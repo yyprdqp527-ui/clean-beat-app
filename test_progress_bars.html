@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Barres de Progression CleanBeat</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f7f8; }
+        .test-container { max-width: 600px; margin: 0 auto; }
+        .avatar-demo { display: flex; gap: 20px; margin: 20px 0; }
+        .avatar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .avatar-square-wrapper { position: relative; display: inline-block; }
+        .avatar-square { 
+            width: 60px; height: 60px; border-radius: 12px; 
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold;
+        }
+        .vbar { 
+            position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+            width: 6px; height: 54px; border-radius: 3px; 
+            background: rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .vbar-fill { 
+            position: absolute; left: 0; right: 0; bottom: 0; 
+            height: 0%; transition: height 0.4s ease;
+            box-shadow: 0 0 6px rgba(0,0,0,0.2);
+        }
+        .avatar-points { font-size: 12px; font-weight: bold; color: #333; }
+        .controls { margin: 20px 0; }
+        .btn { 
+            background: #007bff; color: white; border: none; 
+            padding: 8px 16px; margin: 4px; border-radius: 6px; cursor: pointer;
+        }
+        .btn:hover { background: #0056b3; }
+        .log { 
+            background: #f8f9fa; border: 1px solid #ddd; padding: 15px; 
+            border-radius: 6px; max-height: 200px; overflow-y: auto; 
+            font-family: monospace; font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test des Barres de Progression CleanBeat</h1>
+        
+        <div class="avatar-demo">
+            <div class="avatar-col">
+                <div class="avatar-name">Joueur 1</div>
+                <div class="avatar-square-wrapper">
+                    <div class="avatar-square">J1</div>
+                    <div class="vbar" id="vbar1">
+                        <div class="vbar-fill" id="fill1"></div>
+                    </div>
+                </div>
+                <div class="avatar-points" id="points1">0 pts</div>
+            </div>
+            
+            <div class="avatar-col">
+                <div class="avatar-name">Joueur 2</div>
+                <div class="avatar-square-wrapper">
+                    <div class="avatar-square">J2</div>
+                    <div class="vbar" id="vbar2">
+                        <div class="vbar-fill" id="fill2"></div>
+                    </div>
+                </div>
+                <div class="avatar-points" id="points2">0 pts</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3>🎮 Contrôles de test</h3>
+            <button class="btn" onclick="addPoints(1, 5)">+5 pts Joueur 1</button>
+            <button class="btn" onclick="addPoints(2, 3)">+3 pts Joueur 2</button>
+            <button class="btn" onclick="addPoints(1, 10)">+10 pts Joueur 1</button>
+            <button class="btn" onclick="addPoints(2, 7)">+7 pts Joueur 2</button>
+            <button class="btn" onclick="resetPoints()">🔄 Reset</button>
+            <button class="btn" onclick="testScenario()">🎯 Test Auto</button>
+        </div>
+        
+        <div class="log" id="log">
+            📝 Log des actions:\n
+        </div>
+    </div>
+
+    <script>
+        let player1Points = 0;
+        let player2Points = 0;
+        
+        function log(message) {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logEl.textContent += `[${time}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function updateBar(playerId, points) {
+            const fillEl = document.getElementById(`fill${playerId}`);
+            const pointsEl = document.getElementById(`points${playerId}`);
+            
+            // Logique identique au template CleanBeat
+            let pct = Math.min(Math.floor(points), 100);
+            let fill = (pct > 0 && pct < 2) ? 2 : pct;
+            let hue = Math.floor((pct * 120) / 100);
+            
+            // Appliquer les styles
+            fillEl.style.height = fill + '%';
+            fillEl.style.background = `hsl(${hue}, 80%, 55%)`;
+            pointsEl.textContent = points + ' pts';
+            
+            log(`Joueur ${playerId}: ${points} pts → ${fill}% (hue: ${hue})`);
+        }
+        
+        function addPoints(playerId, pointsToAdd) {
+            if (playerId === 1) {
+                player1Points += pointsToAdd;
+                updateBar(1, player1Points);
+            } else {
+                player2Points += pointsToAdd;
+                updateBar(2, player2Points);
+            }
+        }
+        
+        function resetPoints() {
+            player1Points = 0;
+            player2Points = 0;
+            updateBar(1, 0);
+            updateBar(2, 0);
+            log('🔄 Points remis à zéro');
+        }
+        
+        function testScenario() {
+            log('🎯 Test automatique démarré...');
+            resetPoints();
+            
+            // Simulation progressive
+            let step = 0;
+            const steps = [
+                () => { addPoints(1, 3); log('Joueur 1 fait le café'); },
+                () => { addPoints(2, 5); log('Joueur 2 fait la vaisselle'); },
+                () => { addPoints(1, 4); log('Joueur 1 range sa chambre'); },
+                () => { addPoints(1, 6); log('Joueur 1 passe l\'aspirateur'); },
+                () => { addPoints(2, 3); log('Joueur 2 fait le lit'); },
+                () => { addPoints(2, 7); log('Joueur 2 nettoie la salle de bain'); },
+                () => { addPoints(1, 8); log('Joueur 1 fait les courses'); },
+                () => { log('✅ Test automatique terminé'); }
+            ];
+            
+            function runStep() {
+                if (step < steps.length) {
+                    steps[step]();
+                    step++;
+                    setTimeout(runStep, 1000);
+                }
+            }
+            
+            setTimeout(runStep, 500);
+        }
+        
+        // Test initial
+        log('🚀 Test des barres de progression initialisé');
+        log('💡 Utilisez les boutons pour simuler des gains de points');
+    </script>
+</body>
+</html>

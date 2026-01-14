@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Audio CleanBeat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-btn {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            display: block;
+            width: 300px;
+        }
+        .test-btn:hover { background: #0056b3; }
+        .success { background: #28a745 !important; }
+        .error { background: #dc3545 !important; }
+        .log {
+            background: #333;
+            color: #0f0;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Test Audio CleanBeat</h1>
+    
+    <button id="test-basic" class="test-btn">1. Test Son Basique</button>
+    <button id="test-click" class="test-btn">2. Test Son Clic Maison</button>
+    <button id="test-progress" class="test-btn">3. Test Son Progression</button>
+    <button id="test-all" class="test-btn">4. Test Tous les Sons</button>
+    <button id="clear-log" class="test-btn" style="background: #6c757d;">Effacer Log</button>
+    
+    <div id="log" class="log">🔊 Console Audio - Cliquez pour tester les sons...\n</div>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            log.textContent += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateButton(buttonId, success) {
+            const btn = document.getElementById(buttonId);
+            if (success) {
+                btn.classList.add('success');
+                btn.textContent = btn.textContent + ' ✓';
+            } else {
+                btn.classList.add('error');
+                btn.textContent = btn.textContent + ' ✗';
+            }
+        }
+        
+        // Test son basique
+        function playBasicSound() {
+            addLog('Test son basique...');
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                addLog(`Contexte audio créé. État: ${audioContext.state}`);
+                
+                if (audioContext.state === 'suspended') {
+                    addLog('Contexte suspendu, tentative de reprise...');
+                    audioContext.resume();
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                addLog('✓ Son basique joué avec succès');
+                updateButton('test-basic', true);
+                return true;
+            } catch (error) {
+                addLog(`✗ Erreur son basique: ${error.message}`);
+                updateButton('test-basic', false);
+                return false;
+            }
+        }
+        
+        // Test son clic
+        function playClickSound() {
+            addLog('Test son clic maison...');
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.15);
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.15);
+                
+                addLog('✓ Son clic joué avec succès');
+                updateButton('test-click', true);
+                return true;
+            } catch (error) {
+                addLog(`✗ Erreur son clic: ${error.message}`);
+                updateButton('test-click', false);
+                return false;
+            }
+        }
+        
+        // Test son progression
+        function playProgressionSound() {
+            addLog('Test son progression...');
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                const baseFreq = 500;
+                oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioContext.currentTime + 0.3);
+                oscillator.type = 'triangle';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+                
+                addLog('✓ Son progression joué avec succès');
+                updateButton('test-progress', true);
+                return true;
+            } catch (error) {
+                addLog(`✗ Erreur son progression: ${error.message}`);
+                updateButton('test-progress', false);
+                return false;
+            }
+        }
+        
+        // Test tous les sons
+        function testAllSounds() {
+            addLog('=== TEST COMPLET TOUS LES SONS ===');
+            
+            // Reset button states
+            document.querySelectorAll('.test-btn').forEach(btn => {
+                btn.classList.remove('success', 'error');
+                btn.textContent = btn.textContent.replace(/[✓✗]/g, '').trim();
+            });
+            
+            playBasicSound();
+            setTimeout(() => {
+                playClickSound();
+                setTimeout(() => {
+                    playProgressionSound();
+                    setTimeout(() => {
+                        addLog('=== TESTS TERMINÉS ===');
+                        updateButton('test-all', true);
+                    }, 400);
+                }, 400);
+            }, 600);
+        }
+        
+        // Event listeners
+        document.getElementById('test-basic').addEventListener('click', playBasicSound);
+        document.getElementById('test-click').addEventListener('click', playClickSound);
+        document.getElementById('test-progress').addEventListener('click', playProgressionSound);
+        document.getElementById('test-all').addEventListener('click', testAllSounds);
+        document.getElementById('clear-log').addEventListener('click', () => {
+            log.textContent = '🔊 Console Audio - Log effacé...\n';
+        });
+        
+        // Info de démarrage
+        window.addEventListener('load', () => {
+            addLog('Page de test audio chargée');
+            addLog('Navigateur: ' + navigator.userAgent);
+            addLog('Support AudioContext: ' + !!(window.AudioContext || window.webkitAudioContext));
+            addLog('Cliquez sur les boutons pour tester les sons');
+        });
+    </script>
+</body>
+</html>

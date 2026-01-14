@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Responsive CleanBeat</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            margin: 0; padding: 20px; background: linear-gradient(135deg, #A6D3DC 0%, #f5f7f8 100%); 
+            font-size: 14px; line-height: 1.4;
+        }
+        .test-container { max-width: 900px; margin: 0 auto; }
+        .device-preview { 
+            margin: 20px 0; border: 2px solid #ccc; border-radius: 12px; 
+            overflow: hidden; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .device-header { 
+            background: #333; color: white; padding: 10px 15px; 
+            font-weight: bold; font-size: 12px; text-align: center;
+        }
+        .device-content { 
+            padding: 20px; overflow: auto; 
+            /* Simule les différentes tailles d'écrans */
+        }
+        .mobile { width: 375px; margin: 0 auto; }
+        .mobile .device-content { max-height: 600px; }
+        .tablet { width: 768px; margin: 0 auto; }
+        .tablet .device-content { max-height: 800px; }
+        .desktop { width: 100%; }
+        
+        /* Styles CleanBeat simplifiés pour le test */
+        .house-container { width: 100%; display: flex; justify-content: center; padding: 0 20px; box-sizing: border-box; }
+        .house-center { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; }
+        .house-image-wrapper { width: 100%; max-width: 420px; position: relative; background: #e9ecef; border-radius: 25px; aspect-ratio: 334/484; display: flex; align-items: center; justify-content: center; }
+        .house-info { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 12px; }
+        .house-name { font-weight: 800; color: #1a2a3a; text-align: center; }
+        .house-health-bar { width: 100%; max-width: 320px; height: 12px; background: rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; }
+        .health-fill { height: 100%; width: 70%; background: linear-gradient(90deg, #FDAE54, #F4C68D); border-radius: 10px; }
+        
+        /* Media queries responsive */
+        @media (max-width: 480px) {
+            .house-container { padding: 0 15px; }
+            .house-center { max-width: 100%; }
+            .house-image-wrapper { max-width: 350px; border-radius: 20px; }
+            .house-health-bar { max-width: 280px; }
+        }
+        
+        @media (max-width: 380px) {
+            .house-container { padding: 0 10px; }
+            .house-image-wrapper { max-width: 320px; }
+            .house-health-bar { max-width: 250px; }
+        }
+        
+        @media (max-width: 350px) {
+            .house-image-wrapper { max-width: 300px; }
+        }
+        
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .house-center { max-width: 500px; }
+        }
+        
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 8px; padding: 12px; margin: 10px 0; }
+        .dimensions { font-family: monospace; font-size: 11px; color: #666; text-align: center; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📱 Test Responsive - Image de la Maison</h1>
+        <p>Vérifiez que l'image s'adapte correctement sur tous les appareils :</p>
+        
+        <!-- Mobile iPhone -->
+        <div class="device-preview mobile">
+            <div class="device-header">📱 iPhone (375px)</div>
+            <div class="device-content">
+                <div class="dimensions">Largeur container: <span id="mobile-width"></span>px</div>
+                <div class="house-container">
+                    <div class="house-center">
+                        <div class="house-image-wrapper">
+                            <div>🏠 Image Maison</div>
+                        </div>
+                        <div class="house-info">
+                            <div class="house-name">Ma Maison</div>
+                            <div class="house-health-bar">
+                                <div class="health-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info">✅ L'image ne dépasse pas les bords de l'écran</div>
+            </div>
+        </div>
+        
+        <!-- Petit Mobile -->
+        <div class="device-preview" style="width: 320px; margin: 0 auto;">
+            <div class="device-header">📱 Petit Mobile (320px)</div>
+            <div class="device-content">
+                <div class="dimensions">Largeur container: <span id="small-width"></span>px</div>
+                <div class="house-container">
+                    <div class="house-center">
+                        <div class="house-image-wrapper">
+                            <div>🏠 Image Maison</div>
+                        </div>
+                        <div class="house-info">
+                            <div class="house-name">Ma Maison</div>
+                            <div class="house-health-bar">
+                                <div class="health-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info">✅ Même sur les très petits écrans, ça s'adapte</div>
+            </div>
+        </div>
+        
+        <!-- Tablette iPad */
+        <div class="device-preview tablet">
+            <div class="device-header">📱 iPad (768px)</div>
+            <div class="device-content">
+                <div class="dimensions">Largeur container: <span id="tablet-width"></span>px</div>
+                <div class="house-container">
+                    <div class="house-center">
+                        <div class="house-image-wrapper">
+                            <div>🏠 Image Maison</div>
+                        </div>
+                        <div class="house-info">
+                            <div class="house-name">Ma Maison</div>
+                            <div class="house-health-bar">
+                                <div class="health-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info">✅ Sur tablette, l'image a une taille optimale</div>
+            </div>
+        </div>
+        
+        <!-- Desktop */
+        <div class="device-preview desktop">
+            <div class="device-header">💻 Desktop (1200px+)</div>
+            <div class="device-content">
+                <div class="dimensions">Largeur container: <span id="desktop-width"></span>px</div>
+                <div class="house-container">
+                    <div class="house-center">
+                        <div class="house-image-wrapper">
+                            <div>🏠 Image Maison</div>
+                        </div>
+                        <div class="house-info">
+                            <div class="house-name">Ma Maison</div>
+                            <div class="house-health-bar">
+                                <div class="health-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info">✅ Sur desktop, l'image garde sa taille maximale de 420px</div>
+            </div>
+        </div>
+        
+        <div style="margin: 30px 0; padding: 20px; background: #d4edda; border-radius: 12px;">
+            <h3>🎉 Résumé des améliorations</h3>
+            <ul>
+                <li>✅ <strong>Mobile (320-480px)</strong> : Image adaptée avec padding réduit</li>
+                <li>✅ <strong>Tablette (768-1024px)</strong> : Taille optimisée à 500px max</li>
+                <li>✅ <strong>Desktop (1200px+)</strong> : Taille originale de 420px maintenue</li>
+                <li>✅ <strong>Aspect ratio</strong> : Conservé sur tous les écrans</li>
+                <li>✅ <strong>Zones cliquables</strong> : Proportionnelles à la taille</li>
+                <li>✅ <strong>Barre de santé</strong> : S'adapte à la largeur de l'image</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="testOnRealDevice()" style="background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                📱 Tester sur l'app réelle
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function updateDimensions() {
+            const mobile = document.querySelector('.mobile .house-image-wrapper');
+            const small = document.querySelector('.device-preview:nth-child(3) .house-image-wrapper');
+            const tablet = document.querySelector('.tablet .house-image-wrapper');
+            const desktop = document.querySelector('.desktop .house-image-wrapper');
+            
+            if (mobile) document.getElementById('mobile-width').textContent = Math.round(mobile.offsetWidth);
+            if (small) document.getElementById('small-width').textContent = Math.round(small.offsetWidth);
+            if (tablet) document.getElementById('tablet-width').textContent = Math.round(tablet.offsetWidth);
+            if (desktop) document.getElementById('desktop-width').textContent = Math.round(desktop.offsetWidth);
+        }
+        
+        function testOnRealDevice() {
+            window.open('http://192.168.1.156:8080', '_blank');
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDimensions();
+            
+            // Mise à jour des dimensions en cas de resize
+            window.addEventListener('resize', updateDimensions);
+        });
+    </script>
+</body>
+</html>

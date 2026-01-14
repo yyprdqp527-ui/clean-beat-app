@@ -1,0 +1,980 @@
+{% extends "base.html" %}
+{% block title %}Modifier {{ player.name or 'Joueur' }}{% endblock %}
+{% block content %}
+<style>
+    :root {
+        --teal-light: #A6D3DC;
+        --teal-dark: #597176;
+        --gold: #FDAE54;
+        --peach: #F4C68D;
+        --white: #ffffff;
+        --dark: #153036;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+        min-height: 100vh;
+    }
+    
+    .edit-container {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 100px 20px 40px 20px;
+    }
+    
+    /* Carte avec effet glass morphism */
+    .col-12.col-md-8.mx-auto {
+        background: rgba(255, 255, 255, 0.24);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 24px;
+        padding: 1.5rem;
+        box-shadow: 0 12px 50px rgba(0, 0, 0, 0.15), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+    }
+    
+    /* Bouton retour glassmorphisme */
+    .back-btn-glass {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 2001;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #153036;
+        font-size: 28px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn-glass:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    
+    .back-btn-glass:active {
+        transform: scale(0.95);
+    }
+    
+    /* Carte principale */
+    .edit-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 28px;
+        padding: 32px 24px;
+        box-shadow: 
+            0 25px 60px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    /* Header avec titre */
+    .page-header {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+    
+    .page-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--teal-dark);
+        font-weight: 500;
+    }
+    
+    /* Section Photo/Avatar */
+    .photo-section {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+    
+    .photo-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    
+    .photo-preview {
+        width: 130px;
+        height: 130px;
+        border-radius: 24px;
+        border: 4px solid var(--teal-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        overflow: hidden;
+        cursor: pointer;
+        font-size: 50px;
+        color: var(--teal-dark);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.12),
+            inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    }
+    
+    .photo-preview:hover {
+        border-color: var(--gold);
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(253, 174, 84, 0.25);
+    }
+    
+    .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .camera-overlay {
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        border-radius: 12px;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
+        border: 3px solid white;
+        transition: all 0.3s ease;
+    }
+    
+    .camera-overlay:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Boutons photo/avatar */
+    .photo-options {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    
+    .photo-btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Montserrat', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .upload-btn {
+        background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(89, 113, 118, 0.25);
+    }
+    
+    .camera-btn {
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+    }
+    
+    .avatar-btn {
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(253, 174, 84, 0.25);
+    }
+    
+    .photo-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .photo-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* ===== MODAL SÉLECTION AVATAR ===== */
+    .avatar-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        padding: 20px;
+        overflow-y: auto;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+    
+    .avatar-modal.active {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .avatar-modal-content {
+        background: white;
+        border-radius: 24px;
+        padding: 24px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 85vh;
+        overflow-y: auto;
+        margin-top: 40px;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid rgba(166, 211, 220, 0.3);
+    }
+    
+    .modal-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--dark);
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--teal-dark);
+        padding: 5px;
+        line-height: 1;
+        transition: transform 0.2s;
+    }
+    
+    .modal-close:hover {
+        transform: scale(1.2);
+    }
+    
+    /* Onglets catégories */
+    .category-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .category-tab {
+        padding: 8px 14px;
+        border: 2px solid rgba(166, 211, 220, 0.4);
+        border-radius: 20px;
+        background: white;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Montserrat', sans-serif;
+        color: var(--dark);
+    }
+    
+    .category-tab:hover {
+        border-color: var(--teal-light);
+        background: rgba(166, 211, 220, 0.15);
+    }
+    
+    .category-tab.active {
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        border-color: var(--gold);
+        color: white;
+    }
+    
+    /* Grille d'avatars */
+    .avatars-section {
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--teal-dark);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .avatars-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .avatar-option {
+        aspect-ratio: 1;
+        border-radius: 16px;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .avatar-option img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-option.emoji {
+        font-size: 48px;
+        background: white;
+    }
+    
+    .avatar-option:hover {
+        border-color: var(--teal-light);
+        transform: scale(1.08);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .avatar-option.selected {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.3), 0 8px 25px rgba(253, 174, 84, 0.35);
+        transform: scale(1.05);
+    }
+    
+    /* Bouton confirmer dans modal */
+    .modal-confirm {
+        width: 100%;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        border: none;
+        padding: 16px 24px;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        margin-top: 16px;
+        box-shadow: 0 6px 20px rgba(253, 174, 84, 0.35);
+    }
+    
+    .modal-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(253, 174, 84, 0.45);
+    }
+    
+    .modal-confirm:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Formulaire */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--dark);
+        font-size: 15px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 16px 18px;
+        border: 2px solid rgba(166, 211, 220, 0.5);
+        border-radius: 14px;
+        font-size: 16px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+        color: var(--dark);
+        background: rgba(255, 255, 255, 0.9);
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        border-color: var(--gold);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.15);
+    }
+    
+    .form-input::placeholder {
+        color: #adb5bd;
+        font-weight: 400;
+    }
+    
+    /* Bouton principal */
+    .btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        border: none;
+        padding: 18px 24px;
+        border-radius: 16px;
+        font-size: 17px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Montserrat', sans-serif;
+        box-shadow: 0 8px 25px rgba(253, 174, 84, 0.35);
+        text-transform: none;
+        letter-spacing: 0.3px;
+        margin-top: 10px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(253, 174, 84, 0.45);
+    }
+    
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    /* Loading spinner */
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 40px;
+        color: var(--teal-dark);
+    }
+    
+    .loading.active {
+        display: block;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(166, 211, 220, 0.3);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 520px) {
+        .edit-container {
+            padding: 90px 16px 40px 16px;
+        }
+        
+        .edit-card {
+            padding: 24px 18px;
+            border-radius: 22px;
+        }
+        
+        .page-title {
+            font-size: 22px;
+        }
+        
+        .photo-preview {
+            width: 110px;
+            height: 110px;
+            font-size: 42px;
+        }
+        
+        .camera-overlay {
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+        }
+        
+        .photo-btn {
+            padding: 10px 14px;
+            font-size: 12px;
+        }
+        
+        .avatar-modal-content {
+            padding: 20px 16px;
+            margin-top: 20px;
+            max-height: 90vh;
+        }
+        
+        .avatars-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .avatar-option.emoji {
+            font-size: 38px;
+        }
+        
+        .category-tab {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .form-input {
+            padding: 14px 16px;
+            font-size: 15px;
+        }
+        
+        .btn-submit {
+            padding: 16px 20px;
+            font-size: 16px;
+        }
+        
+        .back-btn-glass {
+            bottom: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 22px;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .edit-card {
+            padding: 20px 14px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+        }
+        
+        .photo-preview {
+            width: 95px;
+            height: 95px;
+        }
+        
+        .photo-options {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .photo-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .avatars-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+</style>
+
+<div class="edit-container">
+    <div class="edit-card">
+        <div class="page-header">
+            <h1 class="page-title">✏️ Modifier le profil</h1>
+            <p class="page-subtitle">{{ player.name or 'Ce joueur' }}</p>
+        </div>
+        
+        <form id="edit-form" enctype="multipart/form-data">
+            <input type="hidden" name="email" value="{{ player.email }}">
+            
+            <!-- Section Photo/Avatar -->
+            <div class="photo-section">
+                <div class="photo-container">
+                    <div class="photo-preview" id="photoPreview" onclick="openAvatarModal()">
+                        {% if player.avatar_file %}
+                            <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar" id="preview-img">
+                        {% elif player.avatar_url %}
+                            <img src="{{ player.avatar_url }}" alt="Avatar" id="preview-img">
+                        {% elif player.avatar and player.avatar|length <= 4 %}
+                            <span id="preview-emoji">{{ player.avatar }}</span>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar" id="preview-img">
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="photo-options">
+                    <button type="button" class="photo-btn camera-btn" onclick="takePhoto()">
+                        📷 Photo
+                    </button>
+                    <button type="button" class="photo-btn upload-btn" onclick="document.getElementById('fileInput').click();">
+                        📁 Galerie
+                    </button>
+                    <button type="button" class="photo-btn avatar-btn" onclick="openAvatarModal()">
+                        🎭 Avatars
+                    </button>
+                </div>
+                
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handlePhotoCapture(event)">
+                <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
+                <input type="hidden" id="selectedPhoto" name="photo_data">
+                <input type="hidden" id="selectedAvatar" name="avatar">
+                <input type="hidden" name="avatar_type" id="avatar-type" value="">
+            </div>
+
+            <!-- Nom -->
+            <div class="form-group">
+                <label class="form-label">Nom du joueur</label>
+                <input type="text" class="form-input" name="name" id="nameInput" value="{{ player.name or '' }}" placeholder="Entrez le nom" required minlength="2">
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                💾 Enregistrer
+            </button>
+        </form>
+    </div>
+    
+    <!-- Bouton retour -->
+    <a href="{{ url_for('manage_players') }}" class="back-btn-glass">
+        ←
+    </a>
+</div>
+
+<!-- Modal de sélection d'avatar -->
+<div class="avatar-modal" id="avatarModal">
+    <div class="avatar-modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🎭 Choisir un avatar</h2>
+            <button type="button" class="modal-close" onclick="closeAvatarModal()">×</button>
+        </div>
+        
+        <!-- Onglets catégories -->
+        <div class="category-tabs" id="categoryTabs">
+            <button type="button" class="category-tab active" data-category="images">📸 Photos</button>
+        </div>
+        
+        <!-- Contenu chargé dynamiquement -->
+        <div id="avatarsContent">
+            <div class="loading active" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Chargement des avatars...</p>
+            </div>
+        </div>
+        
+        <button type="button" class="modal-confirm" id="confirmAvatar" onclick="confirmAvatarSelection()" disabled>
+            ✓ Choisir cet avatar
+        </button>
+    </div>
+</div>
+
+<script>
+    // Variables globales
+    let avatarsData = null;
+    let selectedAvatarData = null;
+    let currentCategory = 'images';
+    
+    // ===== FONCTIONS PHOTOS =====
+    function takePhoto() {
+        document.getElementById('cameraInput').click();
+    }
+    
+    function handlePhotoCapture(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Aperçu">`;
+                document.getElementById('selectedPhoto').value = e.target.result;
+                document.getElementById('avatar-type').value = 'photo';
+                selectedAvatarData = null; // Reset avatar selection
+                document.getElementById('selectedAvatar').value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // ===== FONCTIONS MODAL AVATAR =====
+    function openAvatarModal() {
+        const modal = document.getElementById('avatarModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Charger les avatars si pas encore fait
+        if (!avatarsData) {
+            loadAvatars();
+        }
+    }
+    
+    function closeAvatarModal() {
+        const modal = document.getElementById('avatarModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Charger les avatars depuis l'API
+    async function loadAvatars() {
+        console.log('Chargement des avatars...');
+        try {
+            const response = await fetch('/api/avatars');
+            console.log('Réponse reçue:', response.status);
+            const rawData = await response.json();
+            console.log('Données brutes:', rawData);
+            
+            // Transformer les données pour le format attendu
+            avatarsData = {
+                images: [],
+                emojis: {},
+                categoryNames: {} // Pour stocker les noms lisibles
+            };
+            
+            // Extraire les noms de fichiers des images
+            if (rawData.images && rawData.images.length > 0) {
+                avatarsData.images = rawData.images.map(img => img.file || img);
+                console.log('Images chargées:', avatarsData.images.length);
+            }
+            
+            // Transformer categories en emojis (utiliser id comme clé)
+            if (rawData.categories && rawData.categories.length > 0) {
+                rawData.categories.forEach(cat => {
+                    if (cat.id && cat.items && cat.type === 'emoji') {
+                        // Utiliser l'id comme clé (emoji_people, emoji_animals, etc.)
+                        avatarsData.emojis[cat.id] = cat.items.map(item => item.emoji || item);
+                        // Stocker le nom lisible
+                        avatarsData.categoryNames[cat.id] = cat.name;
+                        console.log('Catégorie emoji ajoutée:', cat.id, 'avec', cat.items.length, 'items');
+                    }
+                });
+            }
+            
+            console.log('Avatars transformés:', avatarsData);
+            
+            // Créer les onglets
+            createCategoryTabs();
+            
+            // Afficher la première catégorie
+            displayCategory('images');
+        } catch (error) {
+            console.error('Erreur chargement avatars:', error);
+            document.getElementById('avatarsContent').innerHTML = '<p style="text-align:center;color:#666;">Erreur de chargement des avatars</p>';
+        }
+    }
+    
+    function createCategoryTabs() {
+        const tabsContainer = document.getElementById('categoryTabs');
+        tabsContainer.innerHTML = '';
+        
+        console.log('Création des onglets. Images:', avatarsData.images?.length, 'Emojis:', Object.keys(avatarsData.emojis || {}).length);
+        
+        // Ajouter onglet Photos (PNG)
+        if (avatarsData.images && avatarsData.images.length > 0) {
+            const tab = document.createElement('button');
+            tab.type = 'button';
+            tab.className = 'category-tab active';
+            tab.dataset.category = 'images';
+            tab.textContent = '📸 Photos';
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Clic sur Photos');
+                selectCategory('images');
+            });
+            tabsContainer.appendChild(tab);
+        }
+        
+        // Ajouter onglets Emojis
+        if (avatarsData.emojis && Object.keys(avatarsData.emojis).length > 0) {
+            Object.keys(avatarsData.emojis).forEach((catId, index) => {
+                const tab = document.createElement('button');
+                tab.type = 'button';
+                tab.className = 'category-tab';
+                tab.dataset.category = catId;
+                
+                // Utiliser le nom stocké ou un nom par défaut
+                const catName = avatarsData.categoryNames[catId] || catId;
+                tab.textContent = catName;
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Clic sur', catId);
+                    selectCategory(catId);
+                });
+                tabsContainer.appendChild(tab);
+                console.log('Onglet ajouté:', catName);
+            });
+        } else {
+            console.log('Pas de catégories emoji trouvées');
+        }
+    }
+    
+    function selectCategory(category) {
+        currentCategory = category;
+        
+        // Mettre à jour les onglets
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.category === category);
+        });
+        
+        displayCategory(category);
+    }
+    
+    function displayCategory(category) {
+        const content = document.getElementById('avatarsContent');
+        const spinner = document.getElementById('loadingSpinner');
+        if (spinner) {
+            spinner.classList.remove('active');
+        }
+        
+        let html = '<div class="avatars-section">';
+        
+        if (category === 'images' && avatarsData && avatarsData.images) {
+            html += '<div class="section-title">📸 Photos disponibles</div>';
+            html += '<div class="avatars-grid">';
+            avatarsData.images.forEach((img, index) => {
+                const isSelected = selectedAvatarData && selectedAvatarData.type === 'image' && selectedAvatarData.value === img;
+                html += `<div class="avatar-option ${isSelected ? 'selected' : ''}" data-type="image" data-value="${img}" data-index="${index}">
+                    <img src="/static/avatars/${img}" alt="${img}">
+                </div>`;
+            });
+            html += '</div>';
+        } else if (avatarsData && avatarsData.emojis && avatarsData.emojis[category]) {
+            // Utiliser le nom lisible pour le titre
+            const catName = avatarsData.categoryNames[category] || category;
+            html += `<div class="section-title">${catName}</div>`;
+            html += '<div class="avatars-grid">';
+            avatarsData.emojis[category].forEach((emoji, index) => {
+                const isSelected = selectedAvatarData && selectedAvatarData.type === 'emoji' && selectedAvatarData.value === emoji;
+                // Utiliser data-attributes au lieu de onclick pour éviter les problèmes d'échappement
+                html += `<div class="avatar-option emoji ${isSelected ? 'selected' : ''}" data-type="emoji" data-value="${emoji}" data-index="${index}">
+                    ${emoji}
+                </div>`;
+            });
+            html += '</div>';
+        } else {
+            html += '<p style="text-align:center;color:#666;padding:20px;">Aucun avatar dans cette catégorie</p>';
+        }
+        
+        html += '</div>';
+        content.innerHTML = html;
+        
+        // Ajouter les gestionnaires de clic via event delegation
+        content.querySelectorAll('.avatar-option').forEach(el => {
+            el.addEventListener('click', function() {
+                const type = this.dataset.type;
+                const value = this.dataset.value;
+                selectAvatar(type, value, this);
+            });
+        });
+    }
+    
+    function selectAvatar(type, value, element) {
+        // Désélectionner précédent
+        document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+        
+        // Sélectionner nouveau
+        element.classList.add('selected');
+        selectedAvatarData = { type, value };
+        
+        // Activer bouton confirmer
+        document.getElementById('confirmAvatar').disabled = false;
+    }
+    
+    function confirmAvatarSelection() {
+        if (!selectedAvatarData) return;
+        
+        const preview = document.getElementById('photoPreview');
+        
+        if (selectedAvatarData.type === 'image') {
+            preview.innerHTML = `<img src="/static/avatars/${selectedAvatarData.value}" alt="Avatar">`;
+            document.getElementById('selectedAvatar').value = selectedAvatarData.value;
+            document.getElementById('avatar-type').value = 'file';
+        } else {
+            preview.innerHTML = `<span style="font-size: 50px;">${selectedAvatarData.value}</span>`;
+            document.getElementById('selectedAvatar').value = selectedAvatarData.value;
+            document.getElementById('avatar-type').value = 'emoji';
+        }
+        
+        // Reset photo
+        document.getElementById('selectedPhoto').value = '';
+        
+        closeAvatarModal();
+    }
+    
+    // Fermer modal en cliquant à l'extérieur
+    document.getElementById('avatarModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAvatarModal();
+        }
+    });
+    
+    // ===== SOUMISSION FORMULAIRE =====
+    document.getElementById('edit-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        // Ajouter le fichier photo si upload depuis galerie
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length > 0) {
+            formData.append('avatar_file', fileInput.files[0]);
+        }
+        
+        // Ajouter le fichier photo si prise avec caméra
+        const cameraInput = document.getElementById('cameraInput');
+        if (cameraInput.files.length > 0) {
+            formData.append('avatar_file', cameraInput.files[0]);
+        }
+        
+        try {
+            const response = await fetch('/update_player', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.href = '{{ url_for("manage_players") }}';
+            } else {
+                alert('Erreur: ' + (result.error || 'Impossible de mettre à jour le joueur'));
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la sauvegarde');
+        }
+    });
+</script>
+{% endblock %}

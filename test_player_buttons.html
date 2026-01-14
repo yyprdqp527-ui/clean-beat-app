@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Boutons Joueurs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #153036;
+            text-align: center;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .player-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 20px 0;
+            position: relative;
+            z-index: 10;
+        }
+        .player-option {
+            cursor: pointer;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
+            user-select: none;
+        }
+        .player-option:hover {
+            border-color: #A6D3DC;
+            background: rgba(166,211,220,0.1);
+            transform: scale(1.05);
+        }
+        .player-option.selected {
+            border-color: #4CAF50 !important;
+            background: rgba(76,175,80,0.1) !important;
+            box-shadow: 0 4px 12px rgba(76,175,80,0.3);
+        }
+        .avatar {
+            font-size: 24px;
+            pointer-events: none;
+        }
+        .name {
+            font-weight: 700;
+            color: #153036;
+            pointer-events: none;
+        }
+        #log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .test-result {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test des Boutons Joueurs</h1>
+        
+        <div class="info">
+            <strong>📋 Instructions :</strong>
+            <ol>
+                <li>Cliquez sur un des boutons joueur ci-dessous</li>
+                <li>Vérifiez que le bouton change de couleur (vert)</li>
+                <li>Regardez les logs en bas pour voir si le clic est détecté</li>
+            </ol>
+        </div>
+
+        <h3 style="text-align:center;color:#153036;margin-top:30px;">Qui a fait cette tâche ?</h3>
+        
+        <div class="player-selector" id="player-selector">
+            <div class="player-option" data-email="parent@test.com">
+                <span class="avatar">👨</span>
+                <span class="name">Parent</span>
+            </div>
+            <div class="player-option" data-email="enfant1@test.com">
+                <span class="avatar">👧</span>
+                <span class="name">Emma</span>
+            </div>
+            <div class="player-option" data-email="enfant2@test.com">
+                <span class="avatar">👦</span>
+                <span class="name">Lucas</span>
+            </div>
+        </div>
+
+        <form>
+            <input type="hidden" id="player_email" name="player_email" value="parent@test.com">
+            <button type="button" onclick="showSelectedPlayer()">Afficher le joueur sélectionné</button>
+        </form>
+
+        <div class="test-result" id="result" style="display:none;">
+            <strong>Résultat :</strong>
+            <div id="result-content"></div>
+        </div>
+
+        <div id="log">
+            <div class="log-entry">📝 Console de débogage - Les événements apparaîtront ici...</div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const resultDiv = document.getElementById('result');
+        const resultContent = document.getElementById('result-content');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function showSelectedPlayer() {
+            const selectedEmail = document.getElementById('player_email').value;
+            const selectedPlayer = document.querySelector(`.player-option[data-email="${selectedEmail}"]`);
+            const playerName = selectedPlayer ? selectedPlayer.querySelector('.name').textContent : 'Aucun';
+            
+            resultDiv.style.display = 'block';
+            resultContent.innerHTML = `
+                <strong>Email sélectionné :</strong> ${selectedEmail}<br>
+                <strong>Nom du joueur :</strong> ${playerName}
+            `;
+            addLog(`✅ Joueur sélectionné : ${playerName} (${selectedEmail})`, 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🎮 Initialisation du test...');
+            
+            const playerOptions = document.querySelectorAll('.player-option');
+            const playerEmailInput = document.getElementById('player_email');
+            
+            addLog(`👥 Nombre de joueurs trouvés : ${playerOptions.length}`);
+            addLog(`📧 Champ player_email : ${playerEmailInput ? 'TROUVÉ' : 'INTROUVABLE'}`);
+            
+            // Sélectionner le premier par défaut
+            if (playerOptions.length > 0) {
+                playerOptions[0].classList.add('selected');
+                addLog(`⭐ Joueur sélectionné par défaut : ${playerOptions[0].dataset.email}`);
+            }
+            
+            playerOptions.forEach((option, index) => {
+                addLog(`  Joueur ${index + 1} : ${option.dataset.email}`);
+                
+                // Test de tous les événements possibles
+                option.addEventListener('click', function(e) {
+                    addLog(`🖱️ CLICK détecté sur : ${this.dataset.email}`);
+                    handlePlayerSelection(this);
+                }, true);
+                
+                option.addEventListener('mousedown', function(e) {
+                    addLog(`🖱️ MOUSEDOWN sur : ${this.dataset.email}`);
+                });
+                
+                option.addEventListener('mouseup', function(e) {
+                    addLog(`🖱️ MOUSEUP sur : ${this.dataset.email}`);
+                });
+                
+                option.addEventListener('touchstart', function(e) {
+                    addLog(`📱 TOUCHSTART sur : ${this.dataset.email}`);
+                    e.preventDefault();
+                    handlePlayerSelection(this);
+                }, { passive: false });
+                
+                option.addEventListener('pointerdown', function(e) {
+                    addLog(`👆 POINTERDOWN sur : ${this.dataset.email}`);
+                });
+            });
+            
+            function handlePlayerSelection(selectedOption) {
+                // Désélectionner tous
+                playerOptions.forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Sélectionner celui-ci
+                selectedOption.classList.add('selected');
+                addLog(`✅ Sélection appliquée : ${selectedOption.dataset.email}`);
+                
+                // Mettre à jour l'email
+                playerEmailInput.value = selectedOption.dataset.email;
+                addLog(`📧 Email mis à jour : ${playerEmailInput.value}`);
+            }
+            
+            addLog('✅ Initialisation terminée - Cliquez sur un joueur !');
+        });
+    </script>
+</body>
+</html>

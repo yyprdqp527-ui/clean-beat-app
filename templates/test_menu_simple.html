@@ -1,0 +1,199 @@
+<!-- Page de test pour sons et navigation -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Menu CleanBeat</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #A6D3DC; }
+        .house-container { position: relative; width: 360px; height: 520px; margin: 20px auto; }
+        .room-rect { 
+            position: absolute; 
+            border: 2px solid rgba(255,255,255,0.3); 
+            background: rgba(255,255,255,0.1);
+            cursor: pointer; 
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .room-rect:hover { 
+            background: rgba(255,255,255,0.3); 
+            border-color: rgba(255,255,255,0.6);
+            transform: scale(1.02);
+        }
+        .test-btn { 
+            padding: 15px; 
+            margin: 10px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Test Menu CleanBeat</h1>
+    <button class="test-btn" onclick="testAudio()">🔊 Test Audio</button>
+    <button class="test-btn" onclick="testNavigation()">🚪 Test Navigation</button>
+    
+    <div class="house-container">
+        <!-- Zones cliquables de la maison -->
+        <div class="room-rect" style="left:10px; top:120px; width:100px; height:90px;" data-href="/categorie/salon">
+            Salon
+        </div>
+        <div class="room-rect" style="left:120px; top:120px; width:110px; height:90px;" data-href="/categorie/cuisine">
+            Cuisine  
+        </div>
+        <div class="room-rect" style="left:240px; top:120px; width:110px; height:90px;" data-href="/categorie/chambre_ado">
+            Chambre Ado
+        </div>
+        <div class="room-rect" style="left:10px; top:220px; width:100px; height:80px;" data-href="/categorie/piece_bonus">
+            Pièce Bonus
+        </div>
+        <div class="room-rect" style="left:120px; top:220px; width:110px; height:80px;" data-href="/categorie/chambre_parentale">
+            Chambre Parents
+        </div>
+        <div class="room-rect" style="left:250px; top:220px; width:100px; height:80px;" data-href="/categorie/salle_bain">
+            Salle de Bain
+        </div>
+    </div>
+
+    <div id="log" style="background:#333; color:#0f0; padding:15px; margin:20px 0; max-height:300px; overflow-y:auto; font-family:monospace;"></div>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}<br>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // ===== SYSTÈME AUDIO =====
+        let audioEnabled = false;
+        let audioInitialized = false;
+        
+        // Son simple et fiable
+        function playSound(frequency = 440, duration = 0.2, type = 'sine') {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+                
+                addLog(`🎵 Son joué: ${frequency}Hz (${type})`);
+                return true;
+            } catch (e) {
+                addLog(`❌ Erreur audio: ${e.message}`);
+                return false;
+            }
+        }
+
+        // Son de clic sur les pièces
+        function playRoomClickSound() {
+            addLog('🔊 Son de clic maison...');
+            return playSound(800, 0.15, 'square');
+        }
+
+        // Son de progression
+        function playProgressSound(points = 50) {
+            addLog(`🔊 Son progression (${points} points)...`);
+            const freq = 400 + (points * 3);
+            return playSound(freq, 0.25, 'triangle');
+        }
+
+        // Test audio
+        function testAudio() {
+            addLog('=== TEST AUDIO ===');
+            audioInitialized = true;
+            playSound(440, 0.3, 'sine');
+            setTimeout(() => playRoomClickSound(), 400);
+            setTimeout(() => playProgressSound(75), 800);
+        }
+
+        // Test navigation
+        function testNavigation() {
+            addLog('=== TEST NAVIGATION ===');
+            const rooms = document.querySelectorAll('.room-rect');
+            addLog(`Nombre de zones trouvées: ${rooms.length}`);
+            rooms.forEach((room, i) => {
+                const href = room.getAttribute('data-href');
+                addLog(`Zone ${i+1}: ${href}`);
+            });
+        }
+
+        // ===== GESTION DES CLICS =====
+        function initRoomClicks() {
+            addLog('🏠 Initialisation des zones cliquables...');
+            
+            const rooms = document.querySelectorAll('.room-rect');
+            addLog(`Zones trouvées: ${rooms.length}`);
+            
+            rooms.forEach((room, index) => {
+                const href = room.getAttribute('data-href');
+                
+                if (!href) return;
+
+                function goToRoom(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    addLog(`🚪 Navigation vers: ${href}`);
+                    
+                    // Activer l'audio si pas encore fait
+                    if (!audioInitialized) {
+                        audioInitialized = true;
+                        addLog('🎵 Activation de l\'audio...');
+                    }
+                    
+                    // Jouer le son
+                    playRoomClickSound();
+                    
+                    // Navigation (avec délai pour le son)
+                    setTimeout(() => {
+                        addLog(`➡️ Redirection vers: ${href}`);
+                        // window.location.href = href; // Désactivé pour le test
+                    }, 100);
+                }
+
+                // Listeners d'événements
+                room.addEventListener('click', goToRoom);
+                room.addEventListener('touchstart', goToRoom, { passive: false });
+                room.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        goToRoom(e);
+                    }
+                });
+                
+                // Rendre focusable pour le clavier
+                room.setAttribute('tabindex', '0');
+            });
+        }
+
+        // Initialisation au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Page de test chargée');
+            addLog('Support AudioContext: ' + !!(window.AudioContext || window.webkitAudioContext));
+            initRoomClicks();
+        });
+    </script>
+</body>
+</html>

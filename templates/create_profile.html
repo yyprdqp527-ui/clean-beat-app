@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{% if change_avatar %}Mon Profil{% else %}Créer mon profil{% endif %} - CleanBeat</title>
+    <!-- Google Fonts avec preconnect pour performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal-light: #A6D3DC;
+            --teal-dark: #597176;
+            --gold: #FDAE54;
+            --peach: #F4C68D;
+            --white: #ffffff;
+            --dark: #153036;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            height: 100%;
+            overflow-x: hidden;
+        }
+        
+        body { 
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 32px 24px;
+        }
+        
+        /* Header avec titre */
+        .page-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 28px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(253, 174, 84, 0.3);
+        }
+        
+        .page-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--dark);
+            font-weight: 400;
+            line-height: 1.5;
+        }
+        
+        /* Carte Profil */
+        .profile-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 32px 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Section Photo/Avatar */
+        .photo-section {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        
+        .photo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        
+        .photo-preview {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 4px solid var(--teal-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            overflow: hidden;
+            cursor: pointer;
+            font-size: 50px;
+            color: var(--teal-dark);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.12),
+                inset 0 2px 4px rgba(255, 255, 255, 0.8);
+        }
+        
+        .photo-preview:hover {
+            border-color: var(--gold);
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(253, 174, 84, 0.25);
+        }
+        
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .camera-overlay {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            color: white;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
+            border: 3px solid white;
+            transition: all 0.3s ease;
+        }
+        
+        .camera-overlay:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Boutons photo/avatar */
+        .photo-options {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        
+        .photo-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(89, 113, 118, 0.25);
+        }
+        
+        .camera-btn {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+        }
+        
+        .avatar-btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.25);
+        }
+        
+        .photo-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .photo-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* ===== MODAL SÉLECTION AVATAR ===== */
+        .avatar-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        
+        .avatar-modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .avatar-modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            margin-top: 40px;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(166, 211, 220, 0.3);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--dark);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--teal-dark);
+            padding: 5px;
+            line-height: 1;
+            transition: transform 0.2s;
+        }
+        
+        .modal-close:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Onglets catégories */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .category-tab {
+            padding: 8px 14px;
+            border: 2px solid rgba(166, 211, 220, 0.4);
+            border-radius: 20px;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--dark);
+        }
+        
+        .category-tab:hover {
+            border-color: var(--teal-light);
+            background: rgba(166, 211, 220, 0.15);
+        }
+        
+        .category-tab.active {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            border-color: var(--gold);
+            color: white;
+        }
+        
+        /* Grille d'avatars */
+        .avatars-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--teal-dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .avatars-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        
+        .avatar-option {
+            aspect-ratio: 1;
+            border-radius: 16px;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .avatar-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-option.emoji {
+            font-size: 36px;
+            background: white;
+        }
+        
+        .avatar-option:hover {
+            border-color: var(--teal-light);
+            transform: scale(1.08);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .avatar-option.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.3), 0 8px 25px rgba(253, 174, 84, 0.35);
+            transform: scale(1.05);
+        }
+        
+        /* Bouton confirmer dans modal */
+        .modal-confirm {
+            width: 100%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            margin-top: 16px;
+            box-shadow: 0 6px 20px rgba(253, 174, 84, 0.35);
+        }
+        
+        .modal-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(253, 174, 84, 0.45);
+        }
+        
+        .modal-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Formulaire */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark);
+            font-size: 15px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 16px 18px;
+            border: 2px solid rgba(166, 211, 220, 0.5);
+            border-radius: 14px;
+            font-size: 16px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            color: var(--dark);
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            border-color: var(--gold);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.15);
+        }
+        
+        .form-input::placeholder {
+            color: #adb5bd;
+            font-weight: 400;
+        }
+        
+        /* Bouton principal */
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            color: white;
+            border: none;
+            padding: 18px 24px;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 8px 25px rgba(253, 174, 84, 0.35);
+            text-transform: none;
+            letter-spacing: 0.3px;
+            margin-top: 10px;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(253, 174, 84, 0.45);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Lien retour */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--teal-dark);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: var(--gold);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Loading spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: var(--teal-dark);
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(166, 211, 220, 0.3);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+                align-items: flex-start;
+                padding-top: 20px;
+            }
+            
+            .container {
+                padding: 24px 18px;
+                border-radius: 22px;
+            }
+            
+            .page-title {
+                font-size: 22px;
+            }
+            
+            .photo-preview {
+                width: 110px;
+                height: 110px;
+                font-size: 42px;
+            }
+            
+            .camera-overlay {
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+            }
+            
+            .photo-btn {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+            
+            .avatar-modal-content {
+                padding: 20px 16px;
+                margin-top: 20px;
+                max-height: 90vh;
+            }
+            
+            .avatars-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+            
+            .avatar-option.emoji {
+                font-size: 28px;
+            }
+            
+            .category-tab {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .form-input {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+            
+            .btn-submit {
+                padding: 16px 20px;
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 375px) {
+            .container {
+                padding: 20px 14px;
+            }
+            
+            .page-title {
+                font-size: 20px;
+            }
+            
+            .photo-preview {
+                width: 95px;
+                height: 95px;
+            }
+            
+            .photo-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .photo-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .avatars-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Carte Titre -->
+        <div class="page-header">
+            <h1 class="page-title">
+                {% if change_avatar %}Mon Profil{% else %}Créer votre profil de joueur{% endif %}
+            </h1>
+            <p class="page-subtitle">
+                {% if change_avatar %}Modifiez vos informations pour personnaliser votre expérience{% else %}Choisis ton avatar et ton prénom pour commencer l'aventure CleanBeat{% endif %}
+            </p>
+        </div>
+        
+        <!-- Carte Profil -->
+        <div class="profile-card">
+            <form method="POST" action="{{ url_for('update_profile') if change_avatar else url_for('create_profile_post') }}" enctype="multipart/form-data" id="profileForm">
+            <!-- Section Photo/Avatar -->
+            <div class="photo-section">
+                <div class="photo-container">
+                    <div class="photo-preview" id="photoPreview" onclick="openAvatarModal()">
+                        👤
+                        <div class="camera-overlay">
+                            ✏️
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="photo-options">
+                    <button type="button" class="photo-btn camera-btn" onclick="takePhoto()">
+                        📷 Photo
+                    </button>
+                    <button type="button" class="photo-btn upload-btn" onclick="document.getElementById('fileInput').click();">
+                        📁 Galerie
+                    </button>
+                    <button type="button" class="photo-btn avatar-btn" onclick="openAvatarModal()">
+                        🎭 Avatars
+                    </button>
+                </div>
+                
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handlePhotoCapture(event)">
+                <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
+                <input type="hidden" id="selectedPhoto" name="photo_data">
+                <input type="hidden" id="selectedAvatar" name="avatar">
+            </div>
+
+            {% if change_avatar %}
+            <!-- Mode édition profil -->
+            <div class="form-group">
+                <label class="form-label">Votre prénom</label>
+                <input type="text" name="name" id="name" class="form-input" placeholder="Entrez votre prénom" value="{{ current_name if current_name else '' }}" minlength="2">
+            </div>
+            {% else %}
+            <!-- Mode création -->
+            <div class="form-group">
+                <label class="form-label">Votre prénom</label>
+                <input type="text" name="name" class="form-input" placeholder="Entrez votre prénom" required minlength="2">
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn-submit">
+                {% if change_avatar %}✨ Enregistrer{% else %}🚀 C'est parti !{% endif %}
+            </button>
+        </form>
+        </div>
+    </div>
+    
+    <!-- Modal de sélection d'avatar -->
+    <div class="avatar-modal" id="avatarModal">
+        <div class="avatar-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🎭 Choisir un avatar</h2>
+                <button type="button" class="modal-close" onclick="closeAvatarModal()">×</button>
+            </div>
+            
+            <!-- Onglets catégories -->
+            <div class="category-tabs" id="categoryTabs">
+                <button type="button" class="category-tab active" data-category="images">📸 Photos</button>
+            </div>
+            
+            <!-- Contenu chargé dynamiquement -->
+            <div id="avatarsContent">
+                <div class="loading active" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Chargement des avatars...</p>
+                </div>
+            </div>
+            
+            <button type="button" class="modal-confirm" id="confirmAvatar" onclick="confirmAvatarSelection()" disabled>
+                ✓ Choisir cet avatar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let avatarsData = null;
+        let selectedAvatarData = null;
+        let currentCategory = 'images';
+        
+        // ===== FONCTIONS PHOTOS =====
+        
+        // Prendre une photo (sur mobile, ouvre l'appareil photo)
+        function takePhoto() {
+            document.getElementById('cameraInput').click();
+        }
+        
+        // Gérer la capture/upload de photo
+        function handlePhotoCapture(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Vérifier la taille (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('La photo est trop volumineuse. Maximum 5 Mo.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Redimensionner l'image si nécessaire
+                resizeImage(e.target.result, 500, function(resizedData) {
+                    const preview = document.getElementById('photoPreview');
+                    preview.innerHTML = `<img src="${resizedData}" alt="Photo de profil"><div class="camera-overlay">✏️</div>`;
+                    document.getElementById('selectedPhoto').value = resizedData;
+                    document.getElementById('selectedAvatar').value = '';
+                    selectedAvatarData = { type: 'photo', data: resizedData };
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Redimensionner l'image pour éviter les fichiers trop lourds
+        function resizeImage(dataUrl, maxSize, callback) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height *= maxSize / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width *= maxSize / height;
+                        height = maxSize;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', 0.85));
+            };
+            img.src = dataUrl;
+        }
+        
+        // ===== MODAL AVATARS =====
+        
+        // Ouvrir le modal
+        function openAvatarModal() {
+            document.getElementById('avatarModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            if (!avatarsData) {
+                loadAvatars();
+            }
+        }
+        
+        // Fermer le modal
+        function closeAvatarModal() {
+            document.getElementById('avatarModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Charger les avatars depuis l'API
+        async function loadAvatars() {
+            const loading = document.getElementById('loadingSpinner');
+            const content = document.getElementById('avatarsContent');
+            
+            try {
+                loading.classList.add('active');
+                
+                const response = await fetch('/api/avatars');
+                avatarsData = await response.json();
+                
+                // Construire les onglets
+                buildCategoryTabs();
+                
+                // Afficher la première catégorie
+                showCategory('images');
+                
+                loading.classList.remove('active');
+                
+            } catch (error) {
+                console.error('Erreur chargement avatars:', error);
+                loading.innerHTML = '<p style="color: #e74c3c;">Erreur de chargement. Veuillez réessayer.</p>';
+            }
+        }
+        
+        // Construire les onglets de catégories
+        function buildCategoryTabs() {
+            const tabsContainer = document.getElementById('categoryTabs');
+            tabsContainer.innerHTML = '';
+            
+            // Onglet Images (toujours premier)
+            if (avatarsData.images && avatarsData.images.length > 0) {
+                const tab = document.createElement('button');
+                tab.type = 'button';
+                tab.className = 'category-tab active';
+                tab.dataset.category = 'images';
+                tab.textContent = '📸 Personnages';
+                tab.onclick = () => showCategory('images');
+                tabsContainer.appendChild(tab);
+            }
+            
+            // Onglets emoji (depuis categories)
+            if (avatarsData.categories) {
+                avatarsData.categories.forEach(cat => {
+                    if (cat.type === 'emoji') {
+                        const tab = document.createElement('button');
+                        tab.type = 'button';
+                        tab.className = 'category-tab';
+                        tab.dataset.category = cat.id;
+                        tab.textContent = cat.name;
+                        tab.onclick = () => showCategory(cat.id);
+                        tabsContainer.appendChild(tab);
+                    }
+                });
+            }
+        }
+        
+        // Afficher une catégorie
+        function showCategory(categoryId) {
+            currentCategory = categoryId;
+            
+            // Mettre à jour les onglets actifs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.category === categoryId);
+            });
+            
+            const content = document.getElementById('avatarsContent');
+            content.innerHTML = '';
+            
+            if (categoryId === 'images') {
+                // Afficher les images PNG
+                const section = document.createElement('div');
+                section.className = 'avatars-section';
+                
+                const grid = document.createElement('div');
+                grid.className = 'avatars-grid';
+                
+                avatarsData.images.forEach(img => {
+                    const option = document.createElement('div');
+                    option.className = 'avatar-option';
+                    option.innerHTML = `<img src="${img.url}" alt="${img.label}">`;
+                    option.title = img.label;
+                    option.onclick = () => selectAvatar('image', img.file, img.url, option);
+                    grid.appendChild(option);
+                });
+                
+                section.appendChild(grid);
+                content.appendChild(section);
+                
+            } else {
+                // Afficher les emojis de la catégorie
+                const category = avatarsData.categories.find(c => c.id === categoryId);
+                if (category && category.items) {
+                    const section = document.createElement('div');
+                    section.className = 'avatars-section';
+                    
+                    const grid = document.createElement('div');
+                    grid.className = 'avatars-grid';
+                    
+                    category.items.forEach(item => {
+                        const option = document.createElement('div');
+                        option.className = 'avatar-option emoji';
+                        option.textContent = item.emoji;
+                        option.title = item.label;
+                        option.onclick = () => selectAvatar('emoji', item.emoji, item.emoji, option);
+                        grid.appendChild(option);
+                    });
+                    
+                    section.appendChild(grid);
+                    content.appendChild(section);
+                }
+            }
+        }
+        
+        // Sélectionner un avatar
+        function selectAvatar(type, value, display, element) {
+            // Retirer la sélection précédente
+            document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+            
+            // Marquer comme sélectionné
+            element.classList.add('selected');
+            
+            // Sauvegarder la sélection
+            selectedAvatarData = { type, value, display };
+            
+            // Activer le bouton de confirmation
+            document.getElementById('confirmAvatar').disabled = false;
+        }
+        
+        // Confirmer la sélection d'avatar
+        function confirmAvatarSelection() {
+            if (!selectedAvatarData) return;
+            
+            const preview = document.getElementById('photoPreview');
+            
+            if (selectedAvatarData.type === 'image') {
+                preview.innerHTML = `<img src="${selectedAvatarData.display}" alt="Avatar sélectionné"><div class="camera-overlay">✏️</div>`;
+                document.getElementById('selectedAvatar').value = selectedAvatarData.value;
+                document.getElementById('selectedPhoto').value = '';
+            } else if (selectedAvatarData.type === 'emoji') {
+                preview.innerHTML = `<span style="font-size: 60px;">${selectedAvatarData.value}</span><div class="camera-overlay">✏️</div>`;
+                document.getElementById('selectedAvatar').value = selectedAvatarData.value;
+                document.getElementById('selectedPhoto').value = '';
+            }
+            
+            closeAvatarModal();
+        }
+        
+        // ===== VALIDATION FORMULAIRE =====
+        
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            const avatar = document.getElementById('selectedAvatar').value;
+            const photo = document.getElementById('selectedPhoto').value;
+            
+            {% if not change_avatar %}
+            const name = document.querySelector('input[name="name"]').value.trim();
+            if (!name || name.length < 2) {
+                alert('Veuillez entrer un prénom valide (minimum 2 caractères).');
+                e.preventDefault();
+                return false;
+            }
+            {% endif %}
+            
+            if (!avatar && !photo) {
+                alert('Veuillez choisir un avatar ou charger une photo.');
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Fermer le modal en cliquant à l'extérieur
+        document.getElementById('avatarModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAvatarModal();
+            }
+        });
+        
+        // ===== INITIALISATION =====
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if change_avatar %}
+            // Pré-remplir l'avatar actuel
+            {% if current_avatar_file %}
+            const currentPhoto = '{{ current_avatar_file }}';
+            if (currentPhoto) {
+                const preview = document.getElementById('photoPreview');
+                preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentPhoto}" alt="Photo actuelle"><div class="camera-overlay">✏️</div>`;
+                document.getElementById('selectedAvatar').value = currentPhoto;
+                selectedAvatarData = { type: 'image', value: currentPhoto };
+            }
+            {% elif current_avatar %}
+            const currentAvatar = '{{ current_avatar }}';
+            if (currentAvatar) {
+                const preview = document.getElementById('photoPreview');
+                // Si c'est un emoji
+                if (currentAvatar.length <= 4 && !currentAvatar.includes('.')) {
+                    preview.innerHTML = `<span style="font-size: 60px;">${currentAvatar}</span><div class="camera-overlay">✏️</div>`;
+                    selectedAvatarData = { type: 'emoji', value: currentAvatar };
+                } else {
+                    // C'est un fichier avatar
+                    preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentAvatar}" alt="Avatar actuel"><div class="camera-overlay">✏️</div>`;
+                    selectedAvatarData = { type: 'image', value: currentAvatar };
+                }
+                document.getElementById('selectedAvatar').value = currentAvatar;
+            }
+            {% endif %}
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

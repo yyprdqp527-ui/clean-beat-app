@@ -1,0 +1,51 @@
+# Query:  avec succès 
+# Flags: RegExp
+# ContextLines: 1
+
+12 résultats - Fichiers 2
+
+app.py:
+   644              
+   645:             flash(f"Compte créé avec succès ! Bienvenue {name} !", "success")
+   646              return redirect(url_for('invite_partner'))
+
+  1175      if photo_filename:
+  1176:         flash(f"Tu peux le faire !  {name} avec photo!", "success")
+  1177      else:
+  1178:         flash(f"Profil créé avec succès pour {name}!", "success")
+  1179      
+
+  1309          
+  1310:         flash("🎉 Vous avez rejoint la maison avec succès !", "success")
+  1311          return redirect(url_for('menu'))
+
+  1888          
+  1889:         flash(f"✨ Tâche '{task_name}' créée avec succès ! ({points} points) 🎉", "success")
+  1890          return redirect(url_for('categorie', cat=category))
+
+  2046          conn.close()
+  2047:         flash("Profil mis à jour avec succès !", "success")
+  2048          return redirect(url_for('menu'))
+
+app.py 2.py:
+   644              
+   645:             flash(f"Compte créé avec succès ! Bienvenue {name} !", "success")
+   646              return redirect(url_for('invite_partner'))
+
+   798          session['registration_step'] = 'profile_created'
+   799:         flash(f"Profil créé avec succès ! Bienvenue {name} !", "success")
+   800          return redirect(url_for('menu'))
+
+  1177      if photo_filename:
+  1178:         flash(f"Profil créé avec succès pour {name} avec photo!", "success")
+  1179      else:
+  1180:         flash(f"Profil créé avec succès pour {name}!", "success")
+  1181      
+
+  1293          
+  1294:         flash("🎉 Vous avez rejoint la maison avec succès !", "success")
+  1295          return redirect(url_for('menu'))
+
+  1872          
+  1873:         flash(f"✨ Tâche '{task_name}' créée avec succès ! ({points} points) 🎉", "success")
+  1874          return redirect(url_for('categorie', cat=category))

@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+
+{% block title %}{% if task %}Modifier{% else %}Créer{% endif %} une mission - {{ category_name }}{% endblock %}
+
+{% block page_styles %}
+<style>
+/* Bouton retour glassmorphism */
+.back-btn-glass {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+}
+
+.back-btn-glass:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.back-btn-glass:active {
+    transform: scale(0.95);
+}
+
+/* Palette harmonisée avec l'app */
+:root {
+    --teal-light: #A6D3DC;
+    --teal-medium: #89b4bb;
+    --teal-dark: #597176;
+    --dark: #153036;
+    --gold: #FDAE54;
+    --peach: #F4C68D;
+}
+
+body {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+    min-height: 100vh;
+}
+
+.add-task-container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-bottom: 120px;
+}
+
+/* Header de la pièce */
+.room-header {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 2px solid rgba(253,174,84,0.3);
+    box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+}
+
+.room-header .room-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.room-header .room-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 0;
+}
+
+.room-header .room-subtitle {
+    font-size: 14px;
+    color: var(--teal-dark);
+    margin-top: 4px;
+}
+
+/* Card formulaire glassmorphism */
+.add-task-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 28px 24px;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 
+        0 12px 40px rgba(89,113,118,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.add-task-card h2 {
+    text-align: center;
+    color: var(--dark);
+    margin: 0 0 24px 0;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid rgba(166,211,220,0.5);
+    border-radius: 14px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.9);
+    box-sizing: border-box;
+    font-family: inherit;
+    color: var(--dark);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.2);
+    background: white;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Slider de points */
+.points-slider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.points-slider span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--teal-dark);
+    min-width: 50px;
+}
+
+.slider {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--peach) 0%, var(--gold) 50%, #FF9A56 100%);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 3px solid var(--gold);
+    box-shadow: 0 4px 12px rgba(253,174,84,0.4);
+    transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 3px solid var(--gold);
+    box-shadow: 0 4px 12px rgba(253,174,84,0.4);
+}
+
+.points-display {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gold);
+    text-align: center;
+    background: linear-gradient(135deg, rgba(253,174,84,0.15) 0%, rgba(244,198,141,0.2) 100%);
+    padding: 14px;
+    border-radius: 14px;
+    margin-top: 12px;
+    border: 2px solid rgba(253,174,84,0.3);
+}
+
+/* Sélecteur d'image */
+.image-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.image-option {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.8);
+}
+
+.image-option:hover {
+    transform: scale(1.05);
+    border-color: rgba(253,174,84,0.5);
+}
+
+.image-option.selected {
+    border-color: var(--gold);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.4);
+}
+
+.image-option img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-container {
+    text-align: center;
+    margin-top: 12px;
+}
+
+.image-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 3px solid var(--gold);
+    box-shadow: 0 8px 24px rgba(253,174,84,0.3);
+}
+
+/* Upload file style */
+.file-upload {
+    position: relative;
+    margin-top: 12px;
+}
+
+.file-upload input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: rgba(166,211,220,0.3);
+    border: 2px dashed var(--teal-medium);
+    border-radius: 14px;
+    color: var(--teal-dark);
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.file-upload:hover .file-upload-btn {
+    background: rgba(253,174,84,0.15);
+    border-color: var(--gold);
+    color: var(--dark);
+}
+
+/* Aide */
+.help-text {
+    background: linear-gradient(135deg, rgba(253,174,84,0.1) 0%, rgba(244,198,141,0.15) 100%);
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--teal-dark);
+    font-weight: 600;
+    margin-top: 8px;
+    border: 1px solid rgba(253,174,84,0.2);
+}
+
+/* Boutons */
+.btn-container {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 130px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(253,174,84,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(253,174,84,0.6);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    color: #153036;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 8px 25px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(89,113,118,0.25), inset 0 1px 0 rgba(255,255,255,0.7);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+    box-shadow: 0 6px 20px rgba(255,107,107,0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255,107,107,0.4);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .add-task-container {
+        padding: 15px;
+        padding-bottom: 100px;
+    }
+    
+    .add-task-card {
+        padding: 20px 18px;
+    }
+    
+    .image-selector {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .btn-container {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Bouton retour glassmorphism -->
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<!-- Espaceur pour header fixe -->
+<div style="height: calc(var(--header-total-height, 80px) + var(--header-spacing-bottom, 4px));"></div>
+
+<div class="add-task-container">
+    <!-- Header de la pièce -->
+    <div class="room-header">
+        <span class="room-icon">{{ category_icon }}</span>
+        <h1 class="room-name">{{ category_name }}</h1>
+        <p class="room-subtitle">{% if task %}Modifier la mission{% else %}Nouvelle mission{% endif %}</p>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="add-task-card">
+        <h2>{% if task %}✏️ Modifier ta mission{% else %}✨ Crée ta mission{% endif %}</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% if task %}
+            <input type="hidden" name="task_id" value="{{ task.id }}">
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="task_name">⚡ Nom de la mission</label>
+                <input type="text" id="task_name" name="task_name" 
+                       value="{{ task.name if task else '' }}"
+                       placeholder="Ex: Ranger le placard" required maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label for="task_description">📝 Description (optionnel)</label>
+                <textarea id="task_description" name="task_description" 
+                          placeholder="Décris les détails de ta mission..." 
+                          rows="3" maxlength="200">{{ task.description if task else '' }}</textarea>
+                <div class="help-text">Ajoute des détails pour te rappeler ce qu'il faut faire !</div>
+            </div>
+
+            <div class="form-group">
+                <label for="points">💎 Valeur en points</label>
+                <div class="points-slider">
+                    <span>5 pts</span>
+                    <input type="range" id="points" name="points" min="5" max="50" 
+                           value="{{ task.points if task else 10 }}" 
+                           class="slider" oninput="updatePointsDisplay()">
+                    <span>50 pts</span>
+                </div>
+                <div class="points-display" id="pointsDisplay">
+                    {% set pts = task.points if task else 10 %}
+                    {% if pts <= 10 %}🥉{% elif pts <= 25 %}🥈{% else %}🥇{% endif %} {{ pts }} points
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>🖼️ Image de la mission</label>
+                <div class="image-selector" id="imageSelector">
+                    {% set images = [
+                        ('cafe.png', '☕'),
+                        ('vaisselle.jpg', '🍽️'),
+                        ('faire_course.png', '🛒'),
+                        ('machine.jpg', '👕'),
+                        ('linge.jpg', '🧺'),
+                        ('laver_toillettes.png', '🚽'),
+                        ('lit.png', '🛏️'),
+                        ('Passer l\'aspirateur.webp', '🏠'),
+                        ('trier les poubelles.webp', '♻️'),
+                        ('cuisine.png', '🍳'),
+                        ('faire la poussière.webp', '✨'),
+                        ('laver les sols.webp', '🧽')
+                    ] %}
+                    {% for img, emoji in images %}
+                    <div class="image-option {% if task and task.image == img %}selected{% endif %}" 
+                         data-image="{{ img }}" onclick="selectImage(this, '{{ img }}')">
+                        <img src="{{ url_for('static', filename='images/' ~ img) }}" alt="{{ emoji }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="task_image_select" id="taskImageSelect" 
+                       value="{{ task.image if task else '' }}">
+                
+                <div class="file-upload">
+                    <input type="file" id="task_image" name="task_image" accept="image/*" onchange="previewImage(event)">
+                    <div class="file-upload-btn">📷 Ou télécharge ta propre photo</div>
+                </div>
+                
+                <div class="image-preview-container" id="previewContainer" style="display: {% if task and task.image %}block{% else %}none{% endif %};">
+                    <img id="imagePreview" class="image-preview" 
+                         src="{% if task and task.image %}{{ url_for('static', filename='images/' ~ task.image) }}{% endif %}" 
+                         alt="Aperçu">
+                </div>
+            </div>
+
+            <div class="btn-container">
+                <a href="{{ url_for('categorie', cat=category) }}" class="btn btn-secondary">← Retour</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if task %}💾 Enregistrer{% else %}✨ Créer{% endif %}
+                </button>
+            </div>
+            
+            {% if task %}
+            <div class="btn-container" style="margin-top: 16px;">
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    🗑️ Supprimer cette mission
+                </button>
+            </div>
+            {% endif %}
+        </form>
+        
+        {% if task %}
+        <form id="deleteForm" method="POST" action="{{ url_for('delete_custom_task', task_id=task.id, cat=category) }}" style="display:none;">
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function updatePointsDisplay() {
+    const points = parseInt(document.getElementById('points').value);
+    const display = document.getElementById('pointsDisplay');
+    
+    let emoji = '';
+    if (points <= 10) emoji = '🥉';
+    else if (points <= 25) emoji = '🥈';
+    else emoji = '🥇';
+    
+    display.textContent = emoji + ' ' + points + ' points';
+}
+
+function selectImage(element, imageName) {
+    // Désélectionner tous
+    document.querySelectorAll('.image-option').forEach(el => el.classList.remove('selected'));
+    // Sélectionner celui-ci
+    element.classList.add('selected');
+    document.getElementById('taskImageSelect').value = imageName;
+    
+    // Afficher l'aperçu
+    const preview = document.getElementById('imagePreview');
+    const container = document.getElementById('previewContainer');
+    preview.src = '/static/images/' + imageName;
+    container.style.display = 'block';
+    
+    // Réinitialiser le file input
+    document.getElementById('task_image').value = '';
+}
+
+function previewImage(event) {
+    const input = event.target;
+    const preview = document.getElementById('imagePreview');
+    const container = document.getElementById('previewContainer');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            container.style.display = 'block';
+            
+            // Désélectionner les images prédéfinies
+            document.querySelectorAll('.image-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('taskImageSelect').value = '';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function confirmDelete() {
+    if (confirm('Es-tu sûr(e) de vouloir supprimer cette mission ? Cette action est irréversible.')) {
+        document.getElementById('deleteForm').submit();
+    }
+}
+</script>
+{% endblock %}

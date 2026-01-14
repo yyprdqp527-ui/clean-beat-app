@@ -1,0 +1,103 @@
+
+{% extends 'base.html' %}
+{% block content %}
+
+{# --------- Sécurisation des valeurs --------- #}
+{% set daily_points_val  = daily_points|default(0)|int %}
+{% set daily_tasks_val   = daily_tasks|default(0)|int %}
+{% set custom_tasks_val  = custom_tasks_count|default(0)|int %}
+{% set weekly_points_val = weekly_points|default(0)|int %}
+
+{% set daily_progress_val  = daily_progress|default(0)|int %}
+{% set weekly_progress_val = weekly_progress|default(0)|int %}
+
+{# clamp 0-100 #}
+{% set daily_progress_val  = 0 if daily_progress_val < 0 else (100 if daily_progress_val > 100 else daily_progress_val) %}
+{% set weekly_progress_val = 0 if weekly_progress_val < 0 else (100 if weekly_progress_val > 100 else weekly_progress_val) %}
+
+{# --------- Prépa classement --------- #}
+{% set safe_players = players|default([]) %}
+{% set max_weekly = 0 %}
+{% for p in safe_players %}
+    {% set wp = p.weekly_points|default(0)|int %}
+    {% if wp > max_weekly %}{% set max_weekly = wp %}{% endif %}
+{% endfor %}
+{% if max_weekly == 0 %}{% set max_weekly = 1 %}{% endif %}
+
+<style>
+    .rank-leader {
+        background: linear-gradient(90deg, #fff7d6, #e8f4ff);
+        border-left: 6px solid #2d8cff;
+        font-weight: 600;
+    }
+    .medal {
+        font-size: 1.2rem;
+        margin-right: .35rem;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,.15));
+    }
+    .player-bar {
+        height: 10px;
+        border-radius: 999px;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Statistiques de la semaine</h2>
+
+    <div class="row g-4">
+
+        <!-- Vos statistiques -->
+        <div class="col-12 col-md-8 mx-auto">
+            <h4 class="mb-3">Vos statistiques</h4>
+
+            <ul class="list-unstyled">
+                <li><b>Points aujourd'hui :</b> {{ daily_points_val }}</li>
+                <li><b>Tâches effectuées aujourd'hui :</b> {{ daily_tasks_val }}</li>
+                <li><b>Tâches personnalisées ajoutées :</b> {{ custom_tasks_val }}</li>
+                <li><b>Points cette semaine :</b> {{ weekly_points_val }}</li>
+            </ul>
+
+            <div class="progress mb-3" style="height: 26px;">
+                {% set daily_val = daily_progress_val|default(0, true)|int %}
+                {% if daily_val < 0 %}{% set daily_val = 0 %}{% endif %}
+                {% if daily_val > 100 %}{% set daily_val = 100 %}{% endif %}
+                <div class="progress-bar bg-success"
+                     role="progressbar"
+                     style="width: {{ daily_val }}%;"
+                     aria-valuenow="{{ daily_val }}"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    Progression du jour : {{ daily_val }}%
+                </div>
+            </div>
+
+            <div class="progress mb-2" style="height: 26px;">
+                {% set weekly_val = weekly_progress_val|default(0, true)|int %}
+                {% if weekly_val < 0 %}{% set weekly_val = 0 %}{% endif %}
+                {% if weekly_val > 100 %}{% set weekly_val = 100 %}{% endif %}
+                <div class="progress-bar bg-info"
+                     role="progressbar"
+                     style="width: {{ weekly_val }}%;"
+                     aria-valuenow="{{ weekly_val }}"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    Progression semaine : {{ weekly_val }}%
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Applique dynamiquement la largeur des barres de progression depuis l'attribut data-width
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+        var width = bar.getAttribute('data-width');
+        if(width !== null) {
+            bar.style.width = width + '%';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une tâche - Clean Beat{% endblock %}
+
+{% block page_styles %}
+    /* Bouton retour glassmorphism */
+    .back-btn-glass {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255,255,255,0.4);
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        z-index: 1000;
+    }
+    
+    .back-btn-glass:hover {
+        background: rgba(255, 255, 255, 0.35);
+        transform: translateX(-3px);
+    }
+    
+    .back-btn-glass:active {
+        transform: scale(0.95);
+    }
+    
+    body {
+        background: #ffffff !important;
+    }
+
+    .add-task-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        padding-bottom: 100px;
+        background: #ffffff;
+        min-height: 100vh;
+    }
+
+    .add-task-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .add-task-card h2 {
+        text-align: center;
+        color: #153036;
+        margin: 0 0 16px 0;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 700;
+        color: #597176;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #E0E0E0;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.2s;
+        background: white;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+        outline: none;
+        border-color: #4A90E2;
+        box-shadow: 0 0 0 3px rgba(74,144,226,0.1);
+    }
+
+    .points-slider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .points-slider span {
+        font-size: 13px;
+        font-weight: 700;
+        color: #597176;
+        min-width: 45px;
+    }
+
+    .slider {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #FFE066 0%, #FF9A56 50%, #FF6B6B 100%);
+        outline: none;
+        opacity: 0.85;
+        transition: opacity 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .slider:hover {
+        opacity: 1;
+    }
+
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        cursor: pointer;
+        border: 2px solid #4A90E2;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        cursor: pointer;
+        border: 2px solid #4A90E2;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .points-display {
+        font-size: 16px;
+        font-weight: 800;
+        color: #4A90E2;
+        text-align: center;
+        background: rgba(74,144,226,0.08);
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
+
+    .image-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid #E0E0E0;
+        margin-top: 10px;
+    }
+
+    .help-text {
+        background: rgba(253,174,84,0.08);
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #FDAE54;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .btn-container {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 24px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 12px 24px !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        text-align: center !important;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(74,144,226,0.3) !important;
+        flex: 1 !important;
+        min-width: 140px !important;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(74,144,226,0.4) !important;
+    }
+
+    .btn-secondary {
+        background: #E8E8E8 !important;
+        color: #597176 !important;
+        flex: 1 !important;
+        min-width: 140px !important;
+    }
+
+    .btn-secondary:hover {
+        background: #D8D8D8 !important;
+        transform: translateY(-2px) !important;
+    }
+{% endblock %}
+
+{% block content %}
+<!-- Bouton retour glassmorphism -->
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<!-- Espaceur harmonisé pour le header fixe -->
+<div style="height: calc(var(--header-total-height, 80px) + var(--header-spacing-bottom, 4px));"></div>
+
+<div class="add-task-container">
+    <div class="add-task-card">
+        <h2>🎮 Crée ta mission épique</h2>
+
+        <form method="POST" action="{{ url_for('add_custom_task') }}">
+            <div class="form-group">
+                <label for="task_name">⚡ Nom de ta mission</label>
+                <input type="text" id="task_name" name="task_name" placeholder="Ex: Nettoyer la cuisine !" required maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label for="task_description">📝 Description</label>
+                <textarea id="task_description" name="task_description" placeholder="Décrivez votre tâche..." rows="3" maxlength="200"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="category">🏠 Catégorie</label>
+                <select id="category" name="category" required>
+                    <option value="">Choisissez une pièce...</option>
+                    <option value="salon" {% if selected_category == 'salon' %}selected{% endif %}>🛋️ Salon</option>
+                    <option value="cuisine" {% if selected_category == 'cuisine' %}selected{% endif %}>🍳 Cuisine</option>
+                    <option value="buanderie" {% if selected_category == 'buanderie' %}selected{% endif %}>👕 Buanderie</option>
+                    <option value="toilettes" {% if selected_category == 'toilettes' %}selected{% endif %}>🚽 Toilettes</option>
+                    <option value="chambre" {% if selected_category == 'chambre' %}selected{% endif %}>🛏️ Chambre Parentale</option>
+                    <option value="salle_bain" {% if selected_category == 'salle_bain' %}selected{% endif %}>🛁 Salle de bain</option>
+                    <option value="chambre_enfant" {% if selected_category == 'chambre_enfant' %}selected{% endif %}>🧸 Chambre Enfant</option>
+                    <option value="chambre_bebe" {% if selected_category == 'chambre_bebe' %}selected{% endif %}>👶 Chambre Bébé</option>
+                    <option value="chambre_ado" {% if selected_category == 'chambre_ado' %}selected{% endif %}>🎮 Zone Ados</option>
+                    <option value="piece_bonus" {% if selected_category == 'piece_bonus' %}selected{% endif %}>💎 Pièce Bonus</option>
+                    <option value="garage" {% if selected_category == 'garage' %}selected{% endif %}>🚗 Garage</option>
+                </select>
+                <div class="help-text">La tâche apparaîtra dans cette pièce de votre maison !</div>
+            </div>
+
+            <div class="form-group">
+                <label for="task_image">🖼️ Image de la tâche</label>
+                <select id="task_image" name="task_image" onchange="updateImagePreview()">
+                    <option value="">Choisissez une image...</option>
+                    <option value="cafe.png">☕ Café</option>
+                    <option value="vaisselle.jpg">🍽️ Vaisselle</option>
+                    <option value="faire_course.png">🛒 Courses</option>
+                    <option value="machine.jpg">👕 Machine</option>
+                    <option value="linge.jpg">🧺 Linge</option>
+                    <option value="laver_toillettes.png">🚽 Toilettes</option>
+                    <option value="jeter_rouleaux.png">🧻 Rouleaux</option>
+                    <option value="lit.png">🛏️ Lit</option>
+                    <option value="Passer l'aspirateur.webp">🏠 Aspirateur</option>
+                    <option value="trier les poubelles.webp">♻️ Poubelles</option>
+                    <option value="mettre la table.webp">🍽️ Table</option>
+                    <option value="netoyer le frigo.webp">❄️ Frigo</option>
+                    <option value="cuisine.png">🍳 Cuisine</option>
+                    <option value="cusine.png">🍽️ Zone cuisine</option>
+                    <option value="faire la poussière.webp">✨ Poussière</option>
+                    <option value="laver les sols.webp">🧽 Sols</option>
+                    <option value="laver les vitres.webp">🪟 Vitres</option>
+                    <option value="lave vaiselle.webp">🧼 Lave-vaisselle</option>
+                    <option value="passer l'eponge.webp">🧽 Éponge</option>
+                    <option value="nettoyer le plan de travil.webp">🏠 Plan de travail</option>
+                    <option value="arroser les plantes.webp">🌱 Plantes</option>
+                    <option value="ranger ses vetements.webp">👔 Vêtements</option>
+                    <option value="logo.png">🏠 Maison générale</option>
+                </select>
+                <img id="imagePreview" class="image-preview" style="display: none;" alt="Aperçu">
+            </div>
+
+            <div class="form-group">
+                <label for="points">💎 Valeur en points</label>
+                <div class="points-slider">
+                    <span>5 pts</span>
+                    <input type="range" id="points" name="points" min="5" max="50" value="10" class="slider" oninput="updatePointsDisplay()">
+                    <span>50 pts</span>
+                </div>
+                <div class="points-display" id="pointsDisplay">🥉 10 points</div>
+                <div class="help-text">Plus la tâche est difficile, plus elle rapporte de points ! 💪</div>
+            </div>
+
+            <div class="form-group">
+                <label for="ad_text">📢 Message publicitaire (optionnel)</label>
+                <input type="text" id="ad_text" name="ad_text" placeholder="Ex: Produit écologique en promotion !" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label for="ad_link">🔗 Lien publicitaire (optionnel)</label>
+                <input type="url" id="ad_link" name="ad_link" placeholder="https://..." maxlength="200">
+            </div>
+
+            <div class="btn-container">
+                {% if selected_category %}
+                    <a href="{{ url_for('categorie', cat=selected_category) }}" class="btn btn-secondary">Retour</a>
+                {% else %}
+                    <a href="{{ url_for('menu') }}" class="btn btn-secondary">Retour au menu</a>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">✨ Créer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function updatePointsDisplay() {
+    const points = parseInt(document.getElementById('points').value);
+    const display = document.getElementById('pointsDisplay');
+    
+    let emoji = '';
+    if (points <= 10) emoji = '🥉';
+    else if (points <= 25) emoji = '🥈';
+    else emoji = '🥇';
+    
+    display.textContent = emoji + ' ' + points + ' points';
+}
+
+function updateImagePreview() {
+    const select = document.getElementById('task_image');
+    const preview = document.getElementById('imagePreview');
+    
+    if (select.value) {
+        preview.src = "/static/images/" + select.value;
+        preview.style.display = 'block';
+        preview.onerror = function() {
+            console.log('Erreur chargement image:', this.src);
+            this.style.display = 'none';
+        };
+    } else {
+        preview.style.display = 'none';
+    }
+}
+</script>
+
+{% endblock %}

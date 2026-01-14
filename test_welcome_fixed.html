@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Welcome - Sans Crop</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f0f0f0; }
+        .test-frame { 
+            width: 375px; height: 667px; margin: 20px auto; 
+            border: 3px solid #333; border-radius: 20px; overflow: hidden; background: black;
+        }
+        .welcome-sim {
+            width: 100%; height: 100%; position: relative; overflow: hidden;
+            background: linear-gradient(135deg, #A6D3DC 0%, #f5f7f8 50%, #597176 100%);
+        }
+        .bg-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('http://192.168.1.156:8080/static/images/Ménage%20à%20Deux.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent 0%, transparent 75%, rgba(89, 113, 118, 0.15) 100%);
+        }
+        .content {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            text-align: center; z-index: 2;
+        }
+        .btn {
+            background: linear-gradient(45deg, #597176, #A6D3DC, #597176);
+            color: white; border: none; padding: 16px 34px; font-size: 14px;
+            font-weight: bold; border-radius: 25px; text-transform: uppercase;
+            letter-spacing: 1px; box-shadow: 0 8px 20px rgba(89, 113, 118, 0.4);
+        }
+        .info { background: white; padding: 15px; margin: 20px; border-radius: 8px; }
+        .status { padding: 8px 12px; border-radius: 6px; margin: 5px 0; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>📱 Test Welcome - Image Sans Crop</h1>
+    
+    <div class="test-frame">
+        <div class="welcome-sim">
+            <div class="bg-image"></div>
+            <div class="overlay"></div>
+            <div class="content">
+                <button class="btn">Que le meilleur gagne !</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info">
+        <h3>✅ Corrections appliquées :</h3>
+        <div class="status success">✅ background-size: contain (plus de crop)</div>
+        <div class="status success">✅ Couleurs harmonisées avec l'app (teal)</div>
+        <div class="status success">✅ Gradient réduit et coloré en teal</div>
+        <div class="status success">✅ Bouton aux couleurs CleanBeat</div>
+        <div class="status success">✅ Image entière visible</div>
+        
+        <div style="margin: 15px 0; text-align: center;">
+            <button onclick="window.open('http://192.168.1.156:8080/welcome', '_blank')" 
+                    style="background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">
+                🚀 Tester la vraie page
+            </button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,620 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task_name }} - Clean Beat{% endblock %}
+
+{% block page_styles %}
+<style>
+    /* Header harmonisé avec menu.html - taille normale sur mobile */
+    @media (max-width: 520px) {
+        .header-menu { padding: 10px 12px; }
+        .header-inner { max-width: calc(100% - 32px); padding: 0 16px; justify-content: center; }
+        .avatar-strip { gap: 100px; }
+        .avatar-col { max-width: none; min-width: var(--avatar-size); }
+        .avatar-name { 
+            white-space: normal; 
+            max-width: 120px; 
+            min-width: var(--avatar-size);
+            line-height: 1.15; 
+            font-size: 10px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .avatar-square-wrapper .vbar { left: calc(100% + 12px); right: auto; }
+    }
+
+
+    /* Description/phrase courte sous le titre */
+        .task-description {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            margin: 0 auto 30px;
+            max-width: 600px;
+            padding: 0 20px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-style: italic;
+            opacity: 0.95;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 25px;
+            padding: 0;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            margin-bottom: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container pour l'image de tâche */
+        .task-image-container {
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .task-image-container img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .task-image-container img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Badge de points - PASTILLE RONDE AVEC RELIEF */
+        .points-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%);
+            color: white;
+            font-weight: 800;
+            font-size: 15px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(255,71,87,0.4), 
+                        inset 0 2px 4px rgba(255,255,255,0.5),
+                        inset 0 -2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            z-index: 10;
+            border: 2px solid rgba(255,255,255,0.9);
+        }
+
+        .points-badge::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 35%;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Zone publicitaire */
+        .ad-zone {
+            background: linear-gradient(135deg, #FF9A56 0%, #FFAD7A 100%);
+            color: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 154, 86, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .ad-zone:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 154, 86, 0.4);
+        }
+
+        .ad-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .ad-content {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .ad-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .ad-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Messages motivants */
+        .motivational-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            margin: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-style: italic;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Statistiques journalières (affichage propre) */
+        .daily-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(255,255,255,0.85);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin: 10px 0 18px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+        }
+
+        .stats-title {
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .stats-content {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 90px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2b9d7b;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Bouton Tâche terminée */
+        .btn-complete-task {
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            font-size: 15px;
+        }
+
+        .btn-complete-task:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Liens de retour */
+        .back-link {
+            text-align: center;
+            margin: 18px 0;
+        }
+
+        .back-link a {
+            color: #333;
+            background: rgba(255,255,255,0.95);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin: 0 6px;
+            display: inline-block;
+        }
+
+        .back-link a:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Mobile */
+        @media (max-width: 768px) {
+            .points-badge {
+                top: 8px;
+                right: 8px;
+                width: 38px;
+                height: 38px;
+                font-size: 14px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .task-card {
+                margin-bottom: 20px;
+            }
+            
+            .task-image-container {
+                height: 220px;
+            }
+            
+            .motivational-message {
+                font-size: 14px;
+                padding: 12px 16px;
+                margin: 15px;
+            }
+            
+            .daily-stats {
+                margin: 8px 0 14px;
+            }
+        }
+        
+        /* 📱 MOBILE PETIT ÉCRAN - CORRECTION AFFICHAGE */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px !important;
+                margin: 10px 0 !important;
+                padding: 0 10px !important;
+            }
+            
+            .task-description {
+                font-size: 14px !important;
+                margin-bottom: 15px !important;
+                padding: 0 10px !important;
+            }
+            
+            .container {
+                padding: 8px !important;
+                max-width: 100% !important;
+            }
+            
+            .task-card {
+                border-radius: 16px !important;
+                margin-bottom: 15px !important;
+            }
+            
+            .task-image-container {
+                height: 180px !important;
+            }
+            
+            .task-image-container img {
+                max-width: 95% !important;
+                max-height: 95% !important;
+            }
+            
+            .points-badge {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 12px !important;
+                top: 6px !important;
+                right: 6px !important;
+            }
+            
+            .motivational-message {
+                font-size: 13px !important;
+                padding: 10px 14px !important;
+                margin: 10px !important;
+                border-radius: 12px !important;
+            }
+            
+            .daily-stats {
+                padding: 10px 12px !important;
+                margin: 8px 0 12px !important;
+            }
+            
+            .stats-title {
+                font-size: 13px !important;
+            }
+            
+            .stat-value {
+                font-size: 16px !important;
+            }
+            
+            .stat-label {
+                font-size: 10px !important;
+            }
+            
+            .ad-zone {
+                padding: 14px !important;
+                margin: 12px !important;
+                border-radius: 12px !important;
+            }
+            
+            .ad-title {
+                font-size: 12px !important;
+            }
+            
+            .ad-content {
+                font-size: 14px !important;
+            }
+        }
+        
+        @media (max-width: 375px) {
+            h1 {
+                font-size: 18px !important;
+            }
+            
+            .task-description {
+                font-size: 12px !important;
+            }
+            
+            .container {
+                padding: 6px !important;
+            }
+            
+            .task-image-container {
+                height: 150px !important;
+            }
+            
+            .points-badge {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 11px !important;
+            }
+            
+            .motivational-message {
+                font-size: 12px !important;
+            }
+            
+            .stat-value {
+                font-size: 14px !important;
+            }
+        }
+        
+        /* 🚨 ANTI-ZOOM - FORCER TOUT DANS L'ÉCRAN */
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+        }
+        
+        .container {
+            max-width: 100% !important;
+            width: calc(100% - 20px) !important;
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
+        }
+{% endblock %}
+
+    {% block content %}
+<h1>{{ task_name }}</h1>
+
+{% if task_description %}
+<div class="task-description">
+    {{ task_description }}
+</div>
+{% endif %}
+
+<div class="container">
+    <!-- Message motivant aléatoire -->
+    <div class="motivational-message" id="motivationalMessage">
+        "Chaque petite action compte pour une maison parfaite ! 🌟"
+    </div>
+
+    <!-- Statistiques de la journée -->
+    <div class="daily-stats">
+        <div class="stats-title">📊 Votre progression aujourd'hui</div>
+        <div class="stats-content">
+            <div class="stat-item">
+                <div class="stat-value" id="dailyPoints">{{ daily_points|default(0) }}</div>
+                <div class="stat-label">Points gagnés</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="dailyTasks">{{ daily_tasks|default(0) }}</div>
+                <div class="stat-label">Tâches finies</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ total_points|default(0) }}</div>
+                <div class="stat-label">Total général</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="task-card">
+        <div class="task-image-container">
+            {% if task_image %}
+                <img src="{{ url_for('static', filename='images/' ~ task_image) }}" alt="{{ task_name }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ task_name }}">
+            {% endif %}
+            
+            <!-- Badge de points -->
+            <div class="points-badge">
+                {{ task_points|default(10) }}
+            </div>
+        </div>
+        
+        <div class="task-info">
+            <div class="task-title">{{ task_name }}</div>
+            
+            {% if task_description %}
+            <div class="task-description-detailed">
+                {{ task_description }}
+            </div>
+            {% endif %}
+
+            <!-- Zone publicitaire -->
+            {% if ad_text %}
+            <div class="ad-zone">
+                <div class="ad-title">💡 Suggestion du jour</div>
+                <div class="ad-content">{{ ad_text }}</div>
+                {% if ad_link %}
+                    <a href="{{ ad_link }}" target="_blank" class="ad-button">
+                        🛒 En savoir plus
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Bouton de validation -->
+            <form method="post" id="gainPointsForm" style="text-align: center; margin-top: 20px;">
+                <button type="submit" class="btn-complete-task">
+                    ✨ Tâche terminée ! Gagner {{ task_points|default(10) }} points ✨
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="back-link">
+    <a href="{{ url_for('categorie', cat=category) }}">← Retour à {{ category|title }}</a> |
+    <a href="{{ url_for('menu') }}">🏠 Menu principal</a>
+</div>
+
+<!-- Toast pour les points -->
+<div id="toast" class="toast"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Messages motivants aléatoires
+const motivationalMessages = [
+    "Chaque petite action compte pour une maison parfaite ! 🌟",
+    "Vous êtes sur la bonne voie ! Continue ! 💪",
+    "Votre maison vous remercie pour vos efforts ! 🏠❤️",
+    "Transformer sa maison, c'est transformer sa vie ! ✨",
+    "Un pas de plus vers la perfection ! 🚀",
+    "Votre motivation fait la différence ! 🔥",
+    "Chaque tâche accomplie est une victoire ! 🏆",
+    "Vous créez un espace de bonheur ! 😊",
+    "Persévérance = Maison de rêve ! 🌈",
+    "Bravo pour votre engagement ! 👏"
+];
+
+// Changer le message motivant toutes les 4 secondes
+function changeMotivationalMessage() {
+    const messageElement = document.getElementById('motivationalMessage');
+    if (messageElement) {
+        const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+        messageElement.innerHTML = `"${randomMessage}"`;
+    }
+}
+
+// Démarrer le changement de messages
+setInterval(changeMotivationalMessage, 4000);
+
+// Gestion de la soumission du formulaire
+document.addEventListener('DOMContentLoaded', function() {
+    var gainPointsForm = document.getElementById('gainPointsForm');
+    var taskPoints = parseInt("{{ task_points|default(10) }}");
+    if (gainPointsForm) {
+        gainPointsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const button = this.querySelector('button');
+            const originalText = button.innerHTML;
+            // Animation du bouton
+            button.innerHTML = '⏳ En cours...';
+            button.disabled = true;
+            fetch("", {method: "POST"})
+                .then(function(response) { return response.text(); })
+                .then(function() {
+                    // Animation de succès
+                    button.innerHTML = '🎉 Tâche accomplie !';
+                    button.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
+                    // Toast avec animation
+                    const toast = document.getElementById('toast');
+                    toast.textContent = "🎉 +" + taskPoints + " points gagnés !";
+                    toast.classList.add('show');
+                    // Déclencher les animations de la maison (si disponibles)
+                    if (typeof onTaskCompleted === 'function') {
+                        onTaskCompleted(taskPoints);
+                    }
+                    // Mettre à jour les statistiques
+                    updateDailyStats(taskPoints);
+                    setTimeout(function() {
+                        toast.classList.remove('show');
+                        // Rediriger vers le menu avec animation de l'avatar
+                        window.location.href = "{{ url_for('menu') }}?validated=1&pts=" + taskPoints + "&ts=" + Date.now();
+                    }, 2500);
+                })
+                .catch(function(err) {
+                    console.error("Erreur lors de la requête :", err);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    const toast = document.getElementById('toast');
+                    toast.textContent = "❌ Erreur, veuillez réessayer";
+                    toast.classList.add('show');
+                    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+                });
+        });
+    }
+});
+
+// Mettre à jour les statistiques localement
+function updateDailyStats(taskPoints) {
+    const dailyPointsElement = document.getElementById('dailyPoints');
+    const dailyTasksElement = document.getElementById('dailyTasks');
+    if (dailyPointsElement) {
+        const currentPoints = parseInt(dailyPointsElement.textContent) || 0;
+        dailyPointsElement.textContent = currentPoints + taskPoints;
+    }
+    if (dailyTasksElement) {
+        const currentTasks = parseInt(dailyTasksElement.textContent) || 0;
+        dailyTasksElement.textContent = currentTasks + 1;
+    }
+}
+
+// Animation d'entrée
+document.addEventListener('DOMContentLoaded', function() {
+    const taskCard = document.querySelector('.task-card');
+    if (taskCard) {
+        taskCard.style.opacity = '0';
+        taskCard.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            taskCard.style.transition = 'all 0.6s ease';
+            taskCard.style.opacity = '1';
+            taskCard.style.transform = 'translateY(0)';
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

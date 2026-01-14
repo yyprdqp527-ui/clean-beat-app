@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Ticket à gratter - Clean Beat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            min-height: 100vh;
+            padding-bottom: 30px;
+        }
+        
+        /* Bouton retour glassmorphism */
+        .back-btn-glass {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        
+        .back-btn-glass:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateX(-3px);
+        }
+        
+        .back-btn-glass:active {
+            transform: scale(0.95);
+        }
+
+        /* Header compact */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 25px;
+        }
+
+        .house-code {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            display: block;
+            width: fit-content;
+            margin: 0 auto 12px;
+        }
+
+        .house-code span {
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* Joueurs compacts */
+        .players-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 8px 14px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .player-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(240, 147, 251, 0.6);
+        }
+
+        .player-card img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+
+        /* Barre verticale pour avatars (remplissage bottom->top) */
+        .vbar { width:6px; height: 30px; border-radius:999px; background: rgba(0,0,0,0.06); overflow:hidden; position: relative; }
+        .vbar-fill { position: absolute; left:0; right:0; bottom:0; height:0%; background: linear-gradient(180deg,#6ee7b7,#10b981); transition: height 0.4s ease; }
+
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .player-email {
+            font-size: 12px;
+        }
+
+        .player-points {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .versus {
+            font-size: 18px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Navigation compacte */
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Titre principal */
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 32px;
+            margin: 25px 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .ticket-container {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            margin-bottom: 30px;
+        }
+
+        .ticket {
+            width: 250px;
+            height: 250px;
+            margin: 30px auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+        }
+
+        .ticket:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .ticket:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .description {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 30px;
+            border-radius: 20px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+        }
+
+        .back-link a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive mobile */
+        @media (max-width: 768px) {
+            header {
+                padding: 12px;
+            }
+
+            .house-code {
+                font-size: 10px;
+                padding: 5px 12px;
+                margin-bottom: 10px;
+            }
+
+            .house-code span {
+                font-size: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin: 20px 0;
+            }
+
+            .players-display {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .player-card {
+                padding: 8px 12px;
+                width: 100%;
+                max-width: 200px;
+                justify-content: center;
+            }
+
+            .player-card img {
+                width: 24px;
+                height: 24px;
+            }
+
+            .player-email {
+                font-size: 11px;
+            }
+
+            .player-points {
+                font-size: 13px;
+            }
+
+            .versus {
+                display: none;
+            }
+
+            .nav-links {
+                gap: 6px;
+            }
+
+            .nav-links a {
+                padding: 5px 10px;
+                font-size: 10px;
+            }
+
+            .ticket-container {
+                padding: 30px 20px;
+            }
+
+            .ticket {
+                width: 200px;
+                height: 200px;
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Bouton retour glassmorphism -->
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<header>
+    <div class="house-code">
+        🏠 Code maison: <span>{{ house_code }}</span>
+    </div>
+
+    <div class="players-display">
+        {% if players|length == 1 %}
+            <div class="player-card">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <img src="{{ url_for('static', filename='avatars/' ~ players[0].avatar) }}" alt="Avatar">
+                    <div class="vbar" title="{{ players[0].percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ players[0].percentage|default(0) }}%"></div></div>
+                </div>
+                <div class="player-info">
+                    <span class="player-email">{{ players[0].email }}</span>
+                    <span class="player-points">{{ players[0].points }} pts</span>
+                </div>
+            </div>
+        {% elif players|length >= 2 %}
+            <div class="player-card">
+                <img src="{{ url_for('static', filename='avatars/' ~ players[0].avatar) }}" alt="Avatar">
+                <div class="player-info">
+                    <span class="player-email">{{ players[0].email }}</span>
+                    <span class="player-points">{{ players[0].points }} pts</span>
+                </div>
+            </div>
+            <span class="versus">VS</span>
+            <div class="player-card">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <img src="{{ url_for('static', filename='avatars/' ~ players[1].avatar) }}" alt="Avatar">
+                    <div class="vbar" title="{{ players[1].percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ players[1].percentage|default(0) }}%"></div></div>
+                </div>
+                <div class="player-info">
+                    <span class="player-email">{{ players[1].email }}</span>
+                    <span class="player-points">{{ players[1].points }} pts</span>
+                </div>
+            </div>
+        {% else %}
+            <p style="color: #666; font-size: 12px;">Aucun joueur</p>
+        {% endif %}
+    </div>
+
+    <div class="nav-links">
+        <a href="{{ url_for('menu') }}">🏠 Menu</a>
+        <a href="{{ url_for('comments') }}">💬 Commentaires</a>
+        <a href="{{ url_for('logout') }}">🚪 Déconnexion</a>
+    </div>
+</header>
+
+<h1>🎟️ Ticket à gratter du jour !</h1>
+
+<div class="container">
+    <div class="ticket-container">
+        <p class="description">Clique sur le ticket pour découvrir ton cadeau</p>
+        
+        <form method="post">
+            <button type="submit" class="ticket">🎫</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}Ajouter des joueurs{% endblock %}
+{% block content %}
+<style>
+    :root {
+        --teal-light: #A6D3DC;
+        --teal-dark: #597176;
+        --gold: #FDAE54;
+        --peach: #F4C68D;
+        --white: #ffffff;
+        --dark: #153036;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+        min-height: 100vh;
+    }
+    
+    .add-players-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 100px 20px 40px 20px;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 40px;
+        text-align: center;
+        border: 2px solid rgba(253,174,84,0.3);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+    }
+    
+    .page-icon {
+        font-size: 48px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .page-title {
+        color: #153036;
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .page-subtitle {
+        color: #597176;
+        font-size: 14px;
+        font-weight: 400;
+        margin: 4px 0 0 0;
+    }
+    
+    /* === CARTES OPTIONS === */
+    .options-grid {
+        display: grid;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .option-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 28px;
+        padding: 32px;
+        border: 2px solid rgba(255,255,255,0.5);
+        box-shadow: 0 12px 40px rgba(89,113,118,0.25),
+                    inset 0 1px 0 rgba(255,255,255,0.6);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        display: block;
+    }
+    
+    .option-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 60px rgba(89,113,118,0.35),
+                    inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    
+    .option-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .option-icon {
+        font-size: 56px;
+        filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+    }
+    
+    .option-info {
+        flex: 1;
+    }
+    
+    .option-title {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 6px;
+        text-shadow: 0 1px 3px rgba(255,255,255,0.9);
+    }
+    
+    .option-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-children {
+        background: linear-gradient(135deg, var(--gold), var(--peach));
+        color: white;
+        box-shadow: 0 4px 12px rgba(253,174,84,0.3);
+    }
+    
+    .badge-partner {
+        background: linear-gradient(135deg, var(--teal-light), var(--teal-dark));
+        color: white;
+        box-shadow: 0 4px 12px rgba(166,211,220,0.3);
+    }
+    
+    .option-description {
+        font-size: 15px;
+        line-height: 1.6;
+        color: rgba(21,48,54,0.8);
+        font-weight: 500;
+        margin-bottom: 16px;
+    }
+    
+    .option-features {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .option-features li {
+        font-size: 14px;
+        color: rgba(21,48,54,0.7);
+        padding: 8px 0;
+        padding-left: 28px;
+        position: relative;
+        font-weight: 600;
+    }
+    
+    .option-features li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--gold);
+        font-weight: 800;
+        font-size: 18px;
+    }
+    
+    .option-arrow {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid rgba(166,211,220,0.3);
+    }
+    
+    .arrow-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 26px;
+        background: linear-gradient(135deg, var(--gold), var(--peach));
+        color: white;
+        border-radius: 16px;
+        font-weight: 800;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 6px 20px rgba(253,174,84,0.4),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .option-card:hover .arrow-btn {
+        transform: translateX(6px);
+        box-shadow: 0 8px 25px rgba(253,174,84,0.5),
+                    inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+    
+    .arrow-icon {
+        font-size: 20px;
+    }
+    
+    /* === BOUTON RETOUR FLECHE === */
+    .back-btn-glass {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 2001;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #153036;
+        font-size: 28px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .back-btn-glass:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .back-btn-glass:active {
+        transform: scale(0.95);
+    }
+
+    @media (max-width: 520px) {
+        .back-btn-glass {
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+        }
+    }
+    
+    /* Header des joueurs */
+    .players-header {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .player-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .player-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border: 2px solid rgba(255,255,255,0.6);
+    }
+    
+    .player-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .player-avatar .emoji {
+        font-size: 32px;
+    }
+    
+    .player-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        max-width: 70px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .player-points {
+        font-size: 10px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.9);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="add-players-container">
+    <div class="page-header">
+        <div class="page-icon">👥</div>
+        <h1 class="page-title">Ajouter des joueurs</h1>
+        <p class="page-subtitle">Choisissez comment ajouter de nouveaux joueurs à votre maison</p>
+    </div>
+    
+    <div class="options-grid">
+        <!-- Option 1 : Ajouter des enfants -->
+        <a href="/add_children" class="option-card">
+            <div class="option-header">
+                <div class="option-icon">👶</div>
+                <div class="option-info">
+                    <h2 class="option-title">Ajouter des enfants</h2>
+                    <span class="option-badge badge-children">Sans téléphone</span>
+                </div>
+            </div>
+            <p class="option-description">
+                Créez des profils pour vos enfants qui n'ont pas encore de téléphone mais qui peuvent faire des tâches ménagères.
+            </p>
+            <ul class="option-features">
+                <li>Profil simple sans email ni mot de passe</li>
+                <li>Avatar personnalisé (emoji ou photo)</li>
+                <li>Participe aux tâches et au classement</li>
+                <li>Vous validez leurs tâches</li>
+            </ul>
+            <div class="option-arrow">
+                <span class="arrow-btn">
+                    <span>C'est parti</span>
+                    <span class="arrow-icon">→</span>
+                </span>
+            </div>
+        </a>
+        
+        <!-- Option 2 : Inviter des partenaires -->
+        <a href="/invite_partner" class="option-card">
+            <div class="option-header">
+                <div class="option-icon">💑</div>
+                <div class="option-info">
+                    <h2 class="option-title">Inviter un partenaire</h2>
+                    <span class="option-badge badge-partner">Par SMS</span>
+                </div>
+            </div>
+            <p class="option-description">
+                Invitez votre conjoint(e) ou colocataire à rejoindre votre maison avec un code d'invitation par SMS.
+            </p>
+            <ul class="option-features">
+                <li>Envoi automatique du code maison par SMS</li>
+                <li>Compte indépendant avec connexion</li>
+                <li>Validation autonome de leurs tâches</li>
+                <li>Compétition amicale entre joueurs</li>
+            </ul>
+            <div class="option-arrow">
+                <span class="arrow-btn">
+                    <span>Inviter maintenant</span>
+                    <span class="arrow-icon">→</span>
+                </span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Bouton retour flèche -->
+<a href="/manage_players" class="back-btn-glass" title="Retour">←</a>
+
+{% endblock %}

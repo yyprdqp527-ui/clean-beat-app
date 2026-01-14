@@ -1,0 +1,51 @@
+{
+  "name": "CleanBeat",
+  "short_name": "CleanBeat",
+  "description": "Application de gestion des tâches ménagères en duo",
+  "start_url": "/menu",
+  "display": "standalone",
+  "background_color": "#A6D3DC",
+  "theme_color": "#597176",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "fr-FR",
+  "dir": "ltr",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "description": "Ouvrir la messagerie",
+      "url": "/comments",
+      "icons": [
+        {
+          "src": "/static/images/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "share_target": {
+    "action": "/comments",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded"
+  },
+  "gcm_sender_id": "103953800507"
+}

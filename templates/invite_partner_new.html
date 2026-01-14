@@ -1,0 +1,1246 @@
+{% extends "base.html" %}
+
+{% block title %}Inviter des partenaires - CleanBeat{% endblock %}
+
+{% block page_styles %}
+<style>
+/* Cacher explicitement tout header */
+.game-header, .header-menu, [class*="game-header"], [class*="header-menu"] {
+    display: none !important;
+}
+
+/* Palette harmonisée avec l'app */
+:root {
+    --teal-light: #A6D3DC;
+    --teal-medium: #89b4bb;
+    --teal-dark: #597176;
+    --dark: #153036;
+    --gold: #FDAE54;
+    --peach: #F4C68D;
+    --success: #28a745;
+    --danger: #dc3545;
+}
+
+body {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+    min-height: 100vh;
+    padding: 20px;
+    padding-bottom: 100px;
+}
+
+.invite-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Header de la page */
+.invite-header {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: center;
+    border: 2px solid rgba(253,174,84,0.3);
+    box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+}
+
+.invite-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.invite-title {
+    color: #153036;
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.invite-subtitle {
+    color: #597176;
+    font-size: 14px;
+    font-weight: 400;
+    margin: 4px 0 0 0;
+}
+
+/* Carte Code Maison */
+.house-code-card {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 
+        0 12px 40px rgba(253,174,84,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.5);
+    border: 2px solid rgba(255,255,255,0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.house-code-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(180deg); }
+}
+
+.house-code-label {
+    font-size: 13px;
+    color: var(--dark);
+    font-weight: 600;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+}
+
+.house-code-value {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--dark);
+    letter-spacing: 6px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+    position: relative;
+    z-index: 1;
+}
+
+.house-code-copy {
+    margin-top: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.copy-btn {
+    background: rgba(21,48,54,0.2);
+    border: 2px solid rgba(21,48,54,0.3);
+    color: var(--dark);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+    background: rgba(21,48,54,0.3);
+}
+
+/* Cartes glassmorphism */
+.glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 
+        0 12px 40px rgba(89,113,118,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 2px solid rgba(255,255,255,0.5);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 15px;
+}
+
+.card-title-icon {
+    font-size: 24px;
+}
+
+/* Bouton d'invitation glassmorphisme premium - effet verre brillant */
+.share-invite-btn {
+    width: 100%;
+    padding: 22px 28px;
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.5) 0%, 
+        rgba(255, 255, 255, 0.2) 40%,
+        rgba(255, 255, 255, 0.1) 60%,
+        rgba(255, 255, 255, 0.3) 100%
+    );
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 1.5px solid rgba(255,255,255,0.7);
+    border-radius: 24px;
+    color: white;
+    font-size: 19px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    box-shadow: 
+        /* Ombre externe principale */
+        0 10px 40px rgba(21, 48, 54, 0.3),
+        /* Lueur externe douce */
+        0 0 30px rgba(255, 255, 255, 0.15),
+        /* Reflet interne haut - effet verre */
+        inset 0 2px 4px rgba(255, 255, 255, 0.8),
+        /* Bord lumineux interne */
+        inset 0 0 20px rgba(255, 255, 255, 0.2),
+        /* Ombre interne bas pour profondeur */
+        inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Reflet brillant en haut du bouton - effet verre */
+.share-invite-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.6) 0%,
+        rgba(255, 255, 255, 0.3) 30%,
+        rgba(255, 255, 255, 0.1) 60%,
+        transparent 100%
+    );
+    border-radius: 24px 24px 50% 50%;
+    pointer-events: none;
+}
+
+/* Effet de brillance qui se déplace */
+.share-invite-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.4) 45%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0.4) 55%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    animation: glass-shine 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes glass-shine {
+    0%, 100% { left: -100%; opacity: 0; }
+    10% { opacity: 1; }
+    50% { left: 150%; opacity: 1; }
+    60%, 100% { opacity: 0; }
+}
+
+.share-invite-btn:active {
+    transform: scale(0.97);
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.6) 0%, 
+        rgba(255, 255, 255, 0.3) 40%,
+        rgba(255, 255, 255, 0.2) 60%,
+        rgba(255, 255, 255, 0.4) 100%
+    );
+    box-shadow: 
+        0 5px 20px rgba(21, 48, 54, 0.35),
+        0 0 20px rgba(255, 255, 255, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.share-invite-icon {
+    font-size: 28px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+    animation: pulse-icon 2s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.share-invite-text {
+    position: relative;
+    z-index: 1;
+}
+
+/* Formulaire manuel */
+.manual-form {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid rgba(166,211,220,0.5);
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.8);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
+}
+
+.form-input::placeholder {
+    color: #999;
+}
+
+.add-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--success) 0%, #20c997 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    margin-top: 8px;
+}
+
+.add-btn:active {
+    transform: scale(0.98);
+}
+
+/* Section enfants */
+.child-section {
+    background: linear-gradient(135deg, rgba(253,174,84,0.1) 0%, rgba(244,198,141,0.05) 100%);
+    border: 2px solid rgba(253,174,84,0.3);
+}
+
+.child-info {
+    background: rgba(253,174,84,0.1);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    color: var(--dark);
+    line-height: 1.5;
+}
+
+/* Grille d'avatars pour enfants */
+.child-avatars-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 14px;
+    border: 2px solid rgba(253,174,84,0.3);
+}
+
+.child-avatar-option {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: 3px solid rgba(253,174,84,0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.child-avatar-option:hover {
+    transform: scale(1.1);
+    border-color: var(--gold);
+}
+
+.child-avatar-option.selected {
+    border-color: var(--gold);
+    background: rgba(253,174,84,0.15);
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.2), 0 4px 12px rgba(253,174,84,0.3);
+    transform: scale(1.05);
+}
+
+.child-info-icon {
+    font-size: 16px;
+    margin-right: 6px;
+}
+
+/* Skip link */
+.skip-section {
+    text-align: center;
+    margin-top: 25px;
+    margin-bottom: 30px;
+}
+
+.skip-link {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.skip-link:active {
+    color: white;
+}
+
+/* Type de foyer - NOUVELLES GRILLES */
+.house-type-section {
+    margin-bottom: 30px;
+}
+
+.house-type-grids {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.house-type-grid-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.house-type-grid-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
+    border-radius: 20px 20px 0 0;
+    pointer-events: none;
+}
+
+.house-type-grid-card:active {
+    transform: scale(0.98);
+}
+
+.house-type-grid-card.selected {
+    border-width: 4px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 40px currentColor;
+    transform: scale(1.02);
+}
+
+/* Couleurs spécifiques par type */
+.house-type-grid-card[data-type="family"] {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(129, 199, 132, 0.15) 100%);
+}
+
+.house-type-grid-card[data-type="family"].selected {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.4) 0%, rgba(129, 199, 132, 0.25) 100%);
+    box-shadow: 0 8px 32px rgba(76, 175, 80, 0.4), 0 0 50px rgba(76, 175, 80, 0.3);
+}
+
+.house-type-grid-card[data-type="couple"] {
+    border-color: #E91E63;
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.25) 0%, rgba(240, 98, 146, 0.15) 100%);
+}
+
+.house-type-grid-card[data-type="couple"].selected {
+    border-color: #E91E63;
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.4) 0%, rgba(240, 98, 146, 0.25) 100%);
+    box-shadow: 0 8px 32px rgba(233, 30, 99, 0.4), 0 0 50px rgba(233, 30, 99, 0.3);
+}
+
+.house-type-grid-card[data-type="coloc"] {
+    border-color: #2196F3;
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.25) 0%, rgba(100, 181, 246, 0.15) 100%);
+}
+
+.house-type-grid-card[data-type="coloc"].selected {
+    border-color: #2196F3;
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.4) 0%, rgba(100, 181, 246, 0.25) 100%);
+    box-shadow: 0 8px 32px rgba(33, 150, 243, 0.4), 0 0 50px rgba(33, 150, 243, 0.3);
+}
+
+.grid-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.grid-emoji {
+    font-size: 48px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    animation: float-emoji 3s ease-in-out infinite;
+}
+
+@keyframes float-emoji {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+.grid-info {
+    flex: 1;
+}
+
+.grid-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: 4px;
+}
+
+.grid-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+}
+
+.grid-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #4CAF50;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.house-type-grid-card.selected .grid-badge {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.grid-preview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.grid-preview-box {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: white;
+    font-size: 13px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+.house-type-grid-card:hover .grid-preview-box {
+    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.house-type-grid-card.selected .grid-preview-box {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 480px) {
+    .grid-emoji {
+        font-size: 36px;
+    }
+    .grid-title {
+        font-size: 18px;
+    }
+    .grid-preview {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    .grid-preview-box {
+        font-size: 11px;
+    }
+}
+
+/* Animation pour le badge */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Anciens styles conservés pour compatibilité */
+.house-type-options {
+    display: flex !important;
+}
+
+.house-type-option {
+    flex: 1;
+    min-width: 100px;
+    max-width: 140px;
+    padding: 15px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.house-type-option.selected {
+    transform: scale(1.08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border-width: 3px !important;
+}
+
+.house-type-option:active {
+    transform: scale(0.95);
+}
+    flex: 1;
+    min-width: 100px;
+    max-width: 140px;
+    padding: 15px 10px;
+    border-radius: 16px;
+    background: rgba(166,211,220,0.2);
+    border: 2px solid rgba(89,113,118,0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.house-type-option:hover {
+    background: rgba(166,211,220,0.4);
+    border-color: var(--teal-medium);
+}
+
+.house-type-option.selected {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-medium) 100%);
+    border-color: var(--teal-dark);
+    box-shadow: 0 4px 15px rgba(89,113,118,0.3);
+}
+
+.house-type-emoji {
+    font-size: 32px;
+}
+
+.house-type-label {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+.house-type-desc {
+    font-size: 11px;
+    color: var(--teal-dark);
+    opacity: 0.8;
+}
+
+.house-type-option.selected .house-type-label,
+.house-type-option.selected .house-type-desc {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Flash messages */
+.flash-message {
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.flash-success {
+    background: rgba(40,167,69,0.15);
+    border: 2px solid rgba(40,167,69,0.3);
+    color: #155724;
+}
+
+.flash-danger {
+    background: rgba(220,53,69,0.15);
+    border: 2px solid rgba(220,53,69,0.3);
+    color: #721c24;
+}
+
+.flash-warning {
+    background: rgba(253,174,84,0.2);
+    border: 2px solid rgba(253,174,84,0.4);
+    color: #856404;
+}
+
+/* Animations pour messages temporaires */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+    .invite-title {
+        font-size: 22px;
+    }
+    
+    .house-code-value {
+        font-size: 28px;
+        letter-spacing: 4px;
+    }
+    
+    .share-invite-btn {
+        padding: 16px 20px;
+        font-size: 16px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="invite-container">
+    <!-- Header -->
+    <div class="invite-header">
+        <div class="invite-icon">🏠</div>
+        <h1 class="invite-title">Inviter des partenaires</h1>
+        <p class="invite-subtitle">
+            Partagez le ménage avec votre famille, votre partenaire ou vos colocs !
+        </p>
+    </div>
+
+    <!-- Section : Type de foyer SIMPLIFIÉ -->
+    <div class="glass-card">
+        <div class="card-title">
+            <span class="card-title-icon">🏠</span>
+            Type de foyer
+        </div>
+        
+        <div class="house-type-options" style="display: flex; gap: 10px; justify-content: space-between;">
+            <label class="house-type-option {% if not house_type or house_type == 'family' %}selected{% endif %}" 
+                   onclick="selectHouseTypeSimple(this)" 
+                   data-type="family"
+                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(76, 175, 80, 0.2); border: 2px solid rgba(76, 175, 80, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <span style="font-size: 32px;">👨‍👩‍👧‍👦</span>
+                <span style="font-weight: 700; color: white; font-size: 14px;">Famille</span>
+                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Parents et enfants</span>
+            </label>
+            
+            <label class="house-type-option {% if house_type == 'couple' %}selected{% endif %}" 
+                   onclick="selectHouseTypeSimple(this)" 
+                   data-type="couple"
+                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(233, 30, 99, 0.2); border: 2px solid rgba(233, 30, 99, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <span style="font-size: 32px;">💑</span>
+                <span style="font-weight: 700; color: white; font-size: 14px;">Couple</span>
+                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Deux adultes</span>
+            </label>
+            
+            <label class="house-type-option {% if house_type == 'coloc' %}selected{% endif %}" 
+                   onclick="selectHouseTypeSimple(this)" 
+                   data-type="coloc"
+                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(33, 150, 243, 0.2); border: 2px solid rgba(33, 150, 243, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <span style="font-size: 32px;">🏠</span>
+                <span style="font-weight: 700; color: white; font-size: 14px;">Colocation</span>
+                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Colocataires</span>
+            </label>
+        </div>
+        
+        <input type="hidden" id="houseTypeInput" value="{{ house_type or 'family' }}">
+    </div>
+
+    <!-- Messages flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+            {% if category == 'success' %}✅{% elif category == 'danger' %}❌{% else %}⚠️{% endif %}
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Section : Inviter un partenaire -->
+    <div class="glass-card" style="margin-bottom: 20px;">
+        <div class="card-title">
+            <span class="card-title-icon">💑</span>
+            Inviter un partenaire
+        </div>
+        
+        <div class="child-info">
+            <span class="child-info-icon">💡</span>
+            Partagez le code de votre maison par SMS, WhatsApp ou autre pour inviter votre partenaire ou colocataire.
+        </div>
+        
+        <!-- Code de la maison -->
+        {% if house_code %}
+        <div class="house-code-card">
+            <div class="house-code-label">Code de ta maison</div>
+            <div class="house-code-value" id="houseCode">{{ house_code }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Bouton principal glassmorphisme -->
+        <button type="button" class="share-invite-btn" id="shareBtn" onclick="shareInvitation()">
+            <span class="share-invite-icon">📤</span>
+            <span class="share-invite-text">Envoyer une invitation</span>
+        </button>
+    </div>
+
+    <!-- Section : Ajouter un enfant -->
+    <div class="glass-card child-section">
+        <div class="card-title">
+            <span class="card-title-icon">👶</span>
+            Ajouter un enfant
+        </div>
+        
+        <div class="child-info">
+            <span class="child-info-icon">💡</span>
+            Pour les enfants sans téléphone, créez directement leur profil. Ils pourront jouer depuis l'appareil familial.
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Prénom de l'enfant</label>
+            <input type="text" class="form-input" id="childName" placeholder="Ex: Lucas, Emma...">
+        </div>
+        
+        <!-- Sélection d'avatar pour l'enfant -->
+        <div class="form-group">
+            <label class="form-label">Choisir un avatar</label>
+            <div class="child-avatars-grid" id="childAvatarsGrid">
+                <div class="child-avatar-option selected" data-avatar="👶" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">👶</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="👧" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">👧</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="👦" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">👦</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🧒" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🧒</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="👸" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">👸</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🤴" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🤴</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🧑‍🎤" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🧑‍🎤</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🦸" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🦸</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🧚" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🧚</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🧙" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🧙</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🐱" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🐱</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🐶" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🐶</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🦄" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🦄</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🐼" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🐼</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🐸" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🐸</span>
+                </div>
+                <div class="child-avatar-option" data-avatar="🦁" onclick="selectChildAvatar(this)">
+                    <span style="font-size: 28px;">🦁</span>
+                </div>
+            </div>
+        </div>
+        
+        <button class="add-btn" style="background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%); color: var(--dark);" onclick="addChild()">
+            ➕ Ajouter un enfant
+        </button>
+        
+        <!-- Liste des enfants ajoutés -->
+        <div class="children-list" id="childrenList" style="margin-top: 15px;"></div>
+        
+        <!-- Bouton Valider -->
+        <button class="add-btn" style="background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; font-size: 16px; padding: 16px; margin-top: 15px;" onclick="validateChildren()">
+            ✅ Valider
+        </button>
+    </div>
+
+    <!-- Lien pour passer -->
+    <div class="skip-section">
+        <a href="{{ url_for('create_profile') }}" class="skip-link">
+            Continuer sans inviter →
+        </a>
+    </div>
+</div>
+
+<!-- Formulaire caché pour les enfants -->
+<form method="post" id="inviteForm" style="display: none;">
+    <input type="hidden" name="partners" id="partnersData" value="[]">
+    <input type="hidden" name="children" id="childrenData" value="[]">
+    <input type="hidden" name="house_type" id="houseTypeData" value="family">
+</form>
+
+<script>
+let children = [];
+let selectedChildAvatar = '👶';  // Avatar par défaut pour les enfants
+const houseCode = "{{ house_code or '' }}";
+
+// Sélection du type de foyer
+function selectHouseType(element) {
+    // Désélectionner tous
+    document.querySelectorAll('.house-type-option').forEach(el => {
+        el.classList.remove('selected');
+    });
+    // Sélectionner celui cliqué
+    element.classList.add('selected');
+    const houseType = element.getAttribute('data-type');
+    document.getElementById('houseTypeInput').value = houseType;
+    document.getElementById('houseTypeData').value = houseType;
+    
+    // Sauvegarder le type de foyer via AJAX
+    fetch('/update_house_type', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ house_type: houseType })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showTemporaryMessage('Type de foyer enregistré !');
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+
+// Sélection d'avatar pour l'enfant
+function selectChildAvatar(element) {
+    // Désélectionner tous les avatars
+    document.querySelectorAll('.child-avatar-option').forEach(el => {
+        el.classList.remove('selected');
+    });
+    // Sélectionner l'avatar cliqué
+    element.classList.add('selected');
+    selectedChildAvatar = element.getAttribute('data-avatar');
+}
+
+// Message d'invitation
+const inviteMessage = `🏠 Rejoins-moi sur CleanBeat !
+
+Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🎮
+
+📱 Télécharge l'app et utilise ce code :
+🔑 ${houseCode}
+
+À tout de suite ! 💪`;
+
+// URL de l'app (à adapter selon votre déploiement)
+const appUrl = window.location.origin;
+
+// Partager l'invitation
+async function shareInvitation() {
+    // Essayer d'abord l'API Web Share (fonctionne sur Safari iOS !)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Invitation CleanBeat',
+                text: inviteMessage,
+                // url: appUrl + '/join_house'  // Optionnel
+            });
+            // L'utilisateur a partagé - proposer de noter la personne
+            showInviteSuccess();
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                // L'utilisateur a annulé - pas d'erreur à afficher
+                return;
+            }
+            console.log('Share error:', err);
+        }
+    }
+    
+    // Fallback : ouvrir l'app Messages directement avec le texte
+    const encodedMessage = encodeURIComponent(inviteMessage);
+    
+    // Détecter iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS) {
+        // Sur iOS, ouvrir Messages avec le texte pré-rempli
+        window.location.href = `sms:&body=${encodedMessage}`;
+    } else {
+        // Sur Android ou autre, essayer SMS
+        window.location.href = `sms:?body=${encodedMessage}`;
+    }
+    
+    // Montrer le succès après un délai
+    setTimeout(showInviteSuccess, 500);
+}
+
+// Montrer le succès et proposer de noter
+function showInviteSuccess() {
+    // Ouvrir le formulaire pour noter qui a été invité
+    document.getElementById('manualForm').style.display = 'block';
+    document.getElementById('adultName').focus();
+}
+
+// Ajouter un enfant
+function addChild() {
+    const name = document.getElementById('childName').value.trim();
+    
+    if (!name) {
+        alert('Veuillez entrer le prénom de l\'enfant');
+        return;
+    }
+    
+    // Vérifier si déjà dans la liste
+    if (children.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        alert('Cet enfant est déjà dans la liste');
+        return;
+    }
+    
+    children.push({
+        name: name,
+        avatar: selectedChildAvatar,  // Inclure l'avatar sélectionné
+        type: 'child'
+    });
+    
+    // Réinitialiser le champ et l'avatar sélectionné
+    document.getElementById('childName').value = '';
+    selectedChildAvatar = '👶';
+    document.querySelectorAll('.child-avatar-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector('.child-avatar-option[data-avatar="👶"]').classList.add('selected');
+    
+    renderChildren();
+    updateChildCount();
+    
+    // Focus sur le champ de saisie pour ajouter un autre enfant
+    setTimeout(() => {
+        document.getElementById('childName').focus();
+    }, 100);
+    
+    // Afficher le message de succès temporaire
+    showTemporaryMessage('✅ Enfant ajouté ! Ajoute-en un autre si besoin 😊');
+}
+
+// Supprimer un enfant
+function removeChild(index) {
+    children.splice(index, 1);
+    renderChildren();
+    updateChildCount();
+}
+
+// Mettre à jour le compteur d'enfants
+function updateChildCount() {
+    const count = children.length;
+    const validateSection = document.getElementById('validateSection');
+    const childCountEl = document.getElementById('childCount');
+    
+    if (count > 0) {
+        validateSection.style.display = 'block';
+        childCountEl.textContent = count;
+    } else {
+        validateSection.style.display = 'none';
+    }
+}
+
+// Valider et créer les enfants
+function validateChildren() {
+    if (children.length === 0) {
+        alert('Veuillez ajouter au moins un enfant');
+        return;
+    }
+    
+    // Mettre à jour les données et soumettre
+    document.getElementById('childrenData').value = JSON.stringify(children);
+    document.getElementById('inviteForm').submit();
+}
+
+// Afficher un message temporaire
+function showTemporaryMessage(message) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'flash-message flash-success';
+    msgDiv.textContent = message;
+    msgDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; animation: slideDown 0.3s ease;';
+    
+    document.body.appendChild(msgDiv);
+    
+    setTimeout(() => {
+        msgDiv.style.animation = 'slideUp 0.3s ease';
+        setTimeout(() => msgDiv.remove(), 300);
+    }, 2000);
+}
+
+// Afficher la liste des enfants
+function renderChildren() {
+    const listEl = document.getElementById('childrenList');
+    
+    if (children.length === 0) {
+        listEl.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div style="padding-top: 12px; border-top: 2px solid rgba(253,174,84,0.3); margin-top: 8px;">';
+    
+    children.forEach((child, index) => {
+        html += `
+            <div class="invite-item child" style="background: rgba(253,174,84,0.15); border: 2px solid rgba(253,174,84,0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">${child.avatar || '👶'}</span>
+                    <span style="font-weight: 700; color: var(--dark);">${child.name}</span>
+                </div>
+                <button type="button" class="remove-btn" onclick="removeChild(${index})" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(220,53,69,0.1); border: 2px solid rgba(220,53,69,0.3); color: var(--danger); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    listEl.innerHTML = html;
+    
+    // Mettre à jour les données du formulaire
+    document.getElementById('childrenData').value = JSON.stringify(children);
+}
+
+// Gérer la touche Entrée
+document.getElementById('childName').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addChild();
+    }
+});
+
+// Sélectionner le type de foyer (version simplifiée)
+function selectHouseTypeSimple(element) {
+    const type = element.getAttribute('data-type');
+    
+    // Désélectionner toutes les options
+    document.querySelectorAll('.house-type-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.style.transform = 'scale(1)';
+    });
+    
+    // Sélectionner l'option cliquée
+    element.classList.add('selected');
+    element.style.transform = 'scale(1.05)';
+    
+    // Mettre à jour le champ caché
+    document.getElementById('houseTypeInput').value = type;
+    document.getElementById('houseTypeData').value = type;
+    
+    // Envoyer la mise à jour au serveur immédiatement
+    fetch('/update_house_type', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ house_type: type })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Type de foyer mis à jour:', type);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de la mise à jour du type de foyer:', error);
+    });
+}
+
+// Sélectionner l'avatar de l'enfant
+function selectChildAvatar(element) {
+    // Désélectionner tous les avatars
+    document.querySelectorAll('.child-avatar-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // Sélectionner l'avatar cliqué
+    element.classList.add('selected');
+    selectedChildAvatar = element.getAttribute('data-avatar');
+}
+</script>
+{% endblock %}

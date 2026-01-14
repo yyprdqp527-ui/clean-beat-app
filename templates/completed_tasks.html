@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Tâches complétées - Clean Beat{% endblock %}
+
+{% block page_styles %}
+        /* Bouton retour glassmorphism */
+        .back-btn-glass {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        
+        .back-btn-glass:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateX(-3px);
+        }
+        
+        .back-btn-glass:active {
+            transform: scale(0.95);
+        }
+        
+        /* Grille de tâches */
+        .tasks {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .task-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .task-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #4CAF50;
+            object-fit: cover;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .task-meta {
+            font-size: 13px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-points {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .no-tasks {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+        }
+
+        .no-tasks-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .no-tasks h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .no-tasks p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Animation d'entrée */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .task-card:nth-child(1) { animation-delay: 0.1s; }
+        .task-card:nth-child(2) { animation-delay: 0.2s; }
+        .task-card:nth-child(3) { animation-delay: 0.3s; }
+        .task-card:nth-child(4) { animation-delay: 0.4s; }
+        .task-card:nth-child(5) { animation-delay: 0.5s; }
+
+        /* Responsive mobile */
+        @media (max-width: 768px) {
+            .tasks {
+                grid-template-columns: 1fr;
+                padding: 15px;
+                gap: 20px;
+            }
+
+            .task-card {
+                padding: 20px;
+            }
+        }
+{% endblock %}
+
+{% block content %}
+<!-- Bouton retour glassmorphism -->
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<h1>✅ Tâches complétées</h1>
+
+{% if tasks_done %}
+<div class="tasks">
+    {% for task in tasks_done %}
+    <div class="task-card">
+        <span class="badge">✔ Terminé</span>
+        <div class="task-header">
+            <img src="{{ url_for('static', filename='avatars/' ~ task[1]) }}" alt="Avatar">
+            <div class="task-info">
+                <div class="task-name">{{ task[3] }}</div>
+                <div class="task-meta">
+                    <span>👤 {{ task[0] }}</span>
+                    <span>•</span>
+                    <span>📁 {{ task[2] }}</span>
+                    <span>•</span>
+                    <span>📅 {{ task[5] }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="task-points">+{{ task[4] }} pts</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="no-tasks">
+    <div class="no-tasks-icon">📋</div>
+    <h3>Aucune tâche complétée</h3>
+    <p>Vous n'avez encore complété aucune tâche pour cette maison.</p>
+</div>
+{% endif %}
+{% endblock %}

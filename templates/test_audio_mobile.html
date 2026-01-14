@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test Audio Mobile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .test-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .test-btn:hover { transform: scale(1.02); }
+        .test-btn:active { transform: scale(0.98); }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔊 Test Audio Mobile</h1>
+        
+        <div class="info-box">
+            <strong>Appareil:</strong> <span id="deviceInfo"></span><br>
+            <strong>User Agent:</strong> <span id="userAgent"></span>
+        </div>
+        
+        <button class="test-btn btn-primary" onclick="activateAudio()">
+            🔊 ACTIVER L'AUDIO
+        </button>
+        
+        <button class="test-btn btn-success" onclick="testWebAudio()" disabled id="webAudioBtn">
+            🎵 Test Web Audio API
+        </button>
+        
+        <button class="test-btn btn-warning" onclick="testHTML5Audio()" disabled id="html5AudioBtn">
+            🔈 Test HTML5 Audio
+        </button>
+        
+        <button class="test-btn btn-danger" onclick="testOscillator()" disabled id="oscillatorBtn">
+            🎶 Test Oscillateur
+        </button>
+        
+        <div class="log" id="logOutput"></div>
+        
+        <audio id="testAudio" preload="auto" style="width: 100%; margin: 10px 0;"></audio>
+    </div>
+
+    <script>
+        let audioContext = null;
+        let audioActivated = false;
+        
+        // Détecter l'appareil
+        function detectDevice() {
+            const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            
+            document.getElementById('deviceInfo').textContent = 
+                isMobile ? (isIOS ? 'iOS' : isAndroid ? 'Android' : 'Mobile') : 'Desktop';
+            document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 100) + '...';
+            
+            return { isMobile, isIOS, isAndroid };
+        }
+        
+        // Logger
+        function log(message) {
+            const logEl = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+        
+        // Activation audio
+        function activateAudio() {
+            log('🔊 Tentative d\'activation audio...');
+            
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                log('✅ AudioContext créé');
+                
+                // Test immédiat
+                const testOsc = audioContext.createOscillator();
+                const testGain = audioContext.createGain();
+                
+                testOsc.connect(testGain);
+                testGain.connect(audioContext.destination);
+                
+                testOsc.frequency.value = 880;
+                testGain.gain.value = 0.1;
+                
+                testOsc.start();
+                testOsc.stop(audioContext.currentTime + 0.2);
+                
+                audioActivated = true;
+                log('✅ Audio activé avec succès !');
+                
+                // Activer les boutons de test
+                document.getElementById('webAudioBtn').disabled = false;
+                document.getElementById('html5AudioBtn').disabled = false;
+                document.getElementById('oscillatorBtn').disabled = false;
+                
+            } catch (error) {
+                log('❌ Erreur activation: ' + error.message);
+            }
+        }
+        
+        // Test Web Audio API
+        function testWebAudio() {
+            log('🎵 Test Web Audio API...');
+            
+            if (!audioContext) {
+                log('❌ Pas d\'AudioContext');
+                return;
+            }
+            
+            try {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.value = 800;
+                gain.gain.value = 0.2;
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.3);
+                
+                log('✅ Web Audio API test lancé');
+            } catch (error) {
+                log('❌ Erreur Web Audio: ' + error.message);
+            }
+        }
+        
+        // Test HTML5 Audio
+        function testHTML5Audio() {
+            log('🔈 Test HTML5 Audio...');
+            
+            try {
+                // Générer un son WAV simple
+                const audioEl = document.getElementById('testAudio');
+                
+                // Créer un son synthétique
+                const sampleRate = 44100;
+                const duration = 0.3;
+                const frequency = 600;
+                const samples = sampleRate * duration;
+                
+                const buffer = new ArrayBuffer(44 + samples * 2);
+                const view = new DataView(buffer);
+                
+                // Header WAV
+                const writeString = (offset, string) => {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                };
+                
+                writeString(0, 'RIFF');
+                view.setUint32(4, 36 + samples * 2, true);
+                writeString(8, 'WAVE');
+                writeString(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                writeString(36, 'data');
+                view.setUint32(40, samples * 2, true);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    const sample = Math.sin(2 * Math.PI * frequency * t) * 0.5;
+                    const intSample = Math.max(-32768, Math.min(32767, Math.floor(sample * 32767)));
+                    view.setInt16(44 + i * 2, intSample, true);
+                }
+                
+                const blob = new Blob([buffer], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                
+                audioEl.src = url;
+                audioEl.play().then(() => {
+                    log('✅ HTML5 Audio joué');
+                }).catch(error => {
+                    log('❌ Erreur HTML5 Audio: ' + error.message);
+                });
+                
+            } catch (error) {
+                log('❌ Erreur génération HTML5: ' + error.message);
+            }
+        }
+        
+        // Test oscillateur direct
+        function testOscillator() {
+            log('🎶 Test oscillateur direct...');
+            
+            if (!audioContext) {
+                log('❌ Pas d\'AudioContext');
+                return;
+            }
+            
+            try {
+                // Test avec différents types d'oscillateurs
+                const types = ['sine', 'square', 'triangle', 'sawtooth'];
+                const frequencies = [440, 550, 660, 770];
+                
+                types.forEach((type, index) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.type = type;
+                        osc.frequency.value = frequencies[index];
+                        gain.gain.value = 0.1;
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.2);
+                        
+                        log(`🎶 ${type} ${frequencies[index]}Hz joué`);
+                    }, index * 300);
+                });
+                
+            } catch (error) {
+                log('❌ Erreur oscillateur: ' + error.message);
+            }
+        }
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            const device = detectDevice();
+            log('📱 Appareil détecté: ' + (device.isMobile ? 'Mobile' : 'Desktop'));
+            log('🚀 Page de test prête');
+        });
+    </script>
+</body>
+</html>

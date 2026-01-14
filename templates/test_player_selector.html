@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Sélecteur de Joueurs</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .player-option { 
+            display: inline-block;
+            padding: 15px 20px;
+            margin: 10px;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .player-option.selected {
+            border-color: #4CAF50;
+            background: rgba(76,175,80,0.2);
+        }
+        #complete-btn {
+            padding: 15px 30px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .info-box {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test du Sélecteur de Joueurs</h1>
+    
+    <div class="info-box">
+        <h3>Valeur actuelle de player_email :</h3>
+        <div id="current-value" style="font-size: 18px; font-weight: bold; color: #4CAF50;">-</div>
+    </div>
+    
+    <h3>Sélectionnez un joueur :</h3>
+    
+    <button type="button" class="player-option" data-email="parent@example.com">
+        👨 Parent
+    </button>
+    
+    <button type="button" class="player-option" data-email="child1@example.com">
+        👧 Enfant 1
+    </button>
+    
+    <button type="button" class="player-option" data-email="child2@example.com">
+        👦 Enfant 2
+    </button>
+    
+    <br>
+    
+    <form method="post" id="test-form" action="/test">
+        <input type="hidden" name="player_email" id="player_email" value="parent@example.com">
+        <button id="complete-btn" type="submit">✅ Valider la tâche</button>
+    </form>
+    
+    <div class="info-box">
+        <h3>Logs :</h3>
+        <div id="logs" style="font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+    (function() {
+        const playerButtons = document.querySelectorAll('.player-option');
+        const playerEmailInput = document.getElementById('player_email');
+        const currentValueDiv = document.getElementById('current-value');
+        const logsDiv = document.getElementById('logs');
+        
+        function addLog(message) {
+            const time = new Date().toLocaleTimeString();
+            logsDiv.innerHTML = `[${time}] ${message}<br>` + logsDiv.innerHTML;
+            console.log(message);
+        }
+        
+        function updateDisplay() {
+            currentValueDiv.textContent = playerEmailInput.value;
+        }
+        
+        function selectPlayer(button) {
+            const email = button.getAttribute('data-email');
+            addLog(`🎯 Sélection du joueur: ${email}`);
+            
+            // Désélectionner tous
+            playerButtons.forEach(btn => btn.classList.remove('selected'));
+            
+            // Sélectionner
+            button.classList.add('selected');
+            
+            // Mettre à jour le champ
+            playerEmailInput.value = email;
+            addLog(`📧 player_email = "${playerEmailInput.value}"`);
+            
+            updateDisplay();
+        }
+        
+        // Sélection par défaut
+        selectPlayer(playerButtons[0]);
+        
+        // Événements
+        playerButtons.forEach(button => {
+            button.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                addLog(`📱 TOUCHSTART sur: ${this.getAttribute('data-email')}`);
+                selectPlayer(this);
+            }, { passive: false });
+            
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                addLog(`🖱️ CLICK sur: ${this.getAttribute('data-email')}`);
+                selectPlayer(this);
+            });
+        });
+        
+        // Form submit
+        document.getElementById('test-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addLog(`🚀 SOUMISSION - player_email = "${playerEmailInput.value}"`);
+            alert(`Formulaire soumis avec player_email = "${playerEmailInput.value}"`);
+        });
+        
+        addLog('✅ Initialisation terminée');
+    })();
+    </script>
+</body>
+</html>

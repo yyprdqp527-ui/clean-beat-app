@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Rejoindre une maison - CleanBeat</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Bouton retour glassmorphism */
+        .back-btn-glass {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        
+        .back-btn-glass:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateX(-3px);
+        }
+        
+        .back-btn-glass:active {
+            transform: scale(0.95);
+        }
+        
+        /* 📱 MOBILE OPTIMISÉ */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px !important;
+            }
+            
+            .container {
+                padding: 25px 18px !important;
+                border-radius: 18px !important;
+            }
+            
+            .icon {
+                font-size: 2.5rem !important;
+                margin-bottom: 15px !important;
+            }
+            
+            h1 {
+                font-size: 20px !important;
+                margin-bottom: 10px !important;
+            }
+            
+            .subtitle {
+                font-size: 13px !important;
+                margin-bottom: 20px !important;
+            }
+        }
+        
+        @media (max-width: 375px) {
+            body {
+                padding: 10px !important;
+            }
+            
+            .container {
+                padding: 20px 15px !important;
+            }
+            
+            .icon {
+                font-size: 2rem !important;
+            }
+            
+            h1 {
+                font-size: 18px !important;
+            }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: saturate(180%) blur(30px);
+            -webkit-backdrop-filter: saturate(180%) blur(30px);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35);
+            border: 1px solid rgba(255,255,255,0.55);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #153036;
+            margin-bottom: 15px;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle {
+            color: #597176;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .steps-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(166, 211, 220, 0.3);
+            border: 2px solid rgba(166, 211, 220, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #597176;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: linear-gradient(135deg, #FDAE54, #F4C68D);
+            border-color: #FDAE54;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
+        }
+
+        .step.completed {
+            background: linear-gradient(135deg, #A6D3DC, #597176);
+            border-color: #597176;
+            color: white;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            color: #153036;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid rgba(166, 211, 220, 0.3);
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .code-input {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FDAE54, #F4C68D);
+            color: white;
+            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(253, 174, 84, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(166, 211, 220, 0.3);
+            color: #597176;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(166, 211, 220, 0.5);
+        }
+
+        .summary-box {
+            background: rgba(166, 211, 220, 0.15);
+            border: 2px solid rgba(166, 211, 220, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(166, 211, 220, 0.2);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #597176;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .summary-value {
+            color: #153036;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .flash {
+            padding: 16px 22px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            animation: slideDown 0.4s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 6px 24px rgba(21, 48, 54, 0.12);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .flash.danger {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 107, 107, 0.2), rgba(231, 76, 60, 0.15));
+            color: #721c24;
+            border: 1px solid rgba(255, 107, 107, 0.4);
+        }
+
+        .flash.success {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 215, 0, 0.2), rgba(253, 174, 84, 0.3));
+            color: #153036;
+            border: 1px solid rgba(253, 174, 84, 0.4);
+        }
+
+        .back-link {
+            margin-top: 25px;
+        }
+
+        .back-link a {
+            color: #597176;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #153036;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .icon {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Bouton retour glassmorphism -->
+<a href="{{ url_for('login') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="icon">🏠</div>
+    <h1>Rejoindre une maison</h1>
+    
+    <!-- Indicateur d'étapes -->
+    <div class="steps-indicator">
+        <div class="step active" id="step1">1</div>
+        <div class="step" id="step2">2</div>
+        <div class="step" id="step3">3</div>
+    </div>
+
+    <form method="post" id="joinForm">
+        <!-- Étape 1: Code de la maison -->
+        <div class="form-section active" id="section1">
+            <div class="subtitle">
+                Entrez le code que vous avez reçu par SMS.
+            </div>
+            <div class="form-group">
+                <label for="house_code">Code de la maison</label>
+                <input type="text" id="house_code" name="house_code" required 
+                       class="code-input" placeholder="ABC123" maxlength="6">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                Suivant →
+            </button>
+        </div>
+
+        <!-- Étape 2: Création du compte -->
+        <div class="form-section" id="section2">
+            <div class="subtitle">
+                Créez votre compte pour commencer à jouer.
+            </div>
+            <div class="form-group">
+                <label for="user_name">Votre nom</label>
+                <input type="text" id="user_name" name="user_name" required 
+                       placeholder="Ex: Marie, Paul...">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="votre@email.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Minimum 6 caractères">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                Suivant →
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+                ← Retour
+            </button>
+        </div>
+
+        <!-- Étape 3: Confirmation -->
+        <div class="form-section" id="section3">
+            <div class="subtitle">
+                Vérifiez vos informations avant de rejoindre.
+            </div>
+            
+            <div class="summary-box">
+                <div class="summary-item">
+                    <span class="summary-label">Code de la maison :</span>
+                    <span class="summary-value" id="summary_code"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Votre nom :</span>
+                    <span class="summary-value" id="summary_name"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Votre email :</span>
+                    <span class="summary-value" id="summary_email"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                🚀 Rejoindre et commencer à jouer !
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+                ← Retour
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+let currentStep = 1;
+
+function nextStep(step) {
+    // Valider l'étape actuelle
+    const currentSection = document.getElementById(`section${currentStep}`);
+    const inputs = currentSection.querySelectorAll('input[required]');
+    let isValid = true;
+    
+    inputs.forEach(input => {
+        if (!input.value.trim()) {
+            input.focus();
+            isValid = false;
+        }
+    });
+    
+    if (!isValid) return;
+    
+    // Masquer l'étape actuelle
+    currentSection.classList.remove('active');
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.getElementById(`step${currentStep}`).classList.add('completed');
+    
+    // Afficher la nouvelle étape
+    currentStep = step;
+    document.getElementById(`section${step}`).classList.add('active');
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    // Si c'est l'étape de confirmation, remplir le récapitulatif
+    if (step === 3) {
+        document.getElementById('summary_code').textContent = document.getElementById('house_code').value;
+        document.getElementById('summary_name').textContent = document.getElementById('user_name').value;
+        document.getElementById('summary_email').textContent = document.getElementById('email').value;
+    }
+    
+    // Scroll vers le haut
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevStep(step) {
+    // Masquer l'étape actuelle
+    document.getElementById(`section${currentStep}`).classList.remove('active');
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    
+    // Afficher l'étape précédente
+    currentStep = step;
+    document.getElementById(`section${step}`).classList.add('active');
+    document.getElementById(`step${step}`).classList.add('active');
+    document.getElementById(`step${step}`).classList.remove('completed');
+    
+    // Scroll vers le haut
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Permettre de passer à l'étape suivante avec Entrée
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentStep < 3) {
+                nextStep(currentStep + 1);
+            }
+        }
+    });
+});
+
+// Auto-uppercase pour le code de la maison
+document.getElementById('house_code').addEventListener('input', function(e) {
+    this.value = this.value.toUpperCase();
+});
+
+// Pré-remplir le code depuis l'URL si présent
+window.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+        document.getElementById('house_code').value = code.toUpperCase();
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,199 @@
+// 🔔 Service Worker pour les notifications push - CleanBeat
+// Version: 1.0.0
+
+const CACHE_NAME = 'cleanbeat-v1';
+const OFFLINE_URL = '/menu';
+
+// Installation du Service Worker
+self.addEventListener('install', (event) => {
+    console.log('🔧 Service Worker: Installation...');
+    
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            console.log('📦 Service Worker: Cache ouvert');
+            return cache.addAll([
+                '/',
+                '/menu',
+                '/comments',
+                '/static/manifest.json',
+                OFFLINE_URL
+            ]);
+        })
+    );
+    
+    // Force le nouveau service worker à prendre le contrôle immédiatement
+    self.skipWaiting();
+});
+
+// Activation du Service Worker
+self.addEventListener('activate', (event) => {
+    console.log('✅ Service Worker: Activation...');
+    
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('🗑️ Service Worker: Suppression ancien cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+    
+    // Prend le contrôle de tous les clients immédiatement
+    return self.clients.claim();
+});
+
+// Gestion des requêtes (stratégie Network First, puis Cache)
+self.addEventListener('fetch', (event) => {
+    // Ignorer les requêtes non-GET
+    if (event.request.method !== 'GET') return;
+    
+    event.respondWith(
+        fetch(event.request)
+            .then((response) => {
+                // Clone la réponse car elle ne peut être consommée qu'une fois
+                const responseClone = response.clone();
+                
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
+                });
+                
+                return response;
+            })
+            .catch(() => {
+                // Si le réseau échoue, essayer le cache
+                return caches.match(event.request).then((response) => {
+                    return response || caches.match(OFFLINE_URL);
+                });
+            })
+    );
+});
+
+// 🔔 NOTIFICATIONS PUSH - Réception
+self.addEventListener('push', (event) => {
+    console.log('📬 Service Worker: Notification push reçue');
+    
+    let notificationData = {
+        title: 'CleanBeat',
+        body: 'Vous avez un nouveau message',
+        icon: '/static/images/logo.png',
+        badge: '/static/images/logo.png',
+        tag: 'cleanbeat-notification',
+        requireInteraction: false,
+        data: {
+            url: '/comments'
+        }
+    };
+    
+    if (event.data) {
+        try {
+            const data = event.data.json();
+            notificationData = {
+                title: data.title || 'CleanBeat',
+                body: data.body || data.message || 'Vous avez un nouveau message',
+                icon: data.icon || '/static/images/logo.png',
+                badge: data.badge || '/static/images/logo.png',
+                tag: data.tag || 'cleanbeat-notification',
+                requireInteraction: data.requireInteraction || false,
+                data: {
+                    url: data.url || '/comments',
+                    messageId: data.messageId,
+                    messageType: data.messageType
+                },
+                actions: data.actions || [
+                    {
+                        action: 'open',
+                        title: 'Ouvrir'
+                    },
+                    {
+                        action: 'close',
+                        title: 'Fermer'
+                    }
+                ]
+            };
+        } catch (e) {
+            console.error('❌ Erreur parsing notification data:', e);
+        }
+    }
+    
+    event.waitUntil(
+        self.registration.showNotification(notificationData.title, {
+            body: notificationData.body,
+            icon: notificationData.icon,
+            badge: notificationData.badge,
+            tag: notificationData.tag,
+            requireInteraction: notificationData.requireInteraction,
+            data: notificationData.data,
+            actions: notificationData.actions,
+            vibrate: [200, 100, 200],
+            timestamp: Date.now()
+        })
+    );
+});
+
+// 🔔 NOTIFICATIONS - Clic sur la notification
+self.addEventListener('notificationclick', (event) => {
+    console.log('👆 Service Worker: Clic sur notification');
+    
+    event.notification.close();
+    
+    const urlToOpen = event.notification.data?.url || '/comments';
+    
+    // Si l'action est "close", ne rien faire
+    if (event.action === 'close') {
+        return;
+    }
+    
+    event.waitUntil(
+        clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        }).then((clientList) => {
+            // Chercher si une fenêtre CleanBeat est déjà ouverte
+            for (const client of clientList) {
+                if (client.url.includes(urlToOpen) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            
+            // Sinon, ouvrir une nouvelle fenêtre
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
+});
+
+// 🔔 NOTIFICATIONS - Fermeture de la notification
+self.addEventListener('notificationclose', (event) => {
+    console.log('❌ Service Worker: Notification fermée');
+    
+    // Optionnel: envoyer une analytics pour tracking
+    // fetch('/api/notification-closed', {
+    //     method: 'POST',
+    //     body: JSON.stringify({
+    //         tag: event.notification.tag,
+    //         timestamp: Date.now()
+    //     })
+    // });
+});
+
+// 📨 Messages depuis le client
+self.addEventListener('message', (event) => {
+    console.log('💬 Service Worker: Message reçu', event.data);
+    
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    if (event.data && event.data.type === 'GET_VERSION') {
+        event.ports[0].postMessage({
+            version: CACHE_NAME
+        });
+    }
+});
+
+console.log('🚀 Service Worker: Chargé et prêt !');

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{% block title %}CleanBeat{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Header avec avatars */
+        .game-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .app-logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+        }
+
+        /* Maison centrée avec barre de santé */
+        .house-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .house-icon {
+            font-size: 2.5rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            animation: houseFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes houseFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .house-name {
+            color: #333;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .house-health {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .health-label {
+            font-size: 0.7rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .health-bar {
+            width: 80px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .health-fill {
+            height: 100%;
+            transition: width 0.8s ease;
+            background: linear-gradient(90deg, #ff4757 0%, #ffa502 50%, #2ed573 100%);
+            border-radius: 4px;
+        }
+
+        .players-header {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+            justify-content: center; /* Centre les deux avatars dans le header */
+            margin: 0 auto;
+        }
+
+        .player-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.9);
+            padding: 12px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 85px;
+        }
+
+        .player-header:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .player-header.current-player {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .player-avatar-header {
+            font-size: 2rem;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            border: 2px solid #fff;
+        }
+
+        /* Conteneur avatar + barre verticale */
+        .avatar-progress-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-progress {
+            width: 10px;
+            height: 46px;
+            background: #e9ecef;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .player-progress-fill {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 0%;
+            background: linear-gradient(180deg, #6ee7b7 0%, #34d399 50%, #10b981 100%);
+            transition: height 0.8s ease;
+        }
+
+        .current-player .player-avatar-header {
+            background: rgba(255,255,255,0.95);
+            border-color: rgba(255,255,255,0.8);
+        }
+
+        .player-info-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .player-name-header {
+            font-weight: bold;
+            font-size: 0.8rem;
+            line-height: 1.1;
+            margin-bottom: 2px;
+        }
+
+        .player-points-header {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+
+        .player-percentage-label {
+            font-size: 0.65rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .current-player .player-points-header {
+            color: #fff;
+        }
+
+        /* Zone de messages de la maison */
+        .house-message {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid rgba(255,193,7,0.3);
+            max-width: 250px;
+            text-align: center;
+            line-height: 1.3;
+            animation: messageSlideIn 0.5s ease-out;
+        }
+
+        .house-message::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #ffeaa7;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .vs-separator {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #666;
+            margin: 0 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Contenu principal */
+        .main-content {
+            padding: 20px;
+        }
+
+        /* Messages flash - Glassmorphisme harmonisé */
+        .flash {
+            margin: 20px auto;
+            max-width: 800px;
+            padding: 18px 24px;
+            border-radius: 16px;
+            font-weight: 600;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(21, 48, 54, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .flash::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmerFlash 3s ease-in-out infinite;
+        }
+        @keyframes shimmerFlash {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .flash.success {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 215, 0, 0.2), rgba(253, 174, 84, 0.3));
+            color: #153036;
+            border: 1px solid rgba(253, 174, 84, 0.4);
+        }
+
+        .flash.danger {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 107, 107, 0.2), rgba(231, 76, 60, 0.15));
+            color: #721c24;
+            border: 1px solid rgba(255, 107, 107, 0.4);
+        }
+
+        .flash.warning {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(253, 174, 84, 0.3), rgba(244, 198, 141, 0.35));
+            color: #153036;
+            border: 1px solid rgba(253, 174, 84, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                position: relative;
+            }
+
+            .house-center {
+                position: static;
+                transform: none;
+                order: 2;
+            }
+
+            .players-header {
+                gap: 10px;
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .player-header {
+                padding: 10px;
+                min-width: 75px;
+            }
+
+            .player-avatar-header {
+                width: 40px;
+                height: 40px;
+                font-size: 1.7rem;
+            }
+
+            .app-logo {
+                font-size: 1.5rem;
+                order: 1;
+            }
+
+            .back-button {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .house-message {
+                position: relative;
+                top: 0;
+                transform: none;
+                margin-bottom: 10px;
+                max-width: 200px;
+                font-size: 0.75rem;
+            }
+
+            .house-message::after {
+                display: none;
+            }
+        }
+
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <!-- Header avec avatars des joueurs -->
+    {% if players and players|length >= 1 %}
+    <div class="game-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <a href="{{ url_for('menu') }}" class="app-logo">🏠 CleanBeat</a>
+                {% if request.endpoint != 'menu' %}
+                    <a href="{{ url_for('menu') }}" class="back-button">
+                        ← Retour maison
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Maison centrée avec barre de santé -->
+            <div class="house-center">
+                {% if house_name %}
+                    <!-- houseMessage removed to keep header compact -->
+                {% endif %}
+                
+                <div class="house-icon">🏠</div>
+                {% if house_name %}
+                    <div class="house-name">{{ house_name }}</div>
+                {% endif %}
+                
+                <!-- Barre de santé de la maison -->
+                <div class="house-health">
+                    <div class="health-label">Santé</div>
+                    <div class="health-bar">
+                        <div class="health-fill" style="width: {{ house_progress|default(75, true) }}%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Joueurs avec VS -->
+            <div class="players-header">
+                {% for player in players %}
+                    <div class="player-header {% if player.email == session.get('user') %}current-player{% endif %}">
+                        <div class="avatar-progress-row">
+                            <div class="player-avatar-header">{{ player.avatar }}</div>
+                            <div class="player-progress" title="{{ player.percentage|default(0) }}%">
+                                <div class="player-progress-fill" data-percentage="{{ player.percentage|default(0) }}"></div>
+                            </div>
+                        </div>
+                        <div class="player-info-header">
+                            <div class="player-name-header">{{ player.name }}</div>
+                            <div class="player-points-header">{{ player.points }} pts</div>
+                        </div>
+                    </div>
+                    {% if not loop.last and players|length > 1 %}
+                        <div class="vs-separator">VS</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Messages flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Contenu principal -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}
+    <script>
+        // Messages humoristiques de la maison
+        const houseMessages = [
+            "🏠 'Allez-y les champions ! Qui va être le roi du ménage aujourd'hui ?'",
+            "🏠 'Hé ho ! Je ne vais pas me nettoyer toute seule !'", 
+            "🏠 'Plus vous en faites, plus je brille ! ✨'",
+            "🏠 'Competition time ! Que le meilleur gagne ! 💪'",
+            "🏠 'Psst... il y a encore de la poussière dans le salon... 👀'",
+            "🏠 'Vous êtes mes héros du ménage ! 🦸‍♀️🦸‍♂️'",
+            "🏠 'Plus de points = plus de fun ! Keep going ! 🚀'",
+            "🏠 'Attention ! Zone sale détectée ! Qui va s'en occuper ? 🕵️'",
+            "🏠 'Travail d'équipe = dream team ! 💪'",
+            "🏠 'Je me sens tellement mieux quand vous vous occupez de moi ! ❤️'"
+        ];
+
+        let currentMessageIndex = 0;
+
+        function updateHouseMessage() {
+            const messageElement = document.getElementById('houseMessage');
+            if (messageElement) {
+                currentMessageIndex = (currentMessageIndex + 1) % houseMessages.length;
+                messageElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    messageElement.textContent = houseMessages[currentMessageIndex];
+                    messageElement.style.opacity = '1';
+                }, 300);
+            }
+        }
+
+        // Changer le message toutes les 8 secondes
+        {% if house_name %}
+        setInterval(updateHouseMessage, 8000);
+        {% endif %}
+
+        // Animation des points quand ils changent
+        function animatePoints() {
+            const pointElements = document.querySelectorAll('.player-points-header');
+            pointElements.forEach(el => {
+                el.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    el.style.transform = 'scale(1)';
+                }, 300);
+            });
+        }
+
+        // Vérifier les changements de points périodiquement
+        let lastPoints = [];
+        function checkPointsChanges() {
+            const pointElements = document.querySelectorAll('.player-points-header');
+            pointElements.forEach((el, index) => {
+                const currentPoints = el.textContent;
+                if (lastPoints[index] && lastPoints[index] !== currentPoints) {
+                    animatePoints();
+                }
+                lastPoints[index] = currentPoints;
+            });
+        }
+        setInterval(checkPointsChanges, 2000);
+
+        // Animation des barres de progression verticales (au chargement)
+        function animatePlayerProgressBars() {
+            const fills = document.querySelectorAll('.player-progress-fill');
+            fills.forEach(el => {
+                const pct = Number(el.getAttribute('data-percentage') || 0);
+                // démarrer à 0 puis animer vers la valeur pour activer la transition
+                el.style.height = '0%';
+                setTimeout(() => {
+                    el.style.height = Math.max(0, Math.min(100, pct)) + '%';
+                }, 50);
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', animatePlayerProgressBars);
+        } else {
+            animatePlayerProgressBars();
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

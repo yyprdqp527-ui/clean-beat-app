@@ -1,0 +1,358 @@
+
+{% extends "base.html" %}
+
+{% block title %}🎁 Grille de Cadeaux - {{ house_name }}{% endblock %}
+
+{% block page_styles %}
+<style>
+    /* Bouton retour glassmorphisme */
+    .back-btn-glass {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 2001;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #153036;
+        font-size: 28px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn-glass:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    
+    .back-btn-glass:active {
+        transform: scale(0.95);
+    }
+    
+    .gifts-main-container {
+        max-width: 900px;
+        margin: 30px auto 0 auto;
+        padding: 24px 18px 40px 18px;
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(102,126,234,0.10);
+    }
+    /* Barre verticale pour avatars (remplissage bottom->top) */
+    .vbar { width:8px; height:56px; border-radius:999px; background: rgba(0,0,0,0.06); overflow:hidden; position: relative; display:inline-block; vertical-align:middle; margin-left:8px; }
+    .vbar-fill { position: absolute; left:0; right:0; bottom:0; height:0%; background: linear-gradient(180deg,#6ee7b7,#10b981); transition: height 0.4s ease; }
+    .gifts-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .gifts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 22px;
+        margin: 20px 0;
+    }
+    .gift-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f3f6fd 100%);
+        border-radius: 18px;
+        padding: 22px 14px 18px 14px;
+        text-align: center;
+        box-shadow: 0 4px 18px rgba(102,126,234,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        position: relative;
+        overflow: hidden;
+        border: 1.5px solid #e3e8f7;
+    }
+    .gift-card:hover {
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(102,126,234,0.18);
+    }
+    .gift-card.revealed {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        border: 3px solid #ffd700;
+    }
+    .gift-card.locked {
+        background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+        opacity: 0.7;
+    }
+    .gift-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    .gift-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #2c3e50;
+    }
+    .gift-description {
+        font-size: 0.98rem;
+        color: #597176;
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+    .gift-status {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-top: 10px;
+        display: inline-block;
+    }
+    .gift-status.available {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        color: white;
+    }
+    .gift-status.revealed {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #8b4513;
+    }
+    .gift-status.locked {
+        background: #e0e0e0;
+        color: #999;
+    }
+    .reveal-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 25px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102,126,234,0.10);
+    }
+    .reveal-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102,126,234,0.18);
+        text-decoration: none;
+        color: white;
+    }
+    .reveal-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    .unlock-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin: 20px 0;
+        text-align: center;
+    }
+    .revealed-info {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 10px;
+        margin-top: 10px;
+        font-size: 0.8rem;
+        color: #666;
+    }
+    @media (max-width: 768px) {
+        .gifts-main-container {
+            padding: 12px 4px 24px 4px;
+        }
+        .gifts-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+        .gift-card {
+            padding: 12px 4px 10px 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Bouton retour glassmorphism -->
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<div class="gifts-main-container">
+    <!-- En-tête -->
+    <div class="gifts-header">
+        <h1>🎁 Grille de Cadeaux Magique ✨</h1>
+        <h2>{{ house_name }}</h2>
+        <p style="margin: 15px 0; font-size: 1.1rem;">
+            Accomplissez vos tâches en équipe pour débloquer des cadeaux fantastiques !
+        </p>
+    </div>
+    
+    <!-- Informations de déverrouillage -->
+    {% if not can_open_gifts %}
+    <div class="unlock-info">
+        <h3>🔒 Cadeaux Verrouillés</h3>
+        <p>🗓️ Les cadeaux se débloquent <strong>uniquement le dimanche à partir de 6h du matin</strong> !</p>
+        <p>⏰ Revenez dimanche matin pour découvrir vos récompenses bien méritées !</p>
+        <p>🏆 Plus vous accomplissez de tâches ensemble, plus vous avez de chances d'avoir de beaux cadeaux !</p>
+    </div>
+    {% else %}
+    <div class="unlock-info" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);">
+        <h3>🎊 Cadeaux Débloqués ! 🎊</h3>
+        <p>🌅 C'est dimanche matin ! Vous pouvez maintenant ouvrir vos cadeaux !</p>
+        <p>✨ Cliquez sur un cadeau pour le révéler !</p>
+    </div>
+    {% endif %}
+    
+    <!-- Grille des cadeaux -->
+    <div class="gifts-grid">
+        {% for gift in gifts %}
+        <div class="gift-card {% if gift.revealed %}revealed{% elif not can_open_gifts %}locked{% endif %}">
+            
+            {% if gift.revealed %}
+                <!-- Cadeau révélé -->
+                <div class="gift-icon">🎁</div>
+                <div class="gift-name">{{ gift.name }}</div>
+                <div class="gift-description">{{ gift.description }}</div>
+                <div class="gift-status revealed">✨ Révélé ! ✨</div>
+                <div class="revealed-info">
+                    🎉 Révélé par {{ gift.revealed_by }}<br>
+                    📅 Le {{ gift.revealed_date.split('T')[0] if gift.revealed_date else 'aujourd\'hui' }}
+                </div>
+                
+            {% elif can_open_gifts %}
+                <!-- Cadeau disponible -->
+                <div class="gift-icon">🎁</div>
+                <div class="gift-name">Cadeau Mystère #{{ gift.id }}</div>
+                <div class="gift-description">Cliquez pour découvrir votre surprise ! 🎊</div>
+                <div class="gift-status available">🌟 Disponible 🌟</div>
+                <div style="margin-top: 15px;">
+                    <a href="{{ url_for('reveal_gift', gift_id=gift.id) }}" 
+                       class="reveal-btn"
+                       onclick="return confirm('🎁 Êtes-vous sûr de vouloir révéler ce cadeau ? Une fois ouvert, il ne peut plus être changé ! ✨')">
+                        ✨ Révéler le Cadeau ✨
+                    </a>
+                </div>
+                
+            {% else %}
+                <!-- Cadeau verrouillé -->
+                <div class="gift-icon">🔒</div>
+                <div class="gift-name">Cadeau Verrouillé</div>
+                <div class="gift-description">Revenez dimanche matin pour découvrir cette surprise !</div>
+                <div class="gift-status locked">🔒 Verrouillé 🔒</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Boutons de navigation -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('menu') }}" 
+           style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: bold; margin: 10px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            🏠 Retour à la Maison
+        </a>
+        
+        <a href="{{ url_for('daily_reward') }}" 
+           style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #8b4513; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: bold; margin: 10px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            🎯 Récompenses Quotidiennes
+        </a>
+    </div>
+    
+    <!-- Statistiques des joueurs -->
+    <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.9); border-radius: 15px;">
+        <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">👫 Équipe de la Maison</h3>
+        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            {% for player in players %}
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 15px; min-width: 120px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
+                    <div style="font-size: 2rem;">{{ player.avatar or '👤' }}</div>
+                    <div class="vbar" title="{{ player.percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ player.percentage|default(0) }}%"></div></div>
+                </div>
+                    <div style="font-weight: bold; color: #2c3e50;">{{ player.name }}</div>
+                    <div style="color: #667eea; font-weight: bold; margin-top: 5px;">{{ player.points }} points</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Confettis pour les célébrations -->
+<div id="confetti-container"></div>
+
+<script>
+// Animation de confettis lors du révélement
+function createConfetti() {
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'];
+    const container = document.getElementById('confetti-container');
+    
+    for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            
+            container.appendChild(confetti);
+            
+            setTimeout(() => {
+                if (confetti.parentNode) {
+                    confetti.parentNode.removeChild(confetti);
+                }
+            }, 3000);
+        }, Math.random() * 1000);
+    }
+}
+
+// Déclencher confettis si cadeau révélé
+document.addEventListener('DOMContentLoaded', function() {
+    const flashMessages = document.querySelectorAll('.alert');
+    flashMessages.forEach(function(message) {
+        if (message.textContent.includes('FÉLICITATIONS')) {
+            setTimeout(() => {
+                createConfetti();
+            }, 500);
+        }
+    });
+    
+    // Animation au survol des cadeaux disponibles
+    const availableGifts = document.querySelectorAll('.gift-card:not(.locked):not(.revealed)');
+    availableGifts.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+
+// Son de succès (simple)
+function playSuccessSound() {
+    try {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        oscillator.frequency.value = 660;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+        
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 0.5);
+    } catch (e) {
+        console.log('Son non disponible');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cadeau Mystère - Clean Beat</title>
+    <!-- PWA: manifest + meta tags pour mode plein écran -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CleanBeat">
+    <meta name="theme-color" content="#597176">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <!-- Import Google Fonts Montserrat pour toute l'appli -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600,700,800&display=swap" rel="stylesheet">
+    <style>
+        /* Supprimer le délai de 300ms sur mobile */
+        html {
+            touch-action: manipulation;
+        }
+        
+        :root {
+            --teal-light: #A6D3DC;
+            --teal-dark: #597176;
+            --gold: #FDAE54;
+            --peach: #F4C68D;
+            --purple: #9B59B6;
+            --pink: #E91E63;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Brume mystérieuse animée */
+        .mist {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .mist::before,
+        .mist::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(166, 211, 220, 0.1) 0%, transparent 70%);
+            animation: mistFloat 15s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        .mist::before {
+            top: -50%;
+            left: -50%;
+        }
+
+        .mist::after {
+            bottom: -50%;
+            right: -50%;
+            animation-delay: -7s;
+            animation-direction: reverse;
+        }
+
+        @keyframes mistFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
+            25% { transform: translate(5%, 3%) rotate(2deg); opacity: 0.7; }
+            50% { transform: translate(0, 5%) rotate(0deg); opacity: 0.5; }
+            75% { transform: translate(-5%, 3%) rotate(-2deg); opacity: 0.7; }
+        }
+
+        /* Particules magiques flottantes */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 215, 100, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 100, 0.5), 0 0 20px rgba(255, 215, 100, 0.3);
+            animation: floatUp 8s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        .particle:nth-child(1) { left: 15%; animation-duration: 7s; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 35%; animation-duration: 9s; animation-delay: 1.5s; }
+        .particle:nth-child(3) { left: 50%; animation-duration: 8s; animation-delay: 1s; }
+        .particle:nth-child(4) { left: 65%; animation-duration: 10s; animation-delay: 2s; }
+        .particle:nth-child(5) { left: 85%; animation-duration: 9s; animation-delay: 0.5s; }
+        .particle:nth-child(6) { left: 75%; animation-duration: 8s; animation-delay: 2.5s; }
+
+        @keyframes floatUp {
+            0% { 
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(10vh) scale(1);
+            }
+            100% { 
+                transform: translateY(-10vh) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Étoiles animées en fond */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s ease-in-out infinite;
+            will-change: opacity, transform;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #153036;
+            margin: 0 0 4px 0;
+            text-shadow: none;
+        }
+
+        .page-title span {
+            color: #153036;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #597176;
+            font-weight: 400;
+            margin: 0;
+            opacity: 1;
+        }
+
+        /* Message du gagnant */
+        .winner-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            padding: 12px 24px;
+            border-radius: 50px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(253, 174, 84, 0.4);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 4px 20px rgba(253, 174, 84, 0.4); }
+            50% { box-shadow: 0 4px 40px rgba(253, 174, 84, 0.6); }
+        }
+
+        .winner-badge .trophy {
+            font-size: 24px;
+        }
+
+        .winner-badge .text {
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* Info box - Règles */
+        .info-box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .info-title {
+            color: var(--gold);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-list li {
+            color: var(--teal-dark);
+            font-size: 14px;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(89, 113, 118, 0.15);
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list li .icon {
+            font-size: 18px;
+        }
+
+        /* État de verrouillage */
+        .lock-message {
+            background: linear-gradient(145deg, rgba(255, 107, 107, 0.2) 0%, rgba(238, 82, 83, 0.2) 100%);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .lock-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .lock-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .lock-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .countdown {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            display: inline-block;
+        }
+
+        .countdown-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .countdown-time {
+            color: #FFD700;
+            font-size: 28px;
+            font-weight: 800;
+            font-family: monospace;
+        }
+
+        /* Container pour centrer la grille */
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            margin: auto;
+        }
+
+        .grid-title {
+            color: var(--teal-dark);
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .grid-title span {
+            color: var(--gold);
+        }
+
+        /* Grille cadeau mystère - 40 cases FUN */
+        .mystery-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .mystery-box {
+            /* Reset button styles */
+            appearance: none;
+            -webkit-appearance: none;
+            padding: 0;
+            font: inherit;
+            outline: none;
+            
+            aspect-ratio: 1;
+            max-width: 55px;
+            max-height: 55px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 12px 40px rgba(89, 113, 118, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+        }
+
+        /* Reflet shiny en haut de la case */
+        .mystery-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.7) 0%, 
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 100%);
+            border-radius: 14px 14px 50% 50%;
+            pointer-events: none;
+        }
+
+        /* Petite brillance dans le coin */
+        .mystery-box::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Améliorer le touch sur mobile */
+        .mystery-box {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .mystery-box:hover:not(.opened):not(.disabled),
+        .mystery-box:active:not(.opened):not(.disabled) {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+            box-shadow: 
+                0 15px 50px rgba(89, 113, 118, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .mystery-box:active:not(.opened):not(.disabled),
+        .mystery-box.touched:not(.opened):not(.disabled) {
+            transform: scale(0.92);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 215, 0, 0.3) 100%);
+        }
+
+        .mystery-box.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(50%);
+        }
+
+        .mystery-box.opened {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.05),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+            opacity: 0.5;
+        }
+
+        .mystery-box.opened .box-number {
+            animation: none;
+            display: none;
+        }
+
+        .box-number {
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 10px rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .mystery-box.opened .box-number {
+            color: white;
+        }
+
+        /* Responsive pour tablettes */
+        @media (max-width: 768px) {
+            .mystery-grid {
+                grid-template-columns: repeat(8, 1fr);
+                gap: 10px;
+                max-width: 90%;
+                margin: 20px auto;
+            }
+            .mystery-box {
+                max-width: 50px;
+                max-height: 50px;
+            }
+            .box-number {
+                font-size: 14px;
+            }
+        }
+
+        /* Responsive pour mobile */
+        @media (max-width: 480px) {
+            .mystery-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 6px;
+                padding: 0;
+                max-width: 100%;
+                width: 100%;
+                margin: 15px auto;
+            }
+            .mystery-box {
+                max-width: none;
+                max-height: none;
+                border-radius: 12px;
+            }
+            .box-number {
+                font-size: 13px;
+            }
+            .grid-title {
+                font-size: 18px;
+            }
+            .grid-container {
+                padding: 5px;
+            }
+            
+            /* Désactiver les effets coûteux sur mobile pour meilleures performances */
+            .mist {
+                display: none;
+            }
+            .particles {
+                display: none;
+            }
+            .header,
+            .back-btn-glass {
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+        }
+
+        /* Message pas de gagnant */
+        .not-winner-message {
+            background: linear-gradient(145deg, rgba(52, 73, 94, 0.5) 0%, rgba(44, 62, 80, 0.5) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .not-winner-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .not-winner-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .not-winner-text {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .winner-name {
+            color: #FFD700;
+            font-weight: 700;
+        }
+
+        /* Bouton retour glassmorphisme */
+        .back-btn-glass {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 2001;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #153036;
+            font-size: 28px;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn-glass:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .back-btn-glass:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal récompense */
+        .reward-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(166, 211, 220, 0.3);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reward-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 30px;
+            max-width: 90%;
+            width: 350px;
+            text-align: center;
+            box-shadow: 
+                0 25px 80px rgba(89,113,118,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            border: 2px solid rgba(255,255,255,0.5);
+            animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 40%,
+                rgba(255, 215, 0, 0.1) 50%,
+                transparent 60%
+            );
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-confetti {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Confettis animés - Feu d'artifice */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+        }
+
+        .confetti.circle { border-radius: 50%; }
+        .confetti.square { border-radius: 2px; }
+        .confetti.ribbon {
+            width: 8px;
+            height: 20px;
+            border-radius: 2px;
+        }
+        .confetti.star {
+            width: 0;
+            height: 0;
+            background: transparent !important;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 10px solid var(--confetti-color);
+        }
+
+        .modal-title {
+            color: var(--gold);
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(253, 174, 84, 0.3);
+        }
+
+        .modal-reward {
+            background: linear-gradient(135deg, rgba(166, 211, 220, 0.35) 0%, rgba(89, 113, 118, 0.35) 100%);
+            border: 2px solid rgba(166, 211, 220, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-reward-image {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 20px;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(253, 174, 84, 0.6);
+            animation: imageGlow 2s ease-in-out infinite;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            display: block;
+        }
+
+        @keyframes imageGlow {
+            0%, 100% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(253, 174, 84, 0.4); }
+            50% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 40px rgba(253, 174, 84, 0.6); }
+        }
+
+        .modal-reward-text {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.4;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-subtitle {
+            color: var(--teal-dark);
+            opacity: 0.7;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .modal-close {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .modal-close:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            display: none;
+            font-weight: 600;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .toast.error {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: white;
+        }
+
+        .toast.success {
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .mystery-grid {
+                gap: 10px;
+            }
+            .box-icon {
+                font-size: 32px;
+            }
+            .page-title {
+                font-size: 26px;
+            }
+        }
+
+        /* POPUP FESTIF GAGNANT - Glassmorphism */
+        .winner-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .winner-popup {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255,255,255,0.5);
+            padding: 35px 25px;
+            max-width: 90%;
+            width: 360px;
+            text-align: center;
+            box-shadow: 
+                0 25px 80px rgba(89,113,118,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            animation: popupBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .winner-popup::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 40%,
+                rgba(255, 215, 0, 0.1) 50%,
+                transparent 60%
+            );
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        @keyframes popupBounce {
+            0% { transform: scale(0.3) translateY(50px); opacity: 0; }
+            50% { transform: scale(1.05) translateY(-10px); }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .popup-confetti-top {
+            font-size: 40px;
+            margin-bottom: 10px;
+            animation: confettiBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes confettiBounce {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        .popup-trophy {
+            font-size: 70px;
+            margin-bottom: 15px;
+            animation: trophyPulse 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 4px 15px rgba(255, 215, 0, 0.6));
+        }
+
+        @keyframes trophyPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 15px rgba(255, 215, 0, 0.6)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 8px 25px rgba(255, 215, 0, 0.9)); }
+        }
+
+        .popup-title {
+            color: #FFD700;
+            font-size: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        .popup-winner-name {
+            color: white;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .popup-subtitle {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .popup-message {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            position: relative;
+            z-index: 1;
+        }
+
+        .popup-message p {
+            color: white;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .popup-message .highlight {
+            color: #FFD700;
+            font-weight: 700;
+        }
+
+        .popup-btn {
+            background: linear-gradient(145deg, #FFD700 0%, #FFA500 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 16px 50px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(255, 215, 0, 0.5),
+                0 0 30px rgba(255, 215, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .popup-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 
+                0 10px 30px rgba(255, 215, 0, 0.6),
+                0 0 50px rgba(255, 215, 0, 0.4);
+        }
+
+        .popup-btn:active {
+            transform: scale(0.98);
+        }
+
+        .popup-stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .popup-star {
+            position: absolute;
+            font-size: 16px;
+            animation: starFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes starFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-15px) rotate(180deg); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Brume mystérieuse -->
+    <div class="mist"></div>
+
+    <!-- Particules magiques -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Étoiles en fond -->
+    <div class="stars" id="stars"></div>
+
+    <div class="content">
+        {% if not can_open %}
+        <!-- Message de verrouillage (pas dimanche ou avant 6h) -->
+        <div class="lock-message">
+            <div class="lock-title">Grille verrouillée</div>
+            <div class="lock-text">
+                La grille cadeau mystère s'ouvre uniquement<br>
+                le <strong>dimanche à partir de 6h du matin</strong> !
+            </div>
+            <div class="countdown">
+                <div class="countdown-label">Prochain déverrouillage dans</div>
+                <div class="countdown-time" id="countdown">--:--:--</div>
+            </div>
+        </div>
+        
+        <!-- BOUTON TEMPORAIRE POUR TEST -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="document.getElementById('testGrid').style.display='block'; this.style.display='none';" 
+                    style="background: linear-gradient(145deg, #FFD700, #FFA500); color: #1a1a2e; border: none; padding: 15px 30px; border-radius: 25px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4);">
+                Débloquer la grille (TEST)
+            </button>
+        </div>
+        
+        <!-- Grille cachée pour test -->
+        <div id="testGrid" style="display: none;">
+            <div class="mystery-grid">
+                {% for i in range(1, 41) %}
+                <div class="mystery-box" 
+                     data-box="{{ i }}"
+                     onclick="openBox({{ i }})">
+                    <div class="box-number">{{ i }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% elif not is_winner %}
+        <!-- Message pas le gagnant -->
+        <div class="not-winner-message">
+            <div class="not-winner-title">Pas cette semaine...</div>
+            <div class="not-winner-text">
+                {% if winner_name %}
+                Le gagnant de cette semaine est <span class="winner-name">{{ winner_name }}</span> !<br><br>
+                {% endif %}
+                Continue à accumuler des points pour gagner la prochaine fois !<br>
+                Tu es capable !
+            </div>
+        </div>
+
+        {% elif already_opened_this_week %}
+        <!-- Déjà ouvert cette semaine -->
+        <div class="not-winner-message">
+            <div class="not-winner-title">Cadeau déjà récupéré !</div>
+            <div class="not-winner-text">
+                Tu as déjà ouvert ton cadeau mystère cette semaine.<br><br>
+                <strong>Ta récompense :</strong><br>
+                <span style="color: #FFD700; font-size: 18px;">{{ last_reward }}</span><br><br>
+                Rendez-vous dimanche prochain !
+            </div>
+        </div>
+
+        {% else %}
+        <!-- ========== PAGE CHAMPION : POPUP FESTIF DU GAGNANT ========== -->
+        <div id="winnerPopup" class="winner-popup-overlay">
+            <div class="winner-popup">
+                <div class="popup-stars">
+                    <span class="popup-star" style="top: 10%; left: 10%; animation-delay: 0s;">✨</span>
+                    <span class="popup-star" style="top: 15%; right: 15%; animation-delay: 0.5s;">⭐</span>
+                    <span class="popup-star" style="bottom: 20%; left: 15%; animation-delay: 1s;">✨</span>
+                    <span class="popup-star" style="bottom: 25%; right: 10%; animation-delay: 1.5s;">⭐</span>
+                    <span class="popup-star" style="top: 40%; left: 5%; animation-delay: 0.3s;">✨</span>
+                    <span class="popup-star" style="top: 50%; right: 5%; animation-delay: 0.8s;">⭐</span>
+                </div>
+                <div class="popup-confetti-top">🎊 🎉 🎊</div>
+                <div class="popup-trophy">🏆</div>
+                <div class="popup-title">Champion de la semaine</div>
+                <div class="popup-winner-name">{{ user_name }}</div>
+                <div class="popup-subtitle">Tu as gagné !</div>
+                <div class="popup-message">
+                    <p>Tu peux débloquer <span class="highlight">une case Mystère</span><br>et découvrir ta récompense !</p>
+                </div>
+                <button id="popupCloseBtn" class="popup-btn" type="button">C'est parti !</button>
+            </div>
+        </div>
+
+        <!-- ========== PAGE GRILLE : Grilles cadeau mystère ========== -->
+        <div id="grid" class="grid-container">
+            
+            <!-- GRILLE FAMILLE -->
+            {% if house_type == 'family' or not house_type %}
+            <div id="mysteryGrid" class="mystery-grid">
+            {% for i in range(1, 41) %}
+            <div class="mystery-box {% if i in opened_boxes %}opened{% endif %}" data-box="{{ i }}" 
+                 onclick="openBox({{ i }})"
+                 style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(129, 199, 132, 0.2) 50%, rgba(76, 175, 80, 0.3) 100%);">
+                {% if i in opened_boxes %}
+                    <span class="box-number">✓</span>
+                {% else %}
+                    <span class="box-number">{{ i }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            </div>
+            <div style="text-align: center; margin-top: 25px;">
+                <button onclick="openEditRewards('family')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Ajouter mes récompenses</button>
+            </div>
+            {% endif %}
+            
+            <!-- GRILLE COUPLE -->
+            {% if house_type == 'couple' %}
+            <div id="mysteryGrid" class="mystery-grid">
+            {% for i in range(1, 41) %}
+            <div class="mystery-box {% if i in opened_boxes %}opened{% endif %}" data-box="{{ i }}"
+                 onclick="openBox({{ i }})"
+                 style="background: linear-gradient(135deg, rgba(233, 30, 99, 0.3) 0%, rgba(240, 98, 146, 0.2) 50%, rgba(233, 30, 99, 0.3) 100%);">
+                {% if i in opened_boxes %}
+                    <span class="box-number">✓</span>
+                {% else %}
+                    <span class="box-number">{{ i }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            </div>
+            <div style="text-align: center; margin-top: 25px;">
+                <button onclick="openEditRewards('couple')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Ajouter mes récompenses</button>
+            </div>
+            {% endif %}
+            
+            <!-- GRILLE COLOCATION -->
+            {% if house_type == 'coloc' %}
+            <div id="mysteryGrid" class="mystery-grid">
+            {% for i in range(1, 41) %}
+            <div class="mystery-box {% if i in opened_boxes %}opened{% endif %}" data-box="{{ i }}"
+                 onclick="openBox({{ i }})"
+                 style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(100, 181, 246, 0.2) 50%, rgba(33, 150, 243, 0.3) 100%);">
+                {% if i in opened_boxes %}
+                    <span class="box-number">✓</span>
+                {% else %}
+                    <span class="box-number">{{ i }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            </div>
+            <div style="text-align: center; margin-top: 25px;">
+                <button onclick="openEditRewards('coloc')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Ajouter mes récompenses</button>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- ========== PAGE RÉCOMPENSES : Aperçu des trois grilles ========== -->
+        <style>
+            /* Style pour la modale d'édition */
+            #editRewardsModal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(166, 211, 220, 0.3);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                z-index: 6000;
+                overflow-y: auto;
+                padding: 20px;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            
+            .edit-modal-content {
+                background: transparent;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                border-radius: 24px;
+                padding: 28px;
+                max-width: 800px;
+                width: 100%;
+                margin: 20px auto;
+                position: relative;
+                max-height: calc(100vh - 40px);
+                overflow-y: auto;
+                box-shadow: none;
+                border: none;
+            }
+            
+            .edit-modal-content h2 {
+                color: #153036;
+                font-weight: 800;
+                text-align: center;
+                margin-bottom: 24px;
+                text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8);
+            }
+            
+            /* Carte titre glass */
+            .edit-title-card {
+                background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 20px;
+                padding: 20px;
+                margin-bottom: 20px;
+                border: 2px solid rgba(253,174,84,0.3);
+                box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+                text-align: center;
+            }
+            
+            .edit-title-card h2 {
+                font-size: 22px;
+                font-weight: 800;
+                color: #153036;
+                margin: 0;
+                line-height: 1.2;
+            }
+            
+            .edit-title-card p {
+                font-size: 14px;
+                color: #597176;
+                font-weight: 400;
+                margin: 4px 0 0 0;
+            }
+            
+            .edit-reward-item {
+                display: flex;
+                align-items: stretch;
+                margin-bottom: 12px;
+                gap: 10px;
+                background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 14px;
+                border-radius: 16px;
+                transition: all 0.3s ease;
+                flex-wrap: wrap;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                box-shadow: 0 4px 15px rgba(89, 113, 118, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            }
+            
+            .edit-reward-item:hover {
+                background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(89, 113, 118, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            }
+            
+            .edit-reward-item label {
+                color: #597176;
+                font-weight: 700;
+                min-width: 50px;
+                display: none;
+                align-items: center;
+                flex-shrink: 0;
+                font-size: 14px;
+            }
+            
+            .edit-reward-item input {
+                flex: 1;
+                min-width: 200px;
+                padding: 12px 16px;
+                border-radius: 12px;
+                border: 2px solid rgba(166, 211, 220, 0.3) !important;
+                background: rgba(255, 255, 255, 0.7) !important;
+                color: #153036 !important;
+                font-size: 15px;
+                font-weight: 600 !important;
+                line-height: 1.4;
+                min-height: 44px;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 8px rgba(89, 113, 118, 0.1);
+            }
+            
+            .edit-reward-item input:focus {
+                outline: none;
+                border-color: #FDAE54 !important;
+                background: rgba(255, 255, 255, 0.9) !important;
+                box-shadow: 0 4px 15px rgba(253, 174, 84, 0.3);
+                color: #153036 !important;
+            }
+            
+            .validate-reward-btn {
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                font-size: 15px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+                min-height: 44px;
+                flex-shrink: 0;
+                box-shadow: 0 4px 12px rgba(253, 174, 84, 0.3);
+            }
+            
+            .validate-reward-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(253, 174, 84, 0.4);
+                background: linear-gradient(135deg, #F4C68D 0%, #FDAE54 100%);
+            }
+            
+            .validate-reward-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+            }
+            
+            .validate-reward-btn.saved {
+                background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+                box-shadow: 0 4px 12px rgba(166, 211, 220, 0.3);
+            }
+            
+            .edit-buttons {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                margin-top: 30px;
+            }
+            
+            .edit-buttons button {
+                padding: 14px 32px;
+                border: none;
+                border-radius: 25px;
+                font-size: 16px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .save-btn {
+                background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+                color: white;
+                box-shadow: 0 4px 15px rgba(253, 174, 84, 0.3);
+            }
+            
+            .save-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4);
+            }
+            
+            .cancel-btn {
+                background: rgba(255, 255, 255, 0.3);
+                backdrop-filter: saturate(180%) blur(20px);
+                -webkit-backdrop-filter: saturate(180%) blur(20px);
+                color: #153036;
+                border: 1px solid rgba(255, 255, 255, 0.45);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            }
+            
+            .cancel-btn:hover {
+                background: rgba(255, 255, 255, 0.45);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            }
+            
+            /* Message de succès */
+            .success-message {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.3);
+                backdrop-filter: saturate(180%) blur(30px);
+                -webkit-backdrop-filter: saturate(180%) blur(30px);
+                color: #153036;
+                padding: 24px 48px;
+                border-radius: 20px;
+                font-size: 18px;
+                font-weight: 700;
+                z-index: 7000;
+                box-shadow: 
+                    0 12px 50px rgba(0, 0, 0, 0.15),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+                border: 1px solid rgba(255, 255, 255, 0.55);
+                animation: successPop 0.3s ease;
+            }
+            
+            @keyframes successPop {
+                0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+                100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            
+            @keyframes slideInRight {
+                0% { transform: translateX(400px); opacity: 0; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOutRight {
+                0% { transform: translateX(0); opacity: 1; }
+                100% { transform: translateX(400px); opacity: 0; }
+            }
+            
+            /* Responsive mobile */
+            @media screen and (max-width: 768px) {
+                .edit-modal {
+                    padding: 10px;
+                    align-items: flex-start;
+                }
+                
+                .edit-modal-content {
+                    padding: 15px;
+                    border-radius: 15px;
+                    margin: 10px auto;
+                    max-height: calc(100vh - 20px);
+                }
+                
+                .edit-modal h2 {
+                    font-size: 22px !important;
+                    margin-bottom: 20px !important;
+                }
+                
+                .edit-reward-item {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 8px;
+                    padding: 15px;
+                }
+                
+                .edit-reward-item label {
+                    min-width: auto;
+                    width: 100%;
+                    font-size: 16px;
+                }
+                
+                .edit-reward-item input {
+                    min-width: 100%;
+                    width: 100%;
+                    font-size: 16px;
+                    padding: 14px;
+                    min-height: 48px;
+                }
+                
+                .validate-reward-btn {
+                    width: 100%;
+                    padding: 14px 20px;
+                    font-size: 16px;
+                    min-height: 48px;
+                }
+                
+                .edit-buttons {
+                    flex-direction: column;
+                    gap: 10px;
+                    margin-top: 20px;
+                }
+                
+                .edit-buttons button {
+                    width: 100%;
+                    padding: 14px 20px;
+                    font-size: 17px;
+                    min-height: 48px;
+                }
+            }
+            
+            @media screen and (max-width: 480px) {
+                .edit-modal-content {
+                    padding: 12px;
+                    border-radius: 12px;
+                }
+                
+                .edit-modal h2 {
+                    font-size: 20px !important;
+                    margin-bottom: 15px !important;
+                }
+                
+                .edit-reward-item {
+                    padding: 10px;
+                    margin-bottom: 12px;
+                }
+                
+                .edit-reward-item label {
+                    font-size: 15px;
+                }
+                
+                .edit-reward-item input {
+                    font-size: 15px;
+                    padding: 12px;
+                    min-height: 50px;
+                }
+                
+                .validate-reward-btn {
+                    font-size: 15px;
+                    padding: 13px 18px;
+                    min-height: 50px;
+                }
+                
+                .edit-buttons button {
+                    font-size: 16px;
+                    min-height: 50px;
+                }
+            }
+        </style>
+        
+        <script>
+            function showReward(reward, type) {
+                const modal = document.getElementById('rewardPreviewModal');
+                const typeEl = document.getElementById('previewType');
+                const rewardEl = document.getElementById('previewReward');
+                
+                const types = {
+                    'famille': 'Grille Famille',
+                    'couple': 'Grille Couple',
+                    'coloc': 'Grille Colocation'
+                };
+                
+                typeEl.textContent = types[type] || type;
+                rewardEl.textContent = reward;
+                modal.style.display = 'flex';
+            }
+            
+            function closePreview() {
+                document.getElementById('rewardPreviewModal').style.display = 'none';
+            }
+            
+            // Fonction pour ouvrir le modal d'édition
+            function openEditRewards(type) {
+                const modal = document.getElementById('editRewardsModal');
+                const title = document.getElementById('editModalTitle');
+                const container = document.getElementById('editRewardsContainer');
+                
+                const titles = {
+                    'family': '',
+                    'couple': '',
+                    'coloc': ''
+                };
+                
+                const rewardLists = {
+                    'family': {{ rewards_family|tojson }},
+                    'couple': {{ rewards_couple|tojson }},
+                    'coloc': {{ rewards_coloc|tojson }}
+                };
+                
+                console.log('📝 Ouverture éditeur pour:', type);
+                console.log('📋 Récompenses chargées:', rewardLists[type].length, 'items');
+                
+                title.textContent = 'Personnalise les récompenses';
+                container.innerHTML = '';
+                
+                const rewards = rewardLists[type];
+                rewards.forEach((reward, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'edit-reward-item';
+                    div.innerHTML = `
+                        <label>${index + 1}.</label>
+                        <input type="text" value="${reward}" data-index="${index}" data-type="${type}">
+                        <button class="validate-reward-btn" onclick="validateSingleReward(this, ${index}, '${type}')">
+                            ✓ Enregistrer
+                        </button>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                modal.style.display = 'block';
+            }
+            
+            // Fonction pour fermer le modal d'édition
+            function closeEditRewards() {
+                document.getElementById('editRewardsModal').style.display = 'none';
+            }
+            
+            // Fonction pour valider une seule récompense
+            async function validateSingleReward(button, index, type) {
+                const input = button.previousElementSibling;
+                const newReward = input.value.trim();
+                
+                console.log(`💾 Sauvegarde récompense ${index + 1}:`, newReward);
+                
+                if (!newReward) {
+                    alert('⚠️ La récompense ne peut pas être vide !');
+                    return;
+                }
+                
+                // Désactiver le bouton pendant la sauvegarde
+                button.disabled = true;
+                button.textContent = '⏳';
+                
+                // Récupérer toutes les récompenses actuelles
+                const inputs = document.querySelectorAll('#editRewardsContainer input');
+                const rewards = Array.from(inputs).map(input => input.value.trim());
+                
+                console.log(`📦 Envoi de ${rewards.length} récompenses pour type:`, type);
+                
+                try {
+                    const response = await fetch('/update_rewards', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            house_type: type,
+                            rewards: rewards
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('📥 Réponse serveur:', data);
+                    
+                    if (data.success) {
+                        button.textContent = '✓ Enregistré';
+                        button.classList.add('saved');
+                        
+                        console.log('✅ Récompense enregistrée, rechargement de la page...');
+                        
+                        // Afficher un mini message de succès et rediriger
+                        const successMsg = document.createElement('div');
+                        successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(145deg, #4CAF50 0%, #45a049 100%); color: white; padding: 15px 25px; border-radius: 10px; font-weight: 700; z-index: 7001; animation: slideInRight 0.3s ease;';
+                        successMsg.textContent = `✅ Récompense ${index + 1} enregistrée !`;
+                        document.body.appendChild(successMsg);
+                        
+                        // Rediriger après 1 seconde vers la grille (skip popup) avec timestamp pour éviter le cache
+                        setTimeout(() => {
+                            const timestamp = new Date().getTime();
+                            window.location.href = '/rewards?skip_popup=1&t=' + timestamp + '#grid';
+                        }, 1000);
+                    } else {
+                        button.disabled = false;
+                        button.textContent = '✓ Enregistrer';
+                        alert('❌ Erreur : ' + (data.message || 'Impossible de sauvegarder'));
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    button.disabled = false;
+                    button.textContent = '✓ Enregistrer';
+                    alert('❌ Erreur de connexion');
+                }
+            }
+        </script>
+        
+        <!-- Modal pour éditer les récompenses -->
+        <div id="editRewardsModal">
+            <div class="edit-modal-content">
+                <div class="edit-title-card">
+                    <h2 id="editModalTitle"></h2>
+                    <p>Modifie et valide chaque récompense individuellement</p>
+                </div>
+                <div id="editRewardsContainer" style="max-height: 500px; overflow-y: auto; padding-right: 10px;"></div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="cancel-btn" onclick="closeEditRewards()" style="padding: 12px 30px; border: none; border-radius: 25px; font-size: 16px; font-weight: 700; cursor: pointer;">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bouton retour glassmorphism -->
+    <a href="{{ url_for('mes_recompenses') }}" class="back-btn-glass" aria-label="Mes récompenses">←</a>
+
+    <!-- Modal récompense -->
+    <div id="rewardModal" class="reward-modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 class="modal-title">FÉLICITATIONS <span id="winnerName"></span> !</h2>
+            <div class="modal-reward">
+                <img id="modalImage" class="modal-reward-image" src="" alt="Récompense" style="display: none;">
+                <p id="modalText" class="modal-reward-text"></p>
+            </div>
+            <p class="modal-subtitle">Valable une fois, utilisable quand tu veux !</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <a href="{{ url_for('menu') }}" class="modal-close" style="text-decoration: none; display: inline-block;">Super !</a>
+                <a href="{{ url_for('mes_recompenses') }}" style="background: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-size: 14px; font-weight: 600; text-align: center;">Voir mes récompenses</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // FAST TOUCH - Gestionnaire immédiat pour les cases
+        (function() {
+            document.addEventListener('touchstart', function(e) {
+                var box = e.target.closest('.mystery-box');
+                if (box && !box.classList.contains('opened') && !box.classList.contains('loading')) {
+                    e.preventDefault();
+                    var boxNumber = parseInt(box.getAttribute('data-box'));
+                    if (boxNumber) {
+                        openBox(boxNumber);
+                    }
+                }
+            }, {passive: false});
+        })();
+
+        // Fermer le popup festif du gagnant et aller vers la grille
+        function closeWinnerPopup() {
+            console.log('closeWinnerPopup appelé');
+            var popup = document.getElementById('winnerPopup');
+            if (popup) {
+                popup.style.opacity = '0';
+                popup.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    popup.style.display = 'none';
+                    // Faire défiler vers la grille mystère
+                    var grid = document.getElementById('mysteryGrid');
+                    if (grid) {
+                        grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 300);
+            }
+        }
+
+        // Attacher l'événement au bouton dès que le DOM est prêt
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier si on doit skiper le popup (retour depuis l'éditeur)
+            const urlParams = new URLSearchParams(window.location.search);
+            const skipPopup = urlParams.get('skip_popup');
+            
+            if (skipPopup) {
+                // Fermer immédiatement le popup et scroller vers la grille
+                var popup = document.getElementById('winnerPopup');
+                if (popup) {
+                    popup.style.display = 'none';
+                }
+                
+                // Scroller vers la grille
+                setTimeout(() => {
+                    var grid = document.getElementById('mysteryGrid');
+                    if (grid) {
+                        grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+            
+            var closeBtn = document.getElementById('popupCloseBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeWinnerPopup);
+                closeBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    closeWinnerPopup();
+                });
+            }
+        });
+
+        // Créer les étoiles en fond (nombre réduit pour performances)
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const isMobile = window.innerWidth <= 768;
+            const starCount = isMobile ? 15 : 25; // Moins d'étoiles sur mobile
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = (Math.random() * 3 + 1) + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        createStars();
+
+        // Countdown jusqu'au prochain dimanche 6h
+        function updateCountdown() {
+            const now = new Date();
+            let nextSunday = new Date();
+            
+            // Trouver le prochain dimanche
+            const daysUntilSunday = (7 - now.getDay()) % 7;
+            if (daysUntilSunday === 0 && now.getHours() >= 6) {
+                // C'est dimanche et après 6h, donc prochain dimanche dans 7 jours
+                nextSunday.setDate(now.getDate() + 7);
+            } else if (daysUntilSunday === 0) {
+                // C'est dimanche mais avant 6h
+                nextSunday = now;
+            } else {
+                nextSunday.setDate(now.getDate() + daysUntilSunday);
+            }
+            
+            nextSunday.setHours(6, 0, 0, 0);
+            
+            const diff = nextSunday - now;
+            
+            if (diff <= 0) {
+                document.getElementById('countdown').textContent = "C'est maintenant !";
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            let timeStr = '';
+            if (days > 0) timeStr += days + 'j ';
+            timeStr += hours.toString().padStart(2, '0') + ':';
+            timeStr += minutes.toString().padStart(2, '0') + ':';
+            timeStr += seconds.toString().padStart(2, '0');
+            
+            const countdownEl = document.getElementById('countdown');
+            if (countdownEl) {
+                countdownEl.textContent = timeStr;
+            }
+        }
+        
+        // Mettre à jour le countdown chaque seconde
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + (type || '');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function closeModal() {
+            document.getElementById('rewardModal').classList.remove('show');
+            // Recharger la page pour mettre à jour l'état
+            window.location.reload();
+        }
+
+        // Mapping des récompenses vers leurs images
+        const rewardImages = {
+            'petit déjeuner au lit': '/static/images/petit dej au lit recompense.png',
+            'petit-déjeuner au lit': '/static/images/petit dej au lit recompense.png',
+            'petit dejeuner au lit': '/static/images/petit dej au lit recompense.png',
+            'petit-déj au lit': '/static/images/petit dej au lit recompense.png',
+            'petit dej': '/static/images/petit dej au lit recompense.png',
+            '2h d\'écran': '/static/images/deux heures d\'ecran supplementaire.webp',
+            'écran supplémentaire': '/static/images/deux heures d\'ecran supplementaire.webp',
+            'heures d\'écran': '/static/images/deux heures d\'ecran supplementaire.webp',
+            'dispensé de corvée': '/static/images/dispensé de corvée pour une journée.webp',
+            'corvée pour une journée': '/static/images/dispensé de corvée pour une journée.webp',
+            'massage': '/static/images/massage.png',
+            'soirée film': '/static/images/soiree_film.png',
+            'restaurant': '/static/images/restaurant.png',
+            'resto': '/static/images/restaurant.png',
+            'grasse matinée': '/static/images/grasse_matinee.png',
+            'journée spa': '/static/images/spa.png',
+            'choix du film': '/static/images/film.png',
+            'film': '/static/images/film.png',
+            'bon pour un câlin': '/static/images/calin.png',
+            'câlin': '/static/images/calin.png',
+            'jour de repos ménage': '/static/images/repos.png',
+            'dessert': '/static/images/dessert.png',
+            'café au lit': '/static/images/cafe.png',
+            'café': '/static/images/cafe.png'
+        };
+
+        function getRewardImage(rewardText) {
+            const rewardLower = rewardText.toLowerCase();
+            for (const [key, value] of Object.entries(rewardImages)) {
+                if (rewardLower.includes(key)) {
+                    return value;
+                }
+            }
+            // Image par défaut si pas de correspondance
+            return '/static/images/default.png';
+        }
+
+        function openBox(boxNumber) {
+            console.log('openBox appelé pour case:', boxNumber);
+            var box = document.querySelector('[data-box="' + boxNumber + '"]');
+            
+            // Éviter les doubles clics
+            if (box.classList.contains('loading') || box.classList.contains('opened')) {
+                console.log('Case déjà en cours ou ouverte');
+                return;
+            }
+            
+            // Marquer comme en cours
+            box.classList.add('loading');
+            box.innerHTML = '<span class="box-number">...</span>';
+            
+            console.log('Envoi fetch...');
+            var startTime = Date.now();
+
+            fetch('/open_reward_box', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({box_number: boxNumber}),
+                cache: 'no-store'
+            })
+            .then(function(response) { 
+                console.log('Réponse reçue en', Date.now() - startTime, 'ms');
+                return response.json(); 
+            })
+            .then(function(data) {
+                console.log('Données:', data);
+                if (data.success) {
+                    box.classList.remove('loading');
+                    box.classList.add('opened');
+                    box.innerHTML = '<span class="box-number">✓</span>';
+                    
+                    // Afficher le nom du gagnant
+                    document.getElementById('winnerName').textContent = data.winner_name || '';
+                    
+                    // Afficher le texte de la récompense
+                    document.getElementById('modalText').textContent = data.reward;
+                    
+                    // IMAGES DÉSACTIVÉES POUR TEST
+                    const modalImage = document.getElementById('modalImage');
+                    modalImage.style.display = 'none';
+                    
+                    document.getElementById('rewardModal').classList.add('show');
+                    
+                    // Confettis différés pour ne pas bloquer l'UI
+                    setTimeout(function() { launchConfetti(); }, 100);
+                } else {
+                    box.classList.remove('loading');
+                    box.innerHTML = '<span class="box-number">' + boxNumber + '</span>';
+                    showToast(data.message || 'Erreur', 'error');
+                }
+            })
+            .catch(function(error) {
+                box.classList.remove('loading');
+                box.innerHTML = '<span class="box-number">' + boxNumber + '</span>';
+                showToast('Une erreur est survenue', 'error');
+            });
+        }
+
+        // Fonction pour lancer les confettis en feu d'artifice
+        function launchConfetti() {
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+
+            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#FF69B4', '#00FF7F'];
+            const shapes = ['circle', 'square', 'ribbon'];
+            
+            // Lancer plusieurs fusées
+            const rockets = 5;
+            for (let r = 0; r < rockets; r++) {
+                setTimeout(() => {
+                    // Point de départ aléatoire en bas
+                    const startX = 20 + Math.random() * 60; // Entre 20% et 80% de l'écran
+                    const confettiPerRocket = 40;
+                    
+                    for (let i = 0; i < confettiPerRocket; i++) {
+                        const confetti = document.createElement('div');
+                        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        confetti.className = `confetti ${shape}`;
+                        confetti.style.background = color;
+                        confetti.style.setProperty('--confetti-color', color);
+                        
+                        // Position de départ : bas de l'écran
+                        confetti.style.left = startX + '%';
+                        confetti.style.bottom = '0px';
+                        
+                        // Tailles variées
+                        const size = Math.random() * 12 + 6;
+                        confetti.style.width = size + 'px';
+                        confetti.style.height = size + 'px';
+                        
+                        container.appendChild(confetti);
+                        
+                        // Animation feu d'artifice : montée puis retombée
+                        const angle = (Math.random() - 0.5) * 120; // Angle d'explosion (-60° à +60°)
+                        const velocity = 400 + Math.random() * 300; // Vitesse d'explosion
+                        const gravity = 0.3;
+                        const duration = 2500 + Math.random() * 1000;
+                        
+                        // Calculer la trajectoire
+                        const radians = angle * Math.PI / 180;
+                        const vx = Math.sin(radians) * velocity;
+                        const vy = Math.cos(radians) * velocity;
+                        
+                        let startTime = null;
+                        const animateConfetti = (timestamp) => {
+                            if (!startTime) startTime = timestamp;
+                            const elapsed = timestamp - startTime;
+                            const progress = elapsed / duration;
+                            
+                            if (progress < 1) {
+                                // Position avec physique
+                                const t = elapsed / 1000;
+                                const x = vx * t * 0.3;
+                                const y = vy * t * 0.5 - (0.5 * gravity * t * t * 500);
+                                
+                                confetti.style.transform = `translate(${x}px, ${-y}px) rotate(${t * 360}deg)`;
+                                confetti.style.opacity = Math.max(0, 1 - progress * 0.8);
+                                
+                                requestAnimationFrame(animateConfetti);
+                            } else {
+                                confetti.remove();
+                            }
+                        };
+                        
+                        // Démarrer avec un petit délai aléatoire
+                        setTimeout(() => {
+                            confetti.style.opacity = '1';
+                            requestAnimationFrame(animateConfetti);
+                        }, Math.random() * 100);
+                    }
+                }, r * 300); // Décalage entre chaque fusée
+            }
+
+            // Nettoyer après l'animation
+            setTimeout(() => {
+                container.remove();
+            }, 6000);
+        }
+        
+        // Forcer le rafraîchissement du cache - version TEST
+        console.log('Mode TEST activé - version 2.0');
+    </script>
+</body>
+</html>

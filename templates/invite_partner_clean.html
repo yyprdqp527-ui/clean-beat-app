@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inviter des partenaires - CleanBeat</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container { 
+            max-width: 600px; 
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: saturate(180%) blur(30px);
+            -webkit-backdrop-filter: saturate(180%) blur(30px);
+            border-radius: 25px; 
+            padding: 40px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35);
+            border: 1px solid rgba(255,255,255,0.55);
+            text-align: center;
+        }
+        
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #153036;
+            margin-bottom: 15px;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .house-code-box {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(253, 174, 84, 0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .house-code-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .house-code {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            font-family: monospace;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .partners-list {
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .partner-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .partner-info {
+            flex: 1;
+        }
+
+        .partner-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .partner-phone {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .partner-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-sent {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .add-partner-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        input[type="text"]:focus,
+        input[type="tel"]:focus {
+            outline: none;
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 3px rgba(253, 174, 84, 0.1);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-send-all {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: white;
+            font-size: 18px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
+            font-weight: 800;
+        }
+
+        .btn-send-all:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(253, 174, 84, 0.5);
+        }
+
+        .btn-send-all:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .skip-link {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .skip-link a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .skip-link a:hover {
+            text-decoration: underline;
+        }
+
+        .flash {
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .flash.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Carte Call to Action */
+        .cta-card {
+            background: linear-gradient(135deg, rgba(166,211,220,0.95) 0%, rgba(89,113,118,0.85) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 2px solid rgba(255,255,255,0.4);
+            box-shadow: 
+                0 12px 40px rgba(89,113,118,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(253,174,84,0.15) 0%, transparent 60%);
+            animation: cta-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes cta-glow {
+            0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+            50% { transform: translate(-20px, 20px); opacity: 1; }
+        }
+
+        .cta-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .cta-house-name {
+            color: #FDAE54;
+            font-style: italic;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .cta-btn-primary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-color: rgba(255,255,255,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .cta-btn-primary:active {
+            background: rgba(255,255,255,0.3);
+            transform: scale(0.95);
+        }
+
+        .cta-btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-color: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .cta-btn-secondary:active {
+            background: rgba(255,255,255,0.25);
+            transform: scale(0.95);
+        }
+
+        .cta-separator {
+            color: rgba(255,255,255,0.7);
+            font-weight: 600;
+            font-size: 12px;
+            align-self: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .icon {
+                font-size: 3rem;
+            }
+
+            .house-code {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="icon">💕</div>
+    <h1>Invitez vos partenaires</h1>
+    <div class="subtitle">
+        Partagez votre code de maison ou ajoutez directement les numéros de téléphone de vos partenaires pour les inviter à jouer !
+    </div>
+
+    {% if house_code %}
+    <div class="house-code-box">
+        <div class="house-code-label">Code de votre maison :</div>
+        <div class="house-code">{{ house_code }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Vignette Call to Action -->
+    <div class="cta-card">
+        <div class="cta-title">
+            Pour s'occuper de <span class="cta-house-name">{{ house_name or 'ta maison' }}</span>, tu peux :
+        </div>
+        <div class="cta-buttons">
+            <a href="{{ url_for('menu') }}" class="cta-btn cta-btn-primary">
+                Faire des tâches
+            </a>
+            <span class="cta-separator">ou</span>
+            <a href="{{ url_for('invite_partner') }}" class="cta-btn cta-btn-secondary">
+                Inviter un partenaire
+            </a>
+        </div>
+    </div>
+
+    <!-- Section d'ajout de partenaire -->
+    <div class="add-partner-section">
+        <h3 style="margin-bottom: 15px; color: #333;">Ajouter un partenaire</h3>
+        <div class="form-group">
+            <label for="partner_name">Nom du partenaire</label>
+            <input type="text" id="partner_name" placeholder="Ex: Marie, Paul, Alex...">
+        </div>
+        <div class="form-group">
+            <label for="partner_phone">Numéro de téléphone</label>
+            <input type="tel" id="partner_phone" placeholder="Ex: +33 6 12 34 56 78">
+        </div>
+        <button class="btn btn-add" onclick="addPartner()">
+            ➕ Ajouter à la liste
+        </button>
+    </div>
+
+    <!-- Liste des partenaires -->
+    <div class="partners-list" id="partnersList">
+        <div class="empty-state" id="emptyState">
+            Aucun partenaire ajouté. Ajoutez-en un ci-dessus !
+        </div>
+    </div>
+
+    <!-- Bouton d'envoi -->
+    <form method="post" id="inviteForm">
+        <input type="hidden" name="partners" id="partnersData">
+        <button type="submit" class="btn btn-send-all" id="sendBtn" disabled>
+            📱 Envoyer les invitations SMS
+        </button>
+    </form>
+
+    <div class="skip-link">
+        <a href="{{ url_for('create_profile') }}">Continuer sans inviter →</a>
+    </div>
+</div>
+
+<script>
+let partners = [];
+
+function addPartner() {
+    const name = document.getElementById('partner_name').value.trim();
+    const phone = document.getElementById('partner_phone').value.trim();
+    
+    if (!name || !phone) {
+        alert('Veuillez remplir le nom et le numéro de téléphone');
+        return;
+    }
+    
+    // Vérifier si le numéro existe déjà
+    if (partners.some(p => p.phone === phone)) {
+        alert('Ce numéro est déjà dans la liste');
+        return;
+    }
+    
+    partners.push({
+        name: name,
+        phone: phone,
+        status: 'pending'
+    });
+    
+    // Réinitialiser les champs
+    document.getElementById('partner_name').value = '';
+    document.getElementById('partner_phone').value = '';
+    
+    renderPartners();
+}
+
+function removePartner(index) {
+    partners.splice(index, 1);
+    renderPartners();
+}
+
+function renderPartners() {
+    const listEl = document.getElementById('partnersList');
+    const emptyState = document.getElementById('emptyState');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    if (partners.length === 0) {
+        emptyState.style.display = 'block';
+        listEl.querySelectorAll('.partner-item').forEach(item => item.remove());
+        sendBtn.disabled = true;
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    listEl.innerHTML = partners.map((partner, index) => `
+        <div class="partner-item">
+            <div class="partner-info">
+                <div class="partner-name">${partner.name}</div>
+                <div class="partner-phone">${partner.phone}</div>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <span class="partner-status status-${partner.status}">
+                    ${partner.status === 'pending' ? 'En attente' : 'Envoyé'}
+                </span>
+                <button type="button" class="remove-btn" onclick="removePartner(${index})">
+                    ✕
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    sendBtn.disabled = false;
+    
+    // Mettre à jour les données du formulaire
+    document.getElementById('partnersData').value = JSON.stringify(partners);
+}
+
+// Permettre d'ajouter avec la touche Entrée
+document.getElementById('partner_phone').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addPartner();
+    }
+});
+
+document.getElementById('partner_name').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('partner_phone').focus();
+    }
+});
+</script>
+
+</body>
+</html>
