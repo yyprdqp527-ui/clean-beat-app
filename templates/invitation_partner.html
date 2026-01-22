@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation Partenaire - CleanBeat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: #333;
+        }
+        
+        .logo {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            color: #597176;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #fdae54 0%, #ff8c42 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            color: white;
+        }
+        
+        .house-code {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+        }
+        
+        .house-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 25px 0;
+            display: inline-block;
+        }
+        
+        #qrcode {
+            width: 220px;
+            height: 220px;
+        }
+        
+        .qr-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .share-options {
+            margin: 30px 0;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #fdae54 0%, #ff8c42 100%);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(253, 174, 84, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            margin-top: 20px;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(149, 165, 166, 0.4);
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #597176;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .url-display {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            color: #333;
+            text-align: left;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .house-code {
+                font-size: 28px;
+            }
+            
+            #qrcode {
+                width: 180px;
+                height: 180px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🏠</div>
+        <h1>Inviter un Partenaire</h1>
+        <p class="subtitle">Partagez votre maison CleanBeat</p>
+        
+        <div class="info-card">
+            <div class="house-name">🏡 {{ house_name or 'Ma Maison' }}</div>
+            <div>Code d'invitation :</div>
+            <div class="house-code" id="houseCode">{{ house_code }}</div>
+        </div>
+        
+        <div class="qr-container">
+            <div id="qrcode"></div>
+            <div class="qr-label">Scannez avec votre téléphone</div>
+        </div>
+        
+        <div class="share-options">
+            <button class="btn btn-primary" onclick="copyCode()">
+                📋 Copier le code
+            </button>
+            
+            <button class="btn btn-secondary" onclick="copyLink()">
+                🔗 Copier le lien d'invitation
+            </button>
+            
+            <button class="btn btn-success" onclick="shareLink()">
+                📤 Partager
+            </button>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            ✅ Copié dans le presse-papier !
+        </div>
+        
+        <div class="instructions">
+            <h3>📱 Comment inviter ?</h3>
+            <ol>
+                <li>Partagez le <strong>code d'invitation</strong> avec votre partenaire</li>
+                <li>Votre partenaire accède à l'application</li>
+                <li>Il entre le code sur la page d'inscription</li>
+                <li>Vous serez ensemble dans la même maison !</li>
+            </ol>
+        </div>
+        
+        <div class="url-display" id="inviteUrl">{{ join_url }}</div>
+        
+        <a href="/menu" class="btn btn-back">
+            ← Retour au menu
+        </a>
+    </div>
+    
+    <script>
+        // Générer le QR Code
+        const joinUrl = "{{ join_url }}";
+        new QRCode(document.getElementById("qrcode"), {
+            text: joinUrl,
+            width: 220,
+            height: 220,
+            colorDark: "#597176",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        // Copier le code
+        function copyCode() {
+            const code = document.getElementById('houseCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                showSuccess();
+            }).catch(err => {
+                alert('Code : ' + code);
+            });
+        }
+        
+        // Copier le lien
+        function copyLink() {
+            const url = "{{ join_url }}";
+            navigator.clipboard.writeText(url).then(() => {
+                showSuccess();
+            }).catch(err => {
+                alert('Lien : ' + url);
+            });
+        }
+        
+        // Partager via l'API Web Share
+        function shareLink() {
+            const shareData = {
+                title: 'Rejoins ma maison CleanBeat !',
+                text: 'Code d\'invitation : {{ house_code }}',
+                url: "{{ join_url }}"
+            };
+            
+            if (navigator.share) {
+                navigator.share(shareData).catch(err => {
+                    console.log('Partage annulé', err);
+                });
+            } else {
+                copyLink();
+            }
+        }
+        
+        // Afficher le message de succès
+        function showSuccess() {
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -100,6 +100,30 @@
             }
         }
 
+        .btn-login {
+            display: inline-block;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+            margin: 15px 0;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+            background: linear-gradient(135deg, #357ABD 0%, #2868A8 100%);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
         .container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: saturate(180%) blur(30px);
@@ -362,6 +386,11 @@
 
     <div class="icon">🏠</div>
     <h1>Rejoindre une maison</h1>
+    
+    <div style="margin: 20px 0;">
+        <p style="color: #597176; font-size: 13px; margin-bottom: 10px;">Déjà inscrit ?</p>
+        <a href="http://192.168.1.156:8000/login" class="btn-login">🔐 Se connecter</a>
+    </div>
     
     <!-- Indicateur d'étapes -->
     <div class="steps-indicator">

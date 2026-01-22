@@ -4154,11 +4154,22 @@ def login():
         password = request.form['password']
         conn = sqlite3.connect(DB)
         c = conn.cursor()
-        c.execute("SELECT password FROM users WHERE email=?", (email,))
+        c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))
         user = c.fetchone()
         conn.close()
         if user and check_password_hash(user[0], password):
             session['user'] = email
+            
+            # Vérifier si l'utilisateur a complété son profil
+            registration_step = user[1] or ''
+            avatar = user[2] or ''
+            avatar_file = user[3] or ''
+            
+            # Si le profil n'est pas complété (pas de registration_step='profile_created' OU pas d'avatar)
+            if registration_step != 'profile_created' or (not avatar and not avatar_file):
+                flash("✨ Complétez votre profil pour commencer !", "info")
+                return redirect(url_for('create_profile'))
+            
             return redirect(url_for('menu'))
         else:
             flash("Email ou mot de passe incorrect", "danger")
@@ -4305,7 +4316,7 @@ def create_profile():
     # Vérifier si l'utilisateur a déjà un profil (mode modification)
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-    c.execute("SELECT name, avatar, avatar_file, house_id FROM users WHERE email=?", (session['user'],))
+    c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
     user = c.fetchone()
     
     change_avatar = False
@@ -4319,9 +4330,11 @@ def create_profile():
         current_avatar = user[1] or ''  # Avatar prédéfini (nom de fichier comme homme.png)
         current_avatar_file = user[2] or ''  # Photo uploadée (fichier JPG)
         house_id = user[3]
+        registration_step = user[4] or ''
         
-        # Si l'utilisateur a déjà un nom ou un avatar, c'est une modification
-        if current_name or current_avatar or current_avatar_file:
+        # Si l'utilisateur a COMPLÉTÉ son profil (registration_step='profile_created'), c'est une modification
+        # Sinon, c'est toujours une première création même si le nom existe
+        if registration_step == 'profile_created':
             change_avatar = True
         
         # Récupérer le nom de la maison si existe
@@ -4633,7 +4646,53 @@ def invite_partner():
         # Continuer vers la création de profil
         return redirect(url_for('create_profile'))
     
-    return render_template('invite_partner_new.html', house_code=house_code, house_name=house_name, house_type=house_type)
+    # Si accès direct à la page (GET), afficher la page d'invitation simple avec QR Code
+    # Construire l'URL d'invitation
+    join_url = f"http://192.168.1.156:8000/join_house?code={house_code}"
+    
+    # Choisir le template selon si on vient du processus d'inscription ou si on veut juste inviter
+    # Pour l'instant, on affiche toujours le formulaire complet
+    return render_template('invite_partner_new.html', 
+                         house_code=house_code, 
+                         house_name=house_name, 
+                         house_type=house_type,
+                         join_url=join_url)
+
+
+@app.route('/partager_invitation')
+def partager_invitation():
+    """Page simple pour partager l'invitation avec QR Code"""
+    if 'user' not in session:
+        flash("Connecte-toi pour inviter des partenaires !", "warning")
+        return redirect(url_for('login'))
+    
+    # Récupérer le code et le nom de la maison
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    row = c.fetchone()
+    
+    house_code = None
+    house_name = None
+    if row and row[0]:
+        c.execute("SELECT code, house_name, name FROM houses WHERE id=?", (row[0],))
+        house_row = c.fetchone()
+        if house_row:
+            house_code = house_row[0]
+            house_name = house_row[1] if house_row[1] else house_row[2]
+    conn.close()
+    
+    if not house_code:
+        flash("Aucune maison trouvée. Créez d'abord une maison.", "warning")
+        return redirect(url_for('menu'))
+    
+    # Construire l'URL d'invitation
+    join_url = f"http://192.168.1.156:8000/join_house?code={house_code}"
+    
+    return render_template('invitation_partner.html', 
+                         house_code=house_code,
+                         house_name=house_name,
+                         join_url=join_url)
 
 
 @app.route('/update_house_type', methods=['POST'])
@@ -6275,6 +6334,40 @@ def save_baby_tracking():
     return redirect(url_for('task_enhanced', cat=category, task_id=task_id))
 
 # 👶 ========== FIN ROUTES SUIVI BÉBÉ ==========
+
+@app.route('/invitation_partner')
+def invitation_partner():
+    """Page d'invitation pour les partenaires avec QR Code"""
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    # Récupérer le code et le nom de la maison
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    row = c.fetchone()
+    
+    house_code = None
+    house_name = None
+    if row and row[0]:
+        c.execute("SELECT code, house_name, name FROM houses WHERE id=?", (row[0],))
+        house_row = c.fetchone()
+        if house_row:
+            house_code = house_row[0]
+            house_name = house_row[1] if house_row[1] else house_row[2]
+    conn.close()
+    
+    if not house_code:
+        flash("Aucune maison trouvée. Créez d'abord une maison.", "warning")
+        return redirect(url_for('menu'))
+    
+    # Construire l'URL d'invitation
+    join_url = f"http://192.168.1.156:8000/join_house?code={house_code}"
+    
+    return render_template('invitation_partner.html', 
+                         house_code=house_code,
+                         house_name=house_name,
+                         join_url=join_url)
 
 
 if __name__ == '__main__':
