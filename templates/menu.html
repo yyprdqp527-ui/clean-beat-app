@@ -66,20 +66,22 @@
         
         /* Bouton burger */
         .burger-menu {
-            background: linear-gradient(135deg, rgba(253,174,84,0.9), rgba(244,198,141,0.8));
-            border: 2px solid rgba(255,255,255,0.6);
-            border-radius: 10px;
-            width: 40px;
-            height: 40px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            width: 56px;
+            height: 56px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             cursor: pointer;
             flex-shrink: 0;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(253,174,84,0.3);
+            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
             padding: 0;
             z-index: 2001;
             order: 2;
@@ -87,12 +89,17 @@
         
         .burger-menu span {
             display: block;
-            width: 20px;
-            height: 2.5px;
-            background: white;
+            width: 24px;
+            height: 3px;
+            background: #153036;
             border-radius: 2px;
             transition: all 0.3s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .burger-menu:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
         }
         
         .burger-menu:active {
@@ -234,12 +241,6 @@
         @keyframes pulse-badge {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.15); }
-        }
-        
-        @media (min-width: 768px) {
-            .burger-menu:hover span {
-                width: 28px;
-            }
         }
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
@@ -973,8 +974,8 @@
             .house-center { max-width: 92vw; }
             .house-image-wrapper { max-width: 92vw; width: 92vw; }
             .svg-room { border-radius: 18px; }
-            .burger-menu { width: 36px; height: 36px; }
-            .burger-menu span { width: 18px; height: 2px; }
+            .burger-menu { width: 48px; height: 48px; }
+            .burger-menu span { width: 20px; height: 2.5px; }
             .burger-nav { width: 260px; padding: 70px 18px 18px; }
             .burger-nav-item { padding: 14px 16px; font-size: 15px; }
         }
@@ -988,8 +989,8 @@
         
         @media (max-width: 350px) {
             .house-image-wrapper { max-width: 92vw; width: 92vw; }
-            .burger-menu { width: 32px; height: 32px; gap: 3px; }
-            .burger-menu span { width: 16px; }
+            .burger-menu { width: 44px; height: 44px; gap: 4px; }
+            .burger-menu span { width: 18px; height: 2.5px; }
         }
         
         /* iPad et tablettes en portrait */
@@ -2260,18 +2261,19 @@
                         }, 4000);
                     }
                     
-                    // Vérifier les nouvelles tâches toutes les 10 secondes
-                    setInterval(checkForNewTasks, 10000);
+                    // Vérifier les nouvelles tâches toutes les 60 secondes (au lieu de 10)
+                    setInterval(checkForNewTasks, 60000);
                     
                     // Initialiser le compteur
                     fetch('/api/daily_tasks')
                         .then(response => response.json())
                         .then(data => {
                             lastTaskCount = data.tasks ? data.tasks.length : 0;
-                        });
+                        })
+                        .catch(err => console.error('Erreur chargement tâches:', err));
                     
-                    // Recharger toutes les 30 secondes pour voir les nouvelles tâches
-                    setInterval(loadRecentTasks, 30000);
+                    // Recharger toutes les 2 minutes pour voir les nouvelles tâches (au lieu de 30s)
+                    setInterval(loadRecentTasks, 120000);
                     
                     // Applique la largeur à la/aux barre(s) de santé
                     document.querySelectorAll('.health-fill').forEach(function(fill){

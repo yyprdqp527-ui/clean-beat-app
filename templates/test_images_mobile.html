@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Test Images Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+        .image-container {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status.success { background: #4CAF50; }
+        .status.error { background: #f44336; }
+        .info {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 5px 0;
+        }
+        .path {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            border-radius: 5px;
+            word-break: break-all;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de chargement des images</h1>
+    
+    <div class="test-section">
+        <h2>📱 Informations de connexion</h2>
+        <div class="info">IP actuelle: <span id="current-ip">Chargement...</span></div>
+        <div class="info">User-Agent: <span id="user-agent"></span></div>
+        <div class="info">Largeur écran: <span id="screen-width"></span>px</div>
+    </div>
+
+    <div class="test-section">
+        <h2>🖼️ Test 1: Images avec url_for (Flask)</h2>
+        <div class="image-container">
+            <div class="path">{{ url_for('static', filename='images/salon/laver les sols.webp') }}</div>
+            <img src="{{ url_for('static', filename='images/salon/laver les sols.webp') }}" 
+                 alt="Laver les sols" 
+                 onload="imageLoaded(this)" 
+                 onerror="imageFailed(this)">
+            <div id="status-1" class="status">⏳ Chargement...</div>
+        </div>
+        
+        <div class="image-container">
+            <div class="path">{{ url_for('static', filename='images/salle de bain/éponger le sol.webp') }}</div>
+            <img src="{{ url_for('static', filename='images/salle de bain/éponger le sol.webp') }}" 
+                 alt="Éponger le sol" 
+                 onload="imageLoaded(this)" 
+                 onerror="imageFailed(this)">
+            <div id="status-2" class="status">⏳ Chargement...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🖼️ Test 2: Images avec chemin absolu</h2>
+        <div class="image-container">
+            <div class="path">/static/images/salon/faire la poussière.webp</div>
+            <img src="/static/images/salon/faire la poussière.webp" 
+                 alt="Faire la poussière" 
+                 onload="imageLoaded(this)" 
+                 onerror="imageFailed(this)">
+            <div id="status-3" class="status">⏳ Chargement...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🖼️ Test 3: Image avec URL complète</h2>
+        <div class="image-container">
+            <div class="path" id="full-url-path">http://192.168.1.156:8000/static/images/salon/laver les vitres.webp</div>
+            <img src="http://192.168.1.156:8000/static/images/salon/laver les vitres.webp" 
+                 alt="Laver les vitres" 
+                 onload="imageLoaded(this)" 
+                 onerror="imageFailed(this)">
+            <div id="status-4" class="status">⏳ Chargement...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Test 4: Fetch API (console)</h2>
+        <div class="info">Résultat dans la console du navigateur</div>
+        <button onclick="testFetch()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 14px; font-weight: bold; margin-top: 10px;">
+            Tester Fetch
+        </button>
+        <div id="fetch-result" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; font-size: 12px; display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Résumé</h2>
+        <div id="summary" class="info">
+            Images chargées: <span id="loaded-count">0</span><br>
+            Images échouées: <span id="failed-count">0</span>
+        </div>
+    </div>
+
+    <script>
+        let loadedCount = 0;
+        let failedCount = 0;
+
+        // Afficher les infos de connexion
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('screen-width').textContent = window.innerWidth;
+        
+        // Récupérer l'IP actuelle
+        fetch('/ping')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('current-ip').textContent = data.client_ip || 'N/A';
+            })
+            .catch(e => {
+                document.getElementById('current-ip').textContent = 'Erreur';
+            });
+
+        function imageLoaded(img) {
+            loadedCount++;
+            const container = img.parentElement;
+            const statusDiv = container.querySelector('.status');
+            statusDiv.textContent = '✅ Chargée';
+            statusDiv.className = 'status success';
+            
+            const info = document.createElement('div');
+            info.className = 'info';
+            info.innerHTML = `Dimensions: ${img.naturalWidth}x${img.naturalHeight}px<br>Taille: ${formatBytes(img.src.length)}`;
+            container.appendChild(info);
+            
+            updateSummary();
+        }
+
+        function imageFailed(img) {
+            failedCount++;
+            const container = img.parentElement;
+            const statusDiv = container.querySelector('.status');
+            statusDiv.textContent = '❌ Échec';
+            statusDiv.className = 'status error';
+            
+            const info = document.createElement('div');
+            info.className = 'info';
+            info.innerHTML = `Erreur: Image non chargée<br>URL: ${img.src}`;
+            container.appendChild(info);
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            document.getElementById('loaded-count').textContent = loadedCount;
+            document.getElementById('failed-count').textContent = failedCount;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        async function testFetch() {
+            const resultDiv = document.getElementById('fetch-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Test en cours...';
+            
+            const testUrls = [
+                '/static/images/salon/laver les sols.webp',
+                '{{ url_for("static", filename="images/salon/faire la poussière.webp") }}'
+            ];
+            
+            const results = [];
+            
+            for (const url of testUrls) {
+                try {
+                    console.log('Fetch test:', url);
+                    const response = await fetch(url);
+                    const status = response.status;
+                    const contentType = response.headers.get('content-type');
+                    const contentLength = response.headers.get('content-length');
+                    
+                    results.push({
+                        url: url,
+                        status: status,
+                        ok: response.ok,
+                        contentType: contentType,
+                        size: contentLength ? formatBytes(parseInt(contentLength)) : 'N/A'
+                    });
+                    
+                    console.log('Fetch success:', url, status, contentType);
+                } catch (error) {
+                    results.push({
+                        url: url,
+                        error: error.message
+                    });
+                    console.error('Fetch error:', url, error);
+                }
+            }
+            
+            resultDiv.innerHTML = results.map(r => {
+                if (r.error) {
+                    return `❌ ${r.url}: ${r.error}`;
+                }
+                return `${r.ok ? '✅' : '❌'} ${r.url}<br>Status: ${r.status}, Type: ${r.contentType}, Taille: ${r.size}`;
+            }).join('<br><br>');
+        }
+
+        // Log toutes les erreurs
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e);
+            if (e.target && e.target.tagName === 'IMG') {
+                console.error('Image error:', e.target.src);
+            }
+        }, true);
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Laver les Sols</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        img {
+            max-width: 100%;
+            border: 3px solid #4CAF50;
+            border-radius: 10px;
+            display: block;
+            margin: 10px 0;
+        }
+        .error { border-color: #f44336; }
+        .status { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #4CAF50; color: white; }
+        .fail { background: #f44336; color: white; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de chargement: Laver les Sols</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: URL directe avec espaces</h2>
+        <pre>/static/images/salon/laver les sols.webp</pre>
+        <img src="/static/images/salon/laver les sols.webp" 
+             alt="Test 1" 
+             onload="document.getElementById('test1').className='status success'; document.getElementById('test1').textContent='✅ Chargée avec succès'"
+             onerror="this.className='error'; document.getElementById('test1').className='status fail'; document.getElementById('test1').textContent='❌ Erreur de chargement'">
+        <div id="test1" class="status">⏳ Chargement...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: URL encodée (%20)</h2>
+        <pre>/static/images/salon/laver%20les%20sols.webp</pre>
+        <img src="/static/images/salon/laver%20les%20sols.webp" 
+             alt="Test 2"
+             onload="document.getElementById('test2').className='status success'; document.getElementById('test2').textContent='✅ Chargée avec succès'"
+             onerror="this.className='error'; document.getElementById('test2').className='status fail'; document.getElementById('test2').textContent='❌ Erreur de chargement'">
+        <div id="test2" class="status">⏳ Chargement...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Avec cache-busting</h2>
+        <pre>/static/images/salon/laver%20les%20sols.webp?v=20260120</pre>
+        <img src="/static/images/salon/laver%20les%20sols.webp?v=20260120" 
+             alt="Test 3"
+             onload="document.getElementById('test3').className='status success'; document.getElementById('test3').textContent='✅ Chargée avec succès'"
+             onerror="this.className='error'; document.getElementById('test3').className='status fail'; document.getElementById('test3').textContent='❌ Erreur de chargement'">
+        <div id="test3" class="status">⏳ Chargement...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Informations</h2>
+        <p><strong>Fichier:</strong> laver les sols.webp</p>
+        <p><strong>Taille:</strong> 48KB (49340 bytes)</p>
+        <p><strong>Format:</strong> WebP</p>
+        <p><strong>Dimensions:</strong> 800x800px</p>
+        <p><strong>URL test:</strong> <a href="http://192.168.1.156:8000/static/test_laver_sols.html">http://192.168.1.156:8000/static/test_laver_sols.html</a></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Actions</h2>
+        <button onclick="location.reload(true)" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            🔄 Rafraîchir (Force Reload)
+        </button>
+    </div>
+</body>
+</html>

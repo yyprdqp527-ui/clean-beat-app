@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réinitialisation Cache - CleanBeat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .status {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .status.info { background: #e3f2fd; color: #1976d2; }
+        .status.success { background: #e8f5e9; color: #388e3c; }
+        .status.error { background: #ffebee; color: #d32f2f; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .log {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry { margin: 5px 0; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Réinitialisation du Cache</h1>
+        
+        <div id="status" class="status info">
+            Prêt à nettoyer le cache et les service workers
+        </div>
+        
+        <div id="log" class="log" style="display:none;"></div>
+        
+        <button class="btn" onclick="clearEverything()">🧹 Tout Nettoyer</button>
+        <button class="btn" onclick="window.location.href='/menu'">← Retour au Menu</button>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+        
+        function addLog(message, type = 'info') {
+            log.style.display = 'block';
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+            console.log(message);
+        }
+        
+        async function clearEverything() {
+            status.innerHTML = '<div class="spinner"></div><p>Nettoyage en cours...</p>';
+            status.className = 'status info';
+            log.innerHTML = '';
+            log.style.display = 'block';
+            
+            let success = true;
+            let errors = [];
+            
+            // 1. Désinstaller tous les service workers
+            addLog('🔍 Recherche des service workers...');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    addLog(`📋 ${registrations.length} service worker(s) trouvé(s)`);
+                    
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        addLog('✅ Service worker désinstallé: ' + registration.scope);
+                    }
+                    
+                    if (registrations.length === 0) {
+                        addLog('ℹ️ Aucun service worker actif');
+                    }
+                } else {
+                    addLog('ℹ️ Service workers non supportés');
+                }
+            } catch (error) {
+                addLog('❌ Erreur service workers: ' + error.message);
+                errors.push(error.message);
+                success = false;
+            }
+            
+            // 2. Vider tous les caches
+            addLog('🗑️ Suppression des caches...');
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    addLog(`📋 ${cacheNames.length} cache(s) trouvé(s)`);
+                    
+                    for (let cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        addLog('✅ Cache supprimé: ' + cacheName);
+                    }
+                    
+                    if (cacheNames.length === 0) {
+                        addLog('ℹ️ Aucun cache à supprimer');
+                    }
+                } else {
+                    addLog('ℹ️ API Cache non supportée');
+                }
+            } catch (error) {
+                addLog('❌ Erreur caches: ' + error.message);
+                errors.push(error.message);
+                success = false;
+            }
+            
+            // 3. Vider le localStorage
+            addLog('🧹 Nettoyage localStorage...');
+            try {
+                const itemsCount = localStorage.length;
+                localStorage.clear();
+                addLog(`✅ ${itemsCount} élément(s) supprimé(s) du localStorage`);
+            } catch (error) {
+                addLog('❌ Erreur localStorage: ' + error.message);
+                errors.push(error.message);
+            }
+            
+            // 4. Vider le sessionStorage
+            addLog('🧹 Nettoyage sessionStorage...');
+            try {
+                const itemsCount = sessionStorage.length;
+                sessionStorage.clear();
+                addLog(`✅ ${itemsCount} élément(s) supprimé(s) du sessionStorage`);
+            } catch (error) {
+                addLog('❌ Erreur sessionStorage: ' + error.message);
+                errors.push(error.message);
+            }
+            
+            // 5. Recharger la page
+            addLog('🔄 Rechargement de la page dans 2 secondes...');
+            
+            if (success && errors.length === 0) {
+                status.innerHTML = '✅ Nettoyage réussi !<br><small>La page va se recharger...</small>';
+                status.className = 'status success';
+                
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 2000);
+            } else {
+                status.innerHTML = '⚠️ Nettoyage partiel<br><small>Consultez les logs ci-dessous</small>';
+                status.className = 'status error';
+                
+                addLog('⚠️ Certaines erreurs sont survenues');
+                addLog('💡 Essayez de vider manuellement le cache de votre navigateur');
+                addLog('📱 Sur Safari : Réglages > Safari > Effacer historique');
+                addLog('📱 Sur Chrome : Menu > Historique > Effacer données');
+            }
+        }
+        
+        // Vérifier l'état actuel au chargement
+        window.addEventListener('load', async () => {
+            addLog('📊 Diagnostic initial...');
+            
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                addLog(`Service Workers actifs: ${registrations.length}`);
+            }
+            
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                addLog(`Caches présents: ${cacheNames.length}`);
+                cacheNames.forEach(name => addLog(`  - ${name}`));
+            }
+            
+            addLog(`localStorage: ${localStorage.length} élément(s)`);
+            addLog(`sessionStorage: ${sessionStorage.length} élément(s)`);
+        });
+    </script>
+</body>
+</html>

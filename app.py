@@ -590,6 +590,14 @@ def test_audio():
 def test_audio_mobile():
     return render_template('test_audio_mobile.html')
 
+@app.route('/test_images_mobile')
+def test_images_mobile():
+    return render_template('test_images_mobile.html')
+
+@app.route('/clear_cache')
+def clear_cache():
+    return render_template('clear_cache.html')
+
 @app.route('/test_menu_simple')
 def test_menu_simple():
     return render_template('test_menu_simple.html')
@@ -657,6 +665,24 @@ DB = "users.db"
 MAX_PLAYERS = None
 
 # ===============================
+# CONNEXION SQLITE OPTIMISÉE
+# ===============================
+
+def get_db_connection(timeout=30.0):
+    """
+    Crée une connexion SQLite avec timeout et configuration optimisée
+    pour éviter les blocages en production
+    """
+    conn = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
+    # Activer le mode WAL pour permettre lectures/écritures concurrentes
+    conn.execute('PRAGMA journal_mode=WAL')
+    # Optimisations de performance
+    conn.execute('PRAGMA synchronous=NORMAL')
+    conn.execute('PRAGMA cache_size=10000')
+    conn.execute('PRAGMA temp_store=MEMORY')
+    return conn
+
+# ===============================
 # FONCTIONS UTILITAIRES
 # ===============================
 
@@ -716,10 +742,12 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
         if house_code:
             print(f"\n📱 SMS simulé envoyé vers {phone_number}:")
             print(f"   🏠 {user_name} vous invite à jouer à CleanBeat !")
-            print(f"   Entrez ce code pour rejoindre la maison: {house_code}")
-            print(f"   Lien: http://127.0.0.1:8000/join_house?code={house_code}\n")
+            print(f"   📱 Cliquez pour rejoindre (aucune installation requise) :")
+            print(f"   http://192.168.1.156:8000/join_house?code={house_code}")
+            print(f"   Code : {house_code}\n")
         else:
             print(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à CleanBeat !")
+            print(f"📱 Cliquez : http://192.168.1.156:8000")
         return True
     
     try:
@@ -727,12 +755,12 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
         
         if house_code:
             message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
-                          f"Entrez ce code pour rejoindre: {house_code} " \
-                          f"➡️ http://127.0.0.1:8000/join_house?code={house_code}"
+                          f"📱 Cliquez pour rejoindre (aucune installation requise) : " \
+                          f"http://192.168.1.156:8000/join_house?code={house_code} " \
+                          f"Code : {house_code}"
         else:
             message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
-                          f"Rejoignez-le pour gérer votre maison ensemble. " \
-                          f"➡️ http://127.0.0.1:8000"
+                          f"📱 Cliquez pour commencer : http://192.168.1.156:8000"
         
         message = client.messages.create(
             body=message_body,
@@ -756,7 +784,7 @@ TASKS_CONFIG = {
     'cuisine': [
         {
             'name': 'Faire le café',
-            'image': 'cafe.png',
+            'image': 'cuisine/cafe.png',
             'description': 'Commence ta journée avec un bon café !',
             'points': 3,
             'fun_text': 'Allez, un petit café… sinon je me rendors pour la journée !',
@@ -764,17 +792,8 @@ TASKS_CONFIG = {
             'ad_link': 'https://www.nespresso.com/fr/fr'
         },
         {
-            'name': 'Faire la vaisselle',
-            'image': 'vaisselle.jpg',
-            'description': 'Une cuisine propre avec de la vaisselle étincelante !',
-            'points': 5,
-            'fun_text': '🫧 Frotte, frotte ! Les assiettes ne vont pas se laver toutes seules !',
-            'ad_text': 'Ajoute un peu de vinaigre blanc à ton eau de rinçage : zéro traces, brillance max !',
-            'ad_link': 'https://www.amazon.fr/s?k=liquide+vaisselle+ecologique'
-        },
-        {
             'name': 'Faire les courses',
-            'image': 'faire_course.png',
+            'image': 'cuisine/faire_course.png',
             'description': 'N\'oublie rien sur ta liste !',
             'points': 8,
             'fun_text': '🛒 Caddie en main, liste en tête... C\'est parti pour l\'aventure !',
@@ -782,49 +801,112 @@ TASKS_CONFIG = {
             'ad_link': 'https://www.carrefour.fr/'
         },
         {
-            'name': 'Nettoyer les surfaces',
-            'image': 'nettoyer le plan de travil.webp',
+            'name': 'Faire à manger',
+            'image': 'cuisine/faire à manger.webp',
+            'description': 'Prépare un bon repas pour toute la famille !',
+            'points': 10,
+            'fun_text': '👨‍🍳 Aux fourneaux chef ! La brigade attend son repas !',
+            'ad_text': 'Batch cooking : cuisine tes repas de la semaine le dimanche, tu gagnes 1h par jour !',
+            'ad_link': 'https://www.marmiton.org/'
+        },
+        {
+            'name': 'Mettre la table',
+            'image': 'cuisine/mettre la table.webp',
+            'description': 'Dresse une belle table pour le repas !',
+            'points': 3,
+            'fun_text': '🍽️ Assiettes, couverts, serviettes... On met les petits plats dans les grands !',
+            'ad_text': 'Astuce déco : un set de table coloré et des serviettes assorties, ça change tout !',
+            'ad_link': 'https://www.ikea.com/fr/fr/cat/arts-de-la-table-24070/'
+        },
+        {
+            'name': 'Mettre dans le lave-vaisselle',
+            'image': 'cuisine/lave vaiselle.webp',
+            'description': 'Range la vaisselle sale dans le lave-vaisselle !',
+            'points': 4,
+            'fun_text': '🍽️ Tetris version vaisselle : optimise l\'espace !',
+            'ad_text': 'Lance ton lave-vaisselle le soir en heures creuses, tu économises jusqu\'à 30% !',
+            'ad_link': 'https://www.amazon.fr/s?k=tablettes+lave+vaisselle'
+        },
+        {
+            'name': 'Passer l\'éponge',
+            'image': 'cuisine/passer l\'eponge.webp',
+            'description': 'Nettoie les surfaces et la table !',
+            'points': 4,
+            'fun_text': '🧽 Frotte, frotte ! On efface les traces du festin !',
+            'ad_text': 'Change ton éponge toutes les semaines pour éviter les bactéries !',
+            'ad_link': 'https://www.amazon.fr/s?k=eponge+ecologique'
+        },
+        {
+            'name': 'Nettoyer le plan de travail',
+            'image': 'cuisine/nettoyer le plan de travil.webp',
             'description': 'Des plans de travail impeccables !',
-            'points': 6,
-            'fun_text': '🧽 Allez, un p\'tit coup d\'éponge et c\'est reparti !',
+            'points': 4,
+            'fun_text': '✨ Un plan de travail nickel, c\'est la base d\'une cuisine pro !',
             'ad_text': 'Bicarbonate + citron = le combo magique pour dégraisser sans produits chimiques !',
             'ad_link': 'https://www.amazon.fr/s?k=produits+entretien+naturel'
+        },
+        {
+            'name': 'Ranger la vaisselle',
+            'image': 'cuisine/ranger la vaiselle.webp',
+            'description': 'Range la vaisselle propre dans les placards !',
+            'points': 4,
+            'fun_text': '📦 Chaque chose à sa place, et une place pour chaque chose !',
+            'ad_text': 'Organise tes placards par zone d\'usage : gain de temps assuré !',
+            'ad_link': 'https://www.ikea.com/fr/fr/cat/rangement-cuisine-24796/'
+        },
+        {
+            'name': 'Livraison',
+            'image': 'cuisine/livraisonUber.webp',
+            'description': 'Commande ou réceptionne une livraison de repas !',
+            'points': -3,
+            'fun_text': '🚴 Ding dong ! Le resto vient à toi ce soir !',
+            'ad_text': 'Astuce budget : compare les prix entre Uber Eats, Deliveroo et Just Eat !',
+            'ad_link': 'https://www.ubereats.com/fr'
         }
     ],
     'buanderie': [
         {
-            'name': 'Lancer une machine',
-            'image': 'machine.jpg',
-            'description': 'Un linge propre, c\'est important !',
+            'name': 'Laver son linge',
+            'image': 'buanderie/machine.jpg',
+            'description': 'Lancer une machine de linge',
             'points': 4,
             'fun_text': '🧺 Trie bien tes couleurs, sinon gare aux chaussettes roses !',
             'ad_text': '30° suffisent pour 90% du linge ! Tu économises de l\'énergie et tes vêtements durent plus longtemps.',
             'ad_link': 'https://www.amazon.fr/s?k=lessive+ecologique'
         },
         {
-            'name': 'Plier le linge',
-            'image': 'linge.jpg',
-            'description': 'Range ton linge proprement !',
-            'points': 5,
+            'name': 'Sécher son linge',
+            'image': 'buanderie/linge etendu.webp',
+            'description': 'Étendre ou sécher le linge',
+            'points': 3,
+            'fun_text': '🌞 Le soleil est le meilleur sèche-linge !',
+            'ad_text': 'Le séchage à l\'air libre préserve tes vêtements et économise de l\'énergie.',
+            'ad_link': 'https://www.amazon.fr/s?k=etendoir+linge'
+        },
+        {
+            'name': 'Plier son linge',
+            'image': 'buanderie/linge plié.webp',
+            'description': 'Plier le linge propre',
+            'points': 4,
             'fun_text': '👕 Marie Kondo serait fière de toi !',
             'ad_text': 'La méthode KonMari : plie tes t-shirts en rectangle et range-les à la verticale. Tu verras tout d\'un coup d\'œil !',
             'ad_link': 'https://www.youtube.com/watch?v=K2VljzCC16g'
         },
         {
-            'name': 'Repasser',
-            'image': 'repasser.jpg',
-            'description': 'Des vêtements sans plis !',
-            'points': 7,
-            'fun_text': '👔 Repasser, c\'est méditer... en mode vapeur !',
-            'ad_text': 'Astuce pro : repasse tes chemises encore légèrement humides, les plis partent 2x plus vite !',
-            'ad_link': 'https://www.amazon.fr/s?k=fer+repasser'
+            'name': 'Ranger ses vêtements',
+            'image': 'buanderie/ranger ses vetements.webp',
+            'description': 'Ranger les vêtements dans l\'armoire',
+            'points': 3,
+            'fun_text': '🗄️ Une place pour chaque chose, chaque chose à sa place !',
+            'ad_text': 'Organisateurs de tiroirs : trouve ce que tu cherches en 2 secondes !',
+            'ad_link': 'https://www.amazon.fr/s?k=organisateur+tiroir'
         }
     ],
     'toilettes': [
         {
             'name': 'Nettoyer les toilettes',
-            'image': 'laver_toillettes.png',
-            'description': 'Des toilettes propres et hygiéniques !',
+            'image': 'wc/laver_toillettes.webp',
+            'description': '🚽 Nettoyer des toilettes ça vaut des points, personne n\'aime laver les chiottes… 😉 !',
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
@@ -832,27 +914,36 @@ TASKS_CONFIG = {
         },
         {
             'name': 'Changer le rouleau de papier toilette',
-            'image': 'jeter_rouleaux.png',
-            'description': 'Pense à vérifier le papier toilette !',
+            'image': 'wc/jeter_rouleaux.png',
+            'description': '🧻 Tu peux jeter les rouleaux ou en faire des ronds de serviettes ! 😄',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
             'ad_link': 'https://www.amazon.fr/s?k=papier+toilette+recycle'
         },
         {
-            'name': 'Nettoyer le lavabo',
-            'image': 'lavabo.jpg',
-            'description': 'Un lavabo propre et brillant !',
-            'points': 4,
-            'fun_text': '✨ Fais briller ce lavabo comme un miroir !',
-            'ad_text': 'Le citron : frotte la robinetterie avec un demi-citron, rince et admire le reflet !',
-            'ad_link': 'https://www.amazon.fr/s?k=anti+calcaire'
+            'name': 'Relever la cuvette',
+            'image': 'wc/relever la cuvette.Webp',
+            'description': '🎯 Relève la lunette des toilettes… Bien viser ; essaye un peu pour voir ! 😉',
+            'points': 1,
+            'fun_text': '🚽 Un petit geste, un grand respect !',
+            'ad_text': 'Astuce : un abattant WC à fermeture ralentie évite les claquements !',
+            'ad_link': 'https://www.amazon.fr/s?k=abattant+wc+fermeture+ralentie'
+        },
+        {
+            'name': 'Séjourner aux toilettes',
+            'image': 'wc/séjourner aux toilettes.webp',
+            'description': '📱 Eh oui, c\'est tentant de passer sa vie aux toilettes pour échapper aux corvées ! 😂',
+            'points': -3,
+            'fun_text': '📱 La bibliothèque préférée de la maison !',
+            'ad_text': 'Un repose-pieds physiologique améliore le confort et la santé intestinale !',
+            'ad_link': 'https://www.amazon.fr/s?k=repose+pieds+toilettes'
         }
     ],
     'chambre': [
         {
-            'name': 'Faire le lit',
-            'image': 'lit.png',
+            'name': 'Faire son lit',
+            'image': 'chambre ados/faire son lit.webp',
             'description': 'Fait un lit propre et bien rangé !',
             'points': 3,
             'fun_text': '🛏️ Un lit fait = une journée bien commencée !',
@@ -860,108 +951,252 @@ TASKS_CONFIG = {
             'ad_link': 'https://www.amazon.fr/s?k=draps+de+lit'
         },
         {
-            'name': 'Ranger les vêtements',
-            'image': 'ranger ses vetements.webp',
+            'name': 'Ranger sa chambre',
+            'image': 'chambre ados/ranger sa chambre.webp',
             'description': 'Une chambre bien rangée pour mieux dormir !',
-            'points': 4,
-            'fun_text': '👗 Bye bye la chaise à vêtements !',
+            'points': 5,
+            'fun_text': '✨ Une chambre rangée, c\'est un esprit apaisé !',
             'ad_text': 'La règle des 3 piles : à garder, à donner, à laver. En 10 min, ta chambre respire !',
             'ad_link': 'https://www.amazon.fr/s?k=organisateur+placard'
         },
         {
-            'name': 'Passer l\'aspirateur',
-            'image': 'Passer l\'aspirateur.webp',
-            'description': 'Un sol propre et sans poussière !',
-            'points': 5,
-            'fun_text': '🌪️ Aspire comme si tu chassais des moutons de poussière !',
-            'ad_text': 'Passe l\'aspi en deux directions perpendiculaires : tu attrapes 30% de poussière en plus !',
-            'ad_link': 'https://www.amazon.fr/s?k=aspirateur'
+            'name': 'Aérer sa chambre',
+            'image': 'chambre ados/aérer sa chambre.webp',
+            'description': 'Ouvre la fenêtre pour renouveler l\'air !',
+            'points': 2,
+            'fun_text': '💨 Un peu d\'air frais, ça fait du bien !',
+            'ad_text': 'Aérer 10 minutes par jour réduit l\'humidité et améliore la qualité de ton sommeil !',
+            'ad_link': 'https://www.amazon.fr/s?k=purificateur+air'
+        },
+        {
+            'name': 'Mettre ses vêtements dans la corbeille',
+            'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
+            'description': 'Ne laisse pas traîner tes vêtements sales !',
+            'points': 2,
+            'fun_text': '👕 Direction le panier à linge !',
+            'ad_text': 'Un panier à linge bien placé = moins de vêtements par terre !',
+            'ad_link': 'https://www.amazon.fr/s?k=panier+linge'
+        },
+        {
+            'name': 'Vider sa corbeille',
+            'image': 'chambre ados/vider sa corbeille à papier.webp',
+            'description': 'Vide ta poubelle pour garder une chambre propre !',
+            'points': 2,
+            'fun_text': '🗑️ Hop, à la poubelle !',
+            'ad_text': 'Une poubelle vide tous les 2-3 jours évite les mauvaises odeurs !',
+            'ad_link': 'https://www.amazon.fr/s?k=poubelle+chambre'
+        },
+        {
+            'name': 'Faire ses devoirs',
+            'image': 'chambre ados/Faire ses devoirs.webp',
+            'description': 'Travaille sérieusement pour réussir !',
+            'points': 8,
+            'fun_text': '📚 Le savoir, c\'est le pouvoir !',
+            'ad_text': 'La technique Pomodoro : 25 min de travail, 5 min de pause. Efficacité maximale !',
+            'ad_link': 'https://www.amazon.fr/s?k=fournitures+scolaires'
         }
     ],
     'chambre_ado': [
         {
-            'name': 'Ranger la Zone Ados',
-            'image': 'ranger ses vetements.webp',
-            'description': 'Range la chambre des ados et remets tout à sa place.',
-            'points': 4,
-            'ad_text': 'Accessoires cool pour ados !',
-            'ad_link': 'https://www.amazon.fr/s?k=accessoires+ado'
+            'name': 'Ranger sa chambre',
+            'image': 'chambre ados/Ranger sa chambre.webp',
+            'description': 'Une chambre bien rangée pour mieux dormir !',
+            'points': 5,
+            'fun_text': '✨ Une chambre rangée, c\'est un esprit apaisé !',
+            'ad_text': 'La règle des 3 piles : à garder, à donner, à laver. En 10 min, ta chambre respire !',
+            'ad_link': 'https://www.amazon.fr/s?k=organisateur+placard'
         },
         {
-            'name': 'Mettre le linge dans le panier',
-            'image': 'linge.jpg',
-            'description': 'Rassemble le linge sale et mets-le dans le panier.',
+            'name': 'Faire son lit',
+            'image': 'chambre ados/faire son lit.webp',
+            'description': 'Fait un lit propre et bien rangé !',
             'points': 3,
-            'ad_text': 'Paniers à linge design',
+            'fun_text': '🛏️ Un lit fait = une journée bien commencée !',
+            'ad_text': 'Astuce hôtel : tire d\'abord le drap du dessous bien tendu, puis borde les côtés. Résultat pro en 2 min !',
+            'ad_link': 'https://www.amazon.fr/s?k=draps+de+lit'
+        },
+        {
+            'name': 'Aérer sa chambre',
+            'image': 'chambre ados/aérer sa chambre.webp',
+            'description': 'Ouvre la fenêtre pour renouveler l\'air !',
+            'points': 2,
+            'fun_text': '💨 Un peu d\'air frais, ça fait du bien !',
+            'ad_text': 'Aérer 10 minutes par jour réduit l\'humidité et améliore la qualité de ton sommeil !',
+            'ad_link': 'https://www.amazon.fr/s?k=purificateur+air'
+        },
+        {
+            'name': 'Mettre ses vêtements dans la corbeille',
+            'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
+            'description': 'Ne laisse pas traîner tes vêtements sales !',
+            'points': 2,
+            'fun_text': '👕 Direction le panier à linge !',
+            'ad_text': 'Un panier à linge bien placé = moins de vêtements par terre !',
             'ad_link': 'https://www.amazon.fr/s?k=panier+linge'
         },
         {
-            'name': 'Faire le lit (ado)',
-            'image': 'lit.png',
-            'description': 'Un lit fait pour commencer la journée du bon pied.',
-            'points': 3,
-            'ad_text': 'Draps fun pour ados',
-            'ad_link': 'https://www.amazon.fr/s?k=draps+ado'
+            'name': 'Vider sa corbeille',
+            'image': 'chambre ados/vider sa corbeille à papier.webp',
+            'description': 'Vide ta poubelle pour garder une chambre propre !',
+            'points': 2,
+            'fun_text': '🗑️ Hop, à la poubelle !',
+            'ad_text': 'Une poubelle vide tous les 2-3 jours évite les mauvaises odeurs !',
+            'ad_link': 'https://www.amazon.fr/s?k=poubelle+chambre'
+        },
+        {
+            'name': 'Faire ses devoirs',
+            'image': 'chambre ados/Faire ses devoirs.webp',
+            'description': 'Travaille sérieusement pour réussir !',
+            'points': 8,
+            'fun_text': '📚 Le savoir, c\'est le pouvoir !',
+            'ad_text': 'La technique Pomodoro : 25 min de travail, 5 min de pause. Efficacité maximale !',
+            'ad_link': 'https://www.amazon.fr/s?k=fournitures+scolaires'
         }
     ],
     'salon': [
         {
-            'name': 'Passer l\'aspirateur au salon',
-            'image': 'Passer l\'aspirateur.webp',
-            'description': 'Un salon propre et accueillant !',
+            'name': 'Ranger le désordre',
+            'image': 'salon/Ranger le desordre du salon.webp',
+            'description': 'Ranger les objets qui traînent dans le salon',
+            'points': 4,
+            'fun_text': '🧹 Un salon rangé, c\'est un salon où on respire !',
+            'ad_text': 'Paniers et boîtes de rangement !',
+            'ad_link': 'https://www.amazon.fr/s?k=rangement+salon'
+        },
+        {
+            'name': 'Faire la poussière',
+            'image': 'salon/faire la poussière.webp',
+            'description': 'Enlever la poussière sur les meubles',
+            'points': 3,
+            'fun_text': '✨ Adieu la poussière, bonjour la propreté !',
+            'ad_text': 'Chiffons microfibres magiques !',
+            'ad_link': 'https://www.amazon.fr/s?k=chiffon+microfibre'
+        },
+        {
+            'name': 'Laver les sols',
+            'image': 'salon/laver les sols.webp',
+            'description': 'Nettoyer les sols du salon',
             'points': 5,
+            'fun_text': '🧼 Des sols qui brillent de mille feux !',
+            'ad_text': 'Serpillières et produits sols !',
+            'ad_link': 'https://www.amazon.fr/s?k=nettoyage+sol'
+        },
+        {
+            'name': 'Passer l\'aspirateur',
+            'image': 'salon/Passer l\'aspirateur.webp',
+            'description': 'Aspirer le salon pour un sol propre',
+            'points': 5,
+            'fun_text': '🌪️ La tornade du ménage passe par ici !',
             'ad_text': 'Aspirateurs performants en promo !',
             'ad_link': 'https://www.amazon.fr/s?k=aspirateur'
         },
         {
-            'name': 'Ranger le salon',
-            'image': 'ranger ses vetements.webp',
-            'description': 'Un salon bien organisé !',
-            'points': 4,
-            'ad_text': 'Solutions de rangement salon !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+salon'
+            'name': 'Laver les vitres',
+            'image': 'salon/laver les vitres.webp',
+            'description': 'Nettoyer les vitres du salon',
+            'points': 5,
+            'fun_text': '🪟 La vue sera encore plus belle !',
+            'ad_text': 'Produits vitres sans traces !',
+            'ad_link': 'https://www.amazon.fr/s?k=produit+vitres'
+        },
+        {
+            'name': 'Arroser les plantes',
+            'image': 'salon/arroser les plantes.webp',
+            'description': 'Prendre soin des plantes du salon',
+            'points': 2,
+            'fun_text': '🌱 Un peu d\'eau pour la jungle urbaine !',
+            'ad_text': 'Arrosoirs design et pratiques !',
+            'ad_link': 'https://www.amazon.fr/s?k=arrosoir'
         }
     ],
     'chambre_parentale': [
         {
-            'name': 'Faire le lit parental',
-            'image': 'lit.png',
-            'description': 'Un lit parental bien fait pour une chambre accueillante !',
+            'name': 'Faire son lit au carré',
+            'image': 'chambre parent/faire le lit.webp',
+            'description': 'Un lit impeccable comme à l\'armée',
             'points': 3,
-            'ad_text': 'Promo sur les draps de lit !',
+            'fun_text': '🛏️ Un lit au carré pour bien démarrer la journée !',
+            'ad_text': 'Linge de lit de qualité !',
             'ad_link': 'https://www.amazon.fr/s?k=draps+de+lit'
         },
         {
-            'name': 'Ranger la chambre parentale',
-            'image': 'ranger ses vetements.webp',
-            'description': 'Une chambre parentale bien rangée !',
+            'name': 'Changer les draps',
+            'image': 'chambre parent/changer les draps du lit.webp',
+            'description': 'Renouveler le linge de lit',
             'points': 4,
+            'fun_text': '🧺 Des draps frais pour de beaux rêves !',
+            'ad_text': 'Draps confortables en promo !',
+            'ad_link': 'https://www.amazon.fr/s?k=draps'
+        },
+        {
+            'name': 'Ranger ses vêtements',
+            'image': 'chambre parent/ranger ses vetements.webp',
+            'description': 'Ranger les vêtements dans l\'armoire',
+            'points': 3,
+            'fun_text': '👔 Une armoire bien organisée !',
             'ad_text': 'Organisateurs de placard !',
             'ad_link': 'https://www.amazon.fr/s?k=organisateur+placard'
         }
     ],
     'salle_bain': [
         {
-            'name': 'Nettoyer la douche',
-            'image': 'lavabo.jpg',
-            'description': 'Une douche propre et éclatante !',
-            'points': 6,
-            'ad_text': 'Produits anti-calcaire efficaces !',
-            'ad_link': 'https://www.amazon.fr/s?k=anti+calcaire'
+            'name': 'Se laver les dents',
+            'image': 'salle de bain/se laver es dents.webp',
+            'description': 'Un sourire éclatant',
+            'points': 1,
+            'fun_text': '🦷 Un sourire éclatant pour bien commencer la journée !',
+            'ad_text': 'Brosses à dents électriques !',
+            'ad_link': 'https://www.amazon.fr/s?k=brosse+dents+electrique'
         },
         {
-            'name': 'Nettoyer le miroir',
-            'image': 'lavabo.jpg',
-            'description': 'Un miroir sans traces !',
+            'name': 'Reboucher le dentifrice',
+            'image': 'salle de bain/reboucher le dentifrice.webp',
+            'description': 'Le dentifrice bien fermé',
+            'points': 1,
+            'fun_text': '🧴 Un tube bien fermé pour éviter le gaspillage !',
+            'ad_text': 'Dentifrices pour toute la famille !',
+            'ad_link': 'https://www.amazon.fr/s?k=dentifrice'
+        },
+        {
+            'name': 'Nettoyer ses cheveux',
+            'image': 'salle de bain/nettoyer les cheveux.webp',
+            'description': 'Enlever les cheveux du lavabo',
+            'points': 2,
+            'fun_text': '💇 Plus de cheveux dans le lavabo !',
+            'ad_text': 'Accessoires salle de bain !',
+            'ad_link': 'https://www.amazon.fr/s?k=accessoires+salle+de+bain'
+        },
+        {
+            'name': 'Nettoyer ses poils de barbe',
+            'image': 'salle de bain/nettoyer les poils de barbe.webp',
+            'description': 'Nettoyer les poils de barbe du lavabo',
+            'points': 2,
+            'fun_text': '🪒 La barbe de trois jours se range !',
+            'ad_text': 'Rasoirs et accessoires !',
+            'ad_link': 'https://www.amazon.fr/s?k=rasoir'
+        },
+        {
+            'name': 'Jeter les bouteilles vides',
+            'image': 'salle de bain/jeter les bouteilles de savon vide. wepb.webp',
+            'description': 'Vider les bouteilles vides',
+            'points': 2,
+            'fun_text': '♻️ Faire de la place pour les nouvelles !',
+            'ad_text': 'Organisateurs salle de bain !',
+            'ad_link': 'https://www.amazon.fr/s?k=rangement+salle+de+bain'
+        },
+        {
+            'name': 'Éponger l\'eau par terre',
+            'image': 'salle de bain/éponger le sol.webp',
+            'description': 'Sécher l\'eau au sol',
             'points': 3,
-            'ad_text': 'Produits pour vitres !',
-            'ad_link': 'https://www.amazon.fr/s?k=produit+vitres'
+            'fun_text': '💦 Plus de flaques pour éviter de glisser !',
+            'ad_text': 'Tapis de bain absorbants !',
+            'ad_link': 'https://www.amazon.fr/s?k=tapis+bain'
         }
     ],
     'garage': [
         {
             'name': 'Ranger les outils',
-            'image': 'Passer l\'aspirateur.webp',
+            'image': 'salon/Passer l\'aspirateur.webp',
             'description': 'Un garage bien organisé !',
             'points': 5,
             'ad_text': 'Solutions de rangement garage !',
@@ -969,7 +1204,7 @@ TASKS_CONFIG = {
         },
         {
             'name': 'Balayer le garage',
-            'image': 'Passer l\'aspirateur.webp',
+            'image': 'salon/Passer l\'aspirateur.webp',
             'description': 'Un garage propre !',
             'points': 4,
             'ad_text': 'Matériel de nettoyage !',
@@ -978,90 +1213,201 @@ TASKS_CONFIG = {
     ],
     'piece_bonus': [
         {
-            'name': 'Ranger la pièce bonus',
-            'image': 'ranger ses vetements.webp',
-            'description': 'Une pièce bonus bien organisée !',
-            'points': 4,
-            'ad_text': 'Solutions de rangement !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+maison'
+            'name': 'Penser au goûter',
+            'image': 'bonus/penser au gouter.webp',
+            'description': 'Préparer le goûter des enfants',
+            'points': 2,
+            'fun_text': '🍪 Le goûter c\'est important !',
+            'ad_text': 'Boîtes à goûter !',
+            'ad_link': 'https://www.amazon.fr/s?k=boite+gouter'
         },
         {
-            'name': 'Nettoyer la pièce bonus',
-            'image': 'Passer l\'aspirateur.webp',
-            'description': 'Une pièce bonus propre !',
+            'name': 'Signer les mots',
+            'image': 'bonus/signer les mots.webp',
+            'description': 'Signer les mots de l\'école',
+            'points': 2,
+            'fun_text': '✍️ Les devoirs administratifs !',
+            'ad_text': 'Fournitures scolaires !',
+            'ad_link': 'https://www.amazon.fr/s?k=fournitures+scolaires'
+        },
+        {
+            'name': 'Aller aux réunions d\'école',
+            'image': 'bonus/aller aux reunions d\'ecole.webp',
+            'description': 'Participer aux réunions scolaires',
             'points': 5,
-            'ad_text': 'Produits d\'entretien !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+entretien'
+            'fun_text': '🏫 Le suivi scolaire c\'est essentiel !',
+            'ad_text': 'Agendas pour parents !',
+            'ad_link': 'https://www.amazon.fr/s?k=agenda+parents'
+        },
+        {
+            'name': 'Prendre les RDV médicaux',
+            'image': 'bonus/prendre les rdv médicaux.webp',
+            'description': 'Gérer les rendez-vous médicaux',
+            'points': 3,
+            'fun_text': '🏥 La santé avant tout !',
+            'ad_text': 'Applications de santé !',
+            'ad_link': 'https://www.amazon.fr/s?k=carnet+santé'
+        },
+        {
+            'name': 'Organiser les anniversaires',
+            'image': 'bonus/organiser les anniversaire.webp',
+            'description': 'Préparer les fêtes d\'anniversaire',
+            'points': 5,
+            'fun_text': '🎉 Les anniversaires c\'est la fête !',
+            'ad_text': 'Décorations d\'anniversaire !',
+            'ad_link': 'https://www.amazon.fr/s?k=decoration+anniversaire'
+        },
+        {
+            'name': 'Déclarer les impôts',
+            'image': 'bonus/déclarer les impôts.webp',
+            'description': 'Gérer les déclarations fiscales',
+            'points': 6,
+            'fun_text': '💰 Les devoirs citoyens !',
+            'ad_text': 'Solutions de gestion administrative !',
+            'ad_link': 'https://www.amazon.fr/s?k=classeur+documents'
         }
     ],
     'chambre_enfant': [
         {
-            'name': 'Faire le lit enfant',
-            'image': 'lit.png',
-            'description': 'Un lit bien fait pour une bonne nuit !',
-            'points': 3,
-            'ad_text': 'Draps enfant colorés !',
-            'ad_link': 'https://www.amazon.fr/s?k=draps+enfant'
-        },
-        {
-            'name': 'Ranger les jouets',
-            'image': 'ranger ses vetements.webp',
-            'description': 'Une chambre bien organisée !',
+            'name': 'Ranger ses jouets',
+            'image': 'chambre enfant/ranger ses jouets.webp',
+            'description': 'Remettre de l\'ordre dans la chambre',
             'points': 4,
+            'fun_text': '🧸 Une chambre bien rangée pour mieux jouer !',
             'ad_text': 'Boîtes de rangement pour enfants !',
             'ad_link': 'https://www.amazon.fr/s?k=rangement+enfant'
         },
         {
-            'name': 'Passer l\'aspirateur chambre enfant',
-            'image': 'Passer l\'aspirateur.webp',
-            'description': 'Un sol propre et sans poussière !',
-            'points': 5,
-            'ad_text': 'Aspirateurs performants !',
-            'ad_link': 'https://www.amazon.fr/s?k=aspirateur'
+            'name': 'Lire 10 minutes par jour',
+            'image': 'chambre enfant/lire dix minutes par jour.webp',
+            'description': 'Un moment de lecture quotidien',
+            'points': 3,
+            'fun_text': '📚 Lire c\'est grandir !',
+            'ad_text': 'Livres pour enfants !',
+            'ad_link': 'https://www.amazon.fr/s?k=livres+enfant'
         }
     ],
     'chambre_bebe': [
         {
-            'name': 'Faire le lit bébé',
-            'image': 'lit.png',
-            'description': 'Un lit bébé douillet et confortable !',
-            'points': 3,
-            'ad_text': 'Draps bébé doux !',
-            'ad_link': 'https://www.amazon.fr/s?k=draps+bebe'
-        },
-        {
-            'name': 'Ranger les affaires bébé',
-            'image': 'ranger ses vetements.webp',
-            'description': 'Chambre bébé bien organisée !',
-            'points': 4,
-            'ad_text': 'Meubles de rangement bébé !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+bebe'
-        },
-        {
-            'name': 'Nettoyer la chambre bébé',
-            'image': 'Passer l\'aspirateur.webp',
-            'description': 'Une chambre bébé propre et hygiénique !',
+            'name': 'Donner le biberon',
+            'image': 'chambre bébé/Donner le biberon.webp',
+            'description': 'Nourrir bébé avec amour !',
             'points': 5,
-            'ad_text': 'Produits de nettoyage doux !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+nettoyage+bebe'
+            'fun_text': '🍼 L\'heure du biberon !',
+            'ad_text': 'Les meilleurs biberons anti-coliques pour bébé !',
+            'ad_link': 'https://www.amazon.fr/s?k=biberon+bebe'
+        },
+        {
+            'name': 'Changer les couches',
+            'image': 'chambre bébé/changer les couches.webp',
+            'description': 'Un bébé propre et confortable !',
+            'points': 4,
+            'fun_text': '👶 Change moi vite !',
+            'ad_text': 'Couches douces et absorbantes pour bébé !',
+            'ad_link': 'https://www.amazon.fr/s?k=couches+bebe'
+        },
+        {
+            'name': 'Faire dormir le bébé',
+            'image': 'chambre bébé/endormir le bébé.webp',
+            'description': 'Un dodo paisible pour bébé !',
+            'points': 6,
+            'fun_text': '😴 Dodo, l\'enfant do !',
+            'ad_text': 'Veilleuses et musiques douces pour endormir bébé !',
+            'ad_link': 'https://www.amazon.fr/s?k=veilleuse+bebe'
+        },
+        {
+            'name': 'Laver les biberons',
+            'image': 'chambre bébé/laver les biberons.webp',
+            'description': 'Des biberons propres et stérilisés !',
+            'points': 3,
+            'fun_text': '🧼 Propreté = santé !',
+            'ad_text': 'Stérilisateurs et goupillons pour biberons !',
+            'ad_link': 'https://www.amazon.fr/s?k=sterilisateur+biberon'
+        },
+        {
+            'name': 'Laver les vêtements',
+            'image': 'chambre bébé/laver les vêtements.webp',
+            'description': 'Des petits habits tout propres !',
+            'points': 4,
+            'fun_text': '👕 Lessive spéciale bébé !',
+            'ad_text': 'Lessives hypoallergéniques pour la peau de bébé !',
+            'ad_link': 'https://www.amazon.fr/s?k=lessive+bebe'
+        },
+        {
+            'name': 'Vider la poubelle',
+            'image': 'chambre bébé/vider la poubelle.webp',
+            'description': 'Vider la poubelle à couches !',
+            'points': 3,
+            'fun_text': '🗑️ Une chambre sans odeurs !',
+            'ad_text': 'Poubelles à couches anti-odeurs !',
+            'ad_link': 'https://www.amazon.fr/s?k=poubelle+couches'
         }
     ],
     'wc': [
         {
-            'name': 'Nettoyer les WC',
-            'image': 'laver_toillettes.png',
-            'description': 'Des WC propres et hygiéniques !',
+            'name': 'Nettoyer les toilettes',
+            'image': 'wc/laver_toillettes.webp',
+            'description': '🚽 Nettoyer des toilettes ça vaut des points, personne n\'aime laver les chiottes… 😉 !',
             'points': 6,
-            'ad_text': 'Produits WC efficaces !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+wc'
+            'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
+            'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
+            'ad_link': 'https://www.amazon.fr/s?k=produits+toilettes'
         },
         {
-            'name': 'Nettoyer le sol des WC',
-            'image': 'Passer l\'aspirateur.webp',
-            'description': 'Un sol impeccable !',
-            'points': 4,
-            'ad_text': 'Produits de nettoyage !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+nettoyage'
+            'name': 'Changer le rouleau de papier toilette',
+            'image': 'wc/jeter_rouleaux.png',
+            'description': '🧻 Tu peux jeter les rouleaux ou en faire des ronds de serviettes ! 😄',
+            'points': 2,
+            'fun_text': '🧻 Le héros silencieux de la maison !',
+            'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
+            'ad_link': 'https://www.amazon.fr/s?k=papier+toilette+recycle'
+        },
+        {
+            'name': 'Relever la cuvette',
+            'image': 'wc/relever la cuvette.Webp',
+            'description': '🎯 Relève la lunette des toilettes… Bien viser ; essaye un peu pour voir ! 😉',
+            'points': 1,
+            'fun_text': '🚽 Un petit geste, un grand respect !',
+            'ad_text': 'Astuce : un abattant WC à fermeture ralentie évite les claquements !',
+            'ad_link': 'https://www.amazon.fr/s?k=abattant+wc+fermeture+ralentie'
+        },
+        {
+            'name': 'Séjourner aux toilettes',
+            'image': 'wc/séjourner aux toilettes.webp',
+            'description': '📱 Eh oui, c\'est tentant de passer sa vie aux toilettes pour échapper aux corvées ! 😂',
+            'points': -3,
+            'fun_text': '📱 La bibliothèque préférée de la maison !',
+            'ad_text': 'Un repose-pieds physiologique améliore le confort et la santé intestinale !',
+            'ad_link': 'https://www.amazon.fr/s?k=repose+pieds+toilettes'
+        }
+    ],
+    'garage': [
+        {
+            'name': 'Laver la voiture',
+            'image': 'garage/carwash.webp',
+            'description': 'Une voiture propre et brillante !',
+            'points': 5,
+            'fun_text': '🚗 Ça brille de mille feux !',
+            'ad_text': 'Produits pour un lavage auto impeccable !',
+            'ad_link': 'https://www.amazon.fr/s?k=lavage+voiture'
+        },
+        {
+            'name': 'Prendre de l\'essence',
+            'image': 'garage/Prendre de l\'essence.webp',
+            'description': 'Faire le plein de carburant',
+            'points': 3,
+            'fun_text': '⛽ Le plein d\'énergie !',
+            'ad_text': 'Carte carburant pour économiser !',
+            'ad_link': 'https://www.amazon.fr/s?k=carte+carburant'
+        },
+        {
+            'name': 'Contrôle technique',
+            'image': 'garage/contrôle technique .webp',
+            'description': 'Passer le contrôle technique du véhicule',
+            'points': 6,
+            'fun_text': '🔧 Sécurité avant tout !',
+            'ad_text': 'Kit d\'entretien auto !',
+            'ad_link': 'https://www.amazon.fr/s?k=entretien+voiture'
         }
     ]
 }
@@ -1399,6 +1745,22 @@ CREATE TABLE IF NOT EXISTS users (
         won_date DATE DEFAULT CURRENT_DATE,
         used INTEGER DEFAULT 0,
         used_date DATE,
+        FOREIGN KEY(user_email) REFERENCES users(email),
+        FOREIGN KEY(house_id) REFERENCES houses(id)
+    )
+    """)
+
+    # Table pour le suivi des tâches de bébé (biberon, couches, sommeil)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS baby_tracking (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT NOT NULL,
+        house_id INTEGER NOT NULL,
+        task_type TEXT NOT NULL,
+        tracking_time TEXT NOT NULL,
+        bottle_ml INTEGER,
+        observations TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_email) REFERENCES users(email),
         FOREIGN KEY(house_id) REFERENCES houses(id)
     )
@@ -3558,7 +3920,7 @@ def mes_recompenses():
     
     conn.close()
     
-    response = make_response(render_template('mes_recompenses.html',
+    response = make_response(render_template('rewards_grid.html',
                          players=players_data,
                          current_user=session['user'],
                          hide_header=True))
@@ -5369,6 +5731,50 @@ def task_enhanced(cat, task_id):
 
             conn.commit()
             
+            # 👶 Sauvegarder les données de suivi bébé si présentes
+            tracking_time = request.form.get('tracking_time')
+            bottle_ml = request.form.get('bottle_ml')
+            observations = request.form.get('observations')
+            
+            if tracking_time:  # Si données de suivi présentes
+                try:
+                    # Déterminer le type de tâche bébé
+                    task_type = None
+                    if 'biberon' in task_name.lower():
+                        task_type = 'biberon'
+                    elif 'couche' in task_name.lower():
+                        task_type = 'couches'
+                    elif 'dormir' in task_name.lower():
+                        task_type = 'sommeil'
+                    
+                    if task_type:
+                        # Sauvegarder dans baby_tracking
+                        c.execute("""
+                            INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        """, (player_email, house_id, task_type, tracking_time, bottle_ml if bottle_ml else None, observations))
+                        conn.commit()
+                        
+                        # Créer un message détaillé pour le partenaire
+                        if task_type == 'biberon':
+                            ml_text = f" ({bottle_ml} ml)" if bottle_ml else ""
+                            message_text = f"🍼 {player_name} a donné le biberon à {tracking_time}{ml_text}"
+                            if observations:
+                                message_text += f"\n📝 {observations}"
+                        elif task_type == 'couches':
+                            message_text = f"👶 {player_name} a changé les couches à {tracking_time}"
+                            if observations:
+                                message_text += f"\n📝 {observations}"
+                        else:  # sommeil
+                            message_text = f"😴 {player_name} a couché bébé à {tracking_time}"
+                            if observations:
+                                message_text += f"\n📝 {observations}"
+                        
+                        create_system_message(house_id, message_text, 'baby_tracking')
+                except Exception as e:
+                    print(f"⚠️ Erreur sauvegarde baby tracking: {e}")
+                    # Ne pas bloquer la validation si le tracking échoue
+            
             # 🎯 Créer un message automatique pour notifier les autres joueurs
             try:
                 message_content = f"✅ {player_name} a validé '{task_name}' (+{final_task_points} pts)"
@@ -5736,6 +6142,139 @@ def api_test_reminder():
 
 
 # 💬 ========== FIN ROUTES API RAPPELS ==========
+
+# 👶 ========== ROUTES SUIVI BÉBÉ ==========
+
+@app.route('/baby_tracking/<cat>/<int:task_id>')
+def baby_tracking(cat, task_id):
+    """Page de suivi pour les tâches de bébé (biberon, couches, sommeil)"""
+    if 'user' not in session:
+        flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
+        return redirect(url_for('login'))
+    
+    normalized_cat = normalize_category(cat)
+    
+    if normalized_cat not in TASKS_CONFIG or task_id < 0 or task_id >= len(TASKS_CONFIG.get(normalized_cat, [])):
+        flash("Tâche introuvable.", "warning")
+        return redirect(url_for('categorie', cat=cat))
+    
+    task = TASKS_CONFIG[normalized_cat][task_id]
+    task_name = task.get('name')
+    
+    # Déterminer le type de tâche
+    task_type = None
+    if 'biberon' in task_name.lower():
+        task_type = 'biberon'
+    elif 'couche' in task_name.lower():
+        task_type = 'couches'
+    elif 'dormir' in task_name.lower() or 'sommeil' in task_name.lower():
+        task_type = 'sommeil'
+    
+    if not task_type:
+        flash("Cette tâche ne nécessite pas de suivi spécial.", "info")
+        return redirect(url_for('task_enhanced', cat=cat, task_id=task_id))
+    
+    # Récupérer l'historique des 5 derniers enregistrements
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    row = c.fetchone()
+    house_id = row[0] if row else None
+    
+    history = []
+    if house_id:
+        c.execute("""
+            SELECT user_email, tracking_time, bottle_ml, observations, 
+                   datetime(created_at, 'localtime') as created_at
+            FROM baby_tracking 
+            WHERE house_id=? AND task_type=?
+            ORDER BY created_at DESC 
+            LIMIT 5
+        """, (house_id, task_type))
+        history = [dict(zip(['user_email', 'tracking_time', 'bottle_ml', 'observations', 'created_at'], row)) 
+                   for row in c.fetchall()]
+    
+    conn.close()
+    
+    return render_template('baby_tracking.html', 
+                         task_name=task_name,
+                         task_type=task_type,
+                         category=cat,
+                         task_id=task_id,
+                         history=history)
+
+@app.route('/save_baby_tracking', methods=['POST'])
+def save_baby_tracking():
+    """Enregistre un suivi de tâche bébé et envoie un message au partenaire"""
+    if 'user' not in session:
+        flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
+        return redirect(url_for('login'))
+    
+    task_type = request.form.get('task_type')
+    task_name = request.form.get('task_name')
+    tracking_time = request.form.get('tracking_time')
+    bottle_ml = request.form.get('bottle_ml')
+    observations = request.form.get('observations', '')
+    category = request.form.get('category')
+    task_id = request.form.get('task_id')
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    # Récupérer house_id
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    row = c.fetchone()
+    house_id = row[0] if row else None
+    
+    if not house_id:
+        flash("Erreur : maison introuvable.", "danger")
+        conn.close()
+        return redirect(url_for('menu'))
+    
+    # Enregistrer le suivi
+    c.execute("""
+        INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (session['user'], house_id, task_type, tracking_time, bottle_ml, observations))
+    
+    # Créer le message pour le partenaire
+    user_name = session['user'].split('@')[0]
+    
+    if task_type == 'biberon':
+        message_text = f"🍼 {user_name} a donné le biberon à {tracking_time}"
+        if bottle_ml:
+            message_text += f" ({bottle_ml} ml)"
+        if observations:
+            message_text += f"\n📝 {observations}"
+    elif task_type == 'couches':
+        message_text = f"👶 {user_name} a changé les couches à {tracking_time}"
+        if observations:
+            message_text += f"\n📝 {observations}"
+    else:  # sommeil
+        message_text = f"😴 {user_name} a couché bébé à {tracking_time}"
+        if observations:
+            message_text += f"\n📝 {observations}"
+    
+    # Envoyer le message au(x) partenaire(s)
+    c.execute("SELECT email FROM users WHERE house_id=? AND email!=?", (house_id, session['user']))
+    partners = c.fetchall()
+    
+    from datetime import datetime
+    for partner in partners:
+        c.execute("""
+            INSERT INTO messages (sender, recipient, message_text, sent_at, house_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (session['user'], partner[0], message_text, datetime.now().isoformat(), house_id))
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f"✅ Suivi enregistré et partagé avec votre partenaire !", "success")
+    
+    # Valider aussi la tâche (ajouter les points)
+    return redirect(url_for('task_enhanced', cat=category, task_id=task_id))
+
+# 👶 ========== FIN ROUTES SUIVI BÉBÉ ==========
 
 
 if __name__ == '__main__':

@@ -127,8 +127,8 @@ body {
     border-radius: 20px;
     overflow: hidden;
     text-align: center;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
-    border: 1px solid rgba(166,211,220,0.35);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.08);
     transition: transform 0.3s, box-shadow 0.3s;
     animation: fadeInUp 0.6s ease-out;
     text-decoration: none;
@@ -137,8 +137,25 @@ body {
     flex-direction: column;
     position: relative;
 }
+
+/* Style pour les cartes avec points négatifs (livraison) */
+.task-card.negative-task {
+    background: linear-gradient(135deg, rgba(45, 45, 45, 0.95) 0%, rgba(30, 30, 30, 0.9) 100%);
+    border: 2px solid rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.task-card.negative-task:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+.task-card.negative-task .task-name {
+    color: white !important;
+}
+
 .task-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 40px rgba(253,174,84,0.25); }
-.task-card .task-name { font-weight: 800; color: var(--teal-dark); font-size: 16px; padding: 12px 10px; margin: 0; background: white; order: 1; }
+.task-card .task-name { font-weight: 800; color: var(--teal-dark); font-size: 16px; padding: 12px 10px; margin: 0; background: transparent !important; order: 1; }
 .task-card .task-image-container { 
     width: 100%; 
     height: 180px; 
@@ -180,6 +197,17 @@ body {
     animation: pulseAttention 2s ease-in-out infinite;
 }
 
+/* Style pour les points négatifs (livraison) */
+.points-badge.negative {
+    background: linear-gradient(135deg, rgba(45, 45, 45, 0.95) 0%, rgba(30, 30, 30, 0.9) 100%);
+    border: 2px solid rgba(0, 0, 0, 0.9);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.5), 
+        inset 0 2px 4px rgba(80, 80, 80, 0.4), 
+        inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+    animation: pulseAttentionNegative 2s ease-in-out infinite;
+}
+
 .points-badge::after {
     content: '';
     position: absolute;
@@ -199,6 +227,14 @@ body {
                 inset 0 2px 4px rgba(255,255,255,0.6),
                 inset 0 -2px 4px rgba(0,0,0,0.25);
     background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+}
+
+.points-badge.negative:hover {
+    transform: scale(1.15);
+    box-shadow: 
+        0 6px 18px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(80, 80, 80, 0.5), 
+        inset 0 -2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .points-badge::before {
@@ -232,6 +268,18 @@ body {
     50% {
         transform: scale(1.08);
         box-shadow: 0 8px 28px rgba(253,174,84,0.6), inset 0 2px 4px rgba(255,255,255,0.5);
+    }
+}
+
+/* Animation pour les points négatifs */
+@keyframes pulseAttentionNegative {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(80, 80, 80, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(80, 80, 80, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -554,7 +602,7 @@ window.addEventListener('DOMContentLoaded', function() {
     <p class="room-subtitle">Sélectionne une tâche à accomplir</p>
 </div>
 
-<div class="container-menu" style="max-width:900px; margin:0 auto; background:white; border-radius:30px; padding:40px 30px 50px; box-shadow:0 20px 60px rgba(0,0,0,0.10);">
+<div class="container-menu" style="max-width:900px; margin:0 auto; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius:30px; padding:40px 30px 50px; box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6); border: 2px solid rgba(255, 255, 255, 0.5);">
 
 
     <div class="tasks">
@@ -563,11 +611,11 @@ window.addEventListener('DOMContentLoaded', function() {
                 {% set task_name = item[0] %}
                 {% set task_image = item[1] %}
                 {% set task_points = (tasks_points[loop.index0] if tasks_points is defined and tasks_points and loop.index0 < tasks_points|length else (item[2] if item|length > 2 else 0)) %}
-                <a href="{{ url_for('task_enhanced', cat=category, task_id=loop.index0) }}" class="task-card">
+                <a href="{{ url_for('task_enhanced', cat=category, task_id=loop.index0) }}" class="task-card{% if task_points < 0 %} negative-task{% endif %}">
                     <p class="task-name">{{ task_name or 'Tâche sans nom' }}</p>
                     <div class="task-image-container">
                         <img src="{{ url_for('static', filename='images/' ~ (task_image if task_image else 'default.png')) }}" alt="{{ task_name or 'Tâche' }}">
-                        <span class="points-badge points-edit-trigger" role="button" tabindex="0" aria-label="{{ task_points }} points" data-action="{{ url_for('update_task_points', cat=category, task_id=loop.index0) }}" data-points="{{ task_points }}">{{ task_points }}</span>
+                        <span class="points-badge{% if task_points < 0 %} negative{% endif %} points-edit-trigger" role="button" tabindex="0" aria-label="{{ task_points }} points" data-action="{{ url_for('update_task_points', cat=category, task_id=loop.index0) }}" data-points="{{ task_points }}">{{ task_points }}</span>
                     </div>
                 </a>
             {% endfor %}

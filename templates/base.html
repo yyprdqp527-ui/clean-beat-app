@@ -605,7 +605,7 @@
     <script src="{{ url_for('static', filename='push-notifications.js') }}" defer></script>
 </head>
 <body>
-{% if not menu_page and not hide_header %}
+{% if menu_page %}
   {% include '_game_header.html' %}
 {% endif %}
 

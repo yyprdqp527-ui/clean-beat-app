@@ -1,66 +1,17 @@
 {% extends "base.html" %}
+{% set player_colors = ['rgba(74, 144, 226, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(39, 174, 96, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(231, 76, 60, 0.4)', 'rgba(26, 188, 156, 0.4)', 'rgba(243, 156, 18, 0.4)', 'rgba(52, 152, 219, 0.4)'] %}
 
 {% block title %}{{ task_name }} - Clean Beat (Avancé){% endblock %}
 
 {% block content %}
-<!-- Header avec flèche retour -->
-<div class="task-header">
-    <a href="{{ url_for('categorie', cat=category) }}" class="back-button" aria-label="Retour">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-    </a>
-    <h1 class="task-header-title">{{ task_name|truncate(25) }}</h1>
-    <div style="width:44px;"></div><!-- Espaceur pour centrer le titre -->
-</div>
 
 <style>
-    .task-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        background: linear-gradient(135deg, rgba(166,211,220,0.95) 0%, rgba(89,113,118,0.9) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 16px;
-        z-index: 1000;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    /* Masquer le header game */
+    .header-menu {
+        display: none !important;
     }
-    .back-button {
-        width: 44px;
-        height: 44px;
-        background: rgba(255,255,255,0.25);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        border: 2px solid rgba(255,255,255,0.3);
-    }
-    .back-button:active {
-        transform: scale(0.95);
-        background: rgba(255,255,255,0.35);
-    }
-    .task-header-title {
-        color: white;
-        font-size: 17px;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        text-align: center;
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        padding: 0 10px;
-    }
+    
+    /* Styles généraux */
     
     /* ========== STYLES IMAGE TÂCHE - RESPONSIVE & FIXE ========== */
     .task-image-container {
@@ -116,6 +67,20 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
+    /* Style pour les points négatifs (livraison) */
+    .task-points-badge.negative {
+        background: linear-gradient(135deg, 
+            rgba(45, 45, 45, 0.95) 0%, 
+            rgba(30, 30, 30, 0.9) 100%
+        );
+        border: 2px solid rgba(0, 0, 0, 0.9);
+        box-shadow: 
+            0 4px 16px rgba(0, 0, 0, 0.6), 
+            inset 0 2px 4px rgba(80, 80, 80, 0.4), 
+            inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+        animation: points-pulse-negative 2.5s ease-in-out infinite;
+    }
+    
     /* Animation de pulsation pour les points */
     @keyframes points-pulse {
         0%, 100% {
@@ -135,6 +100,25 @@
         }
     }
     
+    /* Animation de pulsation pour les points négatifs */
+    @keyframes points-pulse-negative {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.6), 
+                inset 0 2px 4px rgba(80, 80, 80, 0.4), 
+                inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+        }
+        50% {
+            transform: scale(1.08);
+            box-shadow: 
+                0 6px 24px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(0, 0, 0, 0.5),
+                inset 0 2px 4px rgba(80, 80, 80, 0.5), 
+                inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+        }
+    }
+    
     /* Effet hover sur la pastille */
     @media (hover: hover) {
         .task-points-badge:hover {
@@ -143,6 +127,15 @@
                 0 8px 28px rgba(255, 71, 87, 0.8),
                 0 0 30px rgba(255, 71, 87, 0.5),
                 inset 0 2px 4px rgba(255, 255, 255, 0.8);
+            animation: none;
+        }
+        
+        .task-points-badge.negative:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 
+                0 8px 28px rgba(0, 0, 0, 0.9),
+                0 0 30px rgba(0, 0, 0, 0.6),
+                inset 0 2px 4px rgba(80, 80, 80, 0.5);
             animation: none;
         }
     }
@@ -217,7 +210,7 @@
     .player-option-inner {
         padding: 14px 20px;
         border-radius: 16px;
-        border: 3px solid #a6d3dc;
+        border: 3px solid;
         background: linear-gradient(135deg, rgba(166,211,220,0.15) 0%, rgba(255,255,255,0.95) 100%);
         display: flex;
         flex-direction: column;
@@ -309,11 +302,58 @@
         }
     }
     
+    /* ========== STYLES FORMULAIRE BÉBÉ ========== */
+    #baby-tracking-form input[type="time"],
+    #baby-tracking-form input[type="number"],
+    #baby-tracking-form textarea {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    #baby-tracking-form input[type="time"]:focus,
+    #baby-tracking-form input[type="number"]:focus,
+    #baby-tracking-form textarea:focus {
+        outline: none;
+        border-color: rgba(166,211,220,0.8);
+        background: rgba(255,255,255,1);
+        box-shadow: 0 6px 20px rgba(166,211,220,0.4), 
+                    inset 0 1px 0 rgba(255,255,255,1);
+        transform: translateY(-1px);
+    }
+    
+    #baby-tracking-form input[type="time"]:hover,
+    #baby-tracking-form input[type="number"]:hover,
+    #baby-tracking-form textarea:hover {
+        border-color: rgba(166,211,220,0.6);
+        box-shadow: 0 6px 16px rgba(166,211,220,0.35);
+    }
+    
+    #baby-tracking-form input::placeholder,
+    #baby-tracking-form textarea::placeholder {
+        color: rgba(89,113,118,0.5);
+        font-style: italic;
+    }
+    
     /* Responsive mobile */
     @media (max-width: 480px) {
         .player-option-inner {
             padding: 12px 16px;
             width: 100px;
+        }
+        
+        #baby-tracking-form {
+            margin: 16px 12px !important;
+            padding: 20px 16px !important;
+            max-width: calc(100% - 24px) !important;
+        }
+        
+        #baby-tracking-form h4 {
+            font-size: 16px !important;
+        }
+        
+        #baby-tracking-form input,
+        #baby-tracking-form textarea {
+            font-size: 16px !important;
+            padding: 10px 14px !important;
         }
     }
     
@@ -478,12 +518,16 @@
     }
     
     .task-card {
-        background: #fff;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 16px;
         padding: 16px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+        border: 2px solid rgba(255, 255, 255, 0.5);
         width: 100%;
         box-sizing: border-box;
+        transition: all 0.3s ease;
     }
     
     /* Responsive mobile - centrage garanti */
@@ -513,8 +557,8 @@
     }
 </style>
 
-<!-- Espaceur pour le header fixe -->
-<div style="height: 80px;"></div>
+<!-- Bouton retour vers le menu -->
+<a href="{{ url_for('menu') }}" style="position:fixed;top:24px;left:24px;z-index:2001;width:56px;height:56px;background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.5);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#153036;font-size:28px;font-weight:bold;text-decoration:none;box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);transition:all 0.3s ease;" aria-label="Retour au menu">←</a>
 
 <div class="task-main-container">
 
@@ -525,10 +569,10 @@
             <h2 style="margin:0 0 12px 0;color:#153036;font-size:22px;font-weight:800;">{{ task_name }}</h2>
         </div>
         
-        {% if fun_text %}
-        <p style="text-align:center;color:#597176;font-size:15px;font-weight:600;margin:0 0 16px 0;">{{ fun_text }}</p>
-        {% elif task_description %}
+        {% if task_description %}
         <p style="text-align:center;color:#555;margin:0 0 16px 0;">{{ task_description }}</p>
+        {% elif fun_text %}
+        <p style="text-align:center;color:#597176;font-size:15px;font-weight:600;margin:0 0 16px 0;">{{ fun_text }}</p>
         {% endif %}
 
         <!-- Image centrée avec pastille de points - RESPONSIVE & FIXE -->
@@ -539,7 +583,7 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ task_name }}" class="task-image">
             {% endif %}
             <!-- Pastille rouge avec points en haut à droite -->
-            <span class="task-points-badge">{{ task_points|default(0) }}</span>
+            <span class="task-points-badge{% if task_points < 0 %} negative{% endif %}">{{ task_points|default(0) }}</span>
         </div>
 
         <!-- Encart Trucs & Astuces (pub premium) -->
@@ -564,6 +608,37 @@
         </div>
         {% endif %}
 
+        <!-- FORMULAIRE DE SUIVI BÉBÉ (si tâche = biberon/couches/sommeil) -->
+        {% set is_baby_task = 'biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower() %}
+        {% if is_baby_task %}
+        <div id="baby-tracking-form" style="margin:24px auto;max-width:520px;width:calc(100% - 32px);background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:24px;border-radius:16px;border:2px solid rgba(255,255,255,0.5);box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);box-sizing:border-box;">
+            <h4 style="text-align:center;color:#153036;margin-bottom:20px;font-weight:700;font-size:18px;">
+                {% if 'biberon' in task_name.lower() %}🍼 Suivi du biberon
+                {% elif 'couche' in task_name.lower() %}Suivi des couches
+                {% else %}😴 Suivi du sommeil{% endif %}
+            </h4>
+            
+            <div class="form-group" style="margin-bottom:18px;">
+                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🕐 Heure</label>
+                <input type="time" id="tracking_time" class="form-control" required style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:16px;color:#153036;font-weight:500;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;-webkit-appearance:none;appearance:none;">
+            </div>
+            
+            {% if 'biberon' in task_name.lower() %}
+            <div class="form-group" style="margin-bottom:18px;">
+                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🍼 Quantité (ml)</label>
+                <input type="number" id="bottle_ml" class="form-control" placeholder="Ex: 120" min="0" max="500" required style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:16px;color:#153036;font-weight:500;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;">
+            </div>
+            {% endif %}
+            
+            <div class="form-group" style="margin-bottom:18px;">
+                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">📝 Observations {% if 'biberon' not in task_name.lower() %}<span style="color:#e74c3c;font-weight:700;">*</span>{% endif %}</label>
+                <textarea id="observations" class="form-control" rows="3" placeholder="{% if 'biberon' in task_name.lower() %}Type de lait, appétit...{% elif 'couche' in task_name.lower() %}Selles, irritations...{% else %}Qualité du sommeil...{% endif %}" {% if 'biberon' not in task_name.lower() %}required{% endif %} style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:15px;color:#153036;line-height:1.5;resize:vertical;font-weight:400;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;"></textarea>
+            </div>
+            
+            <p style="text-align:center;font-size:13px;color:#597176;margin-top:12px;margin-bottom:0;font-weight:500;opacity:0.85;">✉️ Les infos seront envoyées à votre partenaire</p>
+        </div>
+        {% endif %}
+
         <!-- Sélecteur de joueur (affiché uniquement s'il y a plusieurs joueurs) -->
         {% if players|length > 1 %}
         <div style="margin-bottom:20px;">
@@ -573,8 +648,10 @@
             <form method="post" id="complete-form">
                 <div id="player-selector" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 10px;">
                     {% for player in players %}
+                    {% set player_idx = loop.index0 %}
+                    {% set color = player_colors[player_idx % 8] %}
                     <button type="submit" name="player_email" value="{{ player.email }}" class="player-option" data-email="{{ player.email }}" style="background:none;border:none;padding:0;margin:0;cursor:pointer;outline:none;">
-                        <div class="player-option-inner">
+                        <div class="player-option-inner" style="border-color: {{ color }};">
                             {% if player.avatar_file %}
                                 <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
                             {% elif player.avatar_url %}
@@ -802,6 +879,112 @@ document.addEventListener('DOMContentLoaded', function(){
     
     const playerButtons = document.querySelectorAll('.player-option');
     const form = document.getElementById('complete-form');
+    const formSolo = document.getElementById('complete-form-solo');
+    const taskName = '{{ task_name }}';
+    const category = '{{ cat }}';
+    const taskId = {{ task_id if task_id is defined else 0 }};
+    
+    // Vérifier si c'est une tâche de bébé nécessitant un suivi
+    const isBabyTask = taskName && (
+        taskName.toLowerCase().includes('biberon') || 
+        taskName.toLowerCase().includes('couche') || 
+        taskName.toLowerCase().includes('dormir')
+    );
+    
+    console.log('🍼 Tâche de bébé:', isBabyTask, '- Tâche:', taskName);
+    
+    // Fonction pour valider le formulaire de suivi bébé
+    function validateBabyTracking() {
+        if (!isBabyTask) return true;
+        
+        const trackingTime = document.getElementById('tracking_time');
+        const bottleMl = document.getElementById('bottle_ml');
+        const observations = document.getElementById('observations');
+        
+        if (trackingTime && !trackingTime.value) {
+            alert('⏰ Veuillez indiquer l\'heure');
+            trackingTime.focus();
+            return false;
+        }
+        
+        if (taskName.toLowerCase().includes('biberon')) {
+            if (bottleMl && !bottleMl.value) {
+                alert('🍼 Veuillez indiquer la quantité en ml');
+                bottleMl.focus();
+                return false;
+            }
+        }
+        
+        if (!taskName.toLowerCase().includes('biberon')) {
+            if (observations && !observations.value.trim()) {
+                alert('📝 Veuillez ajouter des observations');
+                observations.focus();
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    // Fonction pour ajouter les données de suivi au formulaire
+    function addBabyTrackingData(form) {
+        if (!isBabyTask) return;
+        
+        const trackingTime = document.getElementById('tracking_time');
+        const bottleMl = document.getElementById('bottle_ml');
+        const observations = document.getElementById('observations');
+        
+        if (trackingTime && trackingTime.value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'tracking_time';
+            input.value = trackingTime.value;
+            form.appendChild(input);
+        }
+        
+        if (bottleMl && bottleMl.value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'bottle_ml';
+            input.value = bottleMl.value;
+            form.appendChild(input);
+        }
+        
+        if (observations && observations.value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'observations';
+            input.value = observations.value;
+            form.appendChild(input);
+        }
+    }
+    
+    // Intercepter la soumission pour les tâches de bébé
+    if (isBabyTask) {
+        console.log('👶 Validation du formulaire de suivi activée');
+        
+        // Intercepter le formulaire multi-joueurs
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!validateBabyTracking()) return;
+                addBabyTrackingData(form);
+                console.log('✅ Formulaire validé avec suivi bébé');
+                form.submit();
+            });
+        }
+        
+        // Intercepter le formulaire solo
+        if (formSolo) {
+            formSolo.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!validateBabyTracking()) return;
+                addBabyTrackingData(formSolo);
+                console.log('✅ Formulaire validé avec suivi bébé');
+                formSolo.submit();
+            });
+        }
+    }
     
     if (playerButtons.length === 0) {
         console.log('ℹ️ Mode solo - pas de sélecteur de joueur');

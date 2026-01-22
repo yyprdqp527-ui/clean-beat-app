@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Suivi Bébé - {{ task_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header" style="background: linear-gradient(135deg, #a8e6cf 0%, #ffd3b6 100%);">
+            <h3 class="mb-0">
+                {% if task_type == 'biberon' %}🍼{% elif task_type == 'couches' %}👶{% else %}😴{% endif %}
+                {{ task_name }}
+            </h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('save_baby_tracking') }}">
+                <input type="hidden" name="task_type" value="{{ task_type }}">
+                <input type="hidden" name="task_name" value="{{ task_name }}">
+                <input type="hidden" name="category" value="{{ category }}">
+                <input type="hidden" name="task_id" value="{{ task_id }}">
+
+                <!-- Heure -->
+                <div class="mb-3">
+                    <label for="tracking_time" class="form-label">
+                        <strong>🕐 Heure</strong>
+                    </label>
+                    <input type="time" class="form-control" id="tracking_time" name="tracking_time" required>
+                </div>
+
+                <!-- Champ spécifique pour biberon : ml -->
+                {% if task_type == 'biberon' %}
+                <div class="mb-3">
+                    <label for="bottle_ml" class="form-label">
+                        <strong>🍼 Quantité (ml)</strong>
+                    </label>
+                    <input type="number" class="form-control" id="bottle_ml" name="bottle_ml" min="0" max="500" placeholder="Ex: 120" required>
+                </div>
+                {% endif %}
+
+                <!-- Observations (optionnel pour biberon, requis pour couches et sommeil) -->
+                <div class="mb-3">
+                    <label for="observations" class="form-label">
+                        <strong>📝 Observations</strong>
+                        {% if task_type != 'biberon' %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    <textarea class="form-control" id="observations" name="observations" rows="3" 
+                              placeholder="{% if task_type == 'biberon' %}Type de lait, appétit...{% elif task_type == 'couches' %}Selles, irritations, état de la couche...{% else %}Qualité du sommeil, réveil, humeur...{% endif %}"
+                              {% if task_type != 'biberon' %}required{% endif %}></textarea>
+                </div>
+
+                <!-- Boutons -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('categorie', cat=category) }}" class="btn btn-secondary">
+                        ← Retour
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        ✅ Valider et partager
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Historique des derniers enregistrements -->
+    {% if history %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">📊 Historique récent</h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for entry in history %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">
+                                🕐 {{ entry.tracking_time }}
+                                {% if entry.bottle_ml %}
+                                - 🍼 {{ entry.bottle_ml }} ml
+                                {% endif %}
+                            </h6>
+                            {% if entry.observations %}
+                            <p class="mb-1 text-muted small">{{ entry.observations }}</p>
+                            {% endif %}
+                            <small class="text-muted">Par {{ entry.user_email.split('@')[0] }}</small>
+                        </div>
+                        <small class="text-muted">{{ entry.created_at }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+.card-header {
+    color: #333;
+    font-weight: bold;
+}
+.form-control:focus {
+    border-color: #a8e6cf;
+    box-shadow: 0 0 0 0.2rem rgba(168, 230, 207, 0.25);
+}
+.btn-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    border: none;
+    font-weight: bold;
+}
+.btn-success:hover {
+    background: linear-gradient(135deg, #6dd5a3 0%, #7bc4e8 100%);
+}
+</style>
+{% endblock %}

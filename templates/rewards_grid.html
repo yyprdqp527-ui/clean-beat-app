@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mes Récompenses - Clean Beat</title>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#597176">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600,700,800&display=swap" rel="stylesheet">
+    <style>/* v3.0 - Design Stats Applied */
+        :root {
+            --teal-light: #A6D3DC;
+            --teal-medium: #89b4bb;
+            --teal-dark: #597176;
+            --dark: #153036;
+            --gold: #FDAE54;
+            --peach: #F4C68D;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* Container principal */
+        .rewards-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 80px 20px 20px 20px;
+        }
+
+        .header {
+            display: none;
+        }
+
+        .page-title {
+            color: var(--dark);
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .page-title span {
+            color: var(--gold);
+        }
+
+        .subtitle {
+            color: var(--teal-dark);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(253,174,84,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+            text-align: center;
+        }
+
+        .info-box-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #153036;
+            margin: 0 0 4px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-box-title span {
+            color: #153036;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            color: #597176;
+            font-weight: 400;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .info-box strong {
+            color: var(--dark);
+            font-weight: 800;
+        }
+        /* Section joueur - Style carte moderne */
+        .player-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 12px 40px rgba(89,113,118,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+
+        .player-section.current-user {
+            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(166,211,220,0.1) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 
+                0 25px 80px rgba(89,113,118,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        .player-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(166,211,220,0.3);
+        }
+
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(166,211,220,0.3), rgba(255,255,255,0.5));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            border: 3px solid white;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .player-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 18px rgba(89,113,118,0.15);
+        }
+
+        .player-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-name {
+            color: var(--dark);
+            font-size: 18px;
+            font-weight: 800;
+            flex: 1;
+        }
+
+        .player-name .you-badge {
+            background: linear-gradient(135deg, var(--gold), var(--peach));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(253,174,84,0.3);
+        }
+
+        .rewards-count {
+            background: linear-gradient(135deg, rgba(166,211,220,0.2), rgba(255,255,255,0.5));
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: var(--dark);
+            font-size: 13px;
+            font-weight: 700;
+            border: 2px solid rgba(166,211,220,0.3);
+            box-shadow: 0 4px 12px rgba(89,113,118,0.1);
+        }
+
+        .rewards-count.has-rewards {
+            background: linear-gradient(135deg, var(--gold), var(--peach));
+            color: white;
+            box-shadow: 0 4px 12px rgba(253, 174, 84, 0.3);
+            border: 2px solid rgba(253, 174, 84, 0.5);
+        }
+
+        /* Sous-sections */
+        .rewards-subsection {
+            margin-top: 15px;
+        }
+
+        .subsection-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reward-card {
+            background: linear-gradient(135deg, rgba(166,211,220,0.2), rgba(255,255,255,0.5));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            border: 2px solid rgba(166,211,220,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(89,113,118,0.1);
+        }
+
+        .reward-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(89,113,118,0.15);
+            border: 2px solid rgba(166,211,220,0.5);
+        }
+
+        .reward-info {
+            flex: 1;
+        }
+
+        .reward-text {
+            color: var(--dark);
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .reward-date {
+            color: var(--teal-dark);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .use-btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(253, 174, 84, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .use-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 18px rgba(253, 174, 84, 0.5);
+        }
+
+        .use-btn:active {
+            transform: scale(0.98);
+        }
+
+        .used-card {
+            background: linear-gradient(135deg, rgba(166,211,220,0.1), rgba(255,255,255,0.3));
+            opacity: 0.7;
+        }
+
+        .used-badge {
+            background: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 2px solid rgba(46, 204, 113, 0.4);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--teal-dark);
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        /* Bouton retour glassmorphisme */
+        .back-btn-glass {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 2001;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #153036;
+            font-size: 28px;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn-glass:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .back-btn-glass:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal confirmation - Style moderne */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(21,48,54,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 90%;
+            width: 320px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 
+                0 25px 80px rgba(89,113,118,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+
+        .modal-title {
+            color: var(--dark);
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .modal-reward {
+            background: linear-gradient(135deg, rgba(253,174,84,0.3), rgba(244,198,141,0.2));
+            border: 2px solid rgba(253,174,84,0.5);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(253,174,84,0.2);
+        }
+
+        .modal-text {
+            color: var(--teal-dark);
+            font-size: 14px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, var(--gold), var(--peach));
+            color: white;
+            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
+        }
+
+        .modal-btn.cancel {
+            background: linear-gradient(135deg, rgba(166,211,220,0.3), rgba(255,255,255,0.5));
+            color: var(--dark);
+            border: 2px solid rgba(166,211,220,0.3);
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .modal-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Toast - Style moderne */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--gold), var(--peach));
+            color: white;
+            padding: 15px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4);
+            z-index: 3000;
+            display: none;
+            font-weight: 700;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* Collapse pour les récompenses utilisées */
+        .used-rewards-toggle {
+            background: none;
+            border: none;
+            color: var(--teal-dark);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .used-rewards-toggle:hover {
+            color: var(--dark);
+        }
+
+        .used-rewards-content {
+            display: none;
+        }
+
+        .used-rewards-content.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .player-section {
+                padding: 20px;
+            }
+
+            .reward-card {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .use-btn {
+                width: 100%;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="page-title">Les <span>Récompenses</span></h1>
+        <p class="subtitle">Récompenses mystère de la maison</p>
+    </div>
+
+    <div class="info-box">
+        <h1 class="info-box-title">Les <span>Récompenses</span></h1>
+        <p style="margin-top: 12px;">
+            Chaque récompense est <strong>valable une seule fois</strong>.<br>
+            Utilisable <strong>quand tu veux</strong> !
+        </p>
+    </div>
+
+    {% for player in players %}
+    <div class="player-section {% if player.is_current_user %}current-user{% endif %}">
+        <div class="player-header">
+            <div class="player-avatar">
+                {% if player.avatar_file %}
+                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="">
+                {% else %}
+                    {{ player.avatar or '👤' }}
+                {% endif %}
+            </div>
+            <div class="player-name">
+                {{ player.name }}
+                {% if player.is_current_user %}<span class="you-badge">TOI</span>{% endif %}
+            </div>
+            <div class="rewards-count {% if player.available_rewards %}has-rewards{% endif %}">
+                {{ player.available_rewards|length }} dispo
+            </div>
+        </div>
+
+        <!-- Récompenses disponibles -->
+        {% if player.available_rewards %}
+        <div class="rewards-subsection">
+            <div class="subsection-title">Disponibles</div>
+            {% for reward in player.available_rewards %}
+            <div class="reward-card" data-id="{{ reward.id }}">
+                <div class="reward-info">
+                    <div class="reward-text">{{ reward.text }}</div>
+                    <div class="reward-date">Gagnée le {{ reward.date }}</div>
+                </div>
+                {% if player.is_current_user %}
+                <button class="use-btn" 
+                        data-reward-id="{{ reward.id }}" 
+                        data-reward-text="{{ reward.text }}"
+                        onclick="confirmUse(this.dataset.rewardId, this.dataset.rewardText)">
+                    Utiliser
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-message">
+            Pas encore de récompense disponible
+        </div>
+        {% endif %}
+
+        <!-- Récompenses utilisées (collapsed) -->
+        {% if player.used_rewards %}
+        <div class="rewards-subsection">
+            <button class="used-rewards-toggle" onclick="toggleUsed(this)">
+                <span>▶</span> Voir les {{ player.used_rewards|length }} récompense(s) utilisée(s)
+            </button>
+            <div class="used-rewards-content">
+                {% for reward in player.used_rewards %}
+                <div class="reward-card used-card">
+                    <div class="reward-info">
+                        <div class="reward-text">{{ reward.text }}</div>
+                        <div class="reward-date">Utilisée le {{ reward.used_date }}</div>
+                    </div>
+                    <span class="used-badge">Utilisée</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Bouton retour glassmorphism -->
+    <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+    <!-- Modal de confirmation -->
+    <div id="confirmModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 class="modal-title">Utiliser cette récompense ?</h2>
+            <div class="modal-reward" id="modalRewardText"></div>
+            <p class="modal-text">
+                Une fois utilisée, cette récompense sera retirée de ta liste.
+                Es-tu sûr(e) de vouloir l'utiliser maintenant ?
+            </p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeModal()">Annuler</button>
+                <button class="modal-btn confirm" id="confirmBtn">Oui, utiliser</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let currentRewardId = null;
+
+        function confirmUse(id, text) {
+            currentRewardId = id;
+            document.getElementById('modalRewardText').textContent = text;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            currentRewardId = null;
+        }
+
+        document.getElementById('confirmBtn').addEventListener('click', function() {
+            if (!currentRewardId) return;
+
+            console.log('[DEBUG] Utilisation récompense ID:', currentRewardId);
+            
+            fetch('/use_reward/' + currentRewardId, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => {
+                console.log('[DEBUG] Réponse HTTP:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] Données reçues:', data);
+                if (data.success) {
+                    closeModal();
+                    showToast('Récompense utilisée !');
+                    setTimeout(() => {
+                        console.log('[DEBUG] Rechargement de la page...');
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alert(data.message || 'Erreur');
+                }
+            })
+            .catch(error => {
+                console.error('[DEBUG] Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function toggleUsed(btn) {
+            const content = btn.nextElementSibling;
+            const arrow = btn.querySelector('span');
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                arrow.textContent = '▶';
+            } else {
+                content.classList.add('show');
+                arrow.textContent = '▼';
+            }
+        }
+    </script>
+</body>
+</html>

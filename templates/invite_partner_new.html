@@ -854,6 +854,17 @@ body {
         <div class="house-code-card">
             <div class="house-code-label">Code de ta maison</div>
             <div class="house-code-value" id="houseCode">{{ house_code }}</div>
+            
+            <!-- Lien d'invitation direct -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div class="house-code-label" style="font-size: 13px; margin-bottom: 8px;">📱 Lien d'invitation</div>
+                <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; font-size: 12px; word-break: break-all; color: rgba(255,255,255,0.9); font-family: monospace;">
+                    http://192.168.1.156:8000/join_house?code={{ house_code }}
+                </div>
+                <button onclick="copyInviteLink('{{ house_code }}')" style="margin-top: 8px; width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: white; font-size: 12px; cursor: pointer; transition: all 0.3s;">
+                    📋 Copier le lien
+                </button>
+            </div>
         </div>
         {% endif %}
         
@@ -1014,13 +1025,31 @@ const inviteMessage = `🏠 Rejoins-moi sur CleanBeat !
 
 Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🎮
 
-📱 Télécharge l'app et utilise ce code :
-🔑 ${houseCode}
+📱 Clique sur ce lien (aucune installation requise) :
+http://192.168.1.156:8000/join_house?code=${houseCode}
+
+🔑 Code de la maison : ${houseCode}
 
 À tout de suite ! 💪`;
 
 // URL de l'app (à adapter selon votre déploiement)
 const appUrl = window.location.origin;
+
+// Fonction pour copier le lien d'invitation
+function copyInviteLink(code) {
+    const link = `http://192.168.1.156:8000/join_house?code=${code}`;
+    navigator.clipboard.writeText(link).then(() => {
+        // Animation de confirmation
+        event.target.innerHTML = '✅ Lien copié !';
+        event.target.style.background = 'rgba(76, 175, 80, 0.3)';
+        setTimeout(() => {
+            event.target.innerHTML = '📋 Copier le lien';
+            event.target.style.background = 'rgba(255,255,255,0.2)';
+        }, 2000);
+    }).catch(err => {
+        alert('Erreur lors de la copie : ' + err);
+    });
+}
 
 // Partager l'invitation
 async function shareInvitation() {

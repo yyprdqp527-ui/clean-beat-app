@@ -1,9 +1,21 @@
 {% extends "base.html" %}
+{% set hide_header = true %}
 
 {% block title %}{% if task %}Modifier{% else %}Créer{% endif %} une mission - {{ category_name }}{% endblock %}
 
 {% block page_styles %}
 <style>
+/* Forcer le masquage du header */
+.header-menu,
+div.header-menu,
+body > .header-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
 /* Bouton retour glassmorphism */
 .back-btn-glass {
     position: fixed;
@@ -58,38 +70,6 @@ body {
     margin: 0 auto;
     padding: 20px;
     padding-bottom: 120px;
-}
-
-/* Header de la pièce */
-.room-header {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    text-align: center;
-    border: 2px solid rgba(253,174,84,0.3);
-    box-shadow: 0 8px 32px rgba(89,113,118,0.15);
-}
-
-.room-header .room-icon {
-    font-size: 48px;
-    margin-bottom: 8px;
-    display: block;
-}
-
-.room-header .room-name {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--dark);
-    margin: 0;
-}
-
-.room-header .room-subtitle {
-    font-size: 14px;
-    color: var(--teal-dark);
-    margin-top: 4px;
 }
 
 /* Card formulaire glassmorphism */
@@ -403,20 +383,42 @@ body {
 {% endblock %}
 
 {% block content %}
+<style>
+/* Masquage forcé du header game */
+.header-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    top: -9999px !important;
+}
+</style>
+
+<script>
+// Masquer immédiatement le header sans attendre le DOM
+(function() {
+    const hideHeader = function() {
+        const header = document.querySelector('.header-menu');
+        if (header) {
+            header.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important;';
+            header.remove();
+        }
+    };
+    // Exécuter immédiatement
+    hideHeader();
+    // Et aussi au chargement du DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hideHeader);
+    }
+})();
+</script>
+
 <!-- Bouton retour glassmorphism -->
 <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
 
-<!-- Espaceur pour header fixe -->
-<div style="height: calc(var(--header-total-height, 80px) + var(--header-spacing-bottom, 4px));"></div>
-
 <div class="add-task-container">
-    <!-- Header de la pièce -->
-    <div class="room-header">
-        <span class="room-icon">{{ category_icon }}</span>
-        <h1 class="room-name">{{ category_name }}</h1>
-        <p class="room-subtitle">{% if task %}Modifier la mission{% else %}Nouvelle mission{% endif %}</p>
-    </div>
-
     <!-- Formulaire -->
     <div class="add-task-card">
         <h2>{% if task %}✏️ Modifier ta mission{% else %}✨ Crée ta mission{% endif %}</h2>
@@ -572,5 +574,17 @@ function confirmDelete() {
         document.getElementById('deleteForm').submit();
     }
 }
+
+// Masquer le header au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const header = document.querySelector('.header-menu');
+    if (header) {
+        header.style.display = 'none';
+        header.style.visibility = 'hidden';
+        header.style.opacity = '0';
+        header.style.height = '0';
+        header.remove(); // Supprimer complètement l'élément
+    }
+});
 </script>
 {% endblock %}
