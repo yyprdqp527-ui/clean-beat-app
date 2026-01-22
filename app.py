@@ -6013,6 +6013,61 @@ def test_player_selector():
     return render_template('test_player_selector.html')
 
 
+@app.route('/api/players_points')
+def api_players_points():
+    """
+    API pour récupérer les points de tous les joueurs de la maison en temps réel.
+    Utilisé pour mettre à jour automatiquement l'affichage sans rafraîchir la page.
+    """
+    if 'user' not in session:
+        return {'players': []}, 200
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    try:
+        # Récupérer house_id de l'utilisateur
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return {'players': []}, 200
+        
+        house_id = row[0]
+        
+        # Récupérer les points de tous les joueurs avec get_house_players_points
+        players = get_house_players_points(house_id)
+        
+        # Formater pour la réponse API
+        players_data = []
+        for p in players:
+            players_data.append({
+                'email': p['email'],
+                'name': p['name'],
+                'avatar': p.get('avatar'),
+                'avatar_url': p.get('avatar_url'),
+                'avatar_file': p.get('avatar_file'),
+                'points': p['points'],
+                'daily_points': p.get('daily_points', 0),
+                'daily_tasks': p.get('daily_tasks', 0)
+            })
+        
+        # Récupérer la santé de la maison
+        c.execute("SELECT health FROM houses WHERE id=?", (house_id,))
+        health_row = c.fetchone()
+        house_health = health_row[0] if health_row and health_row[0] is not None else 100
+        
+        return {
+            'players': players_data,
+            'house_health': house_health
+        }, 200
+        
+    except Exception as e:
+        print(f"Erreur API players_points: {e}")
+        return {'players': [], 'error': str(e)}, 500
+    finally:
+        conn.close()
+
+
 # 🔔 ========== ROUTES API PUSH NOTIFICATIONS ==========
 
 @app.route('/api/push/subscribe', methods=['POST'])

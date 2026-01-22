@@ -440,7 +440,7 @@
             <!-- Joueurs avec VS -->
             <div class="players-header">
                 {% for player in players %}
-                    <div class="player-header {% if player.email == session.get('user') %}current-player{% endif %}">
+                    <div class="player-header {% if player.email == session.get('user') %}current-player{% endif %}" data-email="{{ player.email }}">
                         <div class="avatar-progress-row">
                             <div class="player-avatar-header">{{ player.avatar }}</div>
                             <div class="player-progress" title="{{ player.percentage|default(0) }}%">
@@ -449,7 +449,7 @@
                         </div>
                         <div class="player-info-header">
                             <div class="player-name-header">{{ player.name }}</div>
-                            <div class="player-points-header">{{ player.points }} pts</div>
+                            <div class="player-points-header">{{ player.daily_points|default(player.points, true) }} pts</div>
                         </div>
                     </div>
                     {% if not loop.last and players|length > 1 %}
@@ -522,7 +522,100 @@
             });
         }
 
-        // Vérifier les changements de points périodiquement
+        // 🔄 MISE À JOUR AUTOMATIQUE DES POINTS EN TEMPS RÉEL
+        let lastPointsData = {};
+        
+        function updatePlayersPoints() {
+            fetch('/api/players_points')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.players && data.players.length > 0) {
+                        data.players.forEach(player => {
+                            // Trouver l'élément du joueur
+                            const playerElement = document.querySelector(`.player-header[data-email="${player.email}"]`);
+                            if (!playerElement) return;
+                            
+                            // Mettre à jour les points
+                            const pointsElement = playerElement.querySelector('.player-points-header');
+                            if (pointsElement) {
+                                const currentText = pointsElement.textContent.trim();
+                                const oldPoints = parseInt(currentText.replace(/\D/g, '')) || 0;
+                                const newPoints = player.daily_points || 0;
+                                
+                                if (oldPoints !== newPoints) {
+                                    // Animer le changement
+                                    pointsElement.style.transform = 'scale(1.3)';
+                                    pointsElement.style.color = '#28a745';
+                                    pointsElement.textContent = newPoints + ' pts';
+                                    
+                                    // Afficher l'animation +points si augmentation
+                                    if (newPoints > oldPoints) {
+                                        const diff = newPoints - oldPoints;
+                                        showPointsAnimation(playerElement, diff);
+                                    }
+                                    
+                                    setTimeout(() => {
+                                        pointsElement.style.transform = 'scale(1)';
+                                        pointsElement.style.color = '';
+                                    }, 500);
+                                }
+                            }
+                            
+                            // Mettre à jour la barre de progression
+                            const progressFill = playerElement.querySelector('.player-progress-fill');
+                            if (progressFill && data.players.length > 0) {
+                                // Calculer le pourcentage par rapport au total
+                                const totalPoints = data.players.reduce((sum, p) => sum + (p.daily_points || 0), 0);
+                                const percentage = totalPoints > 0 ? Math.round((player.daily_points / totalPoints) * 100) : 0;
+                                progressFill.style.height = Math.max(5, Math.min(100, percentage)) + '%';
+                                progressFill.setAttribute('data-percentage', percentage);
+                            }
+                        });
+                        
+                        // Mettre à jour la santé de la maison
+                        if (data.house_health !== undefined) {
+                            const healthFills = document.querySelectorAll('.health-fill');
+                            healthFills.forEach(fill => {
+                                fill.style.width = Math.max(0, Math.min(100, data.house_health)) + '%';
+                            });
+                        }
+                    }
+                })
+                .catch(err => console.error('Erreur mise à jour points:', err));
+        }
+        
+        // Fonction pour afficher l'animation +points
+        function showPointsAnimation(playerElement, points) {
+            const bubble = document.createElement('div');
+            bubble.className = 'points-bubble';
+            bubble.textContent = '+' + points;
+            bubble.style.cssText = `
+                position: absolute;
+                top: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                color: #333;
+                font-weight: bold;
+                font-size: 1rem;
+                padding: 5px 12px;
+                border-radius: 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: pointsFloat 2s ease-out forwards;
+            `;
+            playerElement.style.position = 'relative';
+            playerElement.appendChild(bubble);
+            setTimeout(() => bubble.remove(), 2000);
+        }
+        
+        // ⚡ Vérifier toutes les 3 secondes pour synchronisation quasi-instantanée
+        const updateInterval = setInterval(updatePlayersPoints, 3000);
+        console.log('✅ Polling points: toutes les 3 secondes');
+        
+        // Première mise à jour après 1 seconde
+        setTimeout(updatePlayersPoints, 1000);
+        
         let lastPoints = [];
         function checkPointsChanges() {
             const pointElements = document.querySelectorAll('.player-points-header');
