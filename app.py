@@ -6383,4 +6383,14 @@ if __name__ == '__main__':
     # Forcer le port 8000
     chosen_port = 8000
     print(f"Démarrage de CleanBeat sur le port {chosen_port}...")
-    app.run(debug=True, host='0.0.0.0', port=chosen_port, use_reloader=False)
+    print("⚠️  Mode développement : pour une meilleure stabilité, utilisez un serveur WSGI en production")
+    
+    # Paramètres optimisés pour gérer plusieurs connexions
+    app.run(
+        debug=True, 
+        host='0.0.0.0', 
+        port=chosen_port, 
+        use_reloader=False,
+        threaded=True,  # Active le mode multi-thread
+        request_handler=None  # Utilise le handler par défaut mais en mode thread
+    )
