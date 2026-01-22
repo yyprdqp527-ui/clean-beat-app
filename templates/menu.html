@@ -2261,8 +2261,8 @@
                         }, 4000);
                     }
                     
-                    // Vérifier les nouvelles tâches toutes les 60 secondes (au lieu de 10)
-                    setInterval(checkForNewTasks, 60000);
+                    // Vérifier les nouvelles tâches toutes les 5 minutes (optimisé)
+                    setInterval(checkForNewTasks, 300000);
                     
                     // Initialiser le compteur
                     fetch('/api/daily_tasks')
@@ -2272,8 +2272,8 @@
                         })
                         .catch(err => console.error('Erreur chargement tâches:', err));
                     
-                    // Recharger toutes les 2 minutes pour voir les nouvelles tâches (au lieu de 30s)
-                    setInterval(loadRecentTasks, 120000);
+                    // Recharger toutes les 5 minutes pour voir les nouvelles tâches (optimisé)
+                    setInterval(loadRecentTasks, 300000);
                     
                     // Applique la largeur à la/aux barre(s) de santé
                     document.querySelectorAll('.health-fill').forEach(function(fill){
