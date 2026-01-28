@@ -5,21 +5,35 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CleanBeat — Demo</title>
   <meta name="description" content="Démo hors‑ligne de CleanBeat (mock)">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f6fbfc;color:#153036;padding:24px}
-    .card{background:white;padding:16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.08);max-width:720px;margin:18px auto}
-    h1{font-size:20px;margin-bottom:8px}
-    .players{display:flex;flex-wrap:wrap;gap:10px}
-    .player{flex:1 1 140px;padding:8px;border-radius:10px;background:linear-gradient(180deg,#fff,#f0fbff);text-align:center}
-    .points{font-weight:700;font-size:18px;color:#0b6b6f}
-    button{padding:8px 12px;border-radius:8px;border:0;background:#17a2b8;color:white;cursor:pointer}
-    .hint{font-size:13px;color:#556}
+    :root{--teal:#A6D3DC;--teal-dark:#597176;--accent:#17a2b8}
+    body{font-family:'Montserrat', Arial,Helvetica,sans-serif;background:linear-gradient(135deg,var(--teal) 0%, #ffffff 100%);color:#153036;padding:24px}
+    .card{background:white;padding:18px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.08);max-width:820px;margin:22px auto}
+    header.demo-header{display:flex;align-items:center;gap:14px;padding:8px 12px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(240,250,252,0.7));}
+    header.demo-header img{width:64px;height:64px;border-radius:10px;object-fit:cover}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 14px;color:#345}
+    .players{display:flex;flex-wrap:wrap;gap:12px}
+    .player{flex:1 1 160px;padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#f7fdff);text-align:center;box-shadow:0 6px 18px rgba(10,40,40,0.03)}
+    .player img{width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:6px}
+    .points{font-weight:700;font-size:18px;color:var(--teal-dark)}
+    button{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer}
+    .hint{font-size:13px;color:#556;margin-top:8px}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>CleanBeat — Démo interactive (mock)</h1>
     <p class="hint">Cette page fonctionne hors‑ligne après un chargement initial&nbsp;: ouvre-la une fois, puis déconnecte‑toi et l'application restera disponible.</p>
+
+    <header class="demo-header">
+      <img src="https://raw.githubusercontent.com/yyprdqp527-ui/clean-beat-app/main/static/avatars/dicebear_lorelei_default.svg" alt="logo">
+      <div>
+        <h1>CleanBeat — Démo interactive</h1>
+        <div class="lead">Prototype de l'interface — présentation investisseurs</div>
+      </div>
+    </header>
 
     <div id="players" class="players">Chargement…</div>
 
@@ -48,7 +62,9 @@
       container.innerHTML = '';
       players.forEach((p,idx)=>{
         const el = document.createElement('div'); el.className='player';
-        el.innerHTML = `<div style="font-size:14px">${p.name}</div><div class="points">${p.points} pts</div>`;
+        // choose an avatar from the repo avatars folder (raw URL)
+        const avatar = p.avatar || 'https://raw.githubusercontent.com/yyprdqp527-ui/clean-beat-app/main/static/avatars/avatar_boy_1.svg';
+        el.innerHTML = `<img src="${avatar}" alt="${p.name}"><div style="font-size:14px">${p.name}</div><div class="points">${p.points} pts</div>`;
         container.appendChild(el);
       });
       window._demoPlayers = players;
