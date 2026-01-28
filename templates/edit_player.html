@@ -146,29 +146,7 @@
         object-fit: cover;
     }
     
-    .camera-overlay {
-        position: absolute;
-        bottom: -5px;
-        right: -5px;
-        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
-        color: white;
-        border-radius: 12px;
-        width: 38px;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
-        border: 3px solid white;
-        transition: all 0.3s ease;
-    }
-    
-    .camera-overlay:hover {
-        transform: scale(1.1);
-    }
+    /* camera-overlay removed: no edit icon inside avatar frame */
     
     /* Boutons photo/avatar */
     .photo-options {
@@ -652,6 +630,7 @@
                 <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
                 <input type="hidden" id="selectedPhoto" name="photo_data">
                 <input type="hidden" id="selectedAvatar" name="avatar">
+                <input type="hidden" id="avatarStyle" name="avatar_style">
                 <input type="hidden" name="avatar_type" id="avatar-type" value="">
             </div>
 
@@ -747,96 +726,71 @@
     
     // Charger les avatars depuis l'API
     async function loadAvatars() {
-        console.log('Chargement des avatars...');
+        console.log('Chargement des avatars DiceBear...');
         try {
-            const response = await fetch('/api/avatars');
-            console.log('Réponse reçue:', response.status);
-            const rawData = await response.json();
-            console.log('Données brutes:', rawData);
+            const response = await fetch('/static/avatars/avatars_config.json');
+            if (!response.ok) throw new Error('Impossible de charger la config');
             
-            // Transformer les données pour le format attendu
+            const config = await response.json();
+            
             avatarsData = {
-                images: [],
-                emojis: {},
-                categoryNames: {} // Pour stocker les noms lisibles
+                categories: config.categories || [],
+                categoryNames: {},
+                categoryType: {},
+                dicebearSeeds: {}
             };
             
-            // Extraire les noms de fichiers des images
-            if (rawData.images && rawData.images.length > 0) {
-                avatarsData.images = rawData.images.map(img => img.file || img);
-                console.log('Images chargées:', avatarsData.images.length);
-            }
+            config.categories.forEach(cat => {
+                avatarsData.categoryNames[cat.id] = cat.name;
+                avatarsData.categoryType[cat.id] = cat.type;
+                
+                if (cat.type === 'dicebear') {
+                    avatarsData.dicebearSeeds[cat.id] = generateDiceBearSeeds(cat.count || 20);
+                }
+            });
             
-            // Transformer categories en emojis (utiliser id comme clé)
-            if (rawData.categories && rawData.categories.length > 0) {
-                rawData.categories.forEach(cat => {
-                    if (cat.id && cat.items && cat.type === 'emoji') {
-                        // Utiliser l'id comme clé (emoji_people, emoji_animals, etc.)
-                        avatarsData.emojis[cat.id] = cat.items.map(item => item.emoji || item);
-                        // Stocker le nom lisible
-                        avatarsData.categoryNames[cat.id] = cat.name;
-                        console.log('Catégorie emoji ajoutée:', cat.id, 'avec', cat.items.length, 'items');
-                    }
-                });
-            }
-            
-            console.log('Avatars transformés:', avatarsData);
+            console.log('Avatars chargés:', avatarsData);
             
             // Créer les onglets
             createCategoryTabs();
             
             // Afficher la première catégorie
-            displayCategory('images');
+            if (config.categories && config.categories.length > 0) {
+                displayCategory(config.categories[0].id);
+            }
         } catch (error) {
             console.error('Erreur chargement avatars:', error);
             document.getElementById('avatarsContent').innerHTML = '<p style="text-align:center;color:#666;">Erreur de chargement des avatars</p>';
         }
     }
     
+    function generateDiceBearSeeds(count) {
+        const seeds = [];
+        for (let i = 0; i < count; i++) {
+            const seed = Math.random().toString(36).substring(2, 10);
+            seeds.push(seed);
+        }
+        return seeds;
+    }
+    
     function createCategoryTabs() {
         const tabsContainer = document.getElementById('categoryTabs');
         tabsContainer.innerHTML = '';
         
-        console.log('Création des onglets. Images:', avatarsData.images?.length, 'Emojis:', Object.keys(avatarsData.emojis || {}).length);
-        
-        // Ajouter onglet Photos (PNG)
-        if (avatarsData.images && avatarsData.images.length > 0) {
-            const tab = document.createElement('button');
-            tab.type = 'button';
-            tab.className = 'category-tab active';
-            tab.dataset.category = 'images';
-            tab.textContent = '📸 Photos';
-            tab.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Clic sur Photos');
-                selectCategory('images');
-            });
-            tabsContainer.appendChild(tab);
-        }
-        
-        // Ajouter onglets Emojis
-        if (avatarsData.emojis && Object.keys(avatarsData.emojis).length > 0) {
-            Object.keys(avatarsData.emojis).forEach((catId, index) => {
+        if (avatarsData.categories && avatarsData.categories.length > 0) {
+            avatarsData.categories.forEach((cat, index) => {
                 const tab = document.createElement('button');
                 tab.type = 'button';
-                tab.className = 'category-tab';
-                tab.dataset.category = catId;
-                
-                // Utiliser le nom stocké ou un nom par défaut
-                const catName = avatarsData.categoryNames[catId] || catId;
-                tab.textContent = catName;
+                tab.className = 'category-tab' + (index === 0 ? ' active' : '');
+                tab.dataset.category = cat.id;
+                tab.textContent = cat.name;
                 tab.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Clic sur', catId);
-                    selectCategory(catId);
+                    selectCategory(cat.id);
                 });
                 tabsContainer.appendChild(tab);
-                console.log('Onglet ajouté:', catName);
             });
-        } else {
-            console.log('Pas de catégories emoji trouvées');
         }
     }
     
@@ -858,55 +812,55 @@
             spinner.classList.remove('active');
         }
         
-        let html = '<div class="avatars-section">';
+        const catType = avatarsData.categoryType[category];
+        const catName = avatarsData.categoryNames[category] || category;
+        const categoryData = avatarsData.categories.find(c => c.id === category);
         
-        if (category === 'images' && avatarsData && avatarsData.images) {
-            html += '<div class="section-title">📸 Photos disponibles</div>';
-            html += '<div class="avatars-grid">';
-            avatarsData.images.forEach((img, index) => {
-                const isSelected = selectedAvatarData && selectedAvatarData.type === 'image' && selectedAvatarData.value === img;
-                html += `<div class="avatar-option ${isSelected ? 'selected' : ''}" data-type="image" data-value="${img}" data-index="${index}">
-                    <img src="/static/avatars/${img}" alt="${img}">
-                </div>`;
+        let html = '<div class="avatars-section">';
+        html += `<div class="section-title">${catName}</div>`;
+        html += '<div class="avatars-grid">';
+        
+        if (catType === 'dicebear' && categoryData) {
+            const seeds = avatarsData.dicebearSeeds[category] || [];
+            const style = categoryData.style || 'avataaars';
+            
+            seeds.forEach((seed, index) => {
+                const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+                const isSelected = selectedAvatarData && selectedAvatarData.type === 'dicebear' && selectedAvatarData.seed === seed;
+                html += `<div class="avatar-option ${isSelected ? 'selected' : ''}" data-type="dicebear" data-seed="${seed}" data-style="${style}" data-url="${url}" style="background-image: url('${url}'); background-size: cover;"></div>`;
             });
-            html += '</div>';
-        } else if (avatarsData && avatarsData.emojis && avatarsData.emojis[category]) {
-            // Utiliser le nom lisible pour le titre
-            const catName = avatarsData.categoryNames[category] || category;
-            html += `<div class="section-title">${catName}</div>`;
-            html += '<div class="avatars-grid">';
-            avatarsData.emojis[category].forEach((emoji, index) => {
-                const isSelected = selectedAvatarData && selectedAvatarData.type === 'emoji' && selectedAvatarData.value === emoji;
-                // Utiliser data-attributes au lieu de onclick pour éviter les problèmes d'échappement
-                html += `<div class="avatar-option emoji ${isSelected ? 'selected' : ''}" data-type="emoji" data-value="${emoji}" data-index="${index}">
-                    ${emoji}
-                </div>`;
-            });
-            html += '</div>';
         } else {
             html += '<p style="text-align:center;color:#666;padding:20px;">Aucun avatar dans cette catégorie</p>';
         }
         
-        html += '</div>';
+        html += '</div></div>';
         content.innerHTML = html;
         
-        // Ajouter les gestionnaires de clic via event delegation
+        // Ajouter les gestionnaires de clic
         content.querySelectorAll('.avatar-option').forEach(el => {
             el.addEventListener('click', function() {
-                const type = this.dataset.type;
-                const value = this.dataset.value;
-                selectAvatar(type, value, this);
+                selectAvatarElement(this);
             });
         });
     }
     
-    function selectAvatar(type, value, element) {
+    function selectAvatarElement(element) {
+        const type = element.dataset.type;
+        
         // Désélectionner précédent
         document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
         
         // Sélectionner nouveau
         element.classList.add('selected');
-        selectedAvatarData = { type, value };
+        
+        if (type === 'dicebear') {
+            selectedAvatarData = {
+                type: 'dicebear',
+                seed: element.dataset.seed,
+                style: element.dataset.style,
+                url: element.dataset.url
+            };
+        }
         
         // Activer bouton confirmer
         document.getElementById('confirmAvatar').disabled = false;
@@ -917,14 +871,11 @@
         
         const preview = document.getElementById('photoPreview');
         
-        if (selectedAvatarData.type === 'image') {
-            preview.innerHTML = `<img src="/static/avatars/${selectedAvatarData.value}" alt="Avatar">`;
-            document.getElementById('selectedAvatar').value = selectedAvatarData.value;
-            document.getElementById('avatar-type').value = 'file';
-        } else {
-            preview.innerHTML = `<span style="font-size: 50px;">${selectedAvatarData.value}</span>`;
-            document.getElementById('selectedAvatar').value = selectedAvatarData.value;
-            document.getElementById('avatar-type').value = 'emoji';
+        if (selectedAvatarData.type === 'dicebear') {
+            preview.innerHTML = `<img src="${selectedAvatarData.url}" alt="Avatar DiceBear" style="width:100%; height:100%; object-fit:cover;">`;
+            document.getElementById('selectedAvatar').value = selectedAvatarData.seed;
+            document.getElementById('avatar-type').value = 'dicebear';
+            document.getElementById('avatarStyle').value = selectedAvatarData.style;
         }
         
         // Reset photo

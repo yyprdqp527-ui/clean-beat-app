@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+tas cahnge {% extends "base.html" %}
 {% block title %}Gérer les joueurs{% endblock %}
 {% block content %}
 <style>
@@ -143,16 +143,37 @@
         width: 110px;
         height: 110px;
         border-radius: 22px;
-        background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
-        box-shadow: 0 12px 30px rgba(0,0,0,0.15),
-                    inset 0 1px 0 rgba(255,255,255,0.8);
-        border: 2px solid rgba(253,174,84,0.4);
+        /* Glassmorphism interior */
+        background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.65));
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        border: 1px solid rgba(255,255,255,0.35);
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         flex-shrink: 0;
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+
+    /* Shimmer/shine sweep on top of avatar */
+    .player-avatar-preview::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -120%; height: 100%; width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 22px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+
+    @keyframes shine-sweep {
+        0% { left: -120%; }
+        50% { left: 0%; }
+        100% { left: 120%; }
     }
     
     .player-avatar-preview:hover {
@@ -164,6 +185,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        border-radius: 18px; /* match container rounded corners to avoid inner square */
     }
     
     .player-avatar-preview span {
@@ -329,11 +351,11 @@
     }
     
     .btn-edit {
-        background: linear-gradient(135deg, rgba(166,211,220,0.95), rgba(89,113,118,0.95));
+        background: linear-gradient(135deg, #A6D3DC, #597176);
         backdrop-filter: saturate(180%) blur(20px);
         -webkit-backdrop-filter: saturate(180%) blur(20px);
         color: white;
-        box-shadow: 0 8px 25px rgba(166,211,220,0.4),
+        box-shadow: 0 8px 25px rgba(89,113,118,0.35),
                     inset 0 1px 0 rgba(255,255,255,0.3);
         border: 1px solid rgba(255,255,255,0.3);
     }
@@ -656,22 +678,23 @@
     {% for player in players %}
     <div class="player-card" data-email="{{ player.email }}">
         <div class="player-header">
-            <div class="player-avatar-preview" id="avatar-preview-{{ loop.index }}">
+            {% set border_color = ('#FF6B9D' if (player.name and 'marion' in player.name|lower) else (player.player_color_hex if player.player_color_hex else (player.color if player.color else '#A6D3DC'))) %}
+            <div class="player-avatar-preview" id="avatar-preview-{{ loop.index }}" data-dicebear-seed="{{ (player.name or player.email)|urlencode }}" style="border: 3px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %}; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
                 {% if player.avatar_file %}
-                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar">
+                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar" onerror="this.onerror=null;this.src='{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';">
                 {% elif player.avatar_url %}
-                    <img src="{{ player.avatar_url }}" alt="Avatar">
+                    <img src="{{ player.avatar_url }}" alt="Avatar" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/lorelei/svg?seed={{ (player.name or player.email)|urlencode }}';">
                 {% elif player.avatar and player.avatar|length <= 4 %}
                     <span>{{ player.avatar }}</span>
                 {% else %}
-                    <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar par défaut">
+                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ (player.name or player.email)|urlencode }}" alt="Avatar par défaut" onerror="this.onerror=null;this.src='{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';">
                 {% endif %}
             </div>
             <div class="player-info">
-                <div class="player-name-display">{{ player.name or 'Joueur' }}</div>
+                <div class="player-name-display" style="color: #000000;">{{ player.name or 'Joueur' }}</div>
             </div>
         </div>
-        
+
         <div class="btn-group">
             <a href="{{ url_for('edit_player', email=player.email) }}" class="btn btn-edit" style="text-decoration: none; text-align: center;">✏️ Modifier</a>
             <button class="btn btn-delete" onclick="confirmDelete('{{ player.email }}', '{{ player.name or player.email }}')">🗑️ Supprimer</button>
@@ -778,3 +801,37 @@
     }
 </script>
 {% endblock %}
+
+<script>
+// Replace broken avatar images by fetching DiceBear lorelei SVG using container seed
+document.addEventListener('DOMContentLoaded', async function() {
+    const containers = document.querySelectorAll('.player-avatar-preview[data-dicebear-seed]');
+    for (const c of containers) {
+        const img = c.querySelector('img');
+        // if there's an img and it loaded successfully, skip
+        if (img && img.complete && img.naturalWidth > 0) continue;
+
+        const seed = c.getAttribute('data-dicebear-seed') || 'default';
+        const url = `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(seed)}`;
+        try {
+            const resp = await fetch(url, { cache: 'no-cache' });
+            if (!resp.ok) throw new Error('no');
+            const svgText = await resp.text();
+            // inject SVG directly to avoid <img> loading issues
+            c.innerHTML = svgText;
+            // reapply inline styles to make it fit
+            const svg = c.querySelector('svg');
+            if (svg) {
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.display = 'block';
+                svg.style.objectFit = 'cover';
+            }
+        } catch (e) {
+            // fallback to local static svg if fetch failed
+            const local = '{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';
+            c.innerHTML = `<img src="${local}" alt="Avatar par défaut" style="width:100%;height:100%;object-fit:cover;">`;
+        }
+    }
+});
+</script>

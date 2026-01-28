@@ -208,10 +208,10 @@
     }
     
     .player-option-inner {
-        padding: 14px 20px;
+        padding: 6px;
         border-radius: 16px;
-        border: 3px solid;
-        background: linear-gradient(135deg, rgba(166,211,220,0.15) 0%, rgba(255,255,255,0.95) 100%);
+        border: none; /* move colored border to the avatar itself */
+        background: transparent;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -219,7 +219,7 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer !important;
         width: 110px;
-        box-shadow: 0 3px 10px rgba(166,211,220,0.3);
+        box-sizing: border-box;
         pointer-events: none;
         position: relative;
         overflow: hidden;
@@ -254,17 +254,65 @@
     }
     
     .player-option .player-option-inner {
-        animation: player-pulse 2s ease-in-out infinite;
+        animation: none;
+    }
+
+    /* Avatar wrapper using the same glass + shimmer pattern as manage_players,
+       adapted to the small avatar size used on the task page */
+    .player-avatar-preview {
+        width: 100%;
+        height: 100%;
+        max-width: 110px;
+        max-height: 110px;
+        box-sizing: border-box;
+        border-radius: 22px;
+        /* Glassmorphism interior */
+        background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.65));
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        border: 1px solid rgba(255,255,255,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+
+    /* Shimmer/shine sweep on top of avatar */
+    .player-avatar-preview::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -120%; height: 100%; width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 22px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+
+    .player-avatar-preview:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+
+    .player-avatar-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 18px; /* match container rounded corners to avoid inner square */
+        display: block;
     }
     
     /* État actif (clic) - Animation de validation */
-    .player-option:active .player-option-inner,
-    .player-option.validating .player-option-inner {
+    .player-option:active .player-avatar-preview,
+    .player-option.validating .player-avatar-preview {
         transform: scale(0.92) !important;
-        border-color: #4CAF50 !important;
-        background: linear-gradient(135deg, rgba(76,175,80,0.3) 0%, rgba(76,175,80,0.15) 100%) !important;
         box-shadow: 0 0 20px rgba(76,175,80,0.6) !important;
         animation: none !important;
+        border-width: 4px !important;
     }
     
     /* Animation flash lors de la validation */
@@ -287,18 +335,18 @@
         }
     }
     
-    .player-option.validating .player-option-inner {
+    .player-option.validating .player-avatar-preview {
         animation: validation-flash 0.6s ease-out !important;
     }
     
     /* Animation au survol sur desktop */
     @media (hover: hover) {
-        .player-option:hover .player-option-inner {
-            border-color: #4CAF50 !important;
-            background: rgba(76,175,80,0.1) !important;
+        .player-option:hover .player-avatar-preview {
             transform: translateY(-3px) scale(1.05) !important;
-            box-shadow: 0 8px 25px rgba(76,175,80,0.35) !important;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25) !important;
             animation: none !important;
+            border-width: 4px !important;
+            filter: brightness(1.03);
         }
     }
     
@@ -648,20 +696,27 @@
             <form method="post" id="complete-form">
                 <div id="player-selector" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 10px;">
                     {% for player in players %}
-                    {% set player_idx = loop.index0 %}
-                    {% set color = player_colors[player_idx % 8] %}
                     <button type="submit" name="player_email" value="{{ player.email }}" class="player-option" data-email="{{ player.email }}" style="background:none;border:none;padding:0;margin:0;cursor:pointer;outline:none;">
-                        <div class="player-option-inner" style="border-color: {{ color }};">
-                            {% if player.avatar_file %}
-                                <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
-                            {% elif player.avatar_url %}
-                                <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
-                            {% elif player.avatar and player.avatar|length <= 4 %}
-                                <span style="font-size:28px;">{{ player.avatar }}</span>
-                            {% else %}
-                                <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
-                            {% endif %}
-                            <span style="font-weight:700;color:#153036;font-size:14px;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;">{{ player.name }}</span>
+                        {% set border_color = (player.player_color_hex if player.player_color_hex else (player.color if player.color else '#A6D3DC')) %}
+                        <div class="player-option-inner" style="border-color: {{ border_color }};">
+                            <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+                                {% if player.avatar_file %}
+                                    <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %};">
+                                        <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
+                                    </div>
+                                {% elif player.avatar_url %}
+                                    <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %};">
+                                        <img src="{{ player.avatar_url }}" alt="{{ player.name }}">
+                                    </div>
+                                {% elif player.avatar and player.avatar|length <= 4 %}
+                                    <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %}; font-size:32px; color: #153036; display:flex; align-items:center; justify-content:center;">{{ player.avatar }}</div>
+                                {% else %}
+                                    <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %};">
+                                        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ (player.name or player.email)|urlencode }}" alt="{{ player.name }}">
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <span style="font-weight:700;color:#153036;font-size:13px;width:100%;text-align:center;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;line-height:1.2;padding:0 4px;max-width:100px;display:block;">{{ player.name }}</span>
                         </div>
                     </button>
                     {% endfor %}

@@ -234,35 +234,84 @@
         display: block;
     }
     
-    /* === EMOJI PICKER === */
-    .emoji-picker {
+    /* === AVATAR BANK === */
+    .avatar-bank {
         background: rgba(255,255,255,0.95);
         border-radius: 16px;
         padding: 16px;
         margin-top: 12px;
         border: 2px solid rgba(166,211,220,0.3);
-        max-height: 300px;
+        max-height: 400px;
         overflow-y: auto;
     }
     
-    .emoji-grid {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
+    .avatar-categories {
+        display: flex;
         gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
     }
     
-    .emoji-item {
-        font-size: 32px;
-        padding: 8px;
+    .category-btn {
+        padding: 10px 16px;
+        border: 2px solid rgba(166,211,220,0.4);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.9);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        font-size: 13px;
         cursor: pointer;
-        border-radius: 8px;
-        transition: all 0.2s;
-        text-align: center;
+        transition: all 0.3s;
+        color: var(--dark);
     }
     
-    .emoji-item:hover {
+    .category-btn:hover {
         background: var(--teal-light);
-        transform: scale(1.2);
+        border-color: var(--teal-dark);
+        transform: translateY(-2px);
+    }
+    
+    .category-btn.active {
+        background: linear-gradient(135deg, var(--gold), var(--peach));
+        border-color: var(--gold);
+        color: white;
+    }
+    
+    .avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .avatar-item {
+        aspect-ratio: 1;
+        cursor: pointer;
+        border-radius: 12px;
+        border: 3px solid transparent;
+        transition: all 0.3s;
+        overflow: hidden;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .avatar-item:hover {
+        border-color: var(--teal-light);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .avatar-item.selected {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(253,174,84,0.3);
+        transform: scale(1.05);
+    }
+    
+    .avatar-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
     
     /* === BOUTONS === */
@@ -384,67 +433,21 @@
                 </div>
                 
                 <div class="avatar-type-selector">
-                    <button type="button" class="avatar-type-btn active" data-type="emoji" id="btnEmoji">
-                        😊 Emoji
+                    <button type="button" class="avatar-type-btn active" data-type="dicebear" id="btnDicebear">
+                        🎨 Avatars
                     </button>
                     <button type="button" class="avatar-type-btn" data-type="photo" id="btnPhoto">
                         📷 Photo
                     </button>
                 </div>
                 
-                <div class="emoji-picker" id="emojiPicker" style="display: block;">
-                    <div class="emoji-grid">
-                        <span class="emoji-item" data-emoji="😊">😊</span>
-                        <span class="emoji-item" data-emoji="😎">😎</span>
-                        <span class="emoji-item" data-emoji="🥰">🥰</span>
-                        <span class="emoji-item" data-emoji="😁">😁</span>
-                        <span class="emoji-item" data-emoji="🤗">🤗</span>
-                        <span class="emoji-item" data-emoji="😇">😇</span>
-                        <span class="emoji-item" data-emoji="🥳">🥳</span>
-                        <span class="emoji-item" data-emoji="😍">😍</span>
-                        <span class="emoji-item" data-emoji="🤩">🤩</span>
-                        <span class="emoji-item" data-emoji="😺">😺</span>
-                        <span class="emoji-item" data-emoji="🐶">🐶</span>
-                        <span class="emoji-item" data-emoji="🐱">🐱</span>
-                        <span class="emoji-item" data-emoji="🐭">🐭</span>
-                        <span class="emoji-item" data-emoji="🐹">🐹</span>
-                        <span class="emoji-item" data-emoji="🐰">🐰</span>
-                        <span class="emoji-item" data-emoji="🦊">🦊</span>
-                        <span class="emoji-item" data-emoji="🐻">🐻</span>
-                        <span class="emoji-item" data-emoji="🐼">🐼</span>
-                        <span class="emoji-item" data-emoji="🐨">🐨</span>
-                        <span class="emoji-item" data-emoji="🐯">🐯</span>
-                        <span class="emoji-item" data-emoji="🦁">🦁</span>
-                        <span class="emoji-item" data-emoji="🐮">🐮</span>
-                        <span class="emoji-item" data-emoji="🐷">🐷</span>
-                        <span class="emoji-item" data-emoji="🐸">🐸</span>
-                        <span class="emoji-item" data-emoji="🐵">🐵</span>
-                        <span class="emoji-item" data-emoji="🦄">🦄</span>
-                        <span class="emoji-item" data-emoji="🦋">🦋</span>
-                        <span class="emoji-item" data-emoji="🐝">🐝</span>
-                        <span class="emoji-item" data-emoji="🌟">🌟</span>
-                        <span class="emoji-item" data-emoji="⭐">⭐</span>
-                        <span class="emoji-item" data-emoji="✨">✨</span>
-                        <span class="emoji-item" data-emoji="💫">💫</span>
-                        <span class="emoji-item" data-emoji="🎈">🎈</span>
-                        <span class="emoji-item" data-emoji="🎨">🎨</span>
-                        <span class="emoji-item" data-emoji="🎮">🎮</span>
-                        <span class="emoji-item" data-emoji="⚽">⚽</span>
-                        <span class="emoji-item" data-emoji="🏀">🏀</span>
-                        <span class="emoji-item" data-emoji="🎯">🎯</span>
-                        <span class="emoji-item" data-emoji="🎸">🎸</span>
-                        <span class="emoji-item" data-emoji="🎤">🎤</span>
-                        <span class="emoji-item" data-emoji="🎧">🎧</span>
-                        <span class="emoji-item" data-emoji="📚">📚</span>
-                        <span class="emoji-item" data-emoji="🚀">🚀</span>
-                        <span class="emoji-item" data-emoji="🌈">🌈</span>
-                        <span class="emoji-item" data-emoji="🔥">🔥</span>
-                        <span class="emoji-item" data-emoji="💪">💪</span>
-                        <span class="emoji-item" data-emoji="👑">👑</span>
-                    </div>
+                <div class="avatar-bank" id="avatarBank" style="display: none;">
+                    <div class="avatar-categories" id="avatarCategories"></div>
+                    <div class="avatar-grid" id="avatarGrid"></div>
                 </div>
                 
-                <input type="hidden" name="child_emoji" id="emojiInput">
+                <input type="hidden" name="child_avatar" id="avatarInput">
+                <input type="hidden" name="child_avatar_style" id="avatarStyleInput">
                 <input type="file" name="child_photo" class="form-input" accept="image/*" id="photoInput" style="display: none;">
             </div>
             
@@ -461,35 +464,145 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Script chargé');
     
     const form = document.getElementById('addChildForm');
-    const btnEmoji = document.getElementById('btnEmoji');
+    const btnDicebear = document.getElementById('btnDicebear');
     const btnPhoto = document.getElementById('btnPhoto');
-    const emojiInput = document.getElementById('emojiInput');
+    const avatarInput = document.getElementById('avatarInput');
+    const avatarStyleInput = document.getElementById('avatarStyleInput');
     const photoInput = document.getElementById('photoInput');
-    const emojiPicker = document.getElementById('emojiPicker');
+    const avatarBank = document.getElementById('avatarBank');
     const avatarDisplay = document.getElementById('avatarDisplay');
     const successMessage = document.getElementById('successMessage');
+    const avatarCategories = document.getElementById('avatarCategories');
+    const avatarGrid = document.getElementById('avatarGrid');
     
     console.log('✅ Éléments trouvés:', {
-        btnEmoji: !!btnEmoji,
+        btnDicebear: !!btnDicebear,
         btnPhoto: !!btnPhoto,
-        emojiPicker: !!emojiPicker
+        avatarBank: !!avatarBank
     });
     
-    let currentAvatarType = 'emoji';
+    let currentAvatarType = 'dicebear';
+    let avatarData = [];
+    let selectedAvatar = null;
+    let selectedStyle = null;
     
-    // Bouton EMOJI : Affiche la banque d'emojis
-    btnEmoji.addEventListener('click', function(e) {
+    // Charger les catégories d'avatars
+    loadAvatars();
+    
+    function loadAvatars() {
+        console.log('📥 Chargement des avatars...');
+        fetch('/static/avatars/avatars_config.json')
+            .then(response => {
+                console.log('✅ Réponse reçue:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Données avatars:', data);
+                // Le JSON contient {categories: [...]}
+                avatarData = data.categories || data;
+                console.log('✅ Catégories chargées:', avatarData.length);
+                displayCategories();
+                if (avatarData.length > 0) {
+                    showCategory(avatarData[0].id);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erreur chargement avatars:', error);
+            });
+    }
+    
+    function displayCategories() {
+        console.log('📋 Affichage des catégories...');
+        avatarCategories.innerHTML = '';
+        avatarData.forEach((category, index) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'category-btn' + (index === 0 ? ' active' : '');
+            btn.textContent = category.name;
+            btn.onclick = () => {
+                console.log('📂 Catégorie sélectionnée:', category.name);
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                showCategory(category.id);
+            };
+            avatarCategories.appendChild(btn);
+        });
+        console.log('✅ Catégories affichées:', avatarData.length);
+    }
+    
+    function generateDiceBearSeeds(count = 20) {
+        const seeds = [];
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < count; i++) {
+            let seed = '';
+            for (let j = 0; j < 8; j++) {
+                seed += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            seeds.push(seed);
+        }
+        return seeds;
+    }
+    
+    function showCategory(categoryId) {
+        const category = avatarData.find(c => c.id === categoryId);
+        if (!category) {
+            console.error('❌ Catégorie introuvable:', categoryId);
+            return;
+        }
+        
+        console.log('🎨 Affichage catégorie:', category.name);
+        avatarGrid.innerHTML = '';
+        
+        if (category.type === 'dicebear') {
+            const seeds = generateDiceBearSeeds(category.count);
+            console.log('🌱 Seeds générés:', seeds.length);
+            seeds.forEach(seed => {
+                const avatarUrl = `https://api.dicebear.com/7.x/${category.style}/svg?seed=${seed}`;
+                const item = document.createElement('div');
+                item.className = 'avatar-item';
+                item.innerHTML = `<img src="${avatarUrl}" alt="Avatar">`;
+                item.onclick = function(e) {
+                    selectAvatar(seed, category.style, avatarUrl, this);
+                };
+                avatarGrid.appendChild(item);
+            });
+            console.log('✅ Avatars affichés:', seeds.length);
+        }
+    }
+    
+    function selectAvatar(seed, style, url, element) {
+        selectedAvatar = seed;
+        selectedStyle = style;
+        avatarInput.value = seed;
+        avatarStyleInput.value = style;
+        
+        console.log('✅ Avatar sélectionné:', seed, style);
+        
+        // Mettre à jour l'aperçu
+        avatarDisplay.innerHTML = `<img src="${url}" alt="Avatar">`;
+        
+        // Mettre en évidence l'avatar sélectionné
+        document.querySelectorAll('.avatar-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        if (element) {
+            element.classList.add('selected');
+        }
+    }
+    
+    // Bouton DICEBEAR : Affiche la banque d'avatars
+    btnDicebear.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('😊 Bouton Emoji cliqué');
+        console.log('🎨 Bouton Avatars cliqué');
         
         // Activer le bouton
-        btnEmoji.classList.add('active');
+        btnDicebear.classList.add('active');
         btnPhoto.classList.remove('active');
         
-        // Afficher la banque d'emojis
-        emojiPicker.style.display = 'block';
-        currentAvatarType = 'emoji';
+        // Afficher la banque d'avatars
+        avatarBank.style.display = 'block';
+        currentAvatarType = 'dicebear';
         
         // Réinitialiser la photo
         photoInput.value = '';
@@ -503,28 +616,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Activer le bouton
         btnPhoto.classList.add('active');
-        btnEmoji.classList.remove('active');
+        btnDicebear.classList.remove('active');
         
-        // Masquer la banque d'emojis
-        emojiPicker.style.display = 'none';
+        // Masquer la banque d'avatars
+        avatarBank.style.display = 'none';
         currentAvatarType = 'photo';
         
-        // Réinitialiser l'emoji
-        emojiInput.value = '';
+        // Réinitialiser l'avatar
+        avatarInput.value = '';
+        avatarStyleInput.value = '';
         
         // Ouvrir directement le sélecteur de fichiers
         photoInput.click();
-    });
-    
-    // Sélection d'un emoji
-    document.querySelectorAll('.emoji-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const emoji = this.dataset.emoji;
-            console.log('Emoji sélectionné:', emoji);
-            emojiInput.value = emoji;
-            avatarDisplay.textContent = emoji;
-        });
     });
     
     // Aperçu photo
@@ -554,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 successMessage.classList.add('show');
                 form.reset();
-                avatarDisplay.textContent = '👶';
+                avatarDisplay.innerHTML = '<span>👶</span>';
                 
                 setTimeout(() => {
                     window.location.href = '/manage_players';

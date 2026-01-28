@@ -1,0 +1,23 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond -->
+  <rect width="200" height="200" fill="#E8F4F8"/>
+  <!-- Cheveux -->
+  <circle cx="100" cy="60" r="35" fill="#8B6F47"/>
+  <!-- Tête -->
+  <circle cx="100" cy="85" r="40" fill="#F4A460"/>
+  <!-- Yeux -->
+  <circle cx="88" cy="75" r="4" fill="#333"/>
+  <circle cx="112" cy="75" r="4" fill="#333"/>
+  <!-- Nez -->
+  <line x1="100" y1="85" x2="100" y2="95" stroke="#333" stroke-width="2"/>
+  <!-- Bouche -->
+  <path d="M 90 105 Q 100 110 110 105" stroke="#333" stroke-width="2" fill="none"/>
+  <!-- Corps -->
+  <rect x="70" y="125" width="60" height="50" rx="10" fill="#4169E1"/>
+  <!-- Bras -->
+  <rect x="30" y="130" width="40" height="15" rx="7" fill="#F4A460"/>
+  <rect x="130" y="130" width="40" height="15" rx="7" fill="#F4A460"/>
+  <!-- Jambes -->
+  <rect x="80" y="175" width="12" height="35" fill="#333"/>
+  <rect x="108" y="175" width="12" height="35" fill="#333"/>
+</svg>

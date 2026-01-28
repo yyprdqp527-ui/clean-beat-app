@@ -1,0 +1,885 @@
+{% extends "base.html" %}
+{% block title %}Modifier {{ player.name or 'Joueur' }}{% endblock %}
+{% block content %}
+<style>
+    :root {
+        --teal-light: #A6D3DC;
+        --teal-dark: #597176;
+        --gold: #FDAE54;
+        --peach: #F4C68D;
+        --white: #ffffff;
+        --dark: #153036;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+        min-height: 100vh;
+    }
+    
+    .edit-container {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 100px 20px 40px 20px;
+    }
+    
+    /* Carte avec effet glass morphism */
+    .col-12.col-md-8.mx-auto {
+        background: rgba(255, 255, 255, 0.24);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 24px;
+        padding: 1.5rem;
+        box-shadow: 0 12px 50px rgba(0, 0, 0, 0.15), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+    }
+    
+    /* Bouton retour glassmorphisme */
+    .back-btn-glass {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 2001;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #153036;
+        font-size: 28px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn-glass:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    
+    .back-btn-glass:active {
+        transform: scale(0.95);
+    }
+    
+    /* Carte principale */
+    .edit-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 28px;
+        padding: 32px 24px;
+        box-shadow: 
+            0 25px 60px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+    
+    .page-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--teal-dark);
+        font-weight: 500;
+    }
+    
+    .photo-section {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+    
+    .photo-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    
+    .photo-preview {
+        width: 130px;
+        height: 130px;
+        border-radius: 24px;
+        border: 4px solid var(--teal-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        overflow: hidden;
+        cursor: pointer;
+        font-size: 50px;
+        color: var(--teal-dark);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.12),
+            inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    }
+    
+    .photo-preview:hover {
+        border-color: var(--gold);
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(253, 174, 84, 0.25);
+    }
+    
+    .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .photo-options {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    
+    .photo-btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Montserrat', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .upload-btn {
+        background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(89, 113, 118, 0.25);
+    }
+    
+    .avatar-btn {
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(253, 174, 84, 0.25);
+    }
+    
+    .photo-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .photo-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* ===== MODAL SÉLECTION AVATAR ===== */
+    .avatar-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        padding: 20px;
+        overflow-y: auto;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+    
+    .avatar-modal.active {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .avatar-modal-content {
+        background: white;
+        border-radius: 24px;
+        padding: 24px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 85vh;
+        overflow-y: auto;
+        margin-top: 40px;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid rgba(166, 211, 220, 0.3);
+    }
+    
+    .modal-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--dark);
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--teal-dark);
+        padding: 5px;
+        line-height: 1;
+        transition: transform 0.2s;
+    }
+    
+    .modal-close:hover {
+        transform: scale(1.2);
+    }
+    
+    /* Onglets catégories */
+    .category-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .category-tab {
+        padding: 8px 14px;
+        border: 2px solid rgba(166, 211, 220, 0.4);
+        border-radius: 20px;
+        background: white;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Montserrat', sans-serif;
+        color: var(--dark);
+    }
+    
+    .category-tab:hover {
+        border-color: var(--teal-light);
+        background: rgba(166, 211, 220, 0.15);
+    }
+    
+    .category-tab.active {
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        border-color: var(--gold);
+        color: white;
+    }
+    
+    /* Grille d'avatars */
+    .avatars-section {
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--teal-dark);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .avatars-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .avatar-option {
+        aspect-ratio: 1;
+        border-radius: 16px;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .avatar-option img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-option:hover {
+        border-color: var(--teal-light);
+        transform: scale(1.08);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .avatar-option.selected {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.3), 0 8px 25px rgba(253, 174, 84, 0.35);
+        transform: scale(1.05);
+    }
+    
+    /* Bouton confirmer dans modal */
+    .modal-confirm {
+        width: 100%;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        border: none;
+        padding: 16px 24px;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        margin-top: 16px;
+        box-shadow: 0 6px 20px rgba(253, 174, 84, 0.35);
+    }
+    
+    .modal-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(253, 174, 84, 0.45);
+    }
+    
+    .modal-confirm:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Formulaire */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--dark);
+        font-size: 15px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 16px 18px;
+        border: 2px solid rgba(166, 211, 220, 0.5);
+        border-radius: 14px;
+        font-size: 16px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+        color: var(--dark);
+        background: rgba(255, 255, 255, 0.9);
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        border-color: var(--gold);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.15);
+    }
+    
+    .form-input::placeholder {
+        color: #adb5bd;
+        font-weight: 400;
+    }
+    
+    /* Bouton principal */
+    .btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+        color: white;
+        border: none;
+        padding: 18px 24px;
+        border-radius: 16px;
+        font-size: 17px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Montserrat', sans-serif;
+        box-shadow: 0 8px 25px rgba(253, 174, 84, 0.35);
+        text-transform: none;
+        letter-spacing: 0.3px;
+        margin-top: 10px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(253, 174, 84, 0.45);
+    }
+    
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    /* Loading spinner */
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 40px;
+        color: var(--teal-dark);
+    }
+    
+    .loading.active {
+        display: block;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(166, 211, 220, 0.3);
+        border-top-color: var(--gold);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 520px) {
+        .edit-container {
+            padding: 90px 16px 40px 16px;
+        }
+        
+        .edit-card {
+            padding: 24px 18px;
+            border-radius: 22px;
+        }
+        
+        .page-title {
+            font-size: 22px;
+        }
+        
+        .photo-preview {
+            width: 110px;
+            height: 110px;
+            font-size: 42px;
+        }
+        
+        .photo-btn {
+            padding: 10px 14px;
+            font-size: 12px;
+        }
+        
+        .avatar-modal-content {
+            padding: 20px 16px;
+            margin-top: 20px;
+            max-height: 90vh;
+        }
+        
+        .avatars-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .category-tab {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .form-input {
+            padding: 14px 16px;
+            font-size: 15px;
+        }
+        
+        .btn-submit {
+            padding: 16px 20px;
+            font-size: 16px;
+        }
+        
+        .back-btn-glass {
+            bottom: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 22px;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        .edit-card {
+            padding: 20px 14px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+        }
+        
+        .photo-preview {
+            width: 95px;
+            height: 95px;
+        }
+        
+        .photo-options {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .photo-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .avatars-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+</style>
+
+<div class="edit-container">
+    <div class="edit-card">
+        <div class="page-header">
+            <h1 class="page-title">✏️ Modifier le profil</h1>
+            <p class="page-subtitle">{{ player.name or 'Ce joueur' }}</p>
+        </div>
+        
+        <form id="edit-form" enctype="multipart/form-data">
+            <input type="hidden" name="email" value="{{ player.email }}">
+            
+            <div class="photo-section">
+                <div class="photo-container">
+                    <div class="photo-preview" id="photoPreview" onclick="openAvatarModal()">
+                        {% if player.avatar_file %}
+                            <img src="{{ ('/static/avatars/' ~ player.avatar_file) | cache_bust }}" alt="Avatar" id="preview-img">
+                        {% elif player.avatar_url %}
+                            <img src="{{ player.avatar_url | cache_bust }}" alt="Avatar" id="preview-img">
+                        {% elif player.avatar and player.avatar|length <= 4 %}
+                            <span id="preview-emoji">{{ player.avatar }}</span>
+                        {% else %}
+                            <img src="{{ '/static/avatars/homme.png' | cache_bust }}" alt="Avatar" id="preview-img">
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="photo-options">
+                    <button type="button" class="photo-btn upload-btn" onclick="document.getElementById('fileInput').click();">
+                        📁 Galerie
+                    </button>
+                    <button type="button" class="photo-btn avatar-btn" onclick="openAvatarModal()">
+                        🎭 Avatars
+                    </button>
+                </div>
+                
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handlePhotoCapture(event)">
+                <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
+                <input type="hidden" id="selectedPhoto" name="photo_data">
+                <input type="hidden" id="selectedAvatar" name="avatar">
+                <input type="hidden" id="avatarStyle" name="avatar_style">
+                <input type="hidden" name="avatar_type" id="avatar-type" value="">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Nom du joueur</label>
+                <input type="text" class="form-input" name="name" id="nameInput" value="{{ player.name or '' }}" placeholder="Entrez le nom" required minlength="2">
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                💾 Enregistrer
+            </button>
+        </form>
+    </div>
+    
+    <a href="{{ url_for('manage_players') }}" class="back-btn-glass">
+        ←
+    </a>
+</div>
+
+<div class="avatar-modal" id="avatarModal">
+    <div class="avatar-modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🎭 Choisir un avatar</h2>
+            <button type="button" class="modal-close" onclick="closeAvatarModal()">×</button>
+        </div>
+        
+        <div class="category-tabs" id="categoryTabs"></div>
+        
+        <div id="avatarsContent">
+            <div class="loading active" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Chargement des avatars...</p>
+            </div>
+        </div>
+        
+        <button type="button" class="modal-confirm" id="confirmAvatar" onclick="confirmAvatarSelection()" disabled>
+            ✓ Choisir cet avatar
+        </button>
+    </div>
+</div>
+
+<script>
+    let avatarsData = null;
+    let selectedAvatarData = null;
+    let currentCategory = '';
+    
+    function handlePhotoCapture(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Aperçu">`;
+                document.getElementById('selectedPhoto').value = e.target.result;
+                document.getElementById('avatar-type').value = 'photo';
+                selectedAvatarData = null;
+                document.getElementById('selectedAvatar').value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    function openAvatarModal() {
+        const modal = document.getElementById('avatarModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        if (!avatarsData) {
+            loadAvatars();
+        }
+    }
+    
+    function closeAvatarModal() {
+        const modal = document.getElementById('avatarModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    async function loadAvatars() {
+        console.log('Chargement de la banque d\'avatars...');
+        try {
+            const response = await fetch('/static/avatars/avatars_config.json');
+            if (!response.ok) throw new Error('Impossible de charger le config');
+            
+            const config = await response.json();
+            
+            avatarsData = {
+                categories: config.categories || [],
+                categoryNames: {},
+                categoryType: {},
+                dicebearSeeds: {},
+                imageItems: {}
+            };
+            
+            config.categories.forEach(cat => {
+                avatarsData.categoryNames[cat.id] = cat.name;
+                avatarsData.categoryType[cat.id] = cat.type;
+                
+                if (cat.type === 'dicebear') {
+                    avatarsData.dicebearSeeds[cat.id] = generateDiceBearSeeds(cat.count);
+                } else if (cat.type === 'image') {
+                    avatarsData.imageItems[cat.id] = cat.items;
+                }
+            });
+            
+            currentCategory = config.categories[0]?.id || '';
+            createCategoryTabs();
+            
+            if (currentCategory) {
+                displayCategory(currentCategory);
+            } else {
+                document.getElementById('avatarsContent').innerHTML = '<p style="text-align:center;color:#666;">Aucun avatar disponible</p>';
+            }
+        } catch (error) {
+            console.error('Erreur chargement avatars:', error);
+            document.getElementById('avatarsContent').innerHTML = '<p style="text-align:center;color:#666;">Erreur de chargement des avatars</p>';
+        }
+    }
+    
+    function generateDiceBearSeeds(count) {
+        const seeds = [];
+        for (let i = 0; i < count; i++) {
+            const seed = Math.random().toString(36).substring(2, 10);
+            seeds.push(seed);
+        }
+        return seeds;
+    }
+    
+    function createCategoryTabs() {
+        const tabsContainer = document.getElementById('categoryTabs');
+        tabsContainer.innerHTML = '';
+        
+        if (avatarsData.categories && avatarsData.categories.length > 0) {
+            avatarsData.categories.forEach((cat, index) => {
+                const tab = document.createElement('button');
+                tab.type = 'button';
+                tab.className = 'category-tab' + (index === 0 ? ' active' : '');
+                tab.dataset.category = cat.id;
+                tab.textContent = cat.name;
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectCategory(cat.id);
+                });
+                tabsContainer.appendChild(tab);
+            });
+        }
+    }
+    
+    function selectCategory(category) {
+        currentCategory = category;
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.category === category);
+        });
+        displayCategory(category);
+    }
+    
+    function displayCategory(categoryId) {
+        const content = document.getElementById('avatarsContent');
+        const spinner = document.getElementById('loadingSpinner');
+        if (spinner) {
+            spinner.classList.remove('active');
+        }
+        
+        const catType = avatarsData.categoryType[categoryId];
+        const catName = avatarsData.categoryNames[categoryId] || categoryId;
+        
+        let html = '<div class="avatars-section">';
+        html += `<div class="section-title">${catName}</div>`;
+        html += '<div class="avatars-grid">';
+        
+        if (catType === 'dicebear') {
+            const seeds = avatarsData.dicebearSeeds[categoryId] || [];
+            const style = avatarsData.categories.find(c => c.id === categoryId)?.style || 'avataaars';
+            
+            seeds.forEach((seed) => {
+                const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+                const isSelected = selectedAvatarData && selectedAvatarData.type === 'dicebear' && selectedAvatarData.seed === seed;
+                html += `<div class="avatar-option ${isSelected ? 'selected' : ''}" data-type="dicebear" data-seed="${seed}" data-style="${style}" data-url="${url}" style="background-image: url('${url}'); background-size: cover;"></div>`;
+            });
+        } else if (catType === 'image') {
+            const items = avatarsData.imageItems[categoryId] || [];
+            items.forEach((item) => {
+                const imgUrl = `/static/avatars/${item.file}`;
+                const isSelected = selectedAvatarData && selectedAvatarData.type === 'image' && selectedAvatarData.file === item.file;
+                html += `<div class="avatar-option ${isSelected ? 'selected' : ''}" data-type="image" data-file="${item.file}" style="background-image: url('${imgUrl}'); background-size: cover;"></div>`;
+            });
+        }
+        
+        html += '</div></div>';
+        content.innerHTML = html;
+        
+        content.querySelectorAll('.avatar-option').forEach(el => {
+            el.addEventListener('click', function() {
+                selectAvatarElement(this);
+            });
+        });
+    }
+    
+    function selectAvatarElement(element) {
+        const type = element.dataset.type;
+        document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        
+        if (type === 'dicebear') {
+            selectedAvatarData = {
+                type: 'dicebear',
+                seed: element.dataset.seed,
+                style: element.dataset.style,
+                url: element.dataset.url
+            };
+        } else if (type === 'image') {
+            selectedAvatarData = {
+                type: 'image',
+                file: element.dataset.file
+            };
+        }
+        
+        document.getElementById('confirmAvatar').disabled = false;
+    }
+    
+    function confirmAvatarSelection() {
+        if (!selectedAvatarData) return;
+        
+        const preview = document.getElementById('photoPreview');
+        
+        if (selectedAvatarData.type === 'dicebear') {
+            preview.innerHTML = `<img src="${selectedAvatarData.url}" alt="Avatar DiceBear" style="width:100%; height:100%; object-fit:cover;">`;
+            document.getElementById('selectedAvatar').value = selectedAvatarData.seed;
+            document.getElementById('avatar-type').value = 'dicebear';
+            document.getElementById('avatarStyle').value = selectedAvatarData.style;
+        } else if (selectedAvatarData.type === 'image') {
+            const imgUrl = `/static/avatars/${selectedAvatarData.file}`;
+            preview.innerHTML = `<img src="${imgUrl}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;">`;
+            document.getElementById('selectedAvatar').value = selectedAvatarData.file;
+            document.getElementById('avatar-type').value = 'file';
+            document.getElementById('avatarStyle').value = '';
+        }
+        
+        document.getElementById('selectedPhoto').value = '';
+        closeAvatarModal();
+    }
+    
+    document.getElementById('avatarModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAvatarModal();
+        }
+    });
+    
+    document.getElementById('edit-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length > 0) {
+            formData.append('avatar_file', fileInput.files[0]);
+        }
+        
+        const cameraInput = document.getElementById('cameraInput');
+        if (cameraInput.files.length > 0) {
+            formData.append('avatar_file', cameraInput.files[0]);
+        }
+        
+        try {
+            const response = await fetch('/update_player', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.href = '{{ url_for("manage_players") }}';
+            } else {
+                alert('Erreur: ' + (result.error || 'Impossible de mettre à jour le joueur'));
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la sauvegarde');
+        }
+    });
+</script>
+{% endblock %}

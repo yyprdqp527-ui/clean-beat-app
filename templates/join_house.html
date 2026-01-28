@@ -102,22 +102,22 @@
 
         .btn-login {
             display: inline-block;
-            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
             color: white;
             padding: 12px 24px;
             border-radius: 12px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 14px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+            box-shadow: 0 4px 15px rgba(89, 113, 118, 0.3);
             margin: 15px 0;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
-            background: linear-gradient(135deg, #357ABD 0%, #2868A8 100%);
+            box-shadow: 0 6px 20px rgba(89, 113, 118, 0.4);
+            background: linear-gradient(135deg, #597176 0%, #153036 100%);
         }
 
         .btn-login:active {
@@ -423,17 +423,17 @@
             <div class="form-group">
                 <label for="user_name">Votre nom</label>
                 <input type="text" id="user_name" name="user_name" required 
-                       placeholder="Ex: Marie, Paul...">
+                       placeholder="Ex: Marie, Paul..." autocomplete="given-name">
             </div>
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required 
-                       placeholder="votre@email.com">
+                       placeholder="votre@email.com" autocomplete="email">
             </div>
             <div class="form-group">
                 <label for="password">Mot de passe</label>
                 <input type="password" id="password" name="password" required 
-                       placeholder="Minimum 6 caractères">
+                       placeholder="Minimum 6 caractères" autocomplete="new-password">
             </div>
             <button type="button" class="btn btn-primary" onclick="nextStep(3)">
                 Suivant →

@@ -294,9 +294,14 @@ window.pushManager = new PushNotificationManager();
 // Auto-initialisation au chargement
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🔔 Initialisation gestionnaire notifications...');
-    await window.pushManager.init();
     
-    // Afficher le statut dans la console
-    const status = window.pushManager.getStatus();
-    console.log(`📊 Statut notifications: ${status}`);
+    try {
+        await window.pushManager.init();
+        
+        // Afficher le statut dans la console
+        const status = window.pushManager.getStatus();
+        console.log(`📊 Statut notifications: ${status}`);
+    } catch (error) {
+        console.warn('⚠️ Erreur initialisation pushManager:', error);
+    }
 });

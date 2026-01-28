@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Diagnostic Menu</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        .diag {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h1 { margin: 0 0 20px 0; }
+        .ok { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { background: rgba(255,255,255,0.1); padding: 10px; margin: 10px 0; border-radius: 5px; }
+        pre { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="diag">
+        <h1>🔍 Diagnostic de la page Menu</h1>
+        
+        <div class="info">
+            <strong>Session utilisateur:</strong> 
+            <span class="{{ 'ok' if session.get('user') else 'error' }}">
+                {{ session.get('user') or '❌ Non connecté' }}
+            </span>
+        </div>
+        
+        <div class="info">
+            <strong>Maison:</strong> 
+            <span class="{{ 'ok' if house_name else 'error' }}">
+                {{ house_name or '❌ Aucune' }}
+            </span>
+        </div>
+        
+        <div class="info">
+            <strong>show_house_name_form:</strong> 
+            <span class="{{ 'error' if show_house_name_form else 'ok' }}">
+                {{ show_house_name_form }} 
+                {% if show_house_name_form %}❌ Le formulaire masque le contenu!{% endif %}
+            </span>
+        </div>
+        
+        <div class="info">
+            <strong>show_intro_message:</strong> {{ show_intro_message }}
+        </div>
+        
+        <div class="info">
+            <strong>Nombre de joueurs:</strong> 
+            <span class="{{ 'ok' if players else 'error' }}">
+                {{ players|length if players else 0 }}
+            </span>
+        </div>
+        
+        {% if players %}
+        <div class="info">
+            <strong>Joueurs:</strong>
+            <pre>{{ players }}</pre>
+        </div>
+        {% endif %}
+        
+        <div class="info">
+            <strong>Variables du template:</strong>
+            <pre>house_health: {{ house_health }}
+daily_report: {{ daily_report|length if daily_report else 0 }} éléments
+player1_name: {{ player1_name }}
+player2_name: {{ player2_name }}</pre>
+        </div>
+        
+        <h2>🧪 Test d'affichage</h2>
+        <div class="info">
+            <p>Si vous voyez cette page, le serveur Flask fonctionne correctement.</p>
+            <p>Le problème vient probablement d'un JavaScript ou CSS qui cache le contenu dans menu.html</p>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="{{ url_for('menu') }}" style="color: white; text-decoration: underline;">← Retour au menu</a>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🔍 Diagnostic chargé avec succès');
+        console.log('Session user:', '{{ session.get("user") }}');
+        console.log('House name:', '{{ house_name }}');
+        console.log('show_house_name_form:', {{ show_house_name_form|lower }});
+        console.log('Players count:', {{ players|length if players else 0 }});
+    </script>
+</body>
+</html>

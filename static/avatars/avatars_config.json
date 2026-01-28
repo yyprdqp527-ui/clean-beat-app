@@ -1,113 +1,39 @@
 {
   "categories": [
     {
-      "id": "images",
-      "name": "📸 Personnages",
-      "type": "image",
-      "items": [
-        {"file": "homme.png", "label": "Homme"},
-        {"file": "femme.png", "label": "Femme"},
-        {"file": "Homme 40ans.png", "label": "Homme 40 ans"},
-        {"file": "femme 40ans.png", "label": "Femme 40 ans"},
-        {"file": "homme vieux.png", "label": "Senior"},
-        {"file": "vieille.png", "label": "Seniore"},
-        {"file": "avatar garcon.png", "label": "Garçon"}
-      ]
+      "id": "avataaars",
+      "name": "🎨 Avataaars",
+      "type": "dicebear",
+      "style": "avataaars",
+      "count": 20
     },
     {
-      "id": "emoji_people",
-      "name": "😀 Visages",
-      "type": "emoji",
-      "items": [
-        {"emoji": "😀", "label": "Content"},
-        {"emoji": "😎", "label": "Cool"},
-        {"emoji": "🤩", "label": "Star"},
-        {"emoji": "😇", "label": "Ange"},
-        {"emoji": "🥳", "label": "Fête"},
-        {"emoji": "😊", "label": "Souriant"},
-        {"emoji": "🤗", "label": "Câlin"},
-        {"emoji": "😏", "label": "Malin"},
-        {"emoji": "🤓", "label": "Intello"},
-        {"emoji": "😴", "label": "Fatigué"},
-        {"emoji": "🙄", "label": "Blasé"},
-        {"emoji": "😤", "label": "Agacé"}
-      ]
+      "id": "adventurer",
+      "name": "🏔️ Aventurier",
+      "type": "dicebear",
+      "style": "adventurer",
+      "count": 20
     },
     {
-      "id": "emoji_animals",
-      "name": "🐾 Animaux",
-      "type": "emoji",
-      "items": [
-        {"emoji": "🐱", "label": "Chat"},
-        {"emoji": "🐶", "label": "Chien"},
-        {"emoji": "🦊", "label": "Renard"},
-        {"emoji": "🐰", "label": "Lapin"},
-        {"emoji": "🐻", "label": "Ours"},
-        {"emoji": "🐼", "label": "Panda"},
-        {"emoji": "🦁", "label": "Lion"},
-        {"emoji": "🐨", "label": "Koala"},
-        {"emoji": "🦄", "label": "Licorne"},
-        {"emoji": "🐸", "label": "Grenouille"},
-        {"emoji": "🦋", "label": "Papillon"},
-        {"emoji": "🐝", "label": "Abeille"}
-      ]
+      "id": "lorelei",
+      "name": "🌸 Lorelei",
+      "type": "dicebear",
+      "style": "lorelei",
+      "count": 20
     },
     {
-      "id": "emoji_nature",
-      "name": "🌸 Nature & Objets",
-      "type": "emoji",
-      "items": [
-        {"emoji": "🌸", "label": "Fleur"},
-        {"emoji": "🌻", "label": "Tournesol"},
-        {"emoji": "🌈", "label": "Arc-en-ciel"},
-        {"emoji": "⭐", "label": "Étoile"},
-        {"emoji": "🌙", "label": "Lune"},
-        {"emoji": "☀️", "label": "Soleil"},
-        {"emoji": "🔥", "label": "Feu"},
-        {"emoji": "💎", "label": "Diamant"},
-        {"emoji": "🎨", "label": "Art"},
-        {"emoji": "🎵", "label": "Musique"},
-        {"emoji": "🎮", "label": "Jeux"},
-        {"emoji": "⚽", "label": "Foot"}
-      ]
+      "id": "bottts",
+      "name": "🤖 Robots",
+      "type": "dicebear",
+      "style": "bottts",
+      "count": 20
     },
     {
-      "id": "emoji_food",
-      "name": "🍕 Nourriture",
-      "type": "emoji",
-      "items": [
-        {"emoji": "🍕", "label": "Pizza"},
-        {"emoji": "🍔", "label": "Burger"},
-        {"emoji": "🍩", "label": "Donut"},
-        {"emoji": "🍪", "label": "Cookie"},
-        {"emoji": "🍦", "label": "Glace"},
-        {"emoji": "🧁", "label": "Cupcake"},
-        {"emoji": "🍓", "label": "Fraise"},
-        {"emoji": "🍎", "label": "Pomme"},
-        {"emoji": "🥑", "label": "Avocat"},
-        {"emoji": "🌮", "label": "Taco"},
-        {"emoji": "☕", "label": "Café"},
-        {"emoji": "🍹", "label": "Cocktail"}
-      ]
-    },
-    {
-      "id": "emoji_superhero",
-      "name": "🦸 Super-héros",
-      "type": "emoji", 
-      "items": [
-        {"emoji": "🦸", "label": "Super-héros"},
-        {"emoji": "🦸‍♀️", "label": "Super-héroïne"},
-        {"emoji": "🧙", "label": "Mage"},
-        {"emoji": "🧙‍♀️", "label": "Sorcière"},
-        {"emoji": "🧛", "label": "Vampire"},
-        {"emoji": "🧜‍♀️", "label": "Sirène"},
-        {"emoji": "🧚", "label": "Fée"},
-        {"emoji": "👻", "label": "Fantôme"},
-        {"emoji": "🤖", "label": "Robot"},
-        {"emoji": "👽", "label": "Alien"},
-        {"emoji": "🎃", "label": "Citrouille"},
-        {"emoji": "💀", "label": "Crâne"}
-      ]
+      "id": "personas",
+      "name": "👤 Personas",
+      "type": "dicebear",
+      "style": "personas",
+      "count": 20
     }
   ]
 }

@@ -1,0 +1,35 @@
+═══════════════════════════════════════════════════════════════
+🔵 BACKUPS & ARCHIVES - NON UTILISÉS (12+ fichiers)
+═══════════════════════════════════════════════════════════════
+
+⚠️ CES FICHIERS NE SONT PAS UTILISÉS ACTUELLEMENT
+
+🗄️ ANCIENNES VERSIONS:
+   - comments_old.html
+   - join_house_old.html
+   - task_page_OLD_BACKUP.html
+   - task_page.html
+
+💾 BACKUPS DE SÉCURITÉ:
+   - create_profile_backup.html
+   - edit_player_backup.html
+   - menu.html.backup
+   - menu.html.bak
+   - menu.html.current
+   - menu_with_bottom_nav.html.backup
+
+🧪 VERSIONS DE TEST NON RETENUES:
+   - invite_partner.html (remplacé par invite_partner_new.html)
+   - invite_partner_clean.html
+   - menu_clean.html
+   - menu_cleanbeat.html
+   - quick_signup.html
+   - diagnostic_mobile.html
+
+📁 AUTRES:
+   - points_style.css
+   - app Ménage à deux (dossier ancien)
+
+═══════════════════════════════════════════════════════════════
+✅ Ces fichiers peuvent être supprimés sans impact
+═══════════════════════════════════════════════════════════════

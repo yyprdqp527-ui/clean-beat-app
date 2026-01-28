@@ -213,9 +213,11 @@
         align-items: center;
         justify-content: center;
         font-size: 24px;
-        background: rgba(255,255,255,0.2);
-        border: 2px solid rgba(255,255,255,0.3);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        background: transparent;
+        backdrop-filter: blur(6px) saturate(110%);
+        -webkit-backdrop-filter: blur(6px) saturate(110%);
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.06);
         overflow: hidden;
     }
     
@@ -223,6 +225,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        border-radius: inherit;
     }
     
     .message-content {
@@ -477,11 +480,34 @@
         
         <!-- Formulaire d'envoi -->
         <div class="message-form-container">
+            {% if available_players %}
             <form method="POST" action="{{ url_for('comments') }}">
+                <!-- Sélecteur de destinataire avec avatars -->
+                <div style="margin-bottom: 12px;">
+                    <label style="font-weight: 700; color: var(--dark); margin-bottom: 8px; display: block; font-size: 14px;">
+                        📩 Envoyer un message privé à :
+                    </label>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+                        {% for player in available_players %}
+                        <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 3px solid transparent; border-radius: 20px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);">
+                            <input type="radio" name="recipient" value="{{ player.email }}" required style="display: none;" onchange="this.closest('label').parentElement.querySelectorAll('label').forEach(l => { l.style.borderColor = 'transparent'; l.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%)'; l.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)'; l.style.transform = 'scale(1)'; }); this.closest('label').style.borderColor = '{{ player.color }}'; this.closest('label').style.background = 'linear-gradient(135deg, {{ player.color_rgba }}, rgba(255,255,255,0.5))'; this.closest('label').style.boxShadow = '0 0 0 4px {{ player.color_rgba }}, 0 8px 20px {{ player.color_rgba }}'; this.closest('label').style.transform = 'scale(1.05)';">
+                            <div style="width: 56px; height: 56px; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 32px; background: linear-gradient(135deg, {{ player.color_rgba }} 0%, rgba(255,255,255,0.4) 100%); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border: 3px solid {{ player.color }}; box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);">
+                                {% if player.avatar.startswith('/static') or player.avatar.startswith('http') %}
+                                    <img src="{{ player.avatar }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    {{ player.avatar }}
+                                {% endif %}
+                            </div>
+                            <span style="font-size: 12px; font-weight: 700; color: {{ player.color }}; text-align: center; max-width: 70px; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">{{ player.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
                 <div class="message-input-wrapper">
                     <textarea 
                         name="content" 
-                        placeholder="Écris un message à..." 
+                        placeholder="Écris ton message privé..." 
                         required
                         rows="1"
                         oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"
@@ -489,27 +515,44 @@
                     <button type="submit" class="send-btn">Envoyer</button>
                 </div>
             </form>
+            {% else %}
+            <div style="background: rgba(255,243,205,0.95); border: 2px solid rgba(255,234,167,0.8); border-radius: 16px; padding: 20px; text-align: center; color: #856404;">
+                <div style="font-size: 32px; margin-bottom: 10px;">👥</div>
+                <div style="font-weight: 700; margin-bottom: 8px;">Aucun partenaire disponible</div>
+                <div style="font-size: 14px;">Invitez d'autres joueurs pour échanger des messages privés.</div>
+            </div>
+            {% endif %}
         </div>
         
         <!-- Liste des messages -->
         {% if messages %}
             <div class="messages-list">
                 {% for msg in messages %}
-                    <div class="message-item {{ 'message-me' if msg.is_me else '' }} {{ 'message-system' if msg.sender_type == 'system' else '' }}" style="--message-color: {{ msg.color }}; --message-bg-color: {{ msg.bg_color }};">
-                        {% if msg.sender_type != 'system' %}
-                            <div class="message-avatar">
+                    <div class="message-item {{ 'message-me' if msg.is_me else '' }} {{ 'message-system' if msg.sender_type in ['system', 'house'] else '' }}" style="--message-color: {{ msg.color }}; --message-bg-color: {{ msg.bg_color }};">
+                        {% if msg.sender_type not in ['system', 'house'] %}
+                            {% set border_color = (msg.player_color_hex if msg.player_color_hex is defined and msg.player_color_hex else (msg.color if msg.color else '#A6D3DC')) %}
+                            <div class="message-avatar" style="border: 2px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %};">
                                 {% if msg.sender_avatar.startswith('/static') or msg.sender_avatar.startswith('http') %}
                                     <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}">
                                 {% else %}
                                     {{ msg.sender_avatar }}
                                 {% endif %}
                             </div>
+                        {% elif msg.sender_type == 'house' %}
+                            <div class="message-avatar" style="font-size: 50px;">
+                                🏠
+                            </div>
                         {% endif %}
                         
                         <div class="message-content">
                             <div class="message-bubble">
-                                {% if msg.sender_type != 'system' %}
-                                    <div class="message-sender-name">{{ msg.sender_name }}</div>
+                                {% if msg.sender_type not in ['system'] %}
+                                    <div class="message-sender-name">
+                                        {{ msg.sender_name }}
+                                        {% if msg.recipient_name and msg.sender_type != 'house' %}
+                                            <span style="opacity: 0.7; font-size: 0.9em;"> → {{ msg.recipient_name }}</span>
+                                        {% endif %}
+                                    </div>
                                 {% endif %}
                                 <p class="message-text">{{ msg.content }}</p>
                                 <div class="message-timestamp">

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Menu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+        }
+        h1 { margin: 0 0 20px 0; }
+        .info { margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 10px; }
+        img { max-width: 100%; height: auto; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏠 Test Menu - {{ house_name }}</h1>
+        
+        <div class="info">
+            <strong>Utilisateur:</strong> {{ session.get('user', 'Non connecté') }}
+        </div>
+        
+        <div class="info">
+            <strong>Maison:</strong> {{ house_name or 'Aucune' }}
+        </div>
+        
+        <div class="info">
+            <strong>Joueurs:</strong> {{ players|length if players else 0 }}
+        </div>
+        
+        {% if players %}
+        <div class="info">
+            <strong>Liste des joueurs:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+            {% for player in players %}
+                <li>{{ player[1] }} ({{ player[0] }})</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="info">
+            <strong>show_house_name_form:</strong> {{ show_house_name_form }}
+        </div>
+        
+        <h2>Test Image</h2>
+        <img src="{{ url_for('static', filename='images/newmaison.png') }}" alt="Maison">
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="{{ url_for('menu') }}" style="color: white; text-decoration: underline;">← Retour au menu normal</a>
+        </div>
+    </div>
+</body>
+</html>

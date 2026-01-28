@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+{% set player_colors = ['rgba(120, 180, 230, 0.6)', 'rgba(180, 140, 200, 0.6)', 'rgba(240, 140, 140, 0.6)', 'rgba(250, 180, 100, 0.6)', 'rgba(130, 200, 150, 0.6)', 'rgba(240, 150, 170, 0.6)', 'rgba(120, 210, 200, 0.6)', 'rgba(255, 170, 170, 0.6)', 'rgba(140, 220, 210, 0.6)', 'rgba(255, 200, 120, 0.6)'] %}
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +9,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Socket.IO pour la synchronisation en temps réel -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // Neutralise les messages de debug `console.log` pour éviter les affichages indésirables
+        // Laisser les erreurs et warnings visibles (console.error / console.warn)
+        (function(){
+            try {
+                var _noop = function(){};
+                console.log = _noop;
+                console.debug = _noop;
+            } catch (e) {
+                // si console n'existe pas, on ignore
+            }
+        })();
+    </script>
+    
     <style>
         :root{
             --teal-light:#A6D3DC; --teal-dark:#597176; --gold:#FDAE54; --peach:#F4C68D; --white:#ffffff;
@@ -238,6 +256,36 @@
             border: 2px solid white;
         }
         
+        /* Badge de notification sur l'avatar */
+        .avatar-notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: linear-gradient(135deg, #FF4444 0%, #FF6B6B 100%);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            box-shadow: 0 3px 12px rgba(255, 68, 68, 0.7),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            animation: pulse-badge 2s ease-in-out infinite;
+            border: 1.5px solid white;
+            z-index: 10;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .avatar-notification-badge:hover {
+            transform: scale(1.15);
+        }
+        
         @keyframes pulse-badge {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.15); }
@@ -323,16 +371,38 @@
         .avatar-row { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
         .avatar-name { text-align:center; color:#153036; max-width: calc(var(--avatar-size) * 2.2); font-size:12px; font-weight:800; line-height:1.2; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; text-shadow: 0 1px 3px rgba(255,255,255,0.8); letter-spacing: 0.3px; }
         .others-avatar-size { --avatar-size: 56px; }
-        .avatar-square { position: relative; z-index: 2002; width: var(--avatar-size, 80px); height: var(--avatar-size, 80px); min-width: var(--avatar-size, 80px); min-height: var(--avatar-size, 80px); border-radius:18px; overflow:visible; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%); box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid rgba(255,255,255,0.6); flex:0 0 auto; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; cursor: pointer; }
-        .avatar-square img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
-        .avatar-square:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 15px 45px rgba(0,0,0,0.22), 0 0 0 4px rgba(255,255,255,0.45); border-color: rgba(255,255,255,0.8); }
-        .avatar-square:active { transform: translateY(-2px) scale(1.01); transition: transform 0.1s ease; }
-        .avatar-square img { width:100%; height:100%; object-fit:cover; display:block; }
+        .avatar-square { 
+            position: relative; 
+            z-index: 2002; 
+            width: var(--avatar-size, 110px); 
+            height: var(--avatar-size, 110px); 
+            min-width: var(--avatar-size, 110px); 
+            min-height: var(--avatar-size, 110px); 
+            border-radius: 50%; 
+            /* remove solid white interior so avatar image sits flush */
+            background: transparent;
+            backdrop-filter: blur(6px) saturate(120%);
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            border: 1px solid rgba(255,255,255,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.25);
+            flex: 0 0 auto;
+            transition: transform 0.15s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .avatar-square img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+        .avatar-square:hover { transform: none; box-shadow: none; }
+        .avatar-square:active { transform: none; }
         /* Wrapper qui aligne la vbar exactement au côté droit de l'avatar */
-        .avatar-square-wrapper { position: relative; display: inline-block; overflow: visible; }
+        .avatar-square-wrapper { 
+            position: relative; 
+            display: inline-block; 
+            overflow: visible;
+        }
         .avatar-square-wrapper .vbar { position: absolute; left: calc(100% + 16px); right: auto; top: 50%; transform: translateY(-50%); height: calc(var(--avatar-size) - 8px); width:6px; min-width:6px; border-radius:999px; background: linear-gradient(180deg, rgba(21,48,54,0.06), rgba(21,48,54,0.10)); overflow:hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); border: 1px solid rgba(21,48,54,0.22); z-index:2100; }
-        /* Forcer la taille exacte du wrapper pour homogénéiser l'alignement */
-        .avatar-square-wrapper { width: var(--avatar-size); height: var(--avatar-size); box-sizing: border-box; display: inline-block; }
         /* Standardiser le contenu interne des colonnes d'avatar */
         .avatar-col .avatar-row > div,
         .avatar-col > div { display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -512,14 +582,28 @@
             top: -30px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 22px;
-            font-weight: 900;
-            color: #FFD700;
-            text-shadow: 0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,215,0,0.5), 0 3px 6px rgba(0,0,0,0.4);
+            font-size: 18px;
+            font-weight: 800;
+            color: #153036;
             z-index: 10000;
             pointer-events: none;
             animation: points-popup 4s ease-out forwards;
             white-space: nowrap;
+            /* Style glassmorphisme comme les messages de validation */
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.95) 0%, 
+                rgba(255, 215, 0, 0.4) 50%,
+                rgba(253, 174, 84, 0.5) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 12px 20px;
+            box-shadow: 
+                0 20px 40px rgba(255, 215, 0, 0.35),
+                0 0 0 1px rgba(255, 215, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
         .winner-star {
             position: absolute;
@@ -1404,6 +1488,29 @@
     </style>
 </head>
 <body>
+    <script>
+        // Petit badge visuel pour confirmer que les scripts inline s'exécutent
+        try {
+            console.log('menu.html: early debug - script in <body> running');
+            (function(){
+                var badge = document.createElement('div');
+                badge.id = 'js-debug-badge';
+                badge.textContent = 'JS OK';
+                badge.style.position = 'fixed';
+                badge.style.right = '12px';
+                badge.style.bottom = '12px';
+                badge.style.padding = '6px 8px';
+                badge.style.background = 'rgba(0,0,0,0.6)';
+                badge.style.color = 'white';
+                badge.style.fontSize = '12px';
+                badge.style.zIndex = '99999';
+                badge.style.borderRadius = '6px';
+                badge.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+                badge.style.pointerEvents = 'none';
+                document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(badge); });
+            })();
+        } catch(e) { console.error('menu.html: early debug error', e); }
+    </script>
             <!-- 🎭 Pop-up pour les messages flash humoristiques -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -1609,7 +1716,43 @@
                 </button>
                 
                 <div class="header-inner">
-                    <div class="avatar-strip {% if players|length <= 2 %}two-players{% endif %}">
+                        <script>
+                            const MENU_DICEBEAR_FALLBACK = "{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}";
+                        </script>
+                        <script>
+                        // Appliquer un avatar d'aperçu provenant d'un cookie (mise en place rapide pour la démo)
+                        document.addEventListener('DOMContentLoaded', function(){
+                            try{
+                                function getCookie(name){
+                                    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+                                    return v ? decodeURIComponent(v.pop()) : null;
+                                }
+                                const preview = getCookie('preview_avatar_url');
+                                if(preview){
+                                    var wrapper = document.getElementById('current-player-avatar');
+                                    if(wrapper){
+                                        var img = wrapper.querySelector('img');
+                                        if(img){ img.src = preview; }
+                                        else {
+                                            var avatar_size = parseInt(getComputedStyle(wrapper).getPropertyValue('--avatar-size')) || 80;
+                                            var imgEl = document.createElement('img');
+                                            imgEl.src = preview;
+                                            imgEl.alt = 'Avatar';
+                                            imgEl.style.width = avatar_size + 'px';
+                                            imgEl.style.height = avatar_size + 'px';
+                                            imgEl.style.borderRadius = '50%';
+                                            imgEl.style.objectFit = 'cover';
+                                            wrapper.innerHTML = '';
+                                            wrapper.appendChild(imgEl);
+                                        }
+                                        // supprimer le cookie pour éviter de le réappliquer plus tard
+                                        document.cookie = 'preview_avatar_url=; Max-Age=0; path=/';
+                                    }
+                                }
+                            }catch(e){console.warn('Preview avatar script error', e)}
+                        });
+                        </script>
+                        <div class="avatar-strip {% if players|length <= 2 %}two-players{% endif %}">
 
                         {# Joueur actuel (Joueur 1) #}
                         <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:6px;">
@@ -1619,34 +1762,56 @@
                                 {% set pct1 = points1|int %}
                                 {% if pct1 > 100 %}{% set pct1 = 100 %}{% endif %}
                                 {% set fill1 = 2 if pct1 > 0 and pct1 < 2 else pct1 %}
+                                {% set sorted_players = players|sort(attribute='email')|list %}
+                                {% set player1_idx = sorted_players|map(attribute='email')|list|index(current_user_name) %}
+                                {% set border1 = player_colors[player1_idx % player_colors|length] %}
+                                {% set current_player = players|selectattr('email', 'equalto', current_user_name)|first %}
+                                {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
+                                {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}">
-                                        <div class="avatar-square" id="current-player-avatar">
-                                            {% if player1_avatar_file %}
-                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}">
+                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative;">
+                                        {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
+                                        <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: 3px solid {% if '#' in border_color1 %}{{ border_color1 }}66{% else %}{{ border_color1 }}{% endif %}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
+                                            {% if session.get('user_avatar_url') %}
+                                                <img src="{{ session.get('user_avatar_url') }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                            {% elif player1_avatar_file %}
+                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar_url %}
-                                                <img src="{{ player1_avatar_url }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}">
+                                                <img src="{{ player1_avatar_url }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar and player1_avatar|length <= 4 %}
-                                                <span style="font-size: 40px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ player1_avatar }}</span>
+                                                <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ player1_avatar }}</span>
+                                            {% elif player1_avatar and '.' not in player1_avatar %}
+                                                {# Treat stored value as a DiceBear seed (no file extension) #}
+                                                <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                            {% elif player1_avatar and '.' in player1_avatar %}
+                                                {# Looks like a filename with extension -> serve static file #}
+                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% else %}
-                                                <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}">
+                                                <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% endif %}
                                         </div>
+                                        
+                                        <!-- Badge de notification pour messages non lus -->
+                                        {% if unread_messages_count and unread_messages_count > 0 %}
+                                        <span class="avatar-notification-badge" id="avatar-unread-badge" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ unread_messages_count }} message{{ 's' if unread_messages_count > 1 else '' }} non lu{{ 's' if unread_messages_count > 1 else '' }}">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
+                                        {% else %}
+                                        <span class="avatar-notification-badge" id="avatar-unread-badge" style="display: none;" title="Aucun message non lu"></span>
+                                        {% endif %}
                                         <div class="vbar simple" aria-label="Progression du jour" title="{{ pct1 }}%" data-points="{{ points1 }}" data-fill="{{ fill1 }}">
-                                            <div class="vbar-fill" style="height: {{ fill1 }}%; background: linear-gradient(180deg, #4A90E2 0%, #357ABD 100%);"></div>
+                                            <div class="vbar-fill" style="height: {{ fill1 }}%; background: {{ color1 }};"></div>
                                         </div>
                                     </div>
                                     {# Barre horizontale pour mobile - Joueur 1 #}
                                     <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points1 }}" data-fill="{{ fill1 }}">
-                                        <div class="vbar-fill" style="width: {{ fill1 }}%; background: linear-gradient(90deg, #4A90E2 0%, #357ABD 100%);"></div>
+                                        <div class="vbar-fill" style="width: {{ fill1 }}%; background: {{ color1_h }};"></div>
                                     </div>
                                     <div class="avatar-points" aria-label="Points du jour">{{ points1 }} pts</div>
                                 </div>
                             </div>
                         </div>
 
-                        {# Autres joueurs (affichés à côté du joueur 1) #}
-                        {% set others = players|selectattr('email', 'ne', current_user_name)|list %}
+                        {# Autres joueurs triés par email pour ordre cohérent #}
+                        {% set others = players|selectattr('email', 'ne', current_user_name)|sort(attribute='email')|list %}
                         {% set count = others|length %}
                         {% if count > 0 %}
                             {% set p2 = others[0] %}
@@ -1654,29 +1819,39 @@
                             {% set pct_p2 = points_p2|int %}
                             {% if pct_p2 > 100 %}{% set pct_p2 = 100 %}{% endif %}
                             {% set fill_p2 = 2 if pct_p2 > 0 and pct_p2 < 2 else pct_p2 %}
+                            {% set p2_idx = sorted_players|map(attribute='email')|list|index(p2.email) %}
+                            {% set border_p2 = player_colors[p2_idx % player_colors|length] %}
+                            {% set color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else 'linear-gradient(180deg, rgba(180, 140, 200, 0.75) 0%, rgba(160, 120, 180, 0.65) 100%)')) %}
+                            {% set color_p2_h = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color_h if p2.color_h else 'linear-gradient(90deg, rgba(180, 140, 200, 0.75) 0%, rgba(160, 120, 180, 0.65) 100%)')) %}
                             <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:6px;">
                                 <div class="avatar-name" style="font-weight:700;">{{ p2.name }}</div>
                                 <div class="avatar-row" style="gap:8px; align-items:center;">
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                         <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}">
-                                            <div class="avatar-square">
+                                            {% set border_color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else '#A6D3DC')) %}
+                                            <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: 3px solid {% if '#' in border_color_p2 %}{{ border_color_p2 }}66{% else %}{{ border_color_p2 }}{% endif %}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
                                                 {% if p2.avatar_file %}
-                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar_file) }}" alt="Avatar {{ p2.name }}">
+                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar_file) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar_url %}
-                                                    <img src="{{ p2.avatar_url }}" alt="Avatar {{ p2.name }}">
+                                                    <img src="{{ p2.avatar_url }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar and p2.avatar|length <= 4 %}
-                                                    <span style="font-size: 40px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ p2.avatar }}</span>
+                                                    <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p2.avatar }}</span>
+                                                {% elif p2.avatar and '.' not in p2.avatar %}
+                                                    {# Use stored seed for DiceBear when it's not a filename #}
+                                                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                {% elif p2.avatar and '.' in p2.avatar %}
+                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% else %}
-                                                    <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar {{ p2.name }}">
+                                                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
                                             <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
-                                                <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: linear-gradient(180deg, #9B59B6 0%, #8E44AD 100%);"></div>
+                                                <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: {{ color_p2 }};"></div>
                                             </div>
                                         </div>
                                         {# Barre horizontale pour mobile - Joueur 2 #}
                                         <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
-                                            <div class="vbar-fill" style="width: {{ fill_p2 }}%; background: linear-gradient(90deg, #9B59B6 0%, #8E44AD 100%);"></div>
+                                            <div class="vbar-fill" style="width: {{ fill_p2 }}%; background: {{ color_p2_h }};"></div>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">{{ points_p2 }} pts</div>
                                     </div>
@@ -1688,28 +1863,25 @@
                                 {% set pct = points|int %}
                                 {% if pct > 100 %}{% set pct = 100 %}{% endif %}
                                 {% set fill = 2 if pct > 0 and pct < 2 else pct %}
-                                {% set player_colors = [
-                                    'linear-gradient(180deg, #E74C3C 0%, #C0392B 100%)',
-                                    'linear-gradient(180deg, #F39C12 0%, #D68910 100%)',
-                                    'linear-gradient(180deg, #1ABC9C 0%, #16A085 100%)',
-                                    'linear-gradient(180deg, #E91E63 0%, #C2185B 100%)',
-                                    'linear-gradient(180deg, #3498DB 0%, #2980B9 100%)'
-                                ] %}
-                                {% set color = player_colors[loop.index0 % 5] %}
+                                {% set p_idx = sorted_players|map(attribute='email')|list|index(p.email) %}
+                                {% set border_p = player_colors[p_idx % player_colors|length] %}
+                                {% set color = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
+                                {% set color_h = (p.player_color_hex if p and p.player_color_hex else (p.color_h if p.color_h else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:4px;">
                                     <div class="avatar-name" style="font-weight:700;">{{ p.name }}</div>
                                     <div class="avatar-row" style="gap:6px; flex-shrink:0; align-items:center;">
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                             <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}">
-                                                <div class="avatar-square">
+                                                {% set border_color_p = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else '#A6D3DC')) %}
+                                                <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: 3px solid {% if '#' in border_color_p %}{{ border_color_p }}66{% else %}{{ border_color_p }}{% endif %}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
                                                     {% if p.avatar_file %}
-                                                        <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="Avatar {{ p.name }}">
+                                                        <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% elif p.avatar_url %}
-                                                        <img src="{{ p.avatar_url }}" alt="Avatar {{ p.name }}">
+                                                        <img src="{{ p.avatar_url }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% elif p.avatar and p.avatar|length <= 4 %}
-                                                        <span style="font-size: 40px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ p.avatar }}</span>
+                                                        <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p.avatar }}</span>
                                                     {% else %}
-                                                        <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar {{ p.name }}">
+                                                        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
                                                 <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">
@@ -1717,7 +1889,6 @@
                                                 </div>
                                             </div>
                                             {# Barre horizontale pour mobile - Autres joueurs #}
-                                            {% set color_h = color|replace('180deg', '90deg') %}
                                             <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points }}" data-fill="{{ fill }}">
                                                 <div class="vbar-fill" style="width: {{ fill }}%; background: {{ color_h }};"></div>
                                             </div>
@@ -1736,7 +1907,7 @@
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                         <div class="avatar-square-wrapper" title="Joueur en attente">
                                             <div class="avatar-square">
-                                                <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar en attente">
+                                                <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=waiting" alt="Avatar en attente" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             </div>
                                             <div class="vbar simple" aria-label="Progression du jour" title="0%" data-points="0" data-fill="0">
                                                 <div class="vbar-fill" style="height: 0%; background: hsl(0, 0%, 60%);"></div>
@@ -1767,12 +1938,14 @@
                     left: 0;
                     right: 0;
                     z-index: 1000;
-                    background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(253,174,84,0.12) 100%);
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
+                    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(166,211,220,0.15) 100%);
+                    backdrop-filter: saturate(180%) blur(30px);
+                    -webkit-backdrop-filter: saturate(180%) blur(30px);
                     border-radius: 24px 24px 0 0;
-                    box-shadow: 0 -8px 32px rgba(89,113,118,0.2);
-                    border-top: 2px solid rgba(253,174,84,0.35);
+                    box-shadow: 0 -12px 50px rgba(89,113,118,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+                    border-top: 2px solid rgba(255,255,255,0.5);
+                    border-left: 1px solid rgba(255,255,255,0.3);
+                    border-right: 1px solid rgba(255,255,255,0.3);
                     padding: 0 12px 16px 12px;
                     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                     max-height: 70vh;
@@ -1804,14 +1977,16 @@
                 .dashboard-toggle-handle {
                     width: 48px;
                     height: 5px;
-                    background: rgba(166,211,220,0.6);
+                    background: linear-gradient(135deg, rgba(166,211,220,0.7) 0%, rgba(253,174,84,0.5) 100%);
                     border-radius: 3px;
                     transition: all 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(166,211,220,0.3);
                 }
                 
                 .dashboard-toggle:active .dashboard-toggle-handle {
                     width: 64px;
-                    background: rgba(253,174,84,0.8);
+                    background: linear-gradient(135deg, rgba(253,174,84,0.9) 0%, rgba(244,198,141,0.8) 100%);
+                    box-shadow: 0 4px 12px rgba(253,174,84,0.5);
                 }
                 
                 .dashboard-toggle-text {
@@ -1819,6 +1994,7 @@
                     font-weight: 700;
                     color: #597176;
                     transition: all 0.3s ease;
+                    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
                 }
                 
                 .dashboard-floating.minimized .dashboard-toggle-text::after {
@@ -1839,76 +2015,36 @@
                     pointer-events: none;
                 }
                 
-                /* Classement horizontal */
-                .dashboard-ranking {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                    margin-bottom: 12px;
-                    overflow-x: auto;
-                    -webkit-overflow-scrolling: touch;
-                    scrollbar-width: none;
-                    padding: 4px 0;
-                }
-                
-                .dashboard-ranking::-webkit-scrollbar {
-                    display: none;
-                }
-                
-                .dashboard-player-card {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 4px;
-                    min-width: 85px;
-                    padding: 10px 12px;
-                    background: rgba(255,255,255,0.5);
-                    border-radius: 16px;
-                    border: 2px solid rgba(166,211,220,0.25);
-                    flex-shrink: 0;
-                    transition: all 0.3s ease;
-                }
-                
-                .dashboard-player-card.gold {
-                    background: linear-gradient(135deg, rgba(255,215,0,0.22), rgba(253,174,84,0.15));
-                    border-color: rgba(255,215,0,0.5);
-                    box-shadow: 0 4px 16px rgba(255,215,0,0.2);
-                }
-                
-                .dashboard-player-avatar {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 14px;
-                    overflow: hidden;
-                    border: 3px solid currentColor;
-                }
-                
-                .dashboard-player-avatar img {
+                /* Style amélioré du classement */
+                #dailyRankingContainer {
                     width: 100%;
-                    height: 100%;
-                    object-fit: cover;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    padding: 10px 5px;
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(166,211,220,0.5) transparent;
                 }
                 
-                .dashboard-activity {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    padding: 10px 14px;
-                    background: rgba(166,211,220,0.15);
-                    border-radius: 14px;
-                    border: 1px solid rgba(166,211,220,0.25);
+                #dailyRankingContainer::-webkit-scrollbar {
+                    width: 6px;
+                }
+                
+                #dailyRankingContainer::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                
+                #dailyRankingContainer::-webkit-scrollbar-thumb {
+                    background: rgba(166,211,220,0.5);
+                    border-radius: 3px;
+                }
+                
+                #dailyRankingContainer::-webkit-scrollbar-thumb:hover {
+                    background: rgba(166,211,220,0.7);
                 }
                 
                 @media (max-width: 380px) {
-                    .dashboard-player-card {
-                        min-width: 72px;
-                        padding: 8px 10px;
-                    }
-                    
-                    .dashboard-player-avatar {
-                        width: 32px;
-                        height: 32px;
+                    .dashboard-floating {
+                        padding: 0 8px 12px 8px;
                     }
                 }
             </style>
@@ -1922,55 +2058,10 @@
                 
                 <!-- Contenu du dashboard -->
                 <div class="dashboard-content">
-                    <!-- Classement horizontal -->
-                    <div class="dashboard-ranking">
-                        {% if players %}
-                            {% set sorted_players = players|sort(attribute='daily_points', reverse=True) %}
-                            {% for player in sorted_players[:3] %}
-                                {% set is_current = (player.email == current_user_name) %}
-                                {% set rank_emoji = ['🥇', '🥈', '🥉'][loop.index0] %}
-                                {% set rank_color = ['#FFD700', '#C0C0C0', '#CD7F32'][loop.index0] %}
-                                
-                                <div class="dashboard-player-card {{ 'gold' if loop.index0 == 0 else '' }}" style="color: {{ rank_color }};">
-                                    <div style="font-size: 26px;">{{ rank_emoji }}</div>
-                                    
-                                    <div class="dashboard-player-avatar">
-                                        {% if player.avatar_file %}
-                                            <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
-                                        {% elif player.avatar_url %}
-                                            <img src="{{ player.avatar_url }}" alt="{{ player.name }}">
-                                        {% elif player.avatar and player.avatar|length <= 4 %}
-                                            <span style="font-size: 32px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ player.avatar }}</span>
-                                        {% else %}
-                                            <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="{{ player.name }}">
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <div style="font-weight: 800; font-size: 12px; color: #153036; text-align: center; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        {{ player.name[:8] }}{{ '...' if player.name|length > 8 else '' }}
-                                    </div>
-                                    
-                                    <div style="font-size: 18px; font-weight: 900;">
-                                        {{ player.daily_points|default(0) }}
-                                    </div>
-                                    
-                                    <div style="font-size: 10px; color: #597176; font-weight: 600;">
-                                        {{ player.daily_tasks|default(0) }} tâche{{ 's' if player.daily_tasks|default(0) > 1 else '' }}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div style="text-align: center; color: #597176; font-size: 13px; width: 100%; padding: 10px;">
-                                Aucun joueur actif 🎮
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Dernière activité -->
-                    <div class="dashboard-activity">
-                        <div style="font-size: 22px; flex-shrink: 0;">✅</div>
-                        <div style="flex: 1; min-width: 0; font-size: 13px; color: #597176; font-weight: 600;">
-                            <span id="recent-task-text">Aucune tâche aujourd'hui. Sois le premier ! 🎯</span>
+                    <!-- Classement quotidien -->
+                    <div id="dailyRankingContainer" style="width: 100%; max-height: 400px; overflow-y: auto; padding: 10px 5px;">
+                        <div style="text-align: center; color: #597176; font-size: 13px; padding: 20px;">
+                            Chargement du classement...
                         </div>
                     </div>
                 </div>
@@ -2022,6 +2113,110 @@
                 if (savedState === 'false') {
                     dashboard.classList.remove('minimized');
                 }
+            })();
+            
+            // 🏆 CHARGEMENT DU CLASSEMENT QUOTIDIEN
+            (function() {
+                function loadDailyRanking() {
+                    fetch('/api/daily_tasks')
+                        .then(response => response.json())
+                        .then(data => {
+                            const container = document.getElementById('dailyRankingContainer');
+                            if (!container) return;
+                            
+                            if (!data.tasks || data.tasks.length === 0) {
+                                container.innerHTML = `
+                                    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.1) 100%); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-radius: 20px; padding: 30px 20px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); border: 2px solid rgba(255,255,255,0.5);">
+                                        <div style="font-size: 48px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(166,211,220,0.3));">🎯</div>
+                                        <div style="font-weight: 800; font-size: 16px; color: #153036; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">Aucune tâche aujourd'hui</div>
+                                        <div style="font-size: 13px; color: #597176; font-weight: 600;">Sois le premier à valider une tâche !</div>
+                                    </div>
+                                `;
+                                return;
+                            }
+                            
+                            // Grouper les tâches par joueur
+                            const playerTasks = {};
+                            data.tasks.forEach(task => {
+                                if (!playerTasks[task.player_name]) {
+                                    playerTasks[task.player_name] = {
+                                        name: task.player_name,
+                                        avatar: task.avatar,
+                                        tasks: []
+                                    };
+                                }
+                                playerTasks[task.player_name].tasks.push({
+                                    name: task.task_name,
+                                    time: task.time
+                                });
+                            });
+                            
+                            // Trier les joueurs par nombre de tâches
+                            const sortedPlayers = Object.values(playerTasks).sort((a, b) => b.tasks.length - a.tasks.length);
+                            
+                            // Médailles
+                            const medals = ['🥇', '🥈', '🥉'];
+                            const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+                            
+                            // Générer le HTML
+                            let html = '';
+                            sortedPlayers.forEach((player, index) => {
+                                const medal = index < 3 ? medals[index] : `${index + 1}`;
+                                const medalColor = index < 3 ? medalColors[index] : '#597176';
+                                const borderColor = index < 3 ? medalColor : 'rgba(166,211,220,0.3)';
+                                
+                                html += `
+                                    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.1) 100%); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-radius: 20px; padding: 14px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); border: 2px solid ${borderColor === 'rgba(166,211,220,0.3)' ? 'rgba(255,255,255,0.5)' : borderColor};">
+                                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                            <div style="font-size: 32px; font-weight: 900; color: ${medalColor}; min-width: 38px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">
+                                                ${medal}
+                                            </div>
+                                            <div style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 3px solid ${borderColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                                <img src="${player.avatar}" alt="${player.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+                                            <div style="font-weight: 800; font-size: 15px; color: #153036; flex: 1; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">
+                                                ${player.name}
+                                            </div>
+                                        </div>
+                                        <div style="padding-left: 50px; font-size: 12px; background: rgba(255,255,255,0.4); border-radius: 12px; padding: 8px 12px; backdrop-filter: blur(10px);">
+                                `;
+                                
+                                player.tasks.forEach(task => {
+                                    html += `
+                                        <div style="display: flex; align-items: center; gap: 10px; padding: 5px 0; color: #597176;">
+                                            <div style="width: 6px; height: 6px; background: linear-gradient(135deg, #A6D3DC 0%, #89b4bb 100%); border-radius: 50%; box-shadow: 0 2px 4px rgba(166,211,220,0.4);"></div>
+                                            <div style="flex: 1; font-weight: 600; color: #153036;">${task.name}</div>
+                                            <div style="font-size: 11px; color: #FDAE54; font-weight: 800; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px;">${task.time}</div>
+                                        </div>
+                                    `;
+                                });
+                                
+                                html += `
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            
+                            container.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error('Erreur chargement classement:', error);
+                            const container = document.getElementById('dailyRankingContainer');
+                            if (container) {
+                                container.innerHTML = `
+                                    <div style="text-align: center; color: #e74c3c; font-size: 13px; padding: 20px;">
+                                        Erreur de chargement du classement
+                                    </div>
+                                `;
+                            }
+                        });
+                }
+                
+                // Charger au démarrage
+                loadDailyRanking();
+                
+                // Recharger toutes les 30 secondes
+                setInterval(loadDailyRanking, 30000);
             })();
             </script>
             <!-- FIN DASHBOARD FLOTTANT -->
@@ -2285,8 +2480,27 @@
                         fetch('/api/players_points')
                             .then(response => response.json())
                             .then(data => {
+                                console.log('📊 Données reçues:', data);
+                                // Debug: lister les wrappers d'avatar déjà présents dans le DOM
+                                try {
+                                    const wrappers = Array.from(document.querySelectorAll('.avatar-square-wrapper')).map(w => w.getAttribute('data-player-email'));
+                                    console.log('  🔎 DOM avatar wrappers:', wrappers);
+                                } catch(e){ console.warn('  ⚠️ Impossible lister wrappers', e); }
+
+                                // Assurer la présence d'un conteneur de préchargement caché pour forcer les requêtes réseau
+                                let preloadContainer = document.getElementById('avatar-preload');
+                                try {
+                                    if (!preloadContainer) {
+                                        preloadContainer = document.createElement('div');
+                                        preloadContainer.id = 'avatar-preload';
+                                        preloadContainer.style.cssText = 'width:0;height:0;overflow:hidden;position:fixed;left:-9999px;top:-9999px;';
+                                        document.body.appendChild(preloadContainer);
+                                    }
+                                } catch(e) { console.warn('  ⚠️ Erreur création preload container', e); }
                                 if (data.players && data.players.length > 0) {
                                     data.players.forEach(player => {
+                                        console.log(`👤 Traitement joueur: ${player.name} (${player.email}) - ${player.daily_points} pts`);
+                                        
                                         // Mettre à jour les cartes de joueurs dans le podium
                                         const playerCards = document.querySelectorAll('.player-name-link');
                                         playerCards.forEach(card => {
@@ -2300,11 +2514,15 @@
                                                         const oldPoints = parseInt(pointsElement.textContent) || 0;
                                                         const newPoints = player.daily_points || 0;
                                                         
+                                                        console.log(`  📈 Carte: ${oldPoints} → ${newPoints}`);
+                                                        
                                                         if (oldPoints !== newPoints) {
                                                             // Animer le changement
                                                             pointsElement.style.transform = 'scale(1.2)';
                                                             pointsElement.style.color = '#28a745';
                                                             pointsElement.textContent = newPoints;
+                                                            
+                                                            console.log(`  ✨ Carte mise à jour pour ${player.name}`);
                                                             
                                                             setTimeout(() => {
                                                                 pointsElement.style.transform = 'scale(1)';
@@ -2318,19 +2536,132 @@
                                         
                                         // Mettre à jour les avatars-wrapper avec data-player-email
                                         const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${player.email}"]`);
+                                        console.log(`  🔍 Avatar trouvé pour ${player.email}:`, avatarWrapper ? 'OUI' : 'NON');
+                                        
                                         if (avatarWrapper) {
-                                            const pointsBadge = avatarWrapper.querySelector('.points-badge-avatar');
-                                            if (pointsBadge) {
-                                                const oldPoints = parseInt(pointsBadge.textContent) || 0;
+                                            // Mettre à jour la barre verticale (vbar) et son data-points
+                                            const vbar = avatarWrapper.querySelector('.vbar');
+                                            if (vbar) {
+                                                const oldPoints = parseInt(vbar.getAttribute('data-points')) || 0;
                                                 const newPoints = player.daily_points || 0;
                                                 
+                                                console.log(`  📊 VBar: ${oldPoints} → ${newPoints} pts`);
+                                                
                                                 if (oldPoints !== newPoints) {
-                                                    pointsBadge.textContent = newPoints;
-                                                    pointsBadge.style.animation = 'pointsPulse 0.5s ease';
-                                                    setTimeout(() => {
-                                                        pointsBadge.style.animation = '';
-                                                    }, 500);
+                                                    // Mettre à jour les données
+                                                    vbar.setAttribute('data-points', newPoints);
+                                                    vbar.setAttribute('title', `${newPoints} points aujourd'hui`);
+                                                    
+                                                    // Calculer le pourcentage de remplissage (max 30 points = 100%)
+                                                    const maxPoints = 30;
+                                                    let fillPercent = Math.min(100, (newPoints / maxPoints) * 100);
+                                                    fillPercent = Math.max(2, fillPercent); // Minimum 2% pour visibilité
+                                                    vbar.setAttribute('data-fill', fillPercent);
+                                                    
+                                                    // Mettre à jour la hauteur de la barre
+                                                    const vbarFill = vbar.querySelector('.vbar-fill');
+                                                    if (vbarFill) {
+                                                        vbarFill.style.height = fillPercent + '%';
+                                                        
+                                                        // Animation flash
+                                                        vbarFill.style.transition = 'none';
+                                                        vbarFill.style.filter = 'brightness(1.5)';
+                                                        setTimeout(() => {
+                                                            vbarFill.style.transition = 'height 0.4s ease, filter 0.3s ease';
+                                                            vbarFill.style.filter = 'brightness(1)';
+                                                        }, 100);
+                                                    }
+                                                    
+                                                    console.log(`  ✅ VBar mise à jour pour ${player.name}: ${fillPercent}%`);
                                                 }
+                                            }
+
+                                            // Mettre à jour l'image de l'avatar si l'URL/fichier/seed a changé
+                                            try {
+                                                const avatarSquare = avatarWrapper.querySelector('.avatar-square');
+                                                if (avatarSquare) {
+                                                    let newAvatarUrl = null;
+                                                    if (player.avatar_url) {
+                                                        newAvatarUrl = player.avatar_url;
+                                                    } else if (player.avatar_file) {
+                                                        newAvatarUrl = '/static/avatars/' + player.avatar_file;
+                                                    } else if (player.avatar) {
+                                                        // seed DiceBear or emoji
+                                                        const raw = String(player.avatar || '');
+                                                        const isEmoji = raw.length <= 4 && /[^\x00-\x7F]/.test(raw);
+                                                        if (!isEmoji) {
+                                                            const style = player.avatar_style || 'lorelei';
+                                                            newAvatarUrl = 'https://api.dicebear.com/7.x/' + encodeURIComponent(style) + '/svg?seed=' + encodeURIComponent(raw);
+                                                        }
+                                                    }
+
+                                                    console.log('  🔧 Computed avatar URL for', player.email, newAvatarUrl, 'raw avatar:', player.avatar, 'style:', player.avatar_style);
+
+                                                            // Préchargement forcé : créer une Image() cachée pour forcer la requête réseau
+                                                            try {
+                                                                if (newAvatarUrl) {
+                                                                    const probeForce = new Image();
+                                                                    probeForce.style.display = 'none';
+                                                                    probeForce.dataset.email = player.email || '';
+                                                                    probeForce.onload = function() { console.log('  ✅ Preload ok for', player.email, newAvatarUrl); };
+                                                                    probeForce.onerror = function(ev) { console.warn('  ❌ Preload failed for', player.email, newAvatarUrl, ev); };
+                                                                    probeForce.src = newAvatarUrl;
+                                                                    try { preloadContainer.appendChild(probeForce); } catch(e) { /* ignore */ }
+                                                                    console.log('  ⏳ Preloading started for', player.email, newAvatarUrl);
+                                                                }
+                                                            } catch(prefErr) { console.error('  ⚠️ Preload exception', prefErr); }
+
+                                                    if (newAvatarUrl) {
+                                                        const existingImg = avatarSquare.querySelector('img');
+                                                        if (existingImg) {
+                                                            // Compare absolute URLs safely by creating a URL object
+                                                            try {
+                                                                const existingSrc = new URL(existingImg.src, window.location.href).href;
+                                                                const plannedSrc = new URL(newAvatarUrl, window.location.href).href;
+                                                                if (existingSrc !== plannedSrc) {
+                                                                    console.log('  🛠 Updating img src:', plannedSrc);
+                                                                    // Probe loading with a temporary Image to capture load/error
+                                                                    try {
+                                                                        const probe = new Image();
+                                                                        probe.onload = function() {
+                                                                            console.log('  ✅ Avatar loaded successfully for', player.email, plannedSrc);
+                                                                            existingImg.src = plannedSrc;
+                                                                        };
+                                                                        probe.onerror = function(ev) {
+                                                                            console.warn('  ❌ Failed to load avatar for', player.email, plannedSrc, ev);
+                                                                            // fallback to local static image
+                                                                            existingImg.src = MENU_DICEBEAR_FALLBACK;
+                                                                        };
+                                                                        probe.src = plannedSrc;
+                                                                    } catch (probeErr) {
+                                                                        console.error('  ⚠️ Probe error', probeErr);
+                                                                        existingImg.src = plannedSrc;
+                                                                    }
+                                                                    // Expose the planned src for inspection
+                                                                    try { avatarSquare.setAttribute('data-avatar-src', plannedSrc); } catch(e){}
+                                                                }
+                                                            } catch (uerr) {
+                                                                existingImg.src = newAvatarUrl;
+                                                            }
+                                                            // Ensure onerror fallback
+                                                            existingImg.onerror = function() { console.warn('Avatar image failed to load, using fallback for', player.email); this.onerror=null; this.src=MENU_DICEBEAR_FALLBACK; };
+                                                        } else {
+                                                            // Remplacer le contenu par une balise img avec onerror
+                                                            const size = parseInt(getComputedStyle(avatarSquare).getPropertyValue('--avatar-size')) || {{ 48 if False else 48 }};
+                                                            console.log('  🆕 Inserting new img for', player.email, newAvatarUrl);
+                                                            const imgHtml = '<img class="debug-avatar-img" src="' + newAvatarUrl + '" alt="Avatar ' + (player.name || '') + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">';
+                                                            try { avatarSquare.setAttribute('data-avatar-src', newAvatarUrl); } catch(e){}
+                                                            avatarSquare.innerHTML = imgHtml;
+                                                        }
+                                                    } else {
+                                                        // Si c'est un emoji, afficher le texte seul
+                                                        if (player.avatar && String(player.avatar).length <= 4) {
+                                                            avatarSquare.innerHTML = '<span style="font-size:calc(var(--avatar-size,48px) * 0.5);">' + player.avatar + '</span>';
+                                                        }
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                console.error('Erreur mise à jour avatar DOM:', e);
                                             }
                                         }
                                     });
@@ -2696,6 +3027,24 @@
                         animateProgressBar();
                     }, 500);
                 });
+                </script>
+
+                <script>
+                    // Debug rapide pour vérifier que le script de mise à jour des points s'exécute
+                    try {
+                        console.log('menu.html: debug script chargé');
+                        console.log('menu: updatePlayersPointsMenu defined?', typeof updatePlayersPointsMenu);
+                        if (typeof updatePlayersPointsMenu === 'function') {
+                            console.log('menu: appel debug de updatePlayersPointsMenu()');
+                            try { updatePlayersPointsMenu(); } catch(e) { console.error('menu: erreur lors du call debug updatePlayersPointsMenu', e); }
+                        }
+                    } catch(e) {
+                        console.error('menu: erreur dans debug script', e);
+                    }
+
+                    window.addEventListener('error', function(ev) {
+                        console.error('menu: window error captured', ev && ev.error ? ev.error : ev);
+                    });
                 </script>
 
                 <!-- Zone sous le header -->
@@ -3102,10 +3451,22 @@
                     
                     // Fonction pour mettre à jour l'interface
                     function updateNotificationUI() {
-                        if (!window.pushManager) return;
-                        
-                        const status = window.pushManager.getStatus();
-                        
+                        // Défensif : pushManager peut ne pas être initialisé ou remplacé
+                        let status = 'unsupported';
+                        if (window.pushManager && typeof window.pushManager.getStatus === 'function') {
+                            status = window.pushManager.getStatus();
+                        } else {
+                            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                                status = 'unsupported';
+                            } else if (Notification.permission === 'denied') {
+                                status = 'denied';
+                            } else if (Notification.permission === 'granted') {
+                                status = 'granted';
+                            } else {
+                                status = 'default';
+                            }
+                        }
+
                         switch(status) {
                             case 'granted':
                                 notifIcon.textContent = '🔔';
@@ -3140,8 +3501,22 @@
                             return;
                         }
                         
-                        const status = window.pushManager.getStatus();
-                        
+                        // Défensif : obtenir le statut via pushManager si possible, sinon déduire
+                        let status = 'unsupported';
+                        if (window.pushManager && typeof window.pushManager.getStatus === 'function') {
+                            status = window.pushManager.getStatus();
+                        } else {
+                            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                                status = 'unsupported';
+                            } else if (Notification.permission === 'denied') {
+                                status = 'denied';
+                            } else if (Notification.permission === 'granted') {
+                                status = 'granted';
+                            } else {
+                                status = 'default';
+                            }
+                        }
+
                         if (status === 'denied') {
                             alert('❌ Vous avez bloqué les notifications.\n\nPour les réactiver :\n1. Cliquez sur l\'icône 🔒 dans la barre d\'adresse\n2. Autorisez les notifications\n3. Rechargez la page');
                             return;
@@ -3282,6 +3657,258 @@
                     
                     // Charger au démarrage
                     loadReminderStatus();
+                })();
+                
+                // ==========================================
+                // � GESTION DES BADGES DE MESSAGES NON LUS
+                // ==========================================
+                function updateUnreadBadge(count) {
+                    // Mettre à jour le badge sur l'avatar
+                    const avatarBadge = document.getElementById('avatar-unread-badge');
+                    if (avatarBadge) {
+                        if (count > 0) {
+                            avatarBadge.textContent = count < 100 ? count : '99+';
+                            avatarBadge.style.display = 'flex';
+                            avatarBadge.title = `${count} message${count > 1 ? 's' : ''} non lu${count > 1 ? 's' : ''}`;
+                        } else {
+                            avatarBadge.style.display = 'none';
+                            avatarBadge.title = 'Aucun message non lu';
+                        }
+                    }
+                    
+                    // Mettre à jour le badge dans le menu burger
+                    const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
+                    burgerBadges.forEach(badge => {
+                        if (count > 0) {
+                            badge.textContent = count < 100 ? count : '99+';
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // ==========================================
+                // �🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
+                // ==========================================
+                (function() {
+                    try {
+                        const socket = io();
+                        const userEmail = "{{ session.get('user', '') }}";
+                        
+                        if (!userEmail) {
+                            console.log('⚠️ WebSocket: Aucun utilisateur connecté');
+                            return;
+                        }
+                        
+                        socket.on('connect', function() {
+                            console.log('🔌 WebSocket: Connecté au serveur');
+                            // Rejoindre la room de la maison
+                            socket.emit('join_house', { email: userEmail });
+                        });
+                        
+                        socket.on('joined_room', function(data) {
+                            console.log('🏠 WebSocket: Rejoint la room', data.room);
+                        });
+                        
+                        socket.on('disconnect', function() {
+                            console.log('❌ WebSocket: Déconnecté du serveur');
+                        });
+                        
+                        // Écouter les mises à jour de points (nom d'événement principal)
+                        socket.on('points_updated', function(data) {
+                            console.log('📊 WebSocket: Points mis à jour pour', data.email);
+                            
+                            // Rafraîchir l'affichage des points
+                            if (typeof updatePlayersPointsMenu === 'function') {
+                                updatePlayersPointsMenu();
+                            }
+                            
+                            // Rafraîchir le dashboard si visible
+                            const dashboardElement = document.getElementById('dashboard-floating');
+                            if (dashboardElement && dashboardElement.classList.contains('active')) {
+                                if (typeof loadDailyRanking === 'function') {
+                                    loadDailyRanking();
+                                }
+                            }
+                        });
+                        
+                        // Écouter les mises à jour de points en temps réel avec données complètes
+                        socket.on('players_points_update', function(data) {
+                            console.log('📊 WebSocket: Mise à jour des points reçue', data);
+                            
+                            // FORCER la mise à jour complète via la fonction existante
+                            if (typeof updatePlayersPointsMenu === 'function') {
+                                console.log('🔄 Appel de updatePlayersPointsMenu()');
+                                updatePlayersPointsMenu();
+                            }
+                            
+                            // Afficher une notification si c'est un autre joueur qui a validé
+                            const currentUserEmail = userEmail;
+                            if (data.updated_player && data.updated_player !== currentUserEmail) {
+                                // Trouver le joueur qui a validé
+                                const updatedPlayer = data.players.find(p => p.email === data.updated_player);
+                                if (updatedPlayer) {
+                                    console.log('📢 Affichage notification pour', updatedPlayer.name);
+                                    
+                                    // Notification simplifiée
+                                    const notification = document.createElement('div');
+                                    notification.style.cssText = `
+                                        position: fixed;
+                                        top: 100px;
+                                        right: 20px;
+                                        z-index: 10000;
+                                        background: linear-gradient(135deg, rgba(40,167,69,0.98) 0%, rgba(52,211,153,0.95) 100%);
+                                        backdrop-filter: blur(20px);
+                                        border-radius: 20px;
+                                        padding: 16px 20px;
+                                        box-shadow: 0 12px 40px rgba(40,167,69,0.5), 0 0 0 3px rgba(255,255,255,0.3);
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 12px;
+                                        min-width: 280px;
+                                        max-width: 320px;
+                                        transform: translateX(400px);
+                                        opacity: 0;
+                                        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+                                        border: 2px solid rgba(255,255,255,0.4);
+                                    `;
+                                    
+                                    notification.innerHTML = `
+                                        <div style="font-size: 36px; line-height: 1;">✨</div>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 800; font-size: 14px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                                ${updatedPlayer.name} vient de gagner des points !
+                                            </div>
+                                            <div style="font-size: 13px; color: rgba(255,255,255,0.95); font-weight: 600; margin-top: 2px;">
+                                                ${updatedPlayer.daily_points} pts aujourd'hui
+                                            </div>
+                                        </div>
+                                    `;
+                                    
+                                    document.body.appendChild(notification);
+                                    
+                                    setTimeout(() => {
+                                        notification.style.transform = 'translateX(0)';
+                                        notification.style.opacity = '1';
+                                    }, 100);
+                                    
+                                    setTimeout(() => {
+                                        notification.style.transform = 'translateX(400px)';
+                                        notification.style.opacity = '0';
+                                        setTimeout(() => notification.remove(), 500);
+                                    }, 3000);
+                                }
+                            }
+                            
+                            // Rafraîchir le dashboard si visible
+                            const dashboardElement = document.getElementById('dashboard-floating');
+                            if (dashboardElement && dashboardElement.classList.contains('active')) {
+                                if (typeof loadDailyRanking === 'function') {
+                                    loadDailyRanking();
+                                }
+                            }
+                        });
+                        
+                        // Écouter les mises à jour d'avatar
+                        socket.on('player_avatar_update', function(data) {
+                            console.log('👤 WebSocket: Mise à jour avatar reçue', data);
+                            
+                            // Trouver et mettre à jour l'avatar dans l'interface
+                            const avatarElements = document.querySelectorAll(`[data-player-email="${data.email}"]`);
+                            avatarElements.forEach(element => {
+                                let avatarUrl = '';
+                                if (data.avatar_url) {
+                                    avatarUrl = data.avatar_url;
+                                } else if (data.avatar_file) {
+                                    avatarUrl = `/static/avatars/${data.avatar_file}`;
+                                } else if (data.avatar) {
+                                    // Emoji
+                                    element.textContent = data.avatar;
+                                    return;
+                                }
+                                
+                                if (avatarUrl) {
+                                    // If it's a DiceBear SVG, try to inline it for reliability
+                                    if (avatarUrl.includes('dicebear.com')) {
+                                        fetch(avatarUrl, { cache: 'no-cache' }).then(r => {
+                                            if (!r.ok) throw new Error('fetch_failed');
+                                            return r.text();
+                                        }).then(svgText => {
+                                            element.innerHTML = svgText;
+                                            const svg = element.querySelector('svg');
+                                            if (svg) {
+                                                svg.setAttribute('width', '100%');
+                                                svg.setAttribute('height', '100%');
+                                                svg.style.objectFit = 'cover';
+                                                svg.style.display = 'block';
+                                            }
+                                        }).catch(() => {
+                                            element.innerHTML = `<img src="${MENU_DICEBEAR_FALLBACK}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
+                                        });
+                                    } else {
+                                        element.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
+                                    }
+                                }
+                            });
+                        });
+
+                        // On initial load, replace DiceBear <img> with inline SVG for better reliability
+                        document.addEventListener('DOMContentLoaded', function() {
+                            try {
+                                document.querySelectorAll('.avatar-square img').forEach(img => {
+                                    const src = img.getAttribute('src') || '';
+                                    if (src.includes('dicebear.com')) {
+                                        fetch(src, { cache: 'no-cache' }).then(r => {
+                                            if (!r.ok) throw new Error('no');
+                                            return r.text();
+                                        }).then(svgText => {
+                                            const parent = img.parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = svgText;
+                                                const svg = parent.querySelector('svg');
+                                                if (svg) {
+                                                    svg.setAttribute('width', '100%');
+                                                    svg.setAttribute('height', '100%');
+                                                    svg.style.objectFit = 'cover';
+                                                    svg.style.display = 'block';
+                                                }
+                                            }
+                                        }).catch(() => {
+                                            // leave the image; onerror fallback exists
+                                        });
+                                    }
+                                });
+                            } catch (e) { /* ignore */ }
+                        });
+                        
+                        // Écouter les notifications de nouveaux messages
+                        socket.on('new_message_notification', function(data) {
+                            console.log('💬 WebSocket: Nouveau message reçu', data);
+                            
+                            // Ne mettre à jour le badge que si l'utilisateur actuel est le destinataire
+                            if (data.recipient_email === userEmail) {
+                                updateUnreadBadge(data.unread_count);
+                                
+                                // Afficher une notification toast (optionnel)
+                                if (typeof showToast === 'function') {
+                                    showToast(`💬 Nouveau message de ${data.sender}`);
+                                }
+                            }
+                        });
+                        
+                        // Écouter les mises à jour du compteur de messages non lus
+                        socket.on('unread_count_update', function(data) {
+                            console.log('💬 WebSocket: Compteur messages non lus mis à jour', data);
+                            if (data.user_email === userEmail) {
+                                updateUnreadBadge(data.count);
+                            }
+                        });
+                        
+                        console.log('✅ WebSocket: Système de synchronisation initialisé');
+                    } catch (error) {
+                        console.error('❌ WebSocket: Erreur d\'initialisation', error);
+                    }
                 })();
             </script>
 
