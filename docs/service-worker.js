@@ -8,6 +8,9 @@ const URLS_TO_CACHE = [
   'https://raw.githubusercontent.com/yyprdqp527-ui/clean-beat-app/main/static/avatars/dicebear_lorelei_default.svg'
 ];
 
+// Optionnel: ajoute aussi l'image de la maison pour un rendu hors‑ligne complet
+URLS_TO_CACHE.push('https://raw.githubusercontent.com/yyprdqp527-ui/clean-beat-app/main/image%20maison%203.png');
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_TO_CACHE))
