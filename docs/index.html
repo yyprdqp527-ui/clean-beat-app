@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CleanBeat — Demo</title>
+  <meta name="description" content="Démo hors‑ligne de CleanBeat (mock)">
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f6fbfc;color:#153036;padding:24px}
+    .card{background:white;padding:16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.08);max-width:720px;margin:18px auto}
+    h1{font-size:20px;margin-bottom:8px}
+    .players{display:flex;flex-wrap:wrap;gap:10px}
+    .player{flex:1 1 140px;padding:8px;border-radius:10px;background:linear-gradient(180deg,#fff,#f0fbff);text-align:center}
+    .points{font-weight:700;font-size:18px;color:#0b6b6f}
+    button{padding:8px 12px;border-radius:8px;border:0;background:#17a2b8;color:white;cursor:pointer}
+    .hint{font-size:13px;color:#556}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>CleanBeat — Démo interactive (mock)</h1>
+    <p class="hint">Cette page fonctionne hors‑ligne après un chargement initial&nbsp;: ouvre-la une fois, puis déconnecte‑toi et l'application restera disponible.</p>
+
+    <div id="players" class="players">Chargement…</div>
+
+    <p style="text-align:center;margin-top:16px"><button id="simulate">Simuler +1 point (tous)</button></p>
+    <p class="hint">Astuce&nbsp;: ajoute sur l'écran d'accueil pour tester comme PWA.</p>
+  </div>
+
+  <script>
+    // Register service worker (si supporté)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+    }
+
+    async function loadData(){
+      try{
+        const res = await fetch('/demo-data.json');
+        const data = await res.json();
+        renderPlayers(data.players);
+      } catch(e){
+        document.getElementById('players').textContent = 'Impossible de charger les données.';
+      }
+    }
+
+    function renderPlayers(players){
+      const container = document.getElementById('players');
+      container.innerHTML = '';
+      players.forEach((p,idx)=>{
+        const el = document.createElement('div'); el.className='player';
+        el.innerHTML = `<div style="font-size:14px">${p.name}</div><div class="points">${p.points} pts</div>`;
+        container.appendChild(el);
+      });
+      window._demoPlayers = players;
+    }
+
+    document.getElementById('simulate').addEventListener('click', ()=>{
+      if(!window._demoPlayers) return;
+      window._demoPlayers.forEach(p=>p.points+=1);
+      renderPlayers(window._demoPlayers);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
