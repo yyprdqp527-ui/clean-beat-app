@@ -1,5 +1,9 @@
 const CACHE_NAME = 'cleanbeat-demo-v1';
-const URLS_TO_CACHE = ['/','/index.html','/demo-data.json',
+// Use relative paths for cached files so the service worker works
+// when the site is served from a subpath (GitHub Pages).
+const URLS_TO_CACHE = [
+  'index.html',
+  'demo-data.json',
   'https://raw.githubusercontent.com/yyprdqp527-ui/clean-beat-app/main/static/avatars/avatar_boy_1.svg',
   'https://raw.githubusercontent.com/yyprdqp527-ui/clean-beat-app/main/static/avatars/dicebear_lorelei_default.svg'
 ];

@@ -43,13 +43,15 @@
 
   <script>
     // Register service worker (si supporté)
+    // Use a relative path so it works when the site is hosted under
+    // a repository subpath (GitHub Pages: /<user>/<repo>/)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
     }
 
     async function loadData(){
       try{
-        const res = await fetch('/demo-data.json');
+        const res = await fetch('demo-data.json');
         const data = await res.json();
         renderPlayers(data.players);
       } catch(e){
