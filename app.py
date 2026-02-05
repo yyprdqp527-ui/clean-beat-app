@@ -107,6 +107,19 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = "2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025"  # clé secrète forte, à garder confidentielle
 
+# ⚡ Désactiver cache des templates pour développement
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+# 🚫 DÉSACTIVER COMPLÈTEMENT LE CACHE NAVIGATEUR (pour éviter les problèmes de développement)
+@app.after_request
+def add_no_cache_headers(response):
+    """Ajoute des en-têtes pour désactiver complètement le cache navigateur"""
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
 # Ajouter un filtre Jinja personnalisé pour index
 @app.template_filter('index')
 def list_index_filter(lst, value):
@@ -122,6 +135,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Session valable
 app.config['SESSION_COOKIE_SECURE'] = False  # Mettre à True en production avec HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forcer le rechargement des templates
 
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
@@ -159,15 +173,17 @@ def inject_house_name():
             row = c.fetchone()
             if row and row[0]:
                 house_id = row[0]
-                # Essayer de récupérer un nom simple et un code de maison si la table existe
                 try:
-                    c.execute("SELECT house_name, code FROM houses WHERE id=?", (house_id,))
+                    c.execute("SELECT name, house_name, code FROM houses WHERE id=?", (house_id,))
                     hr = c.fetchone()
                     if hr:
-                        house_name = hr[0] if hr[0] and hr[0].strip() else None
-                        house_code = hr[1] if len(hr) > 1 else None
-                except sqlite3.OperationalError:
-                    # Ancienne base sans table/colonnes 'houses' -> on ignore
+                        name, house_name_db, code = hr[0], hr[1], hr[2]
+                        house_code = code
+                        if (house_name_db and house_name_db.strip()):
+                            house_name = house_name_db.strip()
+                        elif (name and name.strip()):
+                            house_name = name.strip()
+                except Exception:
                     pass
             conn.close()
     except Exception:
@@ -855,6 +871,16 @@ def test_invitation():
     except:
         return "Erreur lors du chargement de la page de test"
 
+@app.route('/test_baby_api')
+def test_baby_api():
+    # Servir le fichier de test baby API
+    try:
+        with open('test_baby_api.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        return content
+    except:
+        return "Erreur lors du chargement de la page de test baby API"
+
 @app.route('/welcome')
 def welcome():
     return render_template('welcome.html')
@@ -903,23 +929,6 @@ TWILIO_AUTH_TOKEN = 'your_auth_token_here'
 TWILIO_PHONE_NUMBER = '+1234567890'  # Votre numéro Twilio
 
 DB = "users.db"
-
-# Migration idempotente au démarrage: s'assurer que la colonne `avatar_style` existe
-try:
-    conn_m = sqlite3.connect(DB)
-    c_m = conn_m.cursor()
-    c_m.execute("PRAGMA table_info(users)")
-    cols_m = [r[1] for r in c_m.fetchall()]
-    if 'avatar_style' not in cols_m:
-        try:
-            c_m.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT")
-            conn_m.commit()
-            print("✅ Migration: colonne 'avatar_style' ajoutée à users")
-        except Exception as e:
-            print(f"⚠️ Migration avatar_style échouée: {e}")
-    conn_m.close()
-except Exception:
-    pass
 
 # Nombre maximum de joueurs par maison. Mettre à `None` pour illimité.
 MAX_PLAYERS = None
@@ -974,8 +983,8 @@ def save_photo_from_base64(base64_data):
         print(f"Erreur sauvegarde photo: {e}")
         return None
 
-def get_avatar_url(avatar_id):
-    """Retourne l'URL de l'avatar basé sur l'ID avec DiceBear Lorelei"""
+def get_avatar_url(avatar_id, style='adventurer'):
+    """Retourne l'URL de l'avatar basé sur l'ID avec DiceBear du style donné"""
     seeds = [
         'default', 'alice', 'bella', 'chloe', 'diana', 'emma',
         'fiona', 'grace', 'hannah', 'iris', 'julia', 'kate'
@@ -986,7 +995,7 @@ def get_avatar_url(avatar_id):
     except (ValueError, IndexError):
         seed = seeds[0]
     
-    return f'https://api.dicebear.com/7.x/lorelei/svg?seed={seed}'
+    return f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
 
 def send_sms_invitation(phone_number, user_name, house_code=None):
     """Envoie un SMS d'invitation"""
@@ -1566,15 +1575,6 @@ TASKS_CONFIG = {
             'fun_text': '😴 Dodo, l\'enfant do !',
             'ad_text': 'Veilleuses et musiques douces pour endormir bébé !',
             'ad_link': 'https://www.amazon.fr/s?k=veilleuse+bebe'
-        },
-        {
-            'name': 'Laver les biberons',
-            'image': 'chambre bébé/laver les biberons.webp',
-            'description': 'Des biberons propres et stérilisés !',
-            'points': 3,
-            'fun_text': '🧼 Propreté = santé !',
-            'ad_text': 'Stérilisateurs et goupillons pour biberons !',
-            'ad_link': 'https://www.amazon.fr/s?k=sterilisateur+biberon'
         },
         {
             'name': 'Laver les vêtements',
@@ -2213,6 +2213,11 @@ def add_cache_headers(response):
         # Cache les CSS/JS pendant 1 jour
         elif any(ext in request.path for ext in ['.css', '.js']):
             response.headers['Cache-Control'] = 'public, max-age=86400'  # 1 jour
+    else:
+        # Pas de cache pour les pages HTML (mode développement)
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
     return response
 
 
@@ -2263,31 +2268,37 @@ def compute_daily_streak(conn, email):
     except Exception:
         return 0
 
-def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None):
+def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None):
     """
     Crée un message système automatique pour la maison.
-    Types: 'system', 'task_completed', 'task_added', 'congratulation', 'reminder', 'sermon'
+    Types: 'system', 'task_completed', 'task_added', 'congratulation', 'reminder', 'sermon', 'baby_tracking'
     
     Si send_push=True, envoie également une notification push aux membres de la maison.
     sender_name: nom personnalisé pour l'expéditeur (ex: nom de la maison)
+    sender_email: email du joueur pour les messages baby_tracking
     """
     try:
         conn = sqlite3.connect(DB)
         c = conn.cursor()
         
-        # Utiliser le nom de la maison ou un nom par défaut
-        if sender_name is None:
-            c.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
-            house_row = c.fetchone()
-            if house_row:
-                sender_name = house_row[0] if house_row[0] else house_row[1]
-            if not sender_name:
-                sender_name = "Maison"
+        # Pour les messages baby_tracking, utiliser l'email du joueur
+        if message_type == 'baby_tracking' and sender_email:
+            actual_sender = sender_email
+        else:
+            # Utiliser le nom de la maison ou un nom par défaut
+            if sender_name is None:
+                c.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
+                house_row = c.fetchone()
+                if house_row:
+                    sender_name = house_row[0] if house_row[0] else house_row[1]
+                if not sender_name:
+                    sender_name = "Maison"
+            actual_sender = sender_name
         
         c.execute("""
             INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, related_task_id)
             VALUES (?, ?, 'house', ?, ?, ?)
-        """, (house_id, sender_name, content, message_type, related_task_id))
+        """, (house_id, actual_sender, content, message_type, related_task_id))
         message_id = c.lastrowid
         conn.commit()
         conn.close()
@@ -2301,7 +2312,8 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'task_added': '🆕',
                     'congratulation': '🎉',
                     'reminder': '⏰',
-                    'sermon': '🏠'
+                    'sermon': '🏠',
+                    'baby_tracking': '👶'
                 }
                 icon_emoji = notification_icons.get(message_type, '💬')
                 
@@ -2334,6 +2346,7 @@ def create_system_message(house_id, content, message_type='system', related_task
 def get_unread_message_count(user_email, house_id):
     """
     Retourne le nombre de messages non lus pour un utilisateur dans sa maison.
+    Exclut les messages de validation de tâches (task_completed).
     """
     try:
         conn = sqlite3.connect(DB)
@@ -2345,12 +2358,89 @@ def get_unread_message_count(user_email, house_id):
                 SELECT message_id FROM message_reads WHERE user_email = ?
             )
             AND (m.sender_email IS NULL OR m.sender_email != ?)
+            AND m.message_type != 'task_completed'
         """, (house_id, user_email, user_email))
         count = c.fetchone()[0]
         conn.close()
         return count
     except Exception:
         return 0
+
+def get_unread_messages_by_sender(user_email, house_id):
+    """
+    Retourne un dictionnaire avec le nombre de messages REÇUS non lus pour chaque joueur.
+    Affiche uniquement les messages que les autres joueurs VOUS ont envoyés et que vous n'avez pas encore lus.
+    
+    Exemple: {'james@mail.com': 3, 'marie@mail.com': 1}
+    Utilisé pour afficher un badge sur l'avatar des joueurs qui vous ont envoyé des messages non lus.
+    """
+    try:
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        
+        # Messages REÇUS non lus (ce joueur vous a écrit et vous ne les avez pas encore lus)
+        c.execute("""
+            SELECT m.sender_email, COUNT(*) as unread_count
+            FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = 'private'
+            AND m.recipient_email = ?
+            AND m.id NOT IN (
+                SELECT message_id FROM message_reads WHERE user_email = ?
+            )
+            AND m.sender_email IS NOT NULL
+            AND m.sender_email != ?
+            GROUP BY m.sender_email
+        """, (house_id, user_email, user_email, user_email))
+        received_unread = {sender: count for sender, count in c.fetchall()}
+        
+        conn.close()
+        
+        return received_unread
+    except Exception as e:
+        print(f"Erreur get_unread_messages_by_sender: {e}")
+        return {}
+
+def get_unread_messages_sent_to(user_email, house_id):
+    """
+    Retourne un dictionnaire avec le nombre de messages ENVOYÉS par l'utilisateur courant
+    qui n'ont pas encore été lus par leurs destinataires.
+    """
+    print(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
+    try:
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        
+        # Requête simplifiée - messages envoyés par l'utilisateur, non lus par destinataires
+        c.execute("""
+            SELECT m.recipient_email, COUNT(*) as unread_count
+            FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = 'private'
+            AND m.sender_email = ?
+            AND m.recipient_email IS NOT NULL
+            AND m.recipient_email != ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr 
+                WHERE mr.message_id = m.id 
+                AND mr.user_email = m.recipient_email
+            )
+            GROUP BY m.recipient_email
+        """, (house_id, user_email, user_email))
+        
+        results = c.fetchall()
+        print(f"[DEBUG] Résultats SQL bruts: {results}")
+        sent_unread = {recipient: count for recipient, count in results}
+        
+        conn.close()
+        
+        print(f"[DEBUG] Messages envoyés non lus: {sent_unread}")
+        return sent_unread
+    except Exception as e:
+        print(f"❌ Erreur get_unread_messages_sent_to: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}
 
 def mark_message_as_read(message_id, user_email):
     """
@@ -3044,17 +3134,10 @@ def get_house_players_points(house_id):
     today = date.today().isoformat()
     
     # Récupérer tous les champs nécessaires pour les avatars
-    try:
-        c.execute("""
-            SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style
-            FROM users WHERE house_id=?
-        """, (house_id,))
-    except sqlite3.OperationalError:
-        # Anciennes bases sans colonne `avatar_style`
-        c.execute("""
-            SELECT email, points, avatar, avatar_file, avatar_url, name, player_color
-            FROM users WHERE house_id=?
-        """, (house_id,))
+    c.execute("""
+        SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style 
+        FROM users WHERE house_id=?
+    """, (house_id,))
     rows = c.fetchall()
     players = []
     
@@ -3066,7 +3149,10 @@ def get_house_players_points(house_id):
         avatar_url = r[4]
         name = r[5] if r[5] else (email.split('@')[0] if email else '')
         player_color = r[6] if len(r) > 6 else None
-        avatar_style = r[7] if len(r) > 7 else None
+        avatar_style = r[7] if len(r) > 7 else 'adventurer'  # Style DiceBear par défaut
+        
+        print(f"\n🔍 Traitement joueur: {name} ({email}) - NOUVEAU CODE ACTIF!")
+        print(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}")
         
         # Assigner une couleur si le joueur n'en a pas encore
         if not player_color:
@@ -3074,8 +3160,10 @@ def get_house_players_points(house_id):
 
         # Vérifier que avatar_emoji est bien un emoji et pas un nom de fichier/URL
         is_valid_emoji = False
+        is_dicebear_seed = False
         if avatar_emoji:
             avatar_str = str(avatar_emoji).strip()
+            print(f"🔍 DEBUG {email}: avatar_str='{avatar_str}', len={len(avatar_str)}")
             # C'est un emoji si : max 4 caractères, contient des caractères Unicode > 127, 
             # et ne contient pas .png, .jpg, http, ou /
             if (len(avatar_str) <= 4 and 
@@ -3085,6 +3173,16 @@ def get_house_players_points(house_id):
                 'http' not in avatar_str.lower() and
                 '/' not in avatar_str):
                 is_valid_emoji = True
+                print(f"✅ {email}: Détecté comme emoji")
+            # C'est un seed DiceBear si : chaîne alphanumérique sans extension ni URL
+            elif (len(avatar_str) > 4 and 
+                  '.' not in avatar_str and 
+                  'http' not in avatar_str.lower() and
+                  '/' not in avatar_str):
+                is_dicebear_seed = True
+                print(f"✅ {email}: Détecté comme seed DiceBear")
+            else:
+                print(f"⚠️ {email}: Aucune détection, len={len(avatar_str)}, has_dot={'.' in avatar_str}")
 
         # Calculer les points du jour (daily_points) avec heure locale
         daily_points = 0
@@ -3105,33 +3203,57 @@ def get_house_players_points(house_id):
         # Nettoyer avatar_file et avatar_url des valeurs "None" (chaîne)
         clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
         clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
-
-        # Le champ `avatar` peut contenir :
-        # - un emoji (is_valid_emoji True)
-        # - un seed DiceBear (chaîne sans '.' ni 'http')
-        # - un nom de fichier (contient une extension)
-        # - une URL (contient 'http')
-        raw_avatar = avatar_emoji if avatar_emoji and avatar_emoji != 'None' else None
-
-        # Si `raw_avatar` ressemble à une URL, l'utiliser comme avatar_url
-        if raw_avatar and ('http' in raw_avatar.lower() or raw_avatar.startswith('data:')):
-            clean_avatar_url = raw_avatar
-        # Si `raw_avatar` ressemble à un fichier (contient une extension), le traiter comme avatar_file
-        elif raw_avatar and ('.png' in raw_avatar.lower() or '.jpg' in raw_avatar.lower() or '.jpeg' in raw_avatar.lower() or '.svg' in raw_avatar.lower() or '/' in raw_avatar):
-            clean_avatar_file = raw_avatar
-        # Si `raw_avatar` est un emoji valide, on le conservera dans 'avatar' (is_valid_emoji True)
-        # Sinon, s'il y a une chaîne sans extension, on la traite comme seed DiceBear
-        elif raw_avatar and not is_valid_emoji:
-            seed = raw_avatar
-            # Construire l'URL DiceBear en utilisant le style renseigné par l'utilisateur
-            style_to_use = avatar_style if avatar_style else 'lorelei'
-            clean_avatar_url = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={seed}'
-
-        # Si aucun avatar n'est défini après tout, générer une URL DiceBear par défaut basée sur l'email
-        if not clean_avatar_url and not clean_avatar_file and not is_valid_emoji:
+        
+        # CORRECTION : Si avatar est vide mais avatar_url existe, extraire le seed ET le style de l'URL
+        if not avatar_emoji and clean_avatar_url and 'seed=' in clean_avatar_url:
+            try:
+                import re
+                seed_match = re.search(r'seed=([^&]+)', clean_avatar_url)
+                if seed_match:
+                    avatar_emoji = seed_match.group(1)
+                    is_dicebear_seed = True
+                    is_valid_emoji = False
+                    print(f"🔧 Seed extrait de l'URL pour {email}: {avatar_emoji}")
+                
+                # Extraire aussi le style de l'URL si avatar_style est vide
+                if not avatar_style:
+                    style_match = re.search(r'dicebear\.com/[^/]+/([^/]+)/', clean_avatar_url)
+                    if style_match:
+                        avatar_style = style_match.group(1)
+                        print(f"🔧 Style extrait de l'URL pour {email}: {avatar_style}")
+                    else:
+                        print(f"⚠️ Pas de style trouvé dans l'URL pour {email}: {clean_avatar_url}")
+                else:
+                    print(f"🔍 Style déjà défini pour {email}: {avatar_style}")
+            except Exception as e:
+                print(f"⚠️ Erreur extraction seed/style: {e}")
+                
+        print(f"🔍 DEBUG FINAL {email}: clean_avatar_url={clean_avatar_url}, is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji}, avatar_style={avatar_style}")
+        
+        # Si c'est un seed DiceBear, reconstruire l'URL avec le bon style stocké
+        if is_dicebear_seed and avatar_emoji:
+            style = avatar_style if avatar_style else 'adventurer'
+            new_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={avatar_emoji}'
+            print(f"🔍 DEBUG RECONSTRUCTION: avatar_style={avatar_style}, style={style}, new_url={new_url}")
+            
+            # Vérifier si l'URL existante utilise le bon style
+            if clean_avatar_url and clean_avatar_url != new_url:
+                print(f"🔄 URL reconstruite pour {email}: {new_url} (ancien: {clean_avatar_url})")
+                clean_avatar_url = new_url
+            elif not clean_avatar_url:
+                print(f"🔄 URL reconstruite pour {email}: {new_url} (style={style}, seed={avatar_emoji})")
+                clean_avatar_url = new_url
+            else:
+                print(f"✅ {email}: URL déjà correcte: {clean_avatar_url}")
+        else:
+            print(f"⚠️ {email}: Pas de reconstruction URL (is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji})")
+        
+        # Si aucun avatar n'est défini, générer une URL DiceBear par défaut basée sur l'email
+        if not clean_avatar_url and not clean_avatar_file and not is_valid_emoji and not is_dicebear_seed:
+            # Utiliser l'email comme seed pour DiceBear
             seed = email.split('@')[0] if email else 'default'
-            style_to_use = avatar_style if avatar_style else 'lorelei'
-            clean_avatar_url = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={seed}'
+            style = avatar_style if avatar_style else 'adventurer'  # Utiliser le style stocké ou adventurer par défaut
+            clean_avatar_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
         
         # Convertir la couleur hex en gradients pour correspondre au style du menu (v-bar verticale et horizontale)
         color_vertical = None
@@ -3148,13 +3270,15 @@ def get_house_players_points(house_id):
                 color_vertical = f'linear-gradient(180deg, rgba({r}, {g}, {b}, 1.00) 0%, rgba({r}, {g}, {b}, 0.95) 100%)'
                 color_horizontal = f'linear-gradient(90deg, rgba({r}, {g}, {b}, 1.00) 0%, rgba({r}, {g}, {b}, 0.95) 100%)'
         
+        # DEBUG: Afficher les valeurs avant de les ajouter
+        print(f"🔍 DEBUG get_house_players: email={email}, avatar_emoji={avatar_emoji}, is_valid_emoji={is_valid_emoji}, is_dicebear_seed={is_dicebear_seed}, clean_avatar_url={clean_avatar_url}, clean_avatar_file={clean_avatar_file}")
+        
         players.append({
             'email': email,
             'name': name,
-            'avatar': raw_avatar if raw_avatar else None,  # Peut être emoji ou seed ou filename
-            'avatar_url': clean_avatar_url,  # URL si présente (DiceBear ou fournie)
+            'avatar': avatar_emoji if (is_valid_emoji or is_dicebear_seed) else None,  # Emoji ou seed DiceBear
+            'avatar_url': clean_avatar_url,  # URL si présente
             'avatar_file': clean_avatar_file,  # Fichier uploadé
-            'avatar_style': avatar_style,
             'points': points,
             'daily_points': daily_points,
             'daily_tasks': daily_tasks,
@@ -3184,7 +3308,7 @@ def get_house_players_points(house_id):
 def signup_email():
     """Inscription avec récupération de mail"""
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
+        name = request.form.get('name', '').strip().capitalize()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
         confirm_password = request.form.get('confirm_password', '').strip()
@@ -3282,7 +3406,7 @@ def register():
     if request.method == 'POST':
         photo_data = request.form.get('photo_data')
         avatar = request.form.get('avatar')
-        name = request.form.get('name', '').strip()
+        name = request.form.get('name', '').strip().capitalize()
         if not name or (not avatar and not photo_data):
             flash("Veuillez entrer un prénom et choisir un avatar ou une photo.", "danger")
             return render_template('create_profile.html')
@@ -3471,6 +3595,14 @@ def update_player():
         name = request.form.get('name', '').strip()
         avatar_type = request.form.get('avatar_type')
         
+        print("🔍 UPDATE_PLAYER - Données reçues:")
+        print(f"   email: {email}")
+        print(f"   name: {name}")
+        print(f"   avatar_type: {avatar_type}")
+        print(f"   avatar: {request.form.get('avatar')}")
+        print(f"   avatar_style: {request.form.get('avatar_style')}")
+        print(f"   Tous les champs: {dict(request.form)}")
+        
         if not email:
             return jsonify({'success': False, 'error': 'Email requis'})
         
@@ -3514,15 +3646,22 @@ def update_player():
             # Avatar DiceBear : récupérer le seed et construire l'URL
             seed = request.form.get('avatar', '').strip()
             style = request.form.get('avatar_style', 'avataaars').strip()
+            print(f"✅ Avatar DiceBear détecté - seed: {seed}, style: {style}")
             if seed:
                 dicebear_url = f"https://api.dicebear.com/7.x/{style}/svg?seed={seed}"
                 update_parts.append("avatar_url=?")
                 update_values.append(dicebear_url)
-                # Effacer les autres types d'avatar
+                # Stocker le seed dans avatar pour le retrouver
                 update_parts.append("avatar=?")
-                update_values.append(None)
+                update_values.append(seed)
+                # Stocker le style
+                update_parts.append("avatar_style=?")
+                update_values.append(style)
+                # Effacer avatar_file
                 update_parts.append("avatar_file=?")
                 update_values.append(None)
+                print(f"   URL construite: {dicebear_url}")
+                print(f"   Champs à mettre à jour: avatar={seed}, avatar_style={style}, avatar_url={dicebear_url}")
         
         elif avatar_type == 'file':
             # Sélection d'une image PNG existante depuis la galerie
@@ -3728,7 +3867,7 @@ def add_child():
             return jsonify({'success': False, 'error': 'Vous devez avoir une maison'})
         
         house_id = parent[0]
-        child_name = request.form.get('child_name', '').strip()
+        child_name = request.form.get('child_name', '').strip().capitalize()
         
         if not child_name:
             conn.close()
@@ -3763,17 +3902,18 @@ def add_child():
         else:
             # Avatar par défaut DiceBear
             default_seed = 'baby' + str(int(time.time()))[-4:]
-            avatar_url = f"https://api.dicebear.com/7.x/avataaars/svg?seed={default_seed}"
+            child_avatar_style = 'avataaars'  # Style par défaut pour les enfants
+            avatar_url = f"https://api.dicebear.com/7.x/{child_avatar_style}/svg?seed={default_seed}"
             avatar = default_seed[:8]
         
         # Créer un email unique pour l'enfant (interne, pas utilisé pour connexion)
         child_email = f"child_{house_id}_{int(time.time())}@cleanbeat.internal"
         
-        # Insérer l'enfant dans la base
+        # Insérer l'enfant dans la base avec le style d'avatar
         c.execute("""
-            INSERT INTO users (email, name, avatar, avatar_file, avatar_url, house_id, password)
-            VALUES (?, ?, ?, ?, ?, ?, NULL)
-        """, (child_email, child_name, avatar, avatar_file, avatar_url, house_id))
+            INSERT INTO users (email, name, avatar, avatar_file, avatar_url, avatar_style, house_id, password)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+        """, (child_email, child_name, avatar, avatar_file, avatar_url, child_avatar_style or None, house_id))
         
         conn.commit()
         conn.close()
@@ -3836,6 +3976,7 @@ def comments():
                 # Notifier le destinataire via WebSocket
                 # Compter le nombre de messages non lus pour le destinataire
                 unread_count = get_unread_message_count(recipient_email, house_id)
+                unread_by_sender = get_unread_messages_by_sender(recipient_email, house_id)
                 
                 # Émettre l'événement WebSocket au destinataire
                 socketio.emit('new_message_notification', {
@@ -3843,6 +3984,12 @@ def comments():
                     'content': content[:50] + ('...' if len(content) > 50 else ''),
                     'unread_count': unread_count,
                     'recipient_email': recipient_email
+                }, room=f'house_{house_id}')
+                
+                # Mettre à jour le compteur avec les badges par joueur
+                socketio.emit('unread_by_sender_update', {
+                    'user_email': recipient_email,
+                    'unread_by_sender': unread_by_sender
                 }, room=f'house_{house_id}')
                 
                 flash(f"Message envoyé à {recipient[1] if recipient[1] else recipient[0]}", "success")
@@ -3853,38 +4000,92 @@ def comments():
         
         return redirect(url_for('comments'))
 
+    # Récupérer le code et le nom de la maison AVANT d'afficher les messages
+    c.execute("SELECT code, name FROM houses WHERE id=?", (house_id,))
+    house_row = c.fetchone()
+    house_code = house_row[0] if house_row else None
+    house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
+
     # Récupérer les messages privés (envoyés ou reçus par l'utilisateur connecté)
-    # ET les messages de la maison (sender_type = 'house')
+    # ET les messages de la maison (sender_type = 'house') Y COMPRIS les messages de suivi bébé
+    # mais SAUF les messages de validation de tâches simples
+    # Ajouter une sous-requête pour vérifier si le message a été lu par le destinataire
+    print(f"🔍 /comments - Récupération messages pour house_id={house_id}, user={session['user']}")
+    print(f"🔍 /comments - Requête SQL va être exécutée...")
     c.execute("""
         SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
-               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url,
-               recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
+               recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = m.recipient_email
+               ) THEN 1 ELSE 0 END as is_read_by_recipient,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+               ) THEN 1 ELSE 0 END as is_read_by_me
         FROM messages m
         LEFT JOIN users sender ON m.sender_email = sender.email
         LEFT JOIN users recipient ON m.recipient_email = recipient.email
         WHERE m.house_id = ? 
         AND (
             (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
-            OR m.sender_type = 'house'
+            OR (m.sender_type = 'house' AND m.message_type NOT IN ('task_completed'))
         )
         ORDER BY m.timestamp DESC
         LIMIT 100
-    """, (house_id, session['user'], session['user']))
+    """, (session['user'], house_id, session['user'], session['user']))
+    
+    all_rows = c.fetchall()
+    print(f"🔍 /comments - Nombre de messages récupérés: {len(all_rows)}")
     
     messages_data = []
-    for row in c.fetchall():
-        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url = row
+    for row in all_rows:
+        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, is_read_by_recipient, is_read_by_me = row
         
-        # Marquer le message comme lu pour l'utilisateur actuel
-        if sender_email != session['user']:
-            mark_message_as_read(msg_id, session['user'])
+        # Ne plus marquer automatiquement comme lu - attendre le clic sur "Tout validé"
+        # if sender_email != session['user']:
+        #     mark_message_as_read(msg_id, session['user'])
         
         # Préparer l'avatar et nom de l'expéditeur
         if sender_type == 'house':
-            # Message de la maison - utiliser l'avatar maison
-            display_sender_avatar = '🏠'
-            # sender_email contient le nom de la maison pour les messages 'house'
-            sender_name = sender_email if sender_email else house_name
+            # Pour les messages baby_tracking, sender_email contient l'email du joueur
+            if message_type == 'baby_tracking':
+                # Utiliser les infos du joueur (sender) - CORRIGER l'affichage
+                display_sender_avatar = None
+                if sender_avatar_file:
+                    display_sender_avatar = f"/static/uploads/{sender_avatar_file}"
+                elif sender_avatar_url:
+                    display_sender_avatar = sender_avatar_url
+                elif sender_avatar and len(str(sender_avatar)) <= 4:
+                    # C'est un emoji
+                    display_sender_avatar = sender_avatar
+                elif sender_avatar:  # Avatar DiceBear seed
+                    # Récupérer le style stocké au lieu d'utiliser 'lorelei' par défaut
+                    sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'  # Style par défaut plus sympa
+                    display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
+                    print(f"🍼 DEBUG: Avatar baby_tracking pour {sender_email}: seed={sender_avatar}, style={sender_style}")
+                else:
+                    display_sender_avatar = '👤'
+                
+                # S'assurer d'avoir le nom du joueur
+                if not sender_name or sender_name.strip() == '':
+                    sender_name = sender_email.split('@')[0] if sender_email else 'Inconnu'
+                    if 'child_' in sender_email:
+                        # Pour les enfants, essayer de récupérer le vrai nom
+                        try:
+                            temp_conn = sqlite3.connect(DB)
+                            temp_c = temp_conn.cursor()
+                            temp_c.execute("SELECT name FROM users WHERE email=?", (sender_email,))
+                            temp_row = temp_c.fetchone()
+                            if temp_row and temp_row[0]:
+                                sender_name = temp_row[0]
+                            temp_conn.close()
+                        except:
+                            pass
+            else:
+                # Message de la maison classique - utiliser l'avatar maison
+                display_sender_avatar = '🏠'
+                # sender_email contient le nom de la maison pour les messages 'house'
+                sender_name = sender_email if sender_email else house_name
         else:
             # Message d'un utilisateur
             display_sender_avatar = None
@@ -3926,43 +4127,34 @@ def comments():
             'timestamp': timestamp,
             'sender_type': sender_type,
             'message_type': message_type,
-            'is_me': sender_email == session['user']
+            'is_me': sender_email == session['user'],
+            'is_read_by_recipient': bool(is_read_by_recipient),
+            'is_read_by_me': bool(is_read_by_me)
         })
     
-    # Après avoir marqué les messages comme lus, mettre à jour le compteur et notifier via WebSocket
-    unread_count = get_unread_message_count(session['user'], house_id)
-    socketio.emit('unread_count_update', {
-        'count': unread_count,
-        'user_email': session['user']
-    }, room=f'house_{house_id}')
-    
-    # Récupérer le code de la maison
-    c.execute("SELECT code, name FROM houses WHERE id=?", (house_id,))
-    house_row = c.fetchone()
-    house_code = house_row[0] if house_row else None
-    house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
+    # Ne plus envoyer automatiquement de mise à jour WebSocket ici
+    # L'utilisateur doit cliquer sur "Tout validé" pour marquer les messages comme lus
     
     # Récupérer tous les joueurs de la maison (sauf l'utilisateur actuel)
     print(f"[DEBUG COMMENTS] house_id={house_id}, current_user={session['user']}")
     c.execute("""
-        SELECT email, name, avatar, avatar_file, avatar_url
+        SELECT email, name, avatar, avatar_file, avatar_url, player_color_hex
         FROM users 
-        WHERE house_id = ? 
-        AND email != ?
-    """, (house_id, session['user']))
+        WHERE house_id = ?
+    """, (house_id,))
     
     available_players = []
     players_result = c.fetchall()
-    print(f"[DEBUG COMMENTS] Nombre de joueurs trouvés: {len(players_result)}")
+    print(f"[DEBUG COMMENTS] Nombre de joueurs trouvés (TOUS): {len(players_result)}")
     
     for player_row in players_result:
-        player_email, player_name, player_avatar, player_avatar_file, player_avatar_url = player_row
+        player_email, player_name, player_avatar, player_avatar_file, player_avatar_url, player_color = player_row
         print(f"[DEBUG COMMENTS] Joueur: {player_name} ({player_email})")
         
         # Préparer l'avatar
         display_avatar = None
         if player_avatar_file:
-            display_avatar = f"/static/uploads/{player_avatar_file}"
+            display_avatar = f"/static/avatars/{player_avatar_file}"
         elif player_avatar_url:
             display_avatar = player_avatar_url
         elif player_avatar and len(str(player_avatar)) <= 4:
@@ -3973,7 +4165,8 @@ def comments():
         available_players.append({
             'email': player_email,
             'name': player_name if player_name else player_email.split('@')[0],
-            'avatar': display_avatar
+            'avatar': display_avatar,
+            'color': player_color if player_color else '#4A90E2'
         })
     
     print(f"[DEBUG COMMENTS] available_players count: {len(available_players)}")
@@ -4016,9 +4209,15 @@ def comments():
     # Ajouter la couleur à chaque message
     for msg in messages_data:
         if msg['sender_type'] == 'house':
-            # Messages de la maison - couleur or/jaune
-            msg['color'] = '#FDAE54'  # Or
-            msg['bg_color'] = 'rgba(253, 174, 84, 0.15)'  # Fond or transparent
+            # Messages de la maison - couleur selon le type
+            if msg['message_type'] == 'baby_tracking':
+                # Messages de suivi bébé - utiliser la couleur du joueur
+                msg['color'] = color_map.get(msg['sender_email'], '#FFB6C1')  # Couleur du joueur ou rose par défaut
+                msg['bg_color'] = hex_to_rgba(msg['color'], 0.15)  # Fond avec la couleur du joueur
+            else:
+                # Autres messages de la maison - couleur or/jaune
+                msg['color'] = '#FDAE54'  # Or
+                msg['bg_color'] = 'rgba(253, 174, 84, 0.15)'  # Fond or transparent
         elif msg['sender_type'] == 'system':
             # Couleurs différentes selon le type de message système
             if msg['message_type'] == 'task_completed':
@@ -4037,7 +4236,7 @@ def comments():
     
     # Compter les messages non lus
     unread_count = get_unread_message_count(session['user'], house_id)
-    
+
     conn.close()
 
     return render_template('comments.html', 
@@ -4049,6 +4248,263 @@ def comments():
                          house_name=house_name,
                          current_user_name=current_user_name,
                          unread_count=unread_count)
+
+@app.route('/mark_all_messages_read', methods=['POST'])
+def mark_all_messages_read():
+    """
+    Marque tous les messages reçus par l'utilisateur comme lus.
+    Retourne le nouveau compteur de messages non lus.
+    """
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    # Récupérer la maison de l'utilisateur
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Pas de maison'}), 400
+    
+    house_id = user_row[0]
+    
+    # Récupérer tous les messages non lus reçus par l'utilisateur
+    c.execute("""
+        SELECT m.id
+        FROM messages m
+        WHERE m.house_id = ?
+        AND (m.recipient_email = ? OR m.sender_type IN ('house', 'system'))
+        AND m.sender_email != ?
+        AND m.id NOT IN (
+            SELECT message_id FROM message_reads WHERE user_email = ?
+        )
+    """, (house_id, session['user'], session['user'], session['user']))
+    
+    unread_message_ids = [row[0] for row in c.fetchall()]
+    
+    # Marquer tous ces messages comme lus
+    for msg_id in unread_message_ids:
+        mark_message_as_read(msg_id, session['user'])
+    
+    # Récupérer le nouveau compteur
+    unread_count = get_unread_message_count(session['user'], house_id)
+    unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
+    
+    # Notifier via WebSocket
+    socketio.emit('unread_count_update', {
+        'count': unread_count,
+        'user_email': session['user'],
+        'unread_by_sender': unread_by_sender
+    }, room=f'house_{house_id}')
+    
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'unread_count': unread_count,
+        'marked_count': len(unread_message_ids)
+    })
+
+
+@app.route('/mark_single_message_read_for_child', methods=['POST'])
+def mark_single_message_read_for_child():
+    """
+    Permet à un parent de marquer UN seul message comme lu au nom d'un enfant.
+    Utilisé quand le parent lit un message spécifique à l'enfant.
+    """
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    
+    data = request.get_json() or request.form
+    message_id = data.get('message_id')
+    child_email = data.get('child_email')
+    
+    if not message_id or not child_email:
+        return jsonify({'success': False, 'error': 'Paramètres manquants'}), 400
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    # Vérifier que l'utilisateur et l'enfant sont dans la même maison
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Pas de maison'}), 400
+    
+    house_id = user_row[0]
+    
+    # Vérifier que le message existe et que le destinataire est l'enfant
+    c.execute("""
+        SELECT id, recipient_email 
+        FROM messages 
+        WHERE id = ? AND house_id = ? AND recipient_email = ?
+    """, (message_id, house_id, child_email))
+    
+    msg_row = c.fetchone()
+    if not msg_row:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Message non trouvé'}), 404
+    
+    # Marquer le message comme lu au nom de l'enfant
+    mark_message_as_read(message_id, child_email)
+    
+    # Calculer le nouveau nombre de messages non lus pour cet enfant (envoyés par l'utilisateur courant)
+    c.execute("""
+        SELECT COUNT(*) FROM messages m
+        WHERE m.house_id = ?
+        AND m.sender_email = ?
+        AND m.recipient_email = ?
+        AND m.message_type = 'private'
+        AND m.id NOT IN (SELECT message_id FROM message_reads WHERE user_email = ?)
+    """, (house_id, session['user'], child_email, child_email))
+    new_unread_count = c.fetchone()[0]
+    
+    conn.close()
+    
+    # Émettre un événement WebSocket pour mettre à jour les pastilles en temps réel
+    socketio.emit('badge_update', {
+        'child_email': child_email,
+        'new_count': new_unread_count,
+        'updated_by': session['user']
+    }, room=f'house_{house_id}')
+    
+    return jsonify({
+        'success': True,
+        'message_id': message_id,
+        'child_email': child_email,
+        'new_unread_count': new_unread_count
+    })
+
+@app.route('/mark_single_message_read', methods=['POST'])
+def mark_single_message_read():
+    """
+    Permet à l'utilisateur de marquer UN seul message reçu comme lu.
+    Utilisé pour marquer individuellement les messages reçus.
+    """
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    
+    data = request.get_json() or request.form
+    message_id = data.get('message_id')
+    
+    if not message_id:
+        return jsonify({'success': False, 'error': 'ID de message manquant'}), 400
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    # Vérifier que l'utilisateur a une maison
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Pas de maison'}), 400
+    
+    house_id = user_row[0]
+    
+    # Vérifier que le message existe et que :
+    # - soit l'utilisateur est le destinataire (recipient_email = user)
+    # - soit c'est un message "house" (sender_type = 'house', recipient_email vide/null)
+    c.execute("""
+        SELECT id, recipient_email, sender_email, sender_type 
+        FROM messages 
+        WHERE id = ? AND house_id = ? 
+        AND (recipient_email = ? OR (sender_type = 'house' AND (recipient_email IS NULL OR recipient_email = '')))
+    """, (message_id, house_id, session['user']))
+    
+    msg_row = c.fetchone()
+    if not msg_row:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Message non trouvé'}), 404
+    
+    sender_email = msg_row[2]
+    
+    # Marquer le message comme lu
+    mark_message_as_read(message_id, session['user'])
+    
+    # Calculer le nouveau nombre total de messages non lus
+    unread_count = get_unread_message_count(session['user'], house_id)
+    unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
+    
+    conn.close()
+    
+    # Émettre un événement WebSocket pour mettre à jour les badges en temps réel
+    socketio.emit('unread_count_update', {
+        'count': unread_count,
+        'user_email': session['user'],
+        'unread_by_sender': unread_by_sender
+    }, room=f'house_{house_id}')
+    
+    return jsonify({
+        'success': True,
+        'message_id': message_id,
+        'sender_email': sender_email,
+        'new_unread_count': unread_count,
+        'unread_by_sender': unread_by_sender
+    })
+
+
+@app.route('/mark_messages_read_for_child', methods=['POST'])
+def mark_messages_read_for_child():
+    """
+    Permet à un parent de marquer les messages comme lus au nom d'un enfant.
+    Utilisé quand le parent lit les messages à l'enfant en personne.
+    """
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    
+    data = request.get_json() or request.form
+    child_email = data.get('child_email')
+    
+    if not child_email:
+        return jsonify({'success': False, 'error': 'Email enfant manquant'}), 400
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    # Vérifier que l'utilisateur et l'enfant sont dans la même maison
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Pas de maison'}), 400
+    
+    house_id = user_row[0]
+    
+    c.execute("SELECT house_id, email FROM users WHERE email=? AND house_id=?", (child_email, house_id))
+    child_row = c.fetchone()
+    if not child_row:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Enfant non trouvé dans cette maison'}), 400
+    
+    # Récupérer tous les messages privés envoyés À cet enfant et non encore lus par lui
+    c.execute("""
+        SELECT m.id
+        FROM messages m
+        WHERE m.house_id = ?
+        AND m.recipient_email = ?
+        AND m.message_type = 'private'
+        AND m.id NOT IN (
+            SELECT message_id FROM message_reads WHERE user_email = ?
+        )
+    """, (house_id, child_email, child_email))
+    
+    unread_message_ids = [row[0] for row in c.fetchall()]
+    
+    # Marquer tous ces messages comme lus au nom de l'enfant
+    for msg_id in unread_message_ids:
+        mark_message_as_read(msg_id, child_email)
+    
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'marked_count': len(unread_message_ids),
+        'child_email': child_email
+    })
 
 
 @app.route('/rewards')
@@ -5031,90 +5487,77 @@ def update_profile():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    name = request.form.get('name', '').strip()
+    name = request.form.get('name', '').strip().capitalize()
     avatar = request.form.get('avatar', '').strip()
-    avatar_style = request.form.get('avatar_style', '').strip()
+    avatar_style = request.form.get('avatar_style', 'lorelei').strip()
     photo_data = request.form.get('photo_data')
     house_name_input = request.form.get('house_name', '').strip()
     
-    # Debug: afficher ce qui est reçu
-    print(f"[DEBUG update_profile] name='{name}', avatar='{avatar}' (len={len(avatar) if avatar else 0}), photo_data={'oui' if photo_data else 'non'}")
-    
-    # Déterminer si l'avatar est un fichier PNG ou un emoji
-    avatar_is_file = avatar and (avatar.endswith('.png') or avatar.endswith('.jpg') or avatar.endswith('.jpeg'))
-    avatar_is_emoji = avatar and not avatar_is_file
+    import sys
+    print(f"🔍 UPDATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
+    sys.stdout.flush()
     
     conn = sqlite3.connect(DB)
     c = conn.cursor()
     
-    # Construire la requête de mise à jour
-    update_parts = []
+    update_fields = []
     update_values = []
     
-    # Toujours mettre à jour le nom s'il est fourni
+    # Mettre à jour le nom
     if name:
-        update_parts.append("name=?")
+        update_fields.append("name=?")
         update_values.append(name)
         session['user_name'] = name
     
-    # Gérer l'avatar selon son type
-    if avatar_is_file:
-        # C'est un fichier PNG du dossier avatars -> stocker dans avatar_file
-        update_parts.append("avatar_file=?")
-        update_values.append(avatar)
-        update_parts.append("avatar=?")
-        update_values.append('')  # Vider le champ emoji
-        session['user_avatar'] = avatar
-        if 'user_photo' in session:
-            del session['user_photo']
-    elif avatar_is_emoji:
-        # C'est un emoji -> stocker dans avatar
-        update_parts.append("avatar=?")
-        update_values.append(avatar)
-        update_parts.append("avatar_file=?")
-        update_values.append(None)  # Vider le champ fichier
-        session['user_avatar'] = avatar
-        if 'user_photo' in session:
-            del session['user_photo']
-    else:
-        # Peut être un seed DiceBear -> stocker avatar (seed) et avatar_style
-        if avatar and not avatar_is_file and not avatar_is_emoji:
-            update_parts.append("avatar=?")
-            update_values.append(avatar)
-            update_parts.append("avatar_style=?")
-            update_values.append(avatar_style if avatar_style else 'lorelei')
-            update_parts.append("avatar_file=?")
-            update_values.append(None)
-            if 'user_photo' in session:
-                del session['user_photo']
-    
-    # Traiter la photo uploadée (priorité maximale)
+    # Gérer la photo uploadée (priorité maximale)
     if photo_data and photo_data.startswith('data:image'):
         photo_filename = save_photo_from_base64(photo_data)
         if photo_filename:
-            update_parts.append("avatar_file=?")
-            update_values.append(photo_filename)
-            update_parts.append("avatar=?")
-            update_values.append('')  # Vider le champ emoji
+            update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
+            update_values.extend([photo_filename, '', '', ''])
             session['user_photo'] = photo_filename
+            print(f"✅ Photo uploadée: {photo_filename}")
     
-    if update_parts:
+    # Gérer l'avatar si pas de photo
+    elif avatar:
+        print(f"   📝 Traitement avatar: '{avatar}'")
+        is_file = avatar.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+        is_emoji = len(avatar) <= 4 and any(ord(c) > 127 for c in avatar)
+        is_dicebear = not is_file and not is_emoji
+        print(f"   📋 Type détecté: file={is_file}, emoji={is_emoji}, dicebear={is_dicebear}")
+        
+        if is_file:
+            update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
+            update_values.extend([avatar, '', '', ''])
+            session['user_avatar'] = avatar
+            print(f"✅ Fichier: {avatar}")
+            
+        elif is_emoji:
+            update_fields.extend(["avatar=?", "avatar_file=?", "avatar_url=?", "avatar_style=?"])
+            update_values.extend([avatar, '', '', ''])
+            session['user_avatar'] = avatar
+            print(f"✅ Emoji: {avatar}")
+            
+        else:  # is_dicebear
+            dicebear_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={avatar}"
+            update_fields.extend(["avatar=?", "avatar_url=?", "avatar_style=?", "avatar_file=?"])
+            update_values.extend([avatar, dicebear_url, avatar_style, ''])
+            session['user_avatar'] = avatar
+            print(f"✅ DiceBear: seed={avatar}, style={avatar_style}, url={dicebear_url}")
+            print(f"   🔧 update_fields: {update_fields}")
+            print(f"   🔧 update_values: {update_values}")
+            sys.stdout.flush()
+        
+        if 'user_photo' in session:
+            del session['user_photo']
+    
+    # Exécuter la mise à jour
+    if update_fields:
         update_values.append(session['user'])
-        try:
-            c.execute(f"UPDATE users SET {', '.join(update_parts)} WHERE email=?", update_values)
-        except sqlite3.OperationalError as e:
-            # Ajouter la colonne avatar_style si nécessaire puis réessayer
-            if 'no such column' in str(e):
-                try:
-                    c.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT")
-                    conn.commit()
-                except Exception:
-                    pass
-                c.execute(f"UPDATE users SET {', '.join(update_parts)} WHERE email=?", update_values)
-            else:
-                raise
+        query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
+        c.execute(query, update_values)
     
-    # Mettre à jour le nom de la maison si fourni
+    # Mettre à jour le nom de la maison
     if house_name_input:
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         user_house = c.fetchone()
@@ -5139,13 +5582,15 @@ def create_profile():
     # Vérifier si l'utilisateur a déjà un profil (mode modification)
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-    c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
+    c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, avatar_url, avatar_style FROM users WHERE email=?", (session['user'],))
     user = c.fetchone()
     
     change_avatar = False
     current_name = ''
     current_avatar = ''
     current_avatar_file = ''
+    current_avatar_url = ''
+    current_avatar_style = ''
     current_house_name = ''
     
     if user:
@@ -5154,6 +5599,8 @@ def create_profile():
         current_avatar_file = user[2] or ''  # Photo uploadée (fichier JPG)
         house_id = user[3]
         registration_step = user[4] or ''
+        current_avatar_url = user[5] or ''  # URL DiceBear
+        current_avatar_style = user[6] or 'lorelei'  # Style DiceBear
         
         # Si l'utilisateur a COMPLÉTÉ son profil (registration_step='profile_created'), c'est une modification
         # Sinon, c'est toujours une première création même si le nom existe
@@ -5174,6 +5621,8 @@ def create_profile():
                            current_name=current_name,
                            current_avatar=current_avatar,
                            current_avatar_file=current_avatar_file,
+                           current_avatar_url=current_avatar_url,
+                           current_avatar_style=current_avatar_style,
                            current_house_name=current_house_name)
 
 @app.route('/create_profile', methods=['POST'])
@@ -5182,98 +5631,85 @@ def create_profile_post():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('signup_email'))
     
-    name = request.form.get('name', '').strip()
+    name = request.form.get('name', '').strip().capitalize()
     bio = request.form.get('bio', '').strip()
     avatar = request.form.get('avatar', '').strip()
-    avatar_style = request.form.get('avatar_style', 'avataaars').strip()
+    avatar_style = request.form.get('avatar_style', 'lorelei').strip()
     photo_data = request.form.get('photo_data')
     house_name_input = request.form.get('house_name', '').strip()
+    
+    import sys
+    print(f"🔍 CREATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
+    sys.stdout.flush()
     
     if not name:
         flash("Le nom est requis", "danger")
         return render_template('create_profile.html')
     
+    # Gérer la photo uploadée
     photo_filename = None
     if photo_data and photo_data.startswith('data:image'):
         photo_filename = save_photo_from_base64(photo_data)
         if not photo_filename:
             flash("Erreur lors de la sauvegarde de la photo", "warning")
     
-    # Déterminer si l'avatar est un fichier PNG, emoji ou DiceBear (seed)
-    avatar_is_file = avatar and (avatar.endswith('.png') or avatar.endswith('.jpg') or avatar.endswith('.jpeg'))
-    avatar_is_emoji = avatar and len(avatar) <= 4 and not avatar_is_file  # Emoji court
-    avatar_is_dicebear = avatar and not avatar_is_file and not avatar_is_emoji  # Seed DiceBear
-    
     # Mettre à jour le profil utilisateur
     conn = sqlite3.connect(DB)
     c = conn.cursor()
     
+    # Préparer les valeurs de mise à jour
+    update_fields = ["name=?"]
     update_values = [name]
-    update_query = "UPDATE users SET name=?"
     
     if bio:
-        update_query += ", bio=?"
+        update_fields.append("bio=?")
         update_values.append(bio)
     
-    # Si l'avatar est un fichier PNG du dossier avatars, le stocker dans avatar_file
-    if avatar_is_file:
-        update_query += ", avatar_file=?, avatar=?, avatar_url=?"
-        update_values.append(avatar)
-        update_values.append('')  # Vider le champ avatar emoji
-        update_values.append('')  # Vider avatar_url
-    elif avatar_is_emoji:
-        # C'est un emoji, le stocker dans avatar
-        update_query += ", avatar=?, avatar_file=?, avatar_url=?"
-        update_values.append(avatar)
-        update_values.append('')  # Vider le champ avatar_file
-        update_values.append('')  # Vider avatar_url
-    elif avatar_is_dicebear:
-        # C'est un seed DiceBear. Stocker le seed dans la colonne `avatar`
-        # (le template `menu.html` détecte un seed sans extension et construit
-        # l'URL DiceBear côté client en utilisant le style `lorelei` par défaut).
-        # Construire aussi l'URL DiceBear côté serveur pour éviter les champs vides
-        style_to_use = avatar_style if avatar_style else 'lorelei'
-        avatar_url_built = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={avatar}'
-        update_query += ", avatar=?, avatar_file=?, avatar_url=?"
-        update_values.append(avatar)           # stocke le seed (ex: 'abc123')
-        update_values.append('')               # vider avatar_file
-        update_values.append(avatar_url_built) # stocke avatar_url construit
-        
+    # GESTION AVATAR : 3 cas possibles
     if photo_filename:
-        # Une photo uploadée remplace tout
-        update_query += ", avatar_file=?, avatar=?, avatar_url=?, avatar_style=?"
-        update_values.append(photo_filename)
-        update_values.append('')  # Vider le champ avatar emoji
-        update_values.append('')  # Vider avatar_url
-        update_values.append('')  # Vider avatar_style
-    else:
-        # Toujours sauvegarder le style choisi si fourni
-        update_query += ", avatar_style=?"
-        update_values.append(avatar_style)
+        # CAS 1: Photo uploadée -> avatar_file seulement
+        update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
+        update_values.extend([photo_filename, '', '', ''])
+        print(f"✅ Avatar = Photo uploadée: {photo_filename}")
+        
+    elif avatar:
+        # Détecter le type d'avatar
+        is_file = avatar.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+        is_emoji = len(avatar) <= 4 and any(ord(c) > 127 for c in avatar)
+        is_dicebear = not is_file and not is_emoji
+        
+        if is_file:
+            # CAS 2: Fichier existant (femme.png, homme.png, etc.)
+            update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
+            update_values.extend([avatar, '', '', ''])
+            print(f"✅ Avatar = Fichier: {avatar}")
+            
+        elif is_emoji:
+            # CAS 3: Emoji
+            update_fields.extend(["avatar=?", "avatar_file=?", "avatar_url=?", "avatar_style=?"])
+            update_values.extend([avatar, '', '', ''])
+            print(f"✅ Avatar = Emoji: {avatar}")
+            
+        else:  # is_dicebear
+            # CAS 4: DiceBear (seed)
+            dicebear_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={avatar}"
+            update_fields.extend(["avatar=?", "avatar_url=?", "avatar_style=?", "avatar_file=?"])
+            update_values.extend([avatar, dicebear_url, avatar_style, ''])
+            print(f"✅ Avatar = DiceBear: seed={avatar}, style={avatar_style}, url={dicebear_url}")
     
-    update_query += ", registration_step=? WHERE email=?"
-    update_values.extend(['profile_created', session['user']])
+    # Finaliser la requête
+    update_fields.append("registration_step=?")
+    update_values.append('profile_created')
+    update_values.append(session['user'])
     
-    try:
-        c.execute(update_query, update_values)
-    except sqlite3.OperationalError as e:
-        # Si la colonne `avatar_style` n'existe pas, la créer puis réessayer
-        if 'no such column' in str(e):
-            try:
-                c.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT")
-                conn.commit()
-            except Exception:
-                pass
-            c.execute(update_query, update_values)
-        else:
-            raise
+    query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
+    c.execute(query, update_values)
     
-    # Vérifier si l'utilisateur a déjà une maison
+    # Créer ou vérifier la maison
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     user_house = c.fetchone()
     
     if not user_house or not user_house[0]:
-        # Créer une nouvelle maison sans nom pour forcer le formulaire sur /menu
         from datetime import date
         house_code = generate_house_code()
         today = date.today().isoformat()
@@ -5283,77 +5719,32 @@ def create_profile_post():
         """, ('', '', house_code, today))
         house_id = c.lastrowid
         c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
-        # Commit immédiatement après création de la maison
-        conn.commit()
-    else:
-        conn.commit()
     
+    conn.commit()
+    conn.close()
+    
+    flash("Profil créé avec succès ! 🎉", "success")
+    return redirect(url_for('menu'))
     conn.close()
     
     # Sauvegarde des informations dans la session
     session['user_name'] = name
     session['user_photo'] = photo_filename
     session['registration_step'] = 'profile_created'
-
-    # Mettre à jour des clés de session pour que l'avatar soit disponible immédiatement
-    try:
-        # Priorité: photo uploadée > fichier avatar dans /static/avatars > emoji > DiceBear seed/url
-        if photo_filename:
-            session['user_avatar'] = photo_filename
-            session['user_avatar_url'] = url_for('static', filename=f'avatars/{photo_filename}')
-        else:
-            if avatar_is_file:
-                session['user_avatar'] = avatar
-                session['user_avatar_url'] = url_for('static', filename=f'avatars/{avatar}')
-            elif avatar_is_emoji:
-                session['user_avatar'] = avatar
-                session.pop('user_avatar_url', None)
-            elif avatar_is_dicebear:
-                session['user_avatar'] = avatar
-                session['user_avatar_url'] = avatar_url_built
-            else:
-                # fallback
-                session.pop('user_avatar', None)
-                session.pop('user_avatar_url', None)
-    except Exception:
-        # Ne pas bloquer la création de profil si session/url_for pose problème
-        pass
     
     if photo_filename:
         flash(f"Profil créé avec succès pour {name} avec photo!", "success")
     else:
         flash(f"Profil créé avec succès pour {name}!", "success")
-
-    # Debug: afficher ce qui a été sauvegardé (temporaire)
-    try:
-        debug_msg = f"DEBUG avatar enregistré: user={session.get('user')}, avatar={avatar}, avatar_style={avatar_style}, avatar_file={photo_filename if photo_filename else ''}, avatar_url={avatar_url if 'avatar_url' in locals() else ''}"
-        print(debug_msg)
-        flash(debug_msg, "info")
-    except Exception:
-        pass
-
-    # Redirect vers /menu en ajoutant un cookie temporaire contenant l'URL d'aperçu
-    resp = redirect(url_for('menu'))
-    try:
-        preview_url = None
-        if session.get('user_avatar_url'):
-            preview_url = session.get('user_avatar_url')
-        elif 'avatar_url_built' in locals():
-            preview_url = avatar_url_built
-        if preview_url:
-            # Cookie courte durée pour que la page /menu côté client puisse appliquer l'avatar immédiatement
-            resp.set_cookie('preview_avatar_url', preview_url, max_age=300, path='/')
-    except Exception:
-        pass
-
-    return resp
+    
+    return redirect(url_for('menu'))
 
 
 @app.route('/join_house', methods=['GET', 'POST'])
 def join_house():
     if request.method == 'POST':
         house_code = request.form.get('house_code', '').strip().upper()
-        user_name = request.form.get('user_name', '').strip()
+        user_name = request.form.get('user_name', '').strip().capitalize()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
         
@@ -5522,7 +5913,7 @@ def invite_partner():
                             c.execute("""
                                 INSERT INTO users (email, name, house_id, points, avatar, is_child_account, created_by)
                                 VALUES (?, ?, ?, 0, ?, 1, ?)
-                            """, (child_email, child_name, house_id, child_avatar, session.get('user', '')))
+                            """, (child_email, child_name.capitalize(), house_id, child_avatar, session.get('user', '')))
                             children_created += 1
                     except Exception as e:
                         print(f"Erreur lors de la création du compte enfant {child.get('name', '')}: {e}")
@@ -5661,6 +6052,8 @@ def fullhouse():
 def menu():
     from flask import render_template, session
     import sqlite3
+    from datetime import datetime
+    print(f"🚨🚨🚨 ROUTE /menu APPELÉE à {datetime.now()} 🚨🚨🚨")
     players = []
     current_user_name = session.get('user', '')
     # Récupérer les joueurs de la maison si l'utilisateur est connecté
@@ -5705,6 +6098,9 @@ def menu():
                 except Exception:
                     pass
             players = get_house_players_points(house_id)
+            print(f"🎯🎯🎯 MENU: {len(players)} joueurs chargés pour house_id={house_id}")
+            for p in players:
+                print(f"   ➡️ {p.get('name')}: email={p.get('email')}, daily_pts={p.get('daily_points')}")
             # Ajouter les streaks pour chaque joueur
             try:
                 for p in players:
@@ -5806,7 +6202,7 @@ def menu():
                     c.execute("SELECT email, name, avatar, avatar_file, avatar_url, avatar_style FROM users WHERE house_id=?", (house_id,))
                     for e, n, avatar, avatar_file, avatar_url, avatar_style in c.fetchall():
                         email_to_name[e] = n if n else (e.split('@')[0] if e else '')
-                        # Résoudre l'URL d'avatar (priorité: avatar_file > avatar_url > seed/filename > dicebear par défaut)
+                        # Résoudre l'URL d'avatar
                         final_url = None
                         if avatar_file:
                             try:
@@ -5816,45 +6212,25 @@ def menu():
                         if not final_url and avatar_url:
                             final_url = avatar_url
                         if not final_url and avatar:
-                            # Si c'est une URL complète
-                            if isinstance(avatar, str) and avatar.startswith('http'):
-                                final_url = avatar
-                            else:
-                                # Si semble être un nom de fichier (contient un point), servir depuis static
-                                if isinstance(avatar, str) and '.' in avatar:
-                                    final_url = url_for('static', filename=f'avatars/{avatar}')
-                                else:
-                                    # Traiter comme seed DiceBear et respecter le style stocké
-                                    style = avatar_style if avatar_style else 'lorelei'
-                                    final_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={avatar}'
-                        if not final_url:
-                            # Générer une URL DiceBear par défaut basée sur l'email
-                            seed = e.split('@')[0] if e else 'default'
-                            final_url = f'https://api.dicebear.com/7.x/lorelei/svg?seed={seed}'
-                        email_to_avatar[e] = final_url
-                except sqlite3.OperationalError:
-                    # Anciennes bases sans colonne avatar_file/avatar_style
-                    c.execute("SELECT email, name, avatar, avatar_url FROM users WHERE house_id=?", (house_id,))
-                    for e, n, avatar, avatar_url in c.fetchall():
-                        email_to_name[e] = n if n else (e.split('@')[0] if e else '')
-                        final_url = None
-                        if avatar_url:
-                            final_url = avatar_url
-                        elif avatar:
-                            # Si avatar est numérique index -> use helper
                             try:
                                 idx = int(avatar)
-                                final_url = get_avatar_url(idx)
+                                final_url = get_avatar_url(idx, avatar_style or 'adventurer')
                             except (ValueError, TypeError):
                                 if isinstance(avatar, str) and avatar.startswith('http'):
                                     final_url = avatar
-                                elif isinstance(avatar, str) and '.' in avatar:
-                                    final_url = url_for('static', filename=f'avatars/{avatar}')
                                 else:
-                                    # seed DiceBear fallback to lorelei
-                                    final_url = f'https://api.dicebear.com/7.x/lorelei/svg?seed={avatar}'
+                                    final_url = url_for('static', filename=f'avatars/{avatar}') if avatar else None
                         if not final_url:
-                            final_url = url_for('static', filename='avatars/homme.png')
+                            # Générer une URL DiceBear par défaut basée sur l'email
+                            seed = e.split('@')[0] if e else 'default'
+                            style = avatar_style or 'adventurer'
+                            final_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
+                        email_to_avatar[e] = final_url
+                except sqlite3.OperationalError:
+                    c.execute("SELECT email, name, avatar, avatar_url, avatar_style FROM users WHERE house_id=?", (house_id,))
+                    for e, n, avatar, avatar_url, avatar_style in c.fetchall():
+                        email_to_name[e] = n if n else (e.split('@')[0] if e else '')
+                        final_url = avatar_url or (get_avatar_url(int(avatar), avatar_style or 'adventurer') if str(avatar).isdigit() else url_for('static', filename=f'avatars/{avatar}')) if avatar else url_for('static', filename='avatars/homme.png')
                         email_to_avatar[e] = final_url
                 daily_report = [
                     {
@@ -5909,6 +6285,8 @@ def menu():
             player1_avatar_url = current_player.get('avatar_url')
             player1_avatar = current_player.get('avatar')
             player1_avatar_file = current_player.get('avatar_file')
+            # DEBUG: Afficher les valeurs d'avatar
+            print(f"🔍 DEBUG Avatar Player1: email={current_email}, avatar={player1_avatar}, avatar_url={player1_avatar_url}, avatar_file={player1_avatar_file}")
         else:
             # fallback si non trouvé
             p0 = players[0]
@@ -5944,6 +6322,8 @@ def menu():
     
     # 🔔 Compter les messages non lus pour l'utilisateur
     unread_messages_count = 0
+    unread_by_sender = {}
+    unread_sent_to = {}
     if 'user' in session:
         conn = sqlite3.connect(DB)
         c = conn.cursor()
@@ -5951,15 +6331,11 @@ def menu():
         user_house_row = c.fetchone()
         if user_house_row and user_house_row[0]:
             unread_messages_count = get_unread_message_count(session['user'], user_house_row[0])
+            unread_by_sender = get_unread_messages_by_sender(session['user'], user_house_row[0])
+            unread_sent_to = get_unread_messages_sent_to(session['user'], user_house_row[0])
+            print(f"🔔 DEBUG menu - {session['user']}: unread_by_sender = {unread_by_sender}")
         conn.close()
     
-    # Si l'avatar du joueur courant est manquant dans la liste, utiliser la valeur en session (mise à jour après création de profil)
-    try:
-        if not player1_avatar_url and session.get('user_avatar_url'):
-            player1_avatar_url = session.get('user_avatar_url')
-    except Exception:
-        pass
-
     resp = make_response(render_template(
         'menu.html',
         players=players,
@@ -5980,6 +6356,8 @@ def menu():
         player2_points=player2_points,
         player2_avatar_url=player2_avatar_url,
         unread_messages_count=unread_messages_count,
+        unread_by_sender=unread_by_sender,
+        unread_sent_to=unread_sent_to,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
@@ -5992,6 +6370,18 @@ def menu():
 @app.route('/ping')
 def ping():
     return 'OK', 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+# Page de nettoyage du cache
+@app.route('/clear_cache')
+def clear_cache_page():
+    """Page pour vider le cache du navigateur"""
+    return send_from_directory('.', 'clear_cache.html')
+
+# Page de nettoyage ULTIME (désinstalle les Service Workers)
+@app.route('/force_reload')
+def force_reload_page():
+    """Page de nettoyage complet avec désinstallation des Service Workers"""
+    return render_template('force_reload.html')
 
 # Endpoint de debug pour vérifier les daily_points calculés côté serveur
 @app.route('/debug_points')
@@ -6390,18 +6780,34 @@ def custom_task_page(task_id):
         import random
         today = date.today().isoformat()
         
-        # Vérifier doublon
-        c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
-        if c.fetchone():
-            funny_messages = [
-                f"✅ Tu as déjà validé '{task_name}' aujourd'hui ! Une fois suffit 😊",
-                f"🎯 '{task_name}' c'est fait ! Passe à autre chose champion(ne) ! 💪",
-                f"⚡ Déjà validé ! Tu es tellement efficace que tu oublies ce que tu as fait 😄",
-                f"🏆 '{task_name}' : CHECK ! Pas besoin de le refaire, promis !",
-            ]
-            flash(random.choice(funny_messages), "warning")
-            conn.close()
-            return redirect(url_for('menu'))
+        # 🔄 Tâches qui peuvent être faites plusieurs fois par jour
+        multiple_times_tasks = [
+            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
+            'mettre la table', 'passer l\'éponge', 'éponge'
+        ]
+        
+        # Vérifier si la tâche peut être faite plusieurs fois par jour
+        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        
+        # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
+        if not can_repeat:
+            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
+            if c.fetchone():
+                # 🎭 Messages humoristiques avec le vrai nom de la tâche
+                funny_messages = [
+                    f"✅ Tu as déjà validé '{task_name}' aujourd'hui ! Une fois suffit 😊",
+                    f"🎯 '{task_name}' c'est fait ! Passe à autre chose champion(ne) ! 💪",
+                    f"⚡ '{task_name}' déjà validé ! Tu es tellement efficace que tu oublies ce que tu as fait 😄",
+                    f"🏆 '{task_name}' : CHECK ! Pas besoin de le refaire, promis !",
+                    f"😎 Relax ! '{task_name}' est déjà dans ta liste de victoires du jour !",
+                    f"🔄 '{task_name}' ? Encore ? Tu l'as déjà fait aujourd'hui ! 😅",
+                    f"🌟 Woah ! '{task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
+                    f"🎪 C'est pas Groundhog Day ! '{task_name}' est déjà coché ✓",
+                ]
+                
+                flash(random.choice(funny_messages), "warning")
+                conn.close()
+                return redirect(url_for('menu'))
         
         # Récupérer le joueur qui a fait la tâche (depuis le formulaire)
         player_email = request.form.get('player_email', session['user'])
@@ -6483,29 +6889,87 @@ def custom_task_page(task_id):
 
             conn.commit()
             
-            # 🎯 Créer un message automatique pour notifier les autres joueurs
-            try:
-                message_content = f"✅ {player_name} a validé '{task_name}' (+{task_points} pts)"
-                create_system_message(user_house_id, message_content, 'task_completed')
-                
-                # 💬 Envoyer un message de félicitation si le joueur a fait 3 tâches ou plus aujourd'hui
+            # 👶 Sauvegarder les données de suivi bébé si présentes
+            tracking_time = request.form.get('tracking_time')
+            bottle_ml = request.form.get('bottle_ml')
+            observations = request.form.get('observations')
+            
+            print(f"🔍 CUSTOM TASK BABY TRACKING - Task: {task_name}, Player: {player_name}, Time: {tracking_time}, ML: {bottle_ml}")
+            
+            if tracking_time:  # Si données de suivi présentes
+                print(f"✅ Tracking time présent: {tracking_time}")
                 try:
-                    today = date.today().isoformat()
-                    c_check = conn.cursor()
-                    c_check.execute("""
-                        SELECT COUNT(*) FROM completed_tasks 
-                        WHERE user_email=? AND DATE(completed_at, 'localtime')=?
-                    """, (player_email, today))
-                    task_count = c_check.fetchone()[0]
+                    # Déterminer le type de tâche bébé
+                    task_type = None
+                    if 'biberon' in task_name.lower():
+                        task_type = 'biberon'
+                    elif 'couche' in task_name.lower():
+                        task_type = 'couches'
+                    elif 'dormir' in task_name.lower():
+                        task_type = 'sommeil'
                     
-                    if task_count >= 3 and task_count % 3 == 0:  # À chaque multiple de 3
-                        congrats_msg = get_house_personality_message('congratulation', player_name)
-                        create_system_message(user_house_id, congrats_msg, 'congratulation')
-                except Exception:
-                    pass  # Ne pas bloquer si ça échoue
+                    print(f"🔍 Type de tâche détecté: {task_type}")
                     
-            except Exception:
-                pass  # Ne pas bloquer si le message échoue
+                    if task_type:
+                        print(f"✅ Insertion dans baby_tracking: user={player_email}, house={user_house_id}, type={task_type}")
+                        # Sauvegarder dans baby_tracking
+                        c.execute("""
+                            INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        """, (player_email, user_house_id, task_type, tracking_time, bottle_ml if bottle_ml else None, observations))
+                        conn.commit()
+                        print(f"✅ Enregistré dans baby_tracking")
+                        
+                        # Créer un message détaillé pour le partenaire
+                        if task_type == 'biberon':
+                            ml_text = f" ({bottle_ml} ml)" if bottle_ml else ""
+                            message_text = f"🍼 {player_name} a donné le biberon à {tracking_time}{ml_text}"
+                            if observations:
+                                message_text += f"\n📝 {observations}"
+                        elif task_type == 'couches':
+                            message_text = f"👶 {player_name} a changé les couches à {tracking_time}"
+                            if observations:
+                                message_text += f"\n📝 {observations}"
+                        else:  # sommeil
+                            message_text = f"😴 {player_name} a couché bébé à {tracking_time}"
+                            if observations:
+                                message_text += f"\n📝 {observations}"
+                        
+                        print(f"📨 Création message: {message_text}")
+                        create_system_message(user_house_id, message_text, 'baby_tracking', sender_email=player_email)
+                        print(f"✅ Message créé avec succès!")
+                except Exception as e:
+                    print(f"⚠️ Erreur sauvegarde baby tracking: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Ne pas bloquer la validation si le tracking échoue
+            else:
+                print(f"⚠️ PAS de tracking_time - formulaire non rempli")
+            
+            # 🎯 Messages automatiques désactivés
+            # Les messages ne sont plus envoyés lors de la validation pour éviter l'encombrement
+            # try:
+            #     message_content = f"✅ {player_name} a validé '{task_name}' (+{task_points} pts)"
+            #     create_system_message(user_house_id, message_content, 'task_completed')
+            #     
+            #     # 💬 Envoyer un message de félicitation si le joueur a fait 3 tâches ou plus aujourd'hui
+            #     try:
+            #         today = date.today().isoformat()
+            #         c_check = conn.cursor()
+            #         c_check.execute("""
+            #             SELECT COUNT(*) FROM completed_tasks 
+            #             WHERE user_email=? AND DATE(completed_at, 'localtime')=?
+            #         """, (player_email, today))
+            #         task_count = c_check.fetchone()[0]
+            #         
+            #         if task_count >= 3 and task_count % 3 == 0:  # À chaque multiple de 3
+            #             congrats_msg = get_house_personality_message('congratulation', player_name)
+            #             create_system_message(user_house_id, congrats_msg, 'congratulation')
+            #     except Exception:
+            #         pass  # Ne pas bloquer si ça échoue
+            #         
+            # except Exception:
+            #     pass  # Ne pas bloquer si le message échoue
             
             # flash(f"Tâche validée ! +{task_points} pts pour {player_name}", "success")
         except Exception as e:
@@ -6534,6 +6998,7 @@ def custom_task_page(task_id):
                           daily_tasks=daily_tasks, 
                           total_points=total_points, 
                           category=category,
+                          task_id=task_id,
                           is_custom_task=True)
 
 
@@ -6550,6 +7015,17 @@ def task_enhanced(cat, task_id):
 
     task = TASKS_CONFIG[normalized_cat][task_id]
     task_name = task.get('name')
+    
+    # 🔍 DEBUG: Voir quel task_name est passé au template
+    import sys
+    print(f"\n🎯🎯🎯 [TASK_ENHANCED GET] 🎯🎯🎯", flush=True)
+    print(f"   URL: /task_enhanced/{cat}/{task_id}", flush=True)
+    print(f"   normalized_cat: {normalized_cat}", flush=True)
+    print(f"   task_id: {task_id}", flush=True)
+    print(f"   task_name passé au template: '{task_name}'", flush=True)
+    print(f"🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯\n", flush=True)
+    sys.stdout.flush()
+    
     task_image = task.get('image')
     task_points = task.get('points', 0)
     task_description = task.get('description')
@@ -6648,87 +7124,37 @@ def task_enhanced(cat, task_id):
         from datetime import datetime, date
         import random
         today = date.today().isoformat()
-        # éviter doublons sur la même journée pour la même tâche
-        # Vérifier doublon sur la journée locale POUR LE JOUEUR QUI VALIDE
-        c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
-        if c.fetchone():
-            # 🎭 Messages humoristiques personnalisés selon la tâche
-            funny_messages = {
-                # Lit / Chambre
-                'lit': [
-                    "🛏️ Ton lit est déjà fait ! À moins que tu ne veuilles dormir dedans et le refaire ? 😴",
-                    "🛏️ Le lit est nickel ! Pas besoin de le border 47 fois par jour 😄",
-                    "🛏️ Hé oh, le lit ne va pas se défaire tout seul ! Enfin... sauf si tu fais une sieste 💤",
-                ],
-                'ranger': [
-                    "🧹 C'est déjà rangé ! Tu es sûr(e) de ne pas être un peu maniaque ? 😅",
-                    "📦 Tout est en place ! Respire, détends-toi, c'est propre !",
-                    "🗂️ Déjà fait ! Tu veux qu'on range les rangements ? 🤔",
-                ],
-                'vaisselle': [
-                    "🍽️ La vaisselle est déjà propre ! Propose plutôt à ton/ta partenaire de la faire demain 😉",
-                    "🧽 Hé, la vaisselle brille déjà ! Tu veux laver l'éponge aussi ? 😄",
-                    "🍽️ C'est fait ! Si tu t'ennuies, tu peux toujours faire un gâteau... et salir de la vaisselle 🎂",
-                ],
-                'aspirateur': [
-                    "🧹 Aspirer 2 fois par jour, c'est être maniaque niveau expert ! 🏆",
-                    "🧹 L'aspirateur a besoin de repos aussi ! Laisse-le souffler 😅",
-                    "🧹 Déjà passé ! Les moutons de poussière n'ont pas eu le temps de revenir 🐑",
-                ],
-                'balai': [
-                    "🧹 Balayer deux fois dans la journée, c'est être maniaque ! Les poussières te remercient 😄",
-                    "🧹 Le sol est nickel ! Tu attends de la visite royale ? 👑",
-                    "🧹 Déjà balayé ! À ce rythme, tu vas user le carrelage 😅",
-                ],
-                'courses': [
-                    "🛒 Tu as déjà fait les courses ! Le frigo est plein, profites-en 🥗",
-                    "🛒 Courses faites ! Sauf si tu as oublié quelque chose... encore ? 😏",
-                    "🛒 Déjà validé ! Tu veux vraiment y retourner ? Le supermarché va fermer 🏪",
-                ],
-                'cuisine': [
-                    "👨‍🍳 La cuisine est propre ! Tu veux cuisiner pour salir et recommencer ? 🍳",
-                    "🍳 Plan de travail nickel ! Pas touche, c'est beau comme ça ✨",
-                    "👨‍🍳 Déjà nettoyé ! Ton/ta partenaire peut prendre le relais demain 😉",
-                ],
-                'poubelle': [
-                    "🗑️ Poubelle déjà sortie ! Elle ne se remplit pas si vite (enfin j'espère) 😄",
-                    "🗑️ C'est fait ! À moins que tu aies jeté quelque chose d'important ? 🤔",
-                    "🗑️ Validé ! Les éboueurs te remercient pour ta ponctualité 🚛",
-                ],
-                'linge': [
-                    "👕 Le linge est déjà lavé ! Tu veux te salir pour en refaire ? 😅",
-                    "🧺 Machine faite ! Tes vêtements te disent merci 👔",
-                    "👕 Déjà validé ! Le sèche-linge a besoin de repos 💨",
-                ],
-                'café': [
-                    "☕ Le café est fait ! Tu en veux un autre ? Attention à la caféine 😄",
-                    "☕ Déjà préparé ! À ce rythme, tu ne dormiras plus jamais 😴",
-                    "☕ C'est validé ! Machine à café = meilleure amie 🤝",
-                ],
-            }
-            
-            # Messages génériques par défaut
-            generic_messages = [
-                f"✅ Tu as déjà validé '{task_name}' aujourd'hui ! Une fois suffit 😊",
-                f"🎯 '{task_name}' c'est fait ! Passe à autre chose champion(ne) ! 💪",
-                f"⚡ Déjà validé ! Tu es tellement efficace que tu oublies ce que tu as fait 😄",
-                f"🏆 '{task_name}' : CHECK ! Pas besoin de le refaire, promis !",
-                f"😎 Relax ! '{task_name}' est déjà dans ta liste de victoires du jour !",
-            ]
-            
-            # Trouver un message approprié
-            task_lower = task_name.lower()
-            selected_messages = generic_messages
-            
-            for keyword, messages in funny_messages.items():
-                if keyword in task_lower:
-                    selected_messages = messages
-                    break
-            
-            funny_message = random.choice(selected_messages)
-            flash(funny_message, "warning")
-            conn.close()
-            return redirect(url_for('menu'))
+        
+        # 🔄 Tâches qui peuvent être faites plusieurs fois par jour
+        multiple_times_tasks = [
+            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
+            'mettre la table', 'passer l\'éponge', 'éponge'
+        ]
+        
+        # Vérifier si la tâche peut être faite plusieurs fois par jour
+        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        
+        # éviter doublons sur la même journée pour la même tâche SEULEMENT si ce n'est pas une tâche répétable
+        if not can_repeat:
+            # Vérifier doublon sur la journée locale POUR LE JOUEUR QUI VALIDE
+            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
+            if c.fetchone():
+                # 🎭 Messages humoristiques avec le vrai nom de la tâche
+                funny_messages = [
+                    f"✅ Tu as déjà validé '{task_name}' aujourd'hui ! Une fois suffit 😊",
+                    f"🎯 '{task_name}' c'est fait ! Passe à autre chose champion(ne) ! 💪",
+                    f"⚡ '{task_name}' déjà validé ! Tu es tellement efficace que tu oublies ce que tu as fait 😄",
+                    f"🏆 '{task_name}' : CHECK ! Pas besoin de le refaire, promis !",
+                    f"😎 Relax ! '{task_name}' est déjà dans ta liste de victoires du jour !",
+                    f"🔄 '{task_name}' ? Encore ? Tu l'as déjà fait aujourd'hui ! 😅",
+                    f"🌟 Woah ! '{task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
+                    f"🎪 C'est pas Groundhog Day ! '{task_name}' est déjà coché ✓",
+                ]
+                
+                funny_message = random.choice(funny_messages)
+                flash(funny_message, "warning")
+                conn.close()
+                return redirect(url_for('menu'))
 
         # insérer la tâche complétée POUR LE JOUEUR SÉLECTIONNÉ
         try:
@@ -6815,7 +7241,10 @@ def task_enhanced(cat, task_id):
             bottle_ml = request.form.get('bottle_ml')
             observations = request.form.get('observations')
             
+            print(f"🔍 BABY TRACKING - Task: {task_name}, Player: {player_name}, Time: {tracking_time}, ML: {bottle_ml}")
+            
             if tracking_time:  # Si données de suivi présentes
+                print(f"✅ Tracking time présent: {tracking_time}")
                 try:
                     # Déterminer le type de tâche bébé
                     task_type = None
@@ -6826,13 +7255,17 @@ def task_enhanced(cat, task_id):
                     elif 'dormir' in task_name.lower():
                         task_type = 'sommeil'
                     
+                    print(f"🔍 Type de tâche détecté: {task_type}")
+                    
                     if task_type:
+                        print(f"✅ Insertion dans baby_tracking: user={player_email}, house={house_id}, type={task_type}")
                         # Sauvegarder dans baby_tracking
                         c.execute("""
                             INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
                             VALUES (?, ?, ?, ?, ?, ?)
                         """, (player_email, house_id, task_type, tracking_time, bottle_ml if bottle_ml else None, observations))
                         conn.commit()
+                        print(f"✅ Enregistré dans baby_tracking")
                         
                         # Créer un message détaillé pour le partenaire
                         if task_type == 'biberon':
@@ -6849,34 +7282,41 @@ def task_enhanced(cat, task_id):
                             if observations:
                                 message_text += f"\n📝 {observations}"
                         
-                        create_system_message(house_id, message_text, 'baby_tracking')
+                        print(f"📨 Création message: {message_text}")
+                        create_system_message(house_id, message_text, 'baby_tracking', sender_email=player_email)
+                        print(f"✅ Message créé avec succès!")
                 except Exception as e:
                     print(f"⚠️ Erreur sauvegarde baby tracking: {e}")
+                    import traceback
+                    traceback.print_exc()
                     # Ne pas bloquer la validation si le tracking échoue
+            else:
+                print(f"⏭️ Pas de tracking_time fourni - formulaire baby tracking non rempli")
             
-            # 🎯 Créer un message automatique pour notifier les autres joueurs
-            try:
-                message_content = f"✅ {player_name} a validé '{task_name}' (+{final_task_points} pts)"
-                create_system_message(house_id, message_content, 'task_completed')
-                
-                # 💬 Envoyer un message de félicitation si le joueur a fait 3 tâches ou plus aujourd'hui
-                try:
-                    today = date.today().isoformat()
-                    c_check = conn.cursor()
-                    c_check.execute("""
-                        SELECT COUNT(*) FROM completed_tasks 
-                        WHERE user_email=? AND DATE(completed_at, 'localtime')=?
-                    """, (player_email, today))
-                    task_count = c_check.fetchone()[0]
-                    
-                    if task_count >= 3 and task_count % 3 == 0:  # À chaque multiple de 3
-                        congrats_msg = get_house_personality_message('congratulation', player_name)
-                        create_system_message(house_id, congrats_msg, 'congratulation')
-                except Exception:
-                    pass  # Ne pas bloquer si ça échoue
-                    
-            except Exception:
-                pass  # Ne pas bloquer si le message échoue
+            # 🎯 Messages automatiques désactivés
+            # Les messages ne sont plus envoyés lors de la validation pour éviter l'encombrement
+            # try:
+            #     message_content = f"✅ {player_name} a validé '{task_name}' (+{final_task_points} pts)"
+            #     create_system_message(house_id, message_content, 'task_completed')
+            #     
+            #     # 💬 Envoyer un message de félicitation si le joueur a fait 3 tâches ou plus aujourd'hui
+            #     try:
+            #         today = date.today().isoformat()
+            #         c_check = conn.cursor()
+            #         c_check.execute("""
+            #             SELECT COUNT(*) FROM completed_tasks 
+            #             WHERE user_email=? AND DATE(completed_at, 'localtime')=?
+            #         """, (player_email, today))
+            #         task_count = c_check.fetchone()[0]
+            #         
+            #         if task_count >= 3 and task_count % 3 == 0:  # À chaque multiple de 3
+            #             congrats_msg = get_house_personality_message('congratulation', player_name)
+            #             create_system_message(house_id, congrats_msg, 'congratulation')
+            #     except Exception:
+            #         pass  # Ne pas bloquer si ça échoue
+            #         
+            # except Exception:
+            #     pass  # Ne pas bloquer si le message échoue
             
             # flash(f"Tâche validée ! +{final_task_points} pts pour {player_name}", "success")
         except Exception as e:
@@ -6896,10 +7336,305 @@ def task_enhanced(cat, task_id):
     for p in players:
         print(f"   • {p.get('name', 'N/A')}: color={p.get('color', 'NONE')}")
     
-    return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, hide_header=True)
+    # 🔧 DEBUG: Afficher task_id passé au template
+    print(f"🔧 [TASK_ENHANCED] task_id passé au template: {task_id}")
+    print(f"🔧 [TASK_ENHANCED] task_name: {task_name}")
+    print(f"🔧 [TASK_ENHANCED] category: {cat}")
+    
+    return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, task_id=task_id, current_task_id=task_id, hide_header=True)
 
 
-# 🎭 API : Récupérer la liste des avatars disponibles
+# 🔧 Route de test pour debug task_id
+@app.route('/debug_task_id/<cat>/<int:tid>')
+def debug_task_id(cat, tid):
+    return f"<html><body><h1>DEBUG</h1><p>cat={cat}, tid={tid}</p><script>var taskId = {tid}; console.log('taskId:', taskId);</script></body></html>"
+
+
+# � API : Valider une tâche en AJAX (pour permettre le son automatique)
+@app.route('/api/validate_task', methods=['POST'])
+def api_validate_task():
+    """
+    Valide une tâche via AJAX sans rechargement de page.
+    Retourne les infos nécessaires pour jouer le son et afficher l'animation.
+    """
+    print("="*80)
+    print("🎯 API VALIDATE_TASK APPELÉE !")
+    print("="*80)
+    
+    from flask import jsonify
+    import time
+    from datetime import datetime, date
+    import random
+    
+    if 'user' not in session:
+        print("❌ Utilisateur non connecté - session vide ou expirée")
+        print(f"📋 Session actuelle: {dict(session) if session else 'Aucune session'}")
+        # ✅ Retourner 401 SANS body JSON pour éviter l'affichage du popup
+        return '', 401
+    
+    # Données simplifiées pour performance
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+    
+    task_type = data.get('task_type')  # 'custom' ou 'standard'
+    task_id = data.get('task_id')
+    task_name_from_payload = data.get('task_name')  # ✅ Nom envoyé par le frontend
+    category = data.get('category')
+    player_email = data.get('player_email', session['user'])
+    
+    import sys
+    print(f"\n{'='*60}", flush=True)
+    print(f"🔍 [DEBUG VALIDATION] Début de la validation", flush=True)
+    print(f"{'='*60}", flush=True)
+    print(f"📥 Données JSON brutes: {data}", flush=True)
+    print(f"📥 Données reçues du payload:", flush=True)
+    print(f"   - task_name_from_payload: '{task_name_from_payload}' (type: {type(task_name_from_payload).__name__})", flush=True)
+    print(f"   - category: '{category}'", flush=True)
+    print(f"   - task_id: {task_id}", flush=True)
+    print(f"   - task_type: '{task_type}'", flush=True)
+    print(f"   - player_email: '{player_email}'", flush=True)
+    print(f"{'='*60}\n", flush=True)
+    sys.stdout.flush()
+    
+    # Pour les tâches avec baby tracking
+    tracking_time = data.get('tracking_time')
+    bottle_ml = data.get('bottle_ml')
+    observations = data.get('observations')
+    
+    print(f"🍼 [BABY DEBUG] Données reçues:")
+    print(f"   - tracking_time: '{tracking_time}' (type: {type(tracking_time)})")
+    print(f"   - bottle_ml: '{bottle_ml}' (type: {type(bottle_ml)})")
+    print(f"   - observations: '{observations}' (type: {type(observations)})")
+    
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    
+    try:
+        # Récupérer house_id de l'utilisateur
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        user_row = c.fetchone()
+        user_house_id = user_row[0] if user_row else None
+        
+        if not user_house_id:
+            return jsonify({'success': False, 'error': 'Maison non trouvée'}), 400
+        
+        # Vérifier que le joueur est dans la même maison
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (player_email,))
+        player_row = c.fetchone()
+        if not player_row or player_row[0] != user_house_id:
+            return jsonify({'success': False, 'error': 'Joueur invalide'}), 400
+        player_name = player_row[1] or player_email.split('@')[0]
+        
+        # Déterminer task_name et task_points selon le type
+        # ✅ FORCER l'utilisation du task_name envoyé par le frontend
+        
+        print(f"\n📋 [TASK NAME DEBUG]")
+        print(f"   task_name_from_payload = '{task_name_from_payload}'")
+        
+        if task_type == 'custom':
+            # Tâche personnalisée
+            c.execute("SELECT task_name, task_points FROM custom_tasks WHERE id=? AND house_id=?", (task_id, user_house_id))
+            task_row = c.fetchone()
+            if not task_row:
+                return jsonify({'success': False, 'error': 'Tâche non trouvée'}), 404
+            task_points = task_row[1] or 10
+            # Utiliser le nom du payload, sinon celui de la DB
+            task_name = task_name_from_payload if task_name_from_payload else task_row[0]
+        else:
+            # Tâche standard
+            normalized_cat = normalize_category(category)
+            if normalized_cat not in TASKS_CONFIG or int(task_id) < 0 or int(task_id) >= len(TASKS_CONFIG.get(normalized_cat, [])):
+                return jsonify({'success': False, 'error': 'Tâche introuvable'}), 404
+            task = TASKS_CONFIG[normalized_cat][int(task_id)]
+            task_points = task.get('points', 10)
+            # Utiliser le nom du payload, sinon celui de TASKS_CONFIG
+            task_name = task_name_from_payload if task_name_from_payload else task.get('name')
+            # Appliquer multiplicateur si chambre bébé
+            if normalized_cat == 'chambre_bebe':
+                task_points = int(task_points * 1.5)
+        
+        print(f"   📌 FINAL task_name = '{task_name}'")
+        print(f"📋 [END DEBUG]\n")
+        
+        today = date.today().isoformat()
+        
+        # � Tâches qui peuvent être faites plusieurs fois par jour
+        multiple_times_tasks = [
+            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
+            'mettre la table', 'passer l\'éponge', 'éponge'
+        ]
+        
+        # Vérifier si la tâche peut être faite plusieurs fois par jour
+        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        
+        # 🔍 LOG DEBUG : Vérifier le nom de la tâche utilisé
+        print(f"\n🔍 [DOUBLON CHECK] Avant vérification:")
+        print(f"   - task_name utilisé: '{task_name}'")
+        print(f"   - category: '{category}'")
+        print(f"   - player_email: '{player_email}'")
+        print(f"   - today: '{today}'")
+        print(f"   - can_repeat: {can_repeat}")
+        
+        # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
+        if not can_repeat:
+            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", 
+                     (player_email, category, task_name, today))
+            result = c.fetchone()
+            
+            if result:
+                # ✅ UTILISER UNIQUEMENT le task_name du PAYLOAD pour le message
+                # C'est le nom RÉEL de la tâche affichée à l'utilisateur
+                display_task_name = task_name_from_payload if task_name_from_payload else task_name
+                
+                print(f"\n🚨🚨🚨 DOUBLON DÉTECTÉ 🚨🚨🚨")
+                print(f"   task_name_from_payload: '{task_name_from_payload}'")
+                print(f"   task_name (config): '{task_name}'")
+                print(f"   display_task_name utilisé: '{display_task_name}'")
+                print(f"🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n")
+                
+                # 🎭 Messages humoristiques avec le vrai nom de la tâche
+                funny_messages = [
+                    f"✅ Tu as déjà validé '{display_task_name}' aujourd'hui ! Une fois suffit 😊",
+                    f"🎯 '{display_task_name}' c'est fait ! Passe à autre chose champion(ne) ! 💪",
+                    f"⚡ '{display_task_name}' déjà validé ! Tu es tellement efficace que tu oublies ce que tu as fait 😄",
+                    f"🏆 '{display_task_name}' : CHECK ! Pas besoin de le refaire, promis !",
+                    f"😎 Relax ! '{display_task_name}' est déjà dans ta liste de victoires du jour !",
+                    f"🔄 '{display_task_name}' ? Encore ? Tu l'as déjà fait aujourd'hui ! 😅",
+                    f"🌟 Woah ! '{display_task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
+                    f"🎪 C'est pas Groundhog Day ! '{display_task_name}' est déjà coché ✓",
+                ]
+                
+                funny_message = random.choice(funny_messages)
+                print(f"   Message envoyé: '{funny_message}'")
+                return jsonify({'success': False, 'error': funny_message, 'duplicate': True}), 200
+        
+        # Insérer la tâche complétée
+        c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", 
+                 (player_email, user_house_id, category, task_name, task_points))
+        c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
+        
+        # WebSocket notification - TEMPORAIREMENT DÉSACTIVÉ POUR TEST DE PERFORMANCE
+        # if SOCKETIO_AVAILABLE and socketio:
+        if False:  # Désactivé temporairement
+            try:
+                c_ws = conn.cursor()
+                c_ws.execute("""
+                    SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                           COALESCE(SUM(ct.points), 0) as daily_points
+                    FROM users u
+                    LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
+                        AND DATE(ct.completed_at, 'localtime') = DATE('now', 'localtime')
+                    WHERE u.house_id = ?
+                    GROUP BY u.email
+                    ORDER BY daily_points DESC, u.points DESC
+                """, (user_house_id,))
+                players_data = []
+                for p in c_ws.fetchall():
+                    players_data.append({
+                        'email': p[0], 'name': p[1], 'avatar': p[2],
+                        'avatar_url': p[3], 'avatar_file': p[4],
+                        'total_points': p[5] or 0, 'daily_points': int(p[6]) if p[6] else 0
+                    })
+                socketio.emit('players_points_update', {
+                    'players': players_data, 'updated_player': player_email
+                }, namespace='/', room=f'house_{user_house_id}')
+            except Exception as ws_err:
+                print(f"⚠️ Erreur WebSocket: {ws_err}")
+        
+        # Augmenter la santé de la maison
+        try:
+            c.execute("SELECT health FROM houses WHERE id=?", (user_house_id,))
+            hrow = c.fetchone()
+            current_health = hrow[0] if hrow and hrow[0] is not None else 0
+            new_health = min(current_health + 1, 100)
+            c.execute("UPDATE houses SET health=? WHERE id=?", (new_health, user_house_id))
+        except Exception:
+            pass
+        
+        # Baby tracking si applicable
+        print(f"🔍 DEBUG BABY TRACKING - tracking_time={tracking_time}, category={category}, task_name={task_name}")
+        
+        # Vérifier si c'est une tâche bébé par le nom de la tâche (plus fiable)
+        is_baby_task = task_name and ('biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower())
+        
+        if tracking_time and is_baby_task:
+            print(f"✅ Condition baby tracking remplie!")
+            try:
+                task_type_baby = None
+                if 'biberon' in task_name.lower():
+                    task_type_baby = 'biberon'
+                elif 'couche' in task_name.lower():
+                    task_type_baby = 'couches'
+                elif 'dormir' in task_name.lower():
+                    task_type_baby = 'sommeil'
+                
+                print(f"🔍 Type détecté: {task_type_baby}")
+                
+                if task_type_baby:
+                    # Sauvegarder dans baby_tracking
+                    c.execute("""
+                        INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (player_email, user_house_id, task_type_baby, tracking_time, bottle_ml if bottle_ml else None, observations))
+                    
+                    print(f"✅ Baby tracking sauvegardé: {player_name} - {task_type_baby} - {tracking_time}")
+                    
+                    # Créer le message pour la messagerie
+                    if task_type_baby == 'biberon':
+                        ml_text = f" ({bottle_ml} ml)" if bottle_ml else ""
+                        message_text = f"🍼 {player_name} a donné le biberon à {tracking_time}{ml_text}"
+                        if observations:
+                            message_text += f"\n📝 {observations}"
+                    elif task_type_baby == 'couches':
+                        message_text = f"👶 {player_name} a changé les couches à {tracking_time}"
+                        if observations:
+                            message_text += f"\n📝 {observations}"
+                    else:  # sommeil
+                        message_text = f"😴 {player_name} a couché bébé à {tracking_time}"
+                        if observations:
+                            message_text += f"\n📝 {observations}"
+                    
+                    print(f"📬 Création message baby_tracking: house_id={user_house_id}, sender={player_email}")
+                    print(f"📬 Contenu du message: {message_text[:100]}...")
+                    
+                    # ✅ Créer le message directement dans la transaction courante pour éviter les pertes
+                    from datetime import datetime
+                    c.execute("""
+                        INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
+                        VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
+                    """, (user_house_id, player_email, message_text, datetime.now().isoformat()))
+                    message_id = c.lastrowid
+                    print(f"✅ Message baby_tracking créé avec ID: {message_id}")
+                    
+            except Exception as e:
+                print(f"⚠️ Erreur baby tracking: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            pass
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'points': task_points,
+            'player_email': player_email,
+            'player_name': player_name,
+            'task_name': task_name,
+            'timestamp': int(time.time())
+        })
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Erreur validation AJAX: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+# �🎭 API : Récupérer la liste des avatars disponibles
 @app.route('/api/avatars')
 def api_avatars():
     """
@@ -7044,97 +7779,23 @@ def api_players_points():
     API pour récupérer les points de tous les joueurs de la maison en temps réel.
     Utilisé pour mettre à jour automatiquement l'affichage sans rafraîchir la page.
     """
+    if 'user' not in session:
+        return {'players': []}, 200
+    
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-
+    
     try:
-        print('DEBUG /api/players_points args:', dict(request.args))
-        # Allow debug override: ?house_id=123 to force players response for a house
-        house_id_param = request.args.get('house_id')
-        if house_id_param:
-            try:
-                house_id = int(house_id_param)
-            except Exception:
-                return {'players': [], 'error': 'invalid house_id'}, 400
-        else:
-            if 'user' not in session:
-                return {'players': []}, 200
-
-            # Récupérer house_id de l'utilisateur
-            c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-            row = c.fetchone()
-            if not row or not row[0]:
-                return {'players': []}, 200
-
-            house_id = row[0]
+        # Récupérer house_id de l'utilisateur
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return {'players': []}, 200
         
-        # S'assurer que la colonne `avatar_style` existe (migration idempotente)
-        try:
-            c.execute("PRAGMA table_info(users)")
-            cols = [r[1] for r in c.fetchall()]
-            if 'avatar_style' not in cols:
-                try:
-                    c.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT")
-                    conn.commit()
-                except Exception:
-                    pass
-        except Exception:
-            pass
-
+        house_id = row[0]
+        
         # Récupérer les points de tous les joueurs avec get_house_players_points
-        # If house_id was provided via query param (debug mode), build players directly
-        if house_id_param:
-            players = []
-            try:
-                try:
-                    c.execute("SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style FROM users WHERE house_id=?", (house_id,))
-                except sqlite3.OperationalError:
-                    c.execute("SELECT email, points, avatar, avatar_file, avatar_url, name, player_color FROM users WHERE house_id=?", (house_id,))
-                rows = c.fetchall()
-                for r in rows:
-                    email = r[0]
-                    points = r[1]
-                    avatar_emoji = r[2]
-                    avatar_file = r[3]
-                    avatar_url = r[4]
-                    name = r[5] if r[5] else (email.split('@')[0] if email else '')
-                    player_color = r[6] if len(r) > 6 else None
-                    avatar_style = r[7] if len(r) > 7 else None
-
-                    # determine clean avatar url similar to get_house_players_points
-                    clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
-                    clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
-                    raw_avatar = avatar_emoji if avatar_emoji and avatar_emoji != 'None' else None
-
-                    if raw_avatar and ('http' in raw_avatar.lower() or raw_avatar.startswith('data:')):
-                        clean_avatar_url = raw_avatar
-                    elif raw_avatar and ('.png' in raw_avatar.lower() or '.jpg' in raw_avatar.lower() or '.jpeg' in raw_avatar.lower() or '.svg' in raw_avatar.lower() or '/' in raw_avatar):
-                        clean_avatar_file = raw_avatar
-                    elif raw_avatar:
-                        seed = raw_avatar
-                        style_to_use = avatar_style if avatar_style else 'lorelei'
-                        clean_avatar_url = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={seed}'
-
-                    if not clean_avatar_url and not clean_avatar_file and raw_avatar:
-                        seed = email.split('@')[0] if email else 'default'
-                        style_to_use = avatar_style if avatar_style else 'lorelei'
-                        clean_avatar_url = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={seed}'
-
-                    players.append({
-                        'email': email,
-                        'name': name,
-                        'avatar': raw_avatar if raw_avatar else None,
-                        'avatar_url': clean_avatar_url,
-                        'avatar_file': clean_avatar_file,
-                        'avatar_style': avatar_style,
-                        'points': points,
-                        'daily_points': 0,
-                        'daily_tasks': 0
-                    })
-            except Exception as e:
-                print('Erreur debug players build:', e)
-        else:
-            players = get_house_players_points(house_id)
+        players = get_house_players_points(house_id)
         
         # Formater pour la réponse API
         players_data = []
@@ -7144,7 +7805,6 @@ def api_players_points():
                 'name': p['name'],
                 'avatar': p.get('avatar'),
                 'avatar_url': p.get('avatar_url'),
-                'avatar_style': p.get('avatar_style'),
                 'avatar_file': p.get('avatar_file'),
                 'points': p['points'],
                 'daily_points': p.get('daily_points', 0),
@@ -7362,6 +8022,8 @@ def api_test_reminder():
 @app.route('/baby_tracking/<cat>/<int:task_id>')
 def baby_tracking(cat, task_id):
     """Page de suivi pour les tâches de bébé (biberon, couches, sommeil)"""
+    print(f"👶 PAGE BABY_TRACKING accédée par {session.get('user', 'NON_CONNECTE')} pour task_id={task_id}")
+    
     if 'user' not in session:
         flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
         return redirect(url_for('login'))
@@ -7420,6 +8082,8 @@ def baby_tracking(cat, task_id):
 @app.route('/save_baby_tracking', methods=['POST'])
 def save_baby_tracking():
     """Enregistre un suivi de tâche bébé et envoie un message au partenaire"""
+    print(f"🍼 SAVE_BABY_TRACKING appelé par {session.get('user', 'INCONNU')}")
+    
     if 'user' not in session:
         flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
         return redirect(url_for('login'))
@@ -7431,6 +8095,8 @@ def save_baby_tracking():
     observations = request.form.get('observations', '')
     category = request.form.get('category')
     task_id = request.form.get('task_id')
+    
+    print(f"📝 Données reçues: task_type={task_type}, time={tracking_time}, ml={bottle_ml}")
     
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -7451,8 +8117,10 @@ def save_baby_tracking():
         VALUES (?, ?, ?, ?, ?, ?)
     """, (session['user'], house_id, task_type, tracking_time, bottle_ml, observations))
     
-    # Créer le message pour le partenaire
-    user_name = session['user'].split('@')[0]
+    # Récupérer le nom complet de l'utilisateur
+    c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
+    name_row = c.fetchone()
+    user_name = name_row[0] if name_row else session['user'].split('@')[0]
     
     if task_type == 'biberon':
         message_text = f"🍼 {user_name} a donné le biberon à {tracking_time}"
@@ -7469,19 +8137,29 @@ def save_baby_tracking():
         if observations:
             message_text += f"\n📝 {observations}"
     
-    # Envoyer le message au(x) partenaire(s)
-    c.execute("SELECT email FROM users WHERE house_id=? AND email!=?", (house_id, session['user']))
-    partners = c.fetchall()
-    
-    from datetime import datetime
-    for partner in partners:
-        c.execute("""
-            INSERT INTO messages (sender, recipient, message_text, sent_at, house_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (session['user'], partner[0], message_text, datetime.now().isoformat(), house_id))
-    
     conn.commit()
     conn.close()
+    
+    # Envoyer le message directement dans la base de données
+    try:
+        from datetime import datetime
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        
+        c.execute("""
+            INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
+            VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
+        """, (house_id, session['user'], message_text, datetime.now().isoformat()))
+        
+        message_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        
+        print(f"✅ Message baby_tracking créé avec ID: {message_id} pour {user_name}")
+    except Exception as e:
+        print(f"❌ Erreur création message baby_tracking: {e}")
+        import traceback
+        traceback.print_exc()
     
     flash(f"✅ Suivi enregistré et partagé avec votre partenaire !", "success")
     
@@ -7582,37 +8260,19 @@ if SOCKETIO_AVAILABLE:
                 
                 # Récupérer les points de tous les joueurs de la maison
                 c.execute("""
-                    SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style 
+                    SELECT email, name, avatar, avatar_url, avatar_file, points 
                     FROM users 
                     WHERE house_id=? 
                     ORDER BY points DESC
                 """, (house_id,))
                 players = []
                 for p in c.fetchall():
-                    # Assurer que avatar_url est présent (construire depuis seed si nécessaire)
-                    avatar = p[2]
-                    avatar_url = p[3]
-                    avatar_file = p[4]
-                    avatar_style = p[6] if len(p) > 6 else None
-
-                    if (not avatar_url or avatar_url == '') and avatar:
-                        try:
-                            # si avatar ressemble à une URL ou à un filename, laisser tel quel
-                            if isinstance(avatar, str) and (avatar.startswith('http') or '.' in avatar or '/' in avatar):
-                                avatar_url = avatar_url  # keep as is
-                            else:
-                                style = avatar_style if avatar_style else 'lorelei'
-                                avatar_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={avatar}'
-                        except Exception:
-                            avatar_url = avatar_url
-
                     players.append({
                         'email': p[0],
                         'name': p[1],
-                        'avatar': avatar,
-                        'avatar_url': avatar_url,
-                        'avatar_file': avatar_file,
-                        'avatar_style': avatar_style,
+                        'avatar': p[2],
+                        'avatar_url': p[3],
+                        'avatar_file': p[4],
                         'points': p[5] or 0
                     })
                 
@@ -7744,64 +8404,6 @@ def test_house_sermon_lazy():
 
 # 🏠 ========== FIN ROUTES TEST MESSAGES MAISON ==========
 
-
-@app.route('/debug/players/<int:house_id>')
-def debug_players(house_id):
-    """Debug endpoint: retourne rapidement les joueurs d'une maison (format API players)"""
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    players = []
-    try:
-        try:
-            c.execute("SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style FROM users WHERE house_id=?", (house_id,))
-        except sqlite3.OperationalError:
-            c.execute("SELECT email, points, avatar, avatar_file, avatar_url, name, player_color FROM users WHERE house_id=?", (house_id,))
-        rows = c.fetchall()
-        for r in rows:
-            email = r[0]
-            points = r[1]
-            avatar_emoji = r[2]
-            avatar_file = r[3]
-            avatar_url = r[4]
-            name = r[5] if r[5] else (email.split('@')[0] if email else '')
-            player_color = r[6] if len(r) > 6 else None
-            avatar_style = r[7] if len(r) > 7 else None
-
-            clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
-            clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
-            raw_avatar = avatar_emoji if avatar_emoji and avatar_emoji != 'None' else None
-
-            if raw_avatar and ('http' in raw_avatar.lower() or raw_avatar.startswith('data:')):
-                clean_avatar_url = raw_avatar
-            elif raw_avatar and ('.png' in raw_avatar.lower() or '.jpg' in raw_avatar.lower() or '.jpeg' in raw_avatar.lower() or '.svg' in raw_avatar.lower() or '/' in raw_avatar):
-                clean_avatar_file = raw_avatar
-            elif raw_avatar and not (raw_avatar and ('.' in raw_avatar or '/' in raw_avatar)):
-                seed = raw_avatar
-                style_to_use = avatar_style if avatar_style else 'lorelei'
-                clean_avatar_url = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={seed}'
-
-            if not clean_avatar_url and not clean_avatar_file and not raw_avatar:
-                seed = email.split('@')[0] if email else 'default'
-                style_to_use = avatar_style if avatar_style else 'lorelei'
-                clean_avatar_url = f'https://api.dicebear.com/7.x/{style_to_use}/svg?seed={seed}'
-
-            players.append({
-                'email': email,
-                'name': name,
-                'avatar': raw_avatar if raw_avatar else None,
-                'avatar_url': clean_avatar_url,
-                'avatar_file': clean_avatar_file,
-                'avatar_style': avatar_style,
-                'points': points,
-                'daily_points': 0,
-                'daily_tasks': 0
-            })
-    except Exception as e:
-        print('Erreur debug_players:', e)
-    finally:
-        conn.close()
-
-    return {'players': players}, 200
 
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)

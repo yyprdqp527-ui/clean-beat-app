@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Baby API</title>
+</head>
+<body>
+    <h1>Test Baby Tracking API</h1>
+    
+    <button onclick="testAPI()">Test API</button>
+    
+    <div id="result"></div>
+    
+    <script>
+    function testAPI() {
+        console.log('🚀 Début du test API');
+        
+        const payload = {
+            task_type: 'standard',
+            task_id: 14,
+            task_name: 'Donner biberon',
+            category: 'Chambre Bébé',
+            player_email: 'child_154_1769582843@cleanbeat.internal',
+            tracking_time: '10:00',
+            bottle_ml: '150',
+            observations: 'Test API'
+        };
+        
+        console.log('📦 Payload:', payload);
+        
+        fetch('/api/validate_task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            console.log('📥 Réponse status:', response.status);
+            return response.text();
+        })
+        .then(data => {
+            console.log('📩 Réponse data:', data);
+            document.getElementById('result').innerHTML = `
+                <h3>Résultat:</h3>
+                <pre>${data}</pre>
+            `;
+        })
+        .catch(error => {
+            console.error('❌ Erreur:', error);
+            document.getElementById('result').innerHTML = `
+                <h3>Erreur:</h3>
+                <pre>${error}</pre>
+            `;
+        });
+    }
+    </script>
+</body>
+</html>

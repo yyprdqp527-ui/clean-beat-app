@@ -14,7 +14,7 @@ Quand votre partenaire validait une tâche, vous deviez :
 
 ### Maintenant ✅
 Quand votre partenaire valide une tâche :
-1. **Attendez 10 secondes maximum**
+1. **Attendez 3 secondes maximum**
 2. ✨ Les points apparaissent **automatiquement**
 3. 🎈 Une animation montre le changement
 4. 📊 Les barres se mettent à jour
@@ -29,15 +29,15 @@ Quand les points d'un joueur changent :
 - 🏠 **Santé de la maison** mise à jour
 
 ### Où C'est Actif ?
-- ✅ Page **Menu** principal
-- ✅ Page des **Catégories** de tâches
-- ✅ Page de **Validation** des tâches
-- ✅ **Toutes les pages** avec le header de jeu
+- ✅ Page **Catégories** de tâches (avec header de jeu)
+- ✅ Page de **Validation** des tâches (avec header de jeu)
+- ✅ **Toutes les pages** qui utilisent le header de jeu
+- ⚠️ Page **Menu** principal (mise à jour au rechargement uniquement)
 
 ## 🕐 Fréquence de Mise à Jour
 
-- **Vérification** : toutes les 10 secondes
-- **Première mise à jour** : 2 secondes après le chargement
+- **Vérification** : toutes les 3 secondes
+- **Première mise à jour** : 1 seconde après le chargement
 - **Aucune action requise** de votre part !
 
 ## 💡 Conseils d'Utilisation

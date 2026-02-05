@@ -3,8 +3,28 @@
 
 {% block title %}Messagerie - {{ house_name }}{% endblock %}
 
+{% block extra_styles %}
+<!-- Socket.IO pour la synchronisation en temps réel -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+{% endblock %}
+
 {% block page_styles %}
 <style>
+   
+    
+    .mark-read-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+    }
+    
+    .mark-read-btn:active {
+        transform: translateY(0);
+    }
+    
+    .mark-read-btn.success {
+        background: linear-gradient(135deg, #16A085 0%, #1ABC9C 100%);
+    }
+    
     /* Header harmonisé avec menu.html - taille normale sur mobile */
     @media (max-width: 520px) {
         .header-menu { padding: 10px 12px; }
@@ -21,6 +41,149 @@
             overflow-wrap: break-word;
         }
         .avatar-square-wrapper .vbar { left: calc(100% + 12px); right: auto; }
+        
+        /* Correction pour les avatars de sélection de destinataire - identique au menu */
+        .recipients-strip {
+            gap: 4px !important;
+            flex-wrap: nowrap !important;
+            justify-content: center !important;
+            padding: 8px 0 !important;
+        }
+        
+        .recipient-selector-item {
+            flex: 0 0 auto;
+        }
+        
+        .recipient-selector-item .avatar-col {
+            max-width: 80px !important;
+            gap: 3px !important;
+        }
+        
+        .recipient-selector-item .avatar-name {
+            white-space: normal !important;
+            max-width: 70px !important;
+            line-height: 1.1 !important;
+            font-size: 9px !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            text-align: center !important;
+            margin-bottom: 2px !important;
+        }
+        
+        .recipient-selector-item .avatar-square {
+            width: 56px !important;
+            height: 56px !important;
+            min-width: 56px !important;
+            min-height: 56px !important;
+        }
+    }
+
+    /* Styles des avatars identiques à menu.html */
+    .avatar-col { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 6px; 
+        flex: 0 0 auto;
+        box-sizing: border-box; 
+    }
+    
+    .avatar-name { 
+        text-align: center; 
+        color: #153036; 
+        font-size: 12px; 
+        font-weight: 800; 
+        line-height: 1.2; 
+        white-space: normal; 
+        word-wrap: break-word; 
+        overflow-wrap: break-word; 
+        text-shadow: 0 1px 3px rgba(255,255,255,0.8); 
+        letter-spacing: 0.3px;
+        min-height: 18px;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .avatar-square { 
+        position: relative; 
+        z-index: 2002; 
+        width: 56px; 
+        height: 56px; 
+        min-width: 56px; 
+        min-height: 56px; 
+        border-radius: 12px; 
+        background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        border: 3px solid rgba(255,255,255,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35);
+        flex: 0 0 auto;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        overflow: hidden;
+    }
+    
+    /* Effet shimmer sur l'avatar */
+    .avatar-square::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -120%;
+        height: 100%;
+        width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 12px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+    
+    @keyframes shine-sweep {
+        0% { 
+            left: -120%; 
+            opacity: 0.9; 
+        }
+        50% { 
+            left: 120%; 
+            opacity: 0.9; 
+        }
+        100% { 
+            left: 120%; 
+            opacity: 0; 
+        }
+    }
+    
+    .avatar-square:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    
+    .avatar-square img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        border-radius: 12px; 
+        display: block; 
+    }
+    
+    .recipient-selector-item {
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border: 3px solid transparent;
+        border-radius: 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        box-shadow: none;
     }
 
     /* Palette harmonisée */
@@ -41,37 +204,37 @@
     
     /* Bouton retour glassmorphisme */
     .back-btn-glass {
-        position: fixed;
-        top: 24px;
-        left: 24px;
-        z-index: 2001;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #153036;
-        font-size: 28px;
-        font-weight: bold;
-        text-decoration: none;
-        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-    }
-    
-    .back-btn-glass:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    }
-    
-    .back-btn-glass:active {
-        transform: scale(0.95);
-    }
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+}
+
+.back-btn-glass:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.back-btn-glass:active {
+    transform: scale(0.95);
+}
 
     @media (max-width: 520px) {
         .back-btn-glass {
@@ -129,6 +292,40 @@
         box-shadow: 0 8px 32px rgba(0,0,0,0.1),
                     inset 0 1px 0 rgba(255,255,255,0.5);
     }
+    
+    /* Conteneur des avatars - style horizontal comme le header */
+    .recipients-strip {
+        display: flex;
+        gap: 56px;
+        flex-wrap: nowrap;
+        margin-top: 12px;
+        justify-content: center;
+        align-items: center;
+        padding: 8px 0;
+    }
+    
+    .recipient-selector-item .avatar-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+    }
+    
+    .recipient-selector-item .avatar-name {
+        text-align: center;
+        color: #153036;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+        letter-spacing: 0.3px;
+    }
+
     
     .message-input-wrapper {
         display: flex;
@@ -205,27 +402,52 @@
     }
     
     .message-avatar {
+        position: relative;
         width: 44px;
         height: 44px;
-        border-radius: 50%;
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 10px;
         flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
-        background: transparent;
-        backdrop-filter: blur(6px) saturate(110%);
-        -webkit-backdrop-filter: blur(6px) saturate(110%);
-        border: 1px solid rgba(255,255,255,0.12);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+        background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        border: 3px solid rgba(255,255,255,0.4);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35);
         overflow: hidden;
+        transition: all 0.25s ease;
+    }
+    
+    /* Effet shimmer sur message-avatar */
+    .message-avatar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -120%;
+        height: 100%;
+        width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 10px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+    
+    .message-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
     }
     
     .message-avatar img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        border-radius: inherit;
+        border-radius: 8px;
     }
     
     .message-content {
@@ -272,6 +494,68 @@
         justify-content: center;
     }
     
+    /* Messages d'ajout de mission - Effet spécial harmonisé */
+    .message-item.message-task-added {
+        position: relative;
+        animation: taskItemPulse 2.5s ease-in-out infinite;
+    }
+    
+    .message-item.message-task-added .message-bubble {
+        border-width: 3px;
+        border-style: solid;
+        border-image: linear-gradient(135deg, 
+            rgba(255, 215, 0, 0.6), 
+            rgba(255, 255, 255, 0.8), 
+            rgba(255, 215, 0, 0.6)
+        ) 1;
+        animation: shimmerBorder 3s linear infinite;
+        box-shadow: 0 8px 32px rgba(255, 215, 0, 0.25),
+                    inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    
+    .message-item.message-task-added .message-bubble::before {
+        content: '✨';
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 18px;
+        animation: sparkle 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+    }
+    
+    @keyframes taskItemPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.01);
+        }
+    }
+    
+    @keyframes shimmerBorder {
+        0% {
+            filter: brightness(1) drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
+        }
+        50% {
+            filter: brightness(1.2) drop-shadow(0 0 16px rgba(255, 215, 0, 0.5));
+        }
+        100% {
+            filter: brightness(1) drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
+        }
+    }
+    
+    @keyframes sparkle {
+        0%, 100% {
+            opacity: 0.5;
+            transform: translateY(-50%) scale(1) rotate(0deg);
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.2) rotate(10deg);
+        }
+    }
+    
     .message-item.message-system .message-bubble {
         background: var(--message-bg-color, rgba(166,211,220,0.15));
         border: 3px solid;
@@ -286,6 +570,42 @@
         box-shadow: 0 8px 32px rgba(0,0,0,0.1),
                     inset 0 1px 0 rgba(255,255,255,0.5);
         text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    /* 👶 Messages de suivi bébé - Style spécial rose pastel */
+    .message-item.message-baby-tracking {
+        position: relative;
+        animation: babyPulse 3s ease-in-out infinite;
+    }
+    
+    .message-item.message-baby-tracking .message-bubble {
+        background: linear-gradient(135deg, rgba(255, 182, 193, 0.25) 0%, rgba(255, 218, 233, 0.25) 100%);
+        border: 3px solid rgba(255, 182, 193, 0.6);
+        box-shadow: 0 8px 32px rgba(255, 182, 193, 0.25),
+                    inset 0 1px 0 rgba(255,255,255,0.5);
+        color: #153036; /* texte foncé pour lisibilité */
+        text-shadow: none;
+    }
+    
+    .message-item.message-baby-tracking .message-bubble::before {
+        content: '👶';
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 18px;
+        animation: babyBounce 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 4px rgba(255, 182, 193, 0.6));
+    }
+    
+    @keyframes babyPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+    }
+    
+    @keyframes babyBounce {
+        0%, 100% { transform: translateY(-50%) scale(1); }
+        50% { transform: translateY(-55%) scale(1.1); }
     }
     
     .message-sender-name {
@@ -335,6 +655,83 @@
     .message-item.message-me .message-timestamp {
         color: rgba(255,255,255,0.85);
         text-align: right;
+    }
+    
+    /* Bouton Lu pour marquer comme lu - Glassmorphism style */
+    .mark-read-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        margin-top: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, rgba(166, 211, 220, 0.4), rgba(166, 211, 220, 0.2));
+        border: 2px solid rgba(166, 211, 220, 0.5);
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .mark-read-btn:hover {
+        background: linear-gradient(135deg, rgba(166, 211, 220, 0.6), rgba(166, 211, 220, 0.4));
+        border-color: rgba(166, 211, 220, 0.8);
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 8px 25px rgba(166, 211, 220, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+    
+    .mark-read-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .mark-read-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .mark-read-btn.marked {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+        border-color: rgba(255, 255, 255, 0.2);
+        pointer-events: none;
+    }
+    
+    /* Indicateur de statut lu - Glassmorphism style */
+    .read-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, rgba(166, 211, 220, 0.3), rgba(166, 211, 220, 0.15));
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(166, 211, 220, 0.4);
+    }
+    
+    .read-status.unread {
+        color: rgba(255, 200, 150, 0.95);
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.25), rgba(231, 76, 60, 0.1));
+        border-color: rgba(231, 76, 60, 0.4);
+    }
+    
+    .read-status.read {
+        color: white;
+        background: linear-gradient(135deg, rgba(166, 211, 220, 0.5), rgba(166, 211, 220, 0.3));
+        border: 1px solid rgba(166, 211, 220, 0.6);
+        box-shadow: 0 2px 8px rgba(166, 211, 220, 0.2);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     }
     
     /* État vide */
@@ -476,6 +873,11 @@
         <div class="messages-header">
             <h1>Messagerie</h1>
             <div class="house-name">{{ house_name }}</div>
+            {% if unread_count > 0 %}
+            <button id="mark-all-read-btn" class="mark-read-btn" onclick="markAllAsRead()">
+                ✓ Tout validé (<span id="unread-count-display">{{ unread_count }}</span>)
+            </button>
+            {% endif %}
         </div>
         
         <!-- Formulaire d'envoi -->
@@ -487,18 +889,20 @@
                     <label style="font-weight: 700; color: var(--dark); margin-bottom: 8px; display: block; font-size: 14px;">
                         📩 Envoyer un message privé à :
                     </label>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+                    <div class="recipients-strip">
                         {% for player in available_players %}
-                        <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 3px solid transparent; border-radius: 20px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);">
-                            <input type="radio" name="recipient" value="{{ player.email }}" required style="display: none;" onchange="this.closest('label').parentElement.querySelectorAll('label').forEach(l => { l.style.borderColor = 'transparent'; l.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%)'; l.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)'; l.style.transform = 'scale(1)'; }); this.closest('label').style.borderColor = '{{ player.color }}'; this.closest('label').style.background = 'linear-gradient(135deg, {{ player.color_rgba }}, rgba(255,255,255,0.5))'; this.closest('label').style.boxShadow = '0 0 0 4px {{ player.color_rgba }}, 0 8px 20px {{ player.color_rgba }}'; this.closest('label').style.transform = 'scale(1.05)';">
-                            <div style="width: 56px; height: 56px; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 32px; background: linear-gradient(135deg, {{ player.color_rgba }} 0%, rgba(255,255,255,0.4) 100%); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border: 3px solid {{ player.color }}; box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);">
-                                {% if player.avatar.startswith('/static') or player.avatar.startswith('http') %}
-                                    <img src="{{ player.avatar }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                {% else %}
-                                    {{ player.avatar }}
-                                {% endif %}
+                        <label class="recipient-selector-item" onclick="this.querySelectorAll('input')[0].click();">
+                            <input type="radio" name="recipient" value="{{ player.email }}" required style="display: none;" onchange="this.closest('label').parentElement.querySelectorAll('label').forEach(l => { l.querySelector('.avatar-square').style.transform = 'scale(1)'; l.querySelector('.avatar-square').style.boxShadow = '0 8px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35)'; l.querySelector('.avatar-square').style.borderColor = 'rgba(255,255,255,0.4)'; }); this.closest('label').querySelector('.avatar-square').style.transform = 'scale(1.1)'; this.closest('label').querySelector('.avatar-square').style.boxShadow = '0 0 0 4px {{ player.color }}40, 0 12px 25px rgba(0,0,0,0.2)'; this.closest('label').querySelector('.avatar-square').style.borderColor = '{{ player.color }}';">
+                            <div class="avatar-col">
+                                <div class="avatar-name" style="font-weight: 700;">{{ player.name }}</div>
+                                <div class="avatar-square" style="border-color: {{ player.color }}80;">
+                                    {% if player.avatar.startswith('/static') or player.avatar.startswith('http') %}
+                                        <img src="{{ player.avatar }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        <span style="font-size: 28px;">{{ player.avatar }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <span style="font-size: 12px; font-weight: 700; color: {{ player.color }}; text-align: center; max-width: 70px; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">{{ player.name }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -528,10 +932,9 @@
         {% if messages %}
             <div class="messages-list">
                 {% for msg in messages %}
-                    <div class="message-item {{ 'message-me' if msg.is_me else '' }} {{ 'message-system' if msg.sender_type in ['system', 'house'] else '' }}" style="--message-color: {{ msg.color }}; --message-bg-color: {{ msg.bg_color }};">
-                        {% if msg.sender_type not in ['system', 'house'] %}
-                            {% set border_color = (msg.player_color_hex if msg.player_color_hex is defined and msg.player_color_hex else (msg.color if msg.color else '#A6D3DC')) %}
-                            <div class="message-avatar" style="border: 2px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %};">
+                    <div class="message-item {{ 'message-me' if msg.is_me else '' }} {{ 'message-system' if msg.sender_type in ['system', 'house'] else '' }} {{ 'message-task-added' if msg.message_type == 'task_added' else '' }} {{ 'message-baby-tracking' if msg.message_type == 'baby_tracking' else '' }}" style="--message-color: {{ msg.color }}; --message-bg-color: {{ msg.bg_color }};" data-message-id="{{ msg.id }}">
+                        {% if msg.sender_type not in ['system', 'house'] or msg.message_type == 'baby_tracking' %}
+                            <div class="message-avatar" style="border-color: {{ msg.color }}80;">
                                 {% if msg.sender_avatar.startswith('/static') or msg.sender_avatar.startswith('http') %}
                                     <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}">
                                 {% else %}
@@ -558,6 +961,47 @@
                                 <div class="message-timestamp">
                                     {{ msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp }}
                                 </div>
+                                
+                                {# Bouton Lu pour les messages envoyés par moi et non encore lus par le destinataire #}
+                                {% if msg.is_me and msg.recipient_email and msg.message_type == 'private' %}
+                                    {% if msg.is_read_by_recipient %}
+                                        <div class="read-status read">✓✓ Lu par {{ msg.recipient_name }}</div>
+                                    {% else %}
+                                        <button class="mark-read-btn" 
+                                                data-msg-id="{{ msg.id }}" 
+                                                data-child-email="{{ msg.recipient_email }}" 
+                                                data-child-name="{{ msg.recipient_name }}"
+                                                onclick="markMessageAsRead(this.dataset.msgId, this.dataset.childEmail, this.dataset.childName, this);">
+                                            ✓ Marquer comme lu
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                {# Bouton Lu pour les messages REÇUS par moi et que je n'ai pas encore lus #}
+                                {% if not msg.is_me and msg.message_type == 'private' %}
+                                    {% if msg.is_read_by_me %}
+                                        <div class="read-status read">✓ Lu</div>
+                                    {% else %}
+                                        <button class="mark-read-btn received-msg" 
+                                                data-msg-id="{{ msg.id }}"
+                                                onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
+                                            ✓ Marquer comme lu
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                {# Bouton Lu pour les messages de la MAISON (task_added, etc.) que je n'ai pas encore lus #}
+                                {% if msg.sender_type == 'house' and msg.message_type != 'task_completed' %}
+                                    {% if msg.is_read_by_me %}
+                                        <div class="read-status read">✓ Lu</div>
+                                    {% else %}
+                                        <button class="mark-read-btn house-msg" 
+                                                data-msg-id="{{ msg.id }}"
+                                                onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
+                                            ✓ Marquer comme lu
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -590,5 +1034,191 @@
                 this.style.height = Math.min(this.scrollHeight, 120) + 'px';
             });
         }
+        
+        // ✅ Fonction pour marquer UN message comme lu au nom d'un enfant
+        function markMessageAsRead(messageId, childEmail, childName, btn) {
+            if (!btn) return;
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳...';
+            
+            fetch('/mark_single_message_read_for_child', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message_id: messageId,
+                    child_email: childEmail
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remplacer le bouton par le statut "Lu"
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'read-status read';
+                    statusDiv.innerHTML = '✓✓ Lu par ' + childName;
+                    btn.replaceWith(statusDiv);
+                    
+                    // Animation de confirmation
+                    statusDiv.style.animation = 'fadeIn 0.3s ease';
+                    
+                    // Afficher le nouveau compteur dans la console
+                    console.log('📬 Message marqué comme lu. Nouveaux messages non lus pour ' + childName + ': ' + (data.new_unread_count || 0));
+                } else {
+                    btn.innerHTML = '❌ Erreur';
+                    btn.disabled = false;
+                    setTimeout(() => {
+                        btn.innerHTML = '✓ Marquer comme lu';
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                btn.innerHTML = '❌ Erreur';
+                btn.disabled = false;
+                setTimeout(() => {
+                    btn.innerHTML = '✓ Marquer comme lu';
+                }, 2000);
+            });
+        }
+        
+        // ✅ Fonction pour marquer UN message REÇU comme lu par l'utilisateur
+        function markReceivedMessageAsRead(messageId, btn) {
+            if (!btn) return;
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳...';
+            
+            fetch('/mark_single_message_read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message_id: messageId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remplacer le bouton par le statut "Lu"
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'read-status read';
+                    statusDiv.innerHTML = '✓ Lu';
+                    btn.replaceWith(statusDiv);
+                    
+                    // Animation de confirmation
+                    statusDiv.style.animation = 'fadeIn 0.3s ease';
+                    
+                    // Afficher le nouveau compteur dans la console
+                    console.log('📬 Message marqué comme lu. Nouveaux messages non lus : ' + (data.new_unread_count || 0));
+                    
+                    // Mettre à jour les badges dans le menu (si la fonction existe)
+                    if (typeof updateUnreadBadge === 'function' && data.new_unread_count !== undefined) {
+                        updateUnreadBadge(data.new_unread_count);
+                    }
+                } else {
+                    btn.innerHTML = '❌ Erreur';
+                    btn.disabled = false;
+                    setTimeout(() => {
+                        btn.innerHTML = '✓ Marquer comme lu';
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                btn.innerHTML = '❌ Erreur';
+                btn.disabled = false;
+                setTimeout(() => {
+                    btn.innerHTML = '✓ Marquer comme lu';
+                }, 2000);
+            });
+        }
+        
+        // 📋 Fonction pour marquer tous les messages comme lus
+        function markAllAsRead() {
+            const btn = document.getElementById('mark-all-read-btn');
+            if (!btn) return;
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Validation...';
+            
+            fetch('{{ url_for("mark_all_messages_read") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.textContent = '✓ Tout validé !';
+                    btn.classList.add('success');
+                    
+                    // Mettre à jour le compteur
+                    const countDisplay = document.getElementById('unread-count-display');
+                    if (countDisplay) {
+                        countDisplay.textContent = '0';
+                    }
+                    
+                    // Faire disparaître le bouton après 1 seconde
+                    setTimeout(() => {
+                        btn.style.opacity = '0';
+                        btn.style.transform = 'scale(0.8)';
+                        setTimeout(() => {
+                            btn.style.display = 'none';
+                        }, 300);
+                    }, 1000);
+                } else {
+                    btn.textContent = '❌ Erreur';
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                btn.textContent = '❌ Erreur';
+                btn.disabled = false;
+            });
+        }
+        
+        // �🔌 WebSocket pour synchroniser les compteurs de messages non lus
+        (function() {
+            try {
+                const socket = io();
+                const userEmail = "{{ email }}";
+                
+                if (!userEmail) {
+                    console.log('⚠️ WebSocket: Aucun utilisateur connecté');
+                    return;
+                }
+                
+                socket.on('connect', function() {
+                    console.log('🔌 WebSocket Comments: Connecté au serveur');
+                    // Rejoindre la room de la maison
+                    socket.emit('join_house', { email: userEmail });
+                });
+                
+                socket.on('joined_room', function(data) {
+                    console.log('🏠 WebSocket Comments: Rejoint la room', data.room);
+                });
+                
+                // Écouter les nouveaux messages pour rafraîchir la page
+                socket.on('new_message_notification', function(data) {
+                    console.log('💬 WebSocket Comments: Nouveau message reçu', data);
+                    
+                    // Si l'utilisateur actuel est le destinataire, rafraîchir la page
+                    if (data.recipient_email === userEmail) {
+                        // Recharger la page pour afficher le nouveau message
+                        location.reload();
+                    }
+                });
+                
+                console.log('✅ WebSocket Comments: Système de synchronisation initialisé');
+            } catch (error) {
+                console.error('❌ WebSocket Comments: Erreur d\'initialisation', error);
+            }
+        })();
     </script>
 {% endblock %}

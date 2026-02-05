@@ -47,35 +47,31 @@
             padding: 32px 24px;
         }
         
-        /* Header avec titre */
+        /* Header avec titre - style harmonisé */
         .page-header {
             background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
-            padding: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
             text-align: center;
-            margin-bottom: 28px;
-            box-shadow: 
-                0 12px 40px rgba(89,113,118,0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9),
-                0 0 0 2px rgba(253, 174, 84, 0.7);
-            border: 3px solid rgba(253, 174, 84, 0.8);
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
         }
         
         .page-title {
             font-size: 22px;
             font-weight: 800;
-            color: var(--dark);
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+            color: #153036;
+            margin: 0;
+            margin-bottom: 4px;
         }
         
         .page-subtitle {
             font-size: 14px;
-            color: var(--dark);
-            font-weight: 400;
-            line-height: 1.5;
+            color: #597176;
+            margin-top: 4px;
         }
         
         /* Carte Profil */
@@ -614,7 +610,7 @@
             <div class="photo-section">
                 <div class="photo-container">
                     <div class="photo-preview" id="photoPreview" data-dicebear-seed="default" onclick="openAvatarModal()">
-                        <img src="{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/lorelei/svg?seed=default';">
+                        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">
                     </div>
                 </div>
                 
@@ -634,7 +630,7 @@
                 <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
                 <input type="hidden" id="selectedPhoto" name="photo_data">
                 <input type="hidden" id="selectedAvatar" name="avatar">
-                <input type="hidden" id="avatarStyle" name="avatar_style" value="adventurer">
+                <input type="hidden" id="avatarStyle" name="avatar_style">
             </div>
 
             {% if change_avatar %}
@@ -709,7 +705,7 @@
             
             // Vérifier la taille (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('La photo est trop volumineuse. Maximum 5 Mo.');
+                showGlassPopup('📸 La photo est trop volumineuse. Maximum 5 Mo.', 'warning', 3000);
                 return;
             }
             
@@ -767,9 +763,32 @@
                 loadAvatars();
             }
 
-            // Ne pas injecter dynamiquement un SVG DiceBear pour l'aperçu afin
-            // d'éviter l'effet d'avatar aléatoire. L'aperçu restera sur le fichier
-            // statique local défini dans le HTML.
+            // Ensure DiceBear SVG is injected when preview image fails
+            document.addEventListener('DOMContentLoaded', async function() {
+                const c = document.getElementById('photoPreview');
+                if (!c) return;
+                const img = c.querySelector('img');
+                if (img && img.complete && img.naturalWidth > 0) return;
+                const seed = c.getAttribute('data-dicebear-seed') || 'default';
+                const url = `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(seed)}`;
+                try {
+                    const resp = await fetch(url, { cache: 'no-cache' });
+                    if (!resp.ok) throw new Error('no');
+                    const svgText = await resp.text();
+                    c.innerHTML = svgText;
+                    const svg = c.querySelector('svg');
+                    if (svg) {
+                        svg.setAttribute('width', '100%');
+                        svg.setAttribute('height', '100%');
+                        svg.style.display = 'block';
+                        svg.style.objectFit = 'cover';
+                    }
+                } catch (e) {
+                    // fallback to local file (already available)
+                    const local = '{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';
+                    c.innerHTML = `<img src="${local}" alt="Avatar par défaut" style="width:100%;height:100%;object-fit:cover;">`;
+                }
+            });
         }
         
         // Fermer le modal
@@ -825,10 +844,23 @@
         
         function generateDiceBearSeeds(count) {
             const seeds = [];
-            for (let i = 0; i < count; i++) {
-                const seed = Math.random().toString(36).substring(2, 10);
-                seeds.push(seed);
+            // Utiliser des seeds fixes basés sur des noms pour avoir toujours les mêmes avatars
+            const baseNames = [
+                'alice', 'bob', 'charlie', 'david', 'emma', 'frank', 'grace', 'henry',
+                'iris', 'jack', 'kate', 'liam', 'mia', 'noah', 'olivia', 'paul',
+                'quinn', 'rose', 'sam', 'tom', 'uma', 'victor', 'wendy', 'xavier',
+                'yara', 'zoe', 'alex', 'bella', 'chris', 'diana', 'evan', 'fiona'
+            ];
+            
+            for (let i = 0; i < count && i < baseNames.length; i++) {
+                seeds.push(baseNames[i]);
             }
+            
+            // Si on a besoin de plus de seeds, ajouter des variantes
+            for (let i = baseNames.length; i < count; i++) {
+                seeds.push(baseNames[i % baseNames.length] + (Math.floor(i / baseNames.length) + 1));
+            }
+            
             return seeds;
         }
         
@@ -877,7 +909,7 @@
                 const style = category.style || 'avataaars';
                 
                 seeds.forEach(seed => {
-                    const url = 'https://api.dicebear.com/7.x/' + style + '/svg?seed=' + seed;
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
                     const option = document.createElement('div');
                     option.className = 'avatar-option';
                     option.style.backgroundImage = `url('${url}')`;
@@ -940,14 +972,14 @@
             {% if not change_avatar %}
             const name = document.querySelector('input[name="name"]').value.trim();
             if (!name || name.length < 2) {
-                alert('Veuillez entrer un prénom valide (minimum 2 caractères).');
+                showGlassPopup('📝 Veuillez entrer un prénom valide (minimum 2 caractères).', 'warning', 3000);
                 e.preventDefault();
                 return false;
             }
             {% endif %}
             
             if (!avatar && !photo) {
-                alert('Veuillez choisir un avatar ou charger une photo.');
+                showGlassPopup('👤 Veuillez choisir un avatar ou charger une photo.', 'warning', 3000);
                 e.preventDefault();
                 return false;
             }
@@ -967,9 +999,9 @@
             // Pré-remplir l'avatar actuel
             {% if current_avatar_file %}
             const currentPhoto = '{{ current_avatar_file }}';
-                if (currentPhoto) {
+            if (currentPhoto) {
                 const preview = document.getElementById('photoPreview');
-                preview.innerHTML = '<img src="' + '{{ url_for("static", filename='avatars/') }}' + currentPhoto + '" alt="Photo actuelle" style="width: 100%; height: 100%; object-fit: cover;">';
+                preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentPhoto}" alt="Photo actuelle" style="width: 100%; height: 100%; object-fit: cover;">`;
                 document.getElementById('selectedAvatar').value = currentPhoto;
                 selectedAvatarData = { type: 'image', value: currentPhoto };
             }
@@ -977,44 +1009,52 @@
             const currentAvatar = '{{ current_avatar }}';
             if (currentAvatar) {
                 const preview = document.getElementById('photoPreview');
-                // Si c'est un emoji
-                if (currentAvatar.length <= 4 && !currentAvatar.includes('.')) {
-                    preview.innerHTML = '<span style="font-size: 60px;">' + currentAvatar + '</span>';
+                // Vérifier si c'est un vrai emoji (caractères Unicode > 127)
+                const isEmoji = currentAvatar.length <= 4 && !currentAvatar.includes('.') && 
+                               /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(currentAvatar);
+                
+                if (isEmoji) {
+                    preview.innerHTML = `<span style="font-size: 60px;">${currentAvatar}</span>`;
                     selectedAvatarData = { type: 'emoji', value: currentAvatar };
                     document.getElementById('selectedAvatar').value = currentAvatar;
                 } else if (!currentAvatar.includes('.')) {
                     // Chaîne sans extension => seed DiceBear
                     const seed = currentAvatar;
-                    const url = 'https://api.dicebear.com/7.x/lorelei/svg?seed=' + encodeURIComponent(seed);
-                    preview.innerHTML = '<img src="' + url + '" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover;">';
-                    selectedAvatarData = { type: 'dicebear', seed: seed, style: 'lorelei', url: url };
+                    let style = '{{ current_avatar_style if current_avatar_style else "" }}';
+                    
+                    // Si pas de style, essayer de l'extraire de l'URL
+                    if (!style) {
+                        const currentUrl = '{{ current_avatar_url }}';
+                        const urlMatch = currentUrl.match(/dicebear\.com\/[^\/]+\/([^\/]+)\//);
+                        if (urlMatch) {
+                            style = urlMatch[1];
+                            console.log('🔧 Style extrait de l\'URL:', style);
+                        } else {
+                            style = 'lorelei'; // Fallback par défaut
+                        }
+                    }
+                    
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
+                    preview.innerHTML = `<img src="${url}" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    selectedAvatarData = { type: 'dicebear', seed: seed, style: style, url: url };
                     document.getElementById('selectedAvatar').value = currentAvatar;
-                    document.getElementById('avatarStyle').value = 'lorelei';
+                    document.getElementById('avatarStyle').value = style;
                 } else {
                     // C'est un fichier avatar
-                    preview.innerHTML = '<img src="' + '{{ url_for("static", filename='avatars/') }}' + currentAvatar + '" alt="Avatar actuel" style="width: 100%; height: 100%; object-fit: cover;">';
+                    preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentAvatar}" alt="Avatar actuel" style="width: 100%; height: 100%; object-fit: cover;">`;
                     selectedAvatarData = { type: 'image', value: currentAvatar };
                     document.getElementById('selectedAvatar').value = currentAvatar;
                 }
             }
             {% else %}
-            // Pas d'avatar existant, initialiser avec l'avatar par défaut
+            // Pas d'avatar existant en mode édition, initialiser avec l'avatar par défaut
             const preview = document.getElementById('photoPreview');
-            if (!preview.querySelector('img[src*="dicebear"]')) {
-                preview.innerHTML = `<img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover;">`;
-            }
+            preview.innerHTML = `<img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
             {% endif %}
             {% else %}
-            // Mode création - afficher un avatar par défaut fixe (fichier statique) et
-            // initialiser les champs cachés pour ce choix.
+            // Mode création - afficher l'avatar par défaut Lorelei
             const preview = document.getElementById('photoPreview');
-            const localDefault = '{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';
-            preview.innerHTML = `<img src="${localDefault}" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover;">`;
-            // Remplir les champs cachés pour que le formulaire envoie ce choix par défaut
-            // Utiliser un seed fixe 'default' et le style 'lorelei' (correspond au fichier statique)
-            document.getElementById('selectedAvatar').value = 'default';
-            document.getElementById('avatarStyle').value = 'lorelei';
-            selectedAvatarData = { type: 'dicebear', seed: 'default', style: 'lorelei', url: localDefault };
+            preview.innerHTML = `<img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
             {% endif %}
         });
     </script>

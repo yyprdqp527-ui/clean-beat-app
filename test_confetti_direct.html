@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Confettis Direct</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        h1 {
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #FFD700;
+            color: #333;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .info {
+            margin-top: 30px;
+            color: white;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎉 Test Animation Confettis</h1>
+    <button onclick="testConfetti()">LANCER LES CONFETTIS</button>
+    
+    <div class="info">
+        <p><strong>Email connecté:</strong> gfufgjdgdye@me.com</p>
+        <p>Cliquez sur le bouton pour tester l'animation !</p>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(msg) {
+            console.log(msg);
+            document.getElementById('log').innerHTML += '<div>' + msg + '</div>';
+        }
+        
+        function createMegaConfetti(count) {
+            log('🎊 Création de ' + count + ' confettis...');
+            count = count || 50;
+            var colors = ['#FFD700', '#FF6B9D', '#4ECDC4', '#45B7D1', '#FFA07A'];
+            var centerX = window.innerWidth / 2;
+            var centerY = window.innerHeight / 2;
+            
+            for (var i = 0; i < count; i++) {
+                var confetti = document.createElement('div');
+                confetti.style.cssText = 'position:fixed;width:' + (8 + Math.random() * 6) + 'px;height:' + (8 + Math.random() * 6) + 'px;background:' + colors[Math.floor(Math.random() * colors.length)] + ';left:' + centerX + 'px;top:' + centerY + 'px;border-radius:' + (Math.random() > 0.5 ? '50%' : '0') + ';pointer-events:none;z-index:10000;';
+                document.body.appendChild(confetti);
+                
+                var angle = (Math.random() * 360) * Math.PI / 180;
+                var velocity = 200 + Math.random() * 200;
+                var tx = Math.cos(angle) * velocity;
+                var ty = Math.sin(angle) * velocity - 100;
+                
+                confetti.animate([
+                    { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+                    { transform: 'translate(' + tx + 'px, ' + ty + 'px) rotate(' + (Math.random() * 720) + 'deg)', opacity: 0 }
+                ], {
+                    duration: 1500 + Math.random() * 500,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                });
+                
+                setTimeout(function(c) { c.remove(); }, 2000, confetti);
+            }
+            log('✅ Confettis lancés !');
+        }
+
+        function playEpicSound() {
+            log('🔊 Lecture du son...');
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                [523.25, 659.25, 783.99, 1046.50].forEach(function(freq, i) {
+                    setTimeout(function() {
+                        var osc = ctx.createOscillator();
+                        var gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.value = freq;
+                        osc.type = 'triangle';
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.3);
+                    }, i * 100);
+                });
+                log('✅ Son joué !');
+            } catch(e) {
+                log('❌ Erreur son: ' + e.message);
+            }
+        }
+        
+        function testConfetti() {
+            log('🚀 TEST LANCÉ !');
+            createMegaConfetti(50);
+            playEpicSound();
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 150]);
+                log('📳 Vibration activée');
+            }
+        }
+        
+        // Auto-test au chargement si URL contient ?auto=1
+        if (window.location.search.includes('auto=1')) {
+            setTimeout(function() {
+                log('🤖 Auto-test démarré...');
+                testConfetti();
+            }, 500);
+        }
+        
+        log('✅ Page chargée - Prêt pour le test !');
+    </script>
+</body>
+</html>

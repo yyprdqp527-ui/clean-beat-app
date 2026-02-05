@@ -276,7 +276,7 @@ La page menu contient plusieurs éléments interactifs avec des effets visuels e
 ```
 
 **Effets:**
-- ✨ Animation de célébration de l'avatar
+- ✨  de célébration de l'avatar
 - 🎵 Son de victoire
 - 📢 Notification toast en haut-droit (4s)
 - 🔄 Suppression des paramètres après animation

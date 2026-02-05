@@ -288,20 +288,44 @@ class PushNotificationManager {
     }
 }
 
-// Instance globale
-window.pushManager = new PushNotificationManager();
+// Instance globale - utiliser un nom différent de 'pushManager' car c'est une API native du navigateur
+console.log('🔧 Création instance CleanBeatPushManager...');
+try {
+    window.cleanBeatPush = new PushNotificationManager();
+    console.log('✅ Instance CleanBeatPushManager créée:', window.cleanBeatPush);
+    console.log('✅ Méthode init disponible:', typeof window.cleanBeatPush.init);
+} catch (error) {
+    console.error('❌ Erreur création CleanBeatPushManager:', error);
+    window.cleanBeatPush = null;
+}
 
 // Auto-initialisation au chargement
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🔔 Initialisation gestionnaire notifications...');
-    
-    try {
-        await window.pushManager.init();
+(function() {
+    const init = async function() {
+        console.log('🔔 Initialisation gestionnaire notifications CleanBeat...');
         
-        // Afficher le statut dans la console
-        const status = window.pushManager.getStatus();
-        console.log(`📊 Statut notifications: ${status}`);
-    } catch (error) {
-        console.warn('⚠️ Erreur initialisation pushManager:', error);
+        // Vérifier que cleanBeatPush existe et a une méthode init
+        if (!window.cleanBeatPush || typeof window.cleanBeatPush.init !== 'function') {
+            console.error('❌ cleanBeatPush non disponible ou init() manquante');
+            return;
+        }
+        
+        try {
+            await window.cleanBeatPush.init();
+            
+            // Afficher le statut dans la console
+            const status = window.cleanBeatPush.getStatus();
+            console.log(`📊 Statut notifications: ${status}`);
+        } catch (error) {
+            console.warn('⚠️ Erreur initialisation cleanBeatPush:', error);
+        }
+    };
+    
+    // Attendre que le DOM soit chargé
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM déjà chargé, exécuter au prochain tick
+        setTimeout(init, 0);
     }
-});
+})();

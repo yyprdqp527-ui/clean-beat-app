@@ -1,0 +1,459 @@
+/* ==========================================
+   STYLES COMMUNS - CLEANBEAT APP
+   Flèches retour et avatars
+   ========================================== */
+
+/* ==========================================
+   BOUTON RETOUR GLASSMORPHISME
+   ========================================== */
+
+.back-btn-glass {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+}
+
+.back-btn-glass:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.back-btn-glass:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 520px) {
+    .back-btn-glass {
+        top: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+}
+
+
+/* ==========================================
+   AVATARS - PAGE MENU
+   ========================================== */
+
+/* Colonnes et rangées d'avatars */
+.avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 var(--avatar-size);
+    max-width: var(--avatar-size);
+    width: var(--avatar-size);
+    box-sizing: border-box;
+}
+
+.avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.avatar-strip {
+    display: flex;
+    gap: 56px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Nom du joueur sous l'avatar */
+.avatar-name {
+    text-align: center;
+    color: #153036;
+    max-width: calc(var(--avatar-size) * 2.2);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+    letter-spacing: 0.3px;
+    min-height: 18px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Points du joueur */
+.avatar-points {
+    font-size: 9px;
+    visibility: visible;
+    opacity: 1;
+    color: #153036;
+    margin-top: 2px;
+    font-weight: 700;
+}
+
+/* Conteneur carré de l'avatar avec effet glassmorphisme */
+.avatar-square {
+    position: relative;
+    z-index: 2002;
+    width: var(--avatar-size, 110px);
+    height: var(--avatar-size, 110px);
+    min-width: var(--avatar-size, 110px);
+    min-height: var(--avatar-size, 110px);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.65));
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35);
+    flex: 0 0 auto;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* Effet shimmer/shine sur l'avatar */
+.avatar-square::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    height: 100%;
+    width: 120%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    border-radius: 12px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    animation: shine-sweep 3s ease-in-out infinite;
+    opacity: 0.9;
+}
+
+@keyframes shine-sweep {
+    0% {
+        left: -120%;
+        opacity: 0.9;
+    }
+    50% {
+        left: 120%;
+        opacity: 0.9;
+    }
+    100% {
+        left: 120%;
+        opacity: 0;
+    }
+}
+
+/* Effet au survol de l'avatar */
+.avatar-square:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+/* Image de l'avatar */
+.avatar-square img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+}
+
+.avatar-square:active {
+    transform: scale(0.98);
+}
+
+/* Wrapper de l'avatar avec barre de progression */
+.avatar-square-wrapper {
+    position: relative;
+    display: inline-block;
+    overflow: visible;
+}
+
+/* Barre de progression verticale à côté de l'avatar */
+.avatar-square-wrapper .vbar {
+    position: absolute;
+    left: calc(100% + 16px);
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(var(--avatar-size) - 8px);
+    width: 6px;
+    min-width: 6px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(21,48,54,0.12), rgba(21,48,54,0.18));
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    border: 1.5px solid rgba(21,48,54,0.35);
+    z-index: 2100;
+}
+
+.avatar-square-wrapper .vbar .vbar-fill {
+    transition: height 0.4s ease;
+    box-shadow: 0 0 6px rgba(0,0,0,0.12);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+}
+
+/* Badge de notification sur l'avatar */
+.avatar-notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, #FF4444 0%, #FF6B6B 100%);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    box-shadow: 0 3px 12px rgba(255, 68, 68, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    animation: pulse-badge 2s ease-in-out infinite;
+    border: 1.5px solid white;
+    z-index: 10;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.avatar-notification-badge:hover {
+    transform: scale(1.15);
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+
+/* ==========================================
+   CARTE TITRE - HEADER DE PIÈCE/CATÉGORIE
+   ========================================== */
+
+.room-header {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 2px solid rgba(253,174,84,0.3);
+    box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+}
+
+.room-header .room-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.room-header .room-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #153036;
+    margin: 0;
+}
+
+.room-header .room-subtitle {
+    font-size: 14px;
+    color: #597176;
+    margin-top: 4px;
+}
+
+
+/* ==========================================
+   CARTE PROFIL - FORMULAIRE
+   ========================================== */
+
+.profile-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px;
+    padding: 32px 24px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Section Photo/Avatar */
+.photo-section {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.photo-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.photo-preview {
+    width: 110px;
+    height: 110px;
+    border-radius: 22px;
+    border: 3px solid #A6D3DC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    overflow: hidden;
+    cursor: pointer;
+    font-size: 50px;
+    color: #597176;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.12),
+        inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    box-sizing: border-box;
+}
+
+.photo-preview:hover {
+    border-color: #FDAE54;
+    transform: scale(1.05);
+    box-shadow: 0 15px 40px rgba(253, 174, 84, 0.25);
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px;
+    display: block;
+}
+
+/* Boutons photo/avatar */
+.photo-options {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.photo-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.upload-btn {
+    background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(89, 113, 118, 0.25);
+}
+
+.camera-btn {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+}
+
+.avatar-btn {
+    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(253, 174, 84, 0.25);
+}
+
+.photo-btn:hover {
+    transform: translateY(-2px);
+}
+
+.photo-btn:active {
+    transform: translateY(0);
+}
+
+
+/* ==========================================
+   RESPONSIVE MOBILE - AVATARS
+   ========================================== */
+
+@media (max-width: 520px) {
+    /* Réduction des écarts entre avatars sur mobile */
+    .avatar-strip {
+        gap: 4px !important;
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+
+    .avatar-col {
+        max-width: 80px;
+        gap: 3px !important;
+    }
+
+    /* Barre horizontale sous l'avatar sur mobile */
+    .avatar-square-wrapper .vbar {
+        display: none !important;
+    }
+
+    .vbar-horizontal {
+        display: block !important;
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        margin-top: 4px;
+    }
+
+    /* Noms plus compacts sur mobile */
+    .avatar-name {
+        white-space: normal;
+        max-width: 70px;
+        line-height: 1.1;
+        font-size: 9px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        text-align: center;
+        margin-bottom: 2px;
+    }
+
+    /* Points visibles sur mobile */
+    .avatar-points {
+        display: block !important;
+        font-size: 9px;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #153036 !important;
+        margin-top: 2px;
+        font-weight: 700;
+    }
+}

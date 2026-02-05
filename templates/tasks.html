@@ -136,6 +136,7 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    outline: none;
 }
 
 /* Style pour les cartes avec points négatifs (livraison) */
@@ -146,15 +147,20 @@ body {
 }
 
 .task-card.negative-task:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6),
+                0 0 25px rgba(80, 80, 80, 0.4);
 }
 
 .task-card.negative-task .task-name {
     color: white !important;
 }
 
-.task-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 40px rgba(253,174,84,0.25); }
+.task-card:hover { 
+    transform: translateY(-10px); 
+    box-shadow: 0 15px 40px rgba(253,174,84,0.25),
+                0 0 25px rgba(253,174,84,0.3); 
+}
 .task-card .task-name { font-weight: 800; color: var(--teal-dark); font-size: 16px; padding: 12px 10px; margin: 0; background: transparent !important; order: 1; }
 .task-card .task-image-container { 
     width: 100%; 
@@ -167,9 +173,9 @@ body {
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
-    transition: transform 0.3s;
+    transition: filter 0.3s;
 }
-.task-card:hover .task-image-container img { transform: scale(1.1); }
+.task-card:hover .task-image-container img { filter: brightness(1.1) contrast(1.05); }
 
 /* Pastille points en overlay sur l'image - RONDE ROUGE */
 .points-badge {
@@ -222,19 +228,23 @@ body {
 }
 
 .points-badge:hover {
-    transform: scale(1.15);
-    box-shadow: 0 6px 18px rgba(255,71,87,0.6), 
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(253,174,84,0.8), 
+                0 0 40px rgba(253,174,84,0.5),
                 inset 0 2px 4px rgba(255,255,255,0.6),
                 inset 0 -2px 4px rgba(0,0,0,0.25);
+    border: 2px solid rgba(253,174,84,1);
     background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
 }
 
 .points-badge.negative:hover {
-    transform: scale(1.15);
+    transform: scale(1);
     box-shadow: 
-        0 6px 18px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(80, 80, 80, 0.8),
+        0 0 40px rgba(80, 80, 80, 0.5),
         inset 0 2px 4px rgba(80, 80, 80, 0.5), 
         inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(100, 100, 100, 0.9);
 }
 
 .points-badge::before {
@@ -262,24 +272,20 @@ body {
 /* Animation d'attention pour attirer l'œil */
 @keyframes pulseAttention {
     0%, 100% {
-        transform: scale(1);
         box-shadow: 0 6px 20px rgba(253,174,84,0.4), inset 0 2px 4px rgba(255,255,255,0.3);
     }
     50% {
-        transform: scale(1.08);
-        box-shadow: 0 8px 28px rgba(253,174,84,0.6), inset 0 2px 4px rgba(255,255,255,0.5);
+        box-shadow: 0 8px 28px rgba(253,174,84,0.6), 0 0 20px rgba(253,174,84,0.4), inset 0 2px 4px rgba(255,255,255,0.5);
     }
 }
 
 /* Animation pour les points négatifs */
 @keyframes pulseAttentionNegative {
     0%, 100% {
-        transform: scale(1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(80, 80, 80, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.4);
     }
     50% {
-        transform: scale(1.08);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(80, 80, 80, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 20px rgba(80, 80, 80, 0.4), inset 0 2px 4px rgba(80, 80, 80, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
     }
 }
 

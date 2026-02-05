@@ -381,13 +381,11 @@
             border-radius: 50%; 
             /* remove solid white interior so avatar image sits flush */
             background: transparent;
-            backdrop-filter: blur(6px) saturate(120%);
-            -webkit-backdrop-filter: blur(6px) saturate(120%);
-            border: 1px solid rgba(255,255,255,0.12);
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.25);
+            box-shadow: none;
             flex: 0 0 auto;
             transition: transform 0.15s ease;
             cursor: pointer;
@@ -1752,6 +1750,13 @@
                             }catch(e){console.warn('Preview avatar script error', e)}
                         });
                         </script>
+                        
+                        <!-- 
+                            LOGIQUE DES BADGES DE NOTIFICATION :
+                            - Badge sur VOTRE avatar : nombre de messages que VOUS avez REÇUS et pas encore lus
+                            - Badge sur avatar d'un autre joueur : nombre de messages que VOUS lui avez ENVOYÉS et qu'il n'a pas encore lus
+                        -->
+                        
                         <div class="avatar-strip {% if players|length <= 2 %}two-players{% endif %}">
 
                         {# Joueur actuel (Joueur 1) #}
@@ -1769,9 +1774,9 @@
                                 {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative;">
+                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
                                         {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
-                                        <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: 3px solid {% if '#' in border_color1 %}{{ border_color1 }}66{% else %}{{ border_color1 }}{% endif %}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
+                                        <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none; background: transparent; box-shadow: none;">
                                             {% if session.get('user_avatar_url') %}
                                                 <img src="{{ session.get('user_avatar_url') }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar_file %}
@@ -1782,20 +1787,19 @@
                                                 <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ player1_avatar }}</span>
                                             {% elif player1_avatar and '.' not in player1_avatar %}
                                                 {# Treat stored value as a DiceBear seed (no file extension) #}
-                                                <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="https://api.dicebear.com/7.x/{{ player1_avatar_style or 'adventurer' }}/svg?seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar and '.' in player1_avatar %}
                                                 {# Looks like a filename with extension -> serve static file #}
                                                 <img src="{{ url_for('static', filename='avatars/' + player1_avatar) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% else %}
-                                                <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="https://api.dicebear.com/7.x/{{ player1_avatar_style or 'adventurer' }}/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% endif %}
                                         </div>
                                         
-                                        <!-- Badge de notification pour messages non lus -->
-                                        {% if unread_messages_count and unread_messages_count > 0 %}
-                                        <span class="avatar-notification-badge" id="avatar-unread-badge" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ unread_messages_count }} message{{ 's' if unread_messages_count > 1 else '' }} non lu{{ 's' if unread_messages_count > 1 else '' }}">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
-                                        {% else %}
-                                        <span class="avatar-notification-badge" id="avatar-unread-badge" style="display: none;" title="Aucun message non lu"></span>
+                                        <!-- Badge pour les messages REÇUS par l'utilisateur connecté -->
+                                        {% set current_user_unread = unread_messages_count|default(0) %}
+                                        {% if current_user_unread > 0 %}
+                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="window.location.href='{{ url_for('comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
                                         {% endif %}
                                         <div class="vbar simple" aria-label="Progression du jour" title="{{ pct1 }}%" data-points="{{ points1 }}" data-fill="{{ fill1 }}">
                                             <div class="vbar-fill" style="height: {{ fill1 }}%; background: {{ color1 }};"></div>
@@ -1827,9 +1831,9 @@
                                 <div class="avatar-name" style="font-weight:700;">{{ p2.name }}</div>
                                 <div class="avatar-row" style="gap:8px; align-items:center;">
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                        <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}">
+                                        <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
                                             {% set border_color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else '#A6D3DC')) %}
-                                            <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: 3px solid {% if '#' in border_color_p2 %}{{ border_color_p2 }}66{% else %}{{ border_color_p2 }}{% endif %}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
+                                            <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: none; background: transparent; box-shadow: none;">
                                                 {% if p2.avatar_file %}
                                                     <img src="{{ url_for('static', filename='avatars/' + p2.avatar_file) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar_url %}
@@ -1838,13 +1842,18 @@
                                                     <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p2.avatar }}</span>
                                                 {% elif p2.avatar and '.' not in p2.avatar %}
                                                     {# Use stored seed for DiceBear when it's not a filename #}
-                                                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar and '.' in p2.avatar %}
                                                     <img src="{{ url_for('static', filename='avatars/' + p2.avatar) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% else %}
-                                                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
+                                            <!-- Badge pour les messages que VOUS avez envoyés à p2 et qu'il n'a pas lus -->
+                                            {% set p2_unread = unread_sent_to.get(p2.email, 0) if unread_sent_to else 0 %}
+                                            {% if p2_unread > 0 %}
+                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
+                                            {% endif %}
                                             <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
                                                 <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: {{ color_p2 }};"></div>
                                             </div>
@@ -1871,9 +1880,9 @@
                                     <div class="avatar-name" style="font-weight:700;">{{ p.name }}</div>
                                     <div class="avatar-row" style="gap:6px; flex-shrink:0; align-items:center;">
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                            <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}">
+                                            <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
                                                 {% set border_color_p = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else '#A6D3DC')) %}
-                                                <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: 3px solid {% if '#' in border_color_p %}{{ border_color_p }}66{% else %}{{ border_color_p }}{% endif %}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
+                                                <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: none; background: transparent; box-shadow: none;">
                                                     {% if p.avatar_file %}
                                                         <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% elif p.avatar_url %}
@@ -1881,9 +1890,14 @@
                                                     {% elif p.avatar and p.avatar|length <= 4 %}
                                                         <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p.avatar }}</span>
                                                     {% else %}
-                                                        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                        <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
+                                                <!-- Badge pour les messages que VOUS avez envoyés à ce joueur et qu'il n'a pas lus -->
+                                                {% set p_unread = unread_sent_to.get(p.email, 0) if unread_sent_to else 0 %}
+                                                {% if p_unread > 0 %}
+                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
+                                                {% endif %}
                                                 <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">
                                                     <div class="vbar-fill" style="height: {{ fill }}%; background: {{ color }};"></div>
                                                 </div>
@@ -2590,7 +2604,7 @@
                                                         const raw = String(player.avatar || '');
                                                         const isEmoji = raw.length <= 4 && /[^\x00-\x7F]/.test(raw);
                                                         if (!isEmoji) {
-                                                            const style = player.avatar_style || 'lorelei';
+                                                            const style = player.avatar_style || 'adventurer'; // Changé de 'lorelei' à 'adventurer'
                                                             newAvatarUrl = 'https://api.dicebear.com/7.x/' + encodeURIComponent(style) + '/svg?seed=' + encodeURIComponent(raw);
                                                         }
                                                     }
@@ -3660,23 +3674,10 @@
                 })();
                 
                 // ==========================================
-                // � GESTION DES BADGES DE MESSAGES NON LUS
+                // 🔔 GESTION DES BADGES DE MESSAGES NON LUS
                 // ==========================================
                 function updateUnreadBadge(count) {
-                    // Mettre à jour le badge sur l'avatar
-                    const avatarBadge = document.getElementById('avatar-unread-badge');
-                    if (avatarBadge) {
-                        if (count > 0) {
-                            avatarBadge.textContent = count < 100 ? count : '99+';
-                            avatarBadge.style.display = 'flex';
-                            avatarBadge.title = `${count} message${count > 1 ? 's' : ''} non lu${count > 1 ? 's' : ''}`;
-                        } else {
-                            avatarBadge.style.display = 'none';
-                            avatarBadge.title = 'Aucun message non lu';
-                        }
-                    }
-                    
-                    // Mettre à jour le badge dans le menu burger
+                    // Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
                     burgerBadges.forEach(badge => {
                         if (count > 0) {
@@ -3686,6 +3687,44 @@
                             badge.style.display = 'none';
                         }
                     });
+                }
+                
+                // Mettre à jour les badges par destinataire sur les avatars (messages que VOUS avez envoyés)
+                function updateUnreadSentTo(unreadSentTo) {
+                    // unreadSentTo est un objet { email_destinataire: count, ... }
+                    // Mettre à jour les badges existants
+                    document.querySelectorAll('.avatar-notification-badge[data-recipient]').forEach(badge => {
+                        const recipientEmail = badge.getAttribute('data-recipient');
+                        // Ne pas traiter le badge de l'utilisateur actuel ici
+                        if (recipientEmail === userEmail) return;
+                        
+                        const count = unreadSentTo[recipientEmail] || 0;
+                        if (count > 0) {
+                            badge.textContent = count < 100 ? count : '99+';
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    });
+                    
+                    // Ajouter des badges manquants si nécessaire
+                    for (const [recipientEmail, count] of Object.entries(unreadSentTo)) {
+                        if (count > 0) {
+                            const existingBadge = document.querySelector(`.avatar-notification-badge[data-recipient="${recipientEmail}"]`);
+                            if (!existingBadge) {
+                                // Trouver le wrapper de l'avatar correspondant
+                                const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${recipientEmail}"]`);
+                                if (avatarWrapper) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'avatar-notification-badge';
+                                    badge.setAttribute('data-recipient', recipientEmail);
+                                    badge.textContent = count < 100 ? count : '99+';
+                                    badge.onclick = () => window.location.href = '{{ url_for("comments") }}';
+                                    avatarWrapper.appendChild(badge);
+                                }
+                            }
+                        }
+                    }
                 }
                 
                 // ==========================================
@@ -3886,7 +3925,7 @@
                         socket.on('new_message_notification', function(data) {
                             console.log('💬 WebSocket: Nouveau message reçu', data);
                             
-                            // Ne mettre à jour le badge que si l'utilisateur actuel est le destinataire
+                            // Si l'utilisateur actuel est le DESTINATAIRE : mettre à jour son propre badge
                             if (data.recipient_email === userEmail) {
                                 updateUnreadBadge(data.unread_count);
                                 
@@ -3895,6 +3934,11 @@
                                     showToast(`💬 Nouveau message de ${data.sender}`);
                                 }
                             }
+                            
+                            // Mettre à jour les badges sur les avatars des autres joueurs (messages envoyés par vous)
+                            if (data.unread_sent_to) {
+                                updateUnreadSentTo(data.unread_sent_to);
+                            }
                         });
                         
                         // Écouter les mises à jour du compteur de messages non lus
@@ -3902,6 +3946,18 @@
                             console.log('💬 WebSocket: Compteur messages non lus mis à jour', data);
                             if (data.user_email === userEmail) {
                                 updateUnreadBadge(data.count);
+                                // Mettre à jour les badges sur les avatars des autres (messages envoyés)
+                                if (data.unread_sent_to) {
+                                    updateUnreadSentTo(data.unread_sent_to);
+                                }
+                            }
+                        });
+                        
+                        // Écouter spécifiquement les mises à jour des messages envoyés
+                        socket.on('unread_sent_to_update', function(data) {
+                            console.log('💬 WebSocket: Badges messages envoyés mis à jour', data);
+                            if (data.user_email === userEmail && data.unread_sent_to) {
+                                updateUnreadSentTo(data.unread_sent_to);
                             }
                         });
                         
