@@ -18,7 +18,7 @@ _DEBUG = os.environ.get('CLEANBEAT_DEBUG', '') == '1'
 def _dbg(*args, **kwargs):
     """Print de debug silencieux sauf si CLEANBEAT_DEBUG=1"""
     if _DEBUG:
-        _dbg(*args, **kwargs)
+        print(*args, **kwargs)
 
 # Pour l'envoi de SMS (Twilio)
 
@@ -1013,7 +1013,7 @@ TWILIO_ACCOUNT_SID = 'your_account_sid_here'
 TWILIO_AUTH_TOKEN = 'your_auth_token_here' 
 TWILIO_PHONE_NUMBER = '+1234567890'  # Votre numéro Twilio
 
-DB = "users.db"
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db")
 
 # Nombre maximum de joueurs par maison. Mettre à `None` pour illimité.
 MAX_PLAYERS = None
