@@ -73,6 +73,27 @@
             color: #597176;
             margin-top: 4px;
         }
+
+        /* Barre de progression */
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 5px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: #FDAE54;
+            box-shadow: 0 0 10px rgba(253,174,84,0.5);
+        }
         
         /* Carte Profil */
         .profile-card {
@@ -599,9 +620,20 @@
                 {% if change_avatar %}Mon Profil{% else %}Créer votre profil de joueur{% endif %}
             </h1>
             <p class="page-subtitle">
-                {% if change_avatar %}Modifiez vos informations pour personnaliser votre expérience{% else %}Choisis ton avatar et ton prénom pour commencer l'aventure CleanBeat{% endif %}
+                {% if change_avatar %}Modifiez vos informations pour personnaliser votre expérience{% else %}Choisis ton avatar et ton prénom pour commencer l'aventure{% endif %}
             </p>
         </div>
+
+        <!-- Barre de progression (uniquement si pas change_avatar) -->
+        {% if not change_avatar %}
+        <div class="progress-bar">
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step active"></div>
+        </div>
+        {% endif %}
         
         <!-- Carte Profil -->
         <div class="profile-card">
@@ -609,8 +641,8 @@
             <!-- Section Photo/Avatar -->
             <div class="photo-section">
                 <div class="photo-container">
-                    <div class="photo-preview" id="photoPreview" data-dicebear-seed="default" onclick="openAvatarModal()">
-                        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">
+                    <div class="photo-preview" id="photoPreview" data-dicebear-seed="lorelei-default" onclick="openAvatarModal()">
+                        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=lorelei-default" alt="Avatar Lorelei par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block;">
                     </div>
                 </div>
                 
@@ -636,14 +668,14 @@
             {% if change_avatar %}
             <!-- Mode édition profil -->
             <div class="form-group">
-                <label class="form-label">Votre prénom</label>
-                <input type="text" name="name" id="name" class="form-input" placeholder="Entrez votre prénom" value="{{ current_name if current_name else '' }}" minlength="2">
+                <label class="form-label">Votre prénom ou pseudo</label>
+                <input type="text" name="name" id="name" class="form-input" placeholder="Entrez votre prénom ou pseudo" value="{{ current_name if current_name else '' }}" minlength="2">
             </div>
             {% else %}
             <!-- Mode création -->
             <div class="form-group">
-                <label class="form-label">Votre prénom</label>
-                <input type="text" id="name" name="name" class="form-input" placeholder="Entrez votre prénom" required minlength="2">
+                <label class="form-label">Votre prénom ou pseudo</label>
+                <input type="text" id="name" name="name" class="form-input" placeholder="Entrez votre prénom ou pseudo" required minlength="2">
             </div>
             {% endif %}
 
@@ -762,33 +794,6 @@
             if (!avatarsData) {
                 loadAvatars();
             }
-
-            // Ensure DiceBear SVG is injected when preview image fails
-            document.addEventListener('DOMContentLoaded', async function() {
-                const c = document.getElementById('photoPreview');
-                if (!c) return;
-                const img = c.querySelector('img');
-                if (img && img.complete && img.naturalWidth > 0) return;
-                const seed = c.getAttribute('data-dicebear-seed') || 'default';
-                const url = `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(seed)}`;
-                try {
-                    const resp = await fetch(url, { cache: 'no-cache' });
-                    if (!resp.ok) throw new Error('no');
-                    const svgText = await resp.text();
-                    c.innerHTML = svgText;
-                    const svg = c.querySelector('svg');
-                    if (svg) {
-                        svg.setAttribute('width', '100%');
-                        svg.setAttribute('height', '100%');
-                        svg.style.display = 'block';
-                        svg.style.objectFit = 'cover';
-                    }
-                } catch (e) {
-                    // fallback to local file (already available)
-                    const local = '{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';
-                    c.innerHTML = `<img src="${local}" alt="Avatar par défaut" style="width:100%;height:100%;object-fit:cover;">`;
-                }
-            });
         }
         
         // Fermer le modal
@@ -797,7 +802,38 @@
             document.body.style.overflow = '';
         }
         
-        // Charger les avatars depuis l'API
+        // Fonction pour afficher une notification glassmorphique
+        function showGlassPopup(message, type = 'info', duration = 3000) {
+            // Créer l'élément de notification
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                border-radius: 16px;
+                padding: 16px 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+                border: 2px solid ${type === 'warning' ? '#FDAE54' : type === 'success' ? '#4CAF50' : '#597176'};
+                z-index: 10000;
+                font-family: Montserrat, sans-serif;
+                font-weight: 600;
+                color: #153036;
+                animation: slideDown 0.3s ease;
+            `;
+            popup.textContent = message;
+            
+            document.body.appendChild(popup);
+            
+            setTimeout(() => {
+                popup.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => popup.remove(), 300);
+            }, duration);
+        }
+        
+        // Charger les avatars DiceBear directement
         async function loadAvatars() {
             const loading = document.getElementById('loadingSpinner');
             const content = document.getElementById('avatarsContent');
@@ -805,19 +841,28 @@
             try {
                 loading.classList.add('active');
                 
-                const response = await fetch('/static/avatars/avatars_config.json');
-                if (!response.ok) throw new Error('Impossible de charger la config');
-                
-                const config = await response.json();
+                // Configuration en dur des styles DiceBear disponibles
+                const dicebearCategories = [
+                    { id: 'lorelei', name: '🎨 Lorelei', type: 'dicebear', count: 20 },
+                    { id: 'avataaars', name: '😊 Avataaars', type: 'dicebear', count: 20 },
+                    { id: 'adventurer', name: '🎭 Aventurier', type: 'dicebear', count: 20 },
+                    { id: 'big-ears', name: '👂 Grandes Oreilles', type: 'dicebear', count: 20 },
+                    { id: 'bottts', name: '🤖 Robot', type: 'dicebear', count: 20 },
+                    { id: 'fun-emoji', name: '😄 Emoji Fun', type: 'dicebear', count: 20 },
+                    { id: 'micah', name: '✨ Micah', type: 'dicebear', count: 20 },
+                    { id: 'miniavs', name: '🎮 Mini Avatar', type: 'dicebear', count: 20 },
+                    { id: 'personas', name: '👔 Personas', type: 'dicebear', count: 20 },
+                    { id: 'pixel-art', name: '🎲 Pixel Art', type: 'dicebear', count: 20 }
+                ];
                 
                 avatarsData = {
-                    categories: config.categories || [],
+                    categories: dicebearCategories,
                     categoryNames: {},
                     categoryType: {},
                     dicebearSeeds: {}
                 };
                 
-                config.categories.forEach(cat => {
+                dicebearCategories.forEach(cat => {
                     avatarsData.categoryNames[cat.id] = cat.name;
                     avatarsData.categoryType[cat.id] = cat.type;
                     
@@ -830,8 +875,8 @@
                 buildCategoryTabs();
                 
                 // Afficher la première catégorie
-                if (config.categories && config.categories.length > 0) {
-                    showCategory(config.categories[0].id);
+                if (dicebearCategories.length > 0) {
+                    showCategory(dicebearCategories[0].id);
                 }
                 
                 loading.classList.remove('active');
@@ -906,7 +951,8 @@
                 grid.className = 'avatars-grid';
                 
                 const seeds = avatarsData.dicebearSeeds[categoryId] || [];
-                const style = category.style || 'avataaars';
+                // Le categoryId EST le style DiceBear (lorelei, avataaars, etc.)
+                const style = categoryId;
                 
                 seeds.forEach(seed => {
                     const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
@@ -949,15 +995,29 @@
         
         // Confirmer la sélection d'avatar
         function confirmAvatarSelection() {
-            if (!selectedAvatarData) return;
+            if (!selectedAvatarData) {
+                showGlassPopup('⚠️ Veuillez sélectionner un avatar', 'warning', 2000);
+                return;
+            }
             
             const preview = document.getElementById('photoPreview');
             
             if (selectedAvatarData.type === 'dicebear') {
-                preview.innerHTML = `<img src="${selectedAvatarData.url}" alt="Avatar DiceBear" style="width:100%; height:100%; object-fit:cover;">`;
+                // Afficher l'avatar DiceBear dans le preview
+                preview.innerHTML = `<img src="${selectedAvatarData.url}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius: 20px;">`;
+                
+                // Sauvegarder dans les champs cachés
                 document.getElementById('selectedAvatar').value = selectedAvatarData.seed;
                 document.getElementById('avatarStyle').value = selectedAvatarData.style;
                 document.getElementById('selectedPhoto').value = '';
+                
+                console.log('✅ Avatar sélectionné:', {
+                    seed: selectedAvatarData.seed,
+                    style: selectedAvatarData.style,
+                    url: selectedAvatarData.url
+                });
+                
+                showGlassPopup('✨ Avatar sélectionné avec succès !', 'success', 2000);
             }
             
             closeAvatarModal();
@@ -967,22 +1027,27 @@
         
         document.getElementById('profileForm').addEventListener('submit', function(e) {
             const avatar = document.getElementById('selectedAvatar').value;
+            const avatarStyle = document.getElementById('avatarStyle').value;
             const photo = document.getElementById('selectedPhoto').value;
-            
-            {% if not change_avatar %}
             const name = document.querySelector('input[name="name"]').value.trim();
+            
+            console.log('🔍 Validation formulaire:', { name, avatar, avatarStyle, photo: photo ? 'présente' : 'aucune' });
+            
+            // Vérifier le nom en premier
             if (!name || name.length < 2) {
                 showGlassPopup('📝 Veuillez entrer un prénom valide (minimum 2 caractères).', 'warning', 3000);
                 e.preventDefault();
                 return false;
             }
-            {% endif %}
             
+            // Vérifier qu'un avatar est sélectionné
             if (!avatar && !photo) {
-                showGlassPopup('👤 Veuillez choisir un avatar ou charger une photo.', 'warning', 3000);
+                showGlassPopup('👤 Veuillez choisir un avatar ou charger une photo avant de continuer.', 'warning', 3000);
                 e.preventDefault();
                 return false;
             }
+            
+            console.log('✅ Formulaire valide - soumission en cours');
         });
         
         // Fermer le modal en cliquant à l'extérieur
@@ -995,13 +1060,23 @@
         // ===== INITIALISATION =====
         
         document.addEventListener('DOMContentLoaded', function() {
+            // Avatar Lorelei par défaut (comme dans l'ancien code)
+            const defaultSeed = 'lorelei-default';
+            const defaultStyle = 'lorelei';
+            
+            // Initialiser les champs cachés avec l'avatar par défaut
+            document.getElementById('selectedAvatar').value = defaultSeed;
+            document.getElementById('avatarStyle').value = defaultStyle;
+            
+            console.log('✅ Avatar Lorelei par défaut initialisé:', { seed: defaultSeed, style: defaultStyle });
+            
             {% if change_avatar %}
-            // Pré-remplir l'avatar actuel
+            // Mode édition : pré-remplir l'avatar actuel si existant
             {% if current_avatar_file %}
             const currentPhoto = '{{ current_avatar_file }}';
             if (currentPhoto) {
                 const preview = document.getElementById('photoPreview');
-                preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentPhoto}" alt="Photo actuelle" style="width: 100%; height: 100%; object-fit: cover;">`;
+                preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentPhoto}" alt="Photo actuelle" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
                 document.getElementById('selectedAvatar').value = currentPhoto;
                 selectedAvatarData = { type: 'image', value: currentPhoto };
             }
@@ -1035,27 +1110,20 @@
                     }
                     
                     const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
-                    preview.innerHTML = `<img src="${url}" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    preview.innerHTML = `<img src="${url}" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
                     selectedAvatarData = { type: 'dicebear', seed: seed, style: style, url: url };
                     document.getElementById('selectedAvatar').value = currentAvatar;
                     document.getElementById('avatarStyle').value = style;
                 } else {
                     // C'est un fichier avatar
-                    preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentAvatar}" alt="Avatar actuel" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentAvatar}" alt="Avatar actuel" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
                     selectedAvatarData = { type: 'image', value: currentAvatar };
                     document.getElementById('selectedAvatar').value = currentAvatar;
                 }
             }
-            {% else %}
-            // Pas d'avatar existant en mode édition, initialiser avec l'avatar par défaut
-            const preview = document.getElementById('photoPreview');
-            preview.innerHTML = `<img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
             {% endif %}
-            {% else %}
-            // Mode création - afficher l'avatar par défaut Lorelei
-            const preview = document.getElementById('photoPreview');
-            preview.innerHTML = `<img src="https://api.dicebear.com/7.x/lorelei/svg?seed=default" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
             {% endif %}
+            // Note: En mode création, l'image par défaut est déjà dans le HTML, pas besoin de la recréer
         });
     </script>
 </body>

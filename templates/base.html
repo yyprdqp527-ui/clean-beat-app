@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='points_style.css') }}">
     <!-- Import Google Fonts Montserrat pour toute l'appli -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <!-- Socket.IO pour synchronisation temps réel -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    {% block head_scripts %}{% endblock %}
     <style>
         * {
             margin: 0;
@@ -602,12 +605,17 @@
 <body>
 {% if menu_page %}
   {% include '_game_header.html' %}
+{% elif not hide_header %}
+  {% include '_game_header.html' %}
 {% endif %}
 
 <!-- Bouton retour vers le menu (affiché sur toutes les pages sauf le menu) -->
 
 
 {% block content %}{% endblock %}
+
+<!-- 🎭 Popup flash glassmorphisme universel (toutes pages héritant de base.html) -->
+{% include '_flash_popup.html' %}
 
 <script>
 // Variables globales pour la maison
@@ -777,8 +785,8 @@ function startInactivityCheck() {
 // Fonction pour copier le lien d'invitation
 function copyInviteLink() {
     const baseUrl = window.location.origin;
-    const registerUrl = baseUrl + "{{ url_for('register') }}";
-    const inviteLink = registerUrl + "?house_code={{ house_code }}";
+    const registerUrl = baseUrl + "{{ url_for('join_house') }}";
+    const inviteLink = registerUrl + "?code={{ house_code }}";
     
     navigator.clipboard.writeText(inviteLink).then(function() {
         const btn = event.target.closest('.invite-player-btn');

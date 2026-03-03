@@ -1,0 +1,182 @@
+{# ============================================================
+   🎭 Popup de messages flash glassmorphisme harmonisé — CleanBeat
+   Utilisation : {% include '_flash_popup.html' %}
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="cbFlashOverlay">
+            {% for category, message in messages %}
+            <div class="cb-flash-popup {{ category }}">
+                <button class="cb-flash-close" onclick="cbCloseFlash()">&times;</button>
+                <div class="cb-flash-content">
+                    <div class="cb-flash-msg">{{ message }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <style>
+            /* ===== OVERLAY ===== */
+            #cbFlashOverlay {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background: rgba(21, 48, 54, 0.7);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: cbFadeIn 0.3s ease;
+            }
+            @keyframes cbFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes cbPopIn   { 0%   { transform: scale(0.8) translateY(30px); opacity: 0; }
+                                   60%  { transform: scale(1.03) translateY(-5px); }
+                                   100% { transform: scale(1)    translateY(0);    opacity: 1; } }
+            @keyframes cbShimmer { 0%   { left: -100%; }
+                                   100% { left: 200%; } }
+
+            /* ===== POPUP CARTE (défaut = teal/peach) ===== */
+            .cb-flash-popup {
+                background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.85) 0%,
+                    rgba(166, 211, 220, 0.6)  50%,
+                    rgba(244, 198, 141, 0.4)  100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 28px;
+                padding: 32px 28px;
+                max-width: 340px;
+                width: 90%;
+                box-shadow:
+                    0 25px 50px rgba(21, 48, 54, 0.35),
+                    0 0 0 1px rgba(255, 255, 255, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+                position: relative;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                overflow: hidden;
+                animation: cbPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            /* Effet de brillance animé */
+            .cb-flash-popup::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                width: 60%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                animation: cbShimmer 2.5s ease-in-out infinite;
+                pointer-events: none;
+            }
+
+            /* ===== VARIANTES DE COULEUR ===== */
+            .cb-flash-popup.success {
+                background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.9) 0%,
+                    rgba(255, 215, 0,   0.3) 50%,
+                    rgba(253, 174, 84,  0.4) 100%);
+                box-shadow:
+                    0 25px 50px rgba(255, 215, 0, 0.3),
+                    0 0 0 1px rgba(255, 215, 0, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            }
+            .cb-flash-popup.warning {
+                background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.9) 0%,
+                    rgba(253, 174, 84,  0.4) 50%,
+                    rgba(244, 198, 141, 0.5) 100%);
+                box-shadow:
+                    0 25px 50px rgba(253, 174, 84, 0.3),
+                    0 0 0 1px rgba(253, 174, 84, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            }
+            .cb-flash-popup.danger {
+                background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.9) 0%,
+                    rgba(255, 107, 107, 0.3) 50%,
+                    rgba(231,  76,  60, 0.2) 100%);
+                box-shadow:
+                    0 25px 50px rgba(231,  76,  60, 0.25),
+                    0 0 0 1px rgba(255, 107, 107, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            }
+            .cb-flash-popup.info {
+                background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.9) 0%,
+                    rgba(166, 211, 220, 0.5) 50%,
+                    rgba( 89, 113, 118, 0.3) 100%);
+                box-shadow:
+                    0 25px 50px rgba( 89, 113, 118, 0.3),
+                    0 0 0 1px rgba(166, 211, 220, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            }
+
+            /* ===== BOUTON FERMER ===== */
+            .cb-flash-close {
+                position: absolute;
+                top: 14px; right: 14px;
+                background: rgba(21, 48, 54, 0.1);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                width: 38px; height: 38px;
+                font-size: 22px;
+                color: #153036;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.25s ease;
+                z-index: 10;
+                line-height: 1;
+            }
+            .cb-flash-close:hover,
+            .cb-flash-close:active {
+                background: rgba(21, 48, 54, 0.2);
+                transform: scale(1.1) rotate(90deg);
+            }
+
+            /* ===== TEXTE ===== */
+            .cb-flash-content { text-align: center; padding-top: 10px; }
+            .cb-flash-msg {
+                font-size: 17px;
+                line-height: 1.6;
+                color: #153036;
+                font-weight: 600;
+                margin-top: 8px;
+                text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+                font-family: 'Montserrat', sans-serif;
+            }
+
+            /* ===== RESPONSIVE ===== */
+            @media (max-width: 400px) {
+                .cb-flash-popup  { padding: 28px 20px; border-radius: 24px; }
+                .cb-flash-msg    { font-size: 16px; }
+            }
+        </style>
+        <script>
+            function cbCloseFlash() {
+                var overlay = document.getElementById('cbFlashOverlay');
+                if (!overlay) return;
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() { if (overlay.parentNode) overlay.remove(); }, 300);
+            }
+            (function() {
+                var overlay = document.getElementById('cbFlashOverlay');
+                if (!overlay) return;
+                // Fermer en cliquant sur l'overlay (fond)
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) cbCloseFlash();
+                });
+                // Fermer avec la touche Échap
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') cbCloseFlash();
+                });
+                // Fermeture automatique après 5 secondes
+                setTimeout(cbCloseFlash, 5000);
+            })();
+        </script>
+    {% endif %}
+{% endwith %}

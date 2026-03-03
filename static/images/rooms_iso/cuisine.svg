@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180">
+  <defs>
+    <linearGradient id="floorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDAE54;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#FFC570;stop-opacity:0.4" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Sol isométrique -->
+  <path d="M 100 40 L 180 80 L 100 120 L 20 80 Z" 
+        fill="url(#floorGrad)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="2"/>
+  
+  <!-- Mur gauche -->
+  <path d="M 20 80 L 100 120 L 100 160 L 20 120 Z" 
+        fill="rgba(253, 174, 84, 0.2)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mur droit -->
+  <path d="M 180 80 L 100 120 L 100 160 L 180 120 Z" 
+        fill="rgba(253, 174, 84, 0.15)" 
+        stroke="rgba(255, 255, 255, 0.3)" 
+        stroke-width="1.5"/>
+  
+  <!-- Plan de travail gauche -->
+  <path d="M 30 88 L 70 110 L 70 118 L 30 96 Z" 
+        fill="rgba(89, 113, 118, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.6)" 
+        stroke-width="1.5"/>
+  <path d="M 70 110 L 70 118 L 30 96 L 30 88 Z" 
+        fill="rgba(89, 113, 118, 0.5)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1"/>
+  
+  <!-- Évier -->
+  <ellipse cx="50" cy="107" rx="8" ry="4" 
+           fill="rgba(166, 211, 220, 0.8)" 
+           stroke="rgba(255, 255, 255, 0.7)" 
+           stroke-width="1"/>
+  
+  <!-- Cuisinière/Plaque -->
+  <path d="M 110 95 L 145 115 L 145 122 L 110 102 Z" 
+        fill="rgba(66, 66, 66, 0.8)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <circle cx="125" cy="110" r="4" 
+          fill="rgba(253, 174, 84, 0.6)" 
+          stroke="rgba(255, 100, 0, 0.7)" 
+          stroke-width="1"/>
+  <circle cx="135" cy="115" r="4" 
+          fill="rgba(253, 174, 84, 0.6)" 
+          stroke="rgba(255, 100, 0, 0.7)" 
+          stroke-width="1"/>
+  
+  <!-- Réfrigérateur isométrique -->
+  <path d="M 155 95 L 170 87 L 170 120 L 155 128 Z" 
+        fill="rgba(224, 224, 224, 0.8)" 
+        stroke="rgba(200, 200, 200, 0.9)" 
+        stroke-width="1.5"/>
+  <path d="M 155 95 L 170 87 L 155 79 L 140 87 Z" 
+        fill="rgba(240, 240, 240, 0.9)" 
+        stroke="rgba(200, 200, 200, 0.9)" 
+        stroke-width="1.5"/>
+  <line x1="162" y1="105" x2="162" y2="115" 
+        stroke="rgba(150, 150, 150, 0.8)" 
+        stroke-width="2"/>
+  
+  <!-- Table avec fruits -->
+  <path d="M 75 100 L 100 87 L 115 95 L 90 108 Z" 
+        fill="rgba(255, 235, 205, 0.6)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <circle cx="95" cy="96" r="5" 
+          fill="rgba(255, 140, 0, 0.7)" 
+          stroke="rgba(255, 255, 255, 0.4)" 
+          stroke-width="1"/>
+  
+  <!-- Hotte aspirante -->
+  <path d="M 110 135 L 145 115 L 145 125 L 110 145 Z" 
+        fill="rgba(150, 150, 150, 0.4)" 
+        stroke="rgba(200, 200, 200, 0.6)" 
+        stroke-width="1"/>
+  
+  <!-- Icône -->
+  <text x="100" y="35" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="24" 
+        filter="url(#glow)">🍳</text>
+  
+  <!-- Label glassmorphism -->
+  <rect x="55" y="5" width="90" height="22" 
+        fill="rgba(255, 255, 255, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5" 
+        rx="11"/>
+  <text x="100" y="20" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="14" 
+        font-weight="600" 
+        fill="#FFFFFF">Cuisine</text>
+</svg>

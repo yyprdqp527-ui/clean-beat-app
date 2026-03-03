@@ -196,14 +196,7 @@
 
 <h1>✨ Inscription</h1>
 
-<!-- Bloc pour afficher les messages Flask -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, msg in messages %}
-      <div class="flash {{ category }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+{% include '_flash_popup.html' %}
 
 <form method="post">
     <div class="house-section">
@@ -253,7 +246,7 @@
         <label>Choisir un avatar :</label>
         <div class="radio-group">
             <label>
-                <input type="radio" name="avatar" value="homme.png" checked> 👨 Homme
+                <input type="radio" name="avatar" value="default.png" checked> 👤 Avatar
             </label>
             <label>
                 <input type="radio" name="avatar" value="femme.png"> 👩 Femme

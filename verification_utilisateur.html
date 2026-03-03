@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Utilisateur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .info-box {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .user-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .player-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vérification de votre Compte CleanBeat</h1>
+    
+    <div class="info-box">
+        <h3>Informations de votre Session</h3>
+        <div id="session-info" class="user-info">
+            <p>⏳ Chargement des informations...</p>
+        </div>
+    </div>
+    
+    <div class="info-box">
+        <h3>Joueurs de votre Maison</h3>
+        <div id="players-info" class="player-list">
+            <p>⏳ Chargement de la liste des joueurs...</p>
+        </div>
+    </div>
+    
+    <div class="info-box">
+        <h3>Vérification des Joueurs Attendus</h3>
+        <div id="verification-result">
+            <p>⏳ Vérification en cours...</p>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour récupérer les informations de l'utilisateur courant
+        function getCurrentUserInfo() {
+            fetch('/api/current_user')
+                .then(response => response.json())
+                .then(data => {
+                    const sessionDiv = document.getElementById('session-info');
+                    if (data.email) {
+                        sessionDiv.innerHTML = `
+                            <p><strong>✅ Utilisateur connecté :</strong> ${data.email}</p>
+                            <p><strong>Nom :</strong> ${data.name || 'Non défini'}</p>
+                            <p><strong>House ID :</strong> ${data.house_id}</p>
+                        `;
+                        
+                        // Vérifier si c'est ag@me.com
+                        if (data.email === 'ag@me.com') {
+                            sessionDiv.innerHTML += '<div class="status success">✅ Vous êtes bien connecté(e) en tant qu\'ag@me.com</div>';
+                        } else {
+                            sessionDiv.innerHTML += `<div class="status warning">⚠️ Vous êtes connecté(e) en tant que ${data.email}, pas ag@me.com</div>`;
+                        }
+                    } else {
+                        sessionDiv.innerHTML = '<div class="status error">❌ Aucune session active</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('session-info').innerHTML = 
+                        '<div class="status error">❌ Erreur lors de la récupération des informations utilisateur</div>';
+                });
+        }
+        
+        // Fonction pour récupérer les informations des joueurs
+        function getPlayersInfo() {
+            fetch('/api/players_points')
+                .then(response => response.json())
+                .then(data => {
+                    const playersDiv = document.getElementById('players-info');
+                    const verificationDiv = document.getElementById('verification-result');
+                    
+                    if (data.players && data.players.length > 0) {
+                        let playersHtml = '<h4>👥 Liste des joueurs :</h4><ul>';
+                        const playerNames = [];
+                        
+                        data.players.forEach((player, index) => {
+                            playersHtml += `<li><strong>${player.name}</strong> (${player.email}) - ${player.points} points</li>`;
+                            playerNames.push(player.name);
+                        });
+                        
+                        playersHtml += '</ul>';
+                        playersDiv.innerHTML = playersHtml;
+                        
+                        // Vérification des joueurs attendus
+                        const expectedPlayers = ['Marcel', 'Lucas', 'Emma'];
+                        let verificationHtml = '<h4>🎯 Vérification des joueurs attendus :</h4>';
+                        let allFound = true;
+                        
+                        expectedPlayers.forEach(expected => {
+                            if (playerNames.includes(expected)) {
+                                verificationHtml += `<div class="status success">✅ ${expected} - TROUVÉ</div>`;
+                            } else {
+                                verificationHtml += `<div class="status error">❌ ${expected} - MANQUANT</div>`;
+                                allFound = false;
+                            }
+                        });
+                        
+                        if (allFound && playerNames.length >= 3) {
+                            verificationHtml += '<div class="status success"><h4>🎉 PARFAIT ! Tous les joueurs attendus (Marcel, Lucas, Emma) sont présents.</h4></div>';
+                        } else {
+                            verificationHtml += '<div class="status warning">⚠️ Certains joueurs attendus sont manquants ou il y a des joueurs supplémentaires.</div>';
+                        }
+                        
+                        verificationDiv.innerHTML = verificationHtml;
+                        
+                    } else {
+                        playersDiv.innerHTML = '<div class="status error">❌ Aucun joueur trouvé</div>';
+                        verificationDiv.innerHTML = '<div class="status error">❌ Impossible de vérifier les joueurs</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('players-info').innerHTML = 
+                        '<div class="status error">❌ Erreur lors de la récupération des joueurs</div>';
+                    document.getElementById('verification-result').innerHTML = 
+                        '<div class="status error">❌ Erreur lors de la vérification</div>';
+                });
+        }
+        
+        // Charger les informations au chargement de la page
+        window.onload = function() {
+            getCurrentUserInfo();
+            setTimeout(getPlayersInfo, 500);
+        };
+    </script>
+</body>
+</html>

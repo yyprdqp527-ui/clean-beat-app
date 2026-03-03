@@ -741,6 +741,56 @@ body {
     }
 }
 
+/* Bouton retour maison */
+.go-home-btn {
+    display: none;
+    width: 100%;
+    padding: 13px 20px;
+    background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 16px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    margin-top: 14px;
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.go-home-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.3);
+}
+.go-home-btn.visible {
+    display: flex;
+}
+
+/* Confirmation d'envoi */
+.sent-confirmation {
+    display: none;
+    background: linear-gradient(135deg, rgba(40,167,69,0.15) 0%, rgba(40,167,69,0.05) 100%);
+    border: 2px solid rgba(40,167,69,0.35);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #155724;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+.sent-confirmation.visible {
+    display: flex;
+}
+
 /* Responsive */
 @media (max-width: 400px) {
     .invite-title {
@@ -764,74 +814,30 @@ body {
 <div class="invite-container">
     <!-- Header -->
     <div class="invite-header">
-        <div class="invite-icon">🏠</div>
-        <h1 class="invite-title">Inviter des partenaires</h1>
+        <div class="invite-icon">📱</div>
+        {% if from_manage %}
+        <h1 class="invite-title">Inviter un partenaire</h1>
         <p class="invite-subtitle">
-            Partagez le ménage avec votre famille, votre partenaire ou vos colocs !
+            Partage le code pour inviter quelqu'un à rejoindre ta maison !
         </p>
+        {% else %}
+        <h1 class="invite-title">👥 Invite ton équipe !</h1>
+        <p class="invite-subtitle">
+            Invite ton partenaire ou colocataire par SMS pour jouer ensemble dès maintenant.
+        </p>
+        {% endif %}
     </div>
-
-    <!-- Section : Type de foyer SIMPLIFIÉ -->
-    <div class="glass-card">
-        <div class="card-title">
-            <span class="card-title-icon">🏠</span>
-            Type de foyer
-        </div>
-        
-        <div class="house-type-options" style="display: flex; gap: 10px; justify-content: space-between;">
-            <label class="house-type-option {% if not house_type or house_type == 'family' %}selected{% endif %}" 
-                   onclick="selectHouseTypeSimple(this)" 
-                   data-type="family"
-                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(76, 175, 80, 0.2); border: 2px solid rgba(76, 175, 80, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 32px;">👨‍👩‍👧‍👦</span>
-                <span style="font-weight: 700; color: white; font-size: 14px;">Famille</span>
-                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Parents et enfants</span>
-            </label>
-            
-            <label class="house-type-option {% if house_type == 'couple' %}selected{% endif %}" 
-                   onclick="selectHouseTypeSimple(this)" 
-                   data-type="couple"
-                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(233, 30, 99, 0.2); border: 2px solid rgba(233, 30, 99, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 32px;">💑</span>
-                <span style="font-weight: 700; color: white; font-size: 14px;">Couple</span>
-                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Deux adultes</span>
-            </label>
-            
-            <label class="house-type-option {% if house_type == 'coloc' %}selected{% endif %}" 
-                   onclick="selectHouseTypeSimple(this)" 
-                   data-type="coloc"
-                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(33, 150, 243, 0.2); border: 2px solid rgba(33, 150, 243, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 32px;">🏠</span>
-                <span style="font-weight: 700; color: white; font-size: 14px;">Colocation</span>
-                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Colocataires</span>
-            </label>
-        </div>
-        
-        <input type="hidden" id="houseTypeInput" value="{{ house_type or 'family' }}">
-    </div>
-
-    <!-- Messages flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}">
-            {% if category == 'success' %}✅{% elif category == 'danger' %}❌{% else %}⚠️{% endif %}
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-    {% endwith %}
 
     <!-- Section : Inviter un partenaire -->
     <div class="glass-card" style="margin-bottom: 20px;">
         <div class="card-title">
             <span class="card-title-icon">💑</span>
-            Inviter un partenaire
+            Envoyer une invitation
         </div>
         
         <div class="child-info">
             <span class="child-info-icon">💡</span>
-            Partagez le code de votre maison par SMS, WhatsApp ou autre pour inviter votre partenaire ou colocataire.
+            Partage le code de ta maison pour inviter ton partenaire ou tes colocataires à rejoindre l'aventure TOG !
         </div>
         
         <!-- Code de la maison -->
@@ -844,9 +850,9 @@ body {
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
                 <div class="house-code-label" style="font-size: 13px; margin-bottom: 8px;">📱 Lien d'invitation</div>
                 <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; font-size: 12px; word-break: break-all; color: rgba(255,255,255,0.9); font-family: monospace;">
-                    http://192.168.1.156:8000/join_house?code={{ house_code }}
+                    {{ join_url }}
                 </div>
-                <button onclick="copyInviteLink('{{ house_code }}')" style="margin-top: 8px; width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: white; font-size: 12px; cursor: pointer; transition: all 0.3s;">
+                <button onclick="copyInviteLink('{{ join_url }}')" style="margin-top: 8px; width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: white; font-size: 12px; cursor: pointer; transition: all 0.3s;">
                     📋 Copier le lien
                 </button>
             </div>
@@ -856,173 +862,59 @@ body {
         <!-- Bouton principal glassmorphisme -->
         <button type="button" class="share-invite-btn" id="shareBtn" onclick="shareInvitation()">
             <span class="share-invite-icon">📤</span>
-            <span class="share-invite-text">Envoyer une invitation</span>
+            <span class="share-invite-text">Partager l'invitation</span>
         </button>
-    </div>
 
-    <!-- Section : Ajouter un enfant -->
-    <div class="glass-card child-section">
-        <div class="card-title">
-            <span class="card-title-icon">👶</span>
-            Ajouter un enfant
+        <!-- Confirmation après envoi -->
+        <div class="sent-confirmation" id="sentConfirmation">
+            ✅ Invitation envoyée ! Ton partenaire n'a plus qu'à cliquer sur le lien.
         </div>
-        
-        <div class="child-info">
-            <span class="child-info-icon">💡</span>
-            Pour les enfants sans téléphone, créez directement leur profil. Ils pourront jouer depuis l'appareil familial.
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Prénom de l'enfant</label>
-            <input type="text" class="form-input" id="childName" placeholder="Ex: Lucas, Emma...">
-        </div>
-        
-        <!-- Sélection d'avatar pour l'enfant -->
-        <div class="form-group">
-            <label class="form-label">Choisir un avatar</label>
-            <div class="child-avatars-grid" id="childAvatarsGrid">
-                <div class="child-avatar-option selected" data-avatar="👶" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👶</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="👧" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👧</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="👦" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👦</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧒" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧒</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="👸" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👸</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🤴" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🤴</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧑‍🎤" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧑‍🎤</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🦸" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🦸</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧚" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧚</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧙" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧙</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐱" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐱</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐶" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐶</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🦄" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🦄</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐼" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐼</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐸" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐸</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🦁" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🦁</span>
-                </div>
-            </div>
-        </div>
-        
-        <button class="add-btn" style="background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%); color: var(--dark);" onclick="addChild()">
-            ➕ Ajouter un enfant
-        </button>
-        
-        <!-- Liste des enfants ajoutés -->
-        <div class="children-list" id="childrenList" style="margin-top: 15px;"></div>
-        
-        <!-- Bouton Valider -->
-        <button class="add-btn" style="background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; font-size: 16px; padding: 16px; margin-top: 15px;" onclick="validateChildren()">
-            ✅ Valider
-        </button>
+
+        <!-- Bouton retour maison -->
+        {% if from_manage %}
+        <a href="{{ url_for('menu') }}" class="go-home-btn" id="goHomeBtn">
+            Retourner au jeu
+        </a>
+        {% else %}
+        <a href="{{ url_for('menu') }}" class="go-home-btn" id="goHomeBtn">
+            Continuer
+        </a>
+        {% endif %}
     </div>
 
     <!-- Lien pour passer -->
     <div class="skip-section">
-        <a href="{{ url_for('create_profile') }}" class="skip-link">
-            Continuer sans inviter →
+        {% if from_manage %}
+        <a href="{{ url_for('menu') }}" class="skip-link">
+            Retourner au jeu
         </a>
+        {% else %}
+        <a href="{{ url_for('menu') }}" class="skip-link">
+            Je ferai ça plus tard
+        </a>
+        {% endif %}
     </div>
 </div>
 
-<!-- Formulaire caché pour les enfants -->
-<form method="post" id="inviteForm" style="display: none;">
-    <input type="hidden" name="partners" id="partnersData" value="[]">
-    <input type="hidden" name="children" id="childrenData" value="[]">
-    <input type="hidden" name="house_type" id="houseTypeData" value="family">
-</form>
 
 <script>
-let children = [];
-let selectedChildAvatar = '👶';  // Avatar par défaut pour les enfants
 const houseCode = "{{ house_code or '' }}";
 
-// Sélection du type de foyer
-function selectHouseType(element) {
-    // Désélectionner tous
-    document.querySelectorAll('.house-type-option').forEach(el => {
-        el.classList.remove('selected');
-    });
-    // Sélectionner celui cliqué
-    element.classList.add('selected');
-    const houseType = element.getAttribute('data-type');
-    document.getElementById('houseTypeInput').value = houseType;
-    document.getElementById('houseTypeData').value = houseType;
-    
-    // Sauvegarder le type de foyer via AJAX
-    fetch('/update_house_type', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ house_type: houseType })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showTemporaryMessage('Type de foyer enregistré !');
-        }
-    })
-    .catch(error => console.error('Erreur:', error));
-}
-
-// Sélection d'avatar pour l'enfant
-function selectChildAvatar(element) {
-    // Désélectionner tous les avatars
-    document.querySelectorAll('.child-avatar-option').forEach(el => {
-        el.classList.remove('selected');
-    });
-    // Sélectionner l'avatar cliqué
-    element.classList.add('selected');
-    selectedChildAvatar = element.getAttribute('data-avatar');
-}
-
 // Message d'invitation
-const inviteMessage = `🏠 Rejoins-moi sur CleanBeat !
+const inviteLink = '{{ join_url }}';
+const inviteMessage = `🎮 Rejoins-moi sur CleanBeat !
 
-Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🎮
+Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🏆
 
 📱 Clique sur ce lien (aucune installation requise) :
-http://192.168.1.156:8000/join_house?code=${houseCode}
+${inviteLink}
 
 🔑 Code de la maison : ${houseCode}
 
 À tout de suite ! 💪`;
 
-// URL de l'app (à adapter selon votre déploiement)
-const appUrl = window.location.origin;
-
 // Fonction pour copier le lien d'invitation
-function copyInviteLink(code) {
-    const link = `http://192.168.1.156:8000/join_house?code=${code}`;
+function copyInviteLink(link) {
     navigator.clipboard.writeText(link).then(() => {
         // Animation de confirmation
         event.target.innerHTML = '✅ Lien copié !';
@@ -1036,6 +928,21 @@ function copyInviteLink(code) {
     });
 }
 
+// Afficher la confirmation + bouton retour maison
+function showSentConfirmation() {
+    const confirm = document.getElementById('sentConfirmation');
+    const btn = document.getElementById('goHomeBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    if (confirm) confirm.classList.add('visible');
+    if (btn) btn.classList.add('visible');
+    if (shareBtn) {
+        shareBtn.innerHTML = '<span>✅</span><span>Invitation partagée !</span>';
+        shareBtn.style.background = 'linear-gradient(135deg, rgba(40,167,69,0.4) 0%, rgba(40,167,69,0.2) 100%)';
+        shareBtn.style.border = '1.5px solid rgba(40,167,69,0.5)';
+        shareBtn.disabled = true;
+    }
+}
+
 // Partager l'invitation
 async function shareInvitation() {
     // Essayer d'abord l'API Web Share (fonctionne sur Safari iOS !)
@@ -1044,217 +951,31 @@ async function shareInvitation() {
             await navigator.share({
                 title: 'Invitation CleanBeat',
                 text: inviteMessage,
-                // url: appUrl + '/join_house'  // Optionnel
             });
-            // L'utilisateur a partagé - proposer de noter la personne
-            showInviteSuccess();
+            // Partage réussi → afficher bouton retour
+            showSentConfirmation();
             return;
         } catch (err) {
             if (err.name === 'AbortError') {
-                // L'utilisateur a annulé - pas d'erreur à afficher
+                // L'utilisateur a annulé - pas d'erreur
                 return;
             }
             console.log('Share error:', err);
         }
     }
     
-    // Fallback : ouvrir l'app Messages directement avec le texte
+    // Fallback : ouvrir l'app Messages avec le texte pré-rempli
     const encodedMessage = encodeURIComponent(inviteMessage);
-    
-    // Détecter iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     
     if (isIOS) {
-        // Sur iOS, ouvrir Messages avec le texte pré-rempli
         window.location.href = `sms:&body=${encodedMessage}`;
     } else {
-        // Sur Android ou autre, essayer SMS
         window.location.href = `sms:?body=${encodedMessage}`;
     }
     
-    // Montrer le succès après un délai
-    setTimeout(showInviteSuccess, 500);
-}
-
-// Montrer le succès et proposer de noter
-function showInviteSuccess() {
-    // Ouvrir le formulaire pour noter qui a été invité
-    document.getElementById('manualForm').style.display = 'block';
-    document.getElementById('adultName').focus();
-}
-
-// Ajouter un enfant
-function addChild() {
-    const name = document.getElementById('childName').value.trim();
-    
-    if (!name) {
-        alert('Veuillez entrer le prénom de l\'enfant');
-        return;
-    }
-    
-    // Vérifier si déjà dans la liste
-    if (children.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-        alert('Cet enfant est déjà dans la liste');
-        return;
-    }
-    
-    children.push({
-        name: name,
-        avatar: selectedChildAvatar,  // Inclure l'avatar sélectionné
-        type: 'child'
-    });
-    
-    // Réinitialiser le champ et l'avatar sélectionné
-    document.getElementById('childName').value = '';
-    selectedChildAvatar = '👶';
-    document.querySelectorAll('.child-avatar-option').forEach(el => el.classList.remove('selected'));
-    document.querySelector('.child-avatar-option[data-avatar="👶"]').classList.add('selected');
-    
-    renderChildren();
-    updateChildCount();
-    
-    // Focus sur le champ de saisie pour ajouter un autre enfant
-    setTimeout(() => {
-        document.getElementById('childName').focus();
-    }, 100);
-    
-    // Afficher le message de succès temporaire
-    showTemporaryMessage('✅ Enfant ajouté ! Ajoute-en un autre si besoin 😊');
-}
-
-// Supprimer un enfant
-function removeChild(index) {
-    children.splice(index, 1);
-    renderChildren();
-    updateChildCount();
-}
-
-// Mettre à jour le compteur d'enfants
-function updateChildCount() {
-    const count = children.length;
-    const validateSection = document.getElementById('validateSection');
-    const childCountEl = document.getElementById('childCount');
-    
-    if (count > 0) {
-        validateSection.style.display = 'block';
-        childCountEl.textContent = count;
-    } else {
-        validateSection.style.display = 'none';
-    }
-}
-
-// Valider et créer les enfants
-function validateChildren() {
-    if (children.length === 0) {
-        alert('Veuillez ajouter au moins un enfant');
-        return;
-    }
-    
-    // Mettre à jour les données et soumettre
-    document.getElementById('childrenData').value = JSON.stringify(children);
-    document.getElementById('inviteForm').submit();
-}
-
-// Afficher un message temporaire
-function showTemporaryMessage(message) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'flash-message flash-success';
-    msgDiv.textContent = message;
-    msgDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; animation: slideDown 0.3s ease;';
-    
-    document.body.appendChild(msgDiv);
-    
-    setTimeout(() => {
-        msgDiv.style.animation = 'slideUp 0.3s ease';
-        setTimeout(() => msgDiv.remove(), 300);
-    }, 2000);
-}
-
-// Afficher la liste des enfants
-function renderChildren() {
-    const listEl = document.getElementById('childrenList');
-    
-    if (children.length === 0) {
-        listEl.innerHTML = '';
-        return;
-    }
-    
-    let html = '<div style="padding-top: 12px; border-top: 2px solid rgba(253,174,84,0.3); margin-top: 8px;">';
-    
-    children.forEach((child, index) => {
-        html += `
-            <div class="invite-item child" style="background: rgba(253,174,84,0.15); border: 2px solid rgba(253,174,84,0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 24px;">${child.avatar || '👶'}</span>
-                    <span style="font-weight: 700; color: var(--dark);">${child.name}</span>
-                </div>
-                <button type="button" class="remove-btn" onclick="removeChild(${index})" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(220,53,69,0.1); border: 2px solid rgba(220,53,69,0.3); color: var(--danger); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    listEl.innerHTML = html;
-    
-    // Mettre à jour les données du formulaire
-    document.getElementById('childrenData').value = JSON.stringify(children);
-}
-
-// Gérer la touche Entrée
-document.getElementById('childName').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        addChild();
-    }
-});
-
-// Sélectionner le type de foyer (version simplifiée)
-function selectHouseTypeSimple(element) {
-    const type = element.getAttribute('data-type');
-    
-    // Désélectionner toutes les options
-    document.querySelectorAll('.house-type-option').forEach(opt => {
-        opt.classList.remove('selected');
-        opt.style.transform = 'scale(1)';
-    });
-    
-    // Sélectionner l'option cliquée
-    element.classList.add('selected');
-    element.style.transform = 'scale(1.05)';
-    
-    // Mettre à jour le champ caché
-    document.getElementById('houseTypeInput').value = type;
-    document.getElementById('houseTypeData').value = type;
-    
-    // Envoyer la mise à jour au serveur immédiatement
-    fetch('/update_house_type', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ house_type: type })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Type de foyer mis à jour:', type);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur lors de la mise à jour du type de foyer:', error);
-    });
-}
-
-// Sélectionner l'avatar de l'enfant
-function selectChildAvatar(element) {
-    // Désélectionner tous les avatars
-    document.querySelectorAll('.child-avatar-option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
-    
-    // Sélectionner l'avatar cliqué
-    element.classList.add('selected');
-    selectedChildAvatar = element.getAttribute('data-avatar');
+    // Sur iOS/Android après ouverture SMS → afficher le bouton retour
+    setTimeout(() => showSentConfirmation(), 800);
 }
 </script>
 {% endblock %}

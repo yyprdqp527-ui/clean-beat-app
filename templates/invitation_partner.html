@@ -139,14 +139,37 @@
             box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
         }
         
-        .btn-back {
-            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-            margin-top: 20px;
+        .back-btn-glass {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 2001;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #153036;
+            font-size: 28px;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
         }
         
-        .btn-back:hover {
+        .back-btn-glass:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(149, 165, 166, 0.4);
+            box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+        
+        .back-btn-glass:active {
+            transform: scale(0.95);
         }
         
         .instructions {
@@ -264,9 +287,7 @@
         
         <div class="url-display" id="inviteUrl">{{ join_url }}</div>
         
-        <a href="/menu" class="btn btn-back">
-            ← Retour au menu
-        </a>
+        <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
     </div>
     
     <script>

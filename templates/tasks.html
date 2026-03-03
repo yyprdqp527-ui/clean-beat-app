@@ -720,5 +720,90 @@ window.addEventListener('DOMContentLoaded', function(){
         modal.addEventListener('click', function(e){ if(e.target && e.target.getAttribute && e.target.getAttribute('data-close')){ closeModal(); }});
     }
 });
+
+// ==========================================
+// 🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
+// ==========================================
+(function() {
+    try {
+        console.log('🔍 WebSocket: Démarrage du script de connexion...');
+        
+        // Vérifier que Socket.IO est chargé
+        if (typeof io === 'undefined') {
+            console.error('❌ WebSocket: Socket.IO non chargé! Vérifiez le CDN.');
+            return;
+        }
+        
+        console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
+        const socket = io();
+        const userEmail = "{{ session.get('user', '') }}";
+        
+        console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');
+        
+        if (!userEmail) {
+            console.log('⚠️ WebSocket: Aucun utilisateur connecté');
+            return;
+        }
+        
+        socket.on('connect', function() {
+            console.log('🔌 WebSocket: Connecté au serveur (tasks.html)');
+            console.log('🔍 WebSocket: Envoi join_house avec email:', userEmail);
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        socket.on('joined_room', function(data) {
+            console.log('🏠 WebSocket: Rejoint la room', data.room);
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket: Déconnecté du serveur');
+        });
+        
+        // Écouter les mises à jour de points en temps réel
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket: Mise à jour des points reçue', data);
+            
+            // Mettre à jour l'affichage des avatars et points dans le header
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    // Chercher les éléments de points pour ce joueur
+                    const pointsElements = document.querySelectorAll('[data-player-email="' + player.email + '"]');
+                    pointsElements.forEach(function(el) {
+                        // Mettre à jour les points quotidiens
+                        if (el.classList.contains('player-daily-points') || el.querySelector('.player-daily-points')) {
+                            const dailyEl = el.classList.contains('player-daily-points') ? el : el.querySelector('.player-daily-points');
+                            if (dailyEl) {
+                                const newDailyPoints = player.daily_points || 0;
+                                dailyEl.textContent = newDailyPoints + ' pts';
+                                
+                                // Animation visuelle
+                                dailyEl.style.transition = 'all 0.3s ease';
+                                dailyEl.style.transform = 'scale(1.2)';
+                                dailyEl.style.color = '#28a745';
+                                setTimeout(function() {
+                                    dailyEl.style.transform = 'scale(1)';
+                                    dailyEl.style.color = '';
+                                }, 600);
+                            }
+                        }
+                        
+                        // Mettre à jour les points totaux
+                        if (el.classList.contains('player-total-points') || el.querySelector('.player-total-points')) {
+                            const totalEl = el.classList.contains('player-total-points') ? el : el.querySelector('.player-total-points');
+                            if (totalEl) {
+                                const newTotalPoints = player.total_points || 0;
+                                totalEl.textContent = newTotalPoints;
+                            }
+                        }
+                    });
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur WebSocket:', error);
+    }
+})();
 </script>
 {% endblock %}
+

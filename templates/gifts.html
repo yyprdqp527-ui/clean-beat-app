@@ -280,7 +280,17 @@
             {% for player in players %}
             <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 15px; min-width: 120px;">
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
-                    <div style="font-size: 2rem;">{{ player.avatar or '👤' }}</div>
+                    <div style="font-size: 2rem; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%;">
+                        {% if player.avatar_file %}
+                            <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% elif player.avatar_url %}
+                            <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% elif player.avatar and player.avatar|length <= 4 %}
+                            {{ player.avatar }}
+                        {% else %}
+                            <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                    </div>
                     <div class="vbar" title="{{ player.percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ player.percentage|default(0) }}%"></div></div>
                 </div>
                     <div style="font-weight: bold; color: #2c3e50;">{{ player.name }}</div>
@@ -364,5 +374,55 @@ function playSuccessSound() {
         osc.stop(now + 0.03);
     } catch(e) { /* Ignorer si pas de son */ }
 }
+
+// 🔌 WebSocket pour mise à jour en temps réel des points
+(function() {
+    try {
+        const socket = io();
+        const userEmail = '{{ session.user }}';
+        
+        socket.on('connect', function() {
+            console.log('✅ WebSocket Gifts: Connecté');
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket Gifts: Mise à jour des points reçue', data);
+            
+            // Mettre à jour l'affichage des points dans les cartes joueurs
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    // Chercher les éléments affichant les points
+                    const playerCards = document.querySelectorAll('[data-player-email="' + player.email + '"]');
+                    
+                    playerCards.forEach(function(card) {
+                        // Mettre à jour les points si affichés
+                        const pointsEl = card.querySelector('.player-points-display, [class*="points"]');
+                        if (pointsEl && pointsEl.textContent.includes('points')) {
+                            pointsEl.textContent = (player.total_points || 0) + ' points';
+                            
+                            // Animation visuelle
+                            pointsEl.style.transition = 'all 0.3s ease';
+                            pointsEl.style.transform = 'scale(1.1)';
+                            pointsEl.style.color = '#667eea';
+                            setTimeout(function() {
+                                pointsEl.style.transform = 'scale(1)';
+                                pointsEl.style.color = '';
+                            }, 600);
+                        }
+                    });
+                });
+            }
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket Gifts: Déconnecté');
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur WebSocket Gifts:', error);
+    }
+})();
 </script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 {% endblock %}

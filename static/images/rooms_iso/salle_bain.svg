@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180">
+  <defs>
+    <linearGradient id="floorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B2EBF2;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#00897B;stop-opacity:0.3" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Sol isométrique (carrelage) -->
+  <path d="M 100 40 L 180 80 L 100 120 L 20 80 Z" 
+        fill="url(#floorGrad)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="2"/>
+  
+  <!-- Lignes de carrelage -->
+  <line x1="60" y1="60" x2="100" y2="80" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1"/>
+  <line x1="140" y1="60" x2="100" y2="80" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1"/>
+  <line x1="60" y1="100" x2="100" y2="120" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1"/>
+  <line x1="140" y1="100" x2="100" y2="120" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1"/>
+  
+  <!-- Mur gauche -->
+  <path d="M 20 80 L 100 120 L 100 160 L 20 120 Z" 
+        fill="rgba(166, 211, 220, 0.3)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mur droit -->
+  <path d="M 180 80 L 100 120 L 100 160 L 180 120 Z" 
+        fill="rgba(166, 211, 220, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.3)" 
+        stroke-width="1.5"/>
+  
+  <!-- Douche/Cabine -->
+  <path d="M 30 95 L 60 110 L 60 145 L 30 130 Z" 
+        fill="rgba(255, 255, 255, 0.3)" 
+        stroke="rgba(166, 211, 220, 0.7)" 
+        stroke-width="2"/>
+  <path d="M 30 95 L 60 110 L 60 145 L 30 130 Z" 
+        fill="rgba(166, 211, 220, 0.15)" 
+        stroke="none"/>
+  <!-- Pommeau de douche -->
+  <circle cx="40" cy="100" r="3" 
+          fill="rgba(200, 200, 200, 0.8)" 
+          stroke="rgba(150, 150, 150, 0.9)" 
+          stroke-width="1"/>
+  <!-- Gouttes d'eau -->
+  <circle cx="38" cy="108" r="1.5" fill="rgba(2, 136, 209, 0.5)"/>
+  <circle cx="42" cy="110" r="1.5" fill="rgba(2, 136, 209, 0.5)"/>
+  <circle cx="40" cy="115" r="1.5" fill="rgba(2, 136, 209, 0.5)"/>
+  
+  <!-- Lavabo -->
+  <path d="M 90 110 L 130 130 L 130 135 L 90 115 Z" 
+        fill="rgba(255, 255, 255, 0.9)" 
+        stroke="rgba(200, 200, 200, 0.8)" 
+        stroke-width="1.5"/>
+  <!-- Vasque -->
+  <ellipse cx="110" cy="123" rx="12" ry="5" 
+           fill="rgba(166, 211, 220, 0.6)" 
+           stroke="rgba(166, 211, 220, 0.9)" 
+           stroke-width="1.5"/>
+  <!-- Robinet -->
+  <path d="M 110 115 Q 110 118 113 120" 
+        fill="none" 
+        stroke="rgba(150, 150, 150, 0.9)" 
+        stroke-width="2.5"
+        stroke-linecap="round"/>
+  
+  <!-- Miroir sur mur -->
+  <rect x="85" y="138" width="30" height="20" 
+        fill="rgba(166, 211, 220, 0.4)" 
+        stroke="rgba(200, 200, 200, 0.7)" 
+        stroke-width="1.5" rx="2"/>
+  <rect x="87" y="140" width="26" height="16" 
+        fill="rgba(255, 255, 255, 0.2)" 
+        stroke="none"/>
+  
+  <!-- Meuble sous lavabo -->
+  <path d="M 90 115 L 130 135 L 130 143 L 90 123 Z" 
+        fill="rgba(89, 113, 118, 0.6)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1"/>
+  <!-- Poignée -->
+  <line x1="105" y1="128" x2="115" y2="133" 
+        stroke="rgba(200, 200, 200, 0.8)" 
+        stroke-width="1.5"/>
+  
+  <!-- Toilettes (dans le coin) -->
+  <path d="M 145 115 L 165 126 L 165 138 L 145 127 Z" 
+        fill="rgba(255, 255, 255, 0.9)" 
+        stroke="rgba(200, 200, 200, 0.8)" 
+        stroke-width="1.5"/>
+  <!-- Cuvette -->
+  <ellipse cx="155" cy="128" rx="8" ry="4" 
+           fill="rgba(166, 211, 220, 0.5)" 
+           stroke="rgba(166, 211, 220, 0.8)" 
+           stroke-width="1"/>
+  <!-- Réservoir -->
+  <rect x="150" y="116" width="10" height="12" 
+        fill="rgba(255, 255, 255, 0.9)" 
+        stroke="rgba(200, 200, 200, 0.8)" 
+        stroke-width="1" rx="1"/>
+  
+  <!-- Serviettes accrochées -->
+  <rect x="65" y="140" width="15" height="8" 
+        fill="rgba(253, 174, 84, 0.6)" 
+        stroke="rgba(253, 174, 84, 0.8)" 
+        stroke-width="1" rx="1"/>
+  <rect x="65" y="148" width="15" height="8" 
+        fill="rgba(166, 211, 220, 0.6)" 
+        stroke="rgba(166, 211, 220, 0.8)" 
+        stroke-width="1" rx="1"/>
+  
+  <!-- Plante décorative -->
+  <ellipse cx="72" cy="113" rx="4" ry="2" 
+           fill="rgba(89, 113, 118, 0.5)" 
+           stroke="rgba(255, 255, 255, 0.3)" 
+           stroke-width="0.5"/>
+  <circle cx="72" cy="108" r="5" 
+          fill="rgba(76, 175, 80, 0.6)" 
+          stroke="rgba(76, 175, 80, 0.8)" 
+          stroke-width="1"/>
+  
+  <!-- Tapis de bain -->
+  <ellipse cx="110" cy="125" rx="25" ry="10" 
+           fill="rgba(253, 174, 84, 0.3)" 
+           stroke="rgba(253, 174, 84, 0.5)" 
+           stroke-width="1"/>
+  
+  <!-- Icône -->
+  <text x="100" y="35" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="24" 
+        filter="url(#glow)">🚿</text>
+  
+  <!-- Label glassmorphism -->
+  <rect x="45" y="5" width="110" height="22" 
+        fill="rgba(255, 255, 255, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5" 
+        rx="11"/>
+  <text x="100" y="20" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="14" 
+        font-weight="600" 
+        fill="#FFFFFF">Salle de Bain</text>
+</svg>

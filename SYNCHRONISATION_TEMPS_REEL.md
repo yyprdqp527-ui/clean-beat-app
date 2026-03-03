@@ -1,21 +1,51 @@
 # 🔌 Synchronisation Temps Réel - Guide d'Utilisation
 
+## ✅ **MISE À JOUR : 7 février 2026**
+
+### 🎯 Fonctionnalité activée
+**Les points se synchronisent maintenant en temps réel entre tous les joueurs !**
+
+Quand un joueur valide une tâche, **tous les autres joueurs** de la maison voient les points augmenter **instantanément** sans avoir à recharger la page ou appuyer sur un bouton.
+
+---
+
 ## ✨ Ce qui a été mis en place
 
 Votre application CleanBeat dispose maintenant d'une **synchronisation temps réel** entre tous les appareils (mobile, ordinateur, tablette) grâce à WebSocket (Flask-SocketIO).
 
 ### 🎯 Fonctionnalités
 
-1. **Mise à jour instantanée des points**
+1. **Mise à jour instantanée des points** ✅ **ACTIVÉ**
    - Quand un joueur valide une tâche sur son téléphone, les points s'affichent immédiatement sur tous les écrans
    - Pas besoin de rafraîchir la page
+   - **Notification visuelle** quand un autre joueur gagne des points
 
 2. **Notifications visuelles**
-   - Une notification apparaît quand un autre joueur gagne des points
+   - Une notification verte animée apparaît quand un autre joueur gagne des points
    - Animation des badges de points
 
 3. **Synchronisation des avatars**
    - Les changements d'avatar sont aussi synchronisés en temps réel
+
+---
+
+## 🔧 Modification effectuée aujourd'hui
+
+**Fichier** : `app.py` (ligne ~7735)
+
+**Avant** :
+```python
+if False:  # Désactivé temporairement
+```
+
+**Après** :
+```python
+if SOCKETIO_AVAILABLE and socketio:
+```
+
+Cette simple modification réactive l'envoi des notifications WebSocket lors de la validation des tâches.
+
+---
 
 ## 🚀 Comment ça marche
 

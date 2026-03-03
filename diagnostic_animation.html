@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Animation</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .test-section { background: white; margin: 20px 0; padding: 15px; border-radius: 8px; }
+        .avatar-test { width: 80px; height: 80px; background: #4CAF50; border-radius: 50%; margin: 10px; position: relative; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; }
+        
+        /* Styles d'animation copiés du menu */
+        @keyframes avatar-celebrate {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(-5deg); }
+            50% { transform: scale(1.3) rotate(5deg); }
+            75% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .avatar-celebrating { animation: avatar-celebrate 2s ease-out; }
+        
+        @keyframes points-popup {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.5); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(-15px) scale(1.4); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(0.8); }
+        }
+        .points-popup {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+            z-index: 1000;
+            animation: points-popup 3s ease-out forwards;
+        }
+        
+        @keyframes star-burst {
+            0% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+            100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
+        }
+        .winner-star {
+            position: absolute;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 999;
+            animation: star-burst 2s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnostic Animation Célébration</h1>
+    
+    <div class="test-section">
+        <h3>1. Test Connexion WebSocket</h3>
+        <div id="socket-status" class="result warning">En cours de test...</div>
+        <button onclick="testSocket()">Retester WebSocket</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Test Fonction Animation</h3>
+        <div id="function-status" class="result warning">Vérification...</div>
+        <div class="avatar-test" id="test-avatar" data-player-email="test@example.com"></div>
+        <button onclick="testAnimation()">Tester Animation Directe</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Test Événement WebSocket</h3>
+        <div id="websocket-events" class="result warning">En attente...</div>
+        <button onclick="triggerWebSocketTest()">Déclencher Animation via WebSocket</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Log Debug</h3>
+        <div id="debug-log" style="background: #000; color: #0f0; padding: 10px; font-family: monospace; height: 200px; overflow-y: scroll;"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let debugLog = document.getElementById('debug-log');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#fff';
+            debugLog.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // Test 1: WebSocket
+        function testSocket() {
+            log('🔌 Test connexion WebSocket...');
+            try {
+                socket = io('http://localhost:8000');
+                
+                socket.on('connect', function() {
+                    log('✅ WebSocket connecté!', 'success');
+                    document.getElementById('socket-status').className = 'result success';
+                    document.getElementById('socket-status').innerHTML = '✅ WebSocket connecté!';
+                    
+                    // Rejoindre une room de test
+                    socket.emit('join_house', { email: 'test@example.com' });
+                });
+                
+                socket.on('joined_room', function(data) {
+                    log(`🏠 Rejoint room: ${data.room}`, 'success');
+                });
+                
+                socket.on('task_celebration', function(data) {
+                    log(`🎉 Événement task_celebration reçu!`, 'success');
+                    log(`   Email: ${data.player_email}`);
+                    log(`   Points: ${data.points}`);
+                    log(`   Tâche: ${data.task_name}`);
+                    document.getElementById('websocket-events').className = 'result success';
+                    document.getElementById('websocket-events').innerHTML = `✅ Événement reçu: +${data.points} pts`;
+                    
+                    // Déclencher l'animation
+                    if (typeof window.triggerCelebrationAnimation === 'function') {
+                        window.triggerCelebrationAnimation(data.points, data.player_email, data.player_name, data.task_name);
+                    } else {
+                        log('❌ Fonction triggerCelebrationAnimation non trouvée!', 'error');
+                    }
+                });
+                
+                socket.on('disconnect', function() {
+                    log('❌ WebSocket déconnecté', 'error');
+                    document.getElementById('socket-status').className = 'result error';
+                    document.getElementById('socket-status').innerHTML = '❌ WebSocket déconnecté';
+                });
+                
+            } catch (e) {
+                log(`❌ Erreur WebSocket: ${e}`, 'error');
+                document.getElementById('socket-status').className = 'result error';
+                document.getElementById('socket-status').innerHTML = `❌ Erreur: ${e.message}`;
+            }
+        }
+        
+        // Test 2: Animation directe
+        function testAnimation() {
+            log('🎬 Test animation directe...');
+            
+            // Vérifier si la fonction existe
+            if (typeof window.triggerCelebrationAnimation === 'function') {
+                log('✅ Fonction triggerCelebrationAnimation trouvée!', 'success');
+                document.getElementById('function-status').className = 'result success';
+                document.getElementById('function-status').innerHTML = '✅ Fonction trouvée';
+                
+                // Version simple de l'animation pour test
+                const testAvatar = document.getElementById('test-avatar');
+                testAvatar.classList.add('avatar-celebrating');
+                
+                // Popup points
+                const popup = document.createElement('div');
+                popup.className = 'points-popup';
+                popup.textContent = '+50 pts';
+                testAvatar.appendChild(popup);
+                
+                // Étoiles
+                const stars = ['⭐', '✨', '🌟', '💫'];
+                for (let i = 0; i < 4; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'winner-star';
+                    star.textContent = stars[i];
+                    star.style.left = (30 + i * 15) + '%';
+                    star.style.top = (30 + i * 10) + '%';
+                    star.style.animationDelay = (i * 0.2) + 's';
+                    testAvatar.appendChild(star);
+                }
+                
+                // Nettoyer après animation
+                setTimeout(() => {
+                    testAvatar.classList.remove('avatar-celebrating');
+                    testAvatar.innerHTML = '';
+                }, 3000);
+                
+                log('✅ Animation de test déclenchée!', 'success');
+                
+            } else {
+                log('❌ Fonction triggerCelebrationAnimation NON TROUVÉE!', 'error');
+                document.getElementById('function-status').className = 'result error';
+                document.getElementById('function-status').innerHTML = '❌ Fonction non trouvée';
+                
+                // Lister les fonctions disponibles
+                const functions = Object.keys(window).filter(k => k.includes('trigger') || k.includes('celebration'));
+                log(`Fonctions disponibles: ${functions.join(', ')}`);
+            }
+        }
+        
+        // Test 3: WebSocket
+        function triggerWebSocketTest() {
+            log('📡 Déclenchement test WebSocket...');
+            
+            if (socket && socket.connected) {
+                // Simuler un événement depuis le serveur (on va le faire côté serveur)
+                fetch('/trigger_test_animation', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        log(`📤 Requête envoyée au serveur: ${data.message}`, 'success');
+                    })
+                    .catch(e => {
+                        log(`❌ Erreur requête: ${e}`, 'error');
+                        // Fallback: émettre directement l'événement
+                        if (socket) {
+                            socket.emit('test_celebration', {
+                                player_email: 'test@example.com',
+                                player_name: 'Test',
+                                points: 75,
+                                task_name: 'Test WebSocket'
+                            });
+                            log('📤 Événement de test émis manuellement');
+                        }
+                    });
+            } else {
+                log('❌ WebSocket non connecté!', 'error');
+            }
+        }
+        
+        // Initialiser au chargement
+        window.addEventListener('load', function() {
+            log('🚀 Diagnostic démarré');
+            testSocket();
+            setTimeout(testAnimation, 1000);
+        });
+    </script>
+</body>
+</html>

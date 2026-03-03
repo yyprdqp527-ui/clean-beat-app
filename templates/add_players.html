@@ -337,7 +337,7 @@
         </a>
         
         <!-- Option 2 : Inviter des partenaires -->
-        <a href="/invite_partner" class="option-card">
+        <a href="/invite_partner?source=manage" class="option-card">
             <div class="option-header">
                 <div class="option-icon">💑</div>
                 <div class="option-info">
@@ -366,5 +366,49 @@
 
 <!-- Bouton retour flèche -->
 <a href="/manage_players" class="back-btn-glass" title="Retour">←</a>
+
+<script>
+// 🔌 WebSocket pour synchronisation en temps réel
+if (typeof io !== 'undefined') {
+    const socket = io();
+    
+    socket.on('connect', function() {
+        console.log('🔌 WebSocket connecté sur add_players');
+        const houseId = '{{ house_id }}';
+        if (houseId) {
+            socket.emit('join_house_room', { house_id: houseId });
+            console.log(`🏠 Rejoint la room: house_${houseId}`);
+        }
+    });
+    
+    // Écouter les mises à jour de la liste des joueurs
+    socket.on('players_list_update', function(data) {
+        console.log('🔄 Mise à jour liste joueurs reçue:', data);
+        
+        if (data.action === 'child_added') {
+            console.log(`👶 Enfant ajouté: ${data.new_player}`);
+        } else if (data.action === 'player_joined') {
+            console.log(`🎉 Joueur a rejoint: ${data.new_player}`);
+        } else if (data.action === 'player_registered') {
+            console.log(`✨ Nouveau joueur inscrit: ${data.new_player}`);
+        }
+        
+        // Rediriger vers la page de gestion des joueurs
+        setTimeout(() => {
+            window.location.href = '/manage_players';
+        }, 500);
+    });
+    
+    // Écouter les mises à jour de points en temps réel
+    socket.on('players_points_update', function(data) {
+        console.log('📊 WebSocket: Mise à jour des points reçue dans add_players', data);
+        // Pas d'affichage de points sur cette page, juste log pour cohérence
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('🔌 WebSocket déconnecté');
+    });
+}
+</script>
 
 {% endblock %}

@@ -228,14 +228,7 @@
 <body>
 
 <div class="container">
-    <!-- Messages flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, msg in messages %}
-          <div class="flash {{ category }}">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    {% include '_flash_popup.html' %}
 
     <h1>Créer votre compte</h1>
     <p class="subtitle">

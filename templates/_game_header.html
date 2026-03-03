@@ -29,10 +29,10 @@
                       <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar {{ player.name }}">
                   {% elif player.avatar_url %}
                       <img src="{{ player.avatar_url }}" alt="Avatar {{ player.name }}">
-                  {% elif player.avatar %}
+                  {% elif player.avatar and player.avatar|length <= 4 %}
                       <span style="font-size: {{ (avatar_size * 0.6)|int }}px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ player.avatar }}</span>
                   {% else %}
-                      <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar {{ player.name }}">
+                      <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="Avatar {{ player.name }}">
                   {% endif %}
                 </div>
                 {# Barre verticale pour desktop #}
@@ -57,7 +57,7 @@
             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
               <div class="avatar-square-wrapper" title="Joueur en attente">
                 <div class="avatar-square">
-                  <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar en attente">
+                  <img src="{{ url_for('static', filename='images/default.png') }}" alt="Avatar en attente">
                 </div>
                 <div class="vbar simple" aria-label="Progression du jour" title="0%" data-points="0" data-fill="0">
                   <div class="vbar-fill" style="height: 0%; background: hsl(0, 0%, 60%);"></div>

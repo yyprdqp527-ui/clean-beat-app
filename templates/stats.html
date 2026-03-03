@@ -89,6 +89,7 @@
     </div>
 </div>
 
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
 // Applique dynamiquement la largeur des barres de progression depuis l'attribut data-width
 document.addEventListener('DOMContentLoaded', function() {
@@ -98,6 +99,34 @@ document.addEventListener('DOMContentLoaded', function() {
             bar.style.width = width + '%';
         }
     });
-});
-</script>
-{% endblock %}
+    
+    // 🔌 WebSocket pour mise à jour en temps réel des statistiques
+    try {
+        const socket = io();
+        const userEmail = '{{ session.user }}';
+        
+        socket.on('connect', function() {
+            console.log('✅ WebSocket: Connecté aux statistiques');
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        // Écouter les mises à jour de points en temps réel
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket: Mise à jour des points reçue dans stats', data);
+            
+            // Recharger la page pour TOUS les joueurs pour synchroniser les statistiques
+            // (classement, graphiques, compteurs, etc.)
+            console.log('🔄 Rechargement des statistiques pour synchronisation complète...');
+            // Utiliser un petit délai pour éviter les recharges multiples
+            setTimeout(function() {
+                window.location.reload();
+            }, 500);
+        });
+        
+        // Écouter les mises à jour de la liste des messages (affecte certaines stats)
+        socket.on('messages_list_update', function(data) {
+            console.log('📬 WebSocket Stats: Mise à jour de la messagerie détectée', data);
+            // Recharger pour mettre à jour les stats de messages
+            setTimeout(function() {
+                window.location.reload();
+            }, 500);

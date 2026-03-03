@@ -1,4 +1,4 @@
-from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, jsonify, make_response
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -11,6 +11,15 @@ import uuid
 import json
 import requests
 import time
+
+# 🚀 PERFORMANCE: Prints de debug désactivés par défaut
+# Pour réactiver: lancer avec CLEANBEAT_DEBUG=1 python3 app.py
+_DEBUG = os.environ.get('CLEANBEAT_DEBUG', '') == '1'
+def _dbg(*args, **kwargs):
+    """Print de debug silencieux sauf si CLEANBEAT_DEBUG=1"""
+    if _DEBUG:
+        _dbg(*args, **kwargs)
+
 # Pour l'envoi de SMS (Twilio)
 
 import base64
@@ -109,16 +118,15 @@ app.secret_key = "2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025"  # clé secrète fo
 
 # ⚡ Désactiver cache des templates pour développement
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
 
-# 🚫 DÉSACTIVER COMPLÈTEMENT LE CACHE NAVIGATEUR (pour éviter les problèmes de développement)
-@app.after_request
-def add_no_cache_headers(response):
-    """Ajoute des en-têtes pour désactiver complètement le cache navigateur"""
-    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '-1'
-    return response
+# 🗜️ Compression gzip pour réduire la taille des réponses (~70% plus léger)
+try:
+    from flask_compress import Compress
+    Compress(app)
+    print("✅ Compression gzip activée")
+except ImportError:
+    print("⚠️ flask-compress non installé. Installation: pip install flask-compress")
 
 # Ajouter un filtre Jinja personnalisé pour index
 @app.template_filter('index')
@@ -169,26 +177,23 @@ def inject_house_name():
         if 'user' in session:
             conn = sqlite3.connect(DB)
             c = conn.cursor()
-            c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-            row = c.fetchone()
-            if row and row[0]:
-                house_id = row[0]
-                try:
-                    c.execute("SELECT name, house_name, code FROM houses WHERE id=?", (house_id,))
-                    hr = c.fetchone()
-                    if hr:
-                        name, house_name_db, code = hr[0], hr[1], hr[2]
-                        house_code = code
-                        if (house_name_db and house_name_db.strip()):
-                            house_name = house_name_db.strip()
-                        elif (name and name.strip()):
-                            house_name = name.strip()
-                except Exception:
-                    pass
+            # 🚀 OPTIMISATION: 1 seule requête avec JOIN au lieu de 2 requêtes séparées
+            c.execute("""
+                SELECT h.name, h.house_name, h.code 
+                FROM users u JOIN houses h ON u.house_id = h.id 
+                WHERE u.email=?
+            """, (session['user'],))
+            hr = c.fetchone()
+            if hr:
+                name, house_name_db, code = hr[0], hr[1], hr[2]
+                house_code = code
+                if (house_name_db and house_name_db.strip()):
+                    house_name = house_name_db.strip()
+                elif (name and name.strip()):
+                    house_name = name.strip()
             conn.close()
     except Exception:
         pass
-    # Fournir aussi un booléen pour savoir si on est sur la page menu
     return {
         'global_house_name': house_name,
         'global_house_code': house_code,
@@ -319,40 +324,79 @@ def sats():
         
         # === RÉCUPÉRER LES JOUEURS DE LA MAISON ===
         c.execute("""
-            SELECT email, name, avatar, avatar_url, avatar_file, points 
+            SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style, player_color
             FROM users WHERE house_id=?
         """, (house_id,))
         users_rows = c.fetchall()
         
         players = []
         for u in users_rows:
-            email, name, avatar_emoji, avatar_url, avatar_file, total_points = u
+            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw = u
             
-            # Résoudre l'avatar : priorité avatar_file > avatar_url > avatar (fichier PNG) > avatar emoji > défaut
+            # Résoudre l'avatar : détection du type + reconstruction URL DiceBear
             resolved_avatar_file = None
             resolved_avatar_url = None
             resolved_avatar_emoji = None
+            is_valid_emoji = False
+            is_dicebear_seed = False
             
-            # 1. Si avatar_file est défini, l'utiliser
-            if avatar_file and avatar_file != 'None':
-                resolved_avatar_file = avatar_file
-            # 2. Si avatar_url est défini
-            elif avatar_url and avatar_url != 'None':
-                resolved_avatar_url = avatar_url
-            # 3. Sinon analyser le champ avatar
-            elif avatar_emoji:
+            # Détecter le type d'avatar dans le champ 'avatar'
+            if avatar_emoji:
                 avatar_str = str(avatar_emoji).strip()
-                
-                # Est-ce un fichier image (.png, .jpg, .jpeg) ?
-                if any(avatar_str.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']):
+                if (len(avatar_str) <= 4 and 
+                    any(ord(c) > 127 for c in avatar_str) and
+                    '.png' not in avatar_str.lower() and '.jpg' not in avatar_str.lower() and
+                    'http' not in avatar_str.lower() and '/' not in avatar_str):
+                    is_valid_emoji = True
+                    resolved_avatar_emoji = avatar_str
+                elif any(avatar_str.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']):
                     resolved_avatar_file = avatar_str
-                # Est-ce un emoji ? (caractères Unicode > 127, max 4 chars)
-                elif (len(avatar_str) <= 4 and 
-                      any(ord(c) > 127 for c in avatar_str) and
+                elif (len(avatar_str) >= 2 and 
+                      '.' not in avatar_str and 
                       'http' not in avatar_str.lower() and
                       '/' not in avatar_str):
-                    resolved_avatar_emoji = avatar_str
-                # Sinon c'est probablement un index numérique ou autre -> défaut
+                    is_dicebear_seed = True
+            
+            # 1. Si avatar_file est défini ET existe sur le disque, l'utiliser
+            if avatar_file and avatar_file != 'None':
+                validated = validate_avatar_file(avatar_file)
+                if validated:
+                    resolved_avatar_file = validated
+            
+            # 2. Si avatar_url est défini
+            clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
+            
+            # Extraction seed/style depuis l'URL si le champ avatar est vide
+            if not avatar_emoji and clean_avatar_url and 'seed=' in clean_avatar_url:
+                try:
+                    import re
+                    seed_match = re.search(r'seed=([^&]+)', clean_avatar_url)
+                    if seed_match:
+                        avatar_emoji = seed_match.group(1)
+                        is_dicebear_seed = True
+                    if not avatar_style:
+                        style_match = re.search(r'dicebear\.com/[^/]+/([^/]+)/', clean_avatar_url)
+                        if style_match:
+                            avatar_style = style_match.group(1)
+                except Exception:
+                    pass
+            
+            # Si c'est un seed DiceBear, reconstruire l'URL avec le bon style
+            if is_dicebear_seed and avatar_emoji:
+                style = avatar_style if avatar_style else 'adventurer'
+                resolved_avatar_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={str(avatar_emoji).strip()}'
+            elif clean_avatar_url:
+                resolved_avatar_url = clean_avatar_url
+            
+            # Gérer les anciennes données incohérentes
+            if resolved_avatar_file and (is_dicebear_seed or is_valid_emoji) and resolved_avatar_url:
+                resolved_avatar_file = None
+            
+            # Si toujours rien → DiceBear par défaut
+            if not resolved_avatar_file and not resolved_avatar_url and not resolved_avatar_emoji:
+                seed = name if name else (email.split('@')[0] if email else 'default')
+                style = avatar_style if avatar_style else 'adventurer'
+                resolved_avatar_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
             
             # Points du jour
             c.execute("""
@@ -393,19 +437,24 @@ def sats():
                 for t in tasks_details_rows
             ]
             
+            # Récupérer ou attribuer la couleur du joueur
+            p_color = player_color_raw if player_color_raw else get_player_color(email)
+            
             players.append({
                 'email': email,
                 'name': name if name else email.split('@')[0],
                 'avatar': resolved_avatar_emoji,  # Emoji direct si valide
                 'avatar_url': resolved_avatar_url,  # URL si présente
                 'avatar_file': resolved_avatar_file,  # Fichier (uploadé ou PNG prédéfini)
+                'avatar_style': avatar_style if avatar_style else 'adventurer',  # Style DiceBear
                 'total_points': total_points if total_points else 0,
                 'daily_points': daily_points,
                 'daily_tasks': daily_tasks,
                 'weekly_points': weekly_points,
                 'weekly_tasks': weekly_tasks,
                 'weekly_tasks_details': weekly_tasks_details,
-                'is_current_user': (email == session['user'])
+                'is_current_user': (email == session['user']),
+                'color': p_color  # Couleur identitaire du joueur
             })
         
         # Trier par points de la semaine (pour le classement général et le leader)
@@ -415,6 +464,32 @@ def sats():
         # Attribuer les rangs
         for idx, p in enumerate(players, start=1):
             p['rank'] = idx
+        
+        # === COULEURS DE GRAPHIQUE (cohérentes avec les barres de progression du menu) ===
+        # Même logique que menu.html : player_color DB (hex) en priorité, sinon palette index email
+        _CHART_PALETTE = [
+            'rgba(120,180,230,0.8)', 'rgba(180,140,200,0.8)', 'rgba(240,140,140,0.8)',
+            'rgba(250,180,100,0.8)', 'rgba(130,200,150,0.8)', 'rgba(240,150,170,0.8)',
+            'rgba(120,210,200,0.8)', 'rgba(255,170,170,0.8)', 'rgba(140,220,210,0.8)',
+            'rgba(255,200,120,0.8)',
+        ]
+        _sorted_emails_colors = sorted([p['email'] for p in players])
+        for p in players:
+            _idx = _sorted_emails_colors.index(p['email']) if p['email'] in _sorted_emails_colors else 0
+            _hex = p.get('color')  # Hex DB (ex: '#FF6B9D')
+            if _hex and _hex.startswith('#') and len(_hex) >= 7:
+                try:
+                    _r = int(_hex[1:3], 16)
+                    _g = int(_hex[3:5], 16)
+                    _b = int(_hex[5:7], 16)
+                    p['chart_color'] = f'rgba({_r},{_g},{_b},0.8)'
+                    p['chart_border'] = f'rgba({_r},{_g},{_b},1)'
+                except Exception:
+                    p['chart_color'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)]
+                    p['chart_border'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)].replace('0.8', '1')
+            else:
+                p['chart_color'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)]
+                p['chart_border'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)].replace('0.8', '1')
         
         # Trouver l'utilisateur actuel dans la liste des joueurs
         current_user_data = None
@@ -448,12 +523,13 @@ def sats():
             email, task_name, points, completed_at, category, name, avatar_url, avatar_file = t
             
             # Résoudre l'avatar
-            if avatar_file:
-                avatar = url_for('static', filename=f'avatars/{avatar_file}')
+            valid_file = validate_avatar_file(avatar_file)
+            if valid_file:
+                avatar = url_for('static', filename=f'avatars/{valid_file}')
             elif avatar_url:
                 avatar = avatar_url
             else:
-                avatar = url_for('static', filename='avatars/homme.png')
+                avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
             
             # Extraire l'heure
             try:
@@ -547,7 +623,7 @@ def sats():
             'buanderie': ('Buanderie', '👕'),
             'toilettes': ('Toilettes', '🚽'),
             'chambre': ('Chambre', '🛏️'),
-            'chambre_parentale': ('Chambre Parentale', '🛏️'),
+            'chambre_parentale': ('Chambre', '🛏️'),
             'salle_bain': ('Salle de bain', '🛁'),
             'salle_de_bain': ('Salle de bain', '🛁'),
             'chambre_enfant': ('Chambre Enfant', '🧸'),
@@ -583,7 +659,7 @@ def sats():
             
             if category not in rooms_recap:
                 room_name, room_icon = ROOM_NAMES.get(category, (category.replace('_', ' ').title(), '🏠'))
-                room_image = ROOM_IMAGES.get(category, 'images/newmaison.png')
+                room_image = ROOM_IMAGES.get(category, 'images/maisonwoop.svg')
                 rooms_recap[category] = {
                     'name': room_name,
                     'icon': room_icon,
@@ -644,14 +720,14 @@ def sats():
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        print(f"\n{'='*60}")
-        print(f"❌ ERREUR PAGE STATS (/sats)")
-        print(f"{'='*60}")
-        print(f"Exception: {e}")
-        print(f"Type: {type(e).__name__}")
-        print(f"\nTraceback complet:")
-        print(error_details)
-        print(f"{'='*60}\n")
+        _dbg(f"\n{'='*60}")
+        _dbg(f"❌ ERREUR PAGE STATS (/sats)")
+        _dbg(f"{'='*60}")
+        _dbg(f"Exception: {e}")
+        _dbg(f"Type: {type(e).__name__}")
+        _dbg(f"\nTraceback complet:")
+        _dbg(error_details)
+        _dbg(f"{'='*60}\n")
         conn.close()
         flash(f"Erreur lors du chargement des stats: {e}", "error")
         return redirect(url_for('menu'))
@@ -807,8 +883,8 @@ def stats_graphique():
         
     except Exception as e:
         import traceback
-        print(f"Erreur page stats graphique: {e}")
-        print(traceback.format_exc())
+        _dbg(f"Erreur page stats graphique: {e}")
+        _dbg(traceback.format_exc())
         conn.close()
         return redirect(url_for('sats'))
 
@@ -841,6 +917,14 @@ except ImportError:
 
 # Route d'accueil
 @app.route('/')
+def index():
+    """Page d'accueil - Redirection vers la page de bienvenue"""
+    # Si l'utilisateur est déjà connecté, le rediriger vers le menu
+    if 'user' in session:
+        return redirect(url_for('menu'))
+    # Sinon, afficher la page de bienvenue
+    return redirect(url_for('welcome'))
+
 @app.route('/test_audio')
 def test_audio():
     return render_template('test_audio.html')
@@ -980,7 +1064,7 @@ def save_photo_from_base64(base64_data):
         
         return filename
     except Exception as e:
-        print(f"Erreur sauvegarde photo: {e}")
+        _dbg(f"Erreur sauvegarde photo: {e}")
         return None
 
 def get_avatar_url(avatar_id, style='adventurer'):
@@ -999,16 +1083,19 @@ def get_avatar_url(avatar_id, style='adventurer'):
 
 def send_sms_invitation(phone_number, user_name, house_code=None):
     """Envoie un SMS d'invitation"""
+    # Obtenir l'URL de base depuis le contexte de la requête Flask
+    base_url = request.host_url if has_request_context() else "http://192.168.1.187:8000/"
+    
     if not TWILIO_AVAILABLE:
         if house_code:
-            print(f"\n📱 SMS simulé envoyé vers {phone_number}:")
-            print(f"   🏠 {user_name} vous invite à jouer à CleanBeat !")
-            print(f"   📱 Cliquez pour rejoindre (aucune installation requise) :")
-            print(f"   http://192.168.1.156:8000/join_house?code={house_code}")
-            print(f"   Code : {house_code}\n")
+            _dbg(f"\n📱 SMS simulé envoyé vers {phone_number}:")
+            _dbg(f"   🏠 {user_name} vous invite à jouer à CleanBeat !")
+            _dbg(f"   📱 Cliquez pour rejoindre (aucune installation requise) :")
+            _dbg(f"   {base_url}join_house?code={house_code}")
+            _dbg(f"   Code : {house_code}\n")
         else:
-            print(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à CleanBeat !")
-            print(f"📱 Cliquez : http://192.168.1.156:8000")
+            _dbg(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à CleanBeat !")
+            _dbg(f"📱 Cliquez : {base_url}")
         return True
     
     try:
@@ -1017,11 +1104,11 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
         if house_code:
             message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
                           f"📱 Cliquez pour rejoindre (aucune installation requise) : " \
-                          f"http://192.168.1.156:8000/join_house?code={house_code} " \
+                          f"{base_url}join_house?code={house_code} " \
                           f"Code : {house_code}"
         else:
             message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
-                          f"📱 Cliquez pour commencer : http://192.168.1.156:8000"
+                          f"📱 Cliquez pour commencer : {base_url}"
         
         message = client.messages.create(
             body=message_body,
@@ -1029,11 +1116,11 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
             to=phone_number
         )
         
-        print(f"SMS envoyé avec succès: {message.sid}")
+        _dbg(f"SMS envoyé avec succès: {message.sid}")
         return True
         
     except Exception as e:
-        print(f"Erreur envoi SMS: {e}")
+        _dbg(f"Erreur envoi SMS: {e}")
         return False
 
 # ===============================
@@ -1528,6 +1615,62 @@ TASKS_CONFIG = {
             'ad_link': 'https://www.amazon.fr/s?k=classeur+documents'
         }
     ],
+    'chambre_garcon': [
+        {
+            'name': 'Faire son lit',
+            'image': 'chambre ados/faire son lit.webp',
+            'description': 'Bien faire son lit le matin',
+            'points': 3,
+            'fun_text': '🛏️ Un lit bien fait, une journée bien partie !',
+            'ad_text': 'Parures de lit pour chambre enfant !',
+            'ad_link': 'https://www.amazon.fr/s?k=parure+lit+enfant'
+        },
+        {
+            'name': 'Ranger sa chambre',
+            'image': 'chambre ados/Ranger sa chambre.webp',
+            'description': 'Remettre de l\'ordre dans la chambre',
+            'points': 4,
+            'fun_text': '✨ Une chambre rangée c\'est une chambre heureuse !',
+            'ad_text': 'Rangements pratiques pour chambre enfant !',
+            'ad_link': 'https://www.amazon.fr/s?k=rangement+chambre+enfant'
+        },
+        {
+            'name': 'Aérer sa chambre',
+            'image': 'chambre ados/aérer sa chambre.webp',
+            'description': 'Ouvrir la fenêtre pour renouveler l\'air',
+            'points': 2,
+            'fun_text': '💨 Un air frais pour bien dormir !',
+            'ad_text': 'Purificateurs d\'air pour chambre !',
+            'ad_link': 'https://www.amazon.fr/s?k=purificateur+air+chambre'
+        },
+        {
+            'name': 'Mettre les vêtements dans le panier',
+            'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
+            'description': 'Trier les vêtements sales',
+            'points': 3,
+            'fun_text': '👕 Droit au but, dans le panier !',
+            'ad_text': 'Paniers à linge design !',
+            'ad_link': 'https://www.amazon.fr/s?k=panier+linge+enfant'
+        },
+        {
+            'name': 'Vider sa corbeille',
+            'image': 'chambre ados/vider sa corbeille à papier.webp',
+            'description': 'Vider la corbeille à papier',
+            'points': 2,
+            'fun_text': '🗑️ Poubelle vide, esprit clair !',
+            'ad_text': 'Jolies corbeilles pour chambre !',
+            'ad_link': 'https://www.amazon.fr/s?k=corbeille+chambre+enfant'
+        },
+        {
+            'name': 'Faire ses devoirs',
+            'image': 'chambre ados/Faire ses devoirs.webp',
+            'description': 'Faire les devoirs du soir',
+            'points': 5,
+            'fun_text': '📚 Les devoirs d\'abord, les jeux ensuite !',
+            'ad_text': 'Fournitures scolaires et bureaux enfants !',
+            'ad_link': 'https://www.amazon.fr/s?k=bureau+enfant+scolaire'
+        }
+    ],
     'chambre_enfant': [
         {
             'name': 'Ranger ses jouets',
@@ -1697,6 +1840,8 @@ def normalize_category(cat):
         'salle_bain': 'salle_bain',
         'chambre enfant': 'chambre_enfant',
         'chambre_enfant': 'chambre_enfant',
+        'chambre garcon': 'chambre_garcon',
+        'chambre_garcon': 'chambre_garcon',
         'chambre bebe': 'chambre_bebe',
         'chambre_bebe': 'chambre_bebe',
         'wc': 'wc',
@@ -1835,7 +1980,7 @@ def get_house_players_with_colors(house_id):
                 'email': email,
                 'name': name or email.split('@')[0],
                 'avatar': avatar,
-                'avatar_file': avatar_file,
+                'avatar_file': validate_avatar_file(avatar_file),
                 'avatar_url': avatar_url,
                 'points': points or 0,
                 'color': color
@@ -1891,7 +2036,7 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT,
     points INTEGER DEFAULT 0,
     house_id INTEGER,
-    avatar TEXT DEFAULT 'default.png',
+    avatar TEXT DEFAULT 'lorelei-default',
     name TEXT,
     photo_filename TEXT,
     avatar_url TEXT,
@@ -1929,6 +2074,22 @@ CREATE TABLE IF NOT EXISTS users (
     # Colonne pour la couleur personnelle du joueur
     try:
         c.execute("ALTER TABLE users ADD COLUMN player_color TEXT")
+    except sqlite3.OperationalError:
+        pass
+    
+    # Colonnes pour le système d'avatars DiceBear
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT DEFAULT 'lorelei'")
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN avatar_file TEXT")
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN registration_step TEXT")
     except sqlite3.OperationalError:
         pass
 
@@ -2183,6 +2344,20 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
+    # Table pour les pièces personnalisées (noms custom + masquées)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS custom_rooms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        house_id INTEGER NOT NULL,
+        room_key TEXT NOT NULL,
+        custom_name TEXT,
+        custom_image TEXT,
+        is_hidden INTEGER DEFAULT 0,
+        UNIQUE(house_id, room_key),
+        FOREIGN KEY(house_id) REFERENCES houses(id)
+    )
+    """)
+
     # === INDEX POUR AMÉLIORER LES PERFORMANCES ===
     # Index sur completed_tasks pour les requêtes fréquentes
     c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_user ON completed_tasks(user_email)")
@@ -2207,14 +2382,16 @@ init_db()
 def add_cache_headers(response):
     """Ajouter des headers de cache pour les fichiers statiques"""
     if 'static' in request.path:
-        # Cache les images/avatars pendant 1 semaine
-        if any(ext in request.path for ext in ['.png', '.jpg', '.jpeg', '.webp', '.gif']):
-            response.headers['Cache-Control'] = 'public, max-age=604800'  # 7 jours
+        # Cache les images/avatars/SVG pendant 1 semaine
+        if any(ext in request.path for ext in ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.woff', '.woff2', '.ttf']):
+            response.headers['Cache-Control'] = 'public, max-age=604800, immutable'  # 7 jours
         # Cache les CSS/JS pendant 1 jour
         elif any(ext in request.path for ext in ['.css', '.js']):
             response.headers['Cache-Control'] = 'public, max-age=86400'  # 1 jour
+        else:
+            response.headers['Cache-Control'] = 'public, max-age=3600'  # 1h par défaut pour le reste
     else:
-        # Pas de cache pour les pages HTML (mode développement)
+        # Pas de cache pour les pages HTML dynamiques
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
@@ -2268,6 +2445,55 @@ def compute_daily_streak(conn, email):
     except Exception:
         return 0
 
+def propagate_player_name_change(cursor, email, old_name, new_name, house_id):
+    """
+    Propage le changement de pseudo d'un joueur partout dans la base.
+    Met à jour :
+    - Le contenu des messages (notifications maison, baby_tracking, task_added, privés...)
+    - Le champ sender_email quand il contient l'ancien nom (messages house non-email)
+    - Les commentaires de la maison contenant l'ancien nom
+    """
+    if not old_name or not new_name or old_name == new_name:
+        return 0
+    
+    updated_count = 0
+    try:
+        # 1. Mettre à jour le CONTENU des messages de la maison qui contiennent l'ancien nom
+        cursor.execute("""
+            UPDATE messages 
+            SET content = REPLACE(content, ?, ?)
+            WHERE house_id = ? AND content LIKE ?
+        """, (old_name, new_name, house_id, f'%{old_name}%'))
+        updated_count += cursor.rowcount
+        
+        # 2. Mettre à jour sender_email quand c'est un nom (pas un email) pour les messages house
+        #    Ex: sender_email = "Marguerite" au lieu d'un email pour certains messages
+        cursor.execute("""
+            UPDATE messages 
+            SET sender_email = REPLACE(sender_email, ?, ?)
+            WHERE house_id = ? AND sender_type = 'house' 
+            AND sender_email NOT LIKE '%@%'
+            AND sender_email LIKE ?
+        """, (old_name, new_name, house_id, f'%{old_name}%'))
+        updated_count += cursor.rowcount
+        
+        # 3. Mettre à jour les commentaires contenant l'ancien nom
+        #    (commentaires écrits par ce joueur ET commentaires mentionnant ce joueur)
+        cursor.execute("""
+            UPDATE comments 
+            SET content = REPLACE(content, ?, ?)
+            WHERE content LIKE ?
+            AND user_email IN (SELECT email FROM users WHERE house_id = ?)
+        """, (old_name, new_name, f'%{old_name}%', house_id))
+        updated_count += cursor.rowcount
+        
+        _dbg(f"✅ Propagation du changement de nom: '{old_name}' → '{new_name}' pour {email} dans maison {house_id} ({updated_count} entrées mises à jour)")
+    except Exception as e:
+        _dbg(f"⚠️ Erreur lors de la propagation du changement de nom: {e}")
+    
+    return updated_count
+
+
 def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None):
     """
     Crée un message système automatique pour la maison.
@@ -2303,7 +2529,20 @@ def create_system_message(house_id, content, message_type='system', related_task
         conn.commit()
         conn.close()
         
-        # 🔔 Envoyer une notification push si activé
+        # � Synchroniser la messagerie pour tous les utilisateurs de la maison
+        try:
+            if SOCKETIO_AVAILABLE and socketio:
+                socketio.emit('messages_list_update', {
+                    'house_id': house_id,
+                    'action': 'system_message',
+                    'message_type': message_type,
+                    'sender_name': sender_name
+                }, room=f'house_{house_id}')
+                _dbg(f"🔌 WebSocket: Synchronisation messagerie système pour house_{house_id}")
+        except Exception as ws_err:
+            _dbg(f"⚠️ Erreur WebSocket message système: {ws_err}")
+        
+        # �🔔 Envoyer une notification push si activé
         if send_push:
             try:
                 # Déterminer l'icône et le titre selon le type
@@ -2336,17 +2575,20 @@ def create_system_message(house_id, content, message_type='system', related_task
                 notify_house_members(house_id, notification_data)
                 
             except Exception as e:
-                print(f"⚠️ Erreur envoi notification push: {e}")
+                _dbg(f"⚠️ Erreur envoi notification push: {e}")
         
         return True
     except Exception as e:
-        print(f"Erreur création message système: {e}")
+        _dbg(f"Erreur création message système: {e}")
         return False
 
 def get_unread_message_count(user_email, house_id):
     """
     Retourne le nombre de messages non lus pour un utilisateur dans sa maison.
-    Exclut les messages de validation de tâches (task_completed).
+    Compte uniquement les messages qui sont réellement visibles par cet utilisateur :
+    - Messages privés dont il est l'expéditeur OU le destinataire
+    - Messages de la maison (sender_type = 'house'), sauf task_completed
+    Exclut les messages privés adressés à d'autres joueurs.
     """
     try:
         conn = sqlite3.connect(DB)
@@ -2358,8 +2600,12 @@ def get_unread_message_count(user_email, house_id):
                 SELECT message_id FROM message_reads WHERE user_email = ?
             )
             AND (m.sender_email IS NULL OR m.sender_email != ?)
-            AND m.message_type != 'task_completed'
-        """, (house_id, user_email, user_email))
+            AND m.message_type NOT IN ('task_completed')
+            AND (
+                (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
+                OR (m.sender_type = 'house')
+            )
+        """, (house_id, user_email, user_email, user_email, user_email))
         count = c.fetchone()[0]
         conn.close()
         return count
@@ -2398,7 +2644,7 @@ def get_unread_messages_by_sender(user_email, house_id):
         
         return received_unread
     except Exception as e:
-        print(f"Erreur get_unread_messages_by_sender: {e}")
+        _dbg(f"Erreur get_unread_messages_by_sender: {e}")
         return {}
 
 def get_unread_messages_sent_to(user_email, house_id):
@@ -2406,7 +2652,7 @@ def get_unread_messages_sent_to(user_email, house_id):
     Retourne un dictionnaire avec le nombre de messages ENVOYÉS par l'utilisateur courant
     qui n'ont pas encore été lus par leurs destinataires.
     """
-    print(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
+    _dbg(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
     try:
         conn = sqlite3.connect(DB)
         c = conn.cursor()
@@ -2429,15 +2675,15 @@ def get_unread_messages_sent_to(user_email, house_id):
         """, (house_id, user_email, user_email))
         
         results = c.fetchall()
-        print(f"[DEBUG] Résultats SQL bruts: {results}")
+        _dbg(f"[DEBUG] Résultats SQL bruts: {results}")
         sent_unread = {recipient: count for recipient, count in results}
         
         conn.close()
         
-        print(f"[DEBUG] Messages envoyés non lus: {sent_unread}")
+        _dbg(f"[DEBUG] Messages envoyés non lus: {sent_unread}")
         return sent_unread
     except Exception as e:
-        print(f"❌ Erreur get_unread_messages_sent_to: {e}")
+        _dbg(f"❌ Erreur get_unread_messages_sent_to: {e}")
         import traceback
         traceback.print_exc()
         return {}
@@ -2491,7 +2737,7 @@ def save_push_subscription(user_email, subscription_data):
         conn.close()
         return True
     except Exception as e:
-        print(f"❌ Erreur sauvegarde push subscription: {e}")
+        _dbg(f"❌ Erreur sauvegarde push subscription: {e}")
         return False
 
 
@@ -2521,7 +2767,7 @@ def get_user_push_subscriptions(user_email):
         conn.close()
         return subscriptions
     except Exception as e:
-        print(f"❌ Erreur récupération subscriptions: {e}")
+        _dbg(f"❌ Erreur récupération subscriptions: {e}")
         return []
 
 
@@ -2563,7 +2809,7 @@ def get_house_push_subscriptions(house_id, exclude_email=None):
         conn.close()
         return subscriptions
     except Exception as e:
-        print(f"❌ Erreur récupération subscriptions maison: {e}")
+        _dbg(f"❌ Erreur récupération subscriptions maison: {e}")
         return []
 
 
@@ -2593,7 +2839,7 @@ def send_push_notification(subscription, notification_data):
         }
         
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-            print("⚠️ VAPID keys non configurées - notifications push désactivées")
+            _dbg("⚠️ VAPID keys non configurées - notifications push désactivées")
             return False
         
         payload = json.dumps(notification_data)
@@ -2608,7 +2854,7 @@ def send_push_notification(subscription, notification_data):
         return True
         
     except WebPushException as e:
-        print(f"❌ WebPush erreur: {e}")
+        _dbg(f"❌ WebPush erreur: {e}")
         
         # Si l'abonnement est invalide (410 Gone), le désactiver
         if e.response and e.response.status_code == 410:
@@ -2616,10 +2862,10 @@ def send_push_notification(subscription, notification_data):
         
         return False
     except ImportError:
-        print("⚠️ pywebpush non installé - exécutez: pip install pywebpush")
+        _dbg("⚠️ pywebpush non installé - exécutez: pip install pywebpush")
         return False
     except Exception as e:
-        print(f"❌ Erreur envoi push: {e}")
+        _dbg(f"❌ Erreur envoi push: {e}")
         return False
 
 
@@ -2779,7 +3025,7 @@ def send_house_encouragement(house_id, player_name=None):
         conn.close()
         return True
     except Exception as e:
-        print(f"❌ Erreur envoi encouragement maison: {e}")
+        _dbg(f"❌ Erreur envoi encouragement maison: {e}")
         return False
 
 
@@ -2813,7 +3059,7 @@ def send_house_sermon(house_id, player_name=None, sermon_type='lazy'):
         conn.close()
         return True
     except Exception as e:
-        print(f"❌ Erreur envoi sermon maison: {e}")
+        _dbg(f"❌ Erreur envoi sermon maison: {e}")
         return False
 
 
@@ -2866,7 +3112,7 @@ def check_house_activity_and_send_message(house_id):
         return False
         
     except Exception as e:
-        print(f"❌ Erreur vérification activité maison: {e}")
+        _dbg(f"❌ Erreur vérification activité maison: {e}")
         return False
 
 
@@ -2931,7 +3177,7 @@ def create_reminder(house_id, reminder_type, scheduled_for=None):
         
         return reminder_id
     except Exception as e:
-        print(f"❌ Erreur création reminder: {e}")
+        _dbg(f"❌ Erreur création reminder: {e}")
         return None
 
 
@@ -3008,7 +3254,7 @@ def send_reminder(reminder_id):
         
         return True
     except Exception as e:
-        print(f"❌ Erreur envoi reminder: {e}")
+        _dbg(f"❌ Erreur envoi reminder: {e}")
         return False
 
 
@@ -3117,19 +3363,34 @@ def update_user_reminder_settings(user_email, enabled=None, frequency=None, quie
         conn.close()
         return True
     except Exception as e:
-        print(f"❌ Erreur update reminder settings: {e}")
+        _dbg(f"❌ Erreur update reminder settings: {e}")
         return False
 
 
 # 💬 ========== FIN SYSTÈME DE RAPPELS ==========
 
 
-def get_house_players_points(house_id):
+def validate_avatar_file(avatar_file_value):
+    """Vérifie si un fichier avatar existe réellement sur le disque.
+    Retourne le nom du fichier si trouvé, None sinon."""
+    if not avatar_file_value or avatar_file_value == 'None':
+        return None
+    # Vérifier dans static/avatars/
+    if os.path.exists(os.path.join('static', 'avatars', avatar_file_value)):
+        return avatar_file_value
+    # Fichier introuvable → retourner None pour fallback DiceBear
+    _dbg(f"[AVATAR] Fichier '{avatar_file_value}' introuvable → fallback")
+    return None
+
+
+def get_house_players_points(house_id, existing_conn=None):
     """
     Retourne une liste de dictionnaires avec les joueurs de la maison.
     Inclut automatiquement les daily_points (points du jour) et daily_tasks.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
-    conn = sqlite3.connect(DB)
+    _own_conn = existing_conn is None
+    conn = existing_conn if existing_conn else sqlite3.connect(DB)
     c = conn.cursor()
     today = date.today().isoformat()
     
@@ -3151,8 +3412,8 @@ def get_house_players_points(house_id):
         player_color = r[6] if len(r) > 6 else None
         avatar_style = r[7] if len(r) > 7 else 'adventurer'  # Style DiceBear par défaut
         
-        print(f"\n🔍 Traitement joueur: {name} ({email}) - NOUVEAU CODE ACTIF!")
-        print(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}")
+        _dbg(f"\n🔍 Traitement joueur: {name} ({email}) - NOUVEAU CODE ACTIF!")
+        _dbg(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}")
         
         # Assigner une couleur si le joueur n'en a pas encore
         if not player_color:
@@ -3163,7 +3424,7 @@ def get_house_players_points(house_id):
         is_dicebear_seed = False
         if avatar_emoji:
             avatar_str = str(avatar_emoji).strip()
-            print(f"🔍 DEBUG {email}: avatar_str='{avatar_str}', len={len(avatar_str)}")
+            _dbg(f"🔍 DEBUG {email}: avatar_str='{avatar_str}', len={len(avatar_str)}")
             # C'est un emoji si : max 4 caractères, contient des caractères Unicode > 127, 
             # et ne contient pas .png, .jpg, http, ou /
             if (len(avatar_str) <= 4 and 
@@ -3173,16 +3434,16 @@ def get_house_players_points(house_id):
                 'http' not in avatar_str.lower() and
                 '/' not in avatar_str):
                 is_valid_emoji = True
-                print(f"✅ {email}: Détecté comme emoji")
+                _dbg(f"✅ {email}: Détecté comme emoji")
             # C'est un seed DiceBear si : chaîne alphanumérique sans extension ni URL
-            elif (len(avatar_str) > 4 and 
+            elif (len(avatar_str) >= 4 and 
                   '.' not in avatar_str and 
                   'http' not in avatar_str.lower() and
                   '/' not in avatar_str):
                 is_dicebear_seed = True
-                print(f"✅ {email}: Détecté comme seed DiceBear")
+                _dbg(f"✅ {email}: Détecté comme seed DiceBear")
             else:
-                print(f"⚠️ {email}: Aucune détection, len={len(avatar_str)}, has_dot={'.' in avatar_str}")
+                _dbg(f"⚠️ {email}: Aucune détection, len={len(avatar_str)}, has_dot={'.' in avatar_str}")
 
         # Calculer les points du jour (daily_points) avec heure locale
         daily_points = 0
@@ -3204,6 +3465,13 @@ def get_house_players_points(house_id):
         clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
         clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
         
+        # Vérifier que le fichier avatar existe RÉELLEMENT sur le disque
+        if clean_avatar_file:
+            avatar_path = os.path.join('static', 'avatars', clean_avatar_file)
+            if not os.path.exists(avatar_path):
+                _dbg(f"[DEBUG] avatar_file '{clean_avatar_file}' introuvable dans static/avatars/ → fallback pour {name}")
+                clean_avatar_file = None
+        
         # CORRECTION : Si avatar est vide mais avatar_url existe, extraire le seed ET le style de l'URL
         if not avatar_emoji and clean_avatar_url and 'seed=' in clean_avatar_url:
             try:
@@ -3213,40 +3481,45 @@ def get_house_players_points(house_id):
                     avatar_emoji = seed_match.group(1)
                     is_dicebear_seed = True
                     is_valid_emoji = False
-                    print(f"🔧 Seed extrait de l'URL pour {email}: {avatar_emoji}")
+                    _dbg(f"🔧 Seed extrait de l'URL pour {email}: {avatar_emoji}")
                 
                 # Extraire aussi le style de l'URL si avatar_style est vide
                 if not avatar_style:
                     style_match = re.search(r'dicebear\.com/[^/]+/([^/]+)/', clean_avatar_url)
                     if style_match:
                         avatar_style = style_match.group(1)
-                        print(f"🔧 Style extrait de l'URL pour {email}: {avatar_style}")
+                        _dbg(f"🔧 Style extrait de l'URL pour {email}: {avatar_style}")
                     else:
-                        print(f"⚠️ Pas de style trouvé dans l'URL pour {email}: {clean_avatar_url}")
+                        _dbg(f"⚠️ Pas de style trouvé dans l'URL pour {email}: {clean_avatar_url}")
                 else:
-                    print(f"🔍 Style déjà défini pour {email}: {avatar_style}")
+                    _dbg(f"🔍 Style déjà défini pour {email}: {avatar_style}")
             except Exception as e:
-                print(f"⚠️ Erreur extraction seed/style: {e}")
+                _dbg(f"⚠️ Erreur extraction seed/style: {e}")
                 
-        print(f"🔍 DEBUG FINAL {email}: clean_avatar_url={clean_avatar_url}, is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji}, avatar_style={avatar_style}")
+        _dbg(f"🔍 DEBUG FINAL {email}: clean_avatar_url={clean_avatar_url}, is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji}, avatar_style={avatar_style}")
         
         # Si c'est un seed DiceBear, reconstruire l'URL avec le bon style stocké
         if is_dicebear_seed and avatar_emoji:
             style = avatar_style if avatar_style else 'adventurer'
             new_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={avatar_emoji}'
-            print(f"🔍 DEBUG RECONSTRUCTION: avatar_style={avatar_style}, style={style}, new_url={new_url}")
+            _dbg(f"🔍 DEBUG RECONSTRUCTION: avatar_style={avatar_style}, style={style}, new_url={new_url}")
             
             # Vérifier si l'URL existante utilise le bon style
             if clean_avatar_url and clean_avatar_url != new_url:
-                print(f"🔄 URL reconstruite pour {email}: {new_url} (ancien: {clean_avatar_url})")
+                _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (ancien: {clean_avatar_url})")
                 clean_avatar_url = new_url
             elif not clean_avatar_url:
-                print(f"🔄 URL reconstruite pour {email}: {new_url} (style={style}, seed={avatar_emoji})")
+                _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (style={style}, seed={avatar_emoji})")
                 clean_avatar_url = new_url
             else:
-                print(f"✅ {email}: URL déjà correcte: {clean_avatar_url}")
+                _dbg(f"✅ {email}: URL déjà correcte: {clean_avatar_url}")
         else:
-            print(f"⚠️ {email}: Pas de reconstruction URL (is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji})")
+            _dbg(f"⚠️ {email}: Pas de reconstruction URL (is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji})")
+        
+        # Gérer les anciennes données incohérentes : si avatar_file existe
+        # MAIS l'utilisateur a choisi un DiceBear/emoji plus récemment (avatar_url reconstruit)
+        if clean_avatar_file and (is_dicebear_seed or is_valid_emoji) and clean_avatar_url:
+            clean_avatar_file = None
         
         # Si aucun avatar n'est défini, générer une URL DiceBear par défaut basée sur l'email
         if not clean_avatar_url and not clean_avatar_file and not is_valid_emoji and not is_dicebear_seed:
@@ -3271,7 +3544,7 @@ def get_house_players_points(house_id):
                 color_horizontal = f'linear-gradient(90deg, rgba({r}, {g}, {b}, 1.00) 0%, rgba({r}, {g}, {b}, 0.95) 100%)'
         
         # DEBUG: Afficher les valeurs avant de les ajouter
-        print(f"🔍 DEBUG get_house_players: email={email}, avatar_emoji={avatar_emoji}, is_valid_emoji={is_valid_emoji}, is_dicebear_seed={is_dicebear_seed}, clean_avatar_url={clean_avatar_url}, clean_avatar_file={clean_avatar_file}")
+        _dbg(f"🔍 DEBUG get_house_players: email={email}, avatar_emoji={avatar_emoji}, is_valid_emoji={is_valid_emoji}, is_dicebear_seed={is_dicebear_seed}, clean_avatar_url={clean_avatar_url}, clean_avatar_file={clean_avatar_file}")
         
         players.append({
             'email': email,
@@ -3279,6 +3552,7 @@ def get_house_players_points(house_id):
             'avatar': avatar_emoji if (is_valid_emoji or is_dicebear_seed) else None,  # Emoji ou seed DiceBear
             'avatar_url': clean_avatar_url,  # URL si présente
             'avatar_file': clean_avatar_file,  # Fichier uploadé
+            'avatar_style': avatar_style if avatar_style else 'adventurer',  # Style DiceBear
             'points': points,
             'daily_points': daily_points,
             'daily_tasks': daily_tasks,
@@ -3287,7 +3561,8 @@ def get_house_players_points(house_id):
             'player_color_hex': player_color  # Couleur hex brute pour bordure d'avatar
         })
 
-    conn.close()
+    if _own_conn:
+        conn.close()
     return players
 
 
@@ -3306,24 +3581,38 @@ def get_house_players_points(house_id):
 
 @app.route('/signup_email', methods=['GET', 'POST'])
 def signup_email():
-    """Inscription avec récupération de mail"""
+    """Inscription avec récupération de mail - ÉTAPE 1 du parcours"""
     if request.method == 'POST':
+        import re
+        
         name = request.form.get('name', '').strip().capitalize()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
-        confirm_password = request.form.get('confirm_password', '').strip()
         
-        # Validations
+        # Validations de base - mot de passe OBLIGATOIRE
         if not name or not email or not password:
             flash("Tous les champs sont requis", "danger")
             return render_template('signup_email.html')
         
-        if len(password) < 6:
-            flash("Le mot de passe doit contenir au moins 6 caractères", "danger")
+        # Validation robuste du mot de passe (OBLIGATOIRE)
+        if len(password) < 8:
+            flash("Le mot de passe doit contenir au moins 8 caractères", "danger")
             return render_template('signup_email.html')
-            
-        if password != confirm_password:
-            flash("Les mots de passe ne correspondent pas", "danger")
+        
+        if not re.search(r'[A-Z]', password):
+            flash("Le mot de passe doit contenir au moins une majuscule", "danger")
+            return render_template('signup_email.html')
+        
+        if not re.search(r'[a-z]', password):
+            flash("Le mot de passe doit contenir au moins une minuscule", "danger")
+            return render_template('signup_email.html')
+        
+        if not re.search(r'[0-9]', password):
+            flash("Le mot de passe doit contenir au moins un chiffre", "danger")
+            return render_template('signup_email.html')
+        
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            flash("Le mot de passe doit contenir au moins un caractère spécial", "danger")
             return render_template('signup_email.html')
         
         # Vérifier si email existe déjà
@@ -3347,13 +3636,14 @@ def signup_email():
             conn.close()
             
             # Sauvegarder dans la session
-            session.permanent = True  # Session persistante après rafraîchissement
+            session.permanent = True
             session['user'] = email
             session['user_name'] = name
             session['registration_step'] = 'email_signup'
             
-            flash(f"Compte créé avec succès ! Bienvenue {name} !", "success")
-            return redirect(url_for('invite_partner'))
+            flash(f"Bienvenue {name} ! 🎉", "success")
+            # Rediriger vers l'étape 2 : choix du type de logement
+            return redirect(url_for('choose_house_type'))
             
         except sqlite3.IntegrityError:
             flash("Erreur lors de la création du compte", "danger")
@@ -3361,6 +3651,113 @@ def signup_email():
             return render_template('signup_email.html')
     
     return render_template('signup_email.html')
+
+
+@app.route('/choose_house_type', methods=['GET', 'POST'])
+def choose_house_type():
+    """ÉTAPE 2 : Choix du type de logement"""
+    if 'user' not in session:
+        flash("Veuillez d'abord vous inscrire", "warning")
+        return redirect(url_for('signup_email'))
+    
+    if request.method == 'POST':
+        house_type = request.form.get('house_type', 'family')
+        
+        # Valider le type
+        if house_type not in ['family', 'couple', 'coloc']:
+            house_type = 'family'
+        
+        # Sauvegarder temporairement dans la session
+        session['house_type'] = house_type
+        session['registration_step'] = 'house_type_chosen'
+        
+        # Rediriger vers l'étape 3 : invitation partenaires
+        return redirect(url_for('onboarding_invite'))
+    
+    return render_template('choose_house_type.html')
+
+
+@app.route('/onboarding_invite')
+def onboarding_invite():
+    """ÉTAPE 3 : Page d'explication + invitation partenaires"""
+    if 'user' not in session:
+        flash("Veuillez d'abord vous inscrire", "warning")
+        return redirect(url_for('signup_email'))
+    
+    # Récupérer ou créer le code de la maison
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    row = c.fetchone()
+    
+    house_code = None
+    house_id = None
+    
+    if row and row[0]:
+        # L'utilisateur a déjà une maison
+        house_id = row[0]
+        c.execute("SELECT code FROM houses WHERE id=?", (house_id,))
+        code_row = c.fetchone()
+        if code_row and code_row[0]:
+            house_code = code_row[0]
+        else:
+            # La maison existe mais n'a pas de code, on le génère
+            import random
+            import string
+            house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            c.execute("UPDATE houses SET code=? WHERE id=?", (house_code, house_id))
+            conn.commit()
+    else:
+        # Créer une nouvelle maison avec un code
+        import random
+        import string
+        house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        c.execute("INSERT INTO houses (code, name, health, last_reset_date) VALUES (?, ?, ?, date('now'))", 
+                 (house_code, '', 100))
+        house_id = c.lastrowid
+        c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
+        conn.commit()
+    
+    conn.close()
+    
+    # Construire l'URL d'invitation (garantir que house_code n'est jamais None)
+    if not house_code:
+        house_code = "ERROR"
+        join_url = ""
+    else:
+        join_url = f"{request.host_url}invite/{house_code}"
+    
+    return render_template('onboarding_invite.html', house_code=house_code, join_url=join_url)
+
+
+@app.route('/name_house', methods=['GET', 'POST'])
+def name_house():
+    """ÉTAPE 4 : Nommer le foyer"""
+    if 'user' not in session:
+        flash("Veuillez d'abord vous inscrire", "warning")
+        return redirect(url_for('signup_email'))
+    
+    if request.method == 'POST':
+        house_name = request.form.get('house_name', '').strip()
+        
+        _dbg(f"🏠 NAME_HOUSE POST: house_name={house_name}, user={session.get('user')}")
+        
+        if not house_name:
+            flash("Veuillez donner un nom à votre foyer", "danger")
+            return render_template('name_house.html')
+        
+        # Sauvegarder dans la session
+        session['house_name'] = house_name
+        session['registration_step'] = 'house_named'
+        
+        _dbg(f"✅ NAME_HOUSE: Redirection vers create_profile")
+        
+        # Rediriger vers l'étape 5 : création du profil (avatar + pseudo)
+        return redirect(url_for('create_profile'))
+    
+    _dbg(f"📄 NAME_HOUSE GET: Affichage du formulaire pour {session.get('user')}")
+    return render_template('name_house.html')
+
 
 # Route '/start' (quick signup) removed as requested. Use '/signup_email' instead.
 
@@ -3394,58 +3791,6 @@ def quick_login():
         return render_template('quick_login.html')
 
 
-# Register
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    """Finaliser la création du profil avec photo/avatar"""
-    if 'user' not in session:
-        flash("Veuillez d'abord vous inscrire", "warning")
-        return redirect(url_for('signup_email'))
-
-    if request.method == 'POST':
-        photo_data = request.form.get('photo_data')
-        avatar = request.form.get('avatar')
-        name = request.form.get('name', '').strip().capitalize()
-        if not name or (not avatar and not photo_data):
-            flash("Veuillez entrer un prénom et choisir un avatar ou une photo.", "danger")
-            return render_template('create_profile.html')
-
-        photo_filename = None
-        if photo_data:
-            photo_filename = save_photo_from_base64(photo_data)
-            if not photo_filename:
-                flash("Erreur lors de la sauvegarde de la photo.", "danger")
-                return render_template('create_profile.html')
-
-        conn = sqlite3.connect(DB)
-        c = conn.cursor()
-        # Mettre à jour le profil utilisateur
-        update_query = "UPDATE users SET name=?, avatar=?, registration_step=? WHERE email=?"
-        update_values = [name, avatar, 'profile_created', session['user']]
-        c.execute(update_query, update_values)
-        # Si photo, enregistrer le fichier
-        if photo_filename:
-            c.execute("UPDATE users SET avatar_file=? WHERE email=?", (photo_filename, session['user']))
-        # Vérifier/Créer maison si besoin
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        user_house = c.fetchone()
-        if not user_house or not user_house[0]:
-            house_code = generate_house_code()
-            # Créer la maison sans nom pour forcer le formulaire sur /menu
-            c.execute("INSERT INTO houses (name, house_name, level, health, mood, code, progress) VALUES (?, ?, 1, 100, 'happy', ?, 0)", ('', '', house_code))
-            house_id = c.lastrowid
-            c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
-        conn.commit()
-        conn.close()
-        session['user_name'] = name
-        session['registration_step'] = 'profile_created'
-        flash(f"Profil créé! Bienvenue {name} !", "success")
-        return redirect(url_for('menu'))
-
-    return render_template('create_profile.html')
-
-
 # ========================================
 # Routes pour la gestion des joueurs
 # ========================================
@@ -3476,9 +3821,9 @@ def manage_players():
     house_row = c.fetchone()
     house_name = house_row[0] if house_row else ""
     
-    # Récupérer tous les joueurs de cette maison
+    # Récupérer tous les joueurs de cette maison (inclut avatar_style pour DiceBear)
     c.execute("""
-        SELECT email, name, avatar, avatar_file, avatar_url, player_color
+        SELECT email, name, avatar, avatar_file, avatar_url, player_color, avatar_style
         FROM users
         WHERE house_id=?
         ORDER BY name
@@ -3486,7 +3831,7 @@ def manage_players():
     
     players = []
     for row in c.fetchall():
-        email, name, avatar, avatar_file, avatar_url, player_color = row
+        email, name, avatar, avatar_file, avatar_url, player_color, avatar_style = row
         
         # Assigner une couleur si le joueur n'en a pas encore
         if not player_color:
@@ -3496,8 +3841,9 @@ def manage_players():
             'email': email,
             'name': name,
             'avatar': avatar,
-            'avatar_file': avatar_file,
+            'avatar_file': validate_avatar_file(avatar_file),
             'avatar_url': avatar_url,
+            'avatar_style': avatar_style if avatar_style else 'adventurer',
             'color': player_color
         })
     
@@ -3524,7 +3870,7 @@ def edit_player(email):
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     user_house = c.fetchone()
     
-    c.execute("SELECT house_id, email, name, avatar, avatar_file, avatar_url FROM users WHERE email=?", (email,))
+    c.execute("SELECT house_id, email, name, avatar, avatar_file, avatar_url, avatar_style FROM users WHERE email=?", (email,))
     player_row = c.fetchone()
     
     if not user_house or not player_row or user_house[0] != player_row[0]:
@@ -3537,7 +3883,8 @@ def edit_player(email):
         'name': player_row[2],
         'avatar': player_row[3],
         'avatar_file': player_row[4],
-        'avatar_url': player_row[5]
+        'avatar_url': player_row[5],
+        'avatar_style': player_row[6] if player_row[6] else 'adventurer'
     }
     
     conn.close()
@@ -3595,13 +3942,13 @@ def update_player():
         name = request.form.get('name', '').strip()
         avatar_type = request.form.get('avatar_type')
         
-        print("🔍 UPDATE_PLAYER - Données reçues:")
-        print(f"   email: {email}")
-        print(f"   name: {name}")
-        print(f"   avatar_type: {avatar_type}")
-        print(f"   avatar: {request.form.get('avatar')}")
-        print(f"   avatar_style: {request.form.get('avatar_style')}")
-        print(f"   Tous les champs: {dict(request.form)}")
+        _dbg("🔍 UPDATE_PLAYER - Données reçues:")
+        _dbg(f"   email: {email}")
+        _dbg(f"   name: {name}")
+        _dbg(f"   avatar_type: {avatar_type}")
+        _dbg(f"   avatar: {request.form.get('avatar')}")
+        _dbg(f"   avatar_style: {request.form.get('avatar_style')}")
+        _dbg(f"   Tous les champs: {dict(request.form)}")
         
         if not email:
             return jsonify({'success': False, 'error': 'Email requis'})
@@ -3619,6 +3966,11 @@ def update_player():
         if not user_house or not player_house or user_house[0] != player_house[0]:
             conn.close()
             return jsonify({'success': False, 'error': 'Non autorisé'})
+        
+        # 📛 Récupérer l'ancien nom AVANT la mise à jour (pour propager le changement)
+        c.execute("SELECT name FROM users WHERE email=?", (email,))
+        old_name_row = c.fetchone()
+        old_name = old_name_row[0] if old_name_row and old_name_row[0] else None
         
         # Préparer la mise à jour
         update_parts = []
@@ -3646,7 +3998,7 @@ def update_player():
             # Avatar DiceBear : récupérer le seed et construire l'URL
             seed = request.form.get('avatar', '').strip()
             style = request.form.get('avatar_style', 'avataaars').strip()
-            print(f"✅ Avatar DiceBear détecté - seed: {seed}, style: {style}")
+            _dbg(f"✅ Avatar DiceBear détecté - seed: {seed}, style: {style}")
             if seed:
                 dicebear_url = f"https://api.dicebear.com/7.x/{style}/svg?seed={seed}"
                 update_parts.append("avatar_url=?")
@@ -3660,8 +4012,8 @@ def update_player():
                 # Effacer avatar_file
                 update_parts.append("avatar_file=?")
                 update_values.append(None)
-                print(f"   URL construite: {dicebear_url}")
-                print(f"   Champs à mettre à jour: avatar={seed}, avatar_style={style}, avatar_url={dicebear_url}")
+                _dbg(f"   URL construite: {dicebear_url}")
+                _dbg(f"   Champs à mettre à jour: avatar={seed}, avatar_style={style}, avatar_url={dicebear_url}")
         
         elif avatar_type == 'file':
             # Sélection d'une image PNG existante depuis la galerie
@@ -3701,22 +4053,43 @@ def update_player():
             update_values.append(email)
             query = f"UPDATE users SET {', '.join(update_parts)} WHERE email=?"
             c.execute(query, update_values)
+            
+            # 📛 Propager le changement de nom dans les messages existants
+            if name and old_name and name != old_name:
+                house_id = user_house[0]
+                propagate_player_name_change(c, email, old_name, name, house_id)
+                _dbg(f"📛 Nom du joueur changé: '{old_name}' → '{name}' pour {email}")
+                
+                # Mettre à jour la session si c'est l'utilisateur connecté
+                if email == session.get('user'):
+                    session['user_name'] = name
+                    if 'name' in session:
+                        session['name'] = name
+            
             conn.commit()
             
-            # 🔌 WEBSOCKET: Notifier tous les joueurs du changement d'avatar
+            # 🔌 WEBSOCKET: Notifier tous les joueurs du changement
             if SOCKETIO_AVAILABLE and socketio:
                 try:
-                    socketio.emit('avatar_updated', {'email': email}, namespace='/')
-                    print(f"🔌 WebSocket: Diffusion changement avatar pour {email}")
+                    house_id = user_house[0]
+                    socketio.emit('avatar_updated', {'email': email}, namespace='/', room=f'house_{house_id}')
+                    # Si le nom a changé, notifier aussi pour rafraîchir les affichages
+                    if name and old_name and name != old_name:
+                        socketio.emit('player_name_updated', {
+                            'email': email, 
+                            'old_name': old_name, 
+                            'new_name': name
+                        }, namespace='/', room=f'house_{house_id}')
+                    _dbg(f"🔌 WebSocket: Diffusion changement pour {email} (room: house_{house_id})")
                 except Exception as ws_err:
-                    print(f"⚠️ Erreur WebSocket avatar: {ws_err}")
+                    _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
         
         conn.close()
         
         return jsonify({'success': True})
         
     except Exception as e:
-        print(f"[ERROR update_player] {e}")
+        _dbg(f"[ERROR update_player] {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -3751,15 +4124,67 @@ def delete_player():
             conn.close()
             return jsonify({'success': False, 'error': 'Non autorisé'})
         
+        house_id = user_house[0]
+        
+        # Récupérer le nom du joueur avant suppression
+        c.execute("SELECT name FROM users WHERE email=?", (email,))
+        player_row = c.fetchone()
+        player_name = player_row[0] if player_row and player_row[0] else email.split('@')[0]
+        
         # Supprimer le joueur de la maison (mettre house_id à NULL)
         c.execute("UPDATE users SET house_id=NULL WHERE email=?", (email,))
         conn.commit()
+        
+        # Récupérer la liste mise à jour des joueurs
+        c.execute("""
+            SELECT email, name, avatar, avatar_file, avatar_url, avatar_style, points, player_color 
+            FROM users 
+            WHERE house_id = ?
+            ORDER BY name
+        """, (house_id,))
+        
+        players = c.fetchall()
+        players_data = []
+        for p in players:
+            email_p, name_p, avatar_p, avatar_file_p, avatar_url_p, avatar_style_p, points_p, player_color_p = p
+            
+            # Gérer l'URL de l'avatar
+            clean_avatar_url = None
+            valid_file_p = validate_avatar_file(avatar_file_p)
+            if valid_file_p:
+                clean_avatar_url = f"/static/avatars/{valid_file_p}"
+            elif avatar_url_p:
+                clean_avatar_url = avatar_url_p
+            elif avatar_p:
+                # Si c'est un seed DiceBear (8 caractères alphanumériques)
+                if len(avatar_p) == 8 and avatar_p.isalnum():
+                    style = avatar_style_p if avatar_style_p else 'lorelei'
+                    clean_avatar_url = f"https://api.dicebear.com/7.x/{style}/svg?seed={avatar_p}"
+                else:
+                    clean_avatar_url = avatar_p
+            
+            players_data.append({
+                'email': email_p,
+                'name': name_p or email_p.split('@')[0],
+                'avatar_url': clean_avatar_url,
+                'points': points_p or 0,
+                'player_color': player_color_p
+            })
+        
         conn.close()
+        
+        # Émettre l'événement WebSocket
+        _dbg(f"🔌 WebSocket: Joueur '{player_name}' supprimé (room: house_{house_id})")
+        socketio.emit('players_list_update', {
+            'players': players_data,
+            'deleted_player': player_name,
+            'action': 'player_deleted'
+        }, namespace='/', room=f'house_{house_id}')
         
         return jsonify({'success': True})
         
     except Exception as e:
-        print(f"[ERROR delete_player] {e}")
+        _dbg(f"[ERROR delete_player] {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -3800,8 +4225,9 @@ def add_players():
             player1_avatar = user_row[1]
             avatar_file = user_row[2]
             player1_avatar_url = user_row[3]
-            if avatar_file:
-                player1_avatar_url = url_for('static', filename='avatars/' + avatar_file)
+            valid_file = validate_avatar_file(avatar_file)
+            if valid_file:
+                player1_avatar_url = url_for('static', filename='avatars/' + valid_file)
         
         # Points du jour pour le joueur actuel
         from datetime import date
@@ -3888,7 +4314,7 @@ def add_child():
             if len(child_avatar) == 8 and child_avatar_style:
                 avatar_url = f"https://api.dicebear.com/7.x/{child_avatar_style}/svg?seed={child_avatar}"
                 avatar = child_avatar  # Stocker le seed
-                print(f"✅ [ADD_CHILD] Avatar DiceBear: {avatar_url}")
+                _dbg(f"✅ [ADD_CHILD] Avatar DiceBear: {avatar_url}")
         elif child_avatar and len(child_avatar) <= 4 and any(ord(c) > 127 for c in child_avatar):
             # Emoji (legacy)
             avatar = child_avatar
@@ -3916,12 +4342,55 @@ def add_child():
         """, (child_email, child_name, avatar, avatar_file, avatar_url, child_avatar_style or None, house_id))
         
         conn.commit()
+        
+        # 🔌 Récupérer tous les joueurs de la maison pour WebSocket (y compris les enfants)
+        c.execute("""
+            SELECT email, name, avatar, avatar_file, avatar_url, avatar_style, points, player_color
+            FROM users 
+            WHERE house_id = ?
+            ORDER BY name
+        """, (house_id,))
+        
+        players_data = []
+        for player in c.fetchall():
+            player_email, player_name, player_avatar, player_avatar_file, player_avatar_url, player_avatar_style, player_points, player_color = player
+            
+            # Déterminer l'URL de l'avatar
+            display_avatar_url = None
+            if player_avatar_url:
+                display_avatar_url = player_avatar_url
+            elif validate_avatar_file(player_avatar_file):
+                display_avatar_url = f"/static/avatars/{player_avatar_file}"
+            elif player_avatar and player_avatar_style:
+                display_avatar_url = f"https://api.dicebear.com/7.x/{player_avatar_style}/svg?seed={player_avatar}"
+            else:
+                display_avatar_url = f"https://api.dicebear.com/7.x/{player_avatar_style or 'adventurer'}/svg?seed={player_name or player_email}"
+            
+            players_data.append({
+                'email': player_email,
+                'name': player_name,
+                'avatar_url': display_avatar_url,
+                'points': player_points or 0,
+                'color': player_color
+            })
+        
         conn.close()
+        
+        # 🔌 Émettre WebSocket pour synchroniser tous les écrans
+        try:
+            socketio.emit('players_list_update', {
+                'players': players_data,
+                'new_player': child_name,
+                'action': 'child_added'
+            }, namespace='/', room=f'house_{house_id}')
+            _dbg(f"🔌 WebSocket: Enfant '{child_name}' ajouté (room: house_{house_id})")
+        except Exception as ws_err:
+            _dbg(f"⚠️ Erreur WebSocket ajout enfant: {ws_err}")
         
         return jsonify({'success': True, 'message': 'Enfant ajouté'})
         
     except Exception as e:
-        print(f"[ERROR add_child] {e}")
+        _dbg(f"[ERROR add_child] {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -3992,6 +4461,15 @@ def comments():
                     'unread_by_sender': unread_by_sender
                 }, room=f'house_{house_id}')
                 
+                # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
+                socketio.emit('messages_list_update', {
+                    'house_id': house_id,
+                    'action': 'new_message',
+                    'sender_email': session['user'],
+                    'recipient_email': recipient_email
+                }, room=f'house_{house_id}')
+                _dbg(f"🔌 WebSocket: Synchronisation messagerie pour house_{house_id}")
+                
                 flash(f"Message envoyé à {recipient[1] if recipient[1] else recipient[0]}", "success")
             else:
                 flash("Destinataire invalide.", "danger")
@@ -4010,12 +4488,12 @@ def comments():
     # ET les messages de la maison (sender_type = 'house') Y COMPRIS les messages de suivi bébé
     # mais SAUF les messages de validation de tâches simples
     # Ajouter une sous-requête pour vérifier si le message a été lu par le destinataire
-    print(f"🔍 /comments - Récupération messages pour house_id={house_id}, user={session['user']}")
-    print(f"🔍 /comments - Requête SQL va être exécutée...")
+    _dbg(f"🔍 /comments - Récupération messages pour house_id={house_id}, user={session['user']}")
+    _dbg(f"🔍 /comments - Requête SQL va être exécutée...")
     c.execute("""
         SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
                sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
-               recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url,
+               recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url, recipient.avatar_style,
                CASE WHEN EXISTS (
                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = m.recipient_email
                ) THEN 1 ELSE 0 END as is_read_by_recipient,
@@ -4025,21 +4503,28 @@ def comments():
         FROM messages m
         LEFT JOIN users sender ON m.sender_email = sender.email
         LEFT JOIN users recipient ON m.recipient_email = recipient.email
-        WHERE m.house_id = ? 
+        WHERE m.house_id = ?
         AND (
             (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
             OR (m.sender_type = 'house' AND m.message_type NOT IN ('task_completed'))
         )
-        ORDER BY m.timestamp DESC
+        ORDER BY datetime(substr(m.timestamp, 1, 19)) DESC, m.id DESC
         LIMIT 100
     """, (session['user'], house_id, session['user'], session['user']))
     
     all_rows = c.fetchall()
-    print(f"🔍 /comments - Nombre de messages récupérés: {len(all_rows)}")
+    _dbg(f"🔍 /comments - Nombre de messages récupérés: {len(all_rows)}")
+    
+    # DEBUG: Afficher les 5 premiers messages avec leur ID, timestamp et type
+    _dbg(f"🔍 DEBUG - Ordre des 5 premiers messages:")
+    for i, row in enumerate(all_rows[:5]):
+        msg_id, sender_email, _, content, timestamp, sender_type, message_type = row[:7]
+        _dbg(f"  {i+1}. ID={msg_id}, timestamp={timestamp}, type={message_type}, sender_type={sender_type}")
+        _dbg(f"     content={content[:40]}...")
     
     messages_data = []
     for row in all_rows:
-        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, is_read_by_recipient, is_read_by_me = row
+        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, recipient_avatar_style, is_read_by_recipient, is_read_by_me = row
         
         # Ne plus marquer automatiquement comme lu - attendre le clic sur "Tout validé"
         # if sender_email != session['user']:
@@ -4051,8 +4536,8 @@ def comments():
             if message_type == 'baby_tracking':
                 # Utiliser les infos du joueur (sender) - CORRIGER l'affichage
                 display_sender_avatar = None
-                if sender_avatar_file:
-                    display_sender_avatar = f"/static/uploads/{sender_avatar_file}"
+                if validate_avatar_file(sender_avatar_file):
+                    display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
                 elif sender_avatar_url:
                     display_sender_avatar = sender_avatar_url
                 elif sender_avatar and len(str(sender_avatar)) <= 4:
@@ -4062,7 +4547,7 @@ def comments():
                     # Récupérer le style stocké au lieu d'utiliser 'lorelei' par défaut
                     sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'  # Style par défaut plus sympa
                     display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
-                    print(f"🍼 DEBUG: Avatar baby_tracking pour {sender_email}: seed={sender_avatar}, style={sender_style}")
+                    _dbg(f"🍼 DEBUG: Avatar baby_tracking pour {sender_email}: seed={sender_avatar}, style={sender_style}")
                 else:
                     display_sender_avatar = '👤'
                 
@@ -4089,12 +4574,16 @@ def comments():
         else:
             # Message d'un utilisateur
             display_sender_avatar = None
-            if sender_avatar_file:
-                display_sender_avatar = f"/static/uploads/{sender_avatar_file}"
+            if validate_avatar_file(sender_avatar_file):
+                display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
             elif sender_avatar_url:
                 display_sender_avatar = sender_avatar_url
             elif sender_avatar and len(str(sender_avatar)) <= 4:
                 display_sender_avatar = sender_avatar
+            elif sender_avatar:
+                # C'est un seed DiceBear - construire l'URL
+                sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'
+                display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
             else:
                 display_sender_avatar = '👤'
             
@@ -4103,12 +4592,16 @@ def comments():
         
         # Préparer l'avatar du destinataire
         display_recipient_avatar = None
-        if recipient_avatar_file:
-            display_recipient_avatar = f"/static/uploads/{recipient_avatar_file}"
+        if validate_avatar_file(recipient_avatar_file):
+            display_recipient_avatar = f"/static/avatars/{recipient_avatar_file}"
         elif recipient_avatar_url:
             display_recipient_avatar = recipient_avatar_url
         elif recipient_avatar and len(str(recipient_avatar)) <= 4:
             display_recipient_avatar = recipient_avatar
+        elif recipient_avatar:
+            # C'est un seed DiceBear - construire l'URL
+            recipient_style = recipient_avatar_style if recipient_avatar_style else 'adventurer'
+            display_recipient_avatar = f"https://api.dicebear.com/7.x/{recipient_style}/svg?seed={recipient_avatar}"
         else:
             display_recipient_avatar = '👤'
         
@@ -4135,21 +4628,21 @@ def comments():
     # Ne plus envoyer automatiquement de mise à jour WebSocket ici
     # L'utilisateur doit cliquer sur "Tout validé" pour marquer les messages comme lus
     
-    # Récupérer tous les joueurs de la maison (sauf l'utilisateur actuel)
-    print(f"[DEBUG COMMENTS] house_id={house_id}, current_user={session['user']}")
+    # Récupérer tous les joueurs de la maison (sauf l'utilisateur actuel pour le sélecteur)
+    _dbg(f"[DEBUG COMMENTS] house_id={house_id}, current_user={session['user']}")
     c.execute("""
-        SELECT email, name, avatar, avatar_file, avatar_url, player_color_hex
+        SELECT email, name, avatar, avatar_file, avatar_url, player_color
         FROM users 
-        WHERE house_id = ?
-    """, (house_id,))
+        WHERE house_id = ? AND email != ?
+    """, (house_id, session['user']))
     
     available_players = []
     players_result = c.fetchall()
-    print(f"[DEBUG COMMENTS] Nombre de joueurs trouvés (TOUS): {len(players_result)}")
+    _dbg(f"[DEBUG COMMENTS] Nombre de joueurs trouvés (sans current_user): {len(players_result)}")
     
     for player_row in players_result:
         player_email, player_name, player_avatar, player_avatar_file, player_avatar_url, player_color = player_row
-        print(f"[DEBUG COMMENTS] Joueur: {player_name} ({player_email})")
+        _dbg(f"[DEBUG COMMENTS] Joueur: {player_name} ({player_email})")
         
         # Préparer l'avatar
         display_avatar = None
@@ -4159,8 +4652,20 @@ def comments():
             display_avatar = player_avatar_url
         elif player_avatar and len(str(player_avatar)) <= 4:
             display_avatar = player_avatar
+        elif player_avatar:
+            # C'est un seed DiceBear - construire l'URL
+            # Récupérer le style de l'avatar
+            try:
+                c.execute("SELECT avatar_style FROM users WHERE email=?", (player_email,))
+                style_row = c.fetchone()
+                player_style = style_row[0] if style_row and style_row[0] else 'adventurer'
+            except:
+                player_style = 'adventurer'
+            display_avatar = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}"
         else:
-            display_avatar = '👤'
+            # Aucun avatar - générer un DiceBear par défaut
+            seed = player_email.split('@')[0] if player_email else 'default'
+            display_avatar = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}"
         
         available_players.append({
             'email': player_email,
@@ -4169,7 +4674,7 @@ def comments():
             'color': player_color if player_color else '#4A90E2'
         })
     
-    print(f"[DEBUG COMMENTS] available_players count: {len(available_players)}")
+    _dbg(f"[DEBUG COMMENTS] available_players count: {len(available_players)}")
     
     # Récupérer tous les joueurs pour l'affichage
     players = get_house_players_points(house_id)
@@ -4247,7 +4752,8 @@ def comments():
                          house_code=house_code,
                          house_name=house_name,
                          current_user_name=current_user_name,
-                         unread_count=unread_count)
+                         unread_count=unread_count,
+                         menu_page=True)
 
 @app.route('/mark_all_messages_read', methods=['POST'])
 def mark_all_messages_read():
@@ -4271,16 +4777,21 @@ def mark_all_messages_read():
     house_id = user_row[0]
     
     # Récupérer tous les messages non lus reçus par l'utilisateur
+    # ⚠️ Utiliser la MÊME logique que get_unread_message_count pour éviter les décalages
     c.execute("""
         SELECT m.id
         FROM messages m
         WHERE m.house_id = ?
-        AND (m.recipient_email = ? OR m.sender_type IN ('house', 'system'))
-        AND m.sender_email != ?
+        AND (m.sender_email IS NULL OR m.sender_email != ?)
+        AND m.message_type NOT IN ('task_completed')
+        AND (
+            (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
+            OR (m.sender_type = 'house')
+        )
         AND m.id NOT IN (
             SELECT message_id FROM message_reads WHERE user_email = ?
         )
-    """, (house_id, session['user'], session['user'], session['user']))
+    """, (house_id, session['user'], session['user'], session['user'], session['user']))
     
     unread_message_ids = [row[0] for row in c.fetchall()]
     
@@ -4297,6 +4808,12 @@ def mark_all_messages_read():
         'count': unread_count,
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender
+    }, room=f'house_{house_id}')
+    
+    # Notifier que cet utilisateur a tout lu (pour mettre à jour l'UI des autres)
+    socketio.emit('all_messages_read', {
+        'reader_email': session['user'],
+        'message_ids': unread_message_ids
     }, room=f'house_{house_id}')
     
     conn.close()
@@ -4371,6 +4888,13 @@ def mark_single_message_read_for_child():
         'updated_by': session['user']
     }, room=f'house_{house_id}')
     
+    # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
+    socketio.emit('message_read_update', {
+        'message_id': int(message_id),
+        'reader_email': child_email,
+        'read_by': session['user']
+    }, room=f'house_{house_id}')
+    
     return jsonify({
         'success': True,
         'message_id': message_id,
@@ -4436,6 +4960,13 @@ def mark_single_message_read():
         'count': unread_count,
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender
+    }, room=f'house_{house_id}')
+    
+    # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
+    socketio.emit('message_read_update', {
+        'message_id': int(message_id),
+        'reader_email': session['user'],
+        'read_by': session['user']
     }, room=f'house_{house_id}')
     
     return jsonify({
@@ -4854,7 +5385,7 @@ def open_reward_box():
     house_type_row = c.fetchone()
     house_type = house_type_row[0] if house_type_row and house_type_row[0] else 'family'
     
-    print(f"[DEBUG open_reward_box] house_id={house_id}, house_type={house_type}, box_number={box_number}")
+    _dbg(f"[DEBUG open_reward_box] house_id={house_id}, house_type={house_type}, box_number={box_number}")
     
     # Charger les récompenses personnalisées ou les récompenses par défaut
     # Grille Parents/Enfants (40 récompenses par défaut)
@@ -5005,25 +5536,25 @@ def open_reward_box():
     c.execute("SELECT rewards_json FROM custom_rewards WHERE house_id=? AND house_type=?", (house_id, house_type))
     custom_rewards_row = c.fetchone()
     
-    print(f"[DEBUG] Recherche custom_rewards: house_id={house_id}, house_type={house_type}")
-    print(f"[DEBUG] custom_rewards_row trouvé: {custom_rewards_row is not None}")
+    _dbg(f"[DEBUG] Recherche custom_rewards: house_id={house_id}, house_type={house_type}")
+    _dbg(f"[DEBUG] custom_rewards_row trouvé: {custom_rewards_row is not None}")
     
     if custom_rewards_row:
         # Utiliser les récompenses personnalisées
         custom_rewards_list = json.loads(custom_rewards_row[0])
         rewards = [{"text": reward, "image": None} for reward in custom_rewards_list]
-        print(f"[DEBUG] Utilisation de {len(rewards)} récompenses personnalisées")
+        _dbg(f"[DEBUG] Utilisation de {len(rewards)} récompenses personnalisées")
     else:
         # Utiliser les récompenses par défaut selon le type de foyer
         if house_type == 'couple':
             rewards = default_rewards_couple
-            print(f"[DEBUG] Utilisation des récompenses par défaut COUPLE")
+            _dbg(f"[DEBUG] Utilisation des récompenses par défaut COUPLE")
         elif house_type == 'coloc':
             rewards = default_rewards_coloc
-            print(f"[DEBUG] Utilisation des récompenses par défaut COLOC")
+            _dbg(f"[DEBUG] Utilisation des récompenses par défaut COLOC")
         else:
             rewards = default_rewards_family
-            print(f"[DEBUG] Utilisation des récompenses par défaut FAMILLE")
+            _dbg(f"[DEBUG] Utilisation des récompenses par défaut FAMILLE")
     
     reward = random.choice(rewards)
     reward_text = reward["text"]
@@ -5058,17 +5589,17 @@ def open_reward_box():
         """, (house_id, box_number, reward_text, session['user'], start_of_week))
         
         # Enregistrer la récompense dans les récompenses du joueur
-        print(f"[DEBUG] Insertion dans mystery_rewards: user={session['user']}, house={house_id}, reward={reward_text}")
+        _dbg(f"[DEBUG] Insertion dans mystery_rewards: user={session['user']}, house={house_id}, reward={reward_text}")
         c.execute("""
             INSERT INTO mystery_rewards (user_email, house_id, reward_text, won_date, used)
             VALUES (?, ?, ?, date('now'), 0)
         """, (session['user'], house_id, reward_text))
         
         conn.commit()
-        print(f"[DEBUG] Récompense enregistrée avec succès!")
+        _dbg(f"[DEBUG] Récompense enregistrée avec succès!")
     except Exception as e:
         conn.close()
-        print(f"[ERROR] Erreur lors de l'insertion: {str(e)}")
+        _dbg(f"[ERROR] Erreur lors de l'insertion: {str(e)}")
         return jsonify({'success': False, 'message': f'Erreur base de données: {str(e)}'}), 500
     
     conn.close()
@@ -5110,22 +5641,16 @@ def mes_recompenses():
     
     house_id = house_row[0]
     
-    print(f"[DEBUG mes_recompenses] house_id={house_id}, user={session['user']}")
+    _dbg(f"[DEBUG mes_recompenses] house_id={house_id}, user={session['user']}")
     
-    # Récupérer tous les joueurs de la maison avec leurs récompenses
-    c.execute("""
-        SELECT u.email, u.name, u.avatar, u.avatar_file
-        FROM users u
-        WHERE u.house_id=?
-        ORDER BY u.name
-    """, (house_id,))
+    # ===== UTILISER get_house_players_points() pour garantir les mêmes avatars que le menu =====
+    players_from_menu = get_house_players_points(house_id)
     
+    # Construire directement la liste players_data depuis get_house_players_points
     players_data = []
-    for player_row in c.fetchall():
-        player_email = player_row[0]
-        player_name = player_row[1]
-        player_avatar = player_row[2]
-        player_avatar_file = player_row[3]
+    for p in players_from_menu:
+        player_email = p.get('email')
+        player_name = p.get('name', '')
         
         # Récompenses disponibles de ce joueur
         c.execute("""
@@ -5143,7 +5668,8 @@ def mes_recompenses():
                 'date': r[2]
             })
         
-        print(f"[DEBUG] Joueur {player_name} ({player_email}): {len(available)} récompenses disponibles")
+        _dbg(f"[DEBUG] Joueur {player_name} ({player_email}): {len(available)} récompenses disponibles")
+        _dbg(f"[DEBUG]   avatar={p.get('avatar')}, file={p.get('avatar_file')}, url={p.get('avatar_url')}, style={p.get('avatar_style')}")
         
         # Récompenses utilisées de ce joueur
         c.execute("""
@@ -5165,8 +5691,10 @@ def mes_recompenses():
         players_data.append({
             'email': player_email,
             'name': player_name,
-            'avatar': player_avatar,
-            'avatar_file': player_avatar_file,
+            'avatar': p.get('avatar'),
+            'avatar_file': p.get('avatar_file'),
+            'avatar_url': p.get('avatar_url'),
+            'avatar_style': p.get('avatar_style', 'adventurer'),
             'available_rewards': available,
             'used_rewards': used,
             'is_current_user': player_email == session['user']
@@ -5190,7 +5718,7 @@ def use_reward(reward_id):
     if 'user' not in session:
         return jsonify({'success': False, 'message': 'Non connecté'}), 401
     
-    print(f"[DEBUG use_reward] reward_id={reward_id}, user={session['user']}")
+    _dbg(f"[DEBUG use_reward] reward_id={reward_id}, user={session['user']}")
     
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -5202,7 +5730,7 @@ def use_reward(reward_id):
     """, (reward_id, session['user']))
     
     reward_row = c.fetchone()
-    print(f"[DEBUG] Récompense trouvée: {reward_row is not None}")
+    _dbg(f"[DEBUG] Récompense trouvée: {reward_row is not None}")
     
     if not reward_row:
         conn.close()
@@ -5216,12 +5744,12 @@ def use_reward(reward_id):
     """, (reward_id,))
     
     rows_affected = c.rowcount
-    print(f"[DEBUG] Lignes modifiées: {rows_affected}")
+    _dbg(f"[DEBUG] Lignes modifiées: {rows_affected}")
     
     conn.commit()
     conn.close()
     
-    print(f"[DEBUG] Récompense {reward_id} marquée comme utilisée avec succès")
+    _dbg(f"[DEBUG] Récompense {reward_id} marquée comme utilisée avec succès")
     
     return jsonify({'success': True})
 
@@ -5451,7 +5979,7 @@ def profile():
     c = conn.cursor()
     
     # Récupérer les infos utilisateur
-    c.execute("SELECT name, email, avatar, avatar_file, house_id FROM users WHERE email=?", (session['user'],))
+    c.execute("SELECT name, email, avatar, avatar_file, house_id, avatar_url, avatar_style FROM users WHERE email=?", (session['user'],))
     user = c.fetchone()
     
     if not user:
@@ -5459,7 +5987,7 @@ def profile():
         flash("Utilisateur non trouvé", "danger")
         return redirect(url_for('login'))
     
-    user_name, user_email, user_avatar, user_photo, house_id = user
+    user_name, user_email, user_avatar, user_photo, house_id, user_avatar_url, user_avatar_style = user
     
     # Récupérer les infos de la maison
     house_name = ''
@@ -5477,6 +6005,8 @@ def profile():
                            user_email=user_email,
                            user_avatar=user_avatar,
                            user_photo=user_photo,
+                           user_avatar_url=user_avatar_url,
+                           user_avatar_style=user_avatar_style,
                            house_name=house_name,
                            house_code=house_code)
 
@@ -5494,11 +6024,20 @@ def update_profile():
     house_name_input = request.form.get('house_name', '').strip()
     
     import sys
-    print(f"🔍 UPDATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
+    _dbg(f"🔍 UPDATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
     sys.stdout.flush()
     
     conn = sqlite3.connect(DB)
     c = conn.cursor()
+    
+    # 📛 Récupérer l'ancien nom AVANT la mise à jour (pour propager le changement)
+    old_name = None
+    profile_house_id = None
+    if name:
+        c.execute("SELECT name, house_id FROM users WHERE email=?", (session['user'],))
+        old_row = c.fetchone()
+        old_name = old_row[0] if old_row and old_row[0] else None
+        profile_house_id = old_row[1] if old_row else None
     
     update_fields = []
     update_values = []
@@ -5508,6 +6047,8 @@ def update_profile():
         update_fields.append("name=?")
         update_values.append(name)
         session['user_name'] = name
+        if 'name' in session:
+            session['name'] = name
     
     # Gérer la photo uploadée (priorité maximale)
     if photo_data and photo_data.startswith('data:image'):
@@ -5516,36 +6057,36 @@ def update_profile():
             update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
             update_values.extend([photo_filename, '', '', ''])
             session['user_photo'] = photo_filename
-            print(f"✅ Photo uploadée: {photo_filename}")
+            _dbg(f"✅ Photo uploadée: {photo_filename}")
     
     # Gérer l'avatar si pas de photo
     elif avatar:
-        print(f"   📝 Traitement avatar: '{avatar}'")
+        _dbg(f"   📝 Traitement avatar: '{avatar}'")
         is_file = avatar.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
         is_emoji = len(avatar) <= 4 and any(ord(c) > 127 for c in avatar)
         is_dicebear = not is_file and not is_emoji
-        print(f"   📋 Type détecté: file={is_file}, emoji={is_emoji}, dicebear={is_dicebear}")
+        _dbg(f"   📋 Type détecté: file={is_file}, emoji={is_emoji}, dicebear={is_dicebear}")
         
         if is_file:
             update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
             update_values.extend([avatar, '', '', ''])
             session['user_avatar'] = avatar
-            print(f"✅ Fichier: {avatar}")
+            _dbg(f"✅ Fichier: {avatar}")
             
         elif is_emoji:
             update_fields.extend(["avatar=?", "avatar_file=?", "avatar_url=?", "avatar_style=?"])
             update_values.extend([avatar, '', '', ''])
             session['user_avatar'] = avatar
-            print(f"✅ Emoji: {avatar}")
+            _dbg(f"✅ Emoji: {avatar}")
             
         else:  # is_dicebear
             dicebear_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={avatar}"
             update_fields.extend(["avatar=?", "avatar_url=?", "avatar_style=?", "avatar_file=?"])
             update_values.extend([avatar, dicebear_url, avatar_style, ''])
             session['user_avatar'] = avatar
-            print(f"✅ DiceBear: seed={avatar}, style={avatar_style}, url={dicebear_url}")
-            print(f"   🔧 update_fields: {update_fields}")
-            print(f"   🔧 update_values: {update_values}")
+            _dbg(f"✅ DiceBear: seed={avatar}, style={avatar_style}, url={dicebear_url}")
+            _dbg(f"   🔧 update_fields: {update_fields}")
+            _dbg(f"   🔧 update_values: {update_values}")
             sys.stdout.flush()
         
         if 'user_photo' in session:
@@ -5556,6 +6097,22 @@ def update_profile():
         update_values.append(session['user'])
         query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
         c.execute(query, update_values)
+    
+    # 📛 Propager le changement de nom dans les messages existants
+    if name and old_name and name != old_name and profile_house_id:
+        propagate_player_name_change(c, session['user'], old_name, name, profile_house_id)
+        _dbg(f"📛 Pseudo mis à jour via profil: '{old_name}' → '{name}' pour {session['user']}")
+        
+        # 🔌 Notifier via WebSocket
+        if SOCKETIO_AVAILABLE and socketio:
+            try:
+                socketio.emit('player_name_updated', {
+                    'email': session['user'],
+                    'old_name': old_name,
+                    'new_name': name
+                }, namespace='/', room=f'house_{profile_house_id}')
+            except Exception as ws_err:
+                _dbg(f"⚠️ Erreur WebSocket changement nom: {ws_err}")
     
     # Mettre à jour le nom de la maison
     if house_name_input:
@@ -5575,6 +6132,8 @@ def update_profile():
 # Routes pour la création de profil
 @app.route('/create_profile')
 def create_profile():
+    _dbg(f"🎭 CREATE_PROFILE GET: user={session.get('user')}, house_name={session.get('house_name')}")
+    
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('signup_email'))
@@ -5602,10 +6161,15 @@ def create_profile():
         current_avatar_url = user[5] or ''  # URL DiceBear
         current_avatar_style = user[6] or 'lorelei'  # Style DiceBear
         
+        _dbg(f"   📊 User data: name={current_name}, registration_step={registration_step}, house_id={house_id}")
+        
         # Si l'utilisateur a COMPLÉTÉ son profil (registration_step='profile_created'), c'est une modification
         # Sinon, c'est toujours une première création même si le nom existe
         if registration_step == 'profile_created':
             change_avatar = True
+            _dbg(f"   ⚠️ Profil déjà créé -> mode modification")
+        else:
+            _dbg(f"   ✅ Première création de profil")
         
         # Récupérer le nom de la maison si existe
         if house_id:
@@ -5615,6 +6179,8 @@ def create_profile():
                 current_house_name = house[0]
     
     conn.close()
+    
+    _dbg(f"   🎨 Affichage create_profile.html (change_avatar={change_avatar})")
     
     return render_template('create_profile.html', 
                            change_avatar=change_avatar,
@@ -5639,7 +6205,7 @@ def create_profile_post():
     house_name_input = request.form.get('house_name', '').strip()
     
     import sys
-    print(f"🔍 CREATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
+    _dbg(f"🔍 CREATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
     sys.stdout.flush()
     
     if not name:
@@ -5670,7 +6236,7 @@ def create_profile_post():
         # CAS 1: Photo uploadée -> avatar_file seulement
         update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
         update_values.extend([photo_filename, '', '', ''])
-        print(f"✅ Avatar = Photo uploadée: {photo_filename}")
+        _dbg(f"✅ Avatar = Photo uploadée: {photo_filename}")
         
     elif avatar:
         # Détecter le type d'avatar
@@ -5682,20 +6248,20 @@ def create_profile_post():
             # CAS 2: Fichier existant (femme.png, homme.png, etc.)
             update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
             update_values.extend([avatar, '', '', ''])
-            print(f"✅ Avatar = Fichier: {avatar}")
+            _dbg(f"✅ Avatar = Fichier: {avatar}")
             
         elif is_emoji:
             # CAS 3: Emoji
             update_fields.extend(["avatar=?", "avatar_file=?", "avatar_url=?", "avatar_style=?"])
             update_values.extend([avatar, '', '', ''])
-            print(f"✅ Avatar = Emoji: {avatar}")
+            _dbg(f"✅ Avatar = Emoji: {avatar}")
             
         else:  # is_dicebear
             # CAS 4: DiceBear (seed)
             dicebear_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={avatar}"
             update_fields.extend(["avatar=?", "avatar_url=?", "avatar_style=?", "avatar_file=?"])
             update_values.extend([avatar, dicebear_url, avatar_style, ''])
-            print(f"✅ Avatar = DiceBear: seed={avatar}, style={avatar_style}, url={dicebear_url}")
+            _dbg(f"✅ Avatar = DiceBear: seed={avatar}, style={avatar_style}, url={dicebear_url}")
     
     # Finaliser la requête
     update_fields.append("registration_step=?")
@@ -5710,27 +6276,31 @@ def create_profile_post():
     user_house = c.fetchone()
     
     if not user_house or not user_house[0]:
+        # Récupérer les infos de session pour créer la maison
+        house_type = session.get('house_type', 'family')
+        house_name = session.get('house_name', 'Notre Foyer')
+        
         from datetime import date
         house_code = generate_house_code()
         today = date.today().isoformat()
         c.execute("""
-            INSERT INTO houses (name, house_name, level, health, mood, code, progress, last_reset_date) 
-            VALUES (?, ?, 1, 0, 'happy', ?, 0, ?)
-        """, ('', '', house_code, today))
+            INSERT INTO houses (name, house_name, house_type, level, health, mood, code, progress, last_reset_date) 
+            VALUES (?, ?, ?, 1, 100, 'happy', ?, 0, ?)
+        """, (house_name, house_name, house_type, house_code, today))
         house_id = c.lastrowid
         c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
     
     conn.commit()
     conn.close()
     
-    flash("Profil créé avec succès ! 🎉", "success")
-    return redirect(url_for('menu'))
-    conn.close()
-    
-    # Sauvegarde des informations dans la session
+    # Nettoyer les infos temporaires de session
+    session.pop('house_type', None)
+    session.pop('house_name', None)
     session['user_name'] = name
-    session['user_photo'] = photo_filename
-    session['registration_step'] = 'profile_created'
+    session['registration_step'] = 'complete'
+    
+    flash("🎉 Profil créé ! Bienvenue dans l'aventure !", "success")
+    return redirect(url_for('menu'))
     
     if photo_filename:
         flash(f"Profil créé avec succès pour {name} avec photo!", "success")
@@ -5740,73 +6310,225 @@ def create_profile_post():
     return redirect(url_for('menu'))
 
 
+@app.route('/invite/<code>')
+def invite_welcome(code):
+    """Route d'invitation personnalisée via SMS - affiche une page d'accueil chaleureuse"""
+    house_code = code.strip().upper()
+    
+    # Vérifier que le code existe
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute('SELECT id, name, house_type FROM houses WHERE code = ?', (house_code,))
+    house = c.fetchone()
+    
+    if not house:
+        # Code invalide, rediriger vers la page normale
+        conn.close()
+        flash('Code d\'invitation invalide', 'error')
+        return redirect(url_for('join_house'))
+    
+    house_id, house_name, house_type = house
+    
+    # Trouver le créateur de la maison (premier inscrit) pour afficher son nom
+    c.execute('SELECT name FROM users WHERE house_id = ? ORDER BY id ASC LIMIT 1', (house_id,))
+    inviter = c.fetchone()
+    inviter_name = inviter[0] if inviter else 'Ton ami'
+    
+    conn.close()
+    
+    return render_template('invite_welcome.html',
+                         house_code=house_code,
+                         house_name=house_name,
+                         house_type=house_type,
+                         inviter_name=inviter_name)
+
+
 @app.route('/join_house', methods=['GET', 'POST'])
 def join_house():
+    # Récupérer le code depuis l'URL (pour pré-remplir)
+    code_from_url = request.args.get('code', '').strip().upper()
+    
     if request.method == 'POST':
         house_code = request.form.get('house_code', '').strip().upper()
         user_name = request.form.get('user_name', '').strip().capitalize()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
-        
-        # Vérifier que tous les champs sont remplis (house_name retiré)
-        if not all([house_code, user_name, email, password]):
-            flash("Tous les champs sont requis.", "danger")
-            return render_template('join_house.html')
-        
-        # Vérifier que le mot de passe fait au moins 6 caractères
-        if len(password) < 6:
-            flash("Le mot de passe doit contenir au moins 6 caractères.", "danger")
-            return render_template('join_house.html')
+        is_login = request.form.get('is_login') == 'true'  # Nouveau champ pour distinguer connexion/inscription
         
         conn = sqlite3.connect(DB)
         c = conn.cursor()
         
-        try:
-            # Vérifier que le code de maison existe
-            c.execute("SELECT id, name FROM houses WHERE code=?", (house_code,))
-            house_row = c.fetchone()
-            
-            if not house_row:
-                flash("Code de maison invalide. Vérifiez le code et réessayez.", "danger")
+        # Vérifier que le code de maison existe
+        c.execute("SELECT id, name FROM houses WHERE code=?", (house_code,))
+        house_row = c.fetchone()
+        
+        if not house_row:
+            flash("Code de maison invalide. Vérifiez le code et réessayez.", "danger")
+            conn.close()
+            return render_template('join_house.html', code=code_from_url)
+        
+        house_id = house_row[0]
+        
+        # MODE CONNEXION : utilisateur existant qui rejoint une nouvelle maison
+        if is_login:
+            if not all([house_code, email, password]):
+                flash("Email et mot de passe requis pour se connecter.", "danger")
                 conn.close()
-                return render_template('join_house.html')
+                return render_template('join_house.html', code=code_from_url)
             
-            house_id = house_row[0]
+            # Vérifier les identifiants
+            c.execute("SELECT email, password, name FROM users WHERE email=?", (email,))
+            user = c.fetchone()
             
-            # Vérifier que l'email n'existe pas déjà
-            c.execute("SELECT email FROM users WHERE email=?", (email,))
-            if c.fetchone():
-                flash("Cet email est déjà utilisé. Connectez-vous ou utilisez un autre email.", "danger")
+            if not user or not check_password_hash(user[1], password):
+                flash("Email ou mot de passe incorrect.", "danger")
                 conn.close()
-                return render_template('join_house.html')
+                return render_template('join_house.html', code=code_from_url)
             
-            # Ne plus mettre à jour le nom de la maison ici - ce sera fait plus tard
-            
-            # Créer le nouvel utilisateur
-            hashed_password = generate_password_hash(password)
-            c.execute("""
-                INSERT INTO users (email, password, name, house_id, points, avatar)
-                VALUES (?, ?, ?, ?, 0, '🧑')
-            """, (email, hashed_password, user_name, house_id))
-            
+            # Mettre à jour la maison de l'utilisateur
+            c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, email))
             conn.commit()
+            
+            # 🔌 Récupérer tous les joueurs pour WebSocket (y compris les enfants)
+            c.execute("""
+                SELECT email, name, avatar, avatar_file, avatar_url, avatar_style, points, player_color
+                FROM users 
+                WHERE house_id = ?
+                ORDER BY name
+            """, (house_id,))
+            
+            players_data = []
+            for player in c.fetchall():
+                player_email, player_name, player_avatar, player_avatar_file, player_avatar_url, player_avatar_style, player_points, player_color = player
+                
+                display_avatar_url = None
+                if player_avatar_url:
+                    display_avatar_url = player_avatar_url
+                elif validate_avatar_file(player_avatar_file):
+                    display_avatar_url = f"/static/avatars/{player_avatar_file}"
+                elif player_avatar and player_avatar_style:
+                    display_avatar_url = f"https://api.dicebear.com/7.x/{player_avatar_style}/svg?seed={player_avatar}"
+                else:
+                    display_avatar_url = f"https://api.dicebear.com/7.x/{player_avatar_style or 'adventurer'}/svg?seed={player_name or player_email}"
+                
+                players_data.append({
+                    'email': player_email,
+                    'name': player_name,
+                    'avatar_url': display_avatar_url,
+                    'points': player_points or 0,
+                    'color': player_color
+                })
+            
             conn.close()
             
-            # Connecter automatiquement l'utilisateur
-            session.permanent = True  # Session persistante après rafraîchissement
+            # 🔌 Émettre WebSocket
+            try:
+                socketio.emit('players_list_update', {
+                    'players': players_data,
+                    'new_player': user[2],
+                    'action': 'player_joined'
+                }, namespace='/', room=f'house_{house_id}')
+                _dbg(f"🔌 WebSocket: Joueur '{user[2]}' a rejoint la maison (room: house_{house_id})")
+            except Exception as ws_err:
+                _dbg(f"⚠️ Erreur WebSocket join house: {ws_err}")
+            
+            # Connecter l'utilisateur
+            session.permanent = True
             session['user'] = email
-            session['name'] = user_name
+            session['name'] = user[2]
             
-            flash(f"🎉 Bienvenue {user_name} ! Créez maintenant votre profil et choisissez votre avatar !", "success")
-            return redirect(url_for('create_profile'))
+            flash(f"🎉 Bienvenue {user[2]} ! Vous avez rejoint la maison !", "success")
+            return redirect(url_for('menu'))
+        
+        # MODE INSCRIPTION : nouvel utilisateur
+        else:
+            if not all([house_code, user_name, email, password]):
+                flash("Tous les champs sont requis.", "danger")
+                conn.close()
+                return render_template('join_house.html', code=code_from_url)
             
-        except Exception as e:
-            conn.close()
-            print(f"Erreur lors de la création du compte: {e}")
-            flash("Une erreur s'est produite. Veuillez réessayer.", "danger")
-            return render_template('join_house.html')
+            # Vérifier que le mot de passe fait au moins 6 caractères
+            if len(password) < 6:
+                flash("Le mot de passe doit contenir au moins 6 caractères.", "danger")
+                conn.close()
+                return render_template('join_house.html', code=code_from_url)
+            
+            try:
+                # Vérifier que l'email n'existe pas déjà
+                c.execute("SELECT email FROM users WHERE email=?", (email,))
+                if c.fetchone():
+                    flash("Cet email est déjà utilisé. Connectez-vous ou utilisez un autre email.", "danger")
+                    conn.close()
+                    return render_template('join_house.html', code=code_from_url)
+                
+                # Créer le nouvel utilisateur
+                hashed_password = generate_password_hash(password)
+                c.execute("""
+                    INSERT INTO users (email, password, name, house_id, points, avatar)
+                    VALUES (?, ?, ?, ?, 0, '🧑')
+                """, (email, hashed_password, user_name, house_id))
+                
+                conn.commit()
+                
+                # 🔌 Récupérer tous les joueurs pour WebSocket (y compris les enfants)
+                c.execute("""
+                    SELECT email, name, avatar, avatar_file, avatar_url, avatar_style, points, player_color
+                    FROM users 
+                    WHERE house_id = ?
+                    ORDER BY name
+                """, (house_id,))
+                
+                players_data = []
+                for player in c.fetchall():
+                    player_email, player_name, player_avatar, player_avatar_file, player_avatar_url, player_avatar_style, player_points, player_color = player
+                    
+                    display_avatar_url = None
+                    if player_avatar_url:
+                        display_avatar_url = player_avatar_url
+                    elif validate_avatar_file(player_avatar_file):
+                        display_avatar_url = f"/static/avatars/{player_avatar_file}"
+                    elif player_avatar and player_avatar_style:
+                        display_avatar_url = f"https://api.dicebear.com/7.x/{player_avatar_style}/svg?seed={player_avatar}"
+                    else:
+                        display_avatar_url = f"https://api.dicebear.com/7.x/{player_avatar_style or 'adventurer'}/svg?seed={player_name or player_email}"
+                    
+                    players_data.append({
+                        'email': player_email,
+                        'name': player_name,
+                        'avatar_url': display_avatar_url,
+                        'points': player_points or 0,
+                        'color': player_color
+                    })
+                
+                conn.close()
+                
+                # 🔌 Émettre WebSocket
+                try:
+                    socketio.emit('players_list_update', {
+                        'players': players_data,
+                        'new_player': user_name,
+                        'action': 'player_registered'
+                    }, namespace='/', room=f'house_{house_id}')
+                    _dbg(f"🔌 WebSocket: Nouveau joueur '{user_name}' inscrit (room: house_{house_id})")
+                except Exception as ws_err:
+                    _dbg(f"⚠️ Erreur WebSocket registration: {ws_err}")
+                
+                # Connecter automatiquement l'utilisateur
+                session.permanent = True
+                session['user'] = email
+                session['name'] = user_name
+                
+                flash(f"🎉 Bienvenue {user_name} ! Créez maintenant votre profil et choisissez votre avatar !", "success")
+                return redirect(url_for('create_profile'))
+                
+            except Exception as e:
+                conn.close()
+                _dbg(f"Erreur lors de la création du compte: {e}")
+                flash("Une erreur s'est produite. Veuillez réessayer.", "danger")
+                return render_template('join_house.html', code=code_from_url)
     
-    return render_template('join_house.html')
+    # GET: afficher le formulaire avec le code pré-rempli
+    return render_template('join_house.html', code=code_from_url)
 
 
 @app.route('/invite_partner', methods=['GET', 'POST'])
@@ -5853,6 +6575,12 @@ def invite_partner():
             house_name = house_row[1] if house_row[1] else house_row[2]
             house_type = house_row[3] if house_row[3] else 'family'
     conn.close()
+
+    # Déterminer le contexte : inscription ou depuis manage_players
+    source = request.args.get('source', '')
+    if source == 'manage':
+        session['invite_source'] = 'manage'
+    from_manage = (session.get('invite_source') == 'manage')
     
     if request.method == 'POST':
         import json
@@ -5888,10 +6616,10 @@ def invite_partner():
                         )
                         sent_count += 1
                     except Exception as e:
-                        print(f"Erreur lors de l'envoi du SMS à {partner['name']}: {e}")
+                        _dbg(f"Erreur lors de l'envoi du SMS à {partner['name']}: {e}")
                     
             except Exception as e:
-                print(f"Erreur lors du traitement des partenaires: {e}")
+                _dbg(f"Erreur lors du traitement des partenaires: {e}")
         
         # Traiter les enfants (création de comptes)
         if children_data and house_id:
@@ -5916,12 +6644,12 @@ def invite_partner():
                             """, (child_email, child_name.capitalize(), house_id, child_avatar, session.get('user', '')))
                             children_created += 1
                     except Exception as e:
-                        print(f"Erreur lors de la création du compte enfant {child.get('name', '')}: {e}")
+                        _dbg(f"Erreur lors de la création du compte enfant {child.get('name', '')}: {e}")
                 
                 conn.commit()
                 conn.close()
             except Exception as e:
-                print(f"Erreur lors du traitement des enfants: {e}")
+                _dbg(f"Erreur lors du traitement des enfants: {e}")
         
         # Messages flash
         messages = []
@@ -5937,12 +6665,20 @@ def invite_partner():
         else:
             flash("Aucune invitation n'a pu être envoyée.", "warning")
         
-        # Continuer vers la création de profil
-        return redirect(url_for('create_profile'))
+        # Si on vient de manage_players, retourner directement au jeu
+        # Si on vient du parcours d'inscription, rediriger vers name_house
+        # Sinon, rediriger vers le menu
+        invite_source = session.pop('invite_source', '')
+        if invite_source == 'manage':
+            return redirect(url_for('menu'))
+        elif session.get('registration_step') in ['email_signup', 'house_type_chosen']:
+            return redirect(url_for('name_house'))
+        else:
+            return redirect(url_for('menu'))
     
     # Si accès direct à la page (GET), afficher la page d'invitation simple avec QR Code
     # Construire l'URL d'invitation
-    join_url = f"http://192.168.1.156:8000/join_house?code={house_code}"
+    join_url = f"{request.host_url}join_house?code={house_code}"
     
     # Choisir le template selon si on vient du processus d'inscription ou si on veut juste inviter
     # Pour l'instant, on affiche toujours le formulaire complet
@@ -5950,7 +6686,8 @@ def invite_partner():
                          house_code=house_code, 
                          house_name=house_name, 
                          house_type=house_type,
-                         join_url=join_url)
+                         join_url=join_url,
+                         from_manage=from_manage)
 
 
 @app.route('/partager_invitation')
@@ -5981,7 +6718,7 @@ def partager_invitation():
         return redirect(url_for('menu'))
     
     # Construire l'URL d'invitation
-    join_url = f"http://192.168.1.156:8000/join_house?code={house_code}"
+    join_url = f"{request.host_url}join_house?code={house_code}"
     
     return render_template('invitation_partner.html', 
                          house_code=house_code,
@@ -6050,43 +6787,73 @@ def fullhouse():
 
 @app.route('/menu')
 def menu():
-    from flask import render_template, session
-    import sqlite3
     from datetime import datetime
-    print(f"🚨🚨🚨 ROUTE /menu APPELÉE à {datetime.now()} 🚨🚨🚨")
+    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {datetime.now()} 🚨🚨🚨")
     players = []
     current_user_name = session.get('user', '')
-    # Récupérer les joueurs de la maison si l'utilisateur est connecté
+    house_name = None
+    show_house_name_form = False
+    show_intro_message = False
+    house_health = None
+    daily_report = []
+    player1_name = None
+    player1_points = 0
+    player1_avatar_url = None
+    player1_avatar = None
+    player1_avatar_file = None
+    player2_name = None
+    player2_points = 0
+    player2_avatar_url = None
+    unread_messages_count = 0
+    unread_by_sender = {}
+    unread_sent_to = {}
+    house_id = None
+
+    # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
     if 'user' in session:
         conn = sqlite3.connect(DB)
         c = conn.cursor()
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        row = c.fetchone()
         
-        # Si l'utilisateur n'a pas de maison, rediriger vers la page d'invitation
-        if not row or not row[0]:
-            conn.close()
-            flash("Crée ou rejoins une maison pour commencer à jouer ! 🏠", "info")
-            return redirect(url_for('invite_partner'))
-        
-        if row and row[0]:
-            house_id = row[0]
+        try:
+            # Vérifier si le profil est complet (nom + avatar + registration_step)
+            c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
+            user_row = c.fetchone()
+            
+            if not user_row:
+                conn.close()
+                return redirect(url_for('welcome'))
+            
+            user_name, user_avatar, user_avatar_file, house_id, registration_step = user_row
+            
+            # Si le parcours d'inscription n'est pas terminé
+            if registration_step != 'profile_created':
+                conn.close()
+                flash("Complète ton profil pour commencer à jouer ! 🎭", "info")
+                return redirect(url_for('create_profile'))
+            
+            if not user_name or (not user_avatar and not user_avatar_file):
+                conn.close()
+                flash("Complète ton profil pour commencer à jouer ! 🎭", "info")
+                return redirect(url_for('create_profile'))
+            
+            # Si l'utilisateur n'a pas de maison, rediriger vers la page d'invitation
+            if not house_id:
+                conn.close()
+                flash("Crée ou rejoins une maison pour commencer à jouer ! 🏠", "info")
+                return redirect(url_for('invite_partner'))
+            
             # Réinitialisation quotidienne de la santé/progression de la maison
             try:
-                from datetime import date
                 today = date.today().isoformat()
                 c.execute("SELECT health, last_reset_date FROM houses WHERE id=?", (house_id,))
                 hrow = c.fetchone()
                 if hrow:
                     current_last_reset = hrow[1]
                     if current_last_reset != today:
-                        # reset santé à 0 en début de journée
                         c.execute("UPDATE houses SET health=?, last_reset_date=? WHERE id=?", (0, today, house_id))
                         conn.commit()
             except Exception:
-                # Fallback: utiliser progress si health indisponible
                 try:
-                    from datetime import date
                     today = date.today().isoformat()
                     c.execute("SELECT progress, last_reset_date FROM houses WHERE id=?", (house_id,))
                     prow = c.fetchone()
@@ -6097,55 +6864,25 @@ def menu():
                             conn.commit()
                 except Exception:
                     pass
-            players = get_house_players_points(house_id)
-            print(f"🎯🎯🎯 MENU: {len(players)} joueurs chargés pour house_id={house_id}")
-            for p in players:
-                print(f"   ➡️ {p.get('name')}: email={p.get('email')}, daily_pts={p.get('daily_points')}")
+            
+            # 🚀 Réutiliser la connexion pour get_house_players_points (évite d'en ouvrir une 2ème)
+            players = get_house_players_points(house_id, existing_conn=conn)
+            _dbg(f"🎯🎯🎯 MENU: {len(players)} joueurs chargés pour house_id={house_id}")
+
             # Ajouter les streaks pour chaque joueur
             try:
                 for p in players:
                     p['streak'] = compute_daily_streak(conn, p.get('email'))
             except Exception:
                 pass
-            # Ajouter activité du jour (points et nombre de tâches) pour chaque joueur
-            try:
-                from datetime import date
-                today = date.today().isoformat()
-                for p in players:
-                    email = p.get('email')
-                    if not email:
-                        p['daily_points'] = 0
-                        p['daily_tasks'] = 0
-                        continue
-                    # Utiliser l'heure locale pour éviter les décalages de fuseau horaire
-                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at, 'localtime')=?", (email, today))
-                    sums = c.fetchone()
-                    p['daily_points'] = int(sums[0]) if sums and sums[0] is not None else 0
-                    p['daily_tasks'] = int(sums[1]) if sums and sums[1] is not None else 0
-            except Exception:
-                # En cas d'erreur, initialiser à zéro
-                for p in players:
-                    p['daily_points'] = 0
-                    p['daily_tasks'] = 0
-        conn.close()
-    # Récupérer le nom de la maison (afficher le formulaire si aucun des deux champs n'est rempli)
-    house_name = None
-    show_house_name_form = False
-    show_intro_message = False
-    house_health = None
-    daily_report = []
-    if 'user' in session:
-        conn = sqlite3.connect(DB)
-        c = conn.cursor()
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        row = c.fetchone()
-        if row and row[0]:
-            house_id = row[0]
+
+            # 🚀 daily_points déjà calculés dans get_house_players_points → pas de recalcul
+
+            # Récupérer nom et santé de la maison (dans la MÊME connexion)
             try:
                 c.execute("SELECT name, house_name, health FROM houses WHERE id=?", (house_id,))
                 house_row = c.fetchone()
             except sqlite3.OperationalError:
-                # Compatibilité anciennes bases sans colonne 'health'
                 c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))
                 r = c.fetchone()
                 house_row = (r[0], r[1], None) if r else None
@@ -6156,15 +6893,12 @@ def menu():
                     show_house_name_form = True
                     house_name = None
                 else:
-                    # Afficher house_name si présent, sinon name
                     house_name = house_name_db.strip() if house_name_db and house_name_db.strip() else name.strip() if name and name.strip() else None
-                    # Afficher le message d'introduction si la maison vient d'être nommée (paramètre URL)
                     if request.args.get('welcome') == '1':
                         show_intro_message = True
 
             # Rapport quotidien des tâches effectuées (par joueurs)
             try:
-                # Rapport du jour en heure locale via SQLite
                 c.execute("""
                     SELECT user_email, category, task_name, points, completed_at
                     FROM completed_tasks
@@ -6174,7 +6908,6 @@ def menu():
                     ORDER BY completed_at DESC
                 """, (house_id,))
                 rows = c.fetchall()
-                # Fallback basique si rien (sans conversion locale)
                 if not rows:
                     c.execute("""
                         SELECT user_email, category, task_name, points, completed_at
@@ -6184,7 +6917,6 @@ def menu():
                         ORDER BY completed_at DESC
                     """, (house_id,))
                     rows = c.fetchall()
-                # Diagnostic: si toujours vide, récupérer les 5 dernières tâches de la maison
                 diag_rows = []
                 if not rows:
                     c.execute("""
@@ -6195,48 +6927,14 @@ def menu():
                         LIMIT 5
                     """, (house_id,))
                     diag_rows = c.fetchall()
-                # Récupérer noms et avatars des joueurs
-                email_to_name = {}
-                email_to_avatar = {}
-                try:
-                    c.execute("SELECT email, name, avatar, avatar_file, avatar_url, avatar_style FROM users WHERE house_id=?", (house_id,))
-                    for e, n, avatar, avatar_file, avatar_url, avatar_style in c.fetchall():
-                        email_to_name[e] = n if n else (e.split('@')[0] if e else '')
-                        # Résoudre l'URL d'avatar
-                        final_url = None
-                        if avatar_file:
-                            try:
-                                final_url = url_for('static', filename=f'avatars/{avatar_file}')
-                            except Exception:
-                                final_url = None
-                        if not final_url and avatar_url:
-                            final_url = avatar_url
-                        if not final_url and avatar:
-                            try:
-                                idx = int(avatar)
-                                final_url = get_avatar_url(idx, avatar_style or 'adventurer')
-                            except (ValueError, TypeError):
-                                if isinstance(avatar, str) and avatar.startswith('http'):
-                                    final_url = avatar
-                                else:
-                                    final_url = url_for('static', filename=f'avatars/{avatar}') if avatar else None
-                        if not final_url:
-                            # Générer une URL DiceBear par défaut basée sur l'email
-                            seed = e.split('@')[0] if e else 'default'
-                            style = avatar_style or 'adventurer'
-                            final_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
-                        email_to_avatar[e] = final_url
-                except sqlite3.OperationalError:
-                    c.execute("SELECT email, name, avatar, avatar_url, avatar_style FROM users WHERE house_id=?", (house_id,))
-                    for e, n, avatar, avatar_url, avatar_style in c.fetchall():
-                        email_to_name[e] = n if n else (e.split('@')[0] if e else '')
-                        final_url = avatar_url or (get_avatar_url(int(avatar), avatar_style or 'adventurer') if str(avatar).isdigit() else url_for('static', filename=f'avatars/{avatar}')) if avatar else url_for('static', filename='avatars/homme.png')
-                        email_to_avatar[e] = final_url
+                # 🚀 Réutiliser les avatars déjà chargés dans players au lieu de refaire une requête
+                email_to_name = {p.get('email'): p.get('name', p.get('email', '').split('@')[0]) for p in players}
+                email_to_avatar = {p.get('email'): p.get('avatar_url', url_for('static', filename='images/default.png')) for p in players}
                 daily_report = [
                     {
                         'email': r[0],
                         'name': email_to_name.get(r[0], r[0]),
-                        'avatar_url': email_to_avatar.get(r[0], url_for('static', filename='avatars/homme.png')),
+                        'avatar_url': email_to_avatar.get(r[0], url_for('static', filename='images/default.png')),
                         'category': r[1],
                         'task_name': r[2],
                         'points': r[3],
@@ -6249,7 +6947,7 @@ def menu():
                         {
                             'email': r[0],
                             'name': email_to_name.get(r[0], r[0]),
-                            'avatar_url': email_to_avatar.get(r[0], url_for('static', filename='avatars/homme.png')),
+                            'avatar_url': email_to_avatar.get(r[0], url_for('static', filename='images/default.png')),
                             'category': r[1],
                             'task_name': r[2],
                             'points': r[3],
@@ -6259,19 +6957,76 @@ def menu():
                     ]
             except Exception:
                 daily_report = []
-        conn.close()
-    # Préparer les données header: joueur courant et joueur en attente
-    player1_name = None
-    player1_points = 0
-    player1_avatar_url = None
-    player1_avatar = None
-    player1_avatar_file = None
-    player2_name = None
-    player2_points = 0
-    player2_avatar_url = None
 
+            # 🔔 Messages non lus (dans la MÊME connexion, house_id déjà connu)
+            unread_messages_count = get_unread_message_count(session['user'], house_id)
+            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
+            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}")
+            
+            # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
+            custom_rooms_db = {}
+            if house_id:
+                try:
+                    c.execute("SELECT room_key, custom_name, custom_image, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
+                    custom_rooms_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': row[3]} for row in c.fetchall()}
+                except Exception as e:
+                    _dbg(f"⚠️ Erreur récupération custom_rooms: {e}")
+                    custom_rooms_db = {}
+
+        finally:
+            conn.close()
+
+    # 🏠 Construire la liste des pièces avec personnalisations
+    custom_rooms_data = []
+    # Définir les pièces par défaut (correspond exactement aux 12 cartes du menu)
+    ALL_DEFAULT_ROOMS = [
+        # Chambres (optionnelles – peuvent être masquées et renommées)
+        {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/chambreparentale marron.webp', 'category': 'chambre_parentale', 'fixed': False},
+        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/chambre1.webp',                'category': 'chambre_parentale',  'fixed': False},
+        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/chambre2.webp',                'category': 'chambre_parentale',  'fixed': False},
+        {'key': 'chambre_garcon',    'name': 'Chambre enfant','image': 'images/chambre garçon3.webp',        'category': 'chambre_garcon',     'fixed': False},
+        {'key': 'chambre_enfant',    'name': 'Chambre enfant','image': 'images/chambre enfant 4.webp',       'category': 'chambre_enfant',     'fixed': False},
+        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/chambre bébé4 .webp',         'category': 'chambre_bebe',       'fixed': False},
+        # Pièces fixes (ne peuvent pas être masquées, mais renommables)
+        {'key': 'salon',    'name': 'Salon',        'image': 'images/salonorange.webp',  'category': 'salon',      'fixed': True},
+        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/cuisinewoop.webp',  'category': 'cuisine',    'fixed': True},
+        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/sdbwoop.webp',     'category': 'salle_bain', 'fixed': True},
+        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/Wc2.webp',          'category': 'wc',         'fixed': True},
+        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/buanderie5.webp',   'category': 'buanderie',  'fixed': True},
+        {'key': 'garage',   'name': 'Garage',       'image': 'images/Garage2.webp',      'category': 'garage',     'fixed': True},
+    ]
+    if house_id:
+        for room in ALL_DEFAULT_ROOMS:
+            room_data = room.copy()
+            
+            # Appliquer les personnalisations si elles existent
+            if room['key'] in custom_rooms_db:
+                custom = custom_rooms_db[room['key']]
+                if custom['name']:
+                    room_data['name'] = custom['name']
+                if custom['image']:
+                    room_data['image'] = custom['image']
+                room_data['is_hidden'] = bool(custom['is_hidden'])
+            else:
+                room_data['is_hidden'] = False
+            
+            # Les pièces fixes ne sont jamais masquées
+            if room['fixed']:
+                room_data['is_hidden'] = False
+            
+            # N'ajouter que les pièces non masquées
+            if not room_data.get('is_hidden'):
+                custom_rooms_data.append(room_data)
+    else:
+        # Pas de maison : afficher toutes les pièces par défaut
+        for room in ALL_DEFAULT_ROOMS:
+            room_data = room.copy()
+            room_data['is_hidden'] = False
+            custom_rooms_data.append(room_data)
+
+    # Préparer les données header: joueur courant et joueur en attente
     if players:
-        # Identifier le joueur courant dans la liste
         current_email = session.get('user')
         current_player = None
         for p in players:
@@ -6281,34 +7036,46 @@ def menu():
         # Joueur courant = player1
         if current_player:
             player1_name = current_player.get('name')
-            player1_points = current_player.get('daily_points', 0)  # Utiliser daily_points
+            player1_points = current_player.get('daily_points', 0)
             player1_avatar_url = current_player.get('avatar_url')
             player1_avatar = current_player.get('avatar')
             player1_avatar_file = current_player.get('avatar_file')
-            # DEBUG: Afficher les valeurs d'avatar
-            print(f"🔍 DEBUG Avatar Player1: email={current_email}, avatar={player1_avatar}, avatar_url={player1_avatar_url}, avatar_file={player1_avatar_file}")
+            _dbg(f"🔍 DEBUG Avatar Player1: email={current_email}, avatar={player1_avatar}, avatar_url={player1_avatar_url}, avatar_file={player1_avatar_file}")
         else:
-            # fallback si non trouvé
-            p0 = players[0]
-            player1_name = p0.get('name')
-            player1_points = p0.get('daily_points', 0)  # Utiliser daily_points
-            player1_avatar_url = p0.get('avatar_url')
-            player1_avatar = p0.get('avatar')
-            player1_avatar_file = p0.get('avatar_file')
+            fallback_player = None
+            for p in players:
+                if p.get('email') == current_email:
+                    fallback_player = p
+                    break
+            
+            if fallback_player:
+                player1_name = fallback_player.get('name')
+                player1_points = fallback_player.get('daily_points', 0)
+                player1_avatar_url = fallback_player.get('avatar_url')
+                player1_avatar = fallback_player.get('avatar')
+                player1_avatar_file = fallback_player.get('avatar_file')
+                _dbg(f"⚠️ DEBUG Fallback avec session email: {current_email}, avatar={player1_avatar}")
+            else:
+                p0 = players[0]
+                player1_name = p0.get('name')
+                player1_points = p0.get('daily_points', 0)
+                player1_avatar_url = p0.get('avatar_url')
+                player1_avatar = p0.get('avatar')
+                player1_avatar_file = p0.get('avatar_file')
+                _dbg(f"⚠️ DEBUG Fallback ultime avec players[0]: email={p0.get('email')}, avatar={player1_avatar}")
         # Joueur en attente = premier autre joueur de la maison
         others = [p for p in players if p.get('email') != current_email]
         if others:
             p2 = others[0]
             player2_name = p2.get('name')
-            player2_points = p2.get('daily_points', 0)  # Utiliser daily_points
+            player2_points = p2.get('daily_points', 0)
             player2_avatar_url = p2.get('avatar_url')
     
-# 🎨 Créer une map de couleurs cohérente pour tous les joueurs
+    # 🎨 Créer une map de couleurs cohérente pour tous les joueurs
     if players:
         player_emails = [p.get('email') for p in players if p.get('email')]
         color_map = get_player_colors_map(player_emails)
         
-        # Assigner les couleurs à chaque joueur
         for player in players:
             email = player.get('email')
             if email and email in color_map:
@@ -6317,24 +7084,6 @@ def menu():
             else:
                 player['color'] = 'linear-gradient(180deg, #95A5A6 0%, #7F8C8D 100%)'
                 player['color_h'] = 'linear-gradient(90deg, #95A5A6 0%, #7F8C8D 100%)'
-
-    from flask import make_response
-    
-    # 🔔 Compter les messages non lus pour l'utilisateur
-    unread_messages_count = 0
-    unread_by_sender = {}
-    unread_sent_to = {}
-    if 'user' in session:
-        conn = sqlite3.connect(DB)
-        c = conn.cursor()
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        user_house_row = c.fetchone()
-        if user_house_row and user_house_row[0]:
-            unread_messages_count = get_unread_message_count(session['user'], user_house_row[0])
-            unread_by_sender = get_unread_messages_by_sender(session['user'], user_house_row[0])
-            unread_sent_to = get_unread_messages_sent_to(session['user'], user_house_row[0])
-            print(f"🔔 DEBUG menu - {session['user']}: unread_by_sender = {unread_by_sender}")
-        conn.close()
     
     resp = make_response(render_template(
         'menu.html',
@@ -6358,6 +7107,7 @@ def menu():
         unread_messages_count=unread_messages_count,
         unread_by_sender=unread_by_sender,
         unread_sent_to=unread_sent_to,
+        custom_rooms=custom_rooms_data,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
@@ -6370,6 +7120,105 @@ def menu():
 @app.route('/ping')
 def ping():
     return 'OK', 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
+# ════════════════════════════════════════════════════════════
+# 🏡 Personnalisation de la maison (pièces)
+# ════════════════════════════════════════════════════════════
+@app.route('/personnaliser_maison', methods=['GET', 'POST'])
+def personnaliser_maison():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    # Récupérer house_id depuis la DB (même pattern que menu())
+    house_id = None
+    conn_h = sqlite3.connect(DB)
+    ch = conn_h.cursor()
+    ch.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    row_h = ch.fetchone()
+    if row_h:
+        house_id = row_h[0]
+    conn_h.close()
+
+    if not house_id:
+        flash("Crée ou rejoins une maison pour personnaliser les pièces ! 🏠", "info")
+        return redirect(url_for('invite_partner'))
+
+    # Liste complète de toutes les pièces (fixe = ne peut pas être masquée)
+    ALL_ROOMS = [
+        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',     'image': 'images/chambreparentale marron.webp', 'fixed': False},
+        {'key': 'chambre1',          'default_name': 'Chambre 2',     'image': 'images/chambre1.webp',                'fixed': False},
+        {'key': 'chambre2',          'default_name': 'Chambre 3',     'image': 'images/chambre2.webp',                'fixed': False},
+        {'key': 'chambre_garcon',    'default_name': 'Chambre enfant','image': 'images/chambre garçon3.webp',        'fixed': False},
+        {'key': 'chambre_enfant',    'default_name': 'Chambre enfant','image': 'images/chambre enfant 4.webp',       'fixed': False},
+        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/chambre bébé4 .webp',         'fixed': False},
+        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/salonorange.webp',             'fixed': True},
+        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/cuisinewoop.webp',             'fixed': True},
+        {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/sdbwoop.webp',                'fixed': True},
+        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/Wc2.webp',                    'fixed': True},
+        {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/buanderie5.webp',              'fixed': True},
+        {'key': 'garage',            'default_name': 'Garage',        'image': 'images/Garage2.webp',                'fixed': True},
+    ]
+
+    if request.method == 'POST':
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        try:
+            for room in ALL_ROOMS:
+                key = room['key']
+                custom_name = request.form.get(f'name_{key}', '').strip()
+                is_hidden = 0 if room['fixed'] else (1 if request.form.get(f'hidden_{key}') else 0)
+                # Stocker None si le nom est vide ou identique au nom par défaut
+                if not custom_name or custom_name == room['default_name']:
+                    custom_name = None
+                c.execute("""
+                    INSERT INTO custom_rooms (house_id, room_key, custom_name, is_hidden)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(house_id, room_key) DO UPDATE SET
+                        custom_name = excluded.custom_name,
+                        is_hidden   = excluded.is_hidden
+                """, (house_id, key, custom_name, is_hidden))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            _dbg(f"⚠️ edit_house POST error: {e}")
+        finally:
+            conn.close()
+        return redirect(url_for('menu'))
+
+    # GET : charger les réglages actuels de la maison
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    try:
+        c.execute("SELECT room_key, custom_name, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
+        custom_db = {row[0]: {'name': row[1], 'is_hidden': bool(row[2])} for row in c.fetchall()}
+    except Exception:
+        custom_db = {}
+    finally:
+        conn.close()
+
+    rooms_data = []
+    for room in ALL_ROOMS:
+        r = room.copy()
+        cust = custom_db.get(room['key'], {})
+        r['current_name'] = cust.get('name') or room['default_name']
+        r['is_hidden']    = False if room['fixed'] else cust.get('is_hidden', False)
+        rooms_data.append(r)
+
+    # Récupérer les prénoms des membres de la maison pour l'UI
+    house_members = []
+    try:
+        conn_m = sqlite3.connect(DB)
+        cm = conn_m.cursor()
+        cm.execute("SELECT name FROM users WHERE house_id=? ORDER BY id", (house_id,))
+        house_members = [row[0] for row in cm.fetchall() if row[0]]
+        conn_m.close()
+    except Exception:
+        pass
+
+    return render_template('edit_house.html', rooms=rooms_data, house_members=house_members)
+
+
 
 # Page de nettoyage du cache
 @app.route('/clear_cache')
@@ -6485,9 +7334,11 @@ CATEGORY_NAMES = {
     'cuisine': ('Cuisine', '🍳'),
     'buanderie': ('Buanderie', '👕'),
     'toilettes': ('Toilettes', '🚽'),
-    'chambre': ('Chambre Parentale', '🛏️'),
+    'chambre': ('Chambre', '🛏️'),
+    'chambre_parentale': ('Chambre', '🛏️'),
     'salle_bain': ('Salle de bain', '🛁'),
     'chambre_enfant': ('Chambre Enfant', '🧸'),
+    'chambre_garcon': ('Chambre Enfant', '🧸'),
     'chambre_bebe': ('Chambre Bébé', '👶'),
     'chambre_ado': ('Zone Ados', '🎮'),
     'piece_bonus': ('Pièce Bonus', '💎'),
@@ -6810,7 +7661,8 @@ def custom_task_page(task_id):
                 return redirect(url_for('menu'))
         
         # Récupérer le joueur qui a fait la tâche (depuis le formulaire)
-        player_email = request.form.get('player_email', session['user'])
+        _raw_pe = request.form.get('player_email', '')
+        player_email = _raw_pe if _raw_pe else session['user']
         
         # Vérifier que ce joueur est bien dans la même maison
         c.execute("SELECT house_id FROM users WHERE email=?", (player_email,))
@@ -6854,13 +7706,14 @@ def custom_task_page(task_id):
                         })
                     
                     # Utiliser socketio.emit() directement pour émettre depuis une route HTTP
+                    # ✅ room= envoie à TOUS les clients de la room
                     socketio.emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
                     }, namespace='/', room=f'house_{user_house_id}')
-                    print(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{user_house_id})")
+                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{user_house_id})")
                 except Exception as ws_err:
-                    print(f"⚠️ Erreur WebSocket points: {ws_err}")
+                    _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
             
             # Augmenter la santé de la maison
             try:
@@ -6894,10 +7747,10 @@ def custom_task_page(task_id):
             bottle_ml = request.form.get('bottle_ml')
             observations = request.form.get('observations')
             
-            print(f"🔍 CUSTOM TASK BABY TRACKING - Task: {task_name}, Player: {player_name}, Time: {tracking_time}, ML: {bottle_ml}")
+            _dbg(f"🔍 CUSTOM TASK BABY TRACKING - Task: {task_name}, Player: {player_name}, Time: {tracking_time}, ML: {bottle_ml}")
             
             if tracking_time:  # Si données de suivi présentes
-                print(f"✅ Tracking time présent: {tracking_time}")
+                _dbg(f"✅ Tracking time présent: {tracking_time}")
                 try:
                     # Déterminer le type de tâche bébé
                     task_type = None
@@ -6908,17 +7761,17 @@ def custom_task_page(task_id):
                     elif 'dormir' in task_name.lower():
                         task_type = 'sommeil'
                     
-                    print(f"🔍 Type de tâche détecté: {task_type}")
+                    _dbg(f"🔍 Type de tâche détecté: {task_type}")
                     
                     if task_type:
-                        print(f"✅ Insertion dans baby_tracking: user={player_email}, house={user_house_id}, type={task_type}")
+                        _dbg(f"✅ Insertion dans baby_tracking: user={player_email}, house={user_house_id}, type={task_type}")
                         # Sauvegarder dans baby_tracking
                         c.execute("""
                             INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
                             VALUES (?, ?, ?, ?, ?, ?)
                         """, (player_email, user_house_id, task_type, tracking_time, bottle_ml if bottle_ml else None, observations))
                         conn.commit()
-                        print(f"✅ Enregistré dans baby_tracking")
+                        _dbg(f"✅ Enregistré dans baby_tracking")
                         
                         # Créer un message détaillé pour le partenaire
                         if task_type == 'biberon':
@@ -6935,16 +7788,16 @@ def custom_task_page(task_id):
                             if observations:
                                 message_text += f"\n📝 {observations}"
                         
-                        print(f"📨 Création message: {message_text}")
+                        _dbg(f"📨 Création message: {message_text}")
                         create_system_message(user_house_id, message_text, 'baby_tracking', sender_email=player_email)
-                        print(f"✅ Message créé avec succès!")
+                        _dbg(f"✅ Message créé avec succès!")
                 except Exception as e:
-                    print(f"⚠️ Erreur sauvegarde baby tracking: {e}")
+                    _dbg(f"⚠️ Erreur sauvegarde baby tracking: {e}")
                     import traceback
                     traceback.print_exc()
                     # Ne pas bloquer la validation si le tracking échoue
             else:
-                print(f"⚠️ PAS de tracking_time - formulaire non rempli")
+                _dbg(f"⚠️ PAS de tracking_time - formulaire non rempli")
             
             # 🎯 Messages automatiques désactivés
             # Les messages ne sont plus envoyés lors de la validation pour éviter l'encombrement
@@ -6985,6 +7838,8 @@ def custom_task_page(task_id):
     conn.close()
     
     # GET -> afficher la page améliorée (réutiliser le template task_page_enhanced)
+    norm_cat_custom = normalize_category(category)
+    cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), '🏠'))
     return render_template('task_page_enhanced.html', 
                           task_name=task_name, 
                           task_image=task_image, 
@@ -6999,7 +7854,10 @@ def custom_task_page(task_id):
                           total_points=total_points, 
                           category=category,
                           task_id=task_id,
-                          is_custom_task=True)
+                          current_task_id=task_id,
+                          is_custom_task=True,
+                          category_name=cat_name_custom,
+                          category_icon=cat_icon_custom)
 
 
 @app.route('/task_enhanced/<cat>/<int:task_id>', methods=['GET', 'POST'])
@@ -7018,12 +7876,12 @@ def task_enhanced(cat, task_id):
     
     # 🔍 DEBUG: Voir quel task_name est passé au template
     import sys
-    print(f"\n🎯🎯🎯 [TASK_ENHANCED GET] 🎯🎯🎯", flush=True)
-    print(f"   URL: /task_enhanced/{cat}/{task_id}", flush=True)
-    print(f"   normalized_cat: {normalized_cat}", flush=True)
-    print(f"   task_id: {task_id}", flush=True)
-    print(f"   task_name passé au template: '{task_name}'", flush=True)
-    print(f"🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯\n", flush=True)
+    _dbg(f"\n🎯🎯🎯 [TASK_ENHANCED GET] 🎯🎯🎯", flush=True)
+    _dbg(f"   URL: /task_enhanced/{cat}/{task_id}", flush=True)
+    _dbg(f"   normalized_cat: {normalized_cat}", flush=True)
+    _dbg(f"   task_id: {task_id}", flush=True)
+    _dbg(f"   task_name passé au template: '{task_name}'", flush=True)
+    _dbg(f"🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯\n", flush=True)
     sys.stdout.flush()
     
     task_image = task.get('image')
@@ -7086,12 +7944,13 @@ def task_enhanced(cat, task_id):
         c = conn.cursor()
         
         # Récupérer le joueur qui a fait la tâche (depuis le formulaire)
-        player_email = request.form.get('player_email', session['user'])
+        _raw_player_email = request.form.get('player_email', '')
+        player_email = _raw_player_email if _raw_player_email else session['user']
         
         # LOGS DE DEBUG
-        print(f"🎯 [VALIDATION] Utilisateur connecté: {session['user']}")
-        print(f"🎯 [VALIDATION] Joueur sélectionné (player_email): {player_email}")
-        print(f"🎯 [VALIDATION] Tâche: {task_name} ({task_points} pts)")
+        _dbg(f"🎯 [VALIDATION] Utilisateur connecté: {session['user']}")
+        _dbg(f"🎯 [VALIDATION] Joueur sélectionné (player_email): {player_email}")
+        _dbg(f"🎯 [VALIDATION] Tâche: {task_name} ({task_points} pts)")
         
         # Vérifier que l'utilisateur connecté et le joueur sélectionné sont dans la même maison
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
@@ -7164,8 +8023,8 @@ def task_enhanced(cat, task_id):
             c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (final_task_points, player_email))
             
             # LOGS DE DEBUG
-            print(f"✅ [VALIDATION] Points attribués à: {player_email}")
-            print(f"✅ [VALIDATION] Montant: {final_task_points} points")
+            _dbg(f"✅ [VALIDATION] Points attribués à: {player_email}")
+            _dbg(f"✅ [VALIDATION] Montant: {final_task_points} points")
             
             # 🔌 WEBSOCKET: Notifier tous les joueurs de la mise à jour des points
             if SOCKETIO_AVAILABLE and socketio:
@@ -7195,13 +8054,14 @@ def task_enhanced(cat, task_id):
                         })
                     
                     # Utiliser socketio.emit() directement pour émettre depuis une route HTTP
+                    # ✅ room= envoie à TOUS les clients de la room
                     socketio.emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
                     }, namespace='/', room=f'house_{house_id}')
-                    print(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{house_id})")
+                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{house_id})")
                 except Exception as ws_err:
-                    print(f"⚠️ Erreur WebSocket points: {ws_err}")
+                    _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
             
             # augmenter la santé/progression de la maison
             try:
@@ -7241,10 +8101,10 @@ def task_enhanced(cat, task_id):
             bottle_ml = request.form.get('bottle_ml')
             observations = request.form.get('observations')
             
-            print(f"🔍 BABY TRACKING - Task: {task_name}, Player: {player_name}, Time: {tracking_time}, ML: {bottle_ml}")
+            _dbg(f"🔍 BABY TRACKING - Task: {task_name}, Player: {player_name}, Time: {tracking_time}, ML: {bottle_ml}")
             
             if tracking_time:  # Si données de suivi présentes
-                print(f"✅ Tracking time présent: {tracking_time}")
+                _dbg(f"✅ Tracking time présent: {tracking_time}")
                 try:
                     # Déterminer le type de tâche bébé
                     task_type = None
@@ -7255,17 +8115,17 @@ def task_enhanced(cat, task_id):
                     elif 'dormir' in task_name.lower():
                         task_type = 'sommeil'
                     
-                    print(f"🔍 Type de tâche détecté: {task_type}")
+                    _dbg(f"🔍 Type de tâche détecté: {task_type}")
                     
                     if task_type:
-                        print(f"✅ Insertion dans baby_tracking: user={player_email}, house={house_id}, type={task_type}")
+                        _dbg(f"✅ Insertion dans baby_tracking: user={player_email}, house={house_id}, type={task_type}")
                         # Sauvegarder dans baby_tracking
                         c.execute("""
                             INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
                             VALUES (?, ?, ?, ?, ?, ?)
                         """, (player_email, house_id, task_type, tracking_time, bottle_ml if bottle_ml else None, observations))
                         conn.commit()
-                        print(f"✅ Enregistré dans baby_tracking")
+                        _dbg(f"✅ Enregistré dans baby_tracking")
                         
                         # Créer un message détaillé pour le partenaire
                         if task_type == 'biberon':
@@ -7282,16 +8142,16 @@ def task_enhanced(cat, task_id):
                             if observations:
                                 message_text += f"\n📝 {observations}"
                         
-                        print(f"📨 Création message: {message_text}")
+                        _dbg(f"📨 Création message: {message_text}")
                         create_system_message(house_id, message_text, 'baby_tracking', sender_email=player_email)
-                        print(f"✅ Message créé avec succès!")
+                        _dbg(f"✅ Message créé avec succès!")
                 except Exception as e:
-                    print(f"⚠️ Erreur sauvegarde baby tracking: {e}")
+                    _dbg(f"⚠️ Erreur sauvegarde baby tracking: {e}")
                     import traceback
                     traceback.print_exc()
                     # Ne pas bloquer la validation si le tracking échoue
             else:
-                print(f"⏭️ Pas de tracking_time fourni - formulaire baby tracking non rempli")
+                _dbg(f"⏭️ Pas de tracking_time fourni - formulaire baby tracking non rempli")
             
             # 🎯 Messages automatiques désactivés
             # Les messages ne sont plus envoyés lors de la validation pour éviter l'encombrement
@@ -7332,16 +8192,17 @@ def task_enhanced(cat, task_id):
 
     # GET -> afficher la page améliorée
     # 🎨 DEBUG: Afficher les couleurs des joueurs
-    print(f"🎨 [TASK_ENHANCED] Joueurs passés au template:")
+    _dbg(f"🎨 [TASK_ENHANCED] Joueurs passés au template:")
     for p in players:
-        print(f"   • {p.get('name', 'N/A')}: color={p.get('color', 'NONE')}")
+        _dbg(f"   • {p.get('name', 'N/A')}: color={p.get('color', 'NONE')}")
     
     # 🔧 DEBUG: Afficher task_id passé au template
-    print(f"🔧 [TASK_ENHANCED] task_id passé au template: {task_id}")
-    print(f"🔧 [TASK_ENHANCED] task_name: {task_name}")
-    print(f"🔧 [TASK_ENHANCED] category: {cat}")
+    _dbg(f"🔧 [TASK_ENHANCED] task_id passé au template: {task_id}")
+    _dbg(f"🔧 [TASK_ENHANCED] task_name: {task_name}")
+    _dbg(f"🔧 [TASK_ENHANCED] category: {cat}")
     
-    return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, task_id=task_id, current_task_id=task_id, hide_header=True)
+    category_name_display, category_icon_display = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
+    return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, task_id=task_id, current_task_id=task_id, hide_header=True, category_name=category_name_display, category_icon=category_icon_display)
 
 
 # 🔧 Route de test pour debug task_id
@@ -7357,9 +8218,9 @@ def api_validate_task():
     Valide une tâche via AJAX sans rechargement de page.
     Retourne les infos nécessaires pour jouer le son et afficher l'animation.
     """
-    print("="*80)
-    print("🎯 API VALIDATE_TASK APPELÉE !")
-    print("="*80)
+    _dbg("="*80)
+    _dbg("🎯 API VALIDATE_TASK APPELÉE !")
+    _dbg("="*80)
     
     from flask import jsonify
     import time
@@ -7367,8 +8228,8 @@ def api_validate_task():
     import random
     
     if 'user' not in session:
-        print("❌ Utilisateur non connecté - session vide ou expirée")
-        print(f"📋 Session actuelle: {dict(session) if session else 'Aucune session'}")
+        _dbg("❌ Utilisateur non connecté - session vide ou expirée")
+        _dbg(f"📋 Session actuelle: {dict(session) if session else 'Aucune session'}")
         # ✅ Retourner 401 SANS body JSON pour éviter l'affichage du popup
         return '', 401
     
@@ -7382,20 +8243,22 @@ def api_validate_task():
     task_id = data.get('task_id')
     task_name_from_payload = data.get('task_name')  # ✅ Nom envoyé par le frontend
     category = data.get('category')
-    player_email = data.get('player_email', session['user'])
+    # ⚠️ FIX: data.get('player_email', default) retourne None si la clé existe avec valeur null
+    # → utiliser 'or' pour le fallback vers l'utilisateur connecté
+    player_email = data.get('player_email') or session['user']
     
     import sys
-    print(f"\n{'='*60}", flush=True)
-    print(f"🔍 [DEBUG VALIDATION] Début de la validation", flush=True)
-    print(f"{'='*60}", flush=True)
-    print(f"📥 Données JSON brutes: {data}", flush=True)
-    print(f"📥 Données reçues du payload:", flush=True)
-    print(f"   - task_name_from_payload: '{task_name_from_payload}' (type: {type(task_name_from_payload).__name__})", flush=True)
-    print(f"   - category: '{category}'", flush=True)
-    print(f"   - task_id: {task_id}", flush=True)
-    print(f"   - task_type: '{task_type}'", flush=True)
-    print(f"   - player_email: '{player_email}'", flush=True)
-    print(f"{'='*60}\n", flush=True)
+    _dbg(f"\n{'='*60}", flush=True)
+    _dbg(f"🔍 [DEBUG VALIDATION] Début de la validation", flush=True)
+    _dbg(f"{'='*60}", flush=True)
+    _dbg(f"📥 Données JSON brutes: {data}", flush=True)
+    _dbg(f"📥 Données reçues du payload:", flush=True)
+    _dbg(f"   - task_name_from_payload: '{task_name_from_payload}' (type: {type(task_name_from_payload).__name__})", flush=True)
+    _dbg(f"   - category: '{category}'", flush=True)
+    _dbg(f"   - task_id: {task_id}", flush=True)
+    _dbg(f"   - task_type: '{task_type}'", flush=True)
+    _dbg(f"   - player_email: '{player_email}'", flush=True)
+    _dbg(f"{'='*60}\n", flush=True)
     sys.stdout.flush()
     
     # Pour les tâches avec baby tracking
@@ -7403,10 +8266,10 @@ def api_validate_task():
     bottle_ml = data.get('bottle_ml')
     observations = data.get('observations')
     
-    print(f"🍼 [BABY DEBUG] Données reçues:")
-    print(f"   - tracking_time: '{tracking_time}' (type: {type(tracking_time)})")
-    print(f"   - bottle_ml: '{bottle_ml}' (type: {type(bottle_ml)})")
-    print(f"   - observations: '{observations}' (type: {type(observations)})")
+    _dbg(f"🍼 [BABY DEBUG] Données reçues:")
+    _dbg(f"   - tracking_time: '{tracking_time}' (type: {type(tracking_time)})")
+    _dbg(f"   - bottle_ml: '{bottle_ml}' (type: {type(bottle_ml)})")
+    _dbg(f"   - observations: '{observations}' (type: {type(observations)})")
     
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -7430,12 +8293,12 @@ def api_validate_task():
         # Déterminer task_name et task_points selon le type
         # ✅ FORCER l'utilisation du task_name envoyé par le frontend
         
-        print(f"\n📋 [TASK NAME DEBUG]")
-        print(f"   task_name_from_payload = '{task_name_from_payload}'")
+        _dbg(f"\n📋 [TASK NAME DEBUG]")
+        _dbg(f"   task_name_from_payload = '{task_name_from_payload}'")
         
         if task_type == 'custom':
             # Tâche personnalisée
-            c.execute("SELECT task_name, task_points FROM custom_tasks WHERE id=? AND house_id=?", (task_id, user_house_id))
+            c.execute("SELECT task_name, points FROM custom_tasks WHERE id=? AND house_id=?", (task_id, user_house_id))
             task_row = c.fetchone()
             if not task_row:
                 return jsonify({'success': False, 'error': 'Tâche non trouvée'}), 404
@@ -7455,8 +8318,8 @@ def api_validate_task():
             if normalized_cat == 'chambre_bebe':
                 task_points = int(task_points * 1.5)
         
-        print(f"   📌 FINAL task_name = '{task_name}'")
-        print(f"📋 [END DEBUG]\n")
+        _dbg(f"   📌 FINAL task_name = '{task_name}'")
+        _dbg(f"📋 [END DEBUG]\n")
         
         today = date.today().isoformat()
         
@@ -7470,12 +8333,12 @@ def api_validate_task():
         can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
         
         # 🔍 LOG DEBUG : Vérifier le nom de la tâche utilisé
-        print(f"\n🔍 [DOUBLON CHECK] Avant vérification:")
-        print(f"   - task_name utilisé: '{task_name}'")
-        print(f"   - category: '{category}'")
-        print(f"   - player_email: '{player_email}'")
-        print(f"   - today: '{today}'")
-        print(f"   - can_repeat: {can_repeat}")
+        _dbg(f"\n🔍 [DOUBLON CHECK] Avant vérification:")
+        _dbg(f"   - task_name utilisé: '{task_name}'")
+        _dbg(f"   - category: '{category}'")
+        _dbg(f"   - player_email: '{player_email}'")
+        _dbg(f"   - today: '{today}'")
+        _dbg(f"   - can_repeat: {can_repeat}")
         
         # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
         if not can_repeat:
@@ -7488,11 +8351,11 @@ def api_validate_task():
                 # C'est le nom RÉEL de la tâche affichée à l'utilisateur
                 display_task_name = task_name_from_payload if task_name_from_payload else task_name
                 
-                print(f"\n🚨🚨🚨 DOUBLON DÉTECTÉ 🚨🚨🚨")
-                print(f"   task_name_from_payload: '{task_name_from_payload}'")
-                print(f"   task_name (config): '{task_name}'")
-                print(f"   display_task_name utilisé: '{display_task_name}'")
-                print(f"🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n")
+                _dbg(f"\n🚨🚨🚨 DOUBLON DÉTECTÉ 🚨🚨🚨")
+                _dbg(f"   task_name_from_payload: '{task_name_from_payload}'")
+                _dbg(f"   task_name (config): '{task_name}'")
+                _dbg(f"   display_task_name utilisé: '{display_task_name}'")
+                _dbg(f"🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n")
                 
                 # 🎭 Messages humoristiques avec le vrai nom de la tâche
                 funny_messages = [
@@ -7507,7 +8370,7 @@ def api_validate_task():
                 ]
                 
                 funny_message = random.choice(funny_messages)
-                print(f"   Message envoyé: '{funny_message}'")
+                _dbg(f"   Message envoyé: '{funny_message}'")
                 return jsonify({'success': False, 'error': funny_message, 'duplicate': True}), 200
         
         # Insérer la tâche complétée
@@ -7515,11 +8378,95 @@ def api_validate_task():
                  (player_email, user_house_id, category, task_name, task_points))
         c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
         
-        # WebSocket notification - TEMPORAIREMENT DÉSACTIVÉ POUR TEST DE PERFORMANCE
-        # if SOCKETIO_AVAILABLE and socketio:
-        if False:  # Désactivé temporairement
+        # Augmenter la santé de la maison
+        try:
+            c.execute("SELECT health FROM houses WHERE id=?", (user_house_id,))
+            hrow = c.fetchone()
+            current_health = hrow[0] if hrow and hrow[0] is not None else 0
+            new_health = min(current_health + 1, 100)
+            c.execute("UPDATE houses SET health=? WHERE id=?", (new_health, user_house_id))
+        except Exception:
+            pass
+        
+        # Variable pour suivre si un message baby_tracking a été créé
+        baby_tracking_created = False
+        
+        # Baby tracking si applicable
+        _dbg(f"🔍 DEBUG BABY TRACKING - tracking_time={tracking_time}, category={category}, task_name={task_name}")
+        
+        # Vérifier si c'est une tâche bébé par le nom de la tâche (plus fiable)
+        is_baby_task = task_name and ('biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower())
+        
+        if tracking_time and is_baby_task:
+            _dbg(f"✅ Condition baby tracking remplie!")
             try:
-                c_ws = conn.cursor()
+                task_type_baby = None
+                if 'biberon' in task_name.lower():
+                    task_type_baby = 'biberon'
+                elif 'couche' in task_name.lower():
+                    task_type_baby = 'couches'
+                elif 'dormir' in task_name.lower():
+                    task_type_baby = 'sommeil'
+                
+                _dbg(f"🔍 Type détecté: {task_type_baby}")
+                
+                if task_type_baby:
+                    # Sauvegarder dans baby_tracking
+                    c.execute("""
+                        INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (player_email, user_house_id, task_type_baby, tracking_time, bottle_ml if bottle_ml else None, observations))
+                    
+                    _dbg(f"✅ Baby tracking sauvegardé: {player_name} - {task_type_baby} - {tracking_time}")
+                    
+                    # Créer le message pour la messagerie
+                    if task_type_baby == 'biberon':
+                        ml_text = f" ({bottle_ml} ml)" if bottle_ml else ""
+                        message_text = f"🍼 {player_name} a donné le biberon à {tracking_time}{ml_text}"
+                        if observations:
+                            message_text += f"\n📝 {observations}"
+                    elif task_type_baby == 'couches':
+                        message_text = f"👶 {player_name} a changé les couches à {tracking_time}"
+                        if observations:
+                            message_text += f"\n📝 {observations}"
+                    else:  # sommeil
+                        message_text = f"😴 {player_name} a couché bébé à {tracking_time}"
+                        if observations:
+                            message_text += f"\n📝 {observations}"
+                    
+                    _dbg(f"📬 Création message baby_tracking: house_id={user_house_id}, sender={player_email}")
+                    _dbg(f"📬 Contenu du message: {message_text[:100]}...")
+                    
+                    # ✅ Créer le message directement dans la transaction courante pour éviter les pertes
+                    from datetime import datetime
+                    c.execute("""
+                        INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
+                        VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
+                    """, (user_house_id, player_email, message_text, datetime.now().isoformat()))
+                    message_id = c.lastrowid
+                    _dbg(f"✅ Message baby_tracking créé avec ID: {message_id}")
+                    
+                    # 🔌 Marquer pour synchroniser la messagerie plus tard (après le commit)
+                    baby_tracking_created = True
+                    
+            except Exception as e:
+                _dbg(f"⚠️ Erreur baby tracking: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            pass
+        
+        # ✅ COMMIT en premier pour que les données soient disponibles pour les autres clients
+        conn.commit()
+        
+        # 🔌 WebSocket notification - APRÈS le commit pour que les autres clients voient les nouvelles données
+        _dbg(f"🔍 DEBUG WebSocket: SOCKETIO_AVAILABLE={SOCKETIO_AVAILABLE}, socketio={socketio is not None}")
+        if SOCKETIO_AVAILABLE and socketio:
+            _dbg(f"🚀 Tentative d'envoi WebSocket pour house_id={user_house_id}, player={player_email}")
+            try:
+                # Rouvrir une connexion pour récupérer les données à jour
+                conn_ws = sqlite3.connect(DB)
+                c_ws = conn_ws.cursor()
                 c_ws.execute("""
                     SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
                            COALESCE(SUM(ct.points), 0) as daily_points
@@ -7537,85 +8484,43 @@ def api_validate_task():
                         'avatar_url': p[3], 'avatar_file': p[4],
                         'total_points': p[5] or 0, 'daily_points': int(p[6]) if p[6] else 0
                     })
+                conn_ws.close()
+                
+                _dbg(f"📊 Données récupérées: {len(players_data)} joueurs")
+                for p in players_data:
+                    _dbg(f"   - {p['name']}: {p['daily_points']} pts (total: {p['total_points']})")
+                
+                # 📡 Émettre la mise à jour à tous les joueurs de la maison
+                room_name = f'house_{user_house_id}'
+                _dbg(f"📡 Émission WebSocket vers room='{room_name}', namespace='/'")
+                _dbg(f"   Joueurs dans la room : {len(players_data)}")
+                _dbg(f"   🔍 DEBUG: socketio object = {socketio}")
+                _dbg(f"   🔍 DEBUG: SOCKETIO_AVAILABLE = {SOCKETIO_AVAILABLE}")
+                
+                # ✅ room= envoie déjà à TOUS les clients de la room (pas besoin de broadcast=True)
                 socketio.emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
-                }, namespace='/', room=f'house_{user_house_id}')
+                }, namespace='/', room=room_name)
+                
+                _dbg(f"✅ WebSocket: Notification envoyée à room {room_name} pour {player_email} (+{task_points} pts)")
+                _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
+                
+                # 🔌 Synchroniser la messagerie si un message baby_tracking a été créé
+                if baby_tracking_created:
+                    socketio.emit('messages_list_update', {
+                        'house_id': user_house_id,
+                        'action': 'baby_tracking',
+                        'sender_email': player_email,
+                        'sender_name': player_name
+                    }, namespace='/', room=room_name)
+                    _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{user_house_id}")
+                    
             except Exception as ws_err:
-                print(f"⚠️ Erreur WebSocket: {ws_err}")
-        
-        # Augmenter la santé de la maison
-        try:
-            c.execute("SELECT health FROM houses WHERE id=?", (user_house_id,))
-            hrow = c.fetchone()
-            current_health = hrow[0] if hrow and hrow[0] is not None else 0
-            new_health = min(current_health + 1, 100)
-            c.execute("UPDATE houses SET health=? WHERE id=?", (new_health, user_house_id))
-        except Exception:
-            pass
-        
-        # Baby tracking si applicable
-        print(f"🔍 DEBUG BABY TRACKING - tracking_time={tracking_time}, category={category}, task_name={task_name}")
-        
-        # Vérifier si c'est une tâche bébé par le nom de la tâche (plus fiable)
-        is_baby_task = task_name and ('biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower())
-        
-        if tracking_time and is_baby_task:
-            print(f"✅ Condition baby tracking remplie!")
-            try:
-                task_type_baby = None
-                if 'biberon' in task_name.lower():
-                    task_type_baby = 'biberon'
-                elif 'couche' in task_name.lower():
-                    task_type_baby = 'couches'
-                elif 'dormir' in task_name.lower():
-                    task_type_baby = 'sommeil'
-                
-                print(f"🔍 Type détecté: {task_type_baby}")
-                
-                if task_type_baby:
-                    # Sauvegarder dans baby_tracking
-                    c.execute("""
-                        INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    """, (player_email, user_house_id, task_type_baby, tracking_time, bottle_ml if bottle_ml else None, observations))
-                    
-                    print(f"✅ Baby tracking sauvegardé: {player_name} - {task_type_baby} - {tracking_time}")
-                    
-                    # Créer le message pour la messagerie
-                    if task_type_baby == 'biberon':
-                        ml_text = f" ({bottle_ml} ml)" if bottle_ml else ""
-                        message_text = f"🍼 {player_name} a donné le biberon à {tracking_time}{ml_text}"
-                        if observations:
-                            message_text += f"\n📝 {observations}"
-                    elif task_type_baby == 'couches':
-                        message_text = f"👶 {player_name} a changé les couches à {tracking_time}"
-                        if observations:
-                            message_text += f"\n📝 {observations}"
-                    else:  # sommeil
-                        message_text = f"😴 {player_name} a couché bébé à {tracking_time}"
-                        if observations:
-                            message_text += f"\n📝 {observations}"
-                    
-                    print(f"📬 Création message baby_tracking: house_id={user_house_id}, sender={player_email}")
-                    print(f"📬 Contenu du message: {message_text[:100]}...")
-                    
-                    # ✅ Créer le message directement dans la transaction courante pour éviter les pertes
-                    from datetime import datetime
-                    c.execute("""
-                        INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
-                        VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-                    """, (user_house_id, player_email, message_text, datetime.now().isoformat()))
-                    message_id = c.lastrowid
-                    print(f"✅ Message baby_tracking créé avec ID: {message_id}")
-                    
-            except Exception as e:
-                print(f"⚠️ Erreur baby tracking: {e}")
+                _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
                 import traceback
                 traceback.print_exc()
         else:
-            pass
-        
-        conn.commit()
+            _dbg(f"⚠️ WebSocket NON DISPONIBLE - notification non envoyée")
         
         return jsonify({
             'success': True,
@@ -7628,7 +8533,7 @@ def api_validate_task():
         
     except Exception as e:
         conn.rollback()
-        print(f"❌ Erreur validation AJAX: {e}")
+        _dbg(f"❌ Erreur validation AJAX: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         conn.close()
@@ -7666,7 +8571,7 @@ def api_avatars():
                     'label': filename.replace('.png', '').replace('.jpg', '').replace('_', ' ').replace('.jpeg', '').title()
                 })
     except Exception as e:
-        print(f"Erreur lecture dossier avatars: {e}")
+        _dbg(f"Erreur lecture dossier avatars: {e}")
     
     # 2. Charger la config des emojis si elle existe
     config_path = os.path.join(avatars_folder, 'avatars_config.json')
@@ -7678,7 +8583,7 @@ def api_avatars():
                 emoji_categories = [cat for cat in config.get('categories', []) if cat.get('type') == 'emoji']
                 result['categories'] = emoji_categories
         except Exception as e:
-            print(f"Erreur lecture config avatars: {e}")
+            _dbg(f"Erreur lecture config avatars: {e}")
     
     return result, 200
 
@@ -7735,12 +8640,13 @@ def api_daily_tasks():
             
             # Résoudre l'avatar
             final_avatar = None
-            if avatar_file:
-                final_avatar = url_for('static', filename=f'avatars/{avatar_file}')
+            valid_file = validate_avatar_file(avatar_file)
+            if valid_file:
+                final_avatar = url_for('static', filename=f'avatars/{valid_file}')
             elif avatar_url:
                 final_avatar = avatar_url
             else:
-                final_avatar = url_for('static', filename='avatars/homme.png')
+                final_avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
             
             # Extraire l'heure de completed_at_local (déjà en heure locale grâce à SQLite)
             try:
@@ -7761,7 +8667,7 @@ def api_daily_tasks():
         return {'tasks': tasks}, 200
         
     except Exception as e:
-        print(f"Erreur API daily_tasks: {e}")
+        _dbg(f"Erreur API daily_tasks: {e}")
         return {'tasks': [], 'error': str(e)}, 500
     finally:
         conn.close()
@@ -7822,10 +8728,49 @@ def api_players_points():
         }, 200
         
     except Exception as e:
-        print(f"Erreur API players_points: {e}")
+        _dbg(f"Erreur API players_points: {e}")
         return {'players': [], 'error': str(e)}, 500
     finally:
         conn.close()
+
+
+@app.route('/api/unread_counts')
+def api_unread_counts():
+    """
+    API pour récupérer les compteurs de messages non lus en temps réel.
+    Utilisé pour mettre à jour les badges sans rafraîchir la page.
+    """
+    if 'user' not in session:
+        return jsonify({'error': 'Non authentifié'}), 401
+    
+    try:
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        
+        # Récupérer house_id
+        c.execute('SELECT house_id FROM users WHERE email = ?', (session['user'],))
+        user_row = c.fetchone()
+        
+        if not user_row or not user_row[0]:
+            conn.close()
+            return jsonify({'error': 'Maison introuvable'}), 404
+        
+        house_id = user_row[0]
+        
+        # Récupérer les compteurs
+        unread_received = get_unread_message_count(session['user'], house_id)
+        unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+        
+        conn.close()
+        
+        return jsonify({
+            'unread_received': unread_received,
+            'unread_sent_to': unread_sent_to
+        }), 200
+        
+    except Exception as e:
+        _dbg(f"❌ Erreur API unread_counts: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 # 🔔 ========== ROUTES API PUSH NOTIFICATIONS ==========
@@ -7856,7 +8801,7 @@ def api_push_subscribe():
             return {'success': False, 'error': 'Erreur sauvegarde'}, 500
             
     except Exception as e:
-        print(f"❌ Erreur API push subscribe: {e}")
+        _dbg(f"❌ Erreur API push subscribe: {e}")
         return {'success': False, 'error': str(e)}, 500
 
 
@@ -7884,7 +8829,7 @@ def api_push_unsubscribe():
             return {'success': False, 'error': 'Erreur désactivation'}, 500
             
     except Exception as e:
-        print(f"❌ Erreur API push unsubscribe: {e}")
+        _dbg(f"❌ Erreur API push unsubscribe: {e}")
         return {'success': False, 'error': str(e)}, 500
 
 
@@ -7933,7 +8878,7 @@ def api_push_test():
             return {'success': False, 'error': 'Échec envoi notifications'}, 500
             
     except Exception as e:
-        print(f"❌ Erreur API push test: {e}")
+        _dbg(f"❌ Erreur API push test: {e}")
         return {'success': False, 'error': str(e)}, 500
 
 
@@ -8011,7 +8956,7 @@ def api_test_reminder():
         return {'success': False, 'error': 'Erreur création rappel'}, 500
         
     except Exception as e:
-        print(f"❌ Erreur test reminder: {e}")
+        _dbg(f"❌ Erreur test reminder: {e}")
         return {'success': False, 'error': str(e)}, 500
 
 
@@ -8022,7 +8967,7 @@ def api_test_reminder():
 @app.route('/baby_tracking/<cat>/<int:task_id>')
 def baby_tracking(cat, task_id):
     """Page de suivi pour les tâches de bébé (biberon, couches, sommeil)"""
-    print(f"👶 PAGE BABY_TRACKING accédée par {session.get('user', 'NON_CONNECTE')} pour task_id={task_id}")
+    _dbg(f"👶 PAGE BABY_TRACKING accédée par {session.get('user', 'NON_CONNECTE')} pour task_id={task_id}")
     
     if 'user' not in session:
         flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
@@ -8082,7 +9027,7 @@ def baby_tracking(cat, task_id):
 @app.route('/save_baby_tracking', methods=['POST'])
 def save_baby_tracking():
     """Enregistre un suivi de tâche bébé et envoie un message au partenaire"""
-    print(f"🍼 SAVE_BABY_TRACKING appelé par {session.get('user', 'INCONNU')}")
+    _dbg(f"🍼 SAVE_BABY_TRACKING appelé par {session.get('user', 'INCONNU')}")
     
     if 'user' not in session:
         flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
@@ -8096,7 +9041,7 @@ def save_baby_tracking():
     category = request.form.get('category')
     task_id = request.form.get('task_id')
     
-    print(f"📝 Données reçues: task_type={task_type}, time={tracking_time}, ml={bottle_ml}")
+    _dbg(f"📝 Données reçues: task_type={task_type}, time={tracking_time}, ml={bottle_ml}")
     
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -8155,9 +9100,23 @@ def save_baby_tracking():
         conn.commit()
         conn.close()
         
-        print(f"✅ Message baby_tracking créé avec ID: {message_id} pour {user_name}")
+        _dbg(f"✅ Message baby_tracking créé avec ID: {message_id} pour {user_name}")
+        
+        # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
+        try:
+            if SOCKETIO_AVAILABLE and socketio:
+                socketio.emit('messages_list_update', {
+                    'house_id': house_id,
+                    'action': 'baby_tracking',
+                    'sender_email': session['user'],
+                    'sender_name': user_name,
+                    'task_type': task_type
+                }, room=f'house_{house_id}')
+                _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
+        except Exception as ws_err:
+            _dbg(f"⚠️ Erreur WebSocket baby_tracking: {ws_err}")
     except Exception as e:
-        print(f"❌ Erreur création message baby_tracking: {e}")
+        _dbg(f"❌ Erreur création message baby_tracking: {e}")
         import traceback
         traceback.print_exc()
     
@@ -8195,7 +9154,7 @@ def invitation_partner():
         return redirect(url_for('menu'))
     
     # Construire l'URL d'invitation
-    join_url = f"http://192.168.1.156:8000/join_house?code={house_code}"
+    join_url = f"{request.host_url}join_house?code={house_code}"
     
     return render_template('invitation_partner.html', 
                          house_code=house_code,
@@ -8211,12 +9170,12 @@ if SOCKETIO_AVAILABLE:
     @socketio.on('connect')
     def handle_connect():
         """Connexion d'un client WebSocket"""
-        print(f'🔌 Client connecté: {request.sid}')
+        _dbg(f'🔌 Client connecté: {request.sid}')
     
     @socketio.on('disconnect')
     def handle_disconnect():
         """Déconnexion d'un client WebSocket"""
-        print(f'❌ Client déconnecté: {request.sid}')
+        _dbg(f'❌ Client déconnecté: {request.sid}')
     
     @socketio.on('join_house')
     def handle_join_house(data):
@@ -8237,9 +9196,9 @@ if SOCKETIO_AVAILABLE:
                 room = f"house_{house_id}"
                 join_room(room)
                 emit('joined_room', {'room': room, 'email': user_email})
-                print(f'🏠 {user_email} a rejoint la room {room}')
+                _dbg(f'🏠 {user_email} a rejoint la room {room}')
         except Exception as e:
-            print(f'❌ Erreur join_house: {e}')
+            _dbg(f'❌ Erreur join_house: {e}')
     
     @socketio.on('points_updated')
     def handle_points_updated(data):
@@ -8280,9 +9239,9 @@ if SOCKETIO_AVAILABLE:
                 
                 # Diffuser à tous les clients de la room
                 emit('players_points_update', {'players': players}, room=room)
-                print(f'📊 Points mis à jour pour la room {room}')
+                _dbg(f'📊 Points mis à jour pour la room {room}')
         except Exception as e:
-            print(f'❌ Erreur points_updated: {e}')
+            _dbg(f'❌ Erreur points_updated: {e}')
     
     @socketio.on('avatar_updated')
     def handle_avatar_updated(data):
@@ -8313,9 +9272,9 @@ if SOCKETIO_AVAILABLE:
                 
                 # Diffuser à tous les clients de la room
                 emit('player_avatar_update', player_data, room=room)
-                print(f'👤 Avatar mis à jour pour {user_email} dans la room {room}')
+                _dbg(f'👤 Avatar mis à jour pour {user_email} dans la room {room}')
         except Exception as e:
-            print(f'❌ Erreur avatar_updated: {e}')
+            _dbg(f'❌ Erreur avatar_updated: {e}')
 
 
 # 🏠 ========== ROUTES TEST MESSAGES MAISON ==========
@@ -8344,7 +9303,7 @@ def test_house_encouragement():
         
         return jsonify({'success': result, 'message': 'Message d\'encouragement envoyé !'})
     except Exception as e:
-        print(f"❌ Erreur test encouragement: {e}")
+        _dbg(f"❌ Erreur test encouragement: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -8372,7 +9331,7 @@ def test_house_sermon():
         
         return jsonify({'success': result, 'message': 'Sermon envoyé ! 😄'})
     except Exception as e:
-        print(f"❌ Erreur test sermon: {e}")
+        _dbg(f"❌ Erreur test sermon: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -8399,7 +9358,7 @@ def test_house_sermon_lazy():
         
         return jsonify({'success': result, 'message': 'Sermon général envoyé ! 🏠'})
     except Exception as e:
-        print(f"❌ Erreur test sermon lazy: {e}")
+        _dbg(f"❌ Erreur test sermon lazy: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # 🏠 ========== FIN ROUTES TEST MESSAGES MAISON ==========
@@ -8408,10 +9367,10 @@ def test_house_sermon_lazy():
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
     try:
-        print('\n--- Flask URL Map ---')
+        _dbg('\n--- Flask URL Map ---')
         for rule in app.url_map.iter_rules():
-            print(f"{rule.endpoint}: {rule}")
-        print('---------------------\n')
+            _dbg(f"{rule.endpoint}: {rule}")
+        _dbg('---------------------\n')
     except Exception:
         pass
 

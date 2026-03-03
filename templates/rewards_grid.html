@@ -553,9 +553,22 @@
         <div class="player-header">
             <div class="player-avatar">
                 {% if player.avatar_file %}
-                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="">
+                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" 
+                         alt="{{ player.name }}"
+                         onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}';">
+                {% elif player.avatar_url %}
+                    <img src="{{ player.avatar_url }}" 
+                         alt="{{ player.name }}"
+                         onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}';">
+                {% elif player.avatar and player.avatar|length <= 4 and player.avatar|length > 0 %}
+                    {{ player.avatar }}
+                {% elif player.avatar and '.' not in player.avatar %}
+                    {# Seed DiceBear stocké dans avatar — reconstruire l'URL avec le style #}
+                    <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ player.avatar }}"
+                         alt="{{ player.name }}"
+                         onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}';">
                 {% else %}
-                    {{ player.avatar or '👤' }}
+                    <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="{{ player.name }}">
                 {% endif %}
             </div>
             <div class="player-name">

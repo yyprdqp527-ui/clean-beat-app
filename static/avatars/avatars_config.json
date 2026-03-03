@@ -1,38 +1,73 @@
 {
   "categories": [
     {
-      "id": "avataaars",
-      "name": "🎨 Avataaars",
+      "id": "adventurer",
+      "name": "🏔️ Aventurier",
+      "style": "adventurer",
       "type": "dicebear",
-      "style": "avataaars",
       "count": 20
     },
     {
-      "id": "adventurer",
-      "name": "🏔️ Aventurier",
+      "id": "avataaars",
+      "name": "😊 Avataaars",
+      "style": "avataaars",
       "type": "dicebear",
-      "style": "adventurer",
+      "count": 20
+    },
+    {
+      "id": "big-ears",
+      "name": "🐰 Grandes Oreilles",
+      "style": "big-ears",
+      "type": "dicebear",
+      "count": 20
+    },
+    {
+      "id": "bottts",
+      "name": "🤖 Robot",
+      "style": "bottts",
+      "type": "dicebear",
+      "count": 20
+    },
+    {
+      "id": "fun-emoji",
+      "name": "🎉 Emoji Fun",
+      "style": "fun-emoji",
+      "type": "dicebear",
       "count": 20
     },
     {
       "id": "lorelei",
       "name": "🌸 Lorelei",
-      "type": "dicebear",
       "style": "lorelei",
+      "type": "dicebear",
       "count": 20
     },
     {
-      "id": "bottts",
-      "name": "🤖 Robots",
+      "id": "micah",
+      "name": "✨ Micah",
+      "style": "micah",
       "type": "dicebear",
-      "style": "bottts",
+      "count": 20
+    },
+    {
+      "id": "miniavs",
+      "name": "🎨 Mini Avatar",
+      "style": "miniavs",
+      "type": "dicebear",
       "count": 20
     },
     {
       "id": "personas",
-      "name": "👤 Personas",
-      "type": "dicebear",
+      "name": "💼 Personas",
       "style": "personas",
+      "type": "dicebear",
+      "count": 20
+    },
+    {
+      "id": "pixel-art",
+      "name": "🎮 Pixel Art",
+      "style": "pixel-art",
+      "type": "dicebear",
       "count": 20
     }
   ]

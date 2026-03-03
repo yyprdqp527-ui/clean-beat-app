@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{# Cacher le header game dans la page comments #}
 {% set hide_header = true %}
 
 {% block title %}Messagerie - {{ house_name }}{% endblock %}
@@ -10,7 +11,10 @@
 
 {% block page_styles %}
 <style>
-   
+    /* Cacher complètement le header game sur la page comments */
+    .header-menu {
+        display: none !important;
+    }
     
     .mark-read-btn:hover {
         transform: translateY(-2px);
@@ -42,39 +46,53 @@
         }
         .avatar-square-wrapper .vbar { left: calc(100% + 12px); right: auto; }
         
-        /* Correction pour les avatars de sélection de destinataire - identique au menu */
+        /* === MOBILE : PLACEMENT EN LIGNE COMPACT IDENTIQUE À MENU === */
+        
+        /* Sur mobile, permettre plusieurs lignes avec un espacement adapté */
         .recipients-strip {
-            gap: 4px !important;
-            flex-wrap: nowrap !important;
-            justify-content: center !important;
-            padding: 8px 0 !important;
+            gap: 8px !important; /* Gap minimal pour 4 avatars par ligne */
+            flex-wrap: wrap !important; /* Retour à la ligne activé */
+            justify-content: center !important; /* Centrage des avatars */
+            padding: 12px 8px !important;
+            overflow: visible !important;
+            max-width: 100% !important;
         }
         
         .recipient-selector-item {
             flex: 0 0 auto;
+            margin: 4px 0; /* Espacement vertical entre les lignes */
         }
         
+        /* Colonne d'avatar compacte sur mobile */
         .recipient-selector-item .avatar-col {
             max-width: 80px !important;
-            gap: 3px !important;
+            min-width: 80px !important;
+            gap: 4px !important;
         }
         
+        /* Nom du joueur adapté au mobile */
         .recipient-selector-item .avatar-name {
             white-space: normal !important;
-            max-width: 70px !important;
+            max-width: 80px !important;
             line-height: 1.1 !important;
-            font-size: 9px !important;
+            font-size: 10px !important;
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
             text-align: center !important;
             margin-bottom: 2px !important;
         }
         
+        /* Avatar réduit sur mobile */
         .recipient-selector-item .avatar-square {
-            width: 56px !important;
-            height: 56px !important;
-            min-width: 56px !important;
-            min-height: 56px !important;
+            width: 65px !important;
+            height: 65px !important;
+            min-width: 65px !important;
+            min-height: 65px !important;
+        }
+        
+        /* Supprimer l'indicateur de scroll sur mobile car on a wrap */
+        .recipients-strip::after {
+            display: none !important;
         }
     }
 
@@ -107,15 +125,13 @@
     .avatar-square { 
         position: relative; 
         z-index: 2002; 
-        width: 56px; 
-        height: 56px; 
-        min-width: 56px; 
-        min-height: 56px; 
+        width: 70px; 
+        height: 70px; 
+        min-width: 70px; 
+        min-height: 70px; 
         border-radius: 12px; 
-        background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
-        backdrop-filter: blur(10px) saturate(140%);
-        -webkit-backdrop-filter: blur(10px) saturate(140%);
-        border: 3px solid rgba(255,255,255,0.4);
+        background: transparent;
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -126,40 +142,8 @@
         overflow: hidden;
     }
     
-    /* Effet shimmer sur l'avatar */
-    .avatar-square::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -120%;
-        height: 100%;
-        width: 120%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
-        border-radius: 12px;
-        pointer-events: none;
-        mix-blend-mode: overlay;
-        animation: shine-sweep 3s ease-in-out infinite;
-        opacity: 0.9;
-    }
-    
-    @keyframes shine-sweep {
-        0% { 
-            left: -120%; 
-            opacity: 0.9; 
-        }
-        50% { 
-            left: 120%; 
-            opacity: 0.9; 
-        }
-        100% { 
-            left: 120%; 
-            opacity: 0; 
-        }
-    }
-    
     .avatar-square:hover {
         transform: scale(1.05);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
     }
     
     .avatar-square img { 
@@ -176,8 +160,8 @@
         flex-direction: column;
         align-items: center;
         gap: 8px;
-        padding: 12px;
-        border: 3px solid transparent;
+        padding: 6px;
+        border: none;
         border-radius: 20px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         background: transparent;
@@ -249,7 +233,7 @@
     /* Container principal */
     .messages-container {
         max-width: 800px;
-        margin: 80px auto 30px;
+        margin: 20px auto 30px;
         padding: 0 20px;
     }
     
@@ -291,19 +275,51 @@
         border: 2px solid rgba(253,174,84,0.6);
         box-shadow: 0 8px 32px rgba(0,0,0,0.1),
                     inset 0 1px 0 rgba(255,255,255,0.5);
+        overflow: visible; /* S'assurer que rien n'est coupé */
     }
     
-    /* Conteneur des avatars - style horizontal comme le header */
+    /* === PLACEMENT EN LIGNE DES AVATARS IDENTIQUE À MENU.HTML === */
+    
+    /* Rangée centrée d'avatars : espace entre chaque avatar */
     .recipients-strip {
         display: flex;
-        gap: 56px;
-        flex-wrap: nowrap;
-        margin-top: 12px;
-        justify-content: center;
+        gap: 24px;
         align-items: center;
+        justify-content: center;
+        flex-wrap: wrap; /* Permet le retour à la ligne sur toutes les tailles */
+        margin-top: 12px;
         padding: 8px 0;
+        max-width: 100%;
+        min-height: fit-content;
+        overflow: visible;
     }
     
+    /* Adapter l'écart sur écrans moyens (tablettes) pour maintenir 4 par ligne */
+    @media (max-width: 1024px) {
+        .recipients-strip {
+            gap: 20px;
+        }
+    }
+    
+    @media (max-width: 900px) {
+        .recipients-strip {
+            gap: 16px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .recipients-strip {
+            gap: 12px;
+        }
+    }
+    
+    @media (max-width: 680px) {
+        .recipients-strip {
+            gap: 10px;
+        }
+    }
+    
+    /* Colonne individuelle d'avatar */
     .recipient-selector-item .avatar-col {
         display: flex;
         flex-direction: column;
@@ -311,8 +327,11 @@
         gap: 6px;
         flex: 0 0 auto;
         box-sizing: border-box;
+        min-width: 80px;
+        max-width: 80px;
     }
     
+    /* Nom du joueur */
     .recipient-selector-item .avatar-name {
         text-align: center;
         color: #153036;
@@ -324,6 +343,7 @@
         overflow-wrap: break-word;
         text-shadow: 0 1px 3px rgba(255,255,255,0.8);
         letter-spacing: 0.3px;
+        min-height: 18px;
     }
 
     
@@ -413,34 +433,14 @@
         align-items: center;
         justify-content: center;
         font-size: 24px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
-        backdrop-filter: blur(10px) saturate(140%);
-        -webkit-backdrop-filter: blur(10px) saturate(140%);
-        border: 3px solid rgba(255,255,255,0.4);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35);
+        background: transparent;
+        border: none;
         overflow: hidden;
         transition: all 0.25s ease;
     }
     
-    /* Effet shimmer sur message-avatar */
-    .message-avatar::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -120%;
-        height: 100%;
-        width: 120%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
-        border-radius: 10px;
-        pointer-events: none;
-        mix-blend-mode: overlay;
-        animation: shine-sweep 3s ease-in-out infinite;
-        opacity: 0.9;
-    }
-    
     .message-avatar:hover {
         transform: scale(1.05);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
     }
     
     .message-avatar img {
@@ -779,7 +779,7 @@
     /* Responsive */
     @media (max-width: 768px) {
         .messages-container {
-            margin-top: 60px;
+            margin-top: 20px;
             padding: 0 12px;
         }
         
@@ -857,27 +857,11 @@
     <!-- Bouton retour -->
     <a href="{{ url_for('menu') }}" class="back-btn-glass">←</a>
     
-    <!-- Messages flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    
     <div class="messages-container">
         <!-- En-tête -->
         <div class="messages-header">
             <h1>Messagerie</h1>
             <div class="house-name">{{ house_name }}</div>
-            {% if unread_count > 0 %}
-            <button id="mark-all-read-btn" class="mark-read-btn" onclick="markAllAsRead()">
-                ✓ Tout validé (<span id="unread-count-display">{{ unread_count }}</span>)
-            </button>
-            {% endif %}
         </div>
         
         <!-- Formulaire d'envoi -->
@@ -885,11 +869,11 @@
             {% if available_players %}
             <form method="POST" action="{{ url_for('comments') }}">
                 <!-- Sélecteur de destinataire avec avatars -->
-                <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 12px; position: relative;">
                     <label style="font-weight: 700; color: var(--dark); margin-bottom: 8px; display: block; font-size: 14px;">
                         📩 Envoyer un message privé à :
                     </label>
-                    <div class="recipients-strip">
+                    <div class="recipients-strip" style="position: relative;">
                         {% for player in available_players %}
                         <label class="recipient-selector-item" onclick="this.querySelectorAll('input')[0].click();">
                             <input type="radio" name="recipient" value="{{ player.email }}" required style="display: none;" onchange="this.closest('label').parentElement.querySelectorAll('label').forEach(l => { l.querySelector('.avatar-square').style.transform = 'scale(1)'; l.querySelector('.avatar-square').style.boxShadow = '0 8px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35)'; l.querySelector('.avatar-square').style.borderColor = 'rgba(255,255,255,0.4)'; }); this.closest('label').querySelector('.avatar-square').style.transform = 'scale(1.1)'; this.closest('label').querySelector('.avatar-square').style.boxShadow = '0 0 0 4px {{ player.color }}40, 0 12px 25px rgba(0,0,0,0.2)'; this.closest('label').querySelector('.avatar-square').style.borderColor = '{{ player.color }}';">
@@ -962,11 +946,12 @@
                                     {{ msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp }}
                                 </div>
                                 
-                                {# Bouton Lu pour les messages envoyés par moi et non encore lus par le destinataire #}
+                                {# Accusé de réception pour les messages envoyés par moi #}
                                 {% if msg.is_me and msg.recipient_email and msg.message_type == 'private' %}
                                     {% if msg.is_read_by_recipient %}
                                         <div class="read-status read">✓✓ Lu par {{ msg.recipient_name }}</div>
-                                    {% else %}
+                                    {% elif 'cleanbeat' in msg.recipient_email %}
+                                        {# Bouton "Marquer comme lu" uniquement pour les enfants (compte parent) #}
                                         <button class="mark-read-btn" 
                                                 data-msg-id="{{ msg.id }}" 
                                                 data-child-email="{{ msg.recipient_email }}" 
@@ -1017,12 +1002,21 @@
     </div>
     
     <script>
-        // Auto-scroll vers le bas lors du chargement
+        // Debug : afficher l'ordre des messages
+        console.log('📋 Ordre des messages (de haut en bas):');
+        document.querySelectorAll('.message-item').forEach((msg, index) => {
+            const msgId = msg.dataset.messageId;
+            const timestamp = msg.querySelector('.message-timestamp')?.textContent || 'N/A';
+            console.log(`  ${index + 1}. Message ID ${msgId} - ${timestamp}`);
+        });
+        
+        // Auto-scroll vers le haut pour voir le dernier message envoyé
         window.addEventListener('load', function() {
             const messagesList = document.querySelector('.messages-list');
             if (messagesList) {
-                // Scroll inversé car les messages sont affichés du plus récent au plus ancien
+                // Les messages sont affichés du plus récent (en haut) au plus ancien (en bas)
                 messagesList.scrollTop = 0;
+                console.log('✅ Scroll positionné en haut (messages récents)');
             }
         });
         
@@ -1034,6 +1028,20 @@
                 this.style.height = Math.min(this.scrollHeight, 120) + 'px';
             });
         }
+        
+        // 📱 Masquer l'indicateur de scroll après le premier scroll sur mobile
+        (function() {
+            const recipientsStrip = document.querySelector('.recipients-strip');
+            if (recipientsStrip && window.innerWidth <= 520) {
+                let hasScrolled = false;
+                recipientsStrip.addEventListener('scroll', function() {
+                    if (!hasScrolled) {
+                        this.classList.add('scrolled');
+                        hasScrolled = true;
+                    }
+                }, { passive: true });
+            }
+        })();
         
         // ✅ Fonction pour marquer UN message comme lu au nom d'un enfant
         function markMessageAsRead(messageId, childEmail, childName, btn) {
@@ -1183,11 +1191,27 @@
             });
         }
         
-        // �🔌 WebSocket pour synchroniser les compteurs de messages non lus
+        // 🔌 WebSocket pour synchroniser les messages en temps réel
         (function() {
             try {
                 const socket = io();
                 const userEmail = "{{ email }}";
+                
+                // 🔔 Son de notification pour les nouveaux messages
+                const messageNotifSound = new Audio('/static/audio/notification-pings-335496.mp3');
+                messageNotifSound.preload = 'auto';
+                messageNotifSound.volume = 0.5;
+                
+                function playMessageSound() {
+                    try {
+                        messageNotifSound.currentTime = 0;
+                        messageNotifSound.play().catch(function(e) {
+                            console.log('🔇 Son notification bloqué (interaction utilisateur requise):', e.message);
+                        });
+                    } catch(e) {
+                        console.log('🔇 Erreur son notification:', e);
+                    }
+                }
                 
                 if (!userEmail) {
                     console.log('⚠️ WebSocket: Aucun utilisateur connecté');
@@ -1196,7 +1220,6 @@
                 
                 socket.on('connect', function() {
                     console.log('🔌 WebSocket Comments: Connecté au serveur');
-                    // Rejoindre la room de la maison
                     socket.emit('join_house', { email: userEmail });
                 });
                 
@@ -1204,18 +1227,92 @@
                     console.log('🏠 WebSocket Comments: Rejoint la room', data.room);
                 });
                 
+                // ✅ Synchronisation instantanée : un message a été marqué comme lu
+                socket.on('message_read_update', function(data) {
+                    console.log('✓ WebSocket: message_read_update', data);
+                    const msgEl = document.querySelector(`.message-item[data-message-id="${data.message_id}"]`);
+                    if (!msgEl) return;
+                    
+                    if (data.reader_email === userEmail) {
+                        // C'est MOI qui ai lu → mettre à jour mon bouton "Marquer comme lu" (reçu)
+                        const btn = msgEl.querySelector('.mark-read-btn.received-msg, .mark-read-btn.house-msg');
+                        if (btn) {
+                            const statusDiv = document.createElement('div');
+                            statusDiv.className = 'read-status read';
+                            statusDiv.innerHTML = '✓ Lu';
+                            statusDiv.style.animation = 'fadeIn 0.3s ease';
+                            btn.replaceWith(statusDiv);
+                        }
+                    } else {
+                        // Quelqu'un d'autre a lu → mettre à jour mon bouton "Marquer comme lu" (envoyé)
+                        const btn = msgEl.querySelector('.mark-read-btn:not(.received-msg):not(.house-msg)');
+                        if (btn) {
+                            const recipientName = btn.dataset.childName || data.reader_email;
+                            const statusDiv = document.createElement('div');
+                            statusDiv.className = 'read-status read';
+                            statusDiv.innerHTML = `✓✓ Lu par ${recipientName}`;
+                            statusDiv.style.animation = 'fadeIn 0.3s ease';
+                            btn.replaceWith(statusDiv);
+                        }
+                    }
+                });
+                
+                // ✅ Synchronisation instantanée : quelqu'un a tout marqué comme lu
+                socket.on('all_messages_read', function(data) {
+                    console.log('✓✓ WebSocket: all_messages_read', data);
+                    
+                    if (data.reader_email === userEmail) {
+                        // C'est moi qui ai tout lu → mettre à jour tous mes boutons reçus
+                        document.querySelectorAll('.mark-read-btn.received-msg, .mark-read-btn.house-msg').forEach(btn => {
+                            const statusDiv = document.createElement('div');
+                            statusDiv.className = 'read-status read';
+                            statusDiv.innerHTML = '✓ Lu';
+                            statusDiv.style.animation = 'fadeIn 0.3s ease';
+                            btn.replaceWith(statusDiv);
+                        });
+                    } else {
+                        // Quelqu'un d'autre a tout lu → mettre à jour mes boutons envoyés à cette personne
+                        document.querySelectorAll('.mark-read-btn:not(.received-msg):not(.house-msg)').forEach(btn => {
+                            if (btn.dataset.childEmail === data.reader_email) {
+                                const recipientName = btn.dataset.childName || data.reader_email;
+                                const statusDiv = document.createElement('div');
+                                statusDiv.className = 'read-status read';
+                                statusDiv.innerHTML = `✓✓ Lu par ${recipientName}`;
+                                statusDiv.style.animation = 'fadeIn 0.3s ease';
+                                btn.replaceWith(statusDiv);
+                            }
+                        });
+                    }
+                });
+                
                 // Écouter les nouveaux messages pour rafraîchir la page
                 socket.on('new_message_notification', function(data) {
                     console.log('💬 WebSocket Comments: Nouveau message reçu', data);
-                    
-                    // Si l'utilisateur actuel est le destinataire, rafraîchir la page
                     if (data.recipient_email === userEmail) {
-                        // Recharger la page pour afficher le nouveau message
+                        // 🔔 Jouer le son de notification
+                        playMessageSound();
+                        // Petit délai pour laisser le son démarrer avant le reload
+                        setTimeout(function() { location.reload(); }, 300);
+                    }
+                });
+                
+                // 🔌 Synchroniser la liste des messages pour tous
+                socket.on('messages_list_update', function(data) {
+                    console.log('📬 WebSocket Comments: Mise à jour liste messages', data);
+                    if (data.sender_email !== userEmail) {
+                        console.log('🔄 Rafraîchissement de la messagerie...');
                         location.reload();
                     }
                 });
                 
-                console.log('✅ WebSocket Comments: Système de synchronisation initialisé');
+                // Écouter les mises à jour de points
+                socket.on('players_points_update', function(data) {
+                    if (data.updated_player) {
+                        console.log('🎯 Joueur mis à jour:', data.updated_player);
+                    }
+                });
+                
+                console.log('✅ WebSocket Comments: Synchronisation temps réel initialisée');
             } catch (error) {
                 console.error('❌ WebSocket Comments: Erreur d\'initialisation', error);
             }

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Ma Maison · CleanBeat</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal-light: #A6D3DC;
+            --teal-dark:  #597176;
+            --gold:       #FDAE54;
+            --peach:      #F4C68D;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            min-height: 100vh;
+            color: #153036;
+            overflow-x: hidden;
+        }
+
+        /* Bouton retour glassmorphisme - identique à tasks.html */
+        .back-btn-glass {
+            position: fixed;
+            top: 24px; left: 24px;
+            z-index: 2001;
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: #153036;
+            font-size: 28px; font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+            transition: all 0.3s ease;
+        }
+        .back-btn-glass:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(89,113,118,0.25), inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+        .back-btn-glass:active { transform: scale(0.95); }
+
+        /* Zone de contenu - identique à .header-below-zone de tasks.html */
+        .header-below-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 100px 16px 80px;
+            width: 100%;
+        }
+
+        /* Header pièce - identique à .room-header de tasks.html */
+        .room-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+            max-width: 900px;
+            width: 100%;
+        }
+        .room-header .room-icon { font-size: 48px; margin-bottom: 8px; display: block; }
+        .room-header .room-name { font-size: 22px; font-weight: 800; color: #153036; margin: 0; }
+        .room-header .room-subtitle { font-size: 14px; color: #597176; margin-top: 4px; }
+
+        /* Container principal - identique à .container-menu de tasks.html */
+        .container-menu {
+            max-width: 900px;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 30px 24px 40px;
+            box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .section-label {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: rgba(21,48,54,0.55);
+            margin-bottom: 14px;
+        }
+
+        .rooms-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .room-item {
+            background: rgba(255,255,255,0.55);
+            border: 1.5px solid rgba(255,255,255,0.70);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: opacity .2s;
+        }
+        .room-item.is-hidden-item { opacity: 0.45; }
+
+        .room-thumb {
+            width: 54px; height: 54px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: rgba(166,211,220,0.3);
+        }
+        .room-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .room-info { flex: 1; min-width: 0; }
+        .room-default-name { font-size: .68rem; color: rgba(21,48,54,0.5); margin-bottom: 5px; }
+
+        .room-name-input {
+            width: 100%;
+            background: rgba(255,255,255,0.9);
+            border: 1.5px solid rgba(253,174,84,0.35);
+            border-radius: 9px;
+            color: #153036;
+            font-size: .92rem;
+            font-weight: 600;
+            padding: 7px 10px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .room-name-input::placeholder { color: rgba(21,48,54,0.35); font-weight: 400; }
+        .room-name-input:focus { border-color: #FDAE54; box-shadow: 0 0 0 3px rgba(253,174,84,0.2); }
+
+        .toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+        .toggle-label-txt { font-size: .6rem; color: rgba(21,48,54,0.55); text-align: center; }
+        .toggle { position: relative; width: 46px; height: 26px; }
+        .toggle input { display: none; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.35);
+            border-radius: 26px;
+            cursor: pointer;
+            transition: background .25s;
+            border: 1.5px solid rgba(255,255,255,0.50);
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            left: 3px; top: 50%;
+            transform: translateY(-50%);
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform .25s;
+        }
+        .toggle input:checked + .toggle-slider { background: rgba(220,80,80,0.55); }
+        .toggle input:checked + .toggle-slider::before { transform: translateY(-50%) translateX(20px); }
+
+        /* Bouton Enregistrer - identique à .add-task-btn de tasks.html */
+        .btn-save {
+            display: block;
+            width: max-content;
+            margin: 32px auto 0;
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: white;
+            font-weight: 800;
+            font-size: 15px;
+            padding: 18px 40px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(253,174,84,0.4);
+            font-family: inherit;
+            transition: all .3s ease;
+        }
+        .btn-save:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 35px rgba(253,174,84,0.6); }
+        .btn-save:active { transform: scale(0.97); }
+
+        @media (max-width: 520px) {
+            .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
+            .header-below-zone { padding: 84px 12px 80px; }
+            .container-menu { border-radius: 16px !important; margin: 0 !important; padding: 20px 14px 30px !important; }
+            .room-header { border-radius: 16px; }
+        }
+        @media (max-width: 375px) {
+            .container-menu { border-radius: 12px !important; padding: 14px 10px 24px !important; }
+            .btn-save { padding: 16px 28px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+
+    <div class="header-below-zone">
+
+        <div class="room-header">
+            
+            <h1 class="room-name">Ma Maison</h1>
+            <p class="room-subtitle">C'est ta maison, fais-la à ton image !</p>
+            <p class="room-hint">
+                Pas autant de chambres ? <strong>Masque</strong> celles dont tu n’as pas besoin.
+            </p>
+        </div>
+
+        <!-- Carte Nom de la maison -->
+        <div style="max-width:900px; width:100%; margin:0 auto 18px;">
+            <div style="background: linear-gradient(135deg, rgba(166, 211, 220, 0.3), rgba(244, 198, 141, 0.3)); padding: 20px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <h2 style="margin: 0; font-size: 18px; color: #153036; font-weight: 600;">Nom de la maison</h2>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap;">
+                    <input
+                        type="text"
+                        id="houseNameInput"
+                        value="{{ global_house_name or '' }}"
+                        maxlength="50"
+                        style="flex: 1; min-width: 200px; padding: 12px 16px; border: 2px solid rgba(21,48,54,0.2); border-radius: 12px; font-size: 16px; background: white; font-family: inherit;"
+                        placeholder="Nom de votre maison"
+                    >
+                    <button
+                        type="button"
+                        id="updateHouseNameBtn"
+                        style="padding: 12px 24px; background: linear-gradient(135deg, #A6D3DC, #597176); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap; min-width: 120px;"
+                    >
+                        Modifier
+                    </button>
+                </div>
+                <div id="houseNameFeedback" style="margin-top: 8px; font-size: 14px; display: none;"></div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('personnaliser_maison') }}" style="max-width:900px; width:100%;">
+            <div class="container-menu">
+
+                <p class="section-label">Chambres</p>
+
+                <div class="rooms-list">
+                    {% for room in rooms if not room.fixed %}
+                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+
+                        <div class="room-thumb">
+                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.default_name }}" loading="lazy">
+                        </div>
+
+                        <div class="room-info">
+                            <div class="room-default-name">Prénom du propriétaire de la chambre</div>
+                            <input
+                                class="room-name-input"
+                                type="text"
+                                name="name_{{ room.key }}"
+                                value="{{ room.current_name }}"
+                                placeholder="Écris ton prénom ici"
+                                maxlength="30"
+                            >
+                        </div>
+
+                        <div class="toggle-wrap">
+                            <span class="toggle-label-txt">Masquer</span>
+                            <label class="toggle">
+                                <input
+                                    type="checkbox"
+                                    name="hidden_{{ room.key }}"
+                                    {% if room.is_hidden %}checked{% endif %}
+                                    onchange="document.getElementById('item-{{ room.key }}').classList.toggle('is-hidden-item', this.checked)"
+                                >
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn-save">Enregistrer</button>
+
+            </div>
+        </form>
+
+    </div>
+
+<script>
+    document.getElementById('updateHouseNameBtn').addEventListener('click', async function() {
+        const input = document.getElementById('houseNameInput');
+        const newName = input.value.trim();
+        const feedback = document.getElementById('houseNameFeedback');
+        const btn = this;
+
+        if (!newName) {
+            feedback.textContent = 'Le nom ne peut pas être vide';
+            feedback.style.color = '#f44336';
+            feedback.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'En cours...';
+
+        try {
+            const formData = new FormData();
+            formData.append('house_name', newName);
+            const response = await fetch('/update_house_name', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                feedback.textContent = 'Nom mis à jour !';
+                feedback.style.color = '#4CAF50';
+                feedback.style.display = 'block';
+                setTimeout(() => { feedback.style.display = 'none'; }, 2000);
+            } else {
+                feedback.textContent = data.error || 'Erreur';
+                feedback.style.color = '#f44336';
+                feedback.style.display = 'block';
+            }
+        } catch (e) {
+            feedback.textContent = 'Erreur de connexion';
+            feedback.style.color = '#f44336';
+            feedback.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Modifier';
+        }
+    });
+</script>
+</body>
+</html>

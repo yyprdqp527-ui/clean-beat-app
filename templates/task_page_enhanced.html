@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-<!-- CACHE BUSTER: 2026-02-04-v6-FORCE-RELOAD-BABY-TRACKING-FIX -->
+<!-- CACHE BUSTER: 2026-02-07-NO-POPUP-WEBSOCKET-SYNC-v7 -->
 <!-- DEBUG: current_task_id={{ current_task_id }}, task_id={{ task_id }} -->
 {% set player_colors = ['rgba(74, 144, 226, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(39, 174, 96, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(231, 76, 60, 0.4)', 'rgba(26, 188, 156, 0.4)', 'rgba(243, 156, 18, 0.4)', 'rgba(52, 152, 219, 0.4)'] %}
 
@@ -270,25 +270,27 @@
     /* Utilisation des styles communs pour les avatars */
     .player-avatar-preview {
         position: relative;
-        width: 100px;
-        height: 100px;
-        min-width: 100px;
-        min-height: 100px;
+        width: 100px !important;
+        height: 100px !important;
+        min-width: 100px !important;
+        min-height: 100px !important;
+        max-width: 100px !important;
+        max-height: 100px !important;
         border-radius: 12px;
         background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
         backdrop-filter: blur(10px) saturate(140%);
         -webkit-backdrop-filter: blur(10px) saturate(140%);
         border: 3px solid transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         box-shadow: 
             0 4px 12px rgba(0,0,0,0.08);
-        flex: 0 0 auto;
+        flex: 0 0 100px !important;
         transition: all 0.25s ease;
         cursor: pointer;
-        overflow: visible;
-        box-sizing: border-box;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
     }
     
     /* Effet glassmorphism sur la bordure uniquement */
@@ -350,11 +352,13 @@
     /* Effets hover/active supprimés - seront réajoutés de manière harmonieuse */
 
     .player-avatar-preview img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
         border-radius: 10px;
-        display: block;
+        display: block !important;
+        flex-shrink: 0 !important;
+        min-width: 0 !important;
     }
     
     /* Animation de validation supprimée */
@@ -382,29 +386,30 @@
     
     /* Effets hover supprimés - effet glassmorphism ajouté dans @media (hover: hover) */
     
-    /* ========== STYLES FORMULAIRE BÉBÉ ========== */
+    /* ========== STYLES FORMULAIRE BÉBÉ - HARMONISÉ ========== */
     #baby-tracking-form input[type="time"],
     #baby-tracking-form input[type="number"],
     #baby-tracking-form textarea {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-weight: 500;
     }
     
     #baby-tracking-form input[type="time"]:focus,
     #baby-tracking-form input[type="number"]:focus,
     #baby-tracking-form textarea:focus {
         outline: none;
-        border-color: rgba(166,211,220,0.8);
-        background: rgba(255,255,255,1);
-        box-shadow: 0 6px 20px rgba(166,211,220,0.4), 
-                    inset 0 1px 0 rgba(255,255,255,1);
-        transform: translateY(-1px);
+        border-color: #FDAE54;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.12),
+                    0 4px 16px rgba(253, 174, 84, 0.2);
+        transform: translateY(-2px);
     }
     
     #baby-tracking-form input[type="time"]:hover,
     #baby-tracking-form input[type="number"]:hover,
     #baby-tracking-form textarea:hover {
-        border-color: rgba(166,211,220,0.6);
-        box-shadow: 0 6px 16px rgba(166,211,220,0.35);
+        border-color: rgba(166,211,220,0.5);
+        box-shadow: 0 4px 12px rgba(166,211,220,0.3);
     }
     
     #baby-tracking-form input::placeholder,
@@ -426,9 +431,12 @@
             height: 100px !important;
             min-width: 100px !important;
             min-height: 100px !important;
+            max-width: 100px !important;
+            max-height: 100px !important;
             border-width: 3px !important;
             border-style: solid !important;
             box-sizing: border-box !important;
+            overflow: hidden !important;
         }
         
         #baby-tracking-form {
@@ -448,16 +456,16 @@
         }
     }
     
-    /* ========== BOUTON ASTUCE PRO (CTA Premium) ========== */
+    /* ========== BOUTON ASTUCE PRO (CTA Premium) - GLASSMORPHISME HARMONISÉ ========== */
     .pro-tip-container {
-        background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(253,174,84,0.08) 100%);
-        backdrop-filter: blur(15px) saturate(140%);
-        -webkit-backdrop-filter: blur(15px) saturate(140%);
-        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.24);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 18px;
         padding: 4px;
         margin-bottom: 16px;
-        border: 1px solid rgba(253, 174, 84, 0.25);
-        box-shadow: 0 4px 16px rgba(89, 113, 118, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        box-shadow: 0 8px 24px rgba(21, 48, 54, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.35);
         position: relative;
     }
     
@@ -467,25 +475,21 @@
     }
     
     .pro-tip-inner {
-        background: linear-gradient(135deg, 
-            rgba(253, 174, 84, 0.9) 0%, 
-            rgba(244, 198, 141, 0.85) 100%
-        );
-        backdrop-filter: blur(15px) saturate(160%);
-        -webkit-backdrop-filter: blur(15px) saturate(160%);
-        border-radius: 14px;
-        padding: 14px 18px;
+        background: linear-gradient(135deg, #FDAE54, #F4C68D);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 16px;
+        padding: 16px 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 
-            0 3px 12px rgba(253, 174, 84, 0.3), 
-            0 0 0 1px rgba(255, 255, 255, 0.2),
-            inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            0 6px 24px rgba(253, 174, 84, 0.35), 
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         position: relative;
         animation: gentle-pulse 3s ease-in-out infinite;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid transparent;
     }
     
     /* Animation de pulsation douce pour attirer l'attention */
@@ -538,14 +542,14 @@
         50% { transform: scale(1.15); }
     }
     
-    /* Badge "Gratuit" */
+    /* Badge "Gratuit" - GLASSMORPHISME HARMONISÉ */
     .tip-badge {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px) saturate(180%);
-        -webkit-backdrop-filter: blur(10px) saturate(180%);
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(15px) saturate(180%);
+        -webkit-backdrop-filter: blur(15px) saturate(180%);
         border-radius: 20px;
         padding: 6px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.5);
         animation: badge-glow 2s ease-in-out infinite;
         box-shadow: 
             0 2px 8px rgba(0, 0, 0, 0.1),
@@ -598,7 +602,7 @@
         }
     }
     
-    /* ========== CONTENEUR PRINCIPAL CENTRÉ & FIXE ========== */
+    /* ========== CONTENEUR PRINCIPAL CENTRÉ & FIXE - GLASSMORPHISME HARMONISÉ ========== */
     .task-main-container {
         width: 100%;
         max-width: 760px;
@@ -609,13 +613,14 @@
     }
     
     .task-card {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 16px;
-        padding: 16px;
-        box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
-        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.24);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 20px;
+        padding: 18px;
+        box-shadow: 0 20px 60px rgba(21, 48, 54, 0.15), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.55);
         width: 100%;
         box-sizing: border-box;
         transition: all 0.3s ease;
@@ -630,8 +635,8 @@
             max-width: calc(100% - 24px);
         }
         .task-card {
-            padding: 14px;
-            border-radius: 14px;
+            padding: 16px;
+            border-radius: 18px;
         }
     }
     
@@ -642,14 +647,57 @@
             max-width: calc(100% - 16px);
         }
         .task-card {
-            padding: 12px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 16px;
         }
+    }
+
+    /* Header catégorie orangé glassmorphisme (identique à tasks.html) */
+    .room-header {
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        border: 2px solid rgba(253,174,84,0.3);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+        max-width: 600px;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        box-sizing: border-box;
+    }
+    .room-header .room-icon {
+        font-size: 48px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .room-header .room-name {
+        font-size: 22px;
+        font-weight: 800;
+        color: #153036;
+        margin: 0;
+    }
+    .room-header .room-subtitle {
+        font-size: 14px;
+        color: #597176;
+        margin-top: 4px;
     }
 </style>
 
 <!-- Bouton retour vers le menu -->
 <a href="{{ url_for('menu') }}" style="position:fixed;top:24px;left:24px;z-index:2001;width:56px;height:56px;background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.5);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#153036;font-size:28px;font-weight:bold;text-decoration:none;box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);transition:all 0.3s ease;" aria-label="Retour au menu">←</a>
+
+<!-- Header catégorie orangé glassmorphisme -->
+<div style="padding: 90px 16px 0; max-width:640px; margin:0 auto;">
+    <div class="room-header">
+        <span class="room-icon">{{ category_icon|default('🏠') }}</span>
+        <h1 class="room-name">{{ category_name|default(category|replace('_', ' ')|capitalize) }}</h1>
+        <p class="room-subtitle">{{ task_name }}</p>
+    </div>
+</div>
 
 <div class="task-main-container">
 
@@ -702,7 +750,7 @@
         <!-- FORMULAIRE DE SUIVI BÉBÉ (si tâche = biberon/couches/sommeil) -->
         {% set is_baby_task = 'biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower() %}
         {% if is_baby_task %}
-        <div id="baby-tracking-form" style="margin:24px auto;max-width:520px;width:calc(100% - 32px);background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:24px;border-radius:16px;border:2px solid rgba(255,255,255,0.5);box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);box-sizing:border-box;">
+        <div id="baby-tracking-form" style="margin:24px auto;max-width:520px;width:calc(100% - 32px);background:rgba(255, 255, 255, 0.24);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.55);box-shadow:0 20px 60px rgba(21, 48, 54, 0.15), inset 0 1px 0 rgba(255,255,255,0.35);box-sizing:border-box;">
             <h4 style="text-align:center;color:#153036;margin-bottom:20px;font-weight:700;font-size:18px;">
                 {% if 'biberon' in task_name.lower() %}🍼 Suivi du biberon
                 {% elif 'couche' in task_name.lower() %}👶 Suivi des couches
@@ -712,19 +760,19 @@
             <!-- 🕐 Champ heure précise -->
             <div class="form-group" style="margin-bottom:18px;">
                 <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🕐 Heure <span style="color:#e74c3c;font-weight:700;">*</span></label>
-                <input type="time" id="tracking_time" class="form-control" required style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:16px;color:#153036;font-weight:500;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;-webkit-appearance:none;appearance:none;">
+                <input type="time" id="tracking_time" class="form-control" required style="display:block;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(166,211,220,0.35);background:rgba(255,255,255,0.85);font-size:16px;color:#153036;font-weight:500;box-shadow:0 2px 8px rgba(21, 48, 54, 0.05);transition:all 0.3s ease;box-sizing:border-box;-webkit-appearance:none;appearance:none;">
             </div>
             
             {% if 'biberon' in task_name.lower() %}
             <div class="form-group" style="margin-bottom:18px;">
                 <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🍼 Quantité (ml) <span style="color:#888;font-weight:400;font-size:12px;">(optionnel)</span></label>
-                <input type="number" id="bottle_ml" class="form-control" placeholder="Ex: 120" min="0" max="500" style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:16px;color:#153036;font-weight:500;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;">
+                <input type="number" id="bottle_ml" class="form-control" placeholder="Ex: 120" min="0" max="500" style="display:block;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(166,211,220,0.35);background:rgba(255,255,255,0.85);font-size:16px;color:#153036;font-weight:500;box-shadow:0 2px 8px rgba(21, 48, 54, 0.05);transition:all 0.3s ease;box-sizing:border-box;">
             </div>
             {% endif %}
             
             <div class="form-group" style="margin-bottom:18px;">
                 <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">📝 Observations (optionnel)</label>
-                <textarea id="observations" class="form-control" rows="3" placeholder="{% if 'biberon' in task_name.lower() %}Ex: bébé a bien mangé, lait maternel, régurgitation...{% elif 'couche' in task_name.lower() %}Ex: couche sale, selles normales, irritation...{% else %}Ex: bébé fatigué, a bien dormi...{% endif %}" style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:15px;color:#153036;line-height:1.5;resize:vertical;font-weight:400;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;"></textarea>
+                <textarea id="observations" class="form-control" rows="3" placeholder="{% if 'biberon' in task_name.lower() %}Ex: bébé a bien mangé, lait maternel, régurgitation...{% elif 'couche' in task_name.lower() %}Ex: couche sale, selles normales, irritation...{% else %}Ex: bébé fatigué, a bien dormi...{% endif %}" style="display:block;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(166,211,220,0.35);background:rgba(255,255,255,0.85);font-size:15px;color:#153036;line-height:1.5;resize:vertical;font-weight:500;box-shadow:0 2px 8px rgba(21, 48, 54, 0.05);transition:all 0.3s ease;box-sizing:border-box;"></textarea>
             </div>
             
             <p style="text-align:center;font-size:14px;color:#2ecc71;margin-top:16px;margin-bottom:0;font-weight:700;background:rgba(46,204,113,0.1);padding:12px;border-radius:8px;border:1px solid rgba(46,204,113,0.3);">💬 Ces informations seront automatiquement envoyées dans la messagerie pour informer les autres joueurs de la maison</p>
@@ -958,26 +1006,23 @@ function validateTaskAjax(playerEmail) {
     })
     .then(function(data) {
         if (data.success) {
-            // Créer le popup de succès glassmorphisme
-            showSuccessPopup(data.points || 0, data.player_name || 'Joueur');
-            
-            // Créer les confettis
-            createFireworks();
+            // ✅ PAS de popup, PAS de confettis, mais garder son et animation avatar
             
             // Jouer le son de victoire si disponible
             if (typeof victoryAudioEl !== 'undefined') {
                 victoryAudioEl.play().catch(function(e) { console.log('Audio play blocked:', e); });
             }
             
-            // Redirection après 3 secondes pour profiter de l'animation
+            // Redirection avec paramètres pour l'animation de l'avatar
             var redirectUrl = '/menu?success=1&pts=' + (data.points || 0) + 
                 '&ts=' + (data.timestamp || Date.now()) + 
                 '&who=' + encodeURIComponent(data.player_email || '') + 
                 '&whon=' + encodeURIComponent(data.player_name || '');
             
+            // Délai pour laisser le son se jouer entièrement
             setTimeout(function() {
                 window.location.href = redirectUrl;
-            }, 3000);
+            }, 2500);
         } else {
             // Erreur ou doublon
             if (data.duplicate) {
@@ -1641,5 +1686,85 @@ document.addEventListener('DOMContentLoaded', function(){
         }, 500);
     });
 });
+
+// ==========================================
+// 🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
+// ==========================================
+(function() {
+    try {
+        console.log('🔍 WebSocket: Démarrage du script de connexion (task_page_enhanced)...');
+        
+        // Vérifier que Socket.IO est chargé
+        if (typeof io === 'undefined') {
+            console.error('❌ WebSocket: Socket.IO non chargé! Vérifiez le CDN.');
+            return;
+        }
+        
+        console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
+        const socket = io();
+        const userEmail = "{{ session.get('user', '') }}";
+        
+        console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');
+        
+        if (!userEmail) {
+            console.log('⚠️ WebSocket: Aucun utilisateur connecté');
+            return;
+        }
+        
+        socket.on('connect', function() {
+            console.log('🔌 WebSocket: Connecté au serveur (task_page_enhanced.html)');
+            console.log('🔍 WebSocket: Envoi join_house avec email:', userEmail);
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        socket.on('joined_room', function(data) {
+            console.log('🏠 WebSocket: Rejoint la room', data.room);
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket: Déconnecté du serveur');
+        });
+        
+        // Écouter les mises à jour de points en temps réel
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket: Mise à jour des points reçue', data);
+            
+            // Mettre à jour l'affichage des points dans la barre latérale
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    // Chercher les éléments de points pour ce joueur dans la sidebar
+                    const playerCard = document.querySelector('.player-card[data-player-email="' + player.email + '"]');
+                    if (playerCard) {
+                        // Mettre à jour les points quotidiens
+                        const dailyEl = playerCard.querySelector('.daily-points');
+                        if (dailyEl) {
+                            const newDailyPoints = player.daily_points || 0;
+                            dailyEl.textContent = newDailyPoints + ' pts';
+                            
+                            // Animation visuelle
+                            dailyEl.style.transition = 'all 0.3s ease';
+                            dailyEl.style.transform = 'scale(1.2)';
+                            dailyEl.style.color = '#28a745';
+                            setTimeout(function() {
+                                dailyEl.style.transform = 'scale(1)';
+                                dailyEl.style.color = '';
+                            }, 600);
+                        }
+                        
+                        // Mettre à jour les points totaux
+                        const totalEl = playerCard.querySelector('.total-points');
+                        if (totalEl) {
+                            const newTotalPoints = player.total_points || 0;
+                            totalEl.textContent = newTotalPoints;
+                        }
+                    }
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur WebSocket:', error);
+    }
+})();
 </script>
 {% endblock %}

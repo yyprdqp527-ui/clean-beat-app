@@ -441,7 +441,7 @@
                     </button>
                 </div>
                 
-                <div class="avatar-bank" id="avatarBank" style="display: none;">
+                <div class="avatar-bank" id="avatarBank">
                     <div class="avatar-categories" id="avatarCategories"></div>
                     <div class="avatar-grid" id="avatarGrid"></div>
                 </div>
@@ -485,6 +485,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let avatarData = [];
     let selectedAvatar = null;
     let selectedStyle = null;
+    
+    // Afficher la banque d'avatars dès le début
+    avatarBank.style.display = 'block';
     
     // Charger les catégories d'avatars
     loadAvatars();

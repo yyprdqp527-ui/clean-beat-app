@@ -22,7 +22,7 @@ def name_house():
         house_id = row[0]
         c.execute("UPDATE houses SET name=?, house_name=? WHERE id=?", (house_name, house_name, house_id))
         conn.commit()
-        flash("Nom de la maison mis à jour !", "success")
+        print(f"✅ NAME_HOUSE: Maison nommée '{house_name}', redirection vers create_profile")
     conn.close()
-    # Rediriger avec le paramètre welcome=1 pour afficher le message d'introduction
-    return redirect(url_for('menu', welcome=1))
+    # Rediriger vers la création de profil pour compléter l'inscription
+    return redirect(url_for('create_profile'))

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Invitation - TOG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 25px;
+        }
+
+        /* Logo TOG en haut */
+        .logo {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            letter-spacing: 8px;
+            margin-bottom: 10px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* Carte principale glassmorphisme */
+        .invitation-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 45px 35px;
+            text-align: center;
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 12px 40px rgba(89,113,118,0.2);
+            max-width: 480px;
+            width: 100%;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .invite-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 12px rgba(21, 48, 54, 0.15));
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .invite-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #153036;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .inviter-name {
+            color: #FDAE54;
+            font-weight: 900;
+        }
+
+        .house-name {
+            color: #597176;
+            font-weight: 700;
+        }
+
+        .invite-subtitle {
+            font-size: 16px;
+            color: #597176;
+            margin-bottom: 35px;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .house-info {
+            background: rgba(253,174,84,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 35px;
+            border: 2px solid rgba(253,174,84,0.2);
+        }
+
+        .house-info-label {
+            font-size: 13px;
+            color: #597176;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .house-info-value {
+            font-size: 20px;
+            color: #153036;
+            font-weight: 800;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: #153036;
+            box-shadow: 0 6px 20px rgba(253,174,84,0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(253,174,84,0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            color: #153036;
+            border: 2px solid rgba(253,174,84,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: #FDAE54;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-top: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2.8em;
+                letter-spacing: 6px;
+            }
+
+            .invitation-card {
+                padding: 35px 25px;
+            }
+
+            .invite-icon {
+                font-size: 3rem;
+            }
+
+            .invite-title {
+                font-size: 24px;
+            }
+
+            .invite-subtitle {
+                font-size: 15px;
+            }
+
+            .btn {
+                padding: 16px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="logo">TOG</div>
+
+<div class="invitation-card">
+    <div class="invite-icon">🎮</div>
+    
+    <h1 class="invite-title">
+        <span class="inviter-name">{{ inviter_name }}</span> t'invite à rejoindre<br>
+        <span class="house-name">{{ house_name or 'son foyer' }}</span> !
+    </h1>
+    
+    <p class="invite-subtitle">
+        Rejoins l'aventure TOG et transforme les tâches ménagères en compétition fun ! 🏆
+    </p>
+
+    {% if house_type %}
+    <div class="house-info">
+        <div class="house-info-label">Type de foyer</div>
+        <div class="house-info-value">
+            {% if house_type == 'couple' %}
+                💑 En couple
+            {% elif house_type == 'coloc' %}
+                👥 En colocation
+            {% elif house_type == 'family' %}
+                👨‍👩‍👧‍👦 En famille
+            {% else %}
+                🏠 Foyer partagé
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="buttons-container">
+        <a href="/join_house?code={{ house_code }}" class="btn btn-primary">
+            🚀 Créer mon compte
+        </a>
+        
+        <a href="/login?redirect=/join_house?code={{ house_code }}" class="btn btn-secondary">
+            🔐 J'ai déjà un compte
+        </a>
+    </div>
+</div>
+
+<p class="footer-text">
+    Share. Compete. Live together. ✨
+</p>
+
+</body>
+</html>

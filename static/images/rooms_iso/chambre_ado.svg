@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180">
+  <defs>
+    <linearGradient id="floorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#AB47BC;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#CE93D8;stop-opacity:0.4" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Sol isométrique -->
+  <path d="M 100 40 L 180 80 L 100 120 L 20 80 Z" 
+        fill="url(#floorGrad)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="2"/>
+  
+  <!-- Mur gauche -->
+  <path d="M 20 80 L 100 120 L 100 160 L 20 120 Z" 
+        fill="rgba(171, 71, 188, 0.2)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mur droit -->
+  <path d="M 180 80 L 100 120 L 100 160 L 180 120 Z" 
+        fill="rgba(171, 71, 188, 0.15)" 
+        stroke="rgba(255, 255, 255, 0.3)" 
+        stroke-width="1.5"/>
+  
+  <!-- Lit simple -->
+  <path d="M 40 92 L 80 114 L 80 122 L 40 100 Z" 
+        fill="rgba(156, 39, 176, 0.6)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <!-- Oreiller -->
+  <ellipse cx="50" cy="102" rx="8" ry="4" 
+           fill="rgba(206, 147, 216, 0.7)" 
+           stroke="rgba(255, 255, 255, 0.4)" 
+           stroke-width="1"/>
+  <!-- Tête de lit -->
+  <path d="M 40 92 L 80 114 L 80 108 L 40 86 Z" 
+        fill="rgba(156, 39, 176, 0.8)" 
+        stroke="rgba(255, 255, 255, 0.6)" 
+        stroke-width="1"/>
+  
+  <!-- Bureau gaming -->
+  <path d="M 110 100 L 150 120 L 150 127 L 110 107 Z" 
+        fill="rgba(66, 66, 66, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  
+  <!-- Écran PC gaming -->
+  <path d="M 125 95 L 140 103 L 140 113 L 125 105 Z" 
+        fill="rgba(33, 33, 33, 0.9)" 
+        stroke="rgba(100, 100, 100, 0.8)" 
+        stroke-width="1.5"/>
+  <path d="M 127 97 L 138 103 L 138 111 L 127 105 Z" 
+        fill="rgba(138, 43, 226, 0.4)" 
+        stroke="none"
+        filter="url(#glow)"/>
+  
+  <!-- Chaise gaming -->
+  <ellipse cx="135" cy="125" rx="8" ry="4" 
+           fill="rgba(156, 39, 176, 0.7)" 
+           stroke="rgba(255, 255, 255, 0.5)" 
+           stroke-width="1"/>
+  <line x1="135" y1="125" x2="135" y2="115" 
+        stroke="rgba(100, 100, 100, 0.8)" 
+        stroke-width="3"/>
+  
+  <!-- Poster LED strip sur mur -->
+  <rect x="25" y="125" width="20" height="25" 
+        fill="rgba(138, 43, 226, 0.3)" 
+        stroke="rgba(138, 43, 226, 0.6)" 
+        stroke-width="1"
+        filter="url(#glow)"/>
+  
+  <!-- Console de jeu -->
+  <rect x="85" y="115" width="15" height="5" 
+        fill="rgba(33, 33, 33, 0.8)" 
+        stroke="rgba(100, 100, 100, 0.7)" 
+        stroke-width="1" rx="1"/>
+  <circle cx="92" cy="117" r="1.5" 
+          fill="rgba(0, 255, 0, 0.8)" 
+          filter="url(#glow)"/>
+  
+  <!-- Tapis gaming RGB -->
+  <ellipse cx="130" cy="115" rx="35" ry="15" 
+           fill="rgba(138, 43, 226, 0.15)" 
+           stroke="rgba(138, 43, 226, 0.4)" 
+           stroke-width="1.5"
+           filter="url(#glow)"/>
+  
+  <!-- Icône -->
+  <text x="100" y="35" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="24" 
+        filter="url(#glow)">🎮</text>
+  
+  <!-- Label glassmorphism -->
+  <rect x="50" y="5" width="100" height="22" 
+        fill="rgba(255, 255, 255, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5" 
+        rx="11"/>
+  <text x="100" y="20" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="14" 
+        font-weight="600" 
+        fill="#FFFFFF">Chambre Ado</text>
+</svg>

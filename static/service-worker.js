@@ -1,8 +1,8 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.0.0
 
-const CACHE_NAME = 'cleanbeat-v1';
-const OFFLINE_URL = '/menu';
+const CACHE_NAME = 'cleanbeat-v5';
+const OFFLINE_URL = '/static/manifest.json';
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
@@ -11,12 +11,10 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('📦 Service Worker: Cache ouvert');
+            // ⚠️ Ne PAS pré-cacher les pages dynamiques (menu, comments, /)
+            // car elles contiennent des badges/données qui changent constamment
             return cache.addAll([
-                '/',
-                '/menu',
-                '/comments',
-                '/static/manifest.json',
-                OFFLINE_URL
+                '/static/manifest.json'
             ]);
         })
     );
@@ -50,6 +48,31 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     // Ignorer les requêtes non-GET
     if (event.request.method !== 'GET') return;
+    
+    const url = new URL(event.request.url);
+    
+    // 🚫 Ne JAMAIS mettre en cache les requêtes API ni les pages dynamiques
+    // (les badges/compteurs/avatars doivent toujours être frais)
+    // 🚫 Ne JAMAIS mettre en cache les images des pièces (elles peuvent changer)
+    if (url.pathname.startsWith('/api/') || 
+        url.pathname === '/menu' || 
+        url.pathname === '/comments' ||
+        url.pathname === '/mes_recompenses' ||
+        url.pathname === '/manage_players' ||
+        url.pathname === '/rewards' ||
+        url.pathname.startsWith('/edit_player/') ||
+        url.pathname === '/' ||
+        (url.pathname.startsWith('/static/images/') && url.pathname.endsWith('.webp'))) {
+        event.respondWith(
+            fetch(event.request).catch(() => {
+                // Fallback cache uniquement en cas d'échec réseau
+                return caches.match(event.request).then((response) => {
+                    return response || caches.match(OFFLINE_URL);
+                });
+            })
+        );
+        return;
+    }
     
     event.respondWith(
         fetch(event.request)

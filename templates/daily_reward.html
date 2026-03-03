@@ -330,7 +330,15 @@
         {% if players|length == 1 %}
             <div class="player-card">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <img src="{{ url_for('static', filename='avatars/' ~ players[0].avatar) }}" alt="Avatar">
+                    {% if players[0].avatar_file %}
+                        <img src="{{ url_for('static', filename='avatars/' + players[0].avatar_file) }}" alt="Avatar">
+                    {% elif players[0].avatar_url %}
+                        <img src="{{ players[0].avatar_url }}" alt="Avatar">
+                    {% elif players[0].avatar and players[0].avatar|length <= 4 %}
+                        <span style="font-size: 2rem;">{{ players[0].avatar }}</span>
+                    {% else %}
+                        <img src="https://api.dicebear.com/7.x/{{ players[0].avatar_style|default('adventurer') }}/svg?seed={{ (players[0].name or players[0].email)|urlencode }}" alt="Avatar">
+                    {% endif %}
                     <div class="vbar" title="{{ players[0].percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ players[0].percentage|default(0) }}%"></div></div>
                 </div>
                 <div class="player-info">
@@ -340,7 +348,15 @@
             </div>
         {% elif players|length >= 2 %}
             <div class="player-card">
-                <img src="{{ url_for('static', filename='avatars/' ~ players[0].avatar) }}" alt="Avatar">
+                {% if players[0].avatar_file %}
+                    <img src="{{ url_for('static', filename='avatars/' + players[0].avatar_file) }}" alt="Avatar">
+                {% elif players[0].avatar_url %}
+                    <img src="{{ players[0].avatar_url }}" alt="Avatar">
+                {% elif players[0].avatar and players[0].avatar|length <= 4 %}
+                    <span style="font-size: 2rem;">{{ players[0].avatar }}</span>
+                {% else %}
+                    <img src="https://api.dicebear.com/7.x/{{ players[0].avatar_style|default('adventurer') }}/svg?seed={{ (players[0].name or players[0].email)|urlencode }}" alt="Avatar">
+                {% endif %}
                 <div class="player-info">
                     <span class="player-email">{{ players[0].email }}</span>
                     <span class="player-points">{{ players[0].points }} pts</span>
@@ -349,7 +365,15 @@
             <span class="versus">VS</span>
             <div class="player-card">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <img src="{{ url_for('static', filename='avatars/' ~ players[1].avatar) }}" alt="Avatar">
+                    {% if players[1].avatar_file %}
+                        <img src="{{ url_for('static', filename='avatars/' + players[1].avatar_file) }}" alt="Avatar">
+                    {% elif players[1].avatar_url %}
+                        <img src="{{ players[1].avatar_url }}" alt="Avatar">
+                    {% elif players[1].avatar and players[1].avatar|length <= 4 %}
+                        <span style="font-size: 2rem;">{{ players[1].avatar }}</span>
+                    {% else %}
+                        <img src="https://api.dicebear.com/7.x/{{ players[1].avatar_style|default('adventurer') }}/svg?seed={{ (players[1].name or players[1].email)|urlencode }}" alt="Avatar">
+                    {% endif %}
                     <div class="vbar" title="{{ players[1].percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ players[1].percentage|default(0) }}%"></div></div>
                 </div>
                 <div class="player-info">

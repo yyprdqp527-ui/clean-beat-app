@@ -619,7 +619,7 @@
                         {% elif player.avatar and player.avatar|length <= 4 %}
                             <span id="preview-emoji">{{ player.avatar }}</span>
                         {% else %}
-                            <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar" id="preview-img">
+                            <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="Avatar" id="preview-img">
                         {% endif %}
                     </div>
                 </div>

@@ -101,25 +101,47 @@
         font-weight: 600;
     }
 
-    .back-button {
-        display: inline-flex;
+    .back-btn-glass {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 2001;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
+        display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 12px 20px;
-        background: white;
-        border: 2px solid var(--primary);
-        color: var(--dark);
-        border-radius: 12px;
+        justify-content: center;
+        color: #153036;
+        font-size: 28px;
+        font-weight: bold;
         text-decoration: none;
-        font-weight: 600;
+        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
         transition: all 0.3s ease;
-        margin-bottom: 20px;
     }
 
-    .back-button:hover {
-        background: var(--primary);
-        color: white;
+    .back-btn-glass:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
         transform: translateY(-2px);
+        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .back-btn-glass:active {
+        transform: scale(0.95);
+    }
+
+    @media (max-width: 520px) {
+        .back-btn-glass {
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+        }
     }
 
     @media (max-width: 768px) {
@@ -138,9 +160,7 @@
 </style>
 
 <div class="stats-container">
-    <a href="{{ url_for('sats') }}" class="back-button">
-        ← Retour aux stats
-    </a>
+    <a href="{{ url_for('sats') }}" class="back-btn-glass" aria-label="Retour aux stats">←</a>
 
     <div class="page-header">
         <div class="page-title">📊 Statistiques détaillées</div>
@@ -416,6 +436,42 @@ if (ctx4) {
         }
     });
 }
+
+// 🔌 WebSocket pour mise à jour en temps réel des statistiques
+(function() {
+    try {
+        const socket = io();
+        const userEmail = '{{ session.user }}';
+        
+        socket.on('connect', function() {
+            console.log('✅ WebSocket Stats Graphique: Connecté');
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket Stats Graphique: Mise à jour des points reçue', data);
+            
+            // Recharger la page pour rafraîchir tous les graphiques
+            if (data.players && Array.isArray(data.players)) {
+                const currentPlayer = data.players.find(p => p.email === userEmail);
+                if (currentPlayer) {
+                    console.log('🔄 Rechargement des statistiques graphiques...');
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000);
+                }
+            }
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket Stats Graphique: Déconnecté');
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur WebSocket Stats Graphique:', error);
+    }
+})();
 </script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 {% endblock %}

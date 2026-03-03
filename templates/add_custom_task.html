@@ -472,23 +472,23 @@ body {
                 <label>🖼️ Image de la mission</label>
                 <div class="image-selector" id="imageSelector">
                     {% set images = [
-                        ('cafe.png', '☕'),
-                        ('vaisselle.jpg', '🍽️'),
-                        ('faire_course.png', '🛒'),
-                        ('machine.jpg', '👕'),
-                        ('linge.jpg', '🧺'),
-                        ('laver_toillettes.png', '🚽'),
-                        ('lit.png', '🛏️'),
-                        ('Passer l\'aspirateur.webp', '🏠'),
-                        ('trier les poubelles.webp', '♻️'),
-                        ('cuisine.png', '🍳'),
-                        ('faire la poussière.webp', '✨'),
-                        ('laver les sols.webp', '🧽')
+                        ('cuisine/cafe.png', '☕'),
+                        ('cuisine/ranger la vaiselle dans le placard.webp', '🍽️'),
+                        ('chambre parent/changer les draps du lit.webp', '🛏️'),
+                        ('chambre parent/faire le lit.webp', '🛏️'),
+                        ('salon/Ranger le desordre du salon.webp', '🧹'),
+                        ('salon/arroser les plantes.webp', '🌱'),
+                        ('salon/faire la poussière.webp', '✨'),
+                        ('salon/laver les sols.webp', '🧽'),
+                        ('chambre ados/Ranger sa chambre.webp', '🧸'),
+                        ('salle de bain/éponger le sol.webp', '💧'),
+                        ('garage/carwash.webp', '🚗'),
+                        ('bonus/prendre les rdv médicaux.webp', '🏥')
                     ] %}
                     {% for img, emoji in images %}
                     <div class="image-option {% if task and task.image == img %}selected{% endif %}" 
                          data-image="{{ img }}" onclick="selectImage(this, '{{ img }}')">
-                        <img src="{{ url_for('static', filename='images/' ~ img) }}" alt="{{ emoji }}">
+                        <img src="{{ url_for('static', filename='images/' ~ img) }}" alt="{{ emoji }}" onerror="this.src='{{ url_for('static', filename='images/default.png') }}'">
                     </div>
                     {% endfor %}
                 </div>
@@ -497,7 +497,7 @@ body {
                 
                 <div class="file-upload">
                     <input type="file" id="task_image" name="task_image" accept="image/*" onchange="previewImage(event)">
-                    <div class="file-upload-btn">📷 Ou télécharge ta propre photo</div>
+                    <div class="file-upload-btn" onclick="document.getElementById('task_image').click()">📷 Ou télécharge ta propre photo</div>
                 </div>
                 
                 <div class="image-preview-container" id="previewContainer" style="display: {% if task and task.image %}block{% else %}none{% endif %};">
