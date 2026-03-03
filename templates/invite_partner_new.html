@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Inviter des partenaires - CleanBeat{% endblock %}
+{% block title %}Inviter des partenaires - Dust{% endblock %}
 
 {% block page_styles %}
 <style>
@@ -902,7 +902,7 @@ const houseCode = "{{ house_code or '' }}";
 
 // Message d'invitation
 const inviteLink = '{{ join_url }}';
-const inviteMessage = `🎮 Rejoins-moi sur CleanBeat !
+const inviteMessage = `🎮 Rejoins-moi sur Dust !
 
 Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🏆
 
@@ -949,7 +949,7 @@ async function shareInvitation() {
     if (navigator.share) {
         try {
             await navigator.share({
-                title: 'Invitation CleanBeat',
+                title: 'Invitation Dust',
                 text: inviteMessage,
             });
             // Partage réussi → afficher bouton retour

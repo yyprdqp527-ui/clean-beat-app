@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧹 Nettoyage Cache CleanBeat</title>
+    <title>🧹 Nettoyage Cache Dust</title>
     <style>
         * {
             margin: 0;
@@ -162,7 +162,7 @@
 <body>
     <div class="container">
         <h1>🧹 Nettoyage Cache</h1>
-        <p class="subtitle">Supprimer tous les fichiers en cache pour CleanBeat</p>
+        <p class="subtitle">Supprimer tous les fichiers en cache pour Dust</p>
         
         <div class="step">
             <div class="step-title">
@@ -208,8 +208,8 @@
             <button class="btn btn-clear" onclick="clearAllCache()">
                 🧹 Tout nettoyer
             </button>
-            <button class="btn btn-reload" onclick="reloadCleanBeat()">
-                🔄 Recharger CleanBeat
+            <button class="btn btn-reload" onclick="reloadDust()">
+                🔄 Recharger Dust
             </button>
         </div>
         
@@ -275,7 +275,7 @@
             }
         }
         
-        function reloadCleanBeat() {
+        function reloadDust() {
             // Hard reload avec ?v= pour casser le cache
             const timestamp = new Date().getTime();
             window.location.href = `/menu?v=${timestamp}`;

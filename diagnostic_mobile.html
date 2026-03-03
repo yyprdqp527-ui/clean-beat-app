@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnostic Mobile - CleanBeat</title>
+    <title>Diagnostic Mobile - Dust</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
@@ -45,7 +45,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📱 Diagnostic Mobile CleanBeat</h1>
+        <h1>📱 Diagnostic Mobile Dust</h1>
         
         <div class="card">
             <h2>📊 Informations Appareil</h2>
@@ -62,7 +62,7 @@
             <h2>🔗 Tests de Connectivité</h2>
             <div id="connectivity-status"></div>
             <button class="btn" onclick="testConnectivity()">🔄 Tester Connexion</button>
-            <button class="btn" onclick="testCleanBeat()">🏠 Test CleanBeat</button>
+            <button class="btn" onclick="testDust()">🏠 Test Dust</button>
         </div>
         
         <div class="card">
@@ -130,21 +130,21 @@
             fetch('http://192.168.1.156:8080/menu', { method: 'HEAD' })
                 .then(response => {
                     if (response.ok) {
-                        statusEl.innerHTML = '<div class="status success">✅ CleanBeat accessible (port 8080)</div>';
-                        log('✅ Connexion CleanBeat réussie');
+                        statusEl.innerHTML = '<div class="status success">✅ Dust accessible (port 8080)</div>';
+                        log('✅ Connexion Dust réussie');
                     } else {
-                        statusEl.innerHTML = '<div class="status error">❌ CleanBeat inaccessible (erreur ' + response.status + ')</div>';
-                        log('❌ Erreur CleanBeat: ' + response.status);
+                        statusEl.innerHTML = '<div class="status error">❌ Dust inaccessible (erreur ' + response.status + ')</div>';
+                        log('❌ Erreur Dust: ' + response.status);
                     }
                 })
                 .catch(error => {
-                    statusEl.innerHTML = '<div class="status error">❌ Impossible de joindre CleanBeat</div>';
+                    statusEl.innerHTML = '<div class="status error">❌ Impossible de joindre Dust</div>';
                     log('❌ Erreur réseau: ' + error.message);
                 });
         }
         
-        function testCleanBeat() {
-            log('🏠 Redirection vers CleanBeat...');
+        function testDust() {
+            log('🏠 Redirection vers Dust...');
             window.open('http://192.168.1.156:8080', '_blank');
         }
         
@@ -162,7 +162,7 @@
             barEl.style.width = percentage + '%';
             pointsEl.textContent = testPointsValue;
             
-            // Couleur selon progression (logique CleanBeat)
+            // Couleur selon progression (logique Dust)
             const hue = Math.floor((percentage * 120) / 100);
             barEl.style.background = `hsl(${hue}, 80%, 55%)`;
         }

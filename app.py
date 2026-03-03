@@ -1089,12 +1089,12 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
     if not TWILIO_AVAILABLE:
         if house_code:
             _dbg(f"\n📱 SMS simulé envoyé vers {phone_number}:")
-            _dbg(f"   🏠 {user_name} vous invite à jouer à CleanBeat !")
+            _dbg(f"   🏠 {user_name} vous invite à jouer à Dust !")
             _dbg(f"   📱 Cliquez pour rejoindre (aucune installation requise) :")
             _dbg(f"   {base_url}join_house?code={house_code}")
             _dbg(f"   Code : {house_code}\n")
         else:
-            _dbg(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à CleanBeat !")
+            _dbg(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à Dust !")
             _dbg(f"📱 Cliquez : {base_url}")
         return True
     
@@ -1102,12 +1102,12 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
         
         if house_code:
-            message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
+            message_body = f"🏠 {user_name} vous invite à jouer à 'Dust' ! " \
                           f"📱 Cliquez pour rejoindre (aucune installation requise) : " \
                           f"{base_url}join_house?code={house_code} " \
                           f"Code : {house_code}"
         else:
-            message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
+            message_body = f"🏠 {user_name} vous invite à jouer à 'Dust' ! " \
                           f"📱 Cliquez pour commencer : {base_url}"
         
         message = client.messages.create(
@@ -2299,7 +2299,7 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
-    # Table pour les cadeaux révélés (CleanBeat)
+    # Table pour les cadeaux révélés (Dust)
     c.execute("""
     CREATE TABLE IF NOT EXISTS revealed_gifts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2560,7 +2560,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 if message_type in ['sermon', 'congratulation', 'reminder']:
                     title = f'{icon_emoji} {sender_name or "Maison"}'
                 else:
-                    title = f'{icon_emoji} CleanBeat'
+                    title = f'{icon_emoji} Dust'
                 
                 notification_data = {
                     'title': title,
@@ -2835,7 +2835,7 @@ def send_push_notification(subscription, notification_data):
         VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
         VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
         VAPID_CLAIMS = {
-            "sub": "mailto:contact@cleanbeat.app"
+            "sub": "mailto:contact@dust.app"
         }
         
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
@@ -5798,7 +5798,7 @@ def buy_reward(reward_id):
 
 @app.route('/gifts')
 def gifts():
-    """Grille de cadeaux CleanBeat - débloquée le dimanche matin"""
+    """Grille de cadeaux Dust - débloquée le dimanche matin"""
     if 'user' not in session:
         flash("🔐 Connecte-toi pour voir tes cadeaux !", "warning")
         return redirect(url_for('signup_email'))
@@ -8861,7 +8861,7 @@ def api_push_test():
             return {'success': False, 'error': 'Aucune subscription trouvée'}, 404
         
         notification_data = {
-            'title': '🧹 CleanBeat Test',
+            'title': '🧹 Dust Test',
             'body': 'Vos notifications push fonctionnent correctement !',
             'icon': '/static/images/logo.png',
             'url': '/menu'
@@ -9376,7 +9376,7 @@ if __name__ == '__main__':
 
     # Forcer le port 8000
     chosen_port = 8000
-    print(f"Démarrage de CleanBeat sur le port {chosen_port}...")
+    print(f"Démarrage de Dust sur le port {chosen_port}...")
     print("⚠️  Mode développement : pour une meilleure stabilité, utilisez un serveur WSGI en production")
     
     # Démarrer avec SocketIO si disponible, sinon utiliser Flask standard
