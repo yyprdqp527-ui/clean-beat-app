@@ -19,14 +19,6 @@ Usage examples (from project root):
 Adjust worker count and bind address to your environment and load.
 """
 
-# ⚡ CRITIQUE : eventlet.monkey_patch() DOIT être appelé avant tout autre import
-# pour que gunicorn + eventlet fonctionne correctement sur Render
-try:
-    import eventlet
-    eventlet.monkey_patch()
-except ImportError:
-    pass
-
 try:
     # Import the Flask `app` and (optionally) `socketio` if present
     from app import app  # type: ignore

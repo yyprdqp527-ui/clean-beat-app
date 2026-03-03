@@ -1,3 +1,11 @@
+# ⚡ CRITIQUE: monkey_patch DOIT être la toute première instruction
+# Flask-SocketIO + eventlet l'exige AVANT tout import standard (socket, ssl…)
+try:
+    import eventlet
+    eventlet.monkey_patch()
+except ImportError:
+    pass
+
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
