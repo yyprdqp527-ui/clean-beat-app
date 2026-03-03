@@ -114,7 +114,7 @@ except ImportError:
 
 
 app = Flask(__name__)
-app.secret_key = "2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025"  # clé secrète forte, à garder confidentielle
+app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
 # ⚡ Désactiver cache des templates pour développement
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -140,7 +140,7 @@ def list_index_filter(lst, value):
 # Configuration des sessions pour qu'elles persistent après rafraîchissement
 from datetime import timedelta
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Session valable 30 jours
-app.config['SESSION_COOKIE_SECURE'] = False  # Mettre à True en production avec HTTPS
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RENDER') is not None  # True sur Render (HTTPS)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forcer le rechargement des templates
@@ -148,14 +148,15 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forcer le rechargement des templat
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
     # Configurer SocketIO avec les bons paramètres pour WebSocket
+    _async_mode = 'eventlet' if os.environ.get('RENDER') else None
     socketio = SocketIO(
-        app, 
+        app,
         cors_allowed_origins="*",
-        logger=False,  # Désactiver les logs verbeux
-        engineio_logger=False,  # Désactiver les logs engine.io
-        ping_timeout=60,  # Timeout plus long pour la stabilité
-        ping_interval=25,  # Ping régulier pour maintenir la connexion
-        async_mode=None  # Laisser SocketIO choisir le meilleur mode (eventlet si disponible, sinon threading)
+        logger=False,
+        engineio_logger=False,
+        ping_timeout=60,
+        ping_interval=25,
+        async_mode=_async_mode
     )
     print("✅ WebSocket activé pour la synchronisation en temps réel")
 else:
