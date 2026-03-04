@@ -1,10 +1,13 @@
 # ⚡ CRITIQUE: monkey_patch DOIT être la toute première instruction
 # Flask-SocketIO + eventlet l'exige AVANT tout import standard (socket, ssl…)
-try:
-    import eventlet
-    eventlet.monkey_patch()
-except ImportError:
-    pass
+# En local macOS : désactivé (bug eventlet/kqueue macOS)
+import os as _os
+if _os.environ.get('RENDER'):
+    try:
+        import eventlet
+        eventlet.monkey_patch()
+    except ImportError:
+        pass
 
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
@@ -157,7 +160,8 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forcer le rechargement des templat
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
     # Configurer SocketIO avec les bons paramètres pour WebSocket
-    _async_mode = 'eventlet' if os.environ.get('RENDER') else None
+    # En local macOS : forcer threading (eventlet/kqueue bug sur macOS)
+    _async_mode = 'eventlet' if os.environ.get('RENDER') else 'threading'
     socketio = SocketIO(
         app,
         cors_allowed_origins="*",
