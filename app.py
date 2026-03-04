@@ -5958,7 +5958,7 @@ def login():
     # La page de login ne doit jamais être protégée par une vérification de session !
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
-        password = request.form['password']
+        password = request.form['password'].strip()
         conn = sqlite3.connect(DB)
         c = conn.cursor()
         c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))

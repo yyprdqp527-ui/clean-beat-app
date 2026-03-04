@@ -290,7 +290,7 @@
         <div class="form-group">
             <label for="email">Adresse email</label>
             <input type="email" id="email" name="email" required
-                   placeholder="ton@email.com" autocomplete="email">
+                   placeholder="ton@email.com" autocomplete="username">
         </div>
 
         <div class="form-group">
@@ -381,7 +381,11 @@
                 e.preventDefault();
                 pwdInput.style.borderColor = '#e55353';
                 pwdInput.focus();
+                return;
             }
+            // Remettre en type=password avant soumission
+            // (obligatoire pour que le trousseau macOS/Safari enregistre le credential)
+            pwdInput.type = 'password';
         });
     </script>
 
