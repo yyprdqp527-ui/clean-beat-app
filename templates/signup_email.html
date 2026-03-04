@@ -263,96 +263,126 @@
 <!-- Header avec titre - style create_profile -->
 <div class="page-header">
     <div class="page-icon">📝</div>
-    <h1 class="page-title">Créer votre compte</h1>
+    <h1 class="page-title">Créer mon compte</h1>
 </div>
 
 <div class="container">
     {% include '_flash_popup.html' %}
 
-    <form method="post">
-        <div class="form-group">
-            <label for="name">Prénom</label>
-            <input type="text" id="name" name="name" required 
-                   placeholder="Votre prénom">
+    <form method="post" id="signupForm">
+        {% if invite_code %}
+        <input type="hidden" name="invite_code" value="{{ invite_code }}">
+        {% endif %}
+
+        <div class="form-group" style="display:flex;gap:12px;">
+            <div style="flex:1;">
+                <label for="firstname">Prénom</label>
+                <input type="text" id="firstname" name="firstname" required
+                       placeholder="Ton prénom" autocomplete="given-name">
+            </div>
+            <div style="flex:1;">
+                <label for="name">Nom</label>
+                <input type="text" id="name" name="name" required
+                       placeholder="Ton nom" autocomplete="family-name">
+            </div>
         </div>
 
         <div class="form-group">
             <label for="email">Adresse email</label>
-            <input type="email" id="email" name="email" required 
-                   placeholder="votre@email.com">
+            <input type="email" id="email" name="email" required
+                   placeholder="ton@email.com" autocomplete="email">
         </div>
 
         <div class="form-group">
-            <label for="password">Créer votre mot de passe</label>
-            <input type="text" id="password" name="password" required
-                   placeholder="Mot de passe suggéré"
-                   style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e0e0e0; font-size: 16px; background: #fafafa; transition: border-color 0.3s; font-family: monospace;">
+            <label for="phone">Téléphone <span style="font-weight:400;color:#999;font-size:12px;">(facultatif)</span></label>
+            <input type="tel" id="phone" name="phone"
+                   placeholder="+33 6 12 34 56 78" autocomplete="tel">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <div style="position:relative;">
+                <input type="password" id="password" name="password" required
+                       placeholder="Au moins 8 caractères"
+                       autocomplete="new-password"
+                       style="padding-right:50px;">
+                <button type="button" id="togglePwd"
+                        style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:#597176;padding:0;"
+                        title="Afficher/masquer">👁</button>
+            </div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:12px;color:#888;">8 caractères minimum</span>
+                <button type="button" id="generatePwd"
+                        style="font-size:12px;color:#FDAE54;border:none;background:none;cursor:pointer;font-weight:700;padding:0;text-decoration:underline;">
+                    ✨ Générer un mot de passe fort
+                </button>
+            </div>
+            <div id="pwdGenerated" style="display:none;margin-top:8px;padding:10px 14px;background:rgba(253,174,84,0.12);border-radius:10px;border:1.5px solid rgba(253,174,84,0.4);font-family:monospace;font-size:15px;color:#153036;letter-spacing:1px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span id="pwdText"></span>
+                <button type="button" id="copyPwd" style="background:none;border:none;cursor:pointer;font-size:16px;" title="Copier">📋</button>
+            </div>
         </div>
 
         <button type="submit" class="submit-btn">
-            Créer mon compte
+            🚀 Créer mon compte
         </button>
     </form>
 
     <script>
-        const passwordInput = document.getElementById('password');
+        // ─── Afficher / masquer le mot de passe ───
+        const pwdInput   = document.getElementById('password');
+        const toggleBtn  = document.getElementById('togglePwd');
+        toggleBtn.addEventListener('click', () => {
+            const show = pwdInput.type === 'password';
+            pwdInput.type = show ? 'text' : 'password';
+            toggleBtn.textContent = show ? '🙈' : '👁';
+        });
 
+        // ─── Générateur de mot de passe ───
         function generateStrongPassword() {
-            const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-            const lowercase = 'abcdefghijkmnopqrstuvwxyz';
-            const numbers = '23456789';
-            const special = '!@#$%&*';
-            const all = uppercase + lowercase + numbers + special;
-            
-            let password = '';
-            password += uppercase[Math.floor(Math.random() * uppercase.length)];
-            password += lowercase[Math.floor(Math.random() * lowercase.length)];
-            password += numbers[Math.floor(Math.random() * numbers.length)];
-            password += special[Math.floor(Math.random() * special.length)];
-            
-            for (let i = 4; i < 16; i++) {
-                password += all[Math.floor(Math.random() * all.length)];
-            }
-            
-            return password.split('').sort(() => Math.random() - 0.5).join('');
+            const up   = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            const lo   = 'abcdefghijkmnopqrstuvwxyz';
+            const num  = '23456789';
+            const spec = '!@#$%&*';
+            const all  = up + lo + num + spec;
+            let pwd = up[~~(Math.random()*up.length)]
+                    + lo[~~(Math.random()*lo.length)]
+                    + num[~~(Math.random()*num.length)]
+                    + spec[~~(Math.random()*spec.length)];
+            for (let i=4; i<14; i++) pwd += all[~~(Math.random()*all.length)];
+            return pwd.split('').sort(()=>Math.random()-0.5).join('');
         }
 
-        // Générer et afficher le mot de passe au chargement
-        window.addEventListener('DOMContentLoaded', () => {
-            passwordInput.value = generateStrongPassword();
-            passwordInput.select();
+        document.getElementById('generatePwd').addEventListener('click', () => {
+            const newPwd = generateStrongPassword();
+            pwdInput.value = newPwd;
+            pwdInput.type  = 'text';
+            toggleBtn.textContent = '🙈';
+            const box = document.getElementById('pwdGenerated');
+            document.getElementById('pwdText').textContent = newPwd;
+            box.style.display = 'flex';
         });
 
-        // Masquer le mot de passe quand on quitte le champ
-        passwordInput.addEventListener('blur', function() {
-            if (this.value) {
-                this.type = 'password';
-            }
-            this.style.borderColor = '#e0e0e0';
-            this.style.background = '#fafafa';
+        document.getElementById('copyPwd').addEventListener('click', () => {
+            navigator.clipboard.writeText(pwdInput.value).then(() => {
+                document.getElementById('copyPwd').textContent = '✅';
+                setTimeout(() => document.getElementById('copyPwd').textContent = '📋', 1500);
+            });
         });
 
-        // Afficher en clair au focus
-        passwordInput.addEventListener('focus', function() {
-            this.type = 'text';
-            this.style.borderColor = '#597176';
-            this.style.background = 'white';
-        });
-
-        // Validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const pwd = passwordInput.value;
-            if (!pwd || pwd.length < 8) {
+        // ─── Validation légère à la soumission ───
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            if (pwdInput.value.length < 8) {
                 e.preventDefault();
-                alert('Le mot de passe doit contenir au moins 8 caractères');
-                return false;
+                pwdInput.style.borderColor = '#e55353';
+                pwdInput.focus();
             }
         });
     </script>
 
     <div class="back-link">
         <p><a href="{{ url_for('join_house') }}">Rejoindre une maison existante avec un code</a></p>
-        <p>Vous avez déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
+        <p>Tu as déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
     </div>
 </div>
 <a href="{{ url_for('welcome') }}" class="back-btn-glass" aria-label="Retour">←</a>

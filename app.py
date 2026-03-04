@@ -2102,6 +2102,16 @@ CREATE TABLE IF NOT EXISTS users (
     except sqlite3.OperationalError:
         pass
 
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN firstname TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+    except sqlite3.OperationalError:
+        pass
+
 # Table houses
     c.execute("""
         CREATE TABLE IF NOT EXISTS houses (
@@ -3590,78 +3600,84 @@ def get_house_players_points(house_id, existing_conn=None):
 
 @app.route('/signup_email', methods=['GET', 'POST'])
 def signup_email():
-    """Inscription avec récupération de mail - ÉTAPE 1 du parcours"""
+    """Inscription avec email - ÉTAPE 1 du parcours"""
+    # Code d'invitation éventuel (joueur invité via SMS)
+    invite_code = request.args.get('code', '').strip().upper() or session.get('invite_code', '')
+
     if request.method == 'POST':
-        import re
-        
+        firstname = request.form.get('firstname', '').strip().capitalize()
         name = request.form.get('name', '').strip().capitalize()
         email = request.form.get('email', '').strip().lower()
+        phone = request.form.get('phone', '').strip()
         password = request.form.get('password', '').strip()
-        
-        # Validations de base - mot de passe OBLIGATOIRE
-        if not name or not email or not password:
-            flash("Tous les champs sont requis", "danger")
-            return render_template('signup_email.html')
-        
-        # Validation robuste du mot de passe (OBLIGATOIRE)
+        invite_code_form = request.form.get('invite_code', '').strip().upper()
+        if invite_code_form:
+            invite_code = invite_code_form
+
+        # Validations de base
+        if not firstname or not name or not email or not password:
+            flash("Prénom, nom, email et mot de passe sont requis", "danger")
+            return render_template('signup_email.html', invite_code=invite_code)
+
         if len(password) < 8:
             flash("Le mot de passe doit contenir au moins 8 caractères", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[A-Z]', password):
-            flash("Le mot de passe doit contenir au moins une majuscule", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[a-z]', password):
-            flash("Le mot de passe doit contenir au moins une minuscule", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[0-9]', password):
-            flash("Le mot de passe doit contenir au moins un chiffre", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            flash("Le mot de passe doit contenir au moins un caractère spécial", "danger")
-            return render_template('signup_email.html')
-        
+            return render_template('signup_email.html', invite_code=invite_code)
+
         # Vérifier si email existe déjà
         conn = sqlite3.connect(DB)
         c = conn.cursor()
         c.execute("SELECT email FROM users WHERE email=?", (email,))
         if c.fetchone():
-            flash("Cet email est déjà utilisé", "danger")
+            flash("Cet email est déjà utilisé. Tu peux te connecter.", "danger")
             conn.close()
-            return render_template('signup_email.html')
-        
+            return render_template('signup_email.html', invite_code=invite_code)
+
         try:
-            # Créer l'utilisateur temporaire sans house_id
             hashed_password = generate_password_hash(password)
+            display_name = f"{firstname} {name}"
+
+            # Si joueur invité : trouver la maison du code
+            house_id_to_join = None
+            if invite_code:
+                c.execute("SELECT id FROM houses WHERE code=?", (invite_code,))
+                house_row = c.fetchone()
+                if house_row:
+                    house_id_to_join = house_row[0]
+
             c.execute("""
-                INSERT INTO users (name, email, password, points, avatar, registration_step) 
-                VALUES (?, ?, ?, 0, '👤', 'email_signup')
-            """, (name, email, hashed_password))
-            
+                INSERT INTO users (firstname, name, email, password, phone, points, avatar, registration_step, house_id)
+                VALUES (?, ?, ?, ?, ?, 0, '👤', 'email_signup', ?)
+            """, (firstname, display_name, email, hashed_password, phone, house_id_to_join))
+
             conn.commit()
             conn.close()
-            
+
             # Sauvegarder dans la session
             session.permanent = True
             session['user'] = email
-            session['user_name'] = name
+            session['user_name'] = display_name
             session['registration_step'] = 'email_signup'
-            
-            flash(f"Bienvenue {name} ! 🎉", "success")
-            # Rediriger vers l'étape 2 : choix du type de logement
-            return redirect(url_for('choose_house_type'))
-            
+            session.pop('invite_code', None)
+
+            flash(f"Bienvenue {firstname} ! 🎉", "success")
+
+            # Joueur invité → directement create_profile
+            if house_id_to_join:
+                return redirect(url_for('create_profile'))
+
+            # Joueur principal → invite_partner (nom de la maison + invitations)
+            return redirect(url_for('invite_partner'))
+
         except sqlite3.IntegrityError:
-            flash("Erreur lors de la création du compte", "danger")
+            flash("Erreur lors de la création du compte. Réessaie.", "danger")
             conn.close()
-            return render_template('signup_email.html')
-    
-    return render_template('signup_email.html')
+            return render_template('signup_email.html', invite_code=invite_code)
 
+    # GET — conserver le code d'invitation dans la session si présent
+    if invite_code:
+        session['invite_code'] = invite_code
 
+    return render_template('signup_email.html', invite_code=invite_code)
 @app.route('/choose_house_type', methods=['GET', 'POST'])
 def choose_house_type():
     """ÉTAPE 2 : Choix du type de logement"""
@@ -5949,19 +5965,19 @@ def login():
         user = c.fetchone()
         conn.close()
         if user and check_password_hash(user[0], password):
-            session.permanent = True  # Session persistante après rafraîchissement
+            session.permanent = True
             session['user'] = email
-            
-            # Vérifier si l'utilisateur a complété son profil
+
+            # Vérifier si l'utilisateur est au milieu d'une inscription non terminée
             registration_step = user[1] or ''
             avatar = user[2] or ''
             avatar_file = user[3] or ''
-            
-            # Si le profil n'est pas complété (pas de registration_step='profile_created' OU pas d'avatar)
-            if registration_step != 'profile_created' or (not avatar and not avatar_file):
-                flash("✨ Complétez votre profil pour commencer !", "info")
+
+            # Rediriger vers create_profile seulement si l'inscription n'est pas terminée
+            if registration_step == 'email_signup':
+                flash("✨ Complète ton profil pour commencer !", "info")
                 return redirect(url_for('create_profile'))
-            
+
             return redirect(url_for('menu'))
         else:
             flash("Email ou mot de passe incorrect", "danger")
@@ -6590,15 +6606,36 @@ def invite_partner():
     if source == 'manage':
         session['invite_source'] = 'manage'
     from_manage = (session.get('invite_source') == 'manage')
-    
+    from_registration = (session.get('registration_step') == 'email_signup')
+
     if request.method == 'POST':
         import json
+
+        # ─── Récupérer le nom et le type de la maison depuis le formulaire ───
+        form_house_name = request.form.get('house_name', '').strip()
+        form_house_type = request.form.get('house_type', 'family').strip()
+        if form_house_type not in ('family', 'couple', 'coloc'):
+            form_house_type = 'family'
+
+        # Mettre à jour la maison avec le nom et le type choisis
+        if house_id and form_house_name:
+            conn = sqlite3.connect(DB)
+            c = conn.cursor()
+            c.execute(
+                "UPDATE houses SET house_name=?, name=?, house_type=? WHERE id=?",
+                (form_house_name, form_house_name, form_house_type, house_id)
+            )
+            conn.commit()
+            conn.close()
+            house_name = form_house_name
+            house_type = form_house_type
+
         partners_data = request.form.get('partners')
         children_data = request.form.get('children')
-        
+
         sent_count = 0
         children_created = 0
-        
+
         # Récupérer le nom de l'utilisateur actuel
         user_name = session.get('user', 'Un ami')
         if 'user' in session:
@@ -6609,94 +6646,81 @@ def invite_partner():
             if name_row and name_row[0]:
                 user_name = name_row[0]
             conn.close()
-        
+
         # Traiter les adultes (envoi SMS)
         if partners_data:
             try:
                 partners = json.loads(partners_data)
-                
-                # Envoyer un SMS à chaque partenaire
                 for partner in partners:
                     try:
                         send_sms_invitation(
-                            partner['phone'], 
+                            partner['phone'],
                             user_name,
                             house_code
                         )
                         sent_count += 1
                     except Exception as e:
                         _dbg(f"Erreur lors de l'envoi du SMS à {partner['name']}: {e}")
-                    
             except Exception as e:
                 _dbg(f"Erreur lors du traitement des partenaires: {e}")
-        
+
         # Traiter les enfants (création de comptes)
         if children_data and house_id:
             try:
                 children = json.loads(children_data)
                 conn = sqlite3.connect(DB)
                 c = conn.cursor()
-                
                 for child in children:
                     try:
                         child_name = child.get('name', '').strip()
-                        child_avatar = child.get('avatar', '👶')  # Avatar par défaut si non spécifié
+                        child_avatar = child.get('avatar', '👶')
                         if child_name:
-                            # Créer un email fictif pour l'enfant (basé sur le nom + timestamp)
                             import time
-                            child_email = f"child_{child_name.lower().replace(' ', '_')}_{int(time.time())}@cleanbeat.local"
-                            
-                            # Créer le compte enfant avec l'avatar choisi
+                            child_email = f"child_{child_name.lower().replace(' ', '_')}_{int(time.time())}@dust.local"
                             c.execute("""
                                 INSERT INTO users (email, name, house_id, points, avatar, is_child_account, created_by)
                                 VALUES (?, ?, ?, 0, ?, 1, ?)
                             """, (child_email, child_name.capitalize(), house_id, child_avatar, session.get('user', '')))
                             children_created += 1
                     except Exception as e:
-                        _dbg(f"Erreur lors de la création du compte enfant {child.get('name', '')}: {e}")
-                
+                        _dbg(f"Erreur création enfant {child.get('name', '')}: {e}")
                 conn.commit()
                 conn.close()
             except Exception as e:
-                _dbg(f"Erreur lors du traitement des enfants: {e}")
-        
+                _dbg(f"Erreur traitement enfants: {e}")
+
         # Messages flash
         messages = []
         if sent_count > 0:
             messages.append(f"📱 {sent_count} invitation{'s' if sent_count > 1 else ''} SMS envoyée{'s' if sent_count > 1 else ''}")
         if children_created > 0:
             messages.append(f"👶 {children_created} profil{'s' if children_created > 1 else ''} enfant{'s' if children_created > 1 else ''} créé{'s' if children_created > 1 else ''}")
-        
+
         if messages:
             flash("🎉 " + " • ".join(messages), "success")
         elif not partners_data and not children_data:
-            flash("Tu pourras inviter des partenaires plus tard depuis ton profil !", "info")
-        else:
-            flash("Aucune invitation n'a pu être envoyée.", "warning")
-        
-        # Si on vient de manage_players, retourner directement au jeu
-        # Si on vient du parcours d'inscription, rediriger vers name_house
-        # Sinon, rediriger vers le menu
+            flash("C'est parti ! Tu pourras inviter des partenaires plus tard.", "info")
+
+        # Redirection : inscription → profil ; manage → menu
         invite_source = session.pop('invite_source', '')
         if invite_source == 'manage':
             return redirect(url_for('menu'))
-        elif session.get('registration_step') in ['email_signup', 'house_type_chosen']:
-            return redirect(url_for('name_house'))
+        elif from_registration or session.get('registration_step') == 'email_signup':
+            session['registration_step'] = 'house_named'
+            return redirect(url_for('create_profile'))
         else:
             return redirect(url_for('menu'))
-    
-    # Si accès direct à la page (GET), afficher la page d'invitation simple avec QR Code
-    # Construire l'URL d'invitation
-    join_url = f"{request.host_url}join_house?code={house_code}"
-    
-    # Choisir le template selon si on vient du processus d'inscription ou si on veut juste inviter
-    # Pour l'instant, on affiche toujours le formulaire complet
-    return render_template('invite_partner_new.html', 
-                         house_code=house_code, 
-                         house_name=house_name, 
-                         house_type=house_type,
-                         join_url=join_url,
-                         from_manage=from_manage)
+
+    # GET : construire l'URL d'invitation
+    join_url = f"{request.host_url}invite/{house_code}" if house_code else ""
+
+    return render_template('invite_partner_new.html',
+                           house_code=house_code,
+                           house_name=house_name,
+                           house_type=house_type,
+                           join_url=join_url,
+                           from_manage=from_manage,
+                           from_registration=from_registration)
 
 
 @app.route('/partager_invitation')
