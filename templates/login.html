@@ -233,6 +233,9 @@
 <h1>🔐 Connexion</h1>
 
 <form method="post" action="{{ url_for('login') }}" autocomplete="on">
+    {% if request.args.get('next_code') %}
+    <input type="hidden" name="next_code" value="{{ request.args.get('next_code') }}">
+    {% endif %}
     <label>Email:</label>
     <input type="email" name="email" required
            autocomplete="username" inputmode="email">

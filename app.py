@@ -3655,6 +3655,11 @@ def signup_email():
                 house_row = c.fetchone()
                 if house_row:
                     house_id_to_join = house_row[0]
+                else:
+                    # Code invalide : on bloque l'inscription
+                    flash("🚫 Code d'invitation invalide. Vérifie le lien ou contacte la personne qui t'a invité.", "danger")
+                    conn.close()
+                    return render_template('signup_email.html', invite_code=invite_code)
 
             c.execute("""
                 INSERT INTO users (firstname, name, email, password, phone, points, avatar, registration_step, house_id)
@@ -5971,14 +5976,27 @@ def login():
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
         password = request.form['password'].strip()
+        next_code = request.form.get('next_code', '').strip().upper() or request.args.get('next_code', '').strip().upper()
         conn = sqlite3.connect(DB)
         c = conn.cursor()
         c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))
         user = c.fetchone()
-        conn.close()
         if user and check_password_hash(user[0], password):
             session.permanent = True
             session['user'] = email
+
+            # Si le joueur a un code d'invitation, le rattacher à la maison
+            if next_code:
+                c.execute("SELECT id FROM houses WHERE code=?", (next_code,))
+                house_row = c.fetchone()
+                if house_row:
+                    c.execute("UPDATE users SET house_id=? WHERE email=?", (house_row[0], email))
+                    conn.commit()
+                    conn.close()
+                    flash("🏠 Tu as rejoint la maison avec succès !", "success")
+                    return redirect(url_for('menu'))
+
+            conn.close()
 
             # Vérifier si l'utilisateur est au milieu d'une inscription non terminée
             registration_step = user[1] or ''
@@ -6410,13 +6428,6 @@ def create_profile_post():
     session['registration_step'] = 'complete'
     
     flash("🎉 Profil créé ! Bienvenue dans l'aventure !", "success")
-    return redirect(url_for('menu'))
-    
-    if photo_filename:
-        flash(f"Profil créé avec succès pour {name} avec photo!", "success")
-    else:
-        flash(f"Profil créé avec succès pour {name}!", "success")
-    
     return redirect(url_for('menu'))
 
 
