@@ -244,6 +244,13 @@
     <button type="submit">Se connecter</button>
 </form>
 
+<div style="text-align:center;margin-top:10px;">
+    <a href="{{ url_for('forgot_password') }}"
+       style="color:rgba(255,255,255,0.85);font-size:13px;text-decoration:underline;">
+        Mot de passe oublié ?
+    </a>
+</div>
+
 <div class="register-link">
     <p>Pas de compte ? <a href="{{ url_for('signup_email') }}">Créer un compte</a></p>
 </div>

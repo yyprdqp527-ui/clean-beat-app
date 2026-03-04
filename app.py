@@ -10,7 +10,8 @@ from flask import Flask, render_template, render_template_string, request, redir
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import date
+from datetime import date, datetime, timedelta
+import secrets
 import os
 import random
 import string
@@ -2375,6 +2376,17 @@ CREATE TABLE IF NOT EXISTS users (
         UNIQUE(house_id, room_key),
         FOREIGN KEY(house_id) REFERENCES houses(id)
     )
+    """)
+
+    # Table pour les tokens de réinitialisation de mot de passe
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL,
+            email TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used INTEGER DEFAULT 0
+        )
     """)
 
     # === INDEX POUR AMÉLIORER LES PERFORMANCES ===
@@ -5991,6 +6003,79 @@ def logout():
     session.pop('user', None)
     flash("Déconnecté.", "success")
     return redirect(url_for('login'))
+
+
+# ─── Mot de passe oublié ────────────────────────────────────────────────────
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    reset_link = None
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        c.execute("SELECT email FROM users WHERE email=?", (email,))
+        user = c.fetchone()
+        if user:
+            # Supprimer les anciens tokens non utilisés pour cet email
+            c.execute("DELETE FROM password_reset_tokens WHERE email=? AND used=0", (email,))
+            # Générer un token sécurisé valable 1 heure
+            token = secrets.token_urlsafe(32)
+            expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
+            c.execute("INSERT INTO password_reset_tokens (token, email, expires_at, used) VALUES (?, ?, ?, 0)",
+                      (token, email, expires_at))
+            conn.commit()
+            conn.close()
+            # Construire le lien (avec l'hôte actuel)
+            reset_link = url_for('reset_password', token=token, _external=True)
+        else:
+            conn.close()
+            # Message neutre pour ne pas révéler si l'email existe
+            reset_link = '__not_found__'
+    return render_template('forgot_password.html', reset_link=reset_link)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("SELECT email, expires_at, used FROM password_reset_tokens WHERE token=?", (token,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        flash("Lien invalide ou expiré.", "danger")
+        return redirect(url_for('login'))
+
+    email, expires_at, used = row
+    if used:
+        conn.close()
+        flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
+        return redirect(url_for('forgot_password'))
+
+    if datetime.now() > datetime.fromisoformat(expires_at):
+        conn.close()
+        flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password', '').strip()
+        if len(new_password) < 8:
+            conn.close()
+            flash("Le mot de passe doit contenir au moins 8 caractères.", "danger")
+            return render_template('reset_password.html', token=token)
+        # Mettre à jour le mot de passe
+        hashed = generate_password_hash(new_password)
+        c.execute("UPDATE users SET password=? WHERE email=?", (hashed, email))
+        # Invalider le token
+        c.execute("UPDATE password_reset_tokens SET used=1 WHERE token=?", (token,))
+        conn.commit()
+        conn.close()
+        flash("✅ Mot de passe mis à jour ! Tu peux te connecter.", "success")
+        return redirect(url_for('login'))
+
+    conn.close()
+    return render_template('reset_password.html', token=token, email=email)
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 # Page Mon Profil (glassmorphisme)
