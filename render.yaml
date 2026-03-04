@@ -12,13 +12,5 @@ services:
         value: 3.11.9
       - key: RENDER
         value: "true"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: dust-db       # ← Correspond au nom de la base ci-dessous
-          property: connectionString
-
-databases:
-  - name: dust-db
-    plan: free                # PostgreSQL gratuit sur Render
-    databaseName: dustdb
-    user: dust
+      # DATABASE_URL est définie manuellement dans le dashboard Render
+      # (Environment → DATABASE_URL → coller l'Internal Database URL de ta base existante)
