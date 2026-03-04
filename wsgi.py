@@ -1,23 +1,4 @@
-"""WSGI entry point for production servers.
-
-This file exposes a WSGI callable named `application` so servers
-like Gunicorn, uWSGI or Waitress can import and serve the Flask app.
-
-Usage examples (from project root):
-  - Gunicorn (HTTP only):
-      pip install gunicorn
-      gunicorn -w 4 -b 0.0.0.0:8000 wsgi:application
-
-  - Gunicorn + eventlet (if you use Flask-SocketIO):
-      pip install gunicorn eventlet
-      gunicorn -k eventlet -w 1 -b 0.0.0.0:8000 wsgi:application
-
-  - Waitress (Windows-friendly):
-      pip install waitress
-      waitress-serve --listen=*:8000 wsgi:application
-
-Adjust worker count and bind address to your environment and load.
-"""
+"""WSGI entry point for production (Gunicorn + eventlet + Flask-SocketIO)."""
 
 try:
     # Import the Flask `app` and (optionally) `socketio` if present

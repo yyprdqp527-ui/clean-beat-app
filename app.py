@@ -35,8 +35,28 @@ _USE_PG = bool(_PG_URL)
 if _USE_PG:
     try:
         import psycopg2
+        import psycopg2.pool
     except ImportError:
         _USE_PG = False
+
+# 🚀 POOL DE CONNEXIONS PostgreSQL - évite de recréer une connexion à chaque requête
+# (sur Render, chaque nouvelle connexion coûte ~100-300ms)
+_pg_pool = None
+
+def _get_pg_pool():
+    """Initialise et retourne le pool de connexions PostgreSQL (singleton)."""
+    global _pg_pool
+    if _pg_pool is None and _USE_PG:
+        try:
+            _pg_pool = psycopg2.pool.SimpleConnectionPool(
+                minconn=1,
+                maxconn=5,
+                dsn=_PG_URL,
+                connect_timeout=10
+            )
+        except Exception as e:
+            print(f"⚠️ Pool PG non créé: {e}")
+    return _pg_pool
 
 _RE_INSERT = re.compile(r'^\s*INSERT\s+', re.IGNORECASE)
 _RE_ALTER_ADD = re.compile(
@@ -113,9 +133,10 @@ class _CompatCursor:
 
 class _CompatConn:
     """Connexion compatible sqlite3/psycopg2."""
-    def __init__(self, conn, is_pg=False):
+    def __init__(self, conn, is_pg=False, pool=None):
         self._conn = conn
         self._is_pg = is_pg
+        self._pool = pool  # 🚀 Référence au pool pour retourner la connexion
 
     def cursor(self):
         return _CompatCursor(self._conn.cursor(), self._is_pg)
@@ -133,7 +154,18 @@ class _CompatConn:
         self._conn.rollback()
 
     def close(self):
-        self._conn.close()
+        if self._pool and self._is_pg:
+            # 🚀 Retourner au pool au lieu de fermer (bien plus rapide)
+            try:
+                self._conn.rollback()  # S'assurer que la connexion est propre
+                self._pool.putconn(self._conn)
+            except Exception:
+                try:
+                    self._conn.close()
+                except Exception:
+                    pass
+        else:
+            self._conn.close()
 
     def __enter__(self):
         return self
@@ -145,8 +177,11 @@ class _CompatConn:
             except Exception:
                 pass
         else:
-            self._conn.commit()
-        self._conn.close()
+            try:
+                self._conn.commit()
+            except Exception:
+                pass
+        self.close()
         return False
 
 
@@ -260,11 +295,18 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
-# ⚡ Désactiver cache des templates pour développement
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+# ⚡ Rechargement templates: True en local, False en prod (vérifie les fichiers à chaque render = lent)
+app.config['TEMPLATES_AUTO_RELOAD'] = not bool(os.environ.get('RENDER'))
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
 
 # 🗜️ Compression gzip pour réduire la taille des réponses (~70% plus léger)
+app.config['COMPRESS_LEVEL'] = 6          # Niveau de compression (1-9, 6 = bon équilibre vitesse/taille)
+app.config['COMPRESS_MIN_SIZE'] = 500     # Ne pas compresser les petites réponses
+app.config['COMPRESS_MIMETYPES'] = [
+    'text/html', 'text/css', 'text/javascript',
+    'application/javascript', 'application/json',
+    'text/plain', 'application/x-javascript'
+]
 try:
     from flask_compress import Compress
     Compress(app)
@@ -287,7 +329,14 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Session valable
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RENDER') is not None  # True sur Render (HTTPS)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forcer le rechargement des templates
+
+# ⚡ Cache in-memory pour inject_house_name (évite 1 requête DB par rendu)
+_house_info_cache: dict = {}  # {email: {'name': ..., 'code': ..., 'ts': float}}
+
+
+def _invalidate_house_cache(email: str):
+    """Appeler quand le nom/code de la maison change (edit_house, etc.)"""
+    _house_info_cache.pop(email, None)
 
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
@@ -321,6 +370,13 @@ def inject_house_name():
     house_code = None
     try:
         if 'user' in session:
+            email = session['user']
+            now = time.time()
+            cached = _house_info_cache.get(email)
+            # Cache valide 2 minutes → évite 1 requête DB à chaque render de template
+            if cached and (now - cached['ts']) < 120:
+                return {'global_house_name': cached['name'], 'global_house_code': cached['code']}
+
             conn = get_db_connection()
             c = conn.cursor()
             # 🚀 OPTIMISATION: 1 seule requête avec JOIN au lieu de 2 requêtes séparées
@@ -328,7 +384,7 @@ def inject_house_name():
                 SELECT h.name, h.house_name, h.code 
                 FROM users u JOIN houses h ON u.house_id = h.id 
                 WHERE u.email=?
-            """, (session['user'],))
+            """, (email,))
             hr = c.fetchone()
             if hr:
                 name, house_name_db, code = hr[0], hr[1], hr[2]
@@ -338,6 +394,12 @@ def inject_house_name():
                 elif (name and name.strip()):
                     house_name = name.strip()
             conn.close()
+            # Mettre en cache + purge des entrées expirées (>600s)
+            _house_info_cache[email] = {'name': house_name, 'code': house_code, 'ts': now}
+            if len(_house_info_cache) > 200:
+                expired = [k for k, v in _house_info_cache.items() if now - v['ts'] > 600]
+                for k in expired:
+                    del _house_info_cache[k]
     except Exception:
         pass
     return {
@@ -1171,9 +1233,26 @@ def get_db_connection(timeout=30.0):
     """
     Connexion DB unifiée : SQLite en local, PostgreSQL sur Render.
     Retourne un _CompatConn compatible avec l'API sqlite3.
+    🚀 Sur Render: réutilise une connexion du pool (évite ~100-300ms/requête)
     """
     if _USE_PG:
-        conn = psycopg2.connect(_PG_URL)
+        pool = _get_pg_pool()
+        if pool:
+            try:
+                conn = pool.getconn()
+                # Tester que la connexion est vivante, sinon en créer une nouvelle
+                try:
+                    conn.cursor().execute('SELECT 1')
+                except Exception:
+                    pool.putconn(conn, close=True)
+                    conn = psycopg2.connect(_PG_URL, connect_timeout=10)
+                    pool.putconn(conn)
+                    conn = pool.getconn()
+                return _CompatConn(conn, is_pg=True, pool=pool)
+            except Exception:
+                pass
+        # Fallback: connexion directe sans pool
+        conn = psycopg2.connect(_PG_URL, connect_timeout=10)
         return _CompatConn(conn, is_pg=True)
     else:
         raw = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
@@ -1240,7 +1319,7 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
             _dbg(f"\n📱 SMS simulé envoyé vers {phone_number}:")
             _dbg(f"   🏠 {user_name} vous invite à jouer à Dust !")
             _dbg(f"   📱 Cliquez pour rejoindre (aucune installation requise) :")
-            _dbg(f"   {base_url}join_house?code={house_code}")
+            _dbg(f"   {base_url}invite/{house_code}")
             _dbg(f"   Code : {house_code}\n")
         else:
             _dbg(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à Dust !")
@@ -1253,7 +1332,7 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
         if house_code:
             message_body = f"🏠 {user_name} vous invite à jouer à 'Dust' ! " \
                           f"📱 Cliquez pour rejoindre (aucune installation requise) : " \
-                          f"{base_url}join_house?code={house_code} " \
+                          f"{base_url}invite/{house_code} " \
                           f"Code : {house_code}"
         else:
             message_body = f"🏠 {user_name} vous invite à jouer à 'Dust' ! " \
@@ -2528,6 +2607,26 @@ CREATE TABLE IF NOT EXISTS users (
         )
     """)
 
+    # Table pour les feedbacks des testeurs bêta
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS beta_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_email TEXT,
+        user_name TEXT,
+        note_globale INTEGER,
+        note_facilite INTEGER,
+        note_design INTEGER,
+        ce_qui_plait TEXT,
+        ce_qui_deplait TEXT,
+        ameliorations TEXT,
+        pret_a_payer INTEGER DEFAULT 0,
+        prix_acceptable TEXT,
+        recommande INTEGER,
+        autres_commentaires TEXT
+    )
+    """)
+
     # === INDEX POUR AMÉLIORER LES PERFORMANCES ===
     # Index sur completed_tasks pour les requêtes fréquentes
     c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_user ON completed_tasks(user_email)")
@@ -3634,6 +3733,22 @@ def get_house_players_points(house_id, existing_conn=None):
         # Nettoyer avatar_file et avatar_url des valeurs "None" (chaîne)
         clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
         clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
+        # Supprimer backgroundColor des URLs DiceBear (fond coloré indésirable dans le SVG)
+        if clean_avatar_url and 'backgroundColor' in clean_avatar_url:
+            import re as _re
+            clean_avatar_url = _re.sub(r'[&?]backgroundColor=[^&]*', '', clean_avatar_url).rstrip('?&')
+
+        # CORRECTION : Si la colonne 'avatar' contient une URL complète (données mal stockées)
+        # Cas fréquent pour les enfants créés via invite_partner_new.html (DiceBear v8)
+        if avatar_emoji and str(avatar_emoji).startswith('http') and not clean_avatar_url:
+            clean_avatar_url = avatar_emoji
+            # Supprimer le backgroundColor intégré dans l'URL (fond coloré indésirable)
+            import re as _re
+            clean_avatar_url = _re.sub(r'[&?]backgroundColor=[^&]*', '', clean_avatar_url).rstrip('?&')
+            avatar_emoji = None
+            is_valid_emoji = False
+            is_dicebear_seed = False
+            _dbg(f"🔧 URL complète trouvée dans colonne 'avatar' pour {name}: {clean_avatar_url}")
         
         # Vérifier que le fichier avatar existe RÉELLEMENT sur le disque
         if clean_avatar_file:
@@ -3674,15 +3789,20 @@ def get_house_players_points(house_id, existing_conn=None):
             new_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={avatar_emoji}'
             _dbg(f"🔍 DEBUG RECONSTRUCTION: avatar_style={avatar_style}, style={style}, new_url={new_url}")
             
-            # Vérifier si l'URL existante utilise le bon style
-            if clean_avatar_url and clean_avatar_url != new_url:
-                _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (ancien: {clean_avatar_url})")
-                clean_avatar_url = new_url
+            # Ne reconstruire que si aucune URL DiceBear n'est déjà stockée
+            # (évite d'écraser les URLs v8 avec backgroundColor des enfants créés via invite_partner_new)
+            if clean_avatar_url and 'dicebear.com' in clean_avatar_url:
+                # Supprimer le paramètre backgroundColor des URLs v8 (fond coloré indésirable)
+                import re as _re
+                clean_avatar_url = _re.sub(r'[&?]backgroundColor=[^&]*', '', clean_avatar_url)
+                clean_avatar_url = clean_avatar_url.rstrip('?&')
+                _dbg(f"✅ {email}: URL DiceBear conservée (backgroundColor supprimé): {clean_avatar_url}")
             elif not clean_avatar_url:
                 _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (style={style}, seed={avatar_emoji})")
                 clean_avatar_url = new_url
             else:
-                _dbg(f"✅ {email}: URL déjà correcte: {clean_avatar_url}")
+                _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (ancien non-DiceBear: {clean_avatar_url})")
+                clean_avatar_url = new_url
         else:
             _dbg(f"⚠️ {email}: Pas de reconstruction URL (is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji})")
         
@@ -4044,6 +4164,12 @@ def manage_players():
         if not player_color:
             player_color = assign_player_color(email, house_id)
         
+        # Convertir v8 → v7 et supprimer backgroundColor (fond coloré indésirable)
+        import re as _re_mp
+        if avatar_url and 'dicebear.com/8.x' in avatar_url:
+            avatar_url = avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+        if avatar_url and 'backgroundColor' in avatar_url:
+            avatar_url = _re_mp.sub(r'[&?]backgroundColor=[^&]*', '', avatar_url).rstrip('?&')
         players.append({
             'email': email,
             'name': name,
@@ -4085,12 +4211,17 @@ def edit_player(email):
         flash("Non autorisé", "error")
         return redirect(url_for('manage_players'))
     
+    # Supprimer backgroundColor des URLs DiceBear (fond coloré indésirable)
+    import re as _re_ep
+    ep_avatar_url = player_row[5]
+    if ep_avatar_url and 'backgroundColor' in ep_avatar_url:
+        ep_avatar_url = _re_ep.sub(r'[&?]backgroundColor=[^&]*', '', ep_avatar_url).rstrip('?&')
     player = {
         'email': player_row[1],
         'name': player_row[2],
         'avatar': player_row[3],
         'avatar_file': player_row[4],
-        'avatar_url': player_row[5],
+        'avatar_url': ep_avatar_url,
         'avatar_style': player_row[6] if player_row[6] else 'adventurer'
     }
     
@@ -4131,7 +4262,7 @@ def update_house_name():
         c.execute("UPDATE houses SET house_name=?, name=? WHERE id=?", (new_name, new_name, house_id))
         conn.commit()
         conn.close()
-        
+        _invalidate_house_cache(session['user'])  # ⚡ Invalider le cache du context_processor
         return jsonify({'success': True, 'message': 'Nom de la maison mis à jour !'})
         
     except Exception as e:
@@ -4753,7 +4884,7 @@ def comments():
                 elif sender_avatar:  # Avatar DiceBear seed
                     # Récupérer le style stocké au lieu d'utiliser 'lorelei' par défaut
                     sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'  # Style par défaut plus sympa
-                    display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
+                    display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
                     _dbg(f"🍼 DEBUG: Avatar baby_tracking pour {sender_email}: seed={sender_avatar}, style={sender_style}")
                 else:
                     display_sender_avatar = '👤'
@@ -4784,13 +4915,16 @@ def comments():
             if validate_avatar_file(sender_avatar_file):
                 display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
             elif sender_avatar_url:
+                # Convertir v8 → v7 (fond transparent par défaut)
+                if 'dicebear.com/8.x' in sender_avatar_url:
+                    sender_avatar_url = sender_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
                 display_sender_avatar = sender_avatar_url
             elif sender_avatar and len(str(sender_avatar)) <= 4:
                 display_sender_avatar = sender_avatar
             elif sender_avatar:
                 # C'est un seed DiceBear - construire l'URL
                 sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'
-                display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
+                display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
             else:
                 display_sender_avatar = '👤'
             
@@ -4802,13 +4936,16 @@ def comments():
         if validate_avatar_file(recipient_avatar_file):
             display_recipient_avatar = f"/static/avatars/{recipient_avatar_file}"
         elif recipient_avatar_url:
+            # Convertir v8 → v7 (fond transparent par défaut)
+            if 'dicebear.com/8.x' in recipient_avatar_url:
+                recipient_avatar_url = recipient_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
             display_recipient_avatar = recipient_avatar_url
         elif recipient_avatar and len(str(recipient_avatar)) <= 4:
             display_recipient_avatar = recipient_avatar
         elif recipient_avatar:
             # C'est un seed DiceBear - construire l'URL
             recipient_style = recipient_avatar_style if recipient_avatar_style else 'adventurer'
-            display_recipient_avatar = f"https://api.dicebear.com/7.x/{recipient_style}/svg?seed={recipient_avatar}"
+            display_recipient_avatar = f"https://api.dicebear.com/7.x/{recipient_style}/svg?seed={recipient_avatar}&backgroundColor=transparent"
         else:
             display_recipient_avatar = '👤'
         
@@ -4856,6 +4993,9 @@ def comments():
         if player_avatar_file:
             display_avatar = f"/static/avatars/{player_avatar_file}"
         elif player_avatar_url:
+            # Convertir v8 → v7 (fond transparent par défaut)
+            if 'dicebear.com/8.x' in player_avatar_url:
+                player_avatar_url = player_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
             display_avatar = player_avatar_url
         elif player_avatar and len(str(player_avatar)) <= 4:
             display_avatar = player_avatar
@@ -4868,11 +5008,11 @@ def comments():
                 player_style = style_row[0] if style_row and style_row[0] else 'adventurer'
             except:
                 player_style = 'adventurer'
-            display_avatar = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}"
+            display_avatar = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}&backgroundColor=transparent"
         else:
             # Aucun avatar - générer un DiceBear par défaut
             seed = player_email.split('@')[0] if player_email else 'default'
-            display_avatar = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}"
+            display_avatar = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}&backgroundColor=transparent"
         
         available_players.append({
             'email': player_email,
@@ -5243,6 +5383,124 @@ def mark_messages_read_for_child():
         'marked_count': len(unread_message_ids),
         'child_email': child_email
     })
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# 🧪 FEEDBACK TESTEURS BÊTA
+# ══════════════════════════════════════════════════════════════════════════
+
+@app.route('/feedback', methods=['GET', 'POST'])
+def feedback():
+    """Formulaire de feedback pour les testeurs bêta"""
+    if 'user' not in session:
+        return redirect(url_for('welcome'))
+
+    user_email = session.get('user')
+    user_name = session.get('player_name', '')
+
+    if request.method == 'POST':
+        try:
+            note_globale = request.form.get('note_globale') or None
+            note_facilite = request.form.get('note_facilite') or None
+            note_design = request.form.get('note_design') or None
+            ce_qui_plait = request.form.get('ce_qui_plait', '').strip() or None
+            ce_qui_deplait = request.form.get('ce_qui_deplait', '').strip() or None
+            ameliorations = request.form.get('ameliorations', '').strip() or None
+            pret_a_payer = int(request.form.get('pret_a_payer', 0))
+            prix_acceptable = request.form.get('prix_acceptable', '').strip() or None
+            recommande_raw = request.form.get('recommande', '')
+            recommande = int(recommande_raw) if recommande_raw.strip() in ('0', '1') else None
+            autres_commentaires = request.form.get('autres_commentaires', '').strip() or None
+
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO beta_feedback
+                    (user_email, user_name, note_globale, note_facilite, note_design,
+                     ce_qui_plait, ce_qui_deplait, ameliorations,
+                     pret_a_payer, prix_acceptable, recommande, autres_commentaires)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                user_email, user_name,
+                int(note_globale) if note_globale else None,
+                int(note_facilite) if note_facilite else None,
+                int(note_design) if note_design else None,
+                ce_qui_plait, ce_qui_deplait, ameliorations,
+                pret_a_payer, prix_acceptable, recommande, autres_commentaires
+            ))
+            conn.commit()
+            conn.close()
+            return render_template('feedback.html', submitted=True)
+        except Exception as e:
+            _dbg(f"❌ Erreur feedback: {e}")
+            flash("Une erreur s'est produite. Réessaie.", "error")
+            return render_template('feedback.html', submitted=False)
+
+    return render_template('feedback.html', submitted=False)
+
+
+# Clé secrète admin (à changer !) — accessible via /admin_feedback?key=CETTE_CLE
+ADMIN_FEEDBACK_KEY = "cleanbeat_admin_2026"
+
+
+@app.route('/admin_feedback')
+def admin_feedback():
+    """Page admin pour lire les feedbacks (protégée par clé URL)"""
+    key = request.args.get('key', '')
+    if key != ADMIN_FEEDBACK_KEY:
+        return "Accès refusé. Ajoute ?key=VOTRE_CLE à l'URL.", 403
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("""
+        SELECT id, submitted_at, user_email, user_name,
+               note_globale, note_facilite, note_design,
+               ce_qui_plait, ce_qui_deplait, ameliorations,
+               pret_a_payer, prix_acceptable, recommande, autres_commentaires
+        FROM beta_feedback
+        ORDER BY submitted_at DESC
+    """)
+    rows = c.fetchall()
+    conn.close()
+
+    # Convertir en liste de dicts
+    keys = ['id', 'submitted_at', 'user_email', 'user_name',
+            'note_globale', 'note_facilite', 'note_design',
+            'ce_qui_plait', 'ce_qui_deplait', 'ameliorations',
+            'pret_a_payer', 'prix_acceptable', 'recommande', 'autres_commentaires']
+    feedbacks = [dict(zip(keys, row)) for row in rows]
+    return render_template('admin_feedback.html', feedbacks=feedbacks)
+
+
+@app.route('/admin_feedback_csv')
+def admin_feedback_csv():
+    """Export CSV des feedbacks"""
+    key = request.args.get('key', '')
+    if key != ADMIN_FEEDBACK_KEY:
+        return "Accès refusé.", 403
+
+    import csv
+    import io
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM beta_feedback ORDER BY submitted_at DESC")
+    rows = c.fetchall()
+    col_names = [description[0] for description in c.description]
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(col_names)
+    writer.writerows(rows)
+    csv_content = output.getvalue()
+    output.close()
+
+    from flask import Response
+    return Response(
+        csv_content,
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=feedbacks_cleanbeat.csv'}
+    )
 
 
 @app.route('/rewards')
@@ -6429,11 +6687,14 @@ def update_profile():
         if 'user_photo' in session:
             del session['user_photo']
     
+    # Toujours marquer le profil comme complété (registration_step)
+    update_fields.append("registration_step=?")
+    update_values.append('profile_created')
+
     # Exécuter la mise à jour
-    if update_fields:
-        update_values.append(session['user'])
-        query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
-        c.execute(query, update_values)
+    update_values.append(session['user'])
+    query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
+    c.execute(query, update_values)
     
     # 📛 Propager le changement de nom dans les messages existants
     if name and old_name and name != old_name and profile_house_id:
@@ -6500,11 +6761,10 @@ def create_profile():
         
         _dbg(f"   📊 User data: name={current_name}, registration_step={registration_step}, house_id={house_id}")
         
-        # Si l'utilisateur a COMPLÉTÉ son profil (registration_step='profile_created'), c'est une modification
-        # Sinon, c'est toujours une première création même si le nom existe
-        if registration_step == 'profile_created':
+        # Si l'utilisateur a COMPLÉTÉ son profil OU a déjà un nom/avatar, c'est une modification
+        if registration_step == 'profile_created' or current_name:
             change_avatar = True
-            _dbg(f"   ⚠️ Profil déjà créé -> mode modification")
+            _dbg(f"   ⚠️ Profil déjà présent (name={current_name}, step={registration_step}) -> mode modification")
         else:
             _dbg(f"   ✅ Première création de profil")
         
@@ -6794,8 +7054,8 @@ def join_house():
                 # Créer le nouvel utilisateur
                 hashed_password = generate_password_hash(password)
                 c.execute("""
-                    INSERT INTO users (email, password, name, house_id, points, avatar)
-                    VALUES (?, ?, ?, ?, 0, '🧑')
+                    INSERT INTO users (email, password, name, house_id, points, avatar, registration_step)
+                    VALUES (?, ?, ?, ?, 0, '🧑', 'email_signup')
                 """, (email, hashed_password, user_name, house_id))
                 
                 conn.commit()
@@ -6982,12 +7242,23 @@ def invite_partner():
                         child_name = child.get('name', '').strip()
                         child_avatar = child.get('avatar', '👶')
                         if child_name:
-                            import time
+                            import time, re
                             child_email = f"child_{child_name.lower().replace(' ', '_')}_{int(time.time())}@dust.local"
+                            # Extraire le seed depuis l'URL DiceBear si nécessaire
+                            child_avatar_url = child_avatar
+                            child_avatar_seed = ''
+                            child_avatar_style = 'adventurer'
+                            if 'dicebear.com' in child_avatar:
+                                seed_match = re.search(r'seed=([^&]+)', child_avatar)
+                                style_match = re.search(r'dicebear\.com/[^/]+/([^/]+)/', child_avatar)
+                                child_avatar_seed = seed_match.group(1) if seed_match else child_name.capitalize()
+                                child_avatar_style = style_match.group(1) if style_match else 'adventurer'
+                            else:
+                                child_avatar_seed = child_avatar
                             c.execute("""
-                                INSERT INTO users (email, name, house_id, points, avatar, is_child_account, created_by)
-                                VALUES (?, ?, ?, 0, ?, 1, ?)
-                            """, (child_email, child_name.capitalize(), house_id, child_avatar, session.get('user', '')))
+                                INSERT INTO users (email, name, house_id, points, avatar, avatar_url, avatar_style, registration_step, is_child_account, created_by)
+                                VALUES (?, ?, ?, 0, ?, ?, ?, 'profile_created', 1, ?)
+                            """, (child_email, child_name.capitalize(), house_id, child_avatar_seed, child_avatar_url, child_avatar_style, session.get('user', '')))
                             children_created += 1
                     except Exception as e:
                         _dbg(f"Erreur création enfant {child.get('name', '')}: {e}")
@@ -7013,6 +7284,18 @@ def invite_partner():
         if invite_source == 'manage':
             return redirect(url_for('menu'))
         elif from_registration or session.get('registration_step') == 'email_signup':
+            # Vérifier si le profil est déjà complet en DB
+            try:
+                conn_chk = get_db_connection()
+                c_chk = conn_chk.cursor()
+                c_chk.execute("SELECT registration_step, name FROM users WHERE email=?", (session.get('user', ''),))
+                row_chk = c_chk.fetchone()
+                conn_chk.close()
+                if row_chk and row_chk[0] == 'profile_created' and row_chk[1]:
+                    # Profil déjà complet → aller directement au menu
+                    return redirect(url_for('menu'))
+            except Exception:
+                pass
             session['registration_step'] = 'house_named'
             return redirect(url_for('create_profile'))
         else:
@@ -7058,7 +7341,7 @@ def partager_invitation():
         return redirect(url_for('menu'))
     
     # Construire l'URL d'invitation
-    join_url = f"{request.host_url}join_house?code={house_code}"
+    join_url = f"{request.host_url}invite/{house_code}"
     
     return render_template('invitation_partner.html', 
                          house_code=house_code,
@@ -7462,6 +7745,54 @@ def ping():
     return 'OK', 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
+@app.route('/api/avatar_proxy')
+def avatar_proxy():
+    """
+    🚀 Proxy local pour les avatars DiceBear - cache en fichier local.
+    Évite les appels directs au CDN externe api.dicebear.com depuis le navigateur.
+    Usage: /api/avatar_proxy?style=adventurer&seed=xxx
+    """
+    import urllib.request as _urlreq
+    import re as _re
+    style = request.args.get('style', 'adventurer')
+    seed = request.args.get('seed', 'default')
+    # Sanitiser les entrées
+    if not _re.match(r'^[a-zA-Z0-9_-]+$', style):
+        style = 'adventurer'
+    seed = _re.sub(r'[<>"\'\\]', '', str(seed))[:60]
+    
+    # Dossier de cache
+    cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'avatars_cache')
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_key = _re.sub(r'[^a-zA-Z0-9_-]', '_', f"{style}_{seed}")
+    cache_file = os.path.join(cache_dir, f"{cache_key}.svg")
+    
+    # Servir depuis le cache si dispo
+    if os.path.exists(cache_file):
+        with open(cache_file, 'rb') as f:
+            svg_data = f.read()
+        resp = make_response(svg_data)
+        resp.headers['Content-Type'] = 'image/svg+xml'
+        resp.headers['Cache-Control'] = 'public, max-age=604800'  # 7 jours
+        return resp
+    
+    # Sinon: fetcher depuis DiceBear et mettre en cache
+    dicebear_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
+    try:
+        req = _urlreq.Request(dicebear_url, headers={'User-Agent': 'CleanBeat/1.0'})
+        with _urlreq.urlopen(req, timeout=5) as r:
+            svg_data = r.read()
+        with open(cache_file, 'wb') as f:
+            f.write(svg_data)
+        resp = make_response(svg_data)
+        resp.headers['Content-Type'] = 'image/svg+xml'
+        resp.headers['Cache-Control'] = 'public, max-age=604800'
+        return resp
+    except Exception:
+        # Fallback: rediriger vers DiceBear direct
+        from flask import redirect as _redirect
+        return _redirect(dicebear_url)
+
 # ════════════════════════════════════════════════════════════
 # 🏡 Personnalisation de la maison (pièces)
 # ════════════════════════════════════════════════════════════
@@ -7528,6 +7859,8 @@ def personnaliser_maison():
             _dbg(f"⚠️ edit_house POST error: {e}")
         finally:
             conn.close()
+        if request.form.get('house_name', '').strip():
+            _invalidate_house_cache(session['user'])  # ⚡ Invalider le cache si nom modifié
         return redirect(url_for('menu'))
 
     # GET : charger les réglages actuels de la maison
@@ -9511,7 +9844,7 @@ def invitation_partner():
         return redirect(url_for('menu'))
     
     # Construire l'URL d'invitation
-    join_url = f"{request.host_url}join_house?code={house_code}"
+    join_url = f"{request.host_url}invite/{house_code}"
     
     return render_template('invitation_partner.html', 
                          house_code=house_code,

@@ -112,7 +112,7 @@ body {
     font-weight: 900;
     color: var(--dark);
     letter-spacing: 6px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Courier New', monospace;
     text-shadow: 0 2px 4px rgba(255,255,255,0.5);
     position: relative;
     z-index: 1;
@@ -315,7 +315,7 @@ body {
     border: 2px solid rgba(166,211,220,0.5);
     border-radius: 12px;
     font-size: 16px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: inherit;
     transition: all 0.3s ease;
     background: rgba(255,255,255,0.8);
 }
@@ -807,342 +807,175 @@ body {
         font-size: 16px;
     }
 }
-
-/* Menu déroulant suggestions nom de maison */
-.name-chips-house {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-.name-chip-house {
-    padding: 9px 16px;
-    border: 2px solid rgba(253,174,84,0.5);
-    border-radius: 20px;
-    background: rgba(255,255,255,0.85);
-    color: #153036;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: 'Montserrat', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-}
-.name-chip-house:active, .name-chip-house:hover {
-    background: #FDAE54;
-    border-color: #FDAE54;
-    color: #fff;
-    transform: scale(0.96);
-}
-.house-name-input-styled {
-    width: 100%;
-    padding: 14px 16px;
-    border: 2px solid rgba(166,211,220,0.4);
-    border-radius: 14px;
-    font-size: 15px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    background: rgba(255,255,255,0.95);
-    box-sizing: border-box;
-    color: #153036;
-    transition: border-color 0.3s;
-    -webkit-appearance: none;
-}
-.house-name-input-styled:focus {
-    outline: none;
-    border-color: #FDAE54;
-    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
-}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="invite-container">
-
     <!-- Header -->
     <div class="invite-header">
-        <div class="invite-icon">🏠</div>
-        {% if from_registration %}
-        <h1 class="invite-title">Configure ta maison</h1>
-        <p class="invite-subtitle">Nomme ton foyer, choisis son type et invite tes coéquipiers !</p>
-        {% elif from_manage %}
+        <div class="invite-icon">📱</div>
+        {% if from_manage %}
         <h1 class="invite-title">Inviter un partenaire</h1>
-        <p class="invite-subtitle">Partage le code pour inviter quelqu'un à rejoindre ta maison !</p>
+        <p class="invite-subtitle">
+            Partage le code pour inviter quelqu'un à rejoindre ta maison !
+        </p>
         {% else %}
         <h1 class="invite-title">👥 Invite ton équipe !</h1>
-        <p class="invite-subtitle">Invite ton partenaire ou colocataire par SMS pour jouer ensemble dès maintenant.</p>
+        <p class="invite-subtitle">
+            Invite ton partenaire ou colocataire par SMS pour jouer ensemble dès maintenant.
+        </p>
         {% endif %}
     </div>
 
-    <form method="post" id="inviteForm" style="width:100%;max-width:500px;">
-        <input type="hidden" name="partners" id="partnersJSON" value="[]">
-        <input type="hidden" name="children" id="childrenJSON" value="[]">
-
-        <!-- Nom et type de maison (inscription seulement) -->
-        {% if from_registration %}
-        <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">✏️</span> Nom de votre foyer</div>
-            <div>
-                <label style="display:block;font-size:13px;font-weight:700;color:#153036;margin-bottom:8px;font-family:'Montserrat',sans-serif;">Comment s'appelle votre chez-vous ?</label>
-                <input type="text" id="house_name_input" name="house_name"
-                       class="house-name-input-styled"
-                       placeholder="Ex : Notre Cocon, Sweet Home…"
-                       value="{{ house_name or '' }}"
-                       onfocus="this.style.borderColor='#FDAE54'" onblur="this.style.borderColor='rgba(166,211,220,0.4)'">
-                <div class="name-chips-house">
-                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Notre Cocon</button>
-                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Le QG</button>
-                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Sweet Home</button>
+    <!-- Section : Inviter un partenaire -->
+    <div class="glass-card" style="margin-bottom: 20px;">
+        <div class="card-title">
+            <span class="card-title-icon">💑</span>
+            Envoyer une invitation
+        </div>
+        
+        <div class="child-info">
+            <span class="child-info-icon">💡</span>
+            Partage le code de ta maison pour inviter ton partenaire ou tes colocataires à rejoindre l'aventure TOG !
+        </div>
+        
+        <!-- Code de la maison -->
+        {% if house_code %}
+        <div class="house-code-card">
+            <div class="house-code-label">Code de ta maison</div>
+            <div class="house-code-value" id="houseCode">{{ house_code }}</div>
+            
+            <!-- Lien d'invitation direct -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div class="house-code-label" style="font-size: 13px; margin-bottom: 8px;">📱 Lien d'invitation</div>
+                <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; font-size: 12px; word-break: break-all; color: rgba(255,255,255,0.9); font-family: monospace;">
+                    {{ join_url }}
                 </div>
+                <button onclick="copyInviteLink('{{ join_url }}')" style="margin-top: 8px; width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: white; font-size: 12px; cursor: pointer; transition: all 0.3s;">
+                    📋 Copier le lien
+                </button>
             </div>
         </div>
+        {% endif %}
+        
+        <!-- Bouton principal glassmorphisme -->
+        <button type="button" class="share-invite-btn" id="shareBtn" onclick="shareInvitation()">
+            <span class="share-invite-icon">📤</span>
+            <span class="share-invite-text">Partager l'invitation</span>
+        </button>
 
-        <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">👥</span> Type de foyer</div>
-            <input type="hidden" name="house_type" id="houseTypeInput" value="{{ house_type or 'family' }}">
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-                <div onclick="selectHouseType('family')"
-                     style="border:2.5px solid #e0e0e0;border-radius:14px;padding:14px 8px 10px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;user-select:none;-webkit-tap-highlight-color:transparent;"
-                     id="ht-family" class="{% if (house_type or 'family') == 'family' %}ht-selected{% endif %}">
-                    <span style="font-size:1.8rem;display:block;margin-bottom:6px;">👨‍👩‍👧‍👦</span>
-                    <div style="font-size:12px;font-weight:700;color:#153036;">Famille</div>
-                    <div style="font-size:10px;color:#888;margin-top:3px;">parents + enfants</div>
-                </div>
-                <div onclick="selectHouseType('couple')"
-                     style="border:2.5px solid #e0e0e0;border-radius:14px;padding:14px 8px 10px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;user-select:none;-webkit-tap-highlight-color:transparent;"
-                     id="ht-couple" class="{% if (house_type or 'family') == 'couple' %}ht-selected{% endif %}">
-                    <span style="font-size:1.8rem;display:block;margin-bottom:6px;">💑</span>
-                    <div style="font-size:12px;font-weight:700;color:#153036;">Couple</div>
-                    <div style="font-size:10px;color:#888;margin-top:3px;">à deux</div>
-                </div>
-                <div onclick="selectHouseType('coloc')"
-                     style="border:2.5px solid #e0e0e0;border-radius:14px;padding:14px 8px 10px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;user-select:none;-webkit-tap-highlight-color:transparent;"
-                     id="ht-coloc" class="{% if (house_type or 'family') == 'coloc' %}ht-selected{% endif %}">
-                    <span style="font-size:1.8rem;display:block;margin-bottom:6px;">🏠</span>
-                    <div style="font-size:12px;font-weight:700;color:#153036;">Coloc</div>
-                    <div style="font-size:10px;color:#888;margin-top:3px;">colocataires</div>
-                </div>
-            </div>
+        <!-- Confirmation après envoi -->
+        <div class="sent-confirmation" id="sentConfirmation">
+            ✅ Invitation envoyée ! Ton partenaire n'a plus qu'à cliquer sur le lien.
         </div>
+
+        <!-- Bouton retour maison -->
+        {% if from_manage %}
+        <a href="{{ url_for('menu') }}" class="go-home-btn" id="goHomeBtn">
+            Retourner au jeu
+        </a>
         {% else %}
-        <input type="hidden" name="house_name" value="{{ house_name or '' }}">
-        <input type="hidden" name="house_type" value="{{ house_type or 'family' }}">
+        <a href="{{ url_for('menu') }}" class="go-home-btn" id="goHomeBtn">
+            Continuer
+        </a>
         {% endif %}
+    </div>
 
-        <!-- Inviter par SMS -->
-        <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">📱</span> Inviter mes coéquipiers</div>
-            <p style="font-size:13px;color:#888;margin-bottom:14px;">
-                Le lien et le code d'accès sont inclus automatiquement dans le message.
-            </p>
-            <button type="button" class="share-invite-btn" onclick="shareInvitation()">
-                <span class="share-invite-icon">📤</span>
-                <span class="share-invite-text">Envoyer l'invitation</span>
-            </button>
-        </div>
-
-        <!-- Enfants -->
-        <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">👶</span> Ajouter des enfants</div>
-            <p style="font-size:13px;color:#888;margin-bottom:14px;">
-                Les enfants n'ont pas besoin de téléphone. Crée leur profil directement ici.
-            </p>
-            <div id="childrenList"></div>
-            <button type="button" class="child-add-btn" onclick="addChildRow()">
-                ＋ Ajouter un enfant
-            </button>
-        </div>
-
-        <!-- Bouton continuer -->
-        <div class="glass-card" style="padding:16px;margin-bottom:20px;">
-            <button type="submit" class="share-invite-btn" onclick="prepareSubmit()"
-                    style="background:linear-gradient(135deg,#FDAE54 0%,#F4C68D 100%);border:none;">
-                {% if from_registration %}
-                    Continuer →
-                {% else %}
-                    ✅ Enregistrer
-                {% endif %}
-            </button>
-        </div>
-
-        {% if not from_registration %}
-        <div class="skip-section">
-            <a href="{{ url_for('menu') }}" class="skip-link">Je ferai ça plus tard</a>
-        </div>
+    <!-- Lien pour passer -->
+    <div class="skip-section">
+        {% if from_manage %}
+        <a href="{{ url_for('menu') }}" class="skip-link">
+            Retourner au jeu
+        </a>
+        {% else %}
+        <a href="{{ url_for('menu') }}" class="skip-link">
+            Je ferai ça plus tard
+        </a>
         {% endif %}
-    </form>
+    </div>
 </div>
 
-<style>
-.ht-selected {
-    border-color: #FDAE54 !important;
-    background: rgba(253,174,84,.1) !important;
-    box-shadow: 0 4px 15px rgba(253,174,84,.25) !important;
-}
-.child-add-btn {
-    width:100%;padding:11px;border:2px dashed #c0d9de;border-radius:12px;
-    background:rgba(166,211,220,.1);color:#597176;font-size:14px;font-weight:600;
-    cursor:pointer;transition:all .2s;font-family:'Montserrat',sans-serif;
-}
-.child-add-btn:hover { border-color:#597176;background:rgba(166,211,220,.2); }
-.child-row {
-    background: rgba(255,255,255,0.6);
-    border: 2px solid rgba(166,211,220,0.35);
-    border-radius: 16px;
-    padding: 14px;
-    margin-bottom: 10px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-}
-.child-name-input {
-    width: 100%;
-    padding: 13px 16px;
-    border: 2px solid rgba(166,211,220,0.4);
-    border-radius: 14px;
-    font-size: 15px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    background: rgba(255,255,255,0.95);
-    box-sizing: border-box;
-    color: #153036;
-    transition: border-color 0.3s;
-    -webkit-appearance: none;
-    margin-bottom: 10px;
-}
-.child-name-input:focus {
-    outline: none;
-    border-color: #FDAE54;
-    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
-}
-.child-avatars-row {
-    display: flex;
-    gap: 7px;
-    flex-wrap: wrap;
-}
-.child-av {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    border: 2.5px solid rgba(166,211,220,0.4);
-    background: rgba(255,255,255,0.9);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    padding: 0;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-.child-av img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    display: block;
-    pointer-events: none;
-}
-.child-av.av-selected {
-    border-color: #FDAE54;
-    box-shadow: 0 0 0 3px rgba(253,174,84,0.35);
-    transform: scale(1.15);
-}
-.btn-remove { flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;align-self:flex-start;margin-top:2px; }
-</style>
 
 <script>
-var joinUrl   = "{{ join_url or '' }}";
-var inviteMessage = "Rejoins-moi sur Dust ! 🏠\n\nJe t'invite à partager les tâches de façon fun !\n\nClique ici pour rejoindre ma maison :\n" + joinUrl;
+const houseCode = "{{ house_code or '' }}";
 
-function selectHouseType(type) {
-    ['family','couple','coloc'].forEach(function(t) {
-        var el = document.getElementById('ht-'+t);
-        if (el) el.classList.remove('ht-selected');
+// Message d'invitation
+const inviteLink = '{{ join_url }}';
+const inviteMessage = `🎮 Rejoins-moi sur Dust !
+
+Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🏆
+
+📱 Clique sur ce lien (aucune installation requise) :
+${inviteLink}
+
+🔑 Code de la maison : ${houseCode}
+
+À tout de suite ! 💪`;
+
+// Fonction pour copier le lien d'invitation
+function copyInviteLink(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        // Animation de confirmation
+        event.target.innerHTML = '✅ Lien copié !';
+        event.target.style.background = 'rgba(76, 175, 80, 0.3)';
+        setTimeout(() => {
+            event.target.innerHTML = '📋 Copier le lien';
+            event.target.style.background = 'rgba(255,255,255,0.2)';
+        }, 2000);
+    }).catch(err => {
+        alert('Erreur lors de la copie : ' + err);
     });
-    var sel = document.getElementById('ht-'+type);
-    if (sel) sel.classList.add('ht-selected');
-    var inp = document.getElementById('houseTypeInput');
-    if (inp) inp.value = type;
 }
 
-async function shareInvitation() {
-    if (navigator.share) {
-        try { await navigator.share({ title: 'Invitation Dust', text: inviteMessage }); return; }
-        catch(e) { if (e.name === 'AbortError') return; }
+// Afficher la confirmation + bouton retour maison
+function showSentConfirmation() {
+    const confirm = document.getElementById('sentConfirmation');
+    const btn = document.getElementById('goHomeBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    if (confirm) confirm.classList.add('visible');
+    if (btn) btn.classList.add('visible');
+    if (shareBtn) {
+        shareBtn.innerHTML = '<span>✅</span><span>Invitation partagée !</span>';
+        shareBtn.style.background = 'linear-gradient(135deg, rgba(40,167,69,0.4) 0%, rgba(40,167,69,0.2) 100%)';
+        shareBtn.style.border = '1.5px solid rgba(40,167,69,0.5)';
+        shareBtn.disabled = true;
     }
-    var enc = encodeURIComponent(inviteMessage);
-    var ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    window.location.href = ios ? 'sms:&body=' + enc : 'sms:?body=' + enc;
 }
 
-var childCount = 0;
-var CHILD_AVATARS = [
-    {seed:'Lola',  bg:'b6e3f4'},
-    {seed:'Lucas', bg:'c0aede'},
-    {seed:'Emma',  bg:'ffd5dc'},
-    {seed:'Nathan',bg:'d1d4f9'},
-    {seed:'Lea',   bg:'ffdfbf'},
-    {seed:'Hugo',  bg:'b6e3f4'},
-    {seed:'Chloe', bg:'c0aede'},
-    {seed:'Tom',   bg:'ffd5dc'},
-    {seed:'Zoe',   bg:'d1d4f9'},
-    {seed:'Louis', bg:'ffdfbf'},
-    {seed:'Jade',  bg:'b6e3f4'},
-    {seed:'Theo',  bg:'c0aede'}
-];
-
-function dbUrl(item) {
-    return 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + encodeURIComponent(item.seed) + '&backgroundColor=transparent';
-}
-
-function addChildRow() {
-    var id = ++childCount;
-    var div = document.createElement('div');
-    div.className = 'child-row'; div.id = 'crow' + id;
-
-    var avHtml = '<div class="child-avatars-row" id="avrow' + id + '">';
-    CHILD_AVATARS.forEach(function(av, i) {
-        var sel = (i === 0) ? ' av-selected' : '';
-        var url = dbUrl(av);
-        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')" data-avatar="' + url + '">'
-            + '<img src="' + url + '" alt="' + av.seed + '" loading="lazy"></button>';
-    });
-    avHtml += '</div>';
-
-    div.innerHTML =
-        '<div style="flex:1">'
-        + '<input type="text" class="child-name-input child-name" placeholder="Pr\u00e9nom de l\'enfant" autocapitalize="words" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">'  
-        + avHtml
-        + '</div>'
-        + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
-
-    document.getElementById('childrenList').appendChild(div);
-    div.querySelector('.child-name-input').focus();
-}
-
-function selectChildAv(btn, rowId) {
-    document.getElementById(rowId).querySelectorAll('.child-av').forEach(function(b) {
-        b.classList.remove('av-selected');
-    });
-    btn.classList.add('av-selected');
-}
-
-function removeRow(id) { var el = document.getElementById(id); if (el) el.remove(); }
-
-function prepareSubmit() {
-    document.getElementById('partnersJSON').value = JSON.stringify([]);
-    var children = [];
-    document.querySelectorAll('.child-row').forEach(function(row) {
-        var n = row.querySelector('.child-name').value.trim();
-        if (n.length > 0) n = n.charAt(0).toUpperCase() + n.slice(1);
-        var selAv = row.querySelector('.child-av.av-selected');
-        var av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
-        if (n) children.push({ name: n, avatar: av });
-    });
-    document.getElementById('childrenJSON').value = JSON.stringify(children);
+// Partager l'invitation
+async function shareInvitation() {
+    // Essayer d'abord l'API Web Share (fonctionne sur Safari iOS !)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Invitation Dust',
+                text: inviteMessage,
+            });
+            // Partage réussi → afficher bouton retour
+            showSentConfirmation();
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                // L'utilisateur a annulé - pas d'erreur
+                return;
+            }
+            console.log('Share error:', err);
+        }
+    }
+    
+    // Fallback : ouvrir l'app Messages avec le texte pré-rempli
+    const encodedMessage = encodeURIComponent(inviteMessage);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS) {
+        window.location.href = `sms:&body=${encodedMessage}`;
+    } else {
+        window.location.href = `sms:?body=${encodedMessage}`;
+    }
+    
+    // Sur iOS/Android après ouverture SMS → afficher le bouton retour
+    setTimeout(() => showSentConfirmation(), 800);
 }
 </script>
 {% endblock %}

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Donne ton avis – CleanBeat</title>
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"></noscript>
+    <style>
+        :root {
+            --teal-light: #A6D3DC;
+            --teal-dark: #597176;
+            --gold: #FDAE54;
+            --white: #fff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            min-height: 100vh;
+            padding: 0 0 60px 0;
+        }
+
+        /* Bouton retour glassmorphisme */
+        .back-btn-glass {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 2001;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #153036;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Montserrat', sans-serif;
+            text-decoration: none;
+            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn-glass:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .back-btn-glass:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 520px) {
+            .back-btn-glass {
+                top: 20px;
+                left: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+        }
+        /* ─── Titre de page ─── */
+        .page-title {
+            text-align: center;
+            padding: 30px 20px 0 20px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #153036;
+        }
+
+        /* ─── Contenu ─── */
+        .content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px 16px 60px 16px;
+        }
+
+        .intro-card {
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .intro-emoji { font-size: 48px; margin-bottom: 8px; }
+        .intro-card p {
+            color: #153036;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .intro-card strong { font-weight: 800; }
+
+        /* ─── Carte de section ─── */
+        .section-card {
+            background: rgba(255,255,255,0.22);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.45);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--teal-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title span { font-size: 18px; }
+
+        /* ─── Labels ─── */
+        label.field-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #153036;
+            margin-bottom: 8px;
+            margin-top: 14px;
+        }
+        label.field-label:first-child { margin-top: 0; }
+
+        /* ─── Étoiles (notation) ─── */
+        .stars-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+        .star-btn {
+            background: rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1;
+            flex: 1;
+            min-width: 44px;
+            text-align: center;
+        }
+        .star-btn:hover, .star-btn.selected {
+            background: rgba(253,174,84,0.4);
+            border-color: rgba(253,174,84,0.8);
+            transform: scale(1.08);
+        }
+        .stars-hint {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: rgba(21,48,54,0.6);
+            margin-top: 4px;
+        }
+
+        /* ─── Textarea & input ─── */
+        textarea, input[type="text"], input[type="email"], select {
+            width: 100%;
+            background: rgba(255,255,255,0.4);
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            color: #153036;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+            resize: vertical;
+        }
+        textarea:focus, input:focus, select:focus {
+            border-color: rgba(253,174,84,0.8);
+            background: rgba(255,255,255,0.6);
+        }
+        textarea { min-height: 90px; }
+        select { appearance: none; cursor: pointer; }
+
+        /* ─── Oui / Non ─── */
+        .yesno-row {
+            display: flex;
+            gap: 12px;
+        }
+        .yesno-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 14px;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.25);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #153036;
+            transition: all 0.2s;
+        }
+        .yesno-btn:hover { background: rgba(255,255,255,0.4); }
+        .yesno-btn.selected-yes {
+            background: rgba(100,200,100,0.35);
+            border-color: rgba(80,180,80,0.7);
+        }
+        .yesno-btn.selected-no {
+            background: rgba(240,100,100,0.25);
+            border-color: rgba(220,80,80,0.6);
+        }
+        /* hidden inputs */
+        input[type="hidden"] {}
+
+        /* ─── Bouton soumettre ─── */
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--gold) 0%, #f4a030 100%);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(253,174,84,0.45);
+            transition: all 0.25s;
+            margin-top: 8px;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(253,174,84,0.55); }
+        .submit-btn:active { transform: scale(0.98); }
+
+        /* ─── Message succès ─── */
+        .success-card {
+            background: rgba(255,255,255,0.3);
+            border-radius: 24px;
+            border: 2px solid rgba(100,200,100,0.5);
+            padding: 40px 24px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .success-emoji { font-size: 64px; margin-bottom: 16px; }
+        .success-card h2 { font-size: 22px; font-weight: 800; color: #153036; margin-bottom: 8px; }
+        .success-card p { font-size: 14px; color: #153036; opacity: 0.8; }
+    </style>
+</head>
+<body>
+{% include '_flash_popup.html' %}
+
+    <!-- Bouton retour glassmorphisme -->
+    <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+
+    <div class="page-title">🧪 Tes retours de test</div>
+
+    <div class="content">
+
+        {% if submitted %}
+        <!-- ─── Succès ─── -->
+        <div class="success-card">
+            <div class="success-emoji">🙌</div>
+            <h2>Merci beaucoup !</h2>
+            <p>Ton avis nous aide vraiment à améliorer l'appli.<br>On lit tous les retours attentivement.</p>
+            <br>
+            <a href="{{ url_for('menu') }}" class="submit-btn" style="display:block; text-decoration:none; text-align:center; margin-top:16px;">Retour au menu</a>
+        </div>
+
+        {% else %}
+        <!-- ─── Intro ─── -->
+        <div class="intro-card">
+            <div class="intro-emoji">💡</div>
+            <p>Tu testes <strong>CleanBeat</strong> en avant-première !<br>
+            Tes retours sont précieux – réponds en 2 minutes.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('feedback') }}" id="feedbackForm">
+            <input type="hidden" name="pret_a_payer" id="pretPayerInput" value="0">
+            <input type="hidden" name="recommande" id="recommandeInput" value="">
+            <input type="hidden" name="note_globale" id="noteGlobaleInput" value="">
+            <input type="hidden" name="note_facilite" id="noteFaciliteInput" value="">
+            <input type="hidden" name="note_design" id="noteDesignInput" value="">
+
+            <!-- ─── Section 1 : Notes ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>⭐</span> Tes notes</div>
+
+                <label class="field-label">Note globale de l'appli</label>
+                <div class="stars-row" id="starsGlobal">
+                    <button type="button" class="star-btn" data-val="1" onclick="setNote('global',1)">1</button>
+                    <button type="button" class="star-btn" data-val="2" onclick="setNote('global',2)">2</button>
+                    <button type="button" class="star-btn" data-val="3" onclick="setNote('global',3)">3</button>
+                    <button type="button" class="star-btn" data-val="4" onclick="setNote('global',4)">4</button>
+                    <button type="button" class="star-btn" data-val="5" onclick="setNote('global',5)">5</button>
+                </div>
+                <div class="stars-hint"><span>👎 Pas top</span><span>🏆 Excellent</span></div>
+
+                <label class="field-label" style="margin-top:18px;">Facilité d'utilisation</label>
+                <div class="stars-row" id="starsFacilite">
+                    <button type="button" class="star-btn" data-val="1" onclick="setNote('facilite',1)">1</button>
+                    <button type="button" class="star-btn" data-val="2" onclick="setNote('facilite',2)">2</button>
+                    <button type="button" class="star-btn" data-val="3" onclick="setNote('facilite',3)">3</button>
+                    <button type="button" class="star-btn" data-val="4" onclick="setNote('facilite',4)">4</button>
+                    <button type="button" class="star-btn" data-val="5" onclick="setNote('facilite',5)">5</button>
+                </div>
+                <div class="stars-hint"><span>😵 Compliqué</span><span>✨ Super simple</span></div>
+
+                <label class="field-label" style="margin-top:18px;">Design &amp; apparence</label>
+                <div class="stars-row" id="starsDesign">
+                    <button type="button" class="star-btn" data-val="1" onclick="setNote('design',1)">1</button>
+                    <button type="button" class="star-btn" data-val="2" onclick="setNote('design',2)">2</button>
+                    <button type="button" class="star-btn" data-val="3" onclick="setNote('design',3)">3</button>
+                    <button type="button" class="star-btn" data-val="4" onclick="setNote('design',4)">4</button>
+                    <button type="button" class="star-btn" data-val="5" onclick="setNote('design',5)">5</button>
+                </div>
+                <div class="stars-hint"><span>😐 Banal</span><span>😍 Waouh</span></div>
+            </div>
+
+            <!-- ─── Section 2 : Ressenti ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>💬</span> Ce que tu penses</div>
+
+                <label class="field-label">Ce qui te plaît dans l'appli</label>
+                <textarea name="ce_qui_plait" placeholder="Les points, les avatars, les images des pièces…" rows="3"></textarea>
+
+                <label class="field-label">Ce qui te déplaît ou te dérange</label>
+                <textarea name="ce_qui_deplait" placeholder="Un bug, quelque chose de lent, d'incompréhensible…" rows="3"></textarea>
+
+                <label class="field-label">Ce que tu aimerais qu'on améliore ou ajoute</label>
+                <textarea name="ameliorations" placeholder="Une fonctionnalité manquante, une idée…" rows="3"></textarea>
+            </div>
+
+            <!-- ─── Section 3 : Prix ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>💶</span> Et si c'était payant ?</div>
+
+                <label class="field-label">Serais-tu prêt(e) à payer pour cette appli ?</label>
+                <div class="yesno-row">
+                    <button type="button" class="yesno-btn" id="btnOui" onclick="setPayer(1)">✅ Oui</button>
+                    <button type="button" class="yesno-btn" id="btnNon" onclick="setPayer(0)">❌ Non</button>
+                </div>
+
+                <div id="prixSection" style="display:none; margin-top:14px;">
+                    <label class="field-label">Combien accepterais-tu de payer ?</label>
+                    <select name="prix_acceptable">
+                        <option value="">— Choisis un montant —</option>
+                        <option value="gratuit_seulement">Seulement si c'est gratuit</option>
+                        <option value="moins_1">Moins de 1 € / mois</option>
+                        <option value="1_2">1 – 2 € / mois</option>
+                        <option value="2_5">2 – 5 € / mois</option>
+                        <option value="5_10">5 – 10 € / mois</option>
+                        <option value="plus_10">Plus de 10 € / mois</option>
+                        <option value="achat_unique">Achat unique (pas d'abonnement)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ─── Section 4 : Recommandation ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>📣</span> Tu en parlerais autour de toi ?</div>
+
+                <label class="field-label">Recommanderais-tu l'appli à d'autres personnes ?</label>
+                <div class="yesno-row">
+                    <button type="button" class="yesno-btn" id="btnRecoOui" onclick="setReco(1)">👍 Oui</button>
+                    <button type="button" class="yesno-btn" id="btnRecoNon" onclick="setReco(0)">👎 Non</button>
+                </div>
+            </div>
+
+            <!-- ─── Section 5 : Commentaires libres ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>✏️</span> Autre chose à dire ?</div>
+                <textarea name="autres_commentaires" placeholder="Un message libre, une anecdote, un rêve pour l'appli…" rows="4"></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Envoyer mon avis ✨</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <script>
+        var notes = { global: 0, facilite: 0, design: 0 };
+
+        function setNote(type, val) {
+            notes[type] = val;
+            var mapping = { global: 'starsGlobal', facilite: 'starsFacilite', design: 'starsDesign' };
+            var inputMapping = { global: 'noteGlobaleInput', facilite: 'noteFaciliteInput', design: 'noteDesignInput' };
+            var container = document.getElementById(mapping[type]);
+            var input = document.getElementById(inputMapping[type]);
+            if (container) {
+                var btns = container.querySelectorAll('.star-btn');
+                btns.forEach(function(b) {
+                    b.classList.toggle('selected', parseInt(b.dataset.val) <= val);
+                });
+            }
+            if (input) input.value = val;
+        }
+
+        function setPayer(val) {
+            document.getElementById('pretPayerInput').value = val;
+            var oui = document.getElementById('btnOui');
+            var non = document.getElementById('btnNon');
+            var prixSection = document.getElementById('prixSection');
+            if (val === 1) {
+                oui.classList.add('selected-yes');
+                non.classList.remove('selected-no');
+                prixSection.style.display = 'block';
+            } else {
+                non.classList.add('selected-no');
+                oui.classList.remove('selected-yes');
+                prixSection.style.display = 'none';
+            }
+        }
+
+        function setReco(val) {
+            document.getElementById('recommandeInput').value = val;
+            var oui = document.getElementById('btnRecoOui');
+            var non = document.getElementById('btnRecoNon');
+            if (val === 1) {
+                oui.classList.add('selected-yes');
+                non.classList.remove('selected-no');
+            } else {
+                non.classList.add('selected-no');
+                oui.classList.remove('selected-yes');
+            }
+        }
+    </script>
+</body>
+</html>

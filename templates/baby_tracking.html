@@ -4,6 +4,7 @@
 
 {% block content %}
 <style>
+/* Bouton retour glassmorphisme */
 .back-btn-glass {
     position: fixed;
     top: 24px;
@@ -26,14 +27,25 @@
     box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
     transition: all 0.3s ease;
 }
+
 .back-btn-glass:hover {
     background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
     transform: translateY(-2px);
     box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
-.back-btn-glass:active { transform: scale(0.95); }
+
+.back-btn-glass:active {
+    transform: scale(0.95);
+}
+
 @media (max-width: 520px) {
-    .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
+    .back-btn-glass {
+        top: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
 }
 </style>
 <a href="{{ url_for('categorie', cat=category) }}" class="back-btn-glass" aria-label="Retour">←</a>

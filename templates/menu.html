@@ -5,13 +5,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Menu</title>
-    <!-- Google Fonts avec preconnect pour performance -->
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- Socket.IO pour la synchronisation en temps réel -->
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js" defer></script>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
+    <!-- Socket.IO - hébergé localement -->
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}" defer></script>
     <script>
         // Neutralise les messages de debug `console.log` pour éviter les affichages indésirables
         // Laisser les erreurs et warnings visibles (console.error / console.warn)
@@ -379,7 +380,6 @@
             min-width: var(--avatar-size, 110px); 
             min-height: var(--avatar-size, 110px); 
             border-radius: 50%; 
-            /* remove solid white interior so avatar image sits flush */
             background: transparent;
             border: none;
             display: flex;
@@ -1712,6 +1712,311 @@
                 border-radius: 12px !important;
             }
         }
+
+        /* ══════════════════════════════════════════════════
+           🧑 PANNEAU PROFIL — Menu Burger
+        ══════════════════════════════════════════════════ */
+
+        /* Item "Mon Profil" dans la nav */
+        .burger-nav-item-profile {
+            background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(166,211,220,0.18) 100%) !important;
+            border-color: rgba(166,211,220,0.5) !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+            width: 100%;
+            text-align: left;
+        }
+        .burger-nav-item-profile:active {
+            transform: translateX(6px) scale(0.99);
+            background: rgba(255,255,255,0.28) !important;
+        }
+        .profile-nav-avatar {
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.25);
+            padding: 0 !important;
+            font-size: 22px !important;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        .profile-nav-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .burger-nav-text-block {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .burger-nav-subtext {
+            font-size: 11px;
+            font-weight: 600;
+            opacity: 0.72;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .burger-nav-arrow {
+            font-size: 22px;
+            opacity: 0.55;
+            font-weight: 300;
+            margin-left: 4px;
+        }
+        .burger-nav-divider {
+            padding: 12px 6px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        /* Panneau profil (slide depuis la gauche par-dessus le burger-nav) */
+        .profile-panel {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(170deg, #153036 0%, #1e4a54 40%, #597177 100%);
+            z-index: 20;
+            transform: translateX(-105%);
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-panel.active {
+            transform: translateX(0);
+        }
+        .profile-panel-back {
+            position: sticky;
+            top: 0;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: none;
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 16px 20px;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            z-index: 1;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .profile-panel-back:active { opacity: 0.7; }
+        .profile-panel-back-arrow {
+            font-size: 18px;
+            margin-right: 2px;
+        }
+
+        /* Zone avatar + nom */
+        .profile-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 28px 20px 20px;
+            gap: 10px;
+            position: relative;
+        }
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -20px; right: -20px;
+            height: 180px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(166,211,220,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .profile-avatar-ring {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            padding: 3px;
+            background: conic-gradient(from 0deg, #A6D3DC, #FDAE54, #f4c68d, #A6D3DC);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 4px rgba(166,211,220,0.15);
+            animation: profileRingRotate 6s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes profileRingRotate {
+            from { filter: hue-rotate(0deg); }
+            to   { filter: hue-rotate(30deg); }
+        }
+        .profile-avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(21,48,54,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-avatar-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .profile-avatar-inner .profile-avatar-emoji {
+            font-size: 46px;
+            line-height: 1;
+        }
+        .profile-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 0.4px;
+            text-align: center;
+        }
+        .profile-email-text {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            text-align: center;
+        }
+        .profile-house-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(253,174,84,0.18);
+            border: 1.5px solid rgba(253,174,84,0.35);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        /* Grille de statistiques */
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 16px 16px;
+        }
+        .profile-stat-item {
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            backdrop-filter: blur(6px);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            border-radius: 14px 14px 0 0;
+            background: linear-gradient(90deg, transparent, rgba(166,211,220,0.6), transparent);
+        }
+        .profile-stat-item:nth-child(1)::before { background: linear-gradient(90deg, transparent, rgba(253,174,84,0.7), transparent); }
+        .profile-stat-item:nth-child(2)::before { background: linear-gradient(90deg, transparent, rgba(166,211,220,0.7), transparent); }
+        .profile-stat-item:nth-child(3)::before { background: linear-gradient(90deg, transparent, rgba(180,140,200,0.7), transparent); }
+        .profile-stat-item:nth-child(4)::before { background: linear-gradient(90deg, transparent, rgba(240,180,80,0.7), transparent); }
+        .profile-stat-value {
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            line-height: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+        .profile-stat-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            margin-top: 5px;
+        }
+
+        /* Séparateur section */
+        .profile-section-title {
+            padding: 4px 20px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        /* Boutons d'action */
+        .profile-actions {
+            padding: 4px 16px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+        }
+        .profile-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 20px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            border: 2px solid transparent;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            letter-spacing: 0.2px;
+        }
+        .profile-action-btn:active {
+            transform: scale(0.97);
+        }
+        .profile-action-edit {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.22);
+            color: white;
+        }
+        .profile-action-edit:hover, .profile-action-edit:active {
+            background: rgba(255,255,255,0.2);
+        }
+        .profile-action-logout {
+            background: rgba(255,90,90,0.12);
+            border-color: rgba(255,100,100,0.28);
+            color: rgba(255,170,170,1);
+        }
+        .profile-action-logout:hover, .profile-action-logout:active {
+            background: rgba(255,90,90,0.22);
+        }
+
+        /* Badge de rang */
+        .profile-rank-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+        }
+
     </style>
 </head>
 <body>
@@ -1985,7 +2290,7 @@
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                     <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
                                         {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
-                                        <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none; background: transparent; box-shadow: none;">
+                                        <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none;">
                                             {% if session.get('user_avatar_url') %}
                                                 <img src="{{ session.get('user_avatar_url') }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar_file %}
@@ -2042,7 +2347,7 @@
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                         <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
                                             {% set border_color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else '#A6D3DC')) %}
-                                            <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: none; background: transparent; box-shadow: none;">
+                                            <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: none;">
                                                 {% if p2.avatar_file %}
                                                     <img src="{{ url_for('static', filename='avatars/' + p2.avatar_file) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar_url %}
@@ -2091,7 +2396,7 @@
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                             <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
                                                 {% set border_color_p = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else '#A6D3DC')) %}
-                                                <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: none; background: transparent; box-shadow: none;">
+                                                <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: none;">
                                                     {% if p.avatar_file %}
                                                         <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% elif p.avatar_url %}
@@ -2905,8 +3210,8 @@
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
                     
-                    // ⚡ Vérifier toutes les 3 secondes pour synchronisation quasi-instantanée
-                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 3000);
+                    // ⚡ Vérifier toutes les 30 secondes (le WebSocket gère le temps réel)
+                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 30000);
                     
                     // Première mise à jour après 1 seconde
                     setTimeout(updatePlayersPointsMenu, 1000);
@@ -3405,8 +3710,32 @@
                 <div class="burger-nav">
                     <button class="burger-close" id="burgerClose" aria-label="Fermer le menu">&times;</button>
                     <nav class="burger-nav-items">
-                        <!-- Titre section -->
-                        <div style="padding: 8px 20px 4px; font-size: 11px; font-weight: 700; color: rgba(89,113,118,0.7); text-transform: uppercase; letter-spacing: 1px;">Gérer la maison</div>
+                        <!-- 👤 MON PROFIL — item en haut du menu -->
+                        <a href="#" class="burger-nav-item burger-nav-item-profile" id="profileNavBtn" onclick="openProfilePanel(event)" role="button">
+                            <span class="burger-nav-icon profile-nav-avatar" style="filter:none;">
+                                {% if player1_avatar_file %}
+                                    <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}"
+                                         alt="{{ player1_name or 'Profil' }}"
+                                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                    <span style="display:none;font-size:22px;">👤</span>
+                                {% elif player1_avatar_url %}
+                                    <img src="{{ player1_avatar_url }}"
+                                         alt="{{ player1_name or 'Profil' }}"
+                                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                    <span style="display:none;font-size:22px;">👤</span>
+                                {% elif player1_avatar and player1_avatar|length <= 4 %}
+                                    {{ player1_avatar }}
+                                {% else %}
+                                    👤
+                                {% endif %}
+                            </span>
+                            <div class="burger-nav-text-block">
+                                <span class="burger-nav-text">Mon Profil</span>
+                                <span class="burger-nav-subtext">{{ player1_name or 'Mon compte' }}</span>
+                            </div>
+                            <span class="burger-nav-arrow">›</span>
+                        </a>
+
                         <a href="{{ url_for('personnaliser_maison') }}" class="burger-nav-item">
                             <span class="burger-nav-icon">🏡</span>
                             <span class="burger-nav-text">Gérer la maison</span>
@@ -3436,6 +3765,15 @@
                             <span class="burger-nav-icon">🧪</span>
                             <span class="burger-nav-text">Test Grille</span>
                         </a>
+
+                        <!-- Séparateur version bêta EN BAS -->
+                        <div class="burger-nav-divider">Version bêta</div>
+
+                        <!-- 💌 FEEDBACK TESTEURS -->
+                        <a href="{{ url_for('feedback') }}" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
+                            <span class="burger-nav-icon">💌</span>
+                            <span class="burger-nav-text" style="color:#153036;">Donner mon avis</span>
+                        </a>
                         
                         <!-- 🔔 Boutons notifications/rappels masqués (code conservé pour usage futur) -->
                         <span id="notificationToggle" style="display:none;">
@@ -3449,6 +3787,145 @@
                             <span id="reminderStatus"></span>
                         </span>
                     </nav>
+
+                    <!-- ══════════════════════════════════════════════
+                         🧑 PANNEAU MON PROFIL
+                    ══════════════════════════════════════════════ -->
+                    {% set cp = players|selectattr('email', 'equalto', current_user_name)|first %}
+                    <div class="profile-panel" id="profilePanel" role="dialog" aria-label="Mon Profil">
+
+                        <!-- Bouton retour -->
+                        <button class="profile-panel-back" id="profilePanelBack" onclick="closeProfilePanel()">
+                            <span class="profile-panel-back-arrow">‹</span>
+                            Retour au menu
+                        </button>
+
+                        <!-- Zone héro : avatar + nom + maison -->
+                        <div class="profile-hero">
+                            <div class="profile-avatar-ring">
+                                <div class="profile-avatar-inner">
+                                    {% if player1_avatar_file %}
+                                        <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}"
+                                             alt="{{ player1_name or 'Avatar' }}"
+                                             onerror="this.onerror=null;this.innerHTML='👤';">
+                                    {% elif player1_avatar_url %}
+                                        <img src="{{ player1_avatar_url }}"
+                                             alt="{{ player1_name or 'Avatar' }}"
+                                             onerror="this.onerror=null;this.innerHTML='👤';">
+                                    {% elif player1_avatar and player1_avatar|length <= 4 %}
+                                        <span class="profile-avatar-emoji">{{ player1_avatar }}</span>
+                                    {% elif player1_avatar and '.' not in player1_avatar %}
+                                        <img src="https://api.dicebear.com/7.x/{{ player1_avatar_style or 'adventurer' }}/svg?seed={{ player1_avatar }}"
+                                             alt="{{ player1_name or 'Avatar' }}"
+                                             onerror="this.onerror=null;this.innerHTML='👤';">
+                                    {% else %}
+                                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}"
+                                             alt="{{ player1_name or 'Avatar' }}">
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="profile-name">{{ player1_name or 'Joueur' }}</div>
+
+                            {% if current_user_name %}
+                            <div class="profile-email-text">{{ current_user_name }}</div>
+                            {% endif %}
+
+                            {% if house_name %}
+                            <div class="profile-house-badge">
+                                🏡 {{ house_name }}
+                            </div>
+                            {% endif %}
+
+                            {% if cp %}
+                            {% set total_pts = cp.total_points|default(0) %}
+                            {% if total_pts >= 1000 %}
+                            <div class="profile-rank-badge">🏆 Légende</div>
+                            {% elif total_pts >= 500 %}
+                            <div class="profile-rank-badge">⭐ Expert</div>
+                            {% elif total_pts >= 200 %}
+                            <div class="profile-rank-badge">✨ Confirmé</div>
+                            {% elif total_pts >= 50 %}
+                            <div class="profile-rank-badge">🌱 Apprenti</div>
+                            {% else %}
+                            <div class="profile-rank-badge">🐣 Débutant</div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Grille de stats -->
+                        <div class="profile-section-title">Mes statistiques</div>
+                        <div class="profile-stats-grid">
+                            <div class="profile-stat-item">
+                                <div class="profile-stat-value">{{ cp.total_points|default(0) if cp else 0 }}</div>
+                                <div class="profile-stat-label">Points totaux</div>
+                            </div>
+                            <div class="profile-stat-item">
+                                <div class="profile-stat-value">{{ player1_points or 0 }}</div>
+                                <div class="profile-stat-label">Aujourd'hui</div>
+                            </div>
+                            <div class="profile-stat-item">
+                                <div class="profile-stat-value">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
+                                <div class="profile-stat-label">Cette semaine</div>
+                            </div>
+                            <div class="profile-stat-item">
+                                {% set streak_val = cp.streak|default(0) if cp else 0 %}
+                                <div class="profile-stat-value">
+                                    {{ streak_val }}{% if streak_val > 0 %}&thinsp;🔥{% endif %}
+                                </div>
+                                <div class="profile-stat-label">Jours d'affilée</div>
+                            </div>
+                        </div>
+
+                        <!-- Classement dans la maison -->
+                        {% if players|length > 1 %}
+                        <div class="profile-section-title">Classement de la maison</div>
+                        <div style="padding: 0 16px 16px;">
+                            {% set sorted_players = players|sort(attribute='total_points', reverse=True) %}
+                            {% for p in sorted_players %}
+                            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:8px;
+                                        background:rgba(255,255,255,{% if p.email == current_user_name %}0.15{% else %}0.06{% endif %});
+                                        border:1.5px solid rgba(255,255,255,{% if p.email == current_user_name %}0.25{% else %}0.1{% endif %});
+                                        border-radius:12px;transition:all 0.2s;">
+                                <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,{% if loop.index==1 %}0.9{% else %}0.5{% endif %});width:24px;text-align:center;">
+                                    {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                                </div>
+                                <div style="width:30px;height:30px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    {% if p.avatar_file %}
+                                        <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
+                                    {% elif p.avatar_url %}
+                                        <img src="{{ p.avatar_url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
+                                    {% elif p.avatar and p.avatar|length <= 4 %}
+                                        <span style="font-size:16px;">{{ p.avatar }}</span>
+                                    {% else %}
+                                        <span style="font-size:16px;">👤</span>
+                                    {% endif %}
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-size:13px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                        {{ p.name }}{% if p.email == current_user_name %} <span style="font-size:10px;opacity:0.7;">(moi)</span>{% endif %}
+                                    </div>
+                                </div>
+                                <div style="font-size:14px;font-weight:800;color:rgba(253,174,84,0.9);">
+                                    {{ p.total_points|default(0) }} pts
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Boutons d'action -->
+                        <div class="profile-actions">
+                            <a href="{{ url_for('edit_player', email=current_user_name) }}" class="profile-action-btn profile-action-edit">
+                                ✏️&nbsp; Modifier mon profil
+                            </a>
+                            <a href="{{ url_for('logout') }}" class="profile-action-btn profile-action-logout">
+                                👋&nbsp; Se déconnecter
+                            </a>
+                        </div>
+
+                    </div><!-- /profile-panel -->
+
                 </div>
             </div>
 
@@ -3466,23 +3943,45 @@
                     
                     burgerClose.addEventListener('click', () => {
                         burgerOverlay.classList.remove('active');
+                        closeProfilePanel();
                         document.body.style.overflow = '';
                     });
                     
                     burgerOverlay.addEventListener('click', (e) => {
                         if (e.target === burgerOverlay) {
                             burgerOverlay.classList.remove('active');
+                            closeProfilePanel();
                             document.body.style.overflow = '';
                         }
                     });
                     
                     document.addEventListener('keydown', (e) => {
                         if (e.key === 'Escape' && burgerOverlay.classList.contains('active')) {
-                            burgerOverlay.classList.remove('active');
-                            document.body.style.overflow = '';
+                            const panel = document.getElementById('profilePanel');
+                            if (panel && panel.classList.contains('active')) {
+                                closeProfilePanel();
+                            } else {
+                                burgerOverlay.classList.remove('active');
+                                document.body.style.overflow = '';
+                            }
                         }
                     });
                 })();
+
+                // 🧑 PANNEAU PROFIL
+                function openProfilePanel(e) {
+                    if (e) e.preventDefault();
+                    const panel = document.getElementById('profilePanel');
+                    if (panel) {
+                        panel.classList.add('active');
+                        // Scroll en haut du panneau
+                        panel.scrollTop = 0;
+                    }
+                }
+                function closeProfilePanel() {
+                    const panel = document.getElementById('profilePanel');
+                    if (panel) panel.classList.remove('active');
+                }
                 
                 // 💡 GESTION DES LUMIÈRES PERSISTANTES
                 (function() {

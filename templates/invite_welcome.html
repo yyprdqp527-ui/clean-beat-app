@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Invitation - TOG</title>
+    <title>Invitation - Dust</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <style>
         * {
@@ -215,7 +215,7 @@
 </head>
 <body>
 
-<div class="logo">TOG</div>
+<div class="logo">Dust</div>
 
 <div class="invitation-card">
     <div class="invite-icon">🎮</div>
@@ -226,7 +226,7 @@
     </h1>
     
     <p class="invite-subtitle">
-        Rejoins l'aventure TOG et transforme les tâches ménagères en compétition fun ! 🏆
+        Rejoins l'aventure Dust et transforme les tâches ménagères en compétition fun ! 🏆
     </p>
 
     {% if house_type %}
@@ -247,7 +247,7 @@
     {% endif %}
 
     <div class="buttons-container">
-        <a href="{{ url_for('signup_email') }}?code={{ house_code }}" class="btn btn-primary">
+        <a href="{{ url_for('signup_email', code=house_code) }}" class="btn btn-primary">
             🚀 Créer mon compte
         </a>
         

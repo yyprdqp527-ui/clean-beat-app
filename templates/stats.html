@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 <script>
 // Applique dynamiquement la largeur des barres de progression depuis l'attribut data-width
 document.addEventListener('DOMContentLoaded', function() {

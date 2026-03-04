@@ -677,16 +677,7 @@ window.addEventListener('DOMContentLoaded', function() {
     </div>
     </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, msg in messages %}
-        {% if category == 'success' %}
-            <div id="toast" class="toast show" data-toast-msg="{{ msg|escape }}"></div>
-        {% endif %}
-    {% endfor %}
-    {% if not messages %}
-        <div id="toast" class="toast"></div>
-    {% endif %}
-{% endwith %}
+<div id="toast" class="toast"></div>
 
 {% endblock %}
 
