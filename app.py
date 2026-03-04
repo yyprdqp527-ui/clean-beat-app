@@ -6039,6 +6039,11 @@ def admin_clean_users():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
     msg = ""
+    # Action : garder uniquement un compte, supprimer tous les autres RÉELS (pas les enfants)
+    if action == 'keeponly' and email_keep:
+        c.execute("DELETE FROM users WHERE email != ? AND (is_child_account IS NULL OR is_child_account = 0)", (email_keep,))
+        conn.commit()
+        msg = f"✅ Tous les comptes adultes supprimés sauf {email_keep}"
     # Action : réinitialiser le mot de passe d'un email
     if action == 'resetpwd' and email_keep and new_pwd:
         hashed = generate_password_hash(new_pwd)
@@ -6060,8 +6065,10 @@ def admin_clean_users():
         html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[4]}</td>"
         html += f"<td><a href='?key=dust2026admin&action=delete&email={r[1]}' onclick=\"return confirm('Supprimer ?')\">🗑️ Supprimer</a></td></tr>"
     html += "</table>"
+    html += "<br><b>⭐ Garder uniquement un compte (supprimer tous les autres) :</b><br>"
+    html += "<form method=get>Email à garder: <input name=email style='width:250px'> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=keeponly> <input type=submit value='Garder uniquement cet email' onclick=\"return confirm('Supprimer TOUS les autres comptes adultes ?')\"></form>"
     html += "<br><b>Réinitialiser un mot de passe :</b><br>"
-    html += "<form method=get>Email: <input name=email> Nouveau pwd: <input name=pwd> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
+    html += "<form method=get>Email: <input name=email style='width:250px'> Nouveau pwd: <input name=pwd> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
     return html
 
 # ─── Mot de passe oublié ────────────────────────────────────────────────────
