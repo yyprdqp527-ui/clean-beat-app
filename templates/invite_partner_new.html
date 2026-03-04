@@ -881,25 +881,13 @@ body {
 
         <!-- Inviter par SMS -->
         <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">📱</span> Inviter par SMS</div>
-
-            {% if house_code %}
-            <div class="house-code-card" style="cursor:pointer;" onclick="copyCode()" title="Toucher pour copier">
-                <div class="house-code-label">Code de ta maison</div>
-                <div class="house-code-value" id="houseCodeDisplay">{{ house_code }}</div>
-                <div id="copyLabel" style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:4px;">Touche pour copier</div>
-            </div>
-            {% endif %}
-
+            <div class="card-title"><span class="card-title-icon">📱</span> Inviter mes coéquipiers</div>
+            <p style="font-size:13px;color:#888;margin-bottom:14px;">
+                Le lien et le code d'accès sont inclus automatiquement dans le message.
+            </p>
             <button type="button" class="share-invite-btn" onclick="shareInvitation()">
                 <span class="share-invite-icon">📤</span>
-                <span class="share-invite-text">Partager l'invitation</span>
-            </button>
-
-            <div style="margin:16px 0 8px;font-size:12px;color:#aaa;text-align:center;">— ou saisir manuellement —</div>
-            <div id="partnersList"></div>
-            <button type="button" class="child-add-btn" onclick="addPartnerRow()" style="margin-top:4px;">
-                ＋ Ajouter un numéro de téléphone
+                <span class="share-invite-text">Envoyer l'invitation</span>
             </button>
         </div>
 
@@ -947,11 +935,8 @@ body {
     cursor:pointer;transition:all .2s;font-family:inherit;
 }
 .child-add-btn:hover { border-color:#597176;background:rgba(166,211,220,.2); }
-.partner-row { display:flex;gap:8px;align-items:center;margin-bottom:10px; }
-.partner-input { width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:12px;font-size:15px;font-family:inherit;background:#fafafa;color:#153036;box-sizing:border-box; }
-.partner-input:focus { outline:none;border-color:#597176;background:#fff; }
-.btn-remove { flex-shrink:0;width:36px;height:36px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
 .child-row { display:flex;gap:8px;align-items:flex-start;background:rgba(166,211,220,.12);border-radius:12px;padding:12px;margin-bottom:8px; }
+.btn-remove { flex-shrink:0;width:36px;height:36px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
 </style>
 
 <script>
@@ -970,14 +955,6 @@ function selectHouseType(type) {
     if (inp) inp.value = type;
 }
 
-function copyCode() {
-    if (!houseCode) return;
-    navigator.clipboard.writeText(houseCode).then(function() {
-        var lbl = document.getElementById('copyLabel');
-        if (lbl) { lbl.textContent = 'Copie !'; setTimeout(function(){ lbl.textContent = 'Touche pour copier'; }, 1800); }
-    });
-}
-
 async function shareInvitation() {
     if (navigator.share) {
         try { await navigator.share({ title: 'Invitation Dust', text: inviteMessage }); return; }
@@ -986,16 +963,6 @@ async function shareInvitation() {
     var enc = encodeURIComponent(inviteMessage);
     var ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
     window.location.href = ios ? 'sms:&body=' + enc : 'sms:?body=' + enc;
-}
-
-var partnerCount = 0;
-function addPartnerRow() {
-    var id = ++partnerCount;
-    var div = document.createElement('div');
-    div.className = 'partner-row'; div.id = 'prow' + id;
-    div.innerHTML = '<input type="tel" class="partner-input" placeholder="+33 6 12 34 56 78">'
-        + '<button type="button" class="btn-remove" onclick="removeRow(\'prow' + id + '\')">&#10005;</button>';
-    document.getElementById('partnersList').appendChild(div);
 }
 
 var childCount = 0;
@@ -1011,11 +978,7 @@ function addChildRow() {
 function removeRow(id) { var el = document.getElementById(id); if (el) el.remove(); }
 
 function prepareSubmit() {
-    var partners = [];
-    document.querySelectorAll('.partner-row .partner-input').forEach(function(inp) {
-        var p = inp.value.trim(); if (p) partners.push({ phone: p });
-    });
-    document.getElementById('partnersJSON').value = JSON.stringify(partners);
+    document.getElementById('partnersJSON').value = JSON.stringify([]);
     var children = [];
     document.querySelectorAll('.child-name').forEach(function(inp) {
         var n = inp.value.trim(); if (n) children.push({ name: n, avatar: '👶' });
