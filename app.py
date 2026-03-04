@@ -6892,6 +6892,8 @@ def invite_partner():
 
         # ─── Récupérer le nom et le type de la maison depuis le formulaire ───
         form_house_name = request.form.get('house_name', '').strip()
+        if not form_house_name:
+            form_house_name = 'Notre Maison'  # Valeur par défaut si vide
         form_house_type = request.form.get('house_type', 'family').strip()
         if form_house_type not in ('family', 'couple', 'coloc'):
             form_house_type = 'family'
