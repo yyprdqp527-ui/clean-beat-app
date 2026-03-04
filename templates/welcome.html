@@ -202,10 +202,30 @@
     </style>
 </head>
 <body>
+
+    <!-- ⏳ Splash de démarrage (visible uniquement lors d'un cold start Render) -->
+    <div id="splash-loading" style="display:none; position:fixed; inset:0; z-index:9999;
+         background:linear-gradient(135deg,#A6D3DC 0%,#597176 100%);
+         flex-direction:column; align-items:center; justify-content:center;
+         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+        <div style="font-size:3em; margin-bottom:20px; animation:pulse 1.4s infinite;">🏠</div>
+        <div style="color:#fff; font-size:1.1em; font-weight:600; margin-bottom:8px;">
+            L'appli se réveille…
+        </div>
+        <div style="color:rgba(255,255,255,0.75); font-size:0.85em; text-align:center; max-width:260px; line-height:1.5; margin-bottom:24px;">
+            Premier chargement du jour, encore<br>quelques secondes ☕
+        </div>
+        <div style="width:200px; height:4px; background:rgba(255,255,255,0.25); border-radius:4px; overflow:hidden;">
+            <div id="splash-bar" style="height:100%; width:0%; background:white; border-radius:4px;
+                 transition:width 0.3s ease;"></div>
+        </div>
+        <div id="splash-timer" style="color:rgba(255,255,255,0.6); font-size:0.78em; margin-top:10px;">0s</div>
+    </div>
+
     <div class="background-image"></div>
     <div class="overlay"></div>
     
-    <div class="container">
+    <div class="container" id="main-content" style="opacity:0; transition:opacity 0.5s ease;">
         <div class="tagline">
             <p class="description">
                 Transformez les tâches ménagères en compétition fun !<br>
@@ -216,6 +236,60 @@
             Que le meilleur gagne !
         </a>
     </div>
+
+    <style>
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+    </style>
+
+    <script>
+    (function() {
+        var start = Date.now();
+        var splash = document.getElementById('splash-loading');
+        var bar = document.getElementById('splash-bar');
+        var timer = document.getElementById('splash-timer');
+        var content = document.getElementById('main-content');
+        var MAX_WAIT = 45000; // 45 secondes max
+
+        // Détecter si la page met du temps à charger (cold start)
+        function checkReady() {
+            var elapsed = Date.now() - start;
+            // Si la page charge en moins de 2s → pas de splash
+            if (elapsed < 2000) {
+                content.style.opacity = '1';
+                return;
+            }
+            // Afficher le splash
+            splash.style.display = 'flex';
+            var interval = setInterval(function() {
+                var t = Date.now() - start;
+                var pct = Math.min((t / MAX_WAIT) * 100, 95);
+                bar.style.width = pct + '%';
+                timer.textContent = Math.round(t / 1000) + 's';
+                // Ping le serveur pour savoir s'il répond
+                fetch('/ping', { cache: 'no-store' })
+                    .then(function(r) {
+                        if (r.ok) {
+                            clearInterval(interval);
+                            bar.style.width = '100%';
+                            setTimeout(function() {
+                                splash.style.opacity = '0';
+                                splash.style.transition = 'opacity 0.4s';
+                                content.style.opacity = '1';
+                                setTimeout(function() { splash.style.display = 'none'; }, 400);
+                            }, 300);
+                        }
+                    }).catch(function() {});
+            }, 1000);
+        }
+
+        // Lancer la vérification après un court délai
+        if (document.readyState === 'complete') {
+            checkReady();
+        } else {
+            window.addEventListener('load', checkReady);
+        }
+    })();
+    </script>
 
     <style>
         .tagline {
