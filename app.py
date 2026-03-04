@@ -7504,6 +7504,10 @@ def personnaliser_maison():
         conn = get_db_connection()
         c = conn.cursor()
         try:
+            # Mettre à jour le nom de la maison si fourni
+            new_house_name = request.form.get('house_name', '').strip()
+            if new_house_name:
+                c.execute("UPDATE houses SET house_name=? WHERE id=?", (new_house_name, house_id))
             for room in ALL_ROOMS:
                 key = room['key']
                 custom_name = request.form.get(f'name_{key}', '').strip()
@@ -7556,7 +7560,20 @@ def personnaliser_maison():
     except Exception:
         pass
 
-    return render_template('edit_house.html', rooms=rooms_data, house_members=house_members)
+    # Récupérer le nom actuel de la maison
+    current_house_name = ''
+    try:
+        conn_hn = get_db_connection()
+        chn = conn_hn.cursor()
+        chn.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
+        hn_row = chn.fetchone()
+        conn_hn.close()
+        if hn_row:
+            current_house_name = hn_row[0] or hn_row[1] or ''
+    except Exception:
+        pass
+
+    return render_template('edit_house.html', rooms=rooms_data, house_members=house_members, current_house_name=current_house_name)
 
 
 
