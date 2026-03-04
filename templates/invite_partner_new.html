@@ -988,8 +988,65 @@ body {
     cursor:pointer;transition:all .2s;font-family:inherit;
 }
 .child-add-btn:hover { border-color:#597176;background:rgba(166,211,220,.2); }
-.child-row { display:flex;gap:8px;align-items:flex-start;background:rgba(166,211,220,.12);border-radius:12px;padding:12px;margin-bottom:8px; }
-.btn-remove { flex-shrink:0;width:36px;height:36px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.child-row {
+    background: rgba(255,255,255,0.6);
+    border: 2px solid rgba(166,211,220,0.35);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.child-name-input {
+    width: 100%;
+    padding: 13px 16px;
+    border: 2px solid rgba(166,211,220,0.4);
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    background: rgba(255,255,255,0.95);
+    box-sizing: border-box;
+    color: #153036;
+    transition: border-color 0.3s;
+    -webkit-appearance: none;
+    margin-bottom: 10px;
+}
+.child-name-input:focus {
+    outline: none;
+    border-color: #FDAE54;
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
+}
+.child-avatars-row {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+.child-av {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(166,211,220,0.4);
+    background: rgba(255,255,255,0.85);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    padding: 0;
+    line-height: 1;
+}
+.child-av.av-selected {
+    border-color: #FDAE54;
+    background: rgba(253,174,84,0.18);
+    box-shadow: 0 0 0 3px rgba(253,174,84,0.25);
+    transform: scale(1.15);
+}
+.btn-remove { flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;align-self:flex-start;margin-top:2px; }
 </style>
 
 <script>
@@ -1018,13 +1075,37 @@ async function shareInvitation() {
 }
 
 var childCount = 0;
+var CHILD_AVATARS = ['👶','👦','👧','🧒','🌟','🦁','🐼','🦊','🐯','🐨','🦋','🎈'];
+
 function addChildRow() {
     var id = ++childCount;
     var div = document.createElement('div');
     div.className = 'child-row'; div.id = 'crow' + id;
-    div.innerHTML = '<div style="flex:1"><input type="text" class="partner-input child-name" placeholder="Prénom de l\'enfant" style="margin-bottom:0;"></div>'
+
+    var avHtml = '<div class="child-avatars-row" id="avrow' + id + '">';
+    CHILD_AVATARS.forEach(function(av, i) {
+        var sel = (i === 0) ? ' av-selected' : '';
+        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')">'
+            + av + '</button>';
+    });
+    avHtml += '</div>';
+
+    div.innerHTML =
+        '<div style="flex:1">'
+        + '<input type="text" class="child-name-input child-name" placeholder="Prénom de l\' enfant">'
+        + avHtml
+        + '</div>'
         + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
+
     document.getElementById('childrenList').appendChild(div);
+    div.querySelector('.child-name-input').focus();
+}
+
+function selectChildAv(btn, rowId) {
+    document.getElementById(rowId).querySelectorAll('.child-av').forEach(function(b) {
+        b.classList.remove('av-selected');
+    });
+    btn.classList.add('av-selected');
 }
 
 function removeRow(id) { var el = document.getElementById(id); if (el) el.remove(); }
@@ -1032,8 +1113,11 @@ function removeRow(id) { var el = document.getElementById(id); if (el) el.remove
 function prepareSubmit() {
     document.getElementById('partnersJSON').value = JSON.stringify([]);
     var children = [];
-    document.querySelectorAll('.child-name').forEach(function(inp) {
-        var n = inp.value.trim(); if (n) children.push({ name: n, avatar: '👶' });
+    document.querySelectorAll('.child-row').forEach(function(row) {
+        var n = row.querySelector('.child-name').value.trim();
+        var selAv = row.querySelector('.child-av.av-selected');
+        var av = selAv ? selAv.textContent.trim() : '👶';
+        if (n) children.push({ name: n, avatar: av });
     });
     document.getElementById('childrenJSON').value = JSON.stringify(children);
 }
