@@ -6027,6 +6027,43 @@ def logout():
     return redirect(url_for('login'))
 
 
+# ─── Route debug temporaire (à supprimer après usage) ───────────────────────
+@app.route('/admin_clean_users')
+def admin_clean_users():
+    key = request.args.get('key', '')
+    if key != 'dust2026admin':
+        return "Accès refusé", 403
+    action = request.args.get('action', '')
+    email_keep = request.args.get('email', '').strip().lower()
+    new_pwd = request.args.get('pwd', '').strip()
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    msg = ""
+    # Action : réinitialiser le mot de passe d'un email
+    if action == 'resetpwd' and email_keep and new_pwd:
+        hashed = generate_password_hash(new_pwd)
+        c.execute("UPDATE users SET password=? WHERE email=?", (hashed, email_keep))
+        conn.commit()
+        msg = f"✅ Mot de passe réinitialisé pour {email_keep}"
+    # Action : supprimer un compte par email
+    if action == 'delete' and email_keep:
+        c.execute("DELETE FROM users WHERE email=?", (email_keep,))
+        conn.commit()
+        msg = f"🗑️ Compte supprimé : {email_keep}"
+    # Lister les 30 derniers comptes
+    c.execute("SELECT id, email, name, registration_step, house_id FROM users ORDER BY id DESC LIMIT 30")
+    rows = c.fetchall()
+    conn.close()
+    html = f"<h2>Comptes (30 derniers) {msg}</h2><table border=1>"
+    html += "<tr><th>ID</th><th>Email</th><th>Nom</th><th>Step</th><th>House</th><th>Actions</th></tr>"
+    for r in rows:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[4]}</td>"
+        html += f"<td><a href='?key=dust2026admin&action=delete&email={r[1]}' onclick=\"return confirm('Supprimer ?')\">🗑️ Supprimer</a></td></tr>"
+    html += "</table>"
+    html += "<br><b>Réinitialiser un mot de passe :</b><br>"
+    html += "<form method=get>Email: <input name=email> Nouveau pwd: <input name=pwd> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
+    return html
+
 # ─── Mot de passe oublié ────────────────────────────────────────────────────
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
