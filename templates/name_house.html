@@ -43,6 +43,8 @@
             font-weight: 800;
             color: #153036;
             margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            letter-spacing: -0.3px;
         }
         
         .page-icon {
@@ -185,6 +187,33 @@
             transform: translateY(0);
         }
 
+        .suggestions-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(253,174,84,0.3);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #153036;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FDAE54' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 38px;
+        }
+
+        .suggestions-select:focus {
+            outline: none;
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.2);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
         .helper-text {
             font-size: 12px;
             color: #597176;
@@ -277,15 +306,32 @@
         </div>
 
         <div class="examples">
-            <div class="examples-title">💡 Suggestions :</div>
-            <div class="example-tags">
-                <span class="example-tag" onclick="setName('La Villa des Champions')">La Villa des Champions</span>
-                <span class="example-tag" onclick="setName('Chez Nous')">Chez Nous</span>
-                <span class="example-tag" onclick="setName('Le Nid Douillet')">Le Nid Douillet</span>
-                <span class="example-tag" onclick="setName('La Casa')">La Casa</span>
-                <span class="example-tag" onclick="setName('Sweet Home')">Sweet Home</span>
-                <span class="example-tag" onclick="setName('Le QG')">Le QG</span>
-            </div>
+            <div class="examples-title">💡 Choisir une suggestion :</div>
+            <select class="suggestions-select" id="suggestions" onchange="pickSuggestion(this)">
+                <option value="">— Sélectionner un nom —</option>
+                <optgroup label="🏡 Cosy">
+                    <option value="Chez Nous">Chez Nous</option>
+                    <option value="Notre Cocon">Notre Cocon</option>
+                    <option value="Le Nid Douillet">Le Nid Douillet</option>
+                    <option value="Notre Havre de Paix">Notre Havre de Paix</option>
+                    <option value="Le Refuge">Le Refuge</option>
+                </optgroup>
+                <optgroup label="✨ Joyeux">
+                    <option value="Maison de la Joie">Maison de la Joie</option>
+                    <option value="La Maison Bonheur">La Maison Bonheur</option>
+                    <option value="Notre Paradis">Notre Paradis</option>
+                    <option value="La Belle Vie">La Belle Vie</option>
+                    <option value="Le Coin Sympa">Le Coin Sympa</option>
+                </optgroup>
+                <optgroup label="💪 Fun">
+                    <option value="La Villa des Champions">La Villa des Champions</option>
+                    <option value="Le QG">Le QG</option>
+                    <option value="La Casa">La Casa</option>
+                    <option value="Sweet Home">Sweet Home</option>
+                    <option value="La Base">La Base</option>
+                    <option value="Le Château">Le Château</option>
+                </optgroup>
+            </select>
         </div>
 
         <button type="submit" class="submit-btn">
@@ -302,6 +348,16 @@
     function setName(name) {
         document.getElementById('house_name').value = name;
         document.getElementById('house_name').focus();
+    }
+
+    function pickSuggestion(select) {
+        const val = select.value;
+        if (val) {
+            document.getElementById('house_name').value = val;
+            document.getElementById('house_name').focus();
+            // Reset le select visuellement
+            setTimeout(() => { select.value = ''; }, 600);
+        }
     }
 
     // Auto-focus sur le champ
