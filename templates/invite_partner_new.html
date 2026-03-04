@@ -1024,12 +1024,11 @@ body {
     flex-wrap: wrap;
 }
 .child-av {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     border: 2.5px solid rgba(166,211,220,0.4);
-    background: rgba(255,255,255,0.85);
-    font-size: 20px;
+    background: rgba(255,255,255,0.9);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1038,12 +1037,19 @@ body {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     padding: 0;
-    line-height: 1;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.child-av img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block;
+    pointer-events: none;
 }
 .child-av.av-selected {
     border-color: #FDAE54;
-    background: rgba(253,174,84,0.18);
-    box-shadow: 0 0 0 3px rgba(253,174,84,0.25);
+    box-shadow: 0 0 0 3px rgba(253,174,84,0.35);
     transform: scale(1.15);
 }
 .btn-remove { flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;align-self:flex-start;margin-top:2px; }
@@ -1075,7 +1081,24 @@ async function shareInvitation() {
 }
 
 var childCount = 0;
-var CHILD_AVATARS = ['👶','👦','👧','🧒','🌟','🦁','🐼','🦊','🐯','🐨','🦋','🎈'];
+var CHILD_AVATARS = [
+    {seed:'Lola',  bg:'b6e3f4'},
+    {seed:'Lucas', bg:'c0aede'},
+    {seed:'Emma',  bg:'ffd5dc'},
+    {seed:'Nathan',bg:'d1d4f9'},
+    {seed:'Lea',   bg:'ffdfbf'},
+    {seed:'Hugo',  bg:'b6e3f4'},
+    {seed:'Chloe', bg:'c0aede'},
+    {seed:'Tom',   bg:'ffd5dc'},
+    {seed:'Zoe',   bg:'d1d4f9'},
+    {seed:'Louis', bg:'ffdfbf'},
+    {seed:'Jade',  bg:'b6e3f4'},
+    {seed:'Theo',  bg:'c0aede'}
+];
+
+function dbUrl(item) {
+    return 'https://api.dicebear.com/8.x/fun-emoji/svg?seed=' + item.seed + '&backgroundColor=' + item.bg;
+}
 
 function addChildRow() {
     var id = ++childCount;
@@ -1085,14 +1108,15 @@ function addChildRow() {
     var avHtml = '<div class="child-avatars-row" id="avrow' + id + '">';
     CHILD_AVATARS.forEach(function(av, i) {
         var sel = (i === 0) ? ' av-selected' : '';
-        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')">'
-            + av + '</button>';
+        var url = dbUrl(av);
+        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')" data-avatar="' + url + '">'
+            + '<img src="' + url + '" alt="' + av.seed + '" loading="lazy"></button>';
     });
     avHtml += '</div>';
 
     div.innerHTML =
         '<div style="flex:1">'
-        + '<input type="text" class="child-name-input child-name" placeholder="Prénom de l\' enfant">'
+        + '<input type="text" class="child-name-input child-name" placeholder="Pr\u00e9nom de l\'enfant">'
         + avHtml
         + '</div>'
         + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
@@ -1116,7 +1140,7 @@ function prepareSubmit() {
     document.querySelectorAll('.child-row').forEach(function(row) {
         var n = row.querySelector('.child-name').value.trim();
         var selAv = row.querySelector('.child-av.av-selected');
-        var av = selAv ? selAv.textContent.trim() : '👶';
+        var av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
         if (n) children.push({ name: n, avatar: av });
     });
     document.getElementById('childrenJSON').value = JSON.stringify(children);
