@@ -809,30 +809,31 @@ body {
 }
 
 /* Menu déroulant suggestions nom de maison */
-.suggestions-select-house {
-    width: 100%;
-    padding: 12px 40px 12px 16px;
-    border: 2px solid rgba(166,211,220,0.4);
-    border-radius: 14px;
-    font-size: 14px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    background: rgba(255,255,255,0.9);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23597176' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    color: #153036;
-    cursor: pointer;
+.name-chips-house {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
     margin-top: 10px;
-    appearance: none;
-    -webkit-appearance: none;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
 }
-.suggestions-select-house:focus {
-    outline: none;
+.name-chip-house {
+    padding: 9px 16px;
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.85);
+    color: #153036;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.name-chip-house:active, .name-chip-house:hover {
+    background: #FDAE54;
     border-color: #FDAE54;
-    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
+    color: #fff;
+    transform: scale(0.96);
 }
 .house-name-input-styled {
     width: 100%;
@@ -888,34 +889,14 @@ body {
                 <label style="display:block;font-size:13px;font-weight:700;color:#153036;margin-bottom:8px;font-family:'Montserrat',sans-serif;">Comment s'appelle votre chez-vous ?</label>
                 <input type="text" id="house_name_input" name="house_name"
                        class="house-name-input-styled"
-                       placeholder="Ex : Chez nous, Notre Cocon, Villa Soleil…"
+                       placeholder="Ex : Notre Cocon, Sweet Home…"
                        value="{{ house_name or '' }}"
                        onfocus="this.style.borderColor='#FDAE54'" onblur="this.style.borderColor='rgba(166,211,220,0.4)'">
-                <select class="suggestions-select-house" onchange="pickHouseNameInvite(this)">
-                    <option value="">— Choisir une suggestion —</option>
-                    <optgroup label="🏡 Cosy">
-                        <option value="Chez Nous">Chez Nous</option>
-                        <option value="Notre Cocon">Notre Cocon</option>
-                        <option value="Le Nid Douillet">Le Nid Douillet</option>
-                        <option value="Notre Havre de Paix">Notre Havre de Paix</option>
-                        <option value="Le Refuge">Le Refuge</option>
-                    </optgroup>
-                    <optgroup label="✨ Joyeux">
-                        <option value="Maison de la Joie">Maison de la Joie</option>
-                        <option value="La Maison Bonheur">La Maison Bonheur</option>
-                        <option value="Notre Paradis">Notre Paradis</option>
-                        <option value="La Belle Vie">La Belle Vie</option>
-                        <option value="Le Coin Sympa">Le Coin Sympa</option>
-                    </optgroup>
-                    <optgroup label="💪 Fun">
-                        <option value="La Villa des Champions">La Villa des Champions</option>
-                        <option value="Le QG">Le QG</option>
-                        <option value="La Casa">La Casa</option>
-                        <option value="Sweet Home">Sweet Home</option>
-                        <option value="La Base">La Base</option>
-                        <option value="Le Château">Le Château</option>
-                    </optgroup>
-                </select>
+                <div class="name-chips-house">
+                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Notre Cocon</button>
+                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Le QG</button>
+                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Sweet Home</button>
+                </div>
             </div>
         </div>
 
@@ -1034,15 +1015,6 @@ async function shareInvitation() {
     var enc = encodeURIComponent(inviteMessage);
     var ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
     window.location.href = ios ? 'sms:&body=' + enc : 'sms:?body=' + enc;
-}
-
-function pickHouseNameInvite(select) {
-    var val = select.value;
-    if (val) {
-        var inp = document.getElementById('house_name_input');
-        if (inp) { inp.value = val; inp.focus(); }
-        setTimeout(function() { select.value = ''; }, 600);
-    }
 }
 
 var childCount = 0;
