@@ -940,9 +940,8 @@ body {
 </style>
 
 <script>
-var houseCode = "{{ house_code or '' }}";
 var joinUrl   = "{{ join_url or '' }}";
-var inviteMessage = "Rejoins-moi sur Dust !\n\nJe t'invite a partager les taches de facon fun !\n\nClique ici : " + joinUrl + "\n\nCode : " + houseCode;
+var inviteMessage = "Rejoins-moi sur Dust ! 🏠\n\nJe t'invite à partager les tâches de façon fun !\n\nClique ici pour rejoindre ma maison :\n" + joinUrl;
 
 function selectHouseType(type) {
     ['family','couple','coloc'].forEach(function(t) {
