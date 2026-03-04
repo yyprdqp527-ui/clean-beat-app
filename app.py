@@ -3777,11 +3777,37 @@ def signup_email():
         # Vérifier si email existe déjà
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT email FROM users WHERE email=?", (email,))
-        if c.fetchone():
-            flash("Cet email est déjà utilisé. Tu peux te connecter.", "danger")
-            conn.close()
-            return render_template('signup_email.html', invite_code=invite_code)
+        c.execute("SELECT email, registration_step, password FROM users WHERE email=?", (email,))
+        existing = c.fetchone()
+
+        if existing:
+            existing_step = existing[1] or ''
+            existing_pw = existing[2] or ''
+            # Si le compte existe mais l'inscription est incomplète (registration_step='email_signup'),
+            # on autorise à reprendre / réinitialiser le compte avec les nouvelles infos
+            if existing_step == 'email_signup':
+                # Mettre à jour le compte incomplet avec les nouvelles données
+                hashed_password = generate_password_hash(password)
+                display_name = f"{firstname} {name}"
+                c.execute("""
+                    UPDATE users SET firstname=?, name=?, password=?, phone=?, avatar='👤'
+                    WHERE email=?
+                """, (firstname, display_name, hashed_password, phone, email))
+                conn.commit()
+                conn.close()
+
+                session.permanent = True
+                session['user'] = email
+                session['user_name'] = display_name
+                session['registration_step'] = 'email_signup'
+                session.pop('invite_code', None)
+                flash(f"Bienvenue {firstname} ! 🎉", "success")
+                return redirect(url_for('invite_partner'))
+            else:
+                # Compte complet → rediriger vers login
+                flash("Cet email est déjà utilisé. Connecte-toi avec ton mot de passe.", "danger")
+                conn.close()
+                return redirect(url_for('login'))
 
         try:
             hashed_password = generate_password_hash(password)
