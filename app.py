@@ -11,6 +11,7 @@ if _os.environ.get('RENDER'):
 
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
+import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import date, datetime, timedelta
@@ -23,6 +24,137 @@ import uuid
 import json
 import requests
 import time
+
+# ─── COUCHE DE COMPATIBILITÉ DB (SQLite local / PostgreSQL Render) ──────────
+# Détecte automatiquement l'env Render via DATABASE_URL
+_PG_URL = os.environ.get('DATABASE_URL', '')
+if _PG_URL.startswith('postgres://'):
+    _PG_URL = _PG_URL.replace('postgres://', 'postgresql://', 1)
+_USE_PG = bool(_PG_URL)
+
+if _USE_PG:
+    try:
+        import psycopg2
+    except ImportError:
+        _USE_PG = False
+
+_RE_INSERT = re.compile(r'^\s*INSERT\s+', re.IGNORECASE)
+_RE_ALTER_ADD = re.compile(
+    r'(ALTER\s+TABLE\s+\S+\s+ADD\s+COLUMN\s+)(?!IF\s+NOT\s+EXISTS\s)',
+    re.IGNORECASE
+)
+
+
+class _CompatCursor:
+    """
+    Curseur compatible sqlite3/psycopg2 :
+    - ? → %s pour PostgreSQL
+    - INTEGER PRIMARY KEY AUTOINCREMENT → SERIAL PRIMARY KEY
+    - PRAGMA ignoré silencieusement
+    - lastrowid via RETURNING id
+    - ADD COLUMN → ADD COLUMN IF NOT EXISTS (migration sans erreur)
+    """
+    def __init__(self, cur, is_pg=False):
+        self._cur = cur
+        self._is_pg = is_pg
+        self.lastrowid = None
+        self.rowcount = 0
+        self._pragma_mode = False
+
+    def _adapt(self, sql):
+        if not self._is_pg:
+            return sql
+        sql = sql.replace('?', '%s')
+        sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+        sql = _RE_ALTER_ADD.sub(r'\1IF NOT EXISTS ', sql)
+        return sql
+
+    def execute(self, sql, params=()):
+        self._pragma_mode = False
+        if self._is_pg and sql.strip().upper().startswith('PRAGMA'):
+            self._pragma_mode = True
+            self.rowcount = 0
+            return
+        sql = self._adapt(sql)
+        if self._is_pg and _RE_INSERT.match(sql) and 'RETURNING' not in sql.upper():
+            sql = sql + ' RETURNING id'
+            self._cur.execute(sql, params if params else ())
+            row = self._cur.fetchone()
+            self.lastrowid = row[0] if row else None
+            self.rowcount = self._cur.rowcount
+            return
+        self._cur.execute(sql, params if params else ())
+        if not self._is_pg:
+            self.lastrowid = getattr(self._cur, 'lastrowid', None)
+        self.rowcount = self._cur.rowcount
+
+    def executemany(self, sql, params_list):
+        sql = self._adapt(sql)
+        self._cur.executemany(sql, params_list)
+        self.rowcount = self._cur.rowcount
+
+    def fetchone(self):
+        if self._pragma_mode:
+            return None
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        if self._pragma_mode:
+            return []
+        return self._cur.fetchall()
+
+    @property
+    def description(self):
+        return self._cur.description
+
+    def __iter__(self):
+        return iter(self._cur)
+
+
+class _CompatConn:
+    """Connexion compatible sqlite3/psycopg2."""
+    def __init__(self, conn, is_pg=False):
+        self._conn = conn
+        self._is_pg = is_pg
+
+    def cursor(self):
+        return _CompatCursor(self._conn.cursor(), self._is_pg)
+
+    def execute(self, sql, params=()):
+        """conn.execute() direct style sqlite3."""
+        cur = self.cursor()
+        cur.execute(sql, params)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            try:
+                self._conn.rollback()
+            except Exception:
+                pass
+        else:
+            self._conn.commit()
+        self._conn.close()
+        return False
+
+
+# Alias erreurs DB (sqlite3 vs psycopg2)
+_DBIntegrityError = (sqlite3.IntegrityError,)
+if _USE_PG:
+    _DBIntegrityError = _DBIntegrityError + (psycopg2.IntegrityError,)
+# ────────────────────────────────────────────────────────────────────────────
 
 # 🚀 PERFORMANCE: Prints de debug désactivés par défaut
 # Pour réactiver: lancer avec CLEANBEAT_DEBUG=1 python3 app.py
@@ -58,7 +190,7 @@ def register_delete_custom_task_route(app):
             flash("Connecte-toi pour supprimer une mission.", "warning")
             return redirect(url_for('login'))
 
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         # Vérifier que la tâche existe et que l'utilisateur est le créateur
         c.execute("SELECT task_image, created_by FROM custom_tasks WHERE id=?", (task_id,))
@@ -189,7 +321,7 @@ def inject_house_name():
     house_code = None
     try:
         if 'user' in session:
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             # 🚀 OPTIMISATION: 1 seule requête avec JOIN au lieu de 2 requêtes séparées
             c.execute("""
@@ -321,7 +453,7 @@ def sats():
     from datetime import date, datetime, timedelta
     import sqlite3
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -757,7 +889,7 @@ def stats_graphique():
     from datetime import date, datetime, timedelta
     import sqlite3
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -1037,17 +1169,20 @@ MAX_PLAYERS = None
 
 def get_db_connection(timeout=30.0):
     """
-    Crée une connexion SQLite avec timeout et configuration optimisée
-    pour éviter les blocages en production
+    Connexion DB unifiée : SQLite en local, PostgreSQL sur Render.
+    Retourne un _CompatConn compatible avec l'API sqlite3.
     """
-    conn = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
-    # Activer le mode WAL pour permettre lectures/écritures concurrentes
-    conn.execute('PRAGMA journal_mode=WAL')
-    # Optimisations de performance
-    conn.execute('PRAGMA synchronous=NORMAL')
-    conn.execute('PRAGMA cache_size=10000')
-    conn.execute('PRAGMA temp_store=MEMORY')
-    return conn
+    if _USE_PG:
+        conn = psycopg2.connect(_PG_URL)
+        return _CompatConn(conn, is_pg=True)
+    else:
+        raw = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
+        # Optimisations SQLite
+        raw.execute('PRAGMA journal_mode=WAL')
+        raw.execute('PRAGMA synchronous=NORMAL')
+        raw.execute('PRAGMA cache_size=10000')
+        raw.execute('PRAGMA temp_store=MEMORY')
+        return _CompatConn(raw, is_pg=False)
 
 # ===============================
 # FONCTIONS UTILITAIRES
@@ -1870,7 +2005,7 @@ def normalize_category(cat):
 # ===============================
 
 def get_completed_tasks(user_email, category):
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT task_name FROM completed_tasks WHERE user_email=? AND category=?",
               (user_email, category))
@@ -1907,7 +2042,7 @@ def assign_player_color(email, house_id=None):
     Si house_id est fourni, s'assure que la couleur est unique dans la maison.
     Sinon, assigne une couleur aléatoire.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -1944,7 +2079,7 @@ def get_player_color(email):
     Récupère la couleur d'un joueur. Si aucune couleur n'est définie,
     en assigne une automatiquement.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -1971,7 +2106,7 @@ def get_house_players_with_colors(house_id):
     Récupère tous les joueurs d'une maison avec leurs couleurs.
     Retourne une liste de dictionnaires avec les infos des joueurs.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -2041,7 +2176,7 @@ def get_player_colors_map(player_emails):
 # BASE DE DONNÉES
 # ===============================
 def init_db():
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
 CREATE TABLE IF NOT EXISTS users (
@@ -2444,7 +2579,7 @@ def add_default_rewards_if_empty():
 add_default_rewards_if_empty()
 
 def get_user_points(email):
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT points FROM users WHERE email=?", (email,))
     result = c.fetchone()
@@ -2539,7 +2674,7 @@ def create_system_message(house_id, content, message_type='system', related_task
     sender_email: email du joueur pour les messages baby_tracking
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Pour les messages baby_tracking, utiliser l'email du joueur
@@ -2626,7 +2761,7 @@ def get_unread_message_count(user_email, house_id):
     Exclut les messages privés adressés à d'autres joueurs.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT COUNT(*) FROM messages m
@@ -2656,7 +2791,7 @@ def get_unread_messages_by_sender(user_email, house_id):
     Utilisé pour afficher un badge sur l'avatar des joueurs qui vous ont envoyé des messages non lus.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Messages REÇUS non lus (ce joueur vous a écrit et vous ne les avez pas encore lus)
@@ -2689,7 +2824,7 @@ def get_unread_messages_sent_to(user_email, house_id):
     """
     _dbg(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Requête simplifiée - messages envoyés par l'utilisateur, non lus par destinataires
@@ -2728,7 +2863,7 @@ def mark_message_as_read(message_id, user_email):
     Marque un message comme lu pour un utilisateur.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             INSERT OR IGNORE INTO message_reads (message_id, user_email)
@@ -2749,7 +2884,7 @@ def save_push_subscription(user_email, subscription_data):
     subscription_data doit contenir: endpoint, keys.p256dh, keys.auth
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         endpoint = subscription_data.get('endpoint', '')
@@ -2781,7 +2916,7 @@ def get_user_push_subscriptions(user_email):
     Récupère toutes les subscriptions push actives d'un utilisateur.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT endpoint, p256dh_key, auth_key
@@ -2812,7 +2947,7 @@ def get_house_push_subscriptions(house_id, exclude_email=None):
     exclude_email: optionnel, pour exclure l'expéditeur du message
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         if exclude_email:
@@ -2909,7 +3044,7 @@ def deactivate_push_subscription(endpoint):
     Désactive une subscription push (quand elle est invalide/expirée).
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             UPDATE push_subscriptions
@@ -3034,7 +3169,7 @@ def send_house_encouragement(house_id, player_name=None):
     Envoie un message d'encouragement de la maison à tous les joueurs.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le nom de la maison
@@ -3070,7 +3205,7 @@ def send_house_sermon(house_id, player_name=None, sermon_type='lazy'):
     sermon_type: 'lazy' (inactivité générale) ou 'funny' (ciblé sur un joueur)
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le nom de la maison
@@ -3107,7 +3242,7 @@ def check_house_activity_and_send_message(house_id):
     """
     try:
         from datetime import datetime, timedelta
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier l'activité récente (dernières 72h)
@@ -3190,7 +3325,7 @@ def create_reminder(house_id, reminder_type, scheduled_for=None):
             scheduled_for = datetime.fromisoformat(scheduled_for)
         
         # Générer le message
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le nom de la maison
@@ -3222,7 +3357,7 @@ def get_pending_reminders():
     """
     from datetime import datetime
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     now = datetime.now().isoformat()
@@ -3252,7 +3387,7 @@ def send_reminder(reminder_id):
     Envoie un rappel via le système de messagerie.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le rappel
@@ -3312,7 +3447,7 @@ def get_user_reminder_settings(user_email):
     """
     Récupère les préférences de rappel d'un utilisateur.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     c.execute("""
@@ -3348,7 +3483,7 @@ def update_user_reminder_settings(user_email, enabled=None, frequency=None, quie
     try:
         from datetime import datetime
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier si l'utilisateur a déjà des settings
@@ -3425,7 +3560,7 @@ def get_house_players_points(house_id, existing_conn=None):
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     _own_conn = existing_conn is None
-    conn = existing_conn if existing_conn else sqlite3.connect(DB)
+    conn = existing_conn if existing_conn else get_db_connection()
     c = conn.cursor()
     today = date.today().isoformat()
     
@@ -3640,7 +3775,7 @@ def signup_email():
             return render_template('signup_email.html', invite_code=invite_code)
 
         # Vérifier si email existe déjà
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT email FROM users WHERE email=?", (email,))
         if c.fetchone():
@@ -3689,7 +3824,7 @@ def signup_email():
             # Joueur principal → invite_partner (nom de la maison + invitations)
             return redirect(url_for('invite_partner'))
 
-        except sqlite3.IntegrityError:
+        except _DBIntegrityError:
             flash("Erreur lors de la création du compte. Réessaie.", "danger")
             conn.close()
             return render_template('signup_email.html', invite_code=invite_code)
@@ -3731,7 +3866,7 @@ def onboarding_invite():
         return redirect(url_for('signup_email'))
     
     # Récupérer ou créer le code de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -3820,7 +3955,7 @@ def quick_login():
         flash("🤔 Email et mot de passe requis !", "danger")
         return render_template('quick_login.html')
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT name, password FROM users WHERE email=?", (email,))
     user = c.fetchone()
@@ -3848,7 +3983,7 @@ def manage_players():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur actuel
@@ -3909,7 +4044,7 @@ def edit_player(email):
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur actuel et le joueur à modifier sont dans la même maison
@@ -3953,7 +4088,7 @@ def update_house_name():
         if len(new_name) > 50:
             return jsonify({'success': False, 'error': 'Le nom est trop long (max 50 caractères)'})
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer la maison de l'utilisateur
@@ -3999,7 +4134,7 @@ def update_player():
         if not email:
             return jsonify({'success': False, 'error': 'Email requis'})
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier que l'utilisateur actuel et le joueur à modifier sont dans la même maison
@@ -4156,7 +4291,7 @@ def delete_player():
         if email == session['user']:
             return jsonify({'success': False, 'error': 'Vous ne pouvez pas vous supprimer vous-même'})
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier que l'utilisateur actuel et le joueur à supprimer sont dans la même maison
@@ -4254,7 +4389,7 @@ def add_players():
     current_user_daily_points = 0
     house_health = 100
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -4327,7 +4462,7 @@ def add_child():
         return jsonify({'success': False, 'error': 'Non connecté'})
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer la maison du parent
@@ -4453,7 +4588,7 @@ def comments():
         flash("Connecte-toi pour accéder à la messagerie", "warning")
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -4603,7 +4738,7 @@ def comments():
                     if 'child_' in sender_email:
                         # Pour les enfants, essayer de récupérer le vrai nom
                         try:
-                            temp_conn = sqlite3.connect(DB)
+                            temp_conn = get_db_connection()
                             temp_c = temp_conn.cursor()
                             temp_c.execute("SELECT name FROM users WHERE email=?", (sender_email,))
                             temp_row = temp_c.fetchone()
@@ -4810,7 +4945,7 @@ def mark_all_messages_read():
     if 'user' not in session:
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -4887,7 +5022,7 @@ def mark_single_message_read_for_child():
     if not message_id or not child_email:
         return jsonify({'success': False, 'error': 'Paramètres manquants'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur et l'enfant sont dans la même maison
@@ -4963,7 +5098,7 @@ def mark_single_message_read():
     if not message_id:
         return jsonify({'success': False, 'error': 'ID de message manquant'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur a une maison
@@ -5039,7 +5174,7 @@ def mark_messages_read_for_child():
     if not child_email:
         return jsonify({'success': False, 'error': 'Email enfant manquant'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur et l'enfant sont dans la même maison
@@ -5090,7 +5225,7 @@ def rewards():
         flash("Connecte-toi pour accéder aux récompenses", "warning")
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5327,7 +5462,7 @@ def update_rewards():
         if not isinstance(reward, str) or not reward.strip():
             return jsonify({'success': False, 'message': 'Toutes les récompenses doivent être remplies'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5371,7 +5506,7 @@ def open_reward_box():
     if not box_number or not isinstance(box_number, int) or box_number < 1 or box_number > 40:
         return jsonify({'success': False, 'message': 'Numéro de case invalide'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5653,7 +5788,7 @@ def open_reward_box():
     # Récupérer le nom de l'utilisateur
     user_name = session.get('user_name', '')
     if not user_name:
-        conn2 = sqlite3.connect(DB)
+        conn2 = get_db_connection()
         c2 = conn2.cursor()
         c2.execute("SELECT name FROM users WHERE email=?", (session['user'],))
         name_row = c2.fetchone()
@@ -5674,7 +5809,7 @@ def mes_recompenses():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5766,7 +5901,7 @@ def use_reward(reward_id):
     
     _dbg(f"[DEBUG use_reward] reward_id={reward_id}, user={session['user']}")
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que la récompense appartient à l'utilisateur
@@ -5809,7 +5944,7 @@ def buy_reward(reward_id):
         flash("Connecte-toi pour acheter une récompense", "warning")
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
 
     # Vérifier les points et si l'utilisateur a déjà acheté la récompense aujourd'hui
@@ -5849,7 +5984,7 @@ def gifts():
         flash("🔐 Connecte-toi pour voir tes cadeaux !", "warning")
         return redirect(url_for('signup_email'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer house_id de l'utilisateur
@@ -5923,7 +6058,7 @@ def reveal_gift(gift_id):
         flash("🚫 Les cadeaux ne peuvent être ouverts que le dimanche à partir de 6h du matin ! ⏰", "warning")
         return redirect(url_for('gifts'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer house_id
@@ -5981,7 +6116,7 @@ def login():
         email = request.form['email'].strip().lower()
         password = request.form['password'].strip()
         next_code = request.form.get('next_code', '').strip().upper() or request.args.get('next_code', '').strip().upper()
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))
         user = c.fetchone()
@@ -6036,7 +6171,7 @@ def admin_clean_users():
     action = request.args.get('action', '')
     email_keep = request.args.get('email', '').strip().lower()
     new_pwd = request.args.get('pwd', '').strip()
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     msg = ""
     # Action : garder uniquement un compte, supprimer tous les autres RÉELS (pas les enfants)
@@ -6077,7 +6212,7 @@ def forgot_password():
     reset_link = None
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT email FROM users WHERE email=?", (email,))
         user = c.fetchone()
@@ -6102,7 +6237,7 @@ def forgot_password():
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT email, expires_at, used FROM password_reset_tokens WHERE token=?", (token,))
     row = c.fetchone()
@@ -6151,7 +6286,7 @@ def profile():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer les infos utilisateur
@@ -6203,7 +6338,7 @@ def update_profile():
     _dbg(f"🔍 UPDATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
     sys.stdout.flush()
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # 📛 Récupérer l'ancien nom AVANT la mise à jour (pour propager le changement)
@@ -6315,7 +6450,7 @@ def create_profile():
         return redirect(url_for('signup_email'))
     
     # Vérifier si l'utilisateur a déjà un profil (mode modification)
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, avatar_url, avatar_style FROM users WHERE email=?", (session['user'],))
     user = c.fetchone()
@@ -6396,7 +6531,7 @@ def create_profile_post():
             flash("Erreur lors de la sauvegarde de la photo", "warning")
     
     # Mettre à jour le profil utilisateur
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Préparer les valeurs de mise à jour
@@ -6485,7 +6620,7 @@ def invite_welcome(code):
     house_code = code.strip().upper()
     
     # Vérifier que le code existe
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute('SELECT id, name, house_type FROM houses WHERE code = ?', (house_code,))
     house = c.fetchone()
@@ -6524,7 +6659,7 @@ def join_house():
         password = request.form.get('password', '').strip()
         is_login = request.form.get('is_login') == 'true'  # Nouveau champ pour distinguer connexion/inscription
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier que le code de maison existe
@@ -6713,7 +6848,7 @@ def invite_partner():
     house_type = 'family'  # Valeur par défaut
     
     # Récupérer ou créer une maison pour l'utilisateur
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -6763,7 +6898,7 @@ def invite_partner():
 
         # Mettre à jour la maison avec le nom et le type choisis
         if house_id and form_house_name:
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute(
                 "UPDATE houses SET house_name=?, name=?, house_type=? WHERE id=?",
@@ -6783,7 +6918,7 @@ def invite_partner():
         # Récupérer le nom de l'utilisateur actuel
         user_name = session.get('user', 'Un ami')
         if 'user' in session:
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
             name_row = c.fetchone()
@@ -6812,7 +6947,7 @@ def invite_partner():
         if children_data and house_id:
             try:
                 children = json.loads(children_data)
-                conn = sqlite3.connect(DB)
+                conn = get_db_connection()
                 c = conn.cursor()
                 for child in children:
                     try:
@@ -6875,7 +7010,7 @@ def partager_invitation():
         return redirect(url_for('login'))
     
     # Récupérer le code et le nom de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -6916,7 +7051,7 @@ def update_house_type():
     if house_type not in ['family', 'couple', 'coloc']:
         house_type = 'family'
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -6946,7 +7081,7 @@ def fullhouse():
     if 'user' not in session:
         flash("Connecte-toi pour accéder à cette page", "warning")
         return redirect(url_for('login'))
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     house_id = c.fetchone()[0]
@@ -6988,7 +7123,7 @@ def menu():
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
     if 'user' in session:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         try:
@@ -7309,7 +7444,7 @@ def personnaliser_maison():
 
     # Récupérer house_id depuis la DB (même pattern que menu())
     house_id = None
-    conn_h = sqlite3.connect(DB)
+    conn_h = get_db_connection()
     ch = conn_h.cursor()
     ch.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row_h = ch.fetchone()
@@ -7338,7 +7473,7 @@ def personnaliser_maison():
     ]
 
     if request.method == 'POST':
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         try:
             for room in ALL_ROOMS:
@@ -7364,7 +7499,7 @@ def personnaliser_maison():
         return redirect(url_for('menu'))
 
     # GET : charger les réglages actuels de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     try:
         c.execute("SELECT room_key, custom_name, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
@@ -7385,7 +7520,7 @@ def personnaliser_maison():
     # Récupérer les prénoms des membres de la maison pour l'UI
     house_members = []
     try:
-        conn_m = sqlite3.connect(DB)
+        conn_m = get_db_connection()
         cm = conn_m.cursor()
         cm.execute("SELECT name FROM users WHERE house_id=? ORDER BY id", (house_id,))
         house_members = [row[0] for row in cm.fetchall() if row[0]]
@@ -7414,7 +7549,7 @@ def force_reload_page():
 def debug_points():
     if 'user' not in session:
         return {'error': 'Non connecté', 'redirect': '/login'}, 401
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7460,7 +7595,7 @@ def categorie(cat):
     players = []
     overrides = {}
     if 'user' in session:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         # Récupérer la maison de l'utilisateur
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
@@ -7537,7 +7672,7 @@ def add_task_page(cat, task_id=None):
     category_name, category_icon = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
 
     # Récupérer la maison de l'utilisateur
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7665,7 +7800,7 @@ def update_task_points(cat, task_id):
     if new_points > 999:
         new_points = 999
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7711,7 +7846,7 @@ def update_custom_task_points(cat, task_id):
     if new_points > 999:
         new_points = 999
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7747,7 +7882,7 @@ def custom_task_page(task_id):
         flash("Connecte-toi pour accéder à cette tâche.", "warning")
         return redirect(url_for('signup_email'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la tâche personnalisée (colonnes: task_name, task_description, task_image)
@@ -8075,7 +8210,7 @@ def task_enhanced(cat, task_id):
     daily_tasks = 0
     if 'user' in session:
         total_points = get_user_points(session['user'])
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         row = c.fetchone()
@@ -8117,7 +8252,7 @@ def task_enhanced(cat, task_id):
             flash("Connecte-toi pour valider une tâche.", "warning")
             return redirect(url_for('signup_email'))
 
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le joueur qui a fait la tâche (depuis le formulaire)
@@ -8448,7 +8583,7 @@ def api_validate_task():
     _dbg(f"   - bottle_ml: '{bottle_ml}' (type: {type(bottle_ml)})")
     _dbg(f"   - observations: '{observations}' (type: {type(observations)})")
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -8642,7 +8777,7 @@ def api_validate_task():
             _dbg(f"🚀 Tentative d'envoi WebSocket pour house_id={user_house_id}, player={player_email}")
             try:
                 # Rouvrir une connexion pour récupérer les données à jour
-                conn_ws = sqlite3.connect(DB)
+                conn_ws = get_db_connection()
                 c_ws = conn_ws.cursor()
                 c_ws.execute("""
                     SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
@@ -8775,7 +8910,7 @@ def api_daily_tasks():
     if 'user' not in session:
         return {'tasks': []}, 200
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -8865,7 +9000,7 @@ def api_players_points():
     if 'user' not in session:
         return {'players': []}, 200
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -8921,7 +9056,7 @@ def api_unread_counts():
         return jsonify({'error': 'Non authentifié'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer house_id
@@ -9109,7 +9244,7 @@ def api_test_reminder():
         return {'success': False, 'error': 'Non authentifié'}, 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         row = c.fetchone()
@@ -9173,7 +9308,7 @@ def baby_tracking(cat, task_id):
         return redirect(url_for('task_enhanced', cat=cat, task_id=task_id))
     
     # Récupérer l'historique des 5 derniers enregistrements
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -9220,7 +9355,7 @@ def save_baby_tracking():
     
     _dbg(f"📝 Données reçues: task_type={task_type}, time={tracking_time}, ml={bottle_ml}")
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer house_id
@@ -9265,7 +9400,7 @@ def save_baby_tracking():
     # Envoyer le message directement dans la base de données
     try:
         from datetime import datetime
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         c.execute("""
@@ -9311,7 +9446,7 @@ def invitation_partner():
         return redirect(url_for('login'))
     
     # Récupérer le code et le nom de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -9362,7 +9497,7 @@ if SOCKETIO_AVAILABLE:
             return
         
         try:
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT house_id FROM users WHERE email=?", (user_email,))
             row = c.fetchone()
@@ -9385,7 +9520,7 @@ if SOCKETIO_AVAILABLE:
             if not user_email:
                 return
             
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT house_id FROM users WHERE email=?", (user_email,))
             row = c.fetchone()
@@ -9428,7 +9563,7 @@ if SOCKETIO_AVAILABLE:
             if not user_email:
                 return
             
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT house_id, name, avatar, avatar_url, avatar_file FROM users WHERE email=?", (user_email,))
             row = c.fetchone()
@@ -9463,7 +9598,7 @@ def test_house_encouragement():
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
         user_row = c.fetchone()
@@ -9491,7 +9626,7 @@ def test_house_sermon():
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
         user_row = c.fetchone()
@@ -9519,7 +9654,7 @@ def test_house_sermon_lazy():
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         user_row = c.fetchone()
