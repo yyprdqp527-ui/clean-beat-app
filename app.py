@@ -2851,16 +2851,18 @@ def create_system_message(house_id, content, message_type='system', related_task
         _dbg(f"Erreur création message système: {e}")
         return False
 
-def get_unread_message_count(user_email, house_id):
+def get_unread_message_count(user_email, house_id, existing_conn=None):
     """
     Retourne le nombre de messages non lus pour un utilisateur dans sa maison.
     Compte uniquement les messages qui sont réellement visibles par cet utilisateur :
     - Messages privés dont il est l'expéditeur OU le destinataire
     - Messages de la maison (sender_type = 'house'), sauf task_completed
     Exclut les messages privés adressés à d'autres joueurs.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = get_db_connection()
+        _own_conn = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT COUNT(*) FROM messages m
@@ -2876,21 +2878,24 @@ def get_unread_message_count(user_email, house_id):
             )
         """, (house_id, user_email, user_email, user_email, user_email))
         count = c.fetchone()[0]
-        conn.close()
+        if _own_conn:
+            conn.close()
         return count
     except Exception:
         return 0
 
-def get_unread_messages_by_sender(user_email, house_id):
+def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
     """
     Retourne un dictionnaire avec le nombre de messages REÇUS non lus pour chaque joueur.
     Affiche uniquement les messages que les autres joueurs VOUS ont envoyés et que vous n'avez pas encore lus.
     
     Exemple: {'james@mail.com': 3, 'marie@mail.com': 1}
     Utilisé pour afficher un badge sur l'avatar des joueurs qui vous ont envoyé des messages non lus.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = get_db_connection()
+        _own_conn = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         
         # Messages REÇUS non lus (ce joueur vous a écrit et vous ne les avez pas encore lus)
@@ -2909,21 +2914,24 @@ def get_unread_messages_by_sender(user_email, house_id):
         """, (house_id, user_email, user_email, user_email))
         received_unread = {sender: count for sender, count in c.fetchall()}
         
-        conn.close()
+        if _own_conn:
+            conn.close()
         
         return received_unread
     except Exception as e:
         _dbg(f"Erreur get_unread_messages_by_sender: {e}")
         return {}
 
-def get_unread_messages_sent_to(user_email, house_id):
+def get_unread_messages_sent_to(user_email, house_id, existing_conn=None):
     """
     Retourne un dictionnaire avec le nombre de messages ENVOYÉS par l'utilisateur courant
     qui n'ont pas encore été lus par leurs destinataires.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     _dbg(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
     try:
-        conn = get_db_connection()
+        _own_conn = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         
         # Requête simplifiée - messages envoyés par l'utilisateur, non lus par destinataires
@@ -2947,7 +2955,8 @@ def get_unread_messages_sent_to(user_email, house_id):
         _dbg(f"[DEBUG] Résultats SQL bruts: {results}")
         sent_unread = {recipient: count for recipient, count in results}
         
-        conn.close()
+        if _own_conn:
+            conn.close()
         
         _dbg(f"[DEBUG] Messages envoyés non lus: {sent_unread}")
         return sent_unread
@@ -7581,10 +7590,10 @@ def menu():
             except Exception:
                 daily_report = []
 
-            # 🔔 Messages non lus (dans la MÊME connexion, house_id déjà connu)
-            unread_messages_count = get_unread_message_count(session['user'], house_id)
-            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
-            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+            # 🔔 Messages non lus (réutilise la MÊME connexion → évite 3 connexions PG supplémentaires)
+            unread_messages_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
+            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
+            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id, existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}")
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
