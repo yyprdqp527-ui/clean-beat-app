@@ -10056,9 +10056,14 @@ def test_house_sermon_lazy():
 
 # ─── KEEP-ALIVE RENDER (évite le cold start sur le plan gratuit) ─────────────
 # Sur Render free tier, le serveur s'endort après 15 min sans requête.
-# Ce thread daemon se ping lui-même toutes les 14 min pour rester éveillé.
+# Ce thread daemon se ping lui-même toutes les 10 min pour rester éveillé.
+_keep_alive_running = False
+
 def _start_keep_alive():
     """Lance un thread de self-ping pour éviter le cold start Render."""
+    global _keep_alive_running
+    if _keep_alive_running:
+        return  # Déjà démarré, ne pas dupliquer
     import threading
     import time as _time
     try:
@@ -10068,15 +10073,17 @@ def _start_keep_alive():
         if not _render_url:
             return  # Pas sur Render, inutile
 
+        _keep_alive_running = True
+
         def _ping_loop():
-            _time.sleep(30)  # Attendre que le serveur soit bien démarré
-            print(f"🟢 Keep-alive démarré → ping toutes les 14 min sur {_render_url}/ping")
+            _time.sleep(20)  # Attendre que le serveur soit bien démarré
+            print(f"🟢 Keep-alive démarré → ping toutes les 10 min sur {_render_url}/ping")
             while True:
                 try:
                     _urlreq.urlopen(f"{_render_url}/ping", timeout=10)
                 except Exception:
                     pass  # Erreur ignorée silencieusement
-                _time.sleep(14 * 60)  # 14 minutes
+                _time.sleep(10 * 60)  # 10 minutes (avant le sleep Render à 15 min)
 
         t = threading.Thread(target=_ping_loop, daemon=True, name='keep-alive')
         t.start()
@@ -10084,6 +10091,12 @@ def _start_keep_alive():
         print(f"⚠️ Keep-alive non démarré : {e}")
 
 _start_keep_alive()
+
+# Backup : s'assure que le keep-alive tourne même si gunicorn --preload a tué le thread
+@app.before_request
+def _ensure_keep_alive():
+    if not _keep_alive_running:
+        _start_keep_alive()
 # ─────────────────────────────────────────────────────────────────────────────
 
 
