@@ -60,3 +60,4 @@ static/avatars/*.jpeg
 # Backups
 *_backup.*
 *_old.*
+*.prebeta.bak

@@ -102,8 +102,6 @@
             transition: all 0.3s ease;
             box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
             padding: 0;
-            z-index: 2001;
-            order: 2;
         }
         
         .burger-menu span {
@@ -290,6 +288,69 @@
         @keyframes pulse-badge {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.15); }
+        }
+
+        /* Pastilles d'alerte sous le burger */
+        .burger-alerts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .burger-alert-pill {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 20px;
+            padding: 3px 8px 3px 5px;
+            font-size: 10px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            border: 1.5px solid rgba(255,255,255,0.6);
+            animation: pulse-badge 2s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .burger-alert-pill:hover {
+            transform: scale(1.08);
+        }
+
+        .burger-alert-pill.baby {
+            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
+            box-shadow: 0 2px 10px rgba(236, 72, 153, 0.5);
+        }
+
+        .burger-alert-pill.mission {
+            background: linear-gradient(135deg, #FB923C 0%, #EA580C 100%);
+            box-shadow: 0 2px 10px rgba(234, 88, 12, 0.5);
+        }
+
+        .burger-alert-pill .pill-icon {
+            font-size: 11px;
+            line-height: 1;
+        }
+
+        .burger-alert-pill .pill-count {
+            font-size: 10px;
+            font-weight: 900;
+            min-width: 14px;
+            text-align: center;
+        }
+
+        /* Wrapper pour le burger + alertes */
+        .burger-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            z-index: 2001;
+            order: 2;
+            flex-shrink: 0;
         }
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
@@ -2221,11 +2282,31 @@
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <button class="burger-menu" id="burgerBtn" aria-label="Menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+                <div class="burger-wrapper">
+                    <button class="burger-menu" id="burgerBtn" aria-label="Menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    {% set show_baby = unread_baby_tracking|default(0) > 0 %}
+                    {% set show_mission = unread_task_added|default(0) > 0 %}
+                    {% if show_baby or show_mission %}
+                    <div class="burger-alerts">
+                        {% if show_baby %}
+                        <div class="burger-alert-pill baby" onclick="window.location.href='{{ url_for('comments') }}'" title="Nouveau suivi bébé">
+                            <span class="pill-icon">👶</span>
+                            <span class="pill-count">{{ unread_baby_tracking }}</span>
+                        </div>
+                        {% endif %}
+                        {% if show_mission %}
+                        <div class="burger-alert-pill mission" onclick="window.location.href='{{ url_for('comments') }}'" title="Nouvelle mission ajoutée">
+                            <span class="pill-icon">⚡</span>
+                            <span class="pill-count">{{ unread_task_added }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
                 
                 <div class="header-inner">
                         <script>
