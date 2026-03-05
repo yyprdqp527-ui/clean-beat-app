@@ -64,7 +64,7 @@ _RE_ALTER_ADD = re.compile(
     re.IGNORECASE
 )
 # ─── Traduction SQLite → PostgreSQL : fonctions de date ───────────────────────
-# strftime('%w', DATE(col,'localtime')) → EXTRACT(DOW ...)
+# strftime('%w', DATE(col)) → EXTRACT(DOW ...)
 _RE_STRFTIME_W = re.compile(
     r"CAST\s*\(\s*strftime\s*\(\s*'%w'\s*,\s*DATE\s*\(([^,)]+),\s*'localtime'\s*\)\s*\)\s+AS\s+INTEGER\s*\)",
     re.IGNORECASE
@@ -99,7 +99,7 @@ _RE_DATE_NOW = re.compile(
     r"date\s*\(\s*'now'\s*\)",
     re.IGNORECASE
 )
-# DATE(col, 'localtime') → col::date  (doit être APRÈS les patterns ci-dessus)
+# DATE(col) → col::date  (doit être APRÈS les patterns ci-dessus)
 _RE_DATE_LOCALTIME = re.compile(r"DATE\(([^,)]+),\s*'localtime'\)", re.IGNORECASE)
 # date(col) isolé (sans 'now') → col::date
 _RE_DATE_COL = re.compile(
@@ -146,7 +146,7 @@ class _CompatCursor:
         sql = _RE_DATE_NOW_LOCAL.sub('CURRENT_DATE', sql)
         # 7) date('now') → CURRENT_DATE
         sql = _RE_DATE_NOW.sub('CURRENT_DATE', sql)
-        # 8) DATE(col, 'localtime') → col::date
+        # 8) DATE(col) → col::date
         sql = _RE_DATE_LOCALTIME.sub(r'\1::date', sql)
         # 9) date(col) isolé → col::date
         sql = _RE_DATE_COL.sub(r'\1::date', sql)
@@ -695,7 +695,7 @@ def sats():
             c.execute("""
                 SELECT COALESCE(SUM(points), 0), COUNT(*) 
                 FROM completed_tasks 
-                WHERE user_email=? AND DATE(completed_at, 'localtime')=?
+                WHERE user_email=? AND DATE(completed_at)=?
             """, (email, today))
             daily = c.fetchone()
             daily_points = int(daily[0]) if daily[0] else 0
@@ -706,7 +706,7 @@ def sats():
             c.execute("""
                 SELECT COALESCE(SUM(points), 0), COUNT(*) 
                 FROM completed_tasks 
-                WHERE user_email=? AND DATE(completed_at, 'localtime') >= ?
+                WHERE user_email=? AND DATE(completed_at) >= ?
             """, (email, week_start))
             weekly = c.fetchone()
             weekly_points = int(weekly[0]) if weekly[0] else 0
@@ -716,7 +716,7 @@ def sats():
             c.execute("""
                 SELECT task_name, points, category
                 FROM completed_tasks 
-                WHERE user_email=? AND DATE(completed_at, 'localtime') >= ?
+                WHERE user_email=? AND DATE(completed_at) >= ?
                 ORDER BY completed_at DESC
                 LIMIT 20
             """, (email, week_start))
@@ -805,7 +805,7 @@ def sats():
             FROM completed_tasks ct
             LEFT JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
-              AND DATE(ct.completed_at, 'localtime') = ?
+              AND DATE(ct.completed_at) = ?
             ORDER BY ct.completed_at DESC
         """, (house_id, today))
         
@@ -851,7 +851,7 @@ def sats():
                 COUNT(*) as attempts
             FROM completed_tasks
             WHERE house_id = ?
-              AND DATE(completed_at, 'localtime') = ?
+              AND DATE(completed_at) = ?
             GROUP BY user_email, task_name
             HAVING COUNT(*) > 1
         """, (house_id, today))
@@ -937,7 +937,7 @@ def sats():
             FROM completed_tasks ct
             LEFT JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
-              AND DATE(ct.completed_at, 'localtime') = ?
+              AND DATE(ct.completed_at) = ?
             ORDER BY ct.category, ct.completed_at DESC
         """, (house_id, today))
         
@@ -980,7 +980,7 @@ def sats():
             SELECT category, COUNT(*) as count
             FROM completed_tasks
             WHERE house_id = ?
-              AND DATE(completed_at, 'localtime') >= ?
+              AND DATE(completed_at) >= ?
             GROUP BY category
             ORDER BY count DESC
         """, (house_id, week_start))
@@ -1064,7 +1064,7 @@ def stats_graphique():
             c.execute("""
                 SELECT COALESCE(SUM(points), 0)
                 FROM completed_tasks
-                WHERE user_email=? AND DATE(completed_at, 'localtime')=?
+                WHERE user_email=? AND DATE(completed_at)=?
             """, (session['user'], day.isoformat()))
             points = c.fetchone()[0]
             daily_points_values.append(int(points) if points else 0)
@@ -1074,7 +1074,7 @@ def stats_graphique():
             SELECT u.name, u.email, COALESCE(SUM(ct.points), 0) as total_points
             FROM users u
             LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                AND DATE(ct.completed_at, 'localtime') >= ?
+                AND DATE(ct.completed_at) >= ?
             WHERE u.house_id = ?
             GROUP BY u.email, u.name
             ORDER BY total_points DESC
@@ -1089,7 +1089,7 @@ def stats_graphique():
         c.execute("""
             SELECT category, COUNT(*) as count
             FROM completed_tasks
-            WHERE house_id = ? AND DATE(completed_at, 'localtime') >= ?
+            WHERE house_id = ? AND DATE(completed_at) >= ?
             GROUP BY category
             ORDER BY count DESC
             LIMIT 6
@@ -1106,7 +1106,7 @@ def stats_graphique():
                 SELECT COUNT(*)
                 FROM completed_tasks
                 WHERE user_email=? 
-                AND CAST(strftime('%w', DATE(completed_at, 'localtime')) AS INTEGER) = ?
+                AND CAST(strftime('%w', DATE(completed_at)) AS INTEGER) = ?
             """, (session['user'], weekday))
             count = c.fetchone()[0]
             # Dimanche (0) en dernier
@@ -1120,7 +1120,7 @@ def stats_graphique():
         c.execute("""
             SELECT COALESCE(SUM(points), 0)
             FROM completed_tasks
-            WHERE user_email=? AND DATE(completed_at, 'localtime') >= ?
+            WHERE user_email=? AND DATE(completed_at) >= ?
         """, (session['user'], week_start))
         total_weekly_points = int(c.fetchone()[0] or 0)
         
@@ -1128,7 +1128,7 @@ def stats_graphique():
         c.execute("""
             SELECT COUNT(*)
             FROM completed_tasks
-            WHERE user_email=? AND DATE(completed_at, 'localtime') >= ?
+            WHERE user_email=? AND DATE(completed_at) >= ?
         """, (session['user'], week_start))
         total_weekly_tasks = int(c.fetchone()[0] or 0)
         
@@ -1140,7 +1140,7 @@ def stats_graphique():
             SELECT u.email, COALESCE(SUM(ct.points), 0) as total_points
             FROM users u
             LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                AND DATE(ct.completed_at, 'localtime') >= ?
+                AND DATE(ct.completed_at) >= ?
             WHERE u.house_id = ?
             GROUP BY u.email, u.name
             ORDER BY total_points DESC
@@ -2798,7 +2798,7 @@ def compute_daily_streak(conn, email):
         c = conn.cursor()
         # Récupérer les dates distinctes où l'utilisateur a complété au moins une tâche
         c.execute("""
-            SELECT DISTINCT DATE(completed_at, 'localtime') as d
+            SELECT DISTINCT DATE(completed_at) as d
             FROM completed_tasks
             WHERE user_email=?
             ORDER BY d DESC
@@ -3793,7 +3793,7 @@ def get_house_players_points(house_id, existing_conn=None):
         c.execute("""
             SELECT user_email, COALESCE(SUM(points),0), COUNT(*)
             FROM completed_tasks
-            WHERE house_id=? AND DATE(completed_at, 'localtime')=?
+            WHERE house_id=? AND DATE(completed_at)=?
             GROUP BY user_email
         """, (house_id, today))
         for row_dp in c.fetchall():
@@ -4688,7 +4688,7 @@ def add_players():
         # Points du jour pour le joueur actuel
         from datetime import date
         today = date.today().isoformat()
-        c.execute("SELECT COALESCE(SUM(points),0) FROM completed_tasks WHERE user_email=? AND DATE(completed_at, 'localtime')=?", (session['user'], today))
+        c.execute("SELECT COALESCE(SUM(points),0) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (session['user'], today))
         pts = c.fetchone()
         current_user_daily_points = int(pts[0]) if pts and pts[0] else 0
         
@@ -4696,7 +4696,7 @@ def add_players():
         for p in players:
             email = p.get('email')
             if email:
-                c.execute("SELECT COALESCE(SUM(points),0) FROM completed_tasks WHERE user_email=? AND DATE(completed_at, 'localtime')=?", (email, today))
+                c.execute("SELECT COALESCE(SUM(points),0) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (email, today))
                 sums = c.fetchone()
                 p['daily_points'] = int(sums[0]) if sums and sums[0] else 0
         
@@ -5662,7 +5662,7 @@ def rewards():
         SELECT u.email, u.name, COALESCE(SUM(ct.points), 0) as weekly_points
         FROM users u
         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-            AND DATE(ct.completed_at, 'localtime') >= ?
+            AND DATE(ct.completed_at) >= ?
         WHERE u.house_id = ?
         GROUP BY u.email, u.name
         ORDER BY weekly_points DESC
@@ -5941,7 +5941,7 @@ def open_reward_box():
         SELECT u.email, COALESCE(SUM(ct.points), 0) as weekly_points
         FROM users u
         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-            AND DATE(ct.completed_at, 'localtime') >= ?
+            AND DATE(ct.completed_at) >= ?
         WHERE u.house_id = ?
         GROUP BY u.email, u.name
         ORDER BY weekly_points DESC
@@ -8065,7 +8065,7 @@ def debug_points():
     today = date.today().isoformat()
     for p in players:
         email = p.get('email')
-        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at, 'localtime')=?", (email, today))
+        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (email, today))
         sums = c.fetchone()
         p['daily_points'] = int(sums[0]) if sums and sums[0] is not None else 0
         p['daily_tasks'] = int(sums[1]) if sums and sums[1] is not None else 0
@@ -8426,7 +8426,7 @@ def custom_task_page(task_id):
         # calculs journaliers
         from datetime import date
         today = date.today().isoformat()
-        c.execute("SELECT SUM(points), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at, 'localtime')=?", (session['user'], today))
+        c.execute("SELECT SUM(points), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (session['user'], today))
         sums = c.fetchone()
         if sums and sums[0] is not None:
             try:
@@ -8457,7 +8457,7 @@ def custom_task_page(task_id):
         if is_baby_unlimited:
             pass  # Aucune restriction pour les tâches bébé
         elif is_kitchen_task:
-            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", (session['user'], category, task_name, today))
             if c.fetchone()[0] >= 2:
                 funny_messages = [
                     f"🍳 '{task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
@@ -8468,7 +8468,7 @@ def custom_task_page(task_id):
                 conn.close()
                 return redirect(url_for('menu'))
         else:
-            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
+            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", (session['user'], category, task_name, today))
             if c.fetchone():
                 # 🎭 Messages humoristiques avec le vrai nom de la tâche
                 funny_messages = [
@@ -8513,7 +8513,7 @@ def custom_task_page(task_id):
                                COALESCE(SUM(ct.points), 0) as daily_points
                         FROM users u
                         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                            AND DATE(ct.completed_at, 'localtime') = DATE('now', 'localtime')
+                            AND DATE(ct.completed_at) = DATE('now')
                         WHERE u.house_id = ?
                         GROUP BY u.email, u.name
                         ORDER BY daily_points DESC, u.points DESC
@@ -8636,7 +8636,7 @@ def custom_task_page(task_id):
             #         c_check = conn.cursor()
             #         c_check.execute("""
             #             SELECT COUNT(*) FROM completed_tasks 
-            #             WHERE user_email=? AND DATE(completed_at, 'localtime')=?
+            #             WHERE user_email=? AND DATE(completed_at)=?
             #         """, (player_email, today))
             #         task_count = c_check.fetchone()[0]
             #         
@@ -8745,7 +8745,7 @@ def task_enhanced(cat, task_id):
             from datetime import date
             today = date.today().isoformat()
             # Utiliser l'heure locale pour correspondre à l'affichage du menu
-            c.execute("SELECT SUM(points), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at, 'localtime')=?", (session['user'], today))
+            c.execute("SELECT SUM(points), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (session['user'], today))
             sums = c.fetchone()
             if sums and sums[0] is not None:
                 try:
@@ -8821,7 +8821,7 @@ def task_enhanced(cat, task_id):
         if is_baby_unlimited:
             pass  # Aucune restriction pour les tâches bébé
         elif is_kitchen_task:
-            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", (player_email, normalized_cat, task_name, today))
             if c.fetchone()[0] >= 2:
                 funny_messages = [
                     f"🍳 '{task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
@@ -8834,7 +8834,7 @@ def task_enhanced(cat, task_id):
                 return redirect(url_for('menu'))
         else:
             # Vérifier doublon sur la journée locale POUR LE JOUEUR QUI VALIDE
-            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
+            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", (player_email, normalized_cat, task_name, today))
             if c.fetchone():
                 # 🎭 Messages humoristiques avec le vrai nom de la tâche
                 funny_messages = [
@@ -8873,7 +8873,7 @@ def task_enhanced(cat, task_id):
                                COALESCE(SUM(ct.points), 0) as daily_points
                         FROM users u
                         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                            AND DATE(ct.completed_at, 'localtime') = DATE('now', 'localtime')
+                            AND DATE(ct.completed_at) = DATE('now')
                         WHERE u.house_id = ?
                         GROUP BY u.email, u.name
                         ORDER BY daily_points DESC, u.points DESC
@@ -9002,7 +9002,7 @@ def task_enhanced(cat, task_id):
             #         c_check = conn.cursor()
             #         c_check.execute("""
             #             SELECT COUNT(*) FROM completed_tasks 
-            #             WHERE user_email=? AND DATE(completed_at, 'localtime')=?
+            #             WHERE user_email=? AND DATE(completed_at)=?
             #         """, (player_email, today))
             #         task_count = c_check.fetchone()[0]
             #         
@@ -9181,7 +9181,7 @@ def api_validate_task():
         if is_baby_unlimited:
             pass  # Aucune restriction pour les tâches bébé
         elif is_kitchen_task:
-            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?",
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?",
                      (player_email, category, task_name, today))
             if c.fetchone()[0] >= 2:
                 display_task_name = task_name_from_payload if task_name_from_payload else task_name
@@ -9194,7 +9194,7 @@ def api_validate_task():
                 _dbg(f"   Message envoyé (cuisine max 2): '{funny_message}'")
                 return jsonify({'success': False, 'error': funny_message, 'duplicate': True}), 200
         else:
-            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", 
+            c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", 
                      (player_email, category, task_name, today))
             result = c.fetchone()
             
@@ -9324,7 +9324,7 @@ def api_validate_task():
                            COALESCE(SUM(ct.points), 0) as daily_points
                     FROM users u
                     LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                        AND DATE(ct.completed_at, 'localtime') = DATE('now', 'localtime')
+                        AND DATE(ct.completed_at) = DATE('now')
                     WHERE u.house_id = ?
                     GROUP BY u.email, u.name
                     ORDER BY daily_points DESC, u.points DESC
@@ -9479,7 +9479,7 @@ def api_daily_tasks():
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
               AND u.house_id = ?
-              AND DATE(ct.completed_at, 'localtime') = ?
+              AND DATE(ct.completed_at) = ?
             ORDER BY ct.completed_at DESC
             LIMIT 10
         """, (house_id, house_id, today))
