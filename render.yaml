@@ -3,14 +3,14 @@ services:
     name: dust
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 --worker-connections 200 wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 75 --log-level warning --preload --max-requests 1000 --max-requests-jitter 50
+    startCommand: gunicorn --worker-class eventlet -w 1 --worker-connections 1000 wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 75 --log-level warning --max-requests 1000 --max-requests-jitter 50
     envVars:
       - key: SECRET_KEY
         generateValue: true
-        sync: false           # ← NE CHANGE PLUS après le premier déploiement
+        sync: false
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: "3.11.9"
       - key: RENDER
         value: "true"
-      # DATABASE_URL est définie manuellement dans le dashboard Render
-      # (Environment → DATABASE_URL → coller l'Internal Database URL de ta base existante)
+      - key: WEB_CONCURRENCY
+        value: "1"
