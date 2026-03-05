@@ -48,7 +48,7 @@ def _get_pg_pool():
     global _pg_pool
     if _pg_pool is None and _USE_PG:
         try:
-            _pg_pool = psycopg2.pool.SimpleConnectionPool(
+            _pg_pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
                 maxconn=5,
                 dsn=_PG_URL,
@@ -1325,13 +1325,9 @@ def get_db_connection(timeout=30.0):
         if pool:
             try:
                 conn = pool.getconn()
-                # Tester que la connexion est vivante, sinon en créer une nouvelle
-                try:
-                    conn.cursor().execute('SELECT 1')
-                except Exception:
+                # Vérifier rapidement que la connexion est vivante (sans SELECT 1 coûteux)
+                if conn.closed:
                     pool.putconn(conn, close=True)
-                    conn = psycopg2.connect(_PG_URL, connect_timeout=10)
-                    pool.putconn(conn)
                     conn = pool.getconn()
                 return _CompatConn(conn, is_pg=True, pool=pool)
             except Exception:
@@ -10245,17 +10241,19 @@ def _start_keep_alive():
 
 _start_keep_alive()
 
-# Backup : s'assure que le keep-alive tourne même si gunicorn --preload a tué le thread
+# Relance unique du keep-alive au premier request (après fork gunicorn)
+_ka_checked = False
+
 @app.before_request
 def _ensure_keep_alive():
-    global _keep_alive_running
+    global _ka_checked
+    if _ka_checked:
+        return  # Déjà vérifié, rien à faire (coût = 0 sur les requêtes suivantes)
+    _ka_checked = True
     import threading as _threading
-    # --preload de gunicorn fork le worker APRÈS avoir chargé l'app :
-    # le thread keep-alive lancé dans le master NE SURVIT PAS au fork.
-    # _keep_alive_running est True (hérité) mais le thread est mort → on le vérifie vraiment.
-    thread_alive = any(t.name == 'keep-alive' for t in _threading.enumerate())
-    if not thread_alive:
-        _keep_alive_running = False  # Force la relance
+    if not any(t.name == 'keep-alive' for t in _threading.enumerate()):
+        global _keep_alive_running
+        _keep_alive_running = False
         _start_keep_alive()
 # ─────────────────────────────────────────────────────────────────────────────
 
