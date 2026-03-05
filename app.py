@@ -2697,6 +2697,14 @@ CREATE TABLE IF NOT EXISTS users (
 
     # Table pour les feedbacks des testeurs bêta
     c.execute("""
+    CREATE TABLE IF NOT EXISTS user_reminder_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT UNIQUE NOT NULL,
+        reminders_enabled INTEGER DEFAULT 1,
+        reminder_frequency TEXT DEFAULT 'daily',
+        quiet_hours_start TEXT DEFAULT '22:00',
+        quiet_hours_end TEXT DEFAULT '08:00'
+    );
     CREATE TABLE IF NOT EXISTS beta_feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
