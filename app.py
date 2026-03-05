@@ -63,6 +63,12 @@ _RE_ALTER_ADD = re.compile(
     r'(ALTER\s+TABLE\s+\S+\s+ADD\s+COLUMN\s+)(?!IF\s+NOT\s+EXISTS\s)',
     re.IGNORECASE
 )
+# Traduction SQLite → PostgreSQL : fonctions de date
+_RE_STRFTIME_W = re.compile(
+    r"CAST\s*\(\s*strftime\s*\(\s*'%w'\s*,\s*DATE\s*\(([^,)]+),\s*'localtime'\s*\)\s*\)\s+AS\s+INTEGER\s*\)",
+    re.IGNORECASE
+)
+_RE_DATE_LOCALTIME = re.compile(r"DATE\(([^,)]+),\s*'localtime'\)", re.IGNORECASE)
 
 
 class _CompatCursor:
@@ -87,6 +93,10 @@ class _CompatCursor:
         sql = sql.replace('?', '%s')
         sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
         sql = _RE_ALTER_ADD.sub(r'\1IF NOT EXISTS ', sql)
+        # SQLite → PostgreSQL : CAST(strftime('%w', DATE(col,'localtime')) AS INTEGER) → EXTRACT DOW
+        sql = _RE_STRFTIME_W.sub(r'EXTRACT(DOW FROM \1::date)::integer', sql)
+        # SQLite → PostgreSQL : DATE(col, 'localtime') → col::date
+        sql = _RE_DATE_LOCALTIME.sub(r'\1::date', sql)
         return sql
 
     def execute(self, sql, params=()):
@@ -98,12 +108,28 @@ class _CompatCursor:
         sql = self._adapt(sql)
         if self._is_pg and _RE_INSERT.match(sql) and 'RETURNING' not in sql.upper():
             sql = sql + ' RETURNING id'
-            self._cur.execute(sql, params if params else ())
+            try:
+                self._cur.execute(sql, params if params else ())
+            except Exception:
+                try:
+                    self._cur.connection.rollback()
+                except Exception:
+                    pass
+                raise
             row = self._cur.fetchone()
             self.lastrowid = row[0] if row else None
             self.rowcount = self._cur.rowcount
             return
-        self._cur.execute(sql, params if params else ())
+        try:
+            self._cur.execute(sql, params if params else ())
+        except Exception:
+            if self._is_pg:
+                # PostgreSQL: rollback automatique pour débloquer la transaction
+                try:
+                    self._cur.connection.rollback()
+                except Exception:
+                    pass
+            raise
         if not self._is_pg:
             self.lastrowid = getattr(self._cur, 'lastrowid', None)
         self.rowcount = self._cur.rowcount
