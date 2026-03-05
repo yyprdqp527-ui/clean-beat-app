@@ -2363,60 +2363,60 @@ CREATE TABLE IF NOT EXISTS users (
     # Ajouter les nouvelles colonnes users si elles n'existent pas
     try:
         c.execute("ALTER TABLE users ADD COLUMN name TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     try:
         c.execute("ALTER TABLE users ADD COLUMN photo_filename TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     try:
         c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
 
     # Colonnes pour les comptes enfants
     try:
         c.execute("ALTER TABLE users ADD COLUMN is_child_account INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     try:
         c.execute("ALTER TABLE users ADD COLUMN created_by TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     # Colonne pour la couleur personnelle du joueur
     try:
         c.execute("ALTER TABLE users ADD COLUMN player_color TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     # Colonnes pour le système d'avatars DiceBear
     try:
         c.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT DEFAULT 'lorelei'")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     try:
         c.execute("ALTER TABLE users ADD COLUMN avatar_file TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     try:
         c.execute("ALTER TABLE users ADD COLUMN registration_step TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
 
     try:
         c.execute("ALTER TABLE users ADD COLUMN firstname TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
 
     try:
         c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
 
 # Table houses
@@ -2433,37 +2433,37 @@ CREATE TABLE IF NOT EXISTS users (
     # Ajouter les nouvelles colonnes houses si elles n'existent pas
     try:
         c.execute("ALTER TABLE houses ADD COLUMN house_name TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     try:
         c.execute("ALTER TABLE houses ADD COLUMN progress INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
 
     # Colonnes ajoutées dans des versions ultérieures
     try:
         c.execute("ALTER TABLE houses ADD COLUMN health INTEGER DEFAULT 100")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         c.execute("ALTER TABLE houses ADD COLUMN level INTEGER DEFAULT 1")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         c.execute("ALTER TABLE houses ADD COLUMN mood TEXT DEFAULT 'happy'")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     # Réinitialisation quotidienne: stocker la dernière date de reset
     try:
         c.execute("ALTER TABLE houses ADD COLUMN last_reset_date TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     
     # Type de foyer pour les récompenses (family, couple, coloc)
     try:
         c.execute("ALTER TABLE houses ADD COLUMN house_type TEXT DEFAULT 'family'")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
 
     # Table pour les tâches personnalisées
@@ -2508,7 +2508,7 @@ CREATE TABLE IF NOT EXISTS users (
     # Ajouter la colonne purchased_date si elle n'existe pas (pour les bases existantes)
     try:
         c.execute("ALTER TABLE user_rewards ADD COLUMN purchased_date DATE DEFAULT CURRENT_DATE")
-    except sqlite3.OperationalError:
+    except Exception:
         pass  # La colonne existe déjà
     c.execute("""
     CREATE TABLE IF NOT EXISTS comments (
@@ -2552,7 +2552,7 @@ CREATE TABLE IF NOT EXISTS users (
     # Ajouter la colonne recipient_email pour les messages privés
     try:
         c.execute("ALTER TABLE messages ADD COLUMN recipient_email TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass  # La colonne existe déjà
     
     # 🔔 Table pour les subscriptions push notifications
