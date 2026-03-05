@@ -1076,7 +1076,7 @@ def stats_graphique():
             LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                 AND DATE(ct.completed_at) >= ?
             WHERE u.house_id = ?
-            GROUP BY u.email, u.name
+            GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
             ORDER BY total_points DESC
             LIMIT 5
         """, (week_start, house_id))
@@ -1142,7 +1142,7 @@ def stats_graphique():
             LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                 AND DATE(ct.completed_at) >= ?
             WHERE u.house_id = ?
-            GROUP BY u.email, u.name
+            GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
             ORDER BY total_points DESC
         """, (week_start, house_id))
         
@@ -3483,7 +3483,7 @@ def check_house_activity_and_send_message(house_id):
                 FROM tasks t
                 JOIN users u ON t.completed_by = u.email
                 WHERE t.house_id=? AND t.completed=1 AND t.completed_at > ?
-                GROUP BY u.email, u.name
+                GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
                 ORDER BY task_count DESC
                 LIMIT 1
             """, (house_id, three_days_ago))
@@ -5664,7 +5664,7 @@ def rewards():
         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
             AND DATE(ct.completed_at) >= ?
         WHERE u.house_id = ?
-        GROUP BY u.email, u.name
+        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
         ORDER BY weekly_points DESC
         LIMIT 1
     """, (start_of_week, house_id))
@@ -5943,7 +5943,7 @@ def open_reward_box():
         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
             AND DATE(ct.completed_at) >= ?
         WHERE u.house_id = ?
-        GROUP BY u.email, u.name
+        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
         ORDER BY weekly_points DESC
         LIMIT 1
     """, (start_of_week, house_id))
@@ -8515,7 +8515,7 @@ def custom_task_page(task_id):
                         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                             AND DATE(ct.completed_at) = DATE('now')
                         WHERE u.house_id = ?
-                        GROUP BY u.email, u.name
+                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
                         ORDER BY daily_points DESC, u.points DESC
                     """, (user_house_id,))
                     players_data = []
@@ -8875,7 +8875,7 @@ def task_enhanced(cat, task_id):
                         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                             AND DATE(ct.completed_at) = DATE('now')
                         WHERE u.house_id = ?
-                        GROUP BY u.email, u.name
+                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
                         ORDER BY daily_points DESC, u.points DESC
                     """, (house_id,))
                     players_data = []
@@ -9326,7 +9326,7 @@ def api_validate_task():
                     LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                         AND DATE(ct.completed_at) = DATE('now')
                     WHERE u.house_id = ?
-                    GROUP BY u.email, u.name
+                    GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
                     ORDER BY daily_points DESC, u.points DESC
                 """, (user_house_id,))
                 players_data = []
