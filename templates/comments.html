@@ -940,7 +940,7 @@
                                 {% endif %}
                                 <p class="message-text">{{ msg.content }}</p>
                                 <div class="message-timestamp">
-                                    {{ msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp }}
+                                    {{ msg.timestamp.strftime('%Y-%m-%d %H:%M:%S') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp) }}
                                 </div>
                                 
                                 {# Accusé de réception pour les messages envoyés par moi #}
