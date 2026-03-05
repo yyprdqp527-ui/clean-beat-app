@@ -10203,59 +10203,7 @@ def test_house_sermon_lazy():
 # 🏠 ========== FIN ROUTES TEST MESSAGES MAISON ==========
 
 
-# ─── KEEP-ALIVE RENDER (évite le cold start sur le plan gratuit) ─────────────
-# Sur Render free tier, le serveur s'endort après 15 min sans requête.
-# Ce thread daemon se ping lui-même toutes les 10 min pour rester éveillé.
-_keep_alive_running = False
-
-def _start_keep_alive():
-    """Lance un thread de self-ping pour éviter le cold start Render."""
-    global _keep_alive_running
-    if _keep_alive_running:
-        return  # Déjà démarré, ne pas dupliquer
-    import threading
-    import time as _time
-    try:
-        import urllib.request as _urlreq
-
-        _render_url = os.environ.get('RENDER_EXTERNAL_URL', '').rstrip('/')
-        if not _render_url:
-            return  # Pas sur Render, inutile
-
-        _keep_alive_running = True
-
-        def _ping_loop():
-            _time.sleep(20)  # Attendre que le serveur soit bien démarré
-            print(f"🟢 Keep-alive démarré → ping toutes les 10 min sur {_render_url}/ping")
-            while True:
-                try:
-                    _urlreq.urlopen(f"{_render_url}/ping", timeout=10)
-                except Exception:
-                    pass  # Erreur ignorée silencieusement
-                _time.sleep(10 * 60)  # 10 minutes (avant le sleep Render à 15 min)
-
-        t = threading.Thread(target=_ping_loop, daemon=True, name='keep-alive')
-        t.start()
-    except Exception as e:
-        print(f"⚠️ Keep-alive non démarré : {e}")
-
-_start_keep_alive()
-
-# Relance unique du keep-alive au premier request (après fork gunicorn)
-_ka_checked = False
-
-@app.before_request
-def _ensure_keep_alive():
-    global _ka_checked
-    if _ka_checked:
-        return  # Déjà vérifié, rien à faire (coût = 0 sur les requêtes suivantes)
-    _ka_checked = True
-    import threading as _threading
-    if not any(t.name == 'keep-alive' for t in _threading.enumerate()):
-        global _keep_alive_running
-        _keep_alive_running = False
-        _start_keep_alive()
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── KEEP-ALIVE supprimé (plan payant Render → serveur toujours allumé) ──────
 
 
 if __name__ == '__main__':
