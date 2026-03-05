@@ -295,6 +295,12 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
+# 🔧 ProxyFix : indispensable sur Render (reverse proxy HTTPS)
+# Sans ça, Flask génère des URLs http:// au lieu de https:// → cookies cassés, redirections folles
+if os.environ.get('RENDER'):
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # ⚡ Rechargement templates: True en local, False en prod (vérifie les fichiers à chaque render = lent)
 app.config['TEMPLATES_AUTO_RELOAD'] = not bool(os.environ.get('RENDER'))
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
@@ -2869,7 +2875,7 @@ def get_unread_message_count(user_email, house_id):
                 SELECT message_id FROM message_reads WHERE user_email = ?
             )
             AND (m.sender_email IS NULL OR m.sender_email != ?)
-            AND m.message_type NOT IN ('task_completed')
+            AND m.message_type NOT IN ('task_completed', 'baby_tracking', 'task_added')
             AND (
                 (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
                 OR (m.sender_type = 'house')
@@ -2915,6 +2921,30 @@ def get_unread_messages_by_sender(user_email, house_id):
     except Exception as e:
         _dbg(f"Erreur get_unread_messages_by_sender: {e}")
         return {}
+
+def get_unread_count_by_type(user_email, house_id, message_type):
+    """
+    Retourne le nombre de messages non lus d'un type donné (ex: 'baby_tracking', 'task_added')
+    pour un utilisateur dans sa maison.
+    Pour ces types de notifications de maison, on inclut TOUS les messages non lus,
+    même ceux envoyés par l'utilisateur lui-même (les deux partenaires doivent voir la pastille).
+    """
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("""
+            SELECT COUNT(*) FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = ?
+            AND m.id NOT IN (
+                SELECT message_id FROM message_reads WHERE user_email = ?
+            )
+        """, (house_id, message_type, user_email))
+        count = c.fetchone()[0]
+        conn.close()
+        return count
+    except Exception:
+        return 0
 
 def get_unread_messages_sent_to(user_email, house_id):
     """
@@ -5130,7 +5160,7 @@ def mark_all_messages_read():
         FROM messages m
         WHERE m.house_id = ?
         AND (m.sender_email IS NULL OR m.sender_email != ?)
-        AND m.message_type NOT IN ('task_completed')
+        AND m.message_type NOT IN ('task_completed', 'baby_tracking', 'task_added')
         AND (
             (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
             OR (m.sender_type = 'house')
@@ -7430,6 +7460,8 @@ def menu():
     unread_messages_count = 0
     unread_by_sender = {}
     unread_sent_to = {}
+    unread_baby_tracking = 0
+    unread_task_added = 0
     house_id = None
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
@@ -7585,7 +7617,9 @@ def menu():
             unread_messages_count = get_unread_message_count(session['user'], house_id)
             unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
             unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
-            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}")
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
+            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
+            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}")
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
             custom_rooms_db = {}
@@ -7730,6 +7764,8 @@ def menu():
         unread_messages_count=unread_messages_count,
         unread_by_sender=unread_by_sender,
         unread_sent_to=unread_sent_to,
+        unread_baby_tracking=unread_baby_tracking,
+        unread_task_added=unread_task_added,
         custom_rooms=custom_rooms_data,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
@@ -8321,17 +8357,29 @@ def custom_task_page(task_id):
         import random
         today = date.today().isoformat()
         
-        # 🔄 Tâches qui peuvent être faites plusieurs fois par jour
-        multiple_times_tasks = [
-            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
-            'mettre la table', 'passer l\'éponge', 'éponge'
+        # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
+        baby_unlimited_tasks = [
+            'biberon', 'couche', 'couches', 'dormir', 'donner le biberon', 'changer les couches'
         ]
+        is_baby_unlimited = any(kw.lower() in task_name.lower() for kw in baby_unlimited_tasks)
         
-        # Vérifier si la tâche peut être faite plusieurs fois par jour
-        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        # 🍳 Tâches cuisine : max 2 fois par jour
+        is_kitchen_task = 'cuisine' in (category or '').lower()
         
-        # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
-        if not can_repeat:
+        if is_baby_unlimited:
+            pass  # Aucune restriction pour les tâches bébé
+        elif is_kitchen_task:
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
+            if c.fetchone()[0] >= 2:
+                funny_messages = [
+                    f"🍳 '{task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
+                    f"⚡ Wow ! '{task_name}' déjà 2 fois aujourd'hui ! Repose-toi ! 💪",
+                    f"🏆 '{task_name}' × 2 c'est déjà super ! On s'arrête là 😊",
+                ]
+                flash(random.choice(funny_messages), "warning")
+                conn.close()
+                return redirect(url_for('menu'))
+        else:
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
             if c.fetchone():
                 # 🎭 Messages humoristiques avec le vrai nom de la tâche
@@ -8345,7 +8393,6 @@ def custom_task_page(task_id):
                     f"🌟 Woah ! '{task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
                     f"🎪 C'est pas Groundhog Day ! '{task_name}' est déjà coché ✓",
                 ]
-                
                 flash(random.choice(funny_messages), "warning")
                 conn.close()
                 return redirect(url_for('menu'))
@@ -8674,17 +8721,30 @@ def task_enhanced(cat, task_id):
         import random
         today = date.today().isoformat()
         
-        # 🔄 Tâches qui peuvent être faites plusieurs fois par jour
-        multiple_times_tasks = [
-            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
-            'mettre la table', 'passer l\'éponge', 'éponge'
+        # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
+        baby_unlimited_tasks = [
+            'biberon', 'couche', 'couches', 'dormir', 'donner le biberon', 'changer les couches'
         ]
+        is_baby_unlimited = any(kw.lower() in task_name.lower() for kw in baby_unlimited_tasks)
         
-        # Vérifier si la tâche peut être faite plusieurs fois par jour
-        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        # 🍳 Tâches cuisine : max 2 fois par jour
+        is_kitchen_task = 'cuisine' in (normalized_cat or '').lower()
         
-        # éviter doublons sur la même journée pour la même tâche SEULEMENT si ce n'est pas une tâche répétable
-        if not can_repeat:
+        if is_baby_unlimited:
+            pass  # Aucune restriction pour les tâches bébé
+        elif is_kitchen_task:
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
+            if c.fetchone()[0] >= 2:
+                funny_messages = [
+                    f"🍳 '{task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
+                    f"⚡ Wow ! '{task_name}' déjà 2 fois aujourd'hui ! Repose-toi ! 💪",
+                    f"🏆 '{task_name}' × 2 c'est déjà super ! On s'arrête là 😊",
+                ]
+                funny_message = random.choice(funny_messages)
+                flash(funny_message, "warning")
+                conn.close()
+                return redirect(url_for('menu'))
+        else:
             # Vérifier doublon sur la journée locale POUR LE JOUEUR QUI VALIDE
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
             if c.fetchone():
@@ -8699,7 +8759,6 @@ def task_enhanced(cat, task_id):
                     f"🌟 Woah ! '{task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
                     f"🎪 C'est pas Groundhog Day ! '{task_name}' est déjà coché ✓",
                 ]
-                
                 funny_message = random.choice(funny_messages)
                 flash(funny_message, "warning")
                 conn.close()
@@ -9013,14 +9072,14 @@ def api_validate_task():
         
         today = date.today().isoformat()
         
-        # � Tâches qui peuvent être faites plusieurs fois par jour
-        multiple_times_tasks = [
-            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
-            'mettre la table', 'passer l\'éponge', 'éponge'
+        # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
+        baby_unlimited_tasks = [
+            'biberon', 'couche', 'couches', 'dormir', 'donner le biberon', 'changer les couches'
         ]
+        is_baby_unlimited = any(kw.lower() in task_name.lower() for kw in baby_unlimited_tasks)
         
-        # Vérifier si la tâche peut être faite plusieurs fois par jour
-        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        # 🍳 Tâches cuisine : max 2 fois par jour
+        is_kitchen_task = 'cuisine' in (category or '').lower()
         
         # 🔍 LOG DEBUG : Vérifier le nom de la tâche utilisé
         _dbg(f"\n🔍 [DOUBLON CHECK] Avant vérification:")
@@ -9028,10 +9087,25 @@ def api_validate_task():
         _dbg(f"   - category: '{category}'")
         _dbg(f"   - player_email: '{player_email}'")
         _dbg(f"   - today: '{today}'")
-        _dbg(f"   - can_repeat: {can_repeat}")
+        _dbg(f"   - is_baby_unlimited: {is_baby_unlimited}")
+        _dbg(f"   - is_kitchen_task: {is_kitchen_task}")
         
-        # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
-        if not can_repeat:
+        if is_baby_unlimited:
+            pass  # Aucune restriction pour les tâches bébé
+        elif is_kitchen_task:
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?",
+                     (player_email, category, task_name, today))
+            if c.fetchone()[0] >= 2:
+                display_task_name = task_name_from_payload if task_name_from_payload else task_name
+                funny_messages = [
+                    f"🍳 '{display_task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
+                    f"⚡ Wow ! '{display_task_name}' déjà 2 fois aujourd'hui ! Repose-toi ! 💪",
+                    f"🏆 '{display_task_name}' × 2 c'est déjà super ! On s'arrête là 😊",
+                ]
+                funny_message = random.choice(funny_messages)
+                _dbg(f"   Message envoyé (cuisine max 2): '{funny_message}'")
+                return jsonify({'success': False, 'error': funny_message, 'duplicate': True}), 200
+        else:
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", 
                      (player_email, category, task_name, today))
             result = c.fetchone()
