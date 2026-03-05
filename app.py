@@ -50,7 +50,7 @@ def _get_pg_pool():
         try:
             _pg_pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
-                maxconn=5,
+                maxconn=3,
                 dsn=_PG_URL,
                 connect_timeout=10
             )
@@ -2722,6 +2722,17 @@ CREATE TABLE IF NOT EXISTS users (
     # Index sur houses
     c.execute("CREATE INDEX IF NOT EXISTS idx_houses_code ON houses(code)")
 
+    # 🚀 Index sur messages pour les requêtes de notifications (critiques pour PostgreSQL)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_house ON messages(house_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_type ON messages(house_id, message_type)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_email)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_email)")
+    # Index sur message_reads pour les sous-requêtes NOT IN / NOT EXISTS
+    c.execute("CREATE INDEX IF NOT EXISTS idx_message_reads_user ON message_reads(user_email, message_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_message_reads_msg ON message_reads(message_id)")
+    # Index sur custom_rooms
+    c.execute("CREATE INDEX IF NOT EXISTS idx_custom_rooms_house ON custom_rooms(house_id)")
+
     conn.commit()
     conn.close()
 
@@ -2932,22 +2943,20 @@ def create_system_message(house_id, content, message_type='system', related_task
         _dbg(f"Erreur création message système: {e}")
         return False
 
-def get_unread_message_count(user_email, house_id):
+def get_unread_message_count(user_email, house_id, existing_conn=None):
     """
     Retourne le nombre de messages non lus pour un utilisateur dans sa maison.
-    Compte uniquement les messages qui sont réellement visibles par cet utilisateur :
-    - Messages privés dont il est l'expéditeur OU le destinataire
-    - Messages de la maison (sender_type = 'house'), sauf task_completed
-    Exclut les messages privés adressés à d'autres joueurs.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = get_db_connection()
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT COUNT(*) FROM messages m
             WHERE m.house_id = ?
-            AND m.id NOT IN (
-                SELECT message_id FROM message_reads WHERE user_email = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
             AND (m.sender_email IS NULL OR m.sender_email != ?)
             AND m.message_type NOT IN ('task_completed', 'baby_tracking', 'task_added')
@@ -2957,81 +2966,75 @@ def get_unread_message_count(user_email, house_id):
             )
         """, (house_id, user_email, user_email, user_email, user_email))
         count = c.fetchone()[0]
-        conn.close()
+        if _own:
+            conn.close()
         return count
     except Exception:
         return 0
 
-def get_unread_messages_by_sender(user_email, house_id):
+def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
     """
-    Retourne un dictionnaire avec le nombre de messages REÇUS non lus pour chaque joueur.
-    Affiche uniquement les messages que les autres joueurs VOUS ont envoyés et que vous n'avez pas encore lus.
-    
-    Exemple: {'james@mail.com': 3, 'marie@mail.com': 1}
-    Utilisé pour afficher un badge sur l'avatar des joueurs qui vous ont envoyé des messages non lus.
+    Retourne un dict {sender_email: count} des messages privés reçus non lus.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = get_db_connection()
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
-        
-        # Messages REÇUS non lus (ce joueur vous a écrit et vous ne les avez pas encore lus)
         c.execute("""
             SELECT m.sender_email, COUNT(*) as unread_count
             FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = 'private'
             AND m.recipient_email = ?
-            AND m.id NOT IN (
-                SELECT message_id FROM message_reads WHERE user_email = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
             AND m.sender_email IS NOT NULL
             AND m.sender_email != ?
             GROUP BY m.sender_email
         """, (house_id, user_email, user_email, user_email))
         received_unread = {sender: count for sender, count in c.fetchall()}
-        
-        conn.close()
-        
+        if _own:
+            conn.close()
         return received_unread
     except Exception as e:
         _dbg(f"Erreur get_unread_messages_by_sender: {e}")
         return {}
 
-def get_unread_count_by_type(user_email, house_id, message_type):
+def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
     """
-    Retourne le nombre de messages non lus d'un type donné (ex: 'baby_tracking', 'task_added')
-    pour un utilisateur dans sa maison.
-    Pour ces types de notifications de maison, on inclut TOUS les messages non lus,
-    même ceux envoyés par l'utilisateur lui-même (les deux partenaires doivent voir la pastille).
+    Retourne le nombre de messages non lus d'un type donné.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = get_db_connection()
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT COUNT(*) FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = ?
-            AND m.id NOT IN (
-                SELECT message_id FROM message_reads WHERE user_email = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
         """, (house_id, message_type, user_email))
         count = c.fetchone()[0]
-        conn.close()
+        if _own:
+            conn.close()
         return count
     except Exception:
         return 0
 
-def get_unread_messages_sent_to(user_email, house_id):
+def get_unread_messages_sent_to(user_email, house_id, existing_conn=None):
     """
-    Retourne un dictionnaire avec le nombre de messages ENVOYÉS par l'utilisateur courant
-    qui n'ont pas encore été lus par leurs destinataires.
+    Retourne un dict {recipient_email: count} des messages envoyés non lus par destinataires.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
-    _dbg(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
     try:
-        conn = get_db_connection()
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
-        
-        # Requête simplifiée - messages envoyés par l'utilisateur, non lus par destinataires
         c.execute("""
             SELECT m.recipient_email, COUNT(*) as unread_count
             FROM messages m
@@ -3047,19 +3050,12 @@ def get_unread_messages_sent_to(user_email, house_id):
             )
             GROUP BY m.recipient_email
         """, (house_id, user_email, user_email))
-        
-        results = c.fetchall()
-        _dbg(f"[DEBUG] Résultats SQL bruts: {results}")
-        sent_unread = {recipient: count for recipient, count in results}
-        
-        conn.close()
-        
-        _dbg(f"[DEBUG] Messages envoyés non lus: {sent_unread}")
+        sent_unread = {recipient: count for recipient, count in c.fetchall()}
+        if _own:
+            conn.close()
         return sent_unread
     except Exception as e:
         _dbg(f"❌ Erreur get_unread_messages_sent_to: {e}")
-        import traceback
-        traceback.print_exc()
         return {}
 
 def mark_message_as_read(message_id, user_email):
@@ -3776,6 +3772,20 @@ def get_house_players_points(house_id, existing_conn=None):
     rows = c.fetchall()
     players = []
     
+    # 🚀 BATCH: calculer daily_points pour TOUS les joueurs en 1 seule requête
+    _daily_map = {}  # {email: (points, tasks)}
+    try:
+        c.execute("""
+            SELECT user_email, COALESCE(SUM(points),0), COUNT(*)
+            FROM completed_tasks
+            WHERE house_id=? AND DATE(completed_at, 'localtime')=?
+            GROUP BY user_email
+        """, (house_id, today))
+        for row_dp in c.fetchall():
+            _daily_map[row_dp[0]] = (int(row_dp[1]) if row_dp[1] else 0, int(row_dp[2]) if row_dp[2] else 0)
+    except Exception:
+        pass
+    
     for r in rows:
         email = r[0]
         points = r[1]
@@ -3819,21 +3829,9 @@ def get_house_players_points(house_id, existing_conn=None):
             else:
                 _dbg(f"⚠️ {email}: Aucune détection, len={len(avatar_str)}, has_dot={'.' in avatar_str}")
 
-        # Calculer les points du jour (daily_points) avec heure locale
-        daily_points = 0
-        daily_tasks = 0
-        try:
-            c.execute("""
-                SELECT COALESCE(SUM(points),0), COUNT(*) 
-                FROM completed_tasks 
-                WHERE user_email=? AND DATE(completed_at, 'localtime')=?
-            """, (email, today))
-            sums = c.fetchone()
-            if sums:
-                daily_points = int(sums[0]) if sums[0] is not None else 0
-                daily_tasks = int(sums[1]) if sums[1] is not None else 0
-        except Exception:
-            pass
+        # 🚀 Points du jour depuis le batch pré-calculé (0 requête DB ici)
+        daily_points = _daily_map.get(email, (0, 0))[0]
+        daily_tasks = _daily_map.get(email, (0, 0))[1]
 
         # Nettoyer avatar_file et avatar_url des valeurs "None" (chaîne)
         clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
@@ -7688,12 +7686,12 @@ def menu():
             except Exception:
                 daily_report = []
 
-            # 🔔 Messages non lus (dans la MÊME connexion, house_id déjà connu)
-            unread_messages_count = get_unread_message_count(session['user'], house_id)
-            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
-            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
-            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
-            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
+            # 🔔 Messages non lus — MÊME connexion pour toutes les requêtes
+            unread_messages_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
+            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
+            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id, existing_conn=conn)
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
+            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}")
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
