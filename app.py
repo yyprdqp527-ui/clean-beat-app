@@ -1,8 +1,21 @@
-from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, jsonify, make_response, has_request_context
+# ⚡ CRITIQUE: monkey_patch DOIT être la toute première instruction
+# Flask-SocketIO + eventlet l'exige AVANT tout import standard (socket, ssl…)
+# En local macOS : désactivé (bug eventlet/kqueue macOS)
+import os as _os
+if _os.environ.get('RENDER'):
+    try:
+        import eventlet
+        eventlet.monkey_patch()
+    except ImportError:
+        pass
+
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
+import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import date
+from datetime import date, datetime, timedelta
+import secrets
 import os
 import random
 import string
@@ -12,13 +25,258 @@ import json
 import requests
 import time
 
+# ─── COUCHE DE COMPATIBILITÉ DB (SQLite local / PostgreSQL Render) ──────────
+# Détecte automatiquement l'env Render via DATABASE_URL
+_PG_URL = os.environ.get('DATABASE_URL', '')
+if _PG_URL.startswith('postgres://'):
+    _PG_URL = _PG_URL.replace('postgres://', 'postgresql://', 1)
+_USE_PG = bool(_PG_URL)
+
+if _USE_PG:
+    try:
+        import psycopg2
+        import psycopg2.pool
+    except ImportError:
+        _USE_PG = False
+
+# 🚀 POOL DE CONNEXIONS PostgreSQL - évite de recréer une connexion à chaque requête
+# (sur Render, chaque nouvelle connexion coûte ~100-300ms)
+_pg_pool = None
+
+def _get_pg_pool():
+    """Initialise et retourne le pool de connexions PostgreSQL (singleton)."""
+    global _pg_pool
+    if _pg_pool is None and _USE_PG:
+        try:
+            _pg_pool = psycopg2.pool.ThreadedConnectionPool(
+                minconn=1,
+                maxconn=3,
+                dsn=_PG_URL,
+                connect_timeout=10
+            )
+        except Exception as e:
+            print(f"⚠️ Pool PG non créé: {e}")
+    return _pg_pool
+
+_RE_INSERT = re.compile(r'^\s*INSERT\s+', re.IGNORECASE)
+_RE_ALTER_ADD = re.compile(
+    r'(ALTER\s+TABLE\s+\S+\s+ADD\s+COLUMN\s+)(?!IF\s+NOT\s+EXISTS\s)',
+    re.IGNORECASE
+)
+# ─── Traduction SQLite → PostgreSQL : fonctions de date ───────────────────────
+# strftime('%w', DATE(col,'localtime')) → EXTRACT(DOW ...)
+_RE_STRFTIME_W = re.compile(
+    r"CAST\s*\(\s*strftime\s*\(\s*'%w'\s*,\s*DATE\s*\(([^,)]+),\s*'localtime'\s*\)\s*\)\s+AS\s+INTEGER\s*\)",
+    re.IGNORECASE
+)
+# datetime(date('now','localtime','+N day')) → (CURRENT_DATE + INTERVAL 'N day')::timestamp
+_RE_DATETIME_DATE_NOW_OFFSET = re.compile(
+    r"datetime\s*\(\s*date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'([^']+)'\s*\)\s*\)",
+    re.IGNORECASE
+)
+# datetime(date('now','localtime')) → CURRENT_TIMESTAMP
+_RE_DATETIME_DATE_NOW_LOCAL = re.compile(
+    r"datetime\s*\(\s*date\s*\(\s*'now'\s*,\s*'localtime'\s*\)\s*\)",
+    re.IGNORECASE
+)
+# datetime(col) → col::timestamp
+_RE_DATETIME_COL = re.compile(
+    r"datetime\s*\(\s*([^()]+?)\s*\)",
+    re.IGNORECASE
+)
+# date('now','localtime','+N day') → CURRENT_DATE + INTERVAL 'N day'
+_RE_DATE_NOW_OFFSET = re.compile(
+    r"date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'([^']+)'\s*\)",
+    re.IGNORECASE
+)
+# date('now','localtime') → CURRENT_DATE
+_RE_DATE_NOW_LOCAL = re.compile(
+    r"date\s*\(\s*'now'\s*,\s*'localtime'\s*\)",
+    re.IGNORECASE
+)
+# date('now') → CURRENT_DATE
+_RE_DATE_NOW = re.compile(
+    r"date\s*\(\s*'now'\s*\)",
+    re.IGNORECASE
+)
+# DATE(col, 'localtime') → col::date  (doit être APRÈS les patterns ci-dessus)
+_RE_DATE_LOCALTIME = re.compile(r"DATE\(([^,)]+),\s*'localtime'\)", re.IGNORECASE)
+# date(col) isolé (sans 'now') → col::date
+_RE_DATE_COL = re.compile(
+    r"\bdate\s*\(\s*([^'(),]+?)\s*\)",
+    re.IGNORECASE
+)
+
+
+class _CompatCursor:
+    """
+    Curseur compatible sqlite3/psycopg2 :
+    - ? → %s pour PostgreSQL
+    - INTEGER PRIMARY KEY AUTOINCREMENT → SERIAL PRIMARY KEY
+    - PRAGMA ignoré silencieusement
+    - lastrowid via RETURNING id
+    - ADD COLUMN → ADD COLUMN IF NOT EXISTS (migration sans erreur)
+    """
+    def __init__(self, cur, is_pg=False):
+        self._cur = cur
+        self._is_pg = is_pg
+        self.lastrowid = None
+        self.rowcount = 0
+        self._pragma_mode = False
+
+    def _adapt(self, sql):
+        if not self._is_pg:
+            return sql
+        sql = sql.replace('?', '%s')
+        sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+        sql = _RE_ALTER_ADD.sub(r'\1IF NOT EXISTS ', sql)
+        # ─── SQLite → PostgreSQL : Traduction des fonctions de date ───
+        # ORDRE CRITIQUE : les patterns les plus spécifiques d'abord
+        # 1) strftime('%w', ...) → EXTRACT DOW
+        sql = _RE_STRFTIME_W.sub(r'EXTRACT(DOW FROM \1::date)::integer', sql)
+        # 2) datetime(date('now','localtime','+N day')) → (CURRENT_DATE + INTERVAL 'N day')::timestamp
+        sql = _RE_DATETIME_DATE_NOW_OFFSET.sub(r"(CURRENT_DATE + INTERVAL '\1')::timestamp", sql)
+        # 3) datetime(date('now','localtime')) → CURRENT_TIMESTAMP
+        sql = _RE_DATETIME_DATE_NOW_LOCAL.sub('CURRENT_TIMESTAMP', sql)
+        # 4) datetime(col) → col::timestamp
+        sql = _RE_DATETIME_COL.sub(r'\1::timestamp', sql)
+        # 5) date('now','localtime','+N day') → CURRENT_DATE + INTERVAL 'N day'
+        sql = _RE_DATE_NOW_OFFSET.sub(r"CURRENT_DATE + INTERVAL '\1'", sql)
+        # 6) date('now','localtime') → CURRENT_DATE
+        sql = _RE_DATE_NOW_LOCAL.sub('CURRENT_DATE', sql)
+        # 7) date('now') → CURRENT_DATE
+        sql = _RE_DATE_NOW.sub('CURRENT_DATE', sql)
+        # 8) DATE(col, 'localtime') → col::date
+        sql = _RE_DATE_LOCALTIME.sub(r'\1::date', sql)
+        # 9) date(col) isolé → col::date
+        sql = _RE_DATE_COL.sub(r'\1::date', sql)
+        return sql
+
+    def execute(self, sql, params=()):
+        self._pragma_mode = False
+        if self._is_pg and sql.strip().upper().startswith('PRAGMA'):
+            self._pragma_mode = True
+            self.rowcount = 0
+            return
+        sql = self._adapt(sql)
+        if self._is_pg and _RE_INSERT.match(sql) and 'RETURNING' not in sql.upper():
+            sql = sql + ' RETURNING id'
+            try:
+                self._cur.execute(sql, params if params else ())
+            except Exception:
+                try:
+                    self._cur.connection.rollback()
+                except Exception:
+                    pass
+                raise
+            row = self._cur.fetchone()
+            self.lastrowid = row[0] if row else None
+            self.rowcount = self._cur.rowcount
+            return
+        try:
+            self._cur.execute(sql, params if params else ())
+        except Exception:
+            if self._is_pg:
+                # PostgreSQL: rollback automatique pour débloquer la transaction
+                try:
+                    self._cur.connection.rollback()
+                except Exception:
+                    pass
+            raise
+        if not self._is_pg:
+            self.lastrowid = getattr(self._cur, 'lastrowid', None)
+        self.rowcount = self._cur.rowcount
+
+    def executemany(self, sql, params_list):
+        sql = self._adapt(sql)
+        self._cur.executemany(sql, params_list)
+        self.rowcount = self._cur.rowcount
+
+    def fetchone(self):
+        if self._pragma_mode:
+            return None
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        if self._pragma_mode:
+            return []
+        return self._cur.fetchall()
+
+    @property
+    def description(self):
+        return self._cur.description
+
+    def __iter__(self):
+        return iter(self._cur)
+
+
+class _CompatConn:
+    """Connexion compatible sqlite3/psycopg2."""
+    def __init__(self, conn, is_pg=False, pool=None):
+        self._conn = conn
+        self._is_pg = is_pg
+        self._pool = pool  # 🚀 Référence au pool pour retourner la connexion
+
+    def cursor(self):
+        return _CompatCursor(self._conn.cursor(), self._is_pg)
+
+    def execute(self, sql, params=()):
+        """conn.execute() direct style sqlite3."""
+        cur = self.cursor()
+        cur.execute(sql, params)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        if self._pool and self._is_pg:
+            # 🚀 Retourner au pool au lieu de fermer (bien plus rapide)
+            try:
+                self._conn.rollback()  # S'assurer que la connexion est propre
+                self._pool.putconn(self._conn)
+            except Exception:
+                try:
+                    self._conn.close()
+                except Exception:
+                    pass
+        else:
+            self._conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            try:
+                self._conn.rollback()
+            except Exception:
+                pass
+        else:
+            try:
+                self._conn.commit()
+            except Exception:
+                pass
+        self.close()
+        return False
+
+
+# Alias erreurs DB (sqlite3 vs psycopg2)
+_DBIntegrityError = (sqlite3.IntegrityError,)
+if _USE_PG:
+    _DBIntegrityError = _DBIntegrityError + (psycopg2.IntegrityError,)
+# ────────────────────────────────────────────────────────────────────────────
+
 # 🚀 PERFORMANCE: Prints de debug désactivés par défaut
 # Pour réactiver: lancer avec CLEANBEAT_DEBUG=1 python3 app.py
 _DEBUG = os.environ.get('CLEANBEAT_DEBUG', '') == '1'
 def _dbg(*args, **kwargs):
     """Print de debug silencieux sauf si CLEANBEAT_DEBUG=1"""
     if _DEBUG:
-        _dbg(*args, **kwargs)
+        print(*args, **kwargs)
 
 # Pour l'envoi de SMS (Twilio)
 
@@ -46,7 +304,7 @@ def register_delete_custom_task_route(app):
             flash("Connecte-toi pour supprimer une mission.", "warning")
             return redirect(url_for('login'))
 
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         # Vérifier que la tâche existe et que l'utilisateur est le créateur
         c.execute("SELECT task_image, created_by FROM custom_tasks WHERE id=?", (task_id,))
@@ -114,13 +372,26 @@ except ImportError:
 
 
 app = Flask(__name__)
-app.secret_key = "2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025"  # clé secrète forte, à garder confidentielle
+app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
-# ⚡ Désactiver cache des templates pour développement
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+# 🔧 ProxyFix : indispensable sur Render (reverse proxy HTTPS)
+# Sans ça, Flask génère des URLs http:// au lieu de https:// → cookies cassés, redirections folles
+if os.environ.get('RENDER'):
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# ⚡ Rechargement templates: True en local, False en prod (vérifie les fichiers à chaque render = lent)
+app.config['TEMPLATES_AUTO_RELOAD'] = not bool(os.environ.get('RENDER'))
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
 
 # 🗜️ Compression gzip pour réduire la taille des réponses (~70% plus léger)
+app.config['COMPRESS_LEVEL'] = 6          # Niveau de compression (1-9, 6 = bon équilibre vitesse/taille)
+app.config['COMPRESS_MIN_SIZE'] = 500     # Ne pas compresser les petites réponses
+app.config['COMPRESS_MIMETYPES'] = [
+    'text/html', 'text/css', 'text/javascript',
+    'application/javascript', 'application/json',
+    'text/plain', 'application/x-javascript'
+]
 try:
     from flask_compress import Compress
     Compress(app)
@@ -140,22 +411,31 @@ def list_index_filter(lst, value):
 # Configuration des sessions pour qu'elles persistent après rafraîchissement
 from datetime import timedelta
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Session valable 30 jours
-app.config['SESSION_COOKIE_SECURE'] = False  # Mettre à True en production avec HTTPS
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RENDER') is not None  # True sur Render (HTTPS)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['TEMPLATES_AUTO_RELOAD'] = True  # Forcer le rechargement des templates
+
+# ⚡ Cache in-memory pour inject_house_name (évite 1 requête DB par rendu)
+_house_info_cache: dict = {}  # {email: {'name': ..., 'code': ..., 'ts': float}}
+
+
+def _invalidate_house_cache(email: str):
+    """Appeler quand le nom/code de la maison change (edit_house, etc.)"""
+    _house_info_cache.pop(email, None)
 
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
-    # Configurer SocketIO avec les bons paramètres pour WebSocket
+    # Configurer SocketIO — WebSocket uniquement, polling désactivé (trop lourd en RAM)
+    # En local macOS : forcer threading (eventlet/kqueue bug sur macOS)
+    _async_mode = 'eventlet' if os.environ.get('RENDER') else 'threading'
     socketio = SocketIO(
-        app, 
+        app,
         cors_allowed_origins="*",
-        logger=False,  # Désactiver les logs verbeux
-        engineio_logger=False,  # Désactiver les logs engine.io
-        ping_timeout=60,  # Timeout plus long pour la stabilité
-        ping_interval=25,  # Ping régulier pour maintenir la connexion
-        async_mode='eventlet'  # Laisser SocketIO choisir le meilleur mode (eventlet si disponible, sinon threading)
+        logger=False,
+        engineio_logger=False,
+        ping_timeout=120,
+        ping_interval=60,
+        async_mode=_async_mode
     )
     print("✅ WebSocket activé pour la synchronisation en temps réel")
 else:
@@ -175,14 +455,21 @@ def inject_house_name():
     house_code = None
     try:
         if 'user' in session:
-            conn = sqlite3.connect(DB)
+            email = session['user']
+            now = time.time()
+            cached = _house_info_cache.get(email)
+            # Cache valide 2 minutes → évite 1 requête DB à chaque render de template
+            if cached and (now - cached['ts']) < 120:
+                return {'global_house_name': cached['name'], 'global_house_code': cached['code']}
+
+            conn = get_db_connection()
             c = conn.cursor()
             # 🚀 OPTIMISATION: 1 seule requête avec JOIN au lieu de 2 requêtes séparées
             c.execute("""
                 SELECT h.name, h.house_name, h.code 
                 FROM users u JOIN houses h ON u.house_id = h.id 
                 WHERE u.email=?
-            """, (session['user'],))
+            """, (email,))
             hr = c.fetchone()
             if hr:
                 name, house_name_db, code = hr[0], hr[1], hr[2]
@@ -192,6 +479,12 @@ def inject_house_name():
                 elif (name and name.strip()):
                     house_name = name.strip()
             conn.close()
+            # Mettre en cache + purge des entrées expirées (>600s)
+            _house_info_cache[email] = {'name': house_name, 'code': house_code, 'ts': now}
+            if len(_house_info_cache) > 200:
+                expired = [k for k, v in _house_info_cache.items() if now - v['ts'] > 600]
+                for k in expired:
+                    del _house_info_cache[k]
     except Exception:
         pass
     return {
@@ -307,7 +600,7 @@ def sats():
     from datetime import date, datetime, timedelta
     import sqlite3
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -324,14 +617,14 @@ def sats():
         
         # === RÉCUPÉRER LES JOUEURS DE LA MAISON ===
         c.execute("""
-            SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style 
+            SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style, player_color
             FROM users WHERE house_id=?
         """, (house_id,))
         users_rows = c.fetchall()
         
         players = []
         for u in users_rows:
-            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style = u
+            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw = u
             
             # Résoudre l'avatar : détection du type + reconstruction URL DiceBear
             resolved_avatar_file = None
@@ -437,6 +730,9 @@ def sats():
                 for t in tasks_details_rows
             ]
             
+            # Récupérer ou attribuer la couleur du joueur
+            p_color = player_color_raw if player_color_raw else get_player_color(email)
+            
             players.append({
                 'email': email,
                 'name': name if name else email.split('@')[0],
@@ -450,7 +746,8 @@ def sats():
                 'weekly_points': weekly_points,
                 'weekly_tasks': weekly_tasks,
                 'weekly_tasks_details': weekly_tasks_details,
-                'is_current_user': (email == session['user'])
+                'is_current_user': (email == session['user']),
+                'color': p_color  # Couleur identitaire du joueur
             })
         
         # Trier par points de la semaine (pour le classement général et le leader)
@@ -460,6 +757,32 @@ def sats():
         # Attribuer les rangs
         for idx, p in enumerate(players, start=1):
             p['rank'] = idx
+        
+        # === COULEURS DE GRAPHIQUE (cohérentes avec les barres de progression du menu) ===
+        # Même logique que menu.html : player_color DB (hex) en priorité, sinon palette index email
+        _CHART_PALETTE = [
+            'rgba(120,180,230,0.8)', 'rgba(180,140,200,0.8)', 'rgba(240,140,140,0.8)',
+            'rgba(250,180,100,0.8)', 'rgba(130,200,150,0.8)', 'rgba(240,150,170,0.8)',
+            'rgba(120,210,200,0.8)', 'rgba(255,170,170,0.8)', 'rgba(140,220,210,0.8)',
+            'rgba(255,200,120,0.8)',
+        ]
+        _sorted_emails_colors = sorted([p['email'] for p in players])
+        for p in players:
+            _idx = _sorted_emails_colors.index(p['email']) if p['email'] in _sorted_emails_colors else 0
+            _hex = p.get('color')  # Hex DB (ex: '#FF6B9D')
+            if _hex and _hex.startswith('#') and len(_hex) >= 7:
+                try:
+                    _r = int(_hex[1:3], 16)
+                    _g = int(_hex[3:5], 16)
+                    _b = int(_hex[5:7], 16)
+                    p['chart_color'] = f'rgba({_r},{_g},{_b},0.8)'
+                    p['chart_border'] = f'rgba({_r},{_g},{_b},1)'
+                except Exception:
+                    p['chart_color'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)]
+                    p['chart_border'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)].replace('0.8', '1')
+            else:
+                p['chart_color'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)]
+                p['chart_border'] = _CHART_PALETTE[_idx % len(_CHART_PALETTE)].replace('0.8', '1')
         
         # Trouver l'utilisateur actuel dans la liste des joueurs
         current_user_data = None
@@ -713,7 +1036,7 @@ def stats_graphique():
     from datetime import date, datetime, timedelta
     import sqlite3
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -982,7 +1305,7 @@ TWILIO_ACCOUNT_SID = 'your_account_sid_here'
 TWILIO_AUTH_TOKEN = 'your_auth_token_here' 
 TWILIO_PHONE_NUMBER = '+1234567890'  # Votre numéro Twilio
 
-DB = "users.db"
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db")
 
 # Nombre maximum de joueurs par maison. Mettre à `None` pour illimité.
 MAX_PLAYERS = None
@@ -993,17 +1316,33 @@ MAX_PLAYERS = None
 
 def get_db_connection(timeout=30.0):
     """
-    Crée une connexion SQLite avec timeout et configuration optimisée
-    pour éviter les blocages en production
+    Connexion DB unifiée : SQLite en local, PostgreSQL sur Render.
+    Retourne un _CompatConn compatible avec l'API sqlite3.
+    🚀 Sur Render: réutilise une connexion du pool (évite ~100-300ms/requête)
     """
-    conn = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
-    # Activer le mode WAL pour permettre lectures/écritures concurrentes
-    conn.execute('PRAGMA journal_mode=WAL')
-    # Optimisations de performance
-    conn.execute('PRAGMA synchronous=NORMAL')
-    conn.execute('PRAGMA cache_size=10000')
-    conn.execute('PRAGMA temp_store=MEMORY')
-    return conn
+    if _USE_PG:
+        pool = _get_pg_pool()
+        if pool:
+            try:
+                conn = pool.getconn()
+                # Vérifier rapidement que la connexion est vivante (sans SELECT 1 coûteux)
+                if conn.closed:
+                    pool.putconn(conn, close=True)
+                    conn = pool.getconn()
+                return _CompatConn(conn, is_pg=True, pool=pool)
+            except Exception:
+                pass
+        # Fallback: connexion directe sans pool
+        conn = psycopg2.connect(_PG_URL, connect_timeout=10)
+        return _CompatConn(conn, is_pg=True)
+    else:
+        raw = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
+        # Optimisations SQLite
+        raw.execute('PRAGMA journal_mode=WAL')
+        raw.execute('PRAGMA synchronous=NORMAL')
+        raw.execute('PRAGMA cache_size=10000')
+        raw.execute('PRAGMA temp_store=MEMORY')
+        return _CompatConn(raw, is_pg=False)
 
 # ===============================
 # FONCTIONS UTILITAIRES
@@ -1059,12 +1398,12 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
     if not TWILIO_AVAILABLE:
         if house_code:
             _dbg(f"\n📱 SMS simulé envoyé vers {phone_number}:")
-            _dbg(f"   🏠 {user_name} vous invite à jouer à CleanBeat !")
+            _dbg(f"   🏠 {user_name} vous invite à jouer à Dust !")
             _dbg(f"   📱 Cliquez pour rejoindre (aucune installation requise) :")
-            _dbg(f"   {base_url}join_house?code={house_code}")
+            _dbg(f"   {base_url}invite/{house_code}")
             _dbg(f"   Code : {house_code}\n")
         else:
-            _dbg(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à CleanBeat !")
+            _dbg(f"SMS simulé vers {phone_number}: {user_name} vous invite à jouer à Dust !")
             _dbg(f"📱 Cliquez : {base_url}")
         return True
     
@@ -1072,12 +1411,12 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
         
         if house_code:
-            message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
+            message_body = f"🏠 {user_name} vous invite à jouer à 'Dust' ! " \
                           f"📱 Cliquez pour rejoindre (aucune installation requise) : " \
-                          f"{base_url}join_house?code={house_code} " \
+                          f"{base_url}invite/{house_code} " \
                           f"Code : {house_code}"
         else:
-            message_body = f"🏠 {user_name} vous invite à jouer à 'CleanBeat' ! " \
+            message_body = f"🏠 {user_name} vous invite à jouer à 'Dust' ! " \
                           f"📱 Cliquez pour commencer : {base_url}"
         
         message = client.messages.create(
@@ -1826,7 +2165,7 @@ def normalize_category(cat):
 # ===============================
 
 def get_completed_tasks(user_email, category):
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT task_name FROM completed_tasks WHERE user_email=? AND category=?",
               (user_email, category))
@@ -1863,7 +2202,7 @@ def assign_player_color(email, house_id=None):
     Si house_id est fourni, s'assure que la couleur est unique dans la maison.
     Sinon, assigne une couleur aléatoire.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -1900,7 +2239,7 @@ def get_player_color(email):
     Récupère la couleur d'un joueur. Si aucune couleur n'est définie,
     en assigne une automatiquement.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -1927,7 +2266,7 @@ def get_house_players_with_colors(house_id):
     Récupère tous les joueurs d'une maison avec leurs couleurs.
     Retourne une liste de dictionnaires avec les infos des joueurs.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -1997,7 +2336,7 @@ def get_player_colors_map(player_emails):
 # BASE DE DONNÉES
 # ===============================
 def init_db():
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
 CREATE TABLE IF NOT EXISTS users (
@@ -2060,6 +2399,16 @@ CREATE TABLE IF NOT EXISTS users (
     
     try:
         c.execute("ALTER TABLE users ADD COLUMN registration_step TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN firstname TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
     except sqlite3.OperationalError:
         pass
 
@@ -2269,7 +2618,7 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
-    # Table pour les cadeaux révélés (CleanBeat)
+    # Table pour les cadeaux révélés (Dust)
     c.execute("""
     CREATE TABLE IF NOT EXISTS revealed_gifts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2328,6 +2677,37 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
+    # Table pour les tokens de réinitialisation de mot de passe
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL,
+            email TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used INTEGER DEFAULT 0
+        )
+    """)
+
+    # Table pour les feedbacks des testeurs bêta
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS beta_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_email TEXT,
+        user_name TEXT,
+        note_globale INTEGER,
+        note_facilite INTEGER,
+        note_design INTEGER,
+        ce_qui_plait TEXT,
+        ce_qui_deplait TEXT,
+        ameliorations TEXT,
+        pret_a_payer INTEGER DEFAULT 0,
+        prix_acceptable TEXT,
+        recommande INTEGER,
+        autres_commentaires TEXT
+    )
+    """)
+
     # === INDEX POUR AMÉLIORER LES PERFORMANCES ===
     # Index sur completed_tasks pour les requêtes fréquentes
     c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_user ON completed_tasks(user_email)")
@@ -2341,6 +2721,17 @@ CREATE TABLE IF NOT EXISTS users (
     
     # Index sur houses
     c.execute("CREATE INDEX IF NOT EXISTS idx_houses_code ON houses(code)")
+
+    # 🚀 Index sur messages pour les requêtes de notifications (critiques pour PostgreSQL)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_house ON messages(house_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_type ON messages(house_id, message_type)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_email)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_email)")
+    # Index sur message_reads pour les sous-requêtes NOT IN / NOT EXISTS
+    c.execute("CREATE INDEX IF NOT EXISTS idx_message_reads_user ON message_reads(user_email, message_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_message_reads_msg ON message_reads(message_id)")
+    # Index sur custom_rooms
+    c.execute("CREATE INDEX IF NOT EXISTS idx_custom_rooms_house ON custom_rooms(house_id)")
 
     conn.commit()
     conn.close()
@@ -2379,7 +2770,7 @@ def add_default_rewards_if_empty():
 add_default_rewards_if_empty()
 
 def get_user_points(email):
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT points FROM users WHERE email=?", (email,))
     result = c.fetchone()
@@ -2474,7 +2865,7 @@ def create_system_message(house_id, content, message_type='system', related_task
     sender_email: email du joueur pour les messages baby_tracking
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Pour les messages baby_tracking, utiliser l'email du joueur
@@ -2530,7 +2921,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 if message_type in ['sermon', 'congratulation', 'reminder']:
                     title = f'{icon_emoji} {sender_name or "Maison"}'
                 else:
-                    title = f'{icon_emoji} CleanBeat'
+                    title = f'{icon_emoji} Dust'
                 
                 notification_data = {
                     'title': title,
@@ -2552,82 +2943,98 @@ def create_system_message(house_id, content, message_type='system', related_task
         _dbg(f"Erreur création message système: {e}")
         return False
 
-def get_unread_message_count(user_email, house_id):
+def get_unread_message_count(user_email, house_id, existing_conn=None):
     """
     Retourne le nombre de messages non lus pour un utilisateur dans sa maison.
-    Compte uniquement les messages qui sont réellement visibles par cet utilisateur :
-    - Messages privés dont il est l'expéditeur OU le destinataire
-    - Messages de la maison (sender_type = 'house'), sauf task_completed
-    Exclut les messages privés adressés à d'autres joueurs.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = sqlite3.connect(DB)
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT COUNT(*) FROM messages m
             WHERE m.house_id = ?
-            AND m.id NOT IN (
-                SELECT message_id FROM message_reads WHERE user_email = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
             AND (m.sender_email IS NULL OR m.sender_email != ?)
-            AND m.message_type NOT IN ('task_completed')
+            AND m.message_type NOT IN ('task_completed', 'baby_tracking', 'task_added')
             AND (
                 (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
                 OR (m.sender_type = 'house')
             )
         """, (house_id, user_email, user_email, user_email, user_email))
         count = c.fetchone()[0]
-        conn.close()
+        if _own:
+            conn.close()
         return count
     except Exception:
         return 0
 
-def get_unread_messages_by_sender(user_email, house_id):
+def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
     """
-    Retourne un dictionnaire avec le nombre de messages REÇUS non lus pour chaque joueur.
-    Affiche uniquement les messages que les autres joueurs VOUS ont envoyés et que vous n'avez pas encore lus.
-    
-    Exemple: {'james@mail.com': 3, 'marie@mail.com': 1}
-    Utilisé pour afficher un badge sur l'avatar des joueurs qui vous ont envoyé des messages non lus.
+    Retourne un dict {sender_email: count} des messages privés reçus non lus.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
-        conn = sqlite3.connect(DB)
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
-        
-        # Messages REÇUS non lus (ce joueur vous a écrit et vous ne les avez pas encore lus)
         c.execute("""
             SELECT m.sender_email, COUNT(*) as unread_count
             FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = 'private'
             AND m.recipient_email = ?
-            AND m.id NOT IN (
-                SELECT message_id FROM message_reads WHERE user_email = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
             AND m.sender_email IS NOT NULL
             AND m.sender_email != ?
             GROUP BY m.sender_email
         """, (house_id, user_email, user_email, user_email))
         received_unread = {sender: count for sender, count in c.fetchall()}
-        
-        conn.close()
-        
+        if _own:
+            conn.close()
         return received_unread
     except Exception as e:
         _dbg(f"Erreur get_unread_messages_by_sender: {e}")
         return {}
 
-def get_unread_messages_sent_to(user_email, house_id):
+def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
     """
-    Retourne un dictionnaire avec le nombre de messages ENVOYÉS par l'utilisateur courant
-    qui n'ont pas encore été lus par leurs destinataires.
+    Retourne le nombre de messages non lus d'un type donné.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
-    _dbg(f"[DEBUG] get_unread_messages_sent_to appelé avec user={user_email}, house_id={house_id}")
     try:
-        conn = sqlite3.connect(DB)
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
-        
-        # Requête simplifiée - messages envoyés par l'utilisateur, non lus par destinataires
+        c.execute("""
+            SELECT COUNT(*) FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+            )
+        """, (house_id, message_type, user_email))
+        count = c.fetchone()[0]
+        if _own:
+            conn.close()
+        return count
+    except Exception:
+        return 0
+
+def get_unread_messages_sent_to(user_email, house_id, existing_conn=None):
+    """
+    Retourne un dict {recipient_email: count} des messages envoyés non lus par destinataires.
+    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
+    """
+    try:
+        _own = existing_conn is None
+        conn = existing_conn if existing_conn else get_db_connection()
+        c = conn.cursor()
         c.execute("""
             SELECT m.recipient_email, COUNT(*) as unread_count
             FROM messages m
@@ -2643,19 +3050,12 @@ def get_unread_messages_sent_to(user_email, house_id):
             )
             GROUP BY m.recipient_email
         """, (house_id, user_email, user_email))
-        
-        results = c.fetchall()
-        _dbg(f"[DEBUG] Résultats SQL bruts: {results}")
-        sent_unread = {recipient: count for recipient, count in results}
-        
-        conn.close()
-        
-        _dbg(f"[DEBUG] Messages envoyés non lus: {sent_unread}")
+        sent_unread = {recipient: count for recipient, count in c.fetchall()}
+        if _own:
+            conn.close()
         return sent_unread
     except Exception as e:
         _dbg(f"❌ Erreur get_unread_messages_sent_to: {e}")
-        import traceback
-        traceback.print_exc()
         return {}
 
 def mark_message_as_read(message_id, user_email):
@@ -2663,7 +3063,7 @@ def mark_message_as_read(message_id, user_email):
     Marque un message comme lu pour un utilisateur.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             INSERT OR IGNORE INTO message_reads (message_id, user_email)
@@ -2684,7 +3084,7 @@ def save_push_subscription(user_email, subscription_data):
     subscription_data doit contenir: endpoint, keys.p256dh, keys.auth
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         endpoint = subscription_data.get('endpoint', '')
@@ -2716,7 +3116,7 @@ def get_user_push_subscriptions(user_email):
     Récupère toutes les subscriptions push actives d'un utilisateur.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT endpoint, p256dh_key, auth_key
@@ -2747,7 +3147,7 @@ def get_house_push_subscriptions(house_id, exclude_email=None):
     exclude_email: optionnel, pour exclure l'expéditeur du message
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         if exclude_email:
@@ -2805,7 +3205,7 @@ def send_push_notification(subscription, notification_data):
         VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
         VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
         VAPID_CLAIMS = {
-            "sub": "mailto:contact@cleanbeat.app"
+            "sub": "mailto:contact@dust.app"
         }
         
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
@@ -2844,7 +3244,7 @@ def deactivate_push_subscription(endpoint):
     Désactive une subscription push (quand elle est invalide/expirée).
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             UPDATE push_subscriptions
@@ -2969,7 +3369,7 @@ def send_house_encouragement(house_id, player_name=None):
     Envoie un message d'encouragement de la maison à tous les joueurs.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le nom de la maison
@@ -3005,7 +3405,7 @@ def send_house_sermon(house_id, player_name=None, sermon_type='lazy'):
     sermon_type: 'lazy' (inactivité générale) ou 'funny' (ciblé sur un joueur)
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le nom de la maison
@@ -3042,7 +3442,7 @@ def check_house_activity_and_send_message(house_id):
     """
     try:
         from datetime import datetime, timedelta
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier l'activité récente (dernières 72h)
@@ -3125,7 +3525,7 @@ def create_reminder(house_id, reminder_type, scheduled_for=None):
             scheduled_for = datetime.fromisoformat(scheduled_for)
         
         # Générer le message
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le nom de la maison
@@ -3157,7 +3557,7 @@ def get_pending_reminders():
     """
     from datetime import datetime
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     now = datetime.now().isoformat()
@@ -3187,7 +3587,7 @@ def send_reminder(reminder_id):
     Envoie un rappel via le système de messagerie.
     """
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le rappel
@@ -3247,7 +3647,7 @@ def get_user_reminder_settings(user_email):
     """
     Récupère les préférences de rappel d'un utilisateur.
     """
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     c.execute("""
@@ -3283,7 +3683,7 @@ def update_user_reminder_settings(user_email, enabled=None, frequency=None, quie
     try:
         from datetime import datetime
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier si l'utilisateur a déjà des settings
@@ -3360,7 +3760,7 @@ def get_house_players_points(house_id, existing_conn=None):
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     _own_conn = existing_conn is None
-    conn = existing_conn if existing_conn else sqlite3.connect(DB)
+    conn = existing_conn if existing_conn else get_db_connection()
     c = conn.cursor()
     today = date.today().isoformat()
     
@@ -3371,6 +3771,20 @@ def get_house_players_points(house_id, existing_conn=None):
     """, (house_id,))
     rows = c.fetchall()
     players = []
+    
+    # 🚀 BATCH: calculer daily_points pour TOUS les joueurs en 1 seule requête
+    _daily_map = {}  # {email: (points, tasks)}
+    try:
+        c.execute("""
+            SELECT user_email, COALESCE(SUM(points),0), COUNT(*)
+            FROM completed_tasks
+            WHERE house_id=? AND DATE(completed_at, 'localtime')=?
+            GROUP BY user_email
+        """, (house_id, today))
+        for row_dp in c.fetchall():
+            _daily_map[row_dp[0]] = (int(row_dp[1]) if row_dp[1] else 0, int(row_dp[2]) if row_dp[2] else 0)
+    except Exception:
+        pass
     
     for r in rows:
         email = r[0]
@@ -3415,25 +3829,29 @@ def get_house_players_points(house_id, existing_conn=None):
             else:
                 _dbg(f"⚠️ {email}: Aucune détection, len={len(avatar_str)}, has_dot={'.' in avatar_str}")
 
-        # Calculer les points du jour (daily_points) avec heure locale
-        daily_points = 0
-        daily_tasks = 0
-        try:
-            c.execute("""
-                SELECT COALESCE(SUM(points),0), COUNT(*) 
-                FROM completed_tasks 
-                WHERE user_email=? AND DATE(completed_at, 'localtime')=?
-            """, (email, today))
-            sums = c.fetchone()
-            if sums:
-                daily_points = int(sums[0]) if sums[0] is not None else 0
-                daily_tasks = int(sums[1]) if sums[1] is not None else 0
-        except Exception:
-            pass
+        # 🚀 Points du jour depuis le batch pré-calculé (0 requête DB ici)
+        daily_points = _daily_map.get(email, (0, 0))[0]
+        daily_tasks = _daily_map.get(email, (0, 0))[1]
 
         # Nettoyer avatar_file et avatar_url des valeurs "None" (chaîne)
         clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
         clean_avatar_url = avatar_url if avatar_url and avatar_url != 'None' else None
+        # Supprimer backgroundColor des URLs DiceBear (fond coloré indésirable dans le SVG)
+        if clean_avatar_url and 'backgroundColor' in clean_avatar_url:
+            import re as _re
+            clean_avatar_url = _re.sub(r'[&?]backgroundColor=[^&]*', '', clean_avatar_url).rstrip('?&')
+
+        # CORRECTION : Si la colonne 'avatar' contient une URL complète (données mal stockées)
+        # Cas fréquent pour les enfants créés via invite_partner_new.html (DiceBear v8)
+        if avatar_emoji and str(avatar_emoji).startswith('http') and not clean_avatar_url:
+            clean_avatar_url = avatar_emoji
+            # Supprimer le backgroundColor intégré dans l'URL (fond coloré indésirable)
+            import re as _re
+            clean_avatar_url = _re.sub(r'[&?]backgroundColor=[^&]*', '', clean_avatar_url).rstrip('?&')
+            avatar_emoji = None
+            is_valid_emoji = False
+            is_dicebear_seed = False
+            _dbg(f"🔧 URL complète trouvée dans colonne 'avatar' pour {name}: {clean_avatar_url}")
         
         # Vérifier que le fichier avatar existe RÉELLEMENT sur le disque
         if clean_avatar_file:
@@ -3474,15 +3892,20 @@ def get_house_players_points(house_id, existing_conn=None):
             new_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={avatar_emoji}'
             _dbg(f"🔍 DEBUG RECONSTRUCTION: avatar_style={avatar_style}, style={style}, new_url={new_url}")
             
-            # Vérifier si l'URL existante utilise le bon style
-            if clean_avatar_url and clean_avatar_url != new_url:
-                _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (ancien: {clean_avatar_url})")
-                clean_avatar_url = new_url
+            # Ne reconstruire que si aucune URL DiceBear n'est déjà stockée
+            # (évite d'écraser les URLs v8 avec backgroundColor des enfants créés via invite_partner_new)
+            if clean_avatar_url and 'dicebear.com' in clean_avatar_url:
+                # Supprimer le paramètre backgroundColor des URLs v8 (fond coloré indésirable)
+                import re as _re
+                clean_avatar_url = _re.sub(r'[&?]backgroundColor=[^&]*', '', clean_avatar_url)
+                clean_avatar_url = clean_avatar_url.rstrip('?&')
+                _dbg(f"✅ {email}: URL DiceBear conservée (backgroundColor supprimé): {clean_avatar_url}")
             elif not clean_avatar_url:
                 _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (style={style}, seed={avatar_emoji})")
                 clean_avatar_url = new_url
             else:
-                _dbg(f"✅ {email}: URL déjà correcte: {clean_avatar_url}")
+                _dbg(f"🔄 URL reconstruite pour {email}: {new_url} (ancien non-DiceBear: {clean_avatar_url})")
+                clean_avatar_url = new_url
         else:
             _dbg(f"⚠️ {email}: Pas de reconstruction URL (is_dicebear_seed={is_dicebear_seed}, avatar_emoji={avatar_emoji})")
         
@@ -3551,78 +3974,115 @@ def get_house_players_points(house_id, existing_conn=None):
 
 @app.route('/signup_email', methods=['GET', 'POST'])
 def signup_email():
-    """Inscription avec récupération de mail - ÉTAPE 1 du parcours"""
+    """Inscription avec email - ÉTAPE 1 du parcours"""
+    # Code d'invitation éventuel (joueur invité via SMS)
+    invite_code = request.args.get('code', '').strip().upper() or session.get('invite_code', '')
+
     if request.method == 'POST':
-        import re
-        
+        firstname = request.form.get('firstname', '').strip().capitalize()
         name = request.form.get('name', '').strip().capitalize()
         email = request.form.get('email', '').strip().lower()
+        phone = request.form.get('phone', '').strip()
         password = request.form.get('password', '').strip()
-        
-        # Validations de base - mot de passe OBLIGATOIRE
-        if not name or not email or not password:
-            flash("Tous les champs sont requis", "danger")
-            return render_template('signup_email.html')
-        
-        # Validation robuste du mot de passe (OBLIGATOIRE)
+        invite_code_form = request.form.get('invite_code', '').strip().upper()
+        if invite_code_form:
+            invite_code = invite_code_form
+
+        # Validations de base
+        if not firstname or not name or not email or not password:
+            flash("Prénom, nom, email et mot de passe sont requis", "danger")
+            return render_template('signup_email.html', invite_code=invite_code)
+
         if len(password) < 8:
             flash("Le mot de passe doit contenir au moins 8 caractères", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[A-Z]', password):
-            flash("Le mot de passe doit contenir au moins une majuscule", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[a-z]', password):
-            flash("Le mot de passe doit contenir au moins une minuscule", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[0-9]', password):
-            flash("Le mot de passe doit contenir au moins un chiffre", "danger")
-            return render_template('signup_email.html')
-        
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            flash("Le mot de passe doit contenir au moins un caractère spécial", "danger")
-            return render_template('signup_email.html')
-        
+            return render_template('signup_email.html', invite_code=invite_code)
+
         # Vérifier si email existe déjà
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT email FROM users WHERE email=?", (email,))
-        if c.fetchone():
-            flash("Cet email est déjà utilisé", "danger")
-            conn.close()
-            return render_template('signup_email.html')
-        
+        c.execute("SELECT email, registration_step, password FROM users WHERE email=?", (email,))
+        existing = c.fetchone()
+
+        if existing:
+            existing_step = existing[1] or ''
+            existing_pw = existing[2] or ''
+            # Si le compte existe mais l'inscription est incomplète (registration_step='email_signup'),
+            # on autorise à reprendre / réinitialiser le compte avec les nouvelles infos
+            if existing_step == 'email_signup':
+                # Mettre à jour le compte incomplet avec les nouvelles données
+                hashed_password = generate_password_hash(password)
+                display_name = f"{firstname} {name}"
+                c.execute("""
+                    UPDATE users SET firstname=?, name=?, password=?, phone=?, avatar='👤'
+                    WHERE email=?
+                """, (firstname, display_name, hashed_password, phone, email))
+                conn.commit()
+                conn.close()
+
+                session.permanent = True
+                session['user'] = email
+                session['user_name'] = display_name
+                session['registration_step'] = 'email_signup'
+                session.pop('invite_code', None)
+                flash(f"Bienvenue {firstname} ! 🎉", "success")
+                return redirect(url_for('invite_partner'))
+            else:
+                # Compte complet → rediriger vers login
+                flash("Cet email est déjà utilisé. Connecte-toi avec ton mot de passe.", "danger")
+                conn.close()
+                return redirect(url_for('login'))
+
         try:
-            # Créer l'utilisateur temporaire sans house_id
             hashed_password = generate_password_hash(password)
+            display_name = f"{firstname} {name}"
+
+            # Si joueur invité : trouver la maison du code
+            house_id_to_join = None
+            if invite_code:
+                c.execute("SELECT id FROM houses WHERE code=?", (invite_code,))
+                house_row = c.fetchone()
+                if house_row:
+                    house_id_to_join = house_row[0]
+                else:
+                    # Code invalide : on bloque l'inscription
+                    flash("🚫 Code d'invitation invalide. Vérifie le lien ou contacte la personne qui t'a invité.", "danger")
+                    conn.close()
+                    return render_template('signup_email.html', invite_code=invite_code)
+
             c.execute("""
-                INSERT INTO users (name, email, password, points, avatar, registration_step) 
-                VALUES (?, ?, ?, 0, '👤', 'email_signup')
-            """, (name, email, hashed_password))
-            
+                INSERT INTO users (firstname, name, email, password, phone, points, avatar, registration_step, house_id)
+                VALUES (?, ?, ?, ?, ?, 0, '👤', 'email_signup', ?)
+            """, (firstname, display_name, email, hashed_password, phone, house_id_to_join))
+
             conn.commit()
             conn.close()
-            
+
             # Sauvegarder dans la session
             session.permanent = True
             session['user'] = email
-            session['user_name'] = name
+            session['user_name'] = display_name
             session['registration_step'] = 'email_signup'
-            
-            flash(f"Bienvenue {name} ! 🎉", "success")
-            # Rediriger vers l'étape 2 : choix du type de logement
-            return redirect(url_for('choose_house_type'))
-            
-        except sqlite3.IntegrityError:
-            flash("Erreur lors de la création du compte", "danger")
+            session.pop('invite_code', None)
+
+            flash(f"Bienvenue {firstname} ! 🎉", "success")
+
+            # Joueur invité → directement create_profile
+            if house_id_to_join:
+                return redirect(url_for('create_profile'))
+
+            # Joueur principal → invite_partner (nom de la maison + invitations)
+            return redirect(url_for('invite_partner'))
+
+        except _DBIntegrityError:
+            flash("Erreur lors de la création du compte. Réessaie.", "danger")
             conn.close()
-            return render_template('signup_email.html')
-    
-    return render_template('signup_email.html')
+            return render_template('signup_email.html', invite_code=invite_code)
 
+    # GET — conserver le code d'invitation dans la session si présent
+    if invite_code:
+        session['invite_code'] = invite_code
 
+    return render_template('signup_email.html', invite_code=invite_code)
 @app.route('/choose_house_type', methods=['GET', 'POST'])
 def choose_house_type():
     """ÉTAPE 2 : Choix du type de logement"""
@@ -3655,7 +4115,7 @@ def onboarding_invite():
         return redirect(url_for('signup_email'))
     
     # Récupérer ou créer le code de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -3744,7 +4204,7 @@ def quick_login():
         flash("🤔 Email et mot de passe requis !", "danger")
         return render_template('quick_login.html')
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT name, password FROM users WHERE email=?", (email,))
     user = c.fetchone()
@@ -3772,7 +4232,7 @@ def manage_players():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur actuel
@@ -3807,6 +4267,12 @@ def manage_players():
         if not player_color:
             player_color = assign_player_color(email, house_id)
         
+        # Convertir v8 → v7 et supprimer backgroundColor (fond coloré indésirable)
+        import re as _re_mp
+        if avatar_url and 'dicebear.com/8.x' in avatar_url:
+            avatar_url = avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+        if avatar_url and 'backgroundColor' in avatar_url:
+            avatar_url = _re_mp.sub(r'[&?]backgroundColor=[^&]*', '', avatar_url).rstrip('?&')
         players.append({
             'email': email,
             'name': name,
@@ -3833,7 +4299,7 @@ def edit_player(email):
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur actuel et le joueur à modifier sont dans la même maison
@@ -3848,12 +4314,17 @@ def edit_player(email):
         flash("Non autorisé", "error")
         return redirect(url_for('manage_players'))
     
+    # Supprimer backgroundColor des URLs DiceBear (fond coloré indésirable)
+    import re as _re_ep
+    ep_avatar_url = player_row[5]
+    if ep_avatar_url and 'backgroundColor' in ep_avatar_url:
+        ep_avatar_url = _re_ep.sub(r'[&?]backgroundColor=[^&]*', '', ep_avatar_url).rstrip('?&')
     player = {
         'email': player_row[1],
         'name': player_row[2],
         'avatar': player_row[3],
         'avatar_file': player_row[4],
-        'avatar_url': player_row[5],
+        'avatar_url': ep_avatar_url,
         'avatar_style': player_row[6] if player_row[6] else 'adventurer'
     }
     
@@ -3877,7 +4348,7 @@ def update_house_name():
         if len(new_name) > 50:
             return jsonify({'success': False, 'error': 'Le nom est trop long (max 50 caractères)'})
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer la maison de l'utilisateur
@@ -3894,7 +4365,7 @@ def update_house_name():
         c.execute("UPDATE houses SET house_name=?, name=? WHERE id=?", (new_name, new_name, house_id))
         conn.commit()
         conn.close()
-        
+        _invalidate_house_cache(session['user'])  # ⚡ Invalider le cache du context_processor
         return jsonify({'success': True, 'message': 'Nom de la maison mis à jour !'})
         
     except Exception as e:
@@ -3923,7 +4394,7 @@ def update_player():
         if not email:
             return jsonify({'success': False, 'error': 'Email requis'})
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier que l'utilisateur actuel et le joueur à modifier sont dans la même maison
@@ -4080,7 +4551,7 @@ def delete_player():
         if email == session['user']:
             return jsonify({'success': False, 'error': 'Vous ne pouvez pas vous supprimer vous-même'})
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier que l'utilisateur actuel et le joueur à supprimer sont dans la même maison
@@ -4178,7 +4649,7 @@ def add_players():
     current_user_daily_points = 0
     house_health = 100
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -4251,7 +4722,7 @@ def add_child():
         return jsonify({'success': False, 'error': 'Non connecté'})
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer la maison du parent
@@ -4377,7 +4848,7 @@ def comments():
         flash("Connecte-toi pour accéder à la messagerie", "warning")
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -4516,7 +4987,7 @@ def comments():
                 elif sender_avatar:  # Avatar DiceBear seed
                     # Récupérer le style stocké au lieu d'utiliser 'lorelei' par défaut
                     sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'  # Style par défaut plus sympa
-                    display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
+                    display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
                     _dbg(f"🍼 DEBUG: Avatar baby_tracking pour {sender_email}: seed={sender_avatar}, style={sender_style}")
                 else:
                     display_sender_avatar = '👤'
@@ -4527,7 +4998,7 @@ def comments():
                     if 'child_' in sender_email:
                         # Pour les enfants, essayer de récupérer le vrai nom
                         try:
-                            temp_conn = sqlite3.connect(DB)
+                            temp_conn = get_db_connection()
                             temp_c = temp_conn.cursor()
                             temp_c.execute("SELECT name FROM users WHERE email=?", (sender_email,))
                             temp_row = temp_c.fetchone()
@@ -4547,13 +5018,16 @@ def comments():
             if validate_avatar_file(sender_avatar_file):
                 display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
             elif sender_avatar_url:
+                # Convertir v8 → v7 (fond transparent par défaut)
+                if 'dicebear.com/8.x' in sender_avatar_url:
+                    sender_avatar_url = sender_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
                 display_sender_avatar = sender_avatar_url
             elif sender_avatar and len(str(sender_avatar)) <= 4:
                 display_sender_avatar = sender_avatar
             elif sender_avatar:
                 # C'est un seed DiceBear - construire l'URL
                 sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'
-                display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}"
+                display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
             else:
                 display_sender_avatar = '👤'
             
@@ -4565,13 +5039,16 @@ def comments():
         if validate_avatar_file(recipient_avatar_file):
             display_recipient_avatar = f"/static/avatars/{recipient_avatar_file}"
         elif recipient_avatar_url:
+            # Convertir v8 → v7 (fond transparent par défaut)
+            if 'dicebear.com/8.x' in recipient_avatar_url:
+                recipient_avatar_url = recipient_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
             display_recipient_avatar = recipient_avatar_url
         elif recipient_avatar and len(str(recipient_avatar)) <= 4:
             display_recipient_avatar = recipient_avatar
         elif recipient_avatar:
             # C'est un seed DiceBear - construire l'URL
             recipient_style = recipient_avatar_style if recipient_avatar_style else 'adventurer'
-            display_recipient_avatar = f"https://api.dicebear.com/7.x/{recipient_style}/svg?seed={recipient_avatar}"
+            display_recipient_avatar = f"https://api.dicebear.com/7.x/{recipient_style}/svg?seed={recipient_avatar}&backgroundColor=transparent"
         else:
             display_recipient_avatar = '👤'
         
@@ -4619,6 +5096,9 @@ def comments():
         if player_avatar_file:
             display_avatar = f"/static/avatars/{player_avatar_file}"
         elif player_avatar_url:
+            # Convertir v8 → v7 (fond transparent par défaut)
+            if 'dicebear.com/8.x' in player_avatar_url:
+                player_avatar_url = player_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
             display_avatar = player_avatar_url
         elif player_avatar and len(str(player_avatar)) <= 4:
             display_avatar = player_avatar
@@ -4631,11 +5111,11 @@ def comments():
                 player_style = style_row[0] if style_row and style_row[0] else 'adventurer'
             except:
                 player_style = 'adventurer'
-            display_avatar = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}"
+            display_avatar = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}&backgroundColor=transparent"
         else:
             # Aucun avatar - générer un DiceBear par défaut
             seed = player_email.split('@')[0] if player_email else 'default'
-            display_avatar = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}"
+            display_avatar = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}&backgroundColor=transparent"
         
         available_players.append({
             'email': player_email,
@@ -4734,7 +5214,7 @@ def mark_all_messages_read():
     if 'user' not in session:
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -4753,7 +5233,7 @@ def mark_all_messages_read():
         FROM messages m
         WHERE m.house_id = ?
         AND (m.sender_email IS NULL OR m.sender_email != ?)
-        AND m.message_type NOT IN ('task_completed')
+        AND m.message_type NOT IN ('task_completed', 'baby_tracking', 'task_added')
         AND (
             (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
             OR (m.sender_type = 'house')
@@ -4811,7 +5291,7 @@ def mark_single_message_read_for_child():
     if not message_id or not child_email:
         return jsonify({'success': False, 'error': 'Paramètres manquants'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur et l'enfant sont dans la même maison
@@ -4887,7 +5367,7 @@ def mark_single_message_read():
     if not message_id:
         return jsonify({'success': False, 'error': 'ID de message manquant'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur a une maison
@@ -4963,7 +5443,7 @@ def mark_messages_read_for_child():
     if not child_email:
         return jsonify({'success': False, 'error': 'Email enfant manquant'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que l'utilisateur et l'enfant sont dans la même maison
@@ -5008,13 +5488,131 @@ def mark_messages_read_for_child():
     })
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# 🧪 FEEDBACK TESTEURS BÊTA
+# ══════════════════════════════════════════════════════════════════════════
+
+@app.route('/feedback', methods=['GET', 'POST'])
+def feedback():
+    """Formulaire de feedback pour les testeurs bêta"""
+    if 'user' not in session:
+        return redirect(url_for('welcome'))
+
+    user_email = session.get('user')
+    user_name = session.get('player_name', '')
+
+    if request.method == 'POST':
+        try:
+            note_globale = request.form.get('note_globale') or None
+            note_facilite = request.form.get('note_facilite') or None
+            note_design = request.form.get('note_design') or None
+            ce_qui_plait = request.form.get('ce_qui_plait', '').strip() or None
+            ce_qui_deplait = request.form.get('ce_qui_deplait', '').strip() or None
+            ameliorations = request.form.get('ameliorations', '').strip() or None
+            pret_a_payer = int(request.form.get('pret_a_payer', 0))
+            prix_acceptable = request.form.get('prix_acceptable', '').strip() or None
+            recommande_raw = request.form.get('recommande', '')
+            recommande = int(recommande_raw) if recommande_raw.strip() in ('0', '1') else None
+            autres_commentaires = request.form.get('autres_commentaires', '').strip() or None
+
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO beta_feedback
+                    (user_email, user_name, note_globale, note_facilite, note_design,
+                     ce_qui_plait, ce_qui_deplait, ameliorations,
+                     pret_a_payer, prix_acceptable, recommande, autres_commentaires)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                user_email, user_name,
+                int(note_globale) if note_globale else None,
+                int(note_facilite) if note_facilite else None,
+                int(note_design) if note_design else None,
+                ce_qui_plait, ce_qui_deplait, ameliorations,
+                pret_a_payer, prix_acceptable, recommande, autres_commentaires
+            ))
+            conn.commit()
+            conn.close()
+            return render_template('feedback.html', submitted=True)
+        except Exception as e:
+            _dbg(f"❌ Erreur feedback: {e}")
+            flash("Une erreur s'est produite. Réessaie.", "error")
+            return render_template('feedback.html', submitted=False)
+
+    return render_template('feedback.html', submitted=False)
+
+
+# Clé secrète admin (à changer !) — accessible via /admin_feedback?key=CETTE_CLE
+ADMIN_FEEDBACK_KEY = "cleanbeat_admin_2026"
+
+
+@app.route('/admin_feedback')
+def admin_feedback():
+    """Page admin pour lire les feedbacks (protégée par clé URL)"""
+    key = request.args.get('key', '')
+    if key != ADMIN_FEEDBACK_KEY:
+        return "Accès refusé. Ajoute ?key=VOTRE_CLE à l'URL.", 403
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("""
+        SELECT id, submitted_at, user_email, user_name,
+               note_globale, note_facilite, note_design,
+               ce_qui_plait, ce_qui_deplait, ameliorations,
+               pret_a_payer, prix_acceptable, recommande, autres_commentaires
+        FROM beta_feedback
+        ORDER BY submitted_at DESC
+    """)
+    rows = c.fetchall()
+    conn.close()
+
+    # Convertir en liste de dicts
+    keys = ['id', 'submitted_at', 'user_email', 'user_name',
+            'note_globale', 'note_facilite', 'note_design',
+            'ce_qui_plait', 'ce_qui_deplait', 'ameliorations',
+            'pret_a_payer', 'prix_acceptable', 'recommande', 'autres_commentaires']
+    feedbacks = [dict(zip(keys, row)) for row in rows]
+    return render_template('admin_feedback.html', feedbacks=feedbacks)
+
+
+@app.route('/admin_feedback_csv')
+def admin_feedback_csv():
+    """Export CSV des feedbacks"""
+    key = request.args.get('key', '')
+    if key != ADMIN_FEEDBACK_KEY:
+        return "Accès refusé.", 403
+
+    import csv
+    import io
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM beta_feedback ORDER BY submitted_at DESC")
+    rows = c.fetchall()
+    col_names = [description[0] for description in c.description]
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(col_names)
+    writer.writerows(rows)
+    csv_content = output.getvalue()
+    output.close()
+
+    from flask import Response
+    return Response(
+        csv_content,
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=feedbacks_cleanbeat.csv'}
+    )
+
+
 @app.route('/rewards')
 def rewards():
     if 'user' not in session:
         flash("Connecte-toi pour accéder aux récompenses", "warning")
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5251,7 +5849,7 @@ def update_rewards():
         if not isinstance(reward, str) or not reward.strip():
             return jsonify({'success': False, 'message': 'Toutes les récompenses doivent être remplies'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5295,7 +5893,7 @@ def open_reward_box():
     if not box_number or not isinstance(box_number, int) or box_number < 1 or box_number > 40:
         return jsonify({'success': False, 'message': 'Numéro de case invalide'}), 400
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5577,7 +6175,7 @@ def open_reward_box():
     # Récupérer le nom de l'utilisateur
     user_name = session.get('user_name', '')
     if not user_name:
-        conn2 = sqlite3.connect(DB)
+        conn2 = get_db_connection()
         c2 = conn2.cursor()
         c2.execute("SELECT name FROM users WHERE email=?", (session['user'],))
         name_row = c2.fetchone()
@@ -5598,7 +6196,7 @@ def mes_recompenses():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -5690,7 +6288,7 @@ def use_reward(reward_id):
     
     _dbg(f"[DEBUG use_reward] reward_id={reward_id}, user={session['user']}")
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Vérifier que la récompense appartient à l'utilisateur
@@ -5733,7 +6331,7 @@ def buy_reward(reward_id):
         flash("Connecte-toi pour acheter une récompense", "warning")
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
 
     # Vérifier les points et si l'utilisateur a déjà acheté la récompense aujourd'hui
@@ -5768,12 +6366,12 @@ def buy_reward(reward_id):
 
 @app.route('/gifts')
 def gifts():
-    """Grille de cadeaux CleanBeat - débloquée le dimanche matin"""
+    """Grille de cadeaux Dust - débloquée le dimanche matin"""
     if 'user' not in session:
         flash("🔐 Connecte-toi pour voir tes cadeaux !", "warning")
         return redirect(url_for('signup_email'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer house_id de l'utilisateur
@@ -5847,7 +6445,7 @@ def reveal_gift(gift_id):
         flash("🚫 Les cadeaux ne peuvent être ouverts que le dimanche à partir de 6h du matin ! ⏰", "warning")
         return redirect(url_for('gifts'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer house_id
@@ -5903,26 +6501,39 @@ def login():
     # La page de login ne doit jamais être protégée par une vérification de session !
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
-        password = request.form['password']
-        conn = sqlite3.connect(DB)
+        password = request.form['password'].strip()
+        next_code = request.form.get('next_code', '').strip().upper() or request.args.get('next_code', '').strip().upper()
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))
         user = c.fetchone()
-        conn.close()
         if user and check_password_hash(user[0], password):
-            session.permanent = True  # Session persistante après rafraîchissement
+            session.permanent = True
             session['user'] = email
-            
-            # Vérifier si l'utilisateur a complété son profil
+
+            # Si le joueur a un code d'invitation, le rattacher à la maison
+            if next_code:
+                c.execute("SELECT id FROM houses WHERE code=?", (next_code,))
+                house_row = c.fetchone()
+                if house_row:
+                    c.execute("UPDATE users SET house_id=? WHERE email=?", (house_row[0], email))
+                    conn.commit()
+                    conn.close()
+                    flash("🏠 Tu as rejoint la maison avec succès !", "success")
+                    return redirect(url_for('menu'))
+
+            conn.close()
+
+            # Vérifier si l'utilisateur est au milieu d'une inscription non terminée
             registration_step = user[1] or ''
             avatar = user[2] or ''
             avatar_file = user[3] or ''
-            
-            # Si le profil n'est pas complété (pas de registration_step='profile_created' OU pas d'avatar)
-            if registration_step != 'profile_created' or (not avatar and not avatar_file):
-                flash("✨ Complétez votre profil pour commencer !", "info")
+
+            # Rediriger vers create_profile seulement si l'inscription n'est pas terminée
+            if registration_step == 'email_signup':
+                flash("✨ Complète ton profil pour commencer !", "info")
                 return redirect(url_for('create_profile'))
-            
+
             return redirect(url_for('menu'))
         else:
             flash("Email ou mot de passe incorrect", "danger")
@@ -5938,6 +6549,123 @@ def logout():
     return redirect(url_for('login'))
 
 
+# ─── Route debug temporaire (à supprimer après usage) ───────────────────────
+@app.route('/admin_clean_users')
+def admin_clean_users():
+    key = request.args.get('key', '')
+    if key != 'dust2026admin':
+        return "Accès refusé", 403
+    action = request.args.get('action', '')
+    email_keep = request.args.get('email', '').strip().lower()
+    new_pwd = request.args.get('pwd', '').strip()
+    conn = get_db_connection()
+    c = conn.cursor()
+    msg = ""
+    # Action : garder uniquement un compte, supprimer tous les autres RÉELS (pas les enfants)
+    if action == 'keeponly' and email_keep:
+        c.execute("DELETE FROM users WHERE email != ? AND (is_child_account IS NULL OR is_child_account = 0)", (email_keep,))
+        conn.commit()
+        msg = f"✅ Tous les comptes adultes supprimés sauf {email_keep}"
+    # Action : réinitialiser le mot de passe d'un email
+    if action == 'resetpwd' and email_keep and new_pwd:
+        hashed = generate_password_hash(new_pwd)
+        c.execute("UPDATE users SET password=? WHERE email=?", (hashed, email_keep))
+        conn.commit()
+        msg = f"✅ Mot de passe réinitialisé pour {email_keep}"
+    # Action : supprimer un compte par email
+    if action == 'delete' and email_keep:
+        c.execute("DELETE FROM users WHERE email=?", (email_keep,))
+        conn.commit()
+        msg = f"🗑️ Compte supprimé : {email_keep}"
+    # Lister les 30 derniers comptes
+    c.execute("SELECT id, email, name, registration_step, house_id FROM users ORDER BY id DESC LIMIT 30")
+    rows = c.fetchall()
+    conn.close()
+    html = f"<h2>Comptes (30 derniers) {msg}</h2><table border=1>"
+    html += "<tr><th>ID</th><th>Email</th><th>Nom</th><th>Step</th><th>House</th><th>Actions</th></tr>"
+    for r in rows:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[4]}</td>"
+        html += f"<td><a href='?key=dust2026admin&action=delete&email={r[1]}' onclick=\"return confirm('Supprimer ?')\">🗑️ Supprimer</a></td></tr>"
+    html += "</table>"
+    html += "<br><b>⭐ Garder uniquement un compte (supprimer tous les autres) :</b><br>"
+    html += "<form method=get>Email à garder: <input name=email style='width:250px'> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=keeponly> <input type=submit value='Garder uniquement cet email' onclick=\"return confirm('Supprimer TOUS les autres comptes adultes ?')\"></form>"
+    html += "<br><b>Réinitialiser un mot de passe :</b><br>"
+    html += "<form method=get>Email: <input name=email style='width:250px'> Nouveau pwd: <input name=pwd> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
+    return html
+
+# ─── Mot de passe oublié ────────────────────────────────────────────────────
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    reset_link = None
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT email FROM users WHERE email=?", (email,))
+        user = c.fetchone()
+        if user:
+            # Supprimer les anciens tokens non utilisés pour cet email
+            c.execute("DELETE FROM password_reset_tokens WHERE email=? AND used=0", (email,))
+            # Générer un token sécurisé valable 1 heure
+            token = secrets.token_urlsafe(32)
+            expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
+            c.execute("INSERT INTO password_reset_tokens (token, email, expires_at, used) VALUES (?, ?, ?, 0)",
+                      (token, email, expires_at))
+            conn.commit()
+            conn.close()
+            # Construire le lien (avec l'hôte actuel)
+            reset_link = url_for('reset_password', token=token, _external=True)
+        else:
+            conn.close()
+            # Message neutre pour ne pas révéler si l'email existe
+            reset_link = '__not_found__'
+    return render_template('forgot_password.html', reset_link=reset_link)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT email, expires_at, used FROM password_reset_tokens WHERE token=?", (token,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        flash("Lien invalide ou expiré.", "danger")
+        return redirect(url_for('login'))
+
+    email, expires_at, used = row
+    if used:
+        conn.close()
+        flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
+        return redirect(url_for('forgot_password'))
+
+    if datetime.now() > datetime.fromisoformat(expires_at):
+        conn.close()
+        flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password', '').strip()
+        if len(new_password) < 8:
+            conn.close()
+            flash("Le mot de passe doit contenir au moins 8 caractères.", "danger")
+            return render_template('reset_password.html', token=token)
+        # Mettre à jour le mot de passe
+        hashed = generate_password_hash(new_password)
+        c.execute("UPDATE users SET password=? WHERE email=?", (hashed, email))
+        # Invalider le token
+        c.execute("UPDATE password_reset_tokens SET used=1 WHERE token=?", (token,))
+        conn.commit()
+        conn.close()
+        flash("✅ Mot de passe mis à jour ! Tu peux te connecter.", "success")
+        return redirect(url_for('login'))
+
+    conn.close()
+    return render_template('reset_password.html', token=token, email=email)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 # Page Mon Profil (glassmorphisme)
 @app.route('/profile')
 def profile():
@@ -5945,7 +6673,7 @@ def profile():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer les infos utilisateur
@@ -5997,7 +6725,7 @@ def update_profile():
     _dbg(f"🔍 UPDATE PROFILE: name={name}, avatar={avatar}, style={avatar_style}")
     sys.stdout.flush()
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # 📛 Récupérer l'ancien nom AVANT la mise à jour (pour propager le changement)
@@ -6062,11 +6790,14 @@ def update_profile():
         if 'user_photo' in session:
             del session['user_photo']
     
+    # Toujours marquer le profil comme complété (registration_step)
+    update_fields.append("registration_step=?")
+    update_values.append('profile_created')
+
     # Exécuter la mise à jour
-    if update_fields:
-        update_values.append(session['user'])
-        query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
-        c.execute(query, update_values)
+    update_values.append(session['user'])
+    query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
+    c.execute(query, update_values)
     
     # 📛 Propager le changement de nom dans les messages existants
     if name and old_name and name != old_name and profile_house_id:
@@ -6109,7 +6840,7 @@ def create_profile():
         return redirect(url_for('signup_email'))
     
     # Vérifier si l'utilisateur a déjà un profil (mode modification)
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, avatar_url, avatar_style FROM users WHERE email=?", (session['user'],))
     user = c.fetchone()
@@ -6133,11 +6864,10 @@ def create_profile():
         
         _dbg(f"   📊 User data: name={current_name}, registration_step={registration_step}, house_id={house_id}")
         
-        # Si l'utilisateur a COMPLÉTÉ son profil (registration_step='profile_created'), c'est une modification
-        # Sinon, c'est toujours une première création même si le nom existe
-        if registration_step == 'profile_created':
+        # Si l'utilisateur a COMPLÉTÉ son profil OU a déjà un nom/avatar, c'est une modification
+        if registration_step == 'profile_created' or current_name:
             change_avatar = True
-            _dbg(f"   ⚠️ Profil déjà créé -> mode modification")
+            _dbg(f"   ⚠️ Profil déjà présent (name={current_name}, step={registration_step}) -> mode modification")
         else:
             _dbg(f"   ✅ Première création de profil")
         
@@ -6190,7 +6920,7 @@ def create_profile_post():
             flash("Erreur lors de la sauvegarde de la photo", "warning")
     
     # Mettre à jour le profil utilisateur
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Préparer les valeurs de mise à jour
@@ -6271,13 +7001,6 @@ def create_profile_post():
     
     flash("🎉 Profil créé ! Bienvenue dans l'aventure !", "success")
     return redirect(url_for('menu'))
-    
-    if photo_filename:
-        flash(f"Profil créé avec succès pour {name} avec photo!", "success")
-    else:
-        flash(f"Profil créé avec succès pour {name}!", "success")
-    
-    return redirect(url_for('menu'))
 
 
 @app.route('/invite/<code>')
@@ -6286,7 +7009,7 @@ def invite_welcome(code):
     house_code = code.strip().upper()
     
     # Vérifier que le code existe
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute('SELECT id, name, house_type FROM houses WHERE code = ?', (house_code,))
     house = c.fetchone()
@@ -6325,7 +7048,7 @@ def join_house():
         password = request.form.get('password', '').strip()
         is_login = request.form.get('is_login') == 'true'  # Nouveau champ pour distinguer connexion/inscription
         
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Vérifier que le code de maison existe
@@ -6434,8 +7157,8 @@ def join_house():
                 # Créer le nouvel utilisateur
                 hashed_password = generate_password_hash(password)
                 c.execute("""
-                    INSERT INTO users (email, password, name, house_id, points, avatar)
-                    VALUES (?, ?, ?, ?, 0, '🧑')
+                    INSERT INTO users (email, password, name, house_id, points, avatar, registration_step)
+                    VALUES (?, ?, ?, ?, 0, '🧑', 'email_signup')
                 """, (email, hashed_password, user_name, house_id))
                 
                 conn.commit()
@@ -6514,7 +7237,7 @@ def invite_partner():
     house_type = 'family'  # Valeur par défaut
     
     # Récupérer ou créer une maison pour l'utilisateur
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -6545,108 +7268,152 @@ def invite_partner():
             house_name = house_row[1] if house_row[1] else house_row[2]
             house_type = house_row[3] if house_row[3] else 'family'
     conn.close()
-    
+
+    # Déterminer le contexte : inscription ou depuis manage_players
+    source = request.args.get('source', '')
+    if source == 'manage':
+        session['invite_source'] = 'manage'
+    from_manage = (session.get('invite_source') == 'manage')
+    from_registration = (session.get('registration_step') == 'email_signup')
+
     if request.method == 'POST':
         import json
+
+        # ─── Récupérer le nom et le type de la maison depuis le formulaire ───
+        form_house_name = request.form.get('house_name', '').strip()
+        if not form_house_name:
+            form_house_name = 'Notre Maison'  # Valeur par défaut si vide
+        form_house_type = request.form.get('house_type', 'family').strip()
+        if form_house_type not in ('family', 'couple', 'coloc'):
+            form_house_type = 'family'
+
+        # Mettre à jour la maison avec le nom et le type choisis
+        if house_id and form_house_name:
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute(
+                "UPDATE houses SET house_name=?, name=?, house_type=? WHERE id=?",
+                (form_house_name, form_house_name, form_house_type, house_id)
+            )
+            conn.commit()
+            conn.close()
+            house_name = form_house_name
+            house_type = form_house_type
+
         partners_data = request.form.get('partners')
         children_data = request.form.get('children')
-        
+
         sent_count = 0
         children_created = 0
-        
+
         # Récupérer le nom de l'utilisateur actuel
         user_name = session.get('user', 'Un ami')
         if 'user' in session:
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
             name_row = c.fetchone()
             if name_row and name_row[0]:
                 user_name = name_row[0]
             conn.close()
-        
+
         # Traiter les adultes (envoi SMS)
         if partners_data:
             try:
                 partners = json.loads(partners_data)
-                
-                # Envoyer un SMS à chaque partenaire
                 for partner in partners:
                     try:
                         send_sms_invitation(
-                            partner['phone'], 
+                            partner['phone'],
                             user_name,
                             house_code
                         )
                         sent_count += 1
                     except Exception as e:
                         _dbg(f"Erreur lors de l'envoi du SMS à {partner['name']}: {e}")
-                    
             except Exception as e:
                 _dbg(f"Erreur lors du traitement des partenaires: {e}")
-        
+
         # Traiter les enfants (création de comptes)
         if children_data and house_id:
             try:
                 children = json.loads(children_data)
-                conn = sqlite3.connect(DB)
+                conn = get_db_connection()
                 c = conn.cursor()
-                
                 for child in children:
                     try:
                         child_name = child.get('name', '').strip()
-                        child_avatar = child.get('avatar', '👶')  # Avatar par défaut si non spécifié
+                        child_avatar = child.get('avatar', '👶')
                         if child_name:
-                            # Créer un email fictif pour l'enfant (basé sur le nom + timestamp)
-                            import time
-                            child_email = f"child_{child_name.lower().replace(' ', '_')}_{int(time.time())}@cleanbeat.local"
-                            
-                            # Créer le compte enfant avec l'avatar choisi
+                            import time, re
+                            child_email = f"child_{child_name.lower().replace(' ', '_')}_{int(time.time())}@dust.local"
+                            # Extraire le seed depuis l'URL DiceBear si nécessaire
+                            child_avatar_url = child_avatar
+                            child_avatar_seed = ''
+                            child_avatar_style = 'adventurer'
+                            if 'dicebear.com' in child_avatar:
+                                seed_match = re.search(r'seed=([^&]+)', child_avatar)
+                                style_match = re.search(r'dicebear\.com/[^/]+/([^/]+)/', child_avatar)
+                                child_avatar_seed = seed_match.group(1) if seed_match else child_name.capitalize()
+                                child_avatar_style = style_match.group(1) if style_match else 'adventurer'
+                            else:
+                                child_avatar_seed = child_avatar
                             c.execute("""
-                                INSERT INTO users (email, name, house_id, points, avatar, is_child_account, created_by)
-                                VALUES (?, ?, ?, 0, ?, 1, ?)
-                            """, (child_email, child_name.capitalize(), house_id, child_avatar, session.get('user', '')))
+                                INSERT INTO users (email, name, house_id, points, avatar, avatar_url, avatar_style, registration_step, is_child_account, created_by)
+                                VALUES (?, ?, ?, 0, ?, ?, ?, 'profile_created', 1, ?)
+                            """, (child_email, child_name.capitalize(), house_id, child_avatar_seed, child_avatar_url, child_avatar_style, session.get('user', '')))
                             children_created += 1
                     except Exception as e:
-                        _dbg(f"Erreur lors de la création du compte enfant {child.get('name', '')}: {e}")
-                
+                        _dbg(f"Erreur création enfant {child.get('name', '')}: {e}")
                 conn.commit()
                 conn.close()
             except Exception as e:
-                _dbg(f"Erreur lors du traitement des enfants: {e}")
-        
+                _dbg(f"Erreur traitement enfants: {e}")
+
         # Messages flash
         messages = []
         if sent_count > 0:
             messages.append(f"📱 {sent_count} invitation{'s' if sent_count > 1 else ''} SMS envoyée{'s' if sent_count > 1 else ''}")
         if children_created > 0:
             messages.append(f"👶 {children_created} profil{'s' if children_created > 1 else ''} enfant{'s' if children_created > 1 else ''} créé{'s' if children_created > 1 else ''}")
-        
+
         if messages:
             flash("🎉 " + " • ".join(messages), "success")
         elif not partners_data and not children_data:
-            flash("Tu pourras inviter des partenaires plus tard depuis ton profil !", "info")
-        else:
-            flash("Aucune invitation n'a pu être envoyée.", "warning")
-        
-        # Si on vient du parcours d'inscription, rediriger vers name_house
-        # Sinon, rediriger vers le menu
-        if session.get('registration_step') in ['email_signup', 'house_type_chosen']:
-            return redirect(url_for('name_house'))
+            flash("C'est parti ! Tu pourras inviter des partenaires plus tard.", "info")
+
+        # Redirection : inscription → profil ; manage → menu
+        invite_source = session.pop('invite_source', '')
+        if invite_source == 'manage':
+            return redirect(url_for('menu'))
+        elif from_registration or session.get('registration_step') == 'email_signup':
+            # Vérifier si le profil est déjà complet en DB
+            try:
+                conn_chk = get_db_connection()
+                c_chk = conn_chk.cursor()
+                c_chk.execute("SELECT registration_step, name FROM users WHERE email=?", (session.get('user', ''),))
+                row_chk = c_chk.fetchone()
+                conn_chk.close()
+                if row_chk and row_chk[0] == 'profile_created' and row_chk[1]:
+                    # Profil déjà complet → aller directement au menu
+                    return redirect(url_for('menu'))
+            except Exception:
+                pass
+            session['registration_step'] = 'house_named'
+            return redirect(url_for('create_profile'))
         else:
             return redirect(url_for('menu'))
-    
-    # Si accès direct à la page (GET), afficher la page d'invitation simple avec QR Code
-    # Construire l'URL d'invitation
-    join_url = f"{request.host_url}join_house?code={house_code}"
-    
-    # Choisir le template selon si on vient du processus d'inscription ou si on veut juste inviter
-    # Pour l'instant, on affiche toujours le formulaire complet
-    return render_template('invite_partner_new.html', 
-                         house_code=house_code, 
-                         house_name=house_name, 
-                         house_type=house_type,
-                         join_url=join_url)
+
+    # GET : construire l'URL d'invitation
+    join_url = f"{request.host_url}invite/{house_code}" if house_code else ""
+
+    return render_template('invite_partner_new.html',
+                           house_code=house_code,
+                           house_name=house_name,
+                           house_type=house_type,
+                           join_url=join_url,
+                           from_manage=from_manage,
+                           from_registration=from_registration)
 
 
 @app.route('/partager_invitation')
@@ -6657,7 +7424,7 @@ def partager_invitation():
         return redirect(url_for('login'))
     
     # Récupérer le code et le nom de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -6677,7 +7444,7 @@ def partager_invitation():
         return redirect(url_for('menu'))
     
     # Construire l'URL d'invitation
-    join_url = f"{request.host_url}join_house?code={house_code}"
+    join_url = f"{request.host_url}invite/{house_code}"
     
     return render_template('invitation_partner.html', 
                          house_code=house_code,
@@ -6698,7 +7465,7 @@ def update_house_type():
     if house_type not in ['family', 'couple', 'coloc']:
         house_type = 'family'
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la maison de l'utilisateur
@@ -6728,7 +7495,7 @@ def fullhouse():
     if 'user' not in session:
         flash("Connecte-toi pour accéder à cette page", "warning")
         return redirect(url_for('login'))
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     house_id = c.fetchone()[0]
@@ -6766,11 +7533,13 @@ def menu():
     unread_messages_count = 0
     unread_by_sender = {}
     unread_sent_to = {}
+    unread_baby_tracking = 0
+    unread_task_added = 0
     house_id = None
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
     if 'user' in session:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         try:
@@ -6917,11 +7686,13 @@ def menu():
             except Exception:
                 daily_report = []
 
-            # 🔔 Messages non lus (dans la MÊME connexion, house_id déjà connu)
-            unread_messages_count = get_unread_message_count(session['user'], house_id)
-            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
-            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
-            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}")
+            # 🔔 Messages non lus — MÊME connexion pour toutes les requêtes
+            unread_messages_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
+            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
+            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id, existing_conn=conn)
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
+            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
+            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}")
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
             custom_rooms_db = {}
@@ -7066,6 +7837,8 @@ def menu():
         unread_messages_count=unread_messages_count,
         unread_by_sender=unread_by_sender,
         unread_sent_to=unread_sent_to,
+        unread_baby_tracking=unread_baby_tracking,
+        unread_task_added=unread_task_added,
         custom_rooms=custom_rooms_data,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
@@ -7081,6 +7854,54 @@ def ping():
     return 'OK', 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
+@app.route('/api/avatar_proxy')
+def avatar_proxy():
+    """
+    🚀 Proxy local pour les avatars DiceBear - cache en fichier local.
+    Évite les appels directs au CDN externe api.dicebear.com depuis le navigateur.
+    Usage: /api/avatar_proxy?style=adventurer&seed=xxx
+    """
+    import urllib.request as _urlreq
+    import re as _re
+    style = request.args.get('style', 'adventurer')
+    seed = request.args.get('seed', 'default')
+    # Sanitiser les entrées
+    if not _re.match(r'^[a-zA-Z0-9_-]+$', style):
+        style = 'adventurer'
+    seed = _re.sub(r'[<>"\'\\]', '', str(seed))[:60]
+    
+    # Dossier de cache
+    cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'avatars_cache')
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_key = _re.sub(r'[^a-zA-Z0-9_-]', '_', f"{style}_{seed}")
+    cache_file = os.path.join(cache_dir, f"{cache_key}.svg")
+    
+    # Servir depuis le cache si dispo
+    if os.path.exists(cache_file):
+        with open(cache_file, 'rb') as f:
+            svg_data = f.read()
+        resp = make_response(svg_data)
+        resp.headers['Content-Type'] = 'image/svg+xml'
+        resp.headers['Cache-Control'] = 'public, max-age=604800'  # 7 jours
+        return resp
+    
+    # Sinon: fetcher depuis DiceBear et mettre en cache
+    dicebear_url = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
+    try:
+        req = _urlreq.Request(dicebear_url, headers={'User-Agent': 'CleanBeat/1.0'})
+        with _urlreq.urlopen(req, timeout=5) as r:
+            svg_data = r.read()
+        with open(cache_file, 'wb') as f:
+            f.write(svg_data)
+        resp = make_response(svg_data)
+        resp.headers['Content-Type'] = 'image/svg+xml'
+        resp.headers['Cache-Control'] = 'public, max-age=604800'
+        return resp
+    except Exception:
+        # Fallback: rediriger vers DiceBear direct
+        from flask import redirect as _redirect
+        return _redirect(dicebear_url)
+
 # ════════════════════════════════════════════════════════════
 # 🏡 Personnalisation de la maison (pièces)
 # ════════════════════════════════════════════════════════════
@@ -7091,7 +7912,7 @@ def personnaliser_maison():
 
     # Récupérer house_id depuis la DB (même pattern que menu())
     house_id = None
-    conn_h = sqlite3.connect(DB)
+    conn_h = get_db_connection()
     ch = conn_h.cursor()
     ch.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row_h = ch.fetchone()
@@ -7120,9 +7941,13 @@ def personnaliser_maison():
     ]
 
     if request.method == 'POST':
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         try:
+            # Mettre à jour le nom de la maison si fourni
+            new_house_name = request.form.get('house_name', '').strip()
+            if new_house_name:
+                c.execute("UPDATE houses SET house_name=? WHERE id=?", (new_house_name, house_id))
             for room in ALL_ROOMS:
                 key = room['key']
                 custom_name = request.form.get(f'name_{key}', '').strip()
@@ -7143,10 +7968,12 @@ def personnaliser_maison():
             _dbg(f"⚠️ edit_house POST error: {e}")
         finally:
             conn.close()
+        if request.form.get('house_name', '').strip():
+            _invalidate_house_cache(session['user'])  # ⚡ Invalider le cache si nom modifié
         return redirect(url_for('menu'))
 
     # GET : charger les réglages actuels de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     try:
         c.execute("SELECT room_key, custom_name, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
@@ -7167,7 +7994,7 @@ def personnaliser_maison():
     # Récupérer les prénoms des membres de la maison pour l'UI
     house_members = []
     try:
-        conn_m = sqlite3.connect(DB)
+        conn_m = get_db_connection()
         cm = conn_m.cursor()
         cm.execute("SELECT name FROM users WHERE house_id=? ORDER BY id", (house_id,))
         house_members = [row[0] for row in cm.fetchall() if row[0]]
@@ -7175,7 +8002,20 @@ def personnaliser_maison():
     except Exception:
         pass
 
-    return render_template('edit_house.html', rooms=rooms_data, house_members=house_members)
+    # Récupérer le nom actuel de la maison
+    current_house_name = ''
+    try:
+        conn_hn = get_db_connection()
+        chn = conn_hn.cursor()
+        chn.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
+        hn_row = chn.fetchone()
+        conn_hn.close()
+        if hn_row:
+            current_house_name = hn_row[0] or hn_row[1] or ''
+    except Exception:
+        pass
+
+    return render_template('edit_house.html', rooms=rooms_data, house_members=house_members, current_house_name=current_house_name)
 
 
 
@@ -7196,7 +8036,7 @@ def force_reload_page():
 def debug_points():
     if 'user' not in session:
         return {'error': 'Non connecté', 'redirect': '/login'}, 401
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7242,7 +8082,7 @@ def categorie(cat):
     players = []
     overrides = {}
     if 'user' in session:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         # Récupérer la maison de l'utilisateur
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
@@ -7319,7 +8159,7 @@ def add_task_page(cat, task_id=None):
     category_name, category_icon = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
 
     # Récupérer la maison de l'utilisateur
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7447,7 +8287,7 @@ def update_task_points(cat, task_id):
     if new_points > 999:
         new_points = 999
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7493,7 +8333,7 @@ def update_custom_task_points(cat, task_id):
     if new_points > 999:
         new_points = 999
 
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -7529,7 +8369,7 @@ def custom_task_page(task_id):
         flash("Connecte-toi pour accéder à cette tâche.", "warning")
         return redirect(url_for('signup_email'))
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer la tâche personnalisée (colonnes: task_name, task_description, task_image)
@@ -7590,17 +8430,29 @@ def custom_task_page(task_id):
         import random
         today = date.today().isoformat()
         
-        # 🔄 Tâches qui peuvent être faites plusieurs fois par jour
-        multiple_times_tasks = [
-            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
-            'mettre la table', 'passer l\'éponge', 'éponge'
+        # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
+        baby_unlimited_tasks = [
+            'biberon', 'couche', 'couches', 'dormir', 'donner le biberon', 'changer les couches'
         ]
+        is_baby_unlimited = any(kw.lower() in task_name.lower() for kw in baby_unlimited_tasks)
         
-        # Vérifier si la tâche peut être faite plusieurs fois par jour
-        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        # 🍳 Tâches cuisine : max 2 fois par jour
+        is_kitchen_task = 'cuisine' in (category or '').lower()
         
-        # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
-        if not can_repeat:
+        if is_baby_unlimited:
+            pass  # Aucune restriction pour les tâches bébé
+        elif is_kitchen_task:
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
+            if c.fetchone()[0] >= 2:
+                funny_messages = [
+                    f"🍳 '{task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
+                    f"⚡ Wow ! '{task_name}' déjà 2 fois aujourd'hui ! Repose-toi ! 💪",
+                    f"🏆 '{task_name}' × 2 c'est déjà super ! On s'arrête là 😊",
+                ]
+                flash(random.choice(funny_messages), "warning")
+                conn.close()
+                return redirect(url_for('menu'))
+        else:
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (session['user'], category, task_name, today))
             if c.fetchone():
                 # 🎭 Messages humoristiques avec le vrai nom de la tâche
@@ -7614,7 +8466,6 @@ def custom_task_page(task_id):
                     f"🌟 Woah ! '{task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
                     f"🎪 C'est pas Groundhog Day ! '{task_name}' est déjà coché ✓",
                 ]
-                
                 flash(random.choice(funny_messages), "warning")
                 conn.close()
                 return redirect(url_for('menu'))
@@ -7797,6 +8648,8 @@ def custom_task_page(task_id):
     conn.close()
     
     # GET -> afficher la page améliorée (réutiliser le template task_page_enhanced)
+    norm_cat_custom = normalize_category(category)
+    cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), '🏠'))
     return render_template('task_page_enhanced.html', 
                           task_name=task_name, 
                           task_image=task_image, 
@@ -7812,7 +8665,9 @@ def custom_task_page(task_id):
                           category=category,
                           task_id=task_id,
                           current_task_id=task_id,
-                          is_custom_task=True)
+                          is_custom_task=True,
+                          category_name=cat_name_custom,
+                          category_icon=cat_icon_custom)
 
 
 @app.route('/task_enhanced/<cat>/<int:task_id>', methods=['GET', 'POST'])
@@ -7853,7 +8708,7 @@ def task_enhanced(cat, task_id):
     daily_tasks = 0
     if 'user' in session:
         total_points = get_user_points(session['user'])
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         row = c.fetchone()
@@ -7895,7 +8750,7 @@ def task_enhanced(cat, task_id):
             flash("Connecte-toi pour valider une tâche.", "warning")
             return redirect(url_for('signup_email'))
 
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer le joueur qui a fait la tâche (depuis le formulaire)
@@ -7939,17 +8794,30 @@ def task_enhanced(cat, task_id):
         import random
         today = date.today().isoformat()
         
-        # 🔄 Tâches qui peuvent être faites plusieurs fois par jour
-        multiple_times_tasks = [
-            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
-            'mettre la table', 'passer l\'éponge', 'éponge'
+        # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
+        baby_unlimited_tasks = [
+            'biberon', 'couche', 'couches', 'dormir', 'donner le biberon', 'changer les couches'
         ]
+        is_baby_unlimited = any(kw.lower() in task_name.lower() for kw in baby_unlimited_tasks)
         
-        # Vérifier si la tâche peut être faite plusieurs fois par jour
-        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        # 🍳 Tâches cuisine : max 2 fois par jour
+        is_kitchen_task = 'cuisine' in (normalized_cat or '').lower()
         
-        # éviter doublons sur la même journée pour la même tâche SEULEMENT si ce n'est pas une tâche répétable
-        if not can_repeat:
+        if is_baby_unlimited:
+            pass  # Aucune restriction pour les tâches bébé
+        elif is_kitchen_task:
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
+            if c.fetchone()[0] >= 2:
+                funny_messages = [
+                    f"🍳 '{task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
+                    f"⚡ Wow ! '{task_name}' déjà 2 fois aujourd'hui ! Repose-toi ! 💪",
+                    f"🏆 '{task_name}' × 2 c'est déjà super ! On s'arrête là 😊",
+                ]
+                funny_message = random.choice(funny_messages)
+                flash(funny_message, "warning")
+                conn.close()
+                return redirect(url_for('menu'))
+        else:
             # Vérifier doublon sur la journée locale POUR LE JOUEUR QUI VALIDE
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", (player_email, normalized_cat, task_name, today))
             if c.fetchone():
@@ -7964,7 +8832,6 @@ def task_enhanced(cat, task_id):
                     f"🌟 Woah ! '{task_name}' a déjà été validé. Tu veux un trophée ? 🏅",
                     f"🎪 C'est pas Groundhog Day ! '{task_name}' est déjà coché ✓",
                 ]
-                
                 funny_message = random.choice(funny_messages)
                 flash(funny_message, "warning")
                 conn.close()
@@ -8156,7 +9023,8 @@ def task_enhanced(cat, task_id):
     _dbg(f"🔧 [TASK_ENHANCED] task_name: {task_name}")
     _dbg(f"🔧 [TASK_ENHANCED] category: {cat}")
     
-    return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, task_id=task_id, current_task_id=task_id, hide_header=True)
+    category_name_display, category_icon_display = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
+    return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, task_id=task_id, current_task_id=task_id, hide_header=True, category_name=category_name_display, category_icon=category_icon_display)
 
 
 # 🔧 Route de test pour debug task_id
@@ -8225,7 +9093,7 @@ def api_validate_task():
     _dbg(f"   - bottle_ml: '{bottle_ml}' (type: {type(bottle_ml)})")
     _dbg(f"   - observations: '{observations}' (type: {type(observations)})")
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -8277,14 +9145,14 @@ def api_validate_task():
         
         today = date.today().isoformat()
         
-        # � Tâches qui peuvent être faites plusieurs fois par jour
-        multiple_times_tasks = [
-            'donner le biberon', 'biberon', 'changer les couches', 'couches', 'couche',
-            'mettre la table', 'passer l\'éponge', 'éponge'
+        # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
+        baby_unlimited_tasks = [
+            'biberon', 'couche', 'couches', 'dormir', 'donner le biberon', 'changer les couches'
         ]
+        is_baby_unlimited = any(kw.lower() in task_name.lower() for kw in baby_unlimited_tasks)
         
-        # Vérifier si la tâche peut être faite plusieurs fois par jour
-        can_repeat = any(keyword.lower() in task_name.lower() for keyword in multiple_times_tasks)
+        # 🍳 Tâches cuisine : max 2 fois par jour
+        is_kitchen_task = 'cuisine' in (category or '').lower()
         
         # 🔍 LOG DEBUG : Vérifier le nom de la tâche utilisé
         _dbg(f"\n🔍 [DOUBLON CHECK] Avant vérification:")
@@ -8292,10 +9160,25 @@ def api_validate_task():
         _dbg(f"   - category: '{category}'")
         _dbg(f"   - player_email: '{player_email}'")
         _dbg(f"   - today: '{today}'")
-        _dbg(f"   - can_repeat: {can_repeat}")
+        _dbg(f"   - is_baby_unlimited: {is_baby_unlimited}")
+        _dbg(f"   - is_kitchen_task: {is_kitchen_task}")
         
-        # Vérifier doublon SEULEMENT si la tâche ne peut pas être répétée
-        if not can_repeat:
+        if is_baby_unlimited:
+            pass  # Aucune restriction pour les tâches bébé
+        elif is_kitchen_task:
+            c.execute("SELECT COUNT(*) FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?",
+                     (player_email, category, task_name, today))
+            if c.fetchone()[0] >= 2:
+                display_task_name = task_name_from_payload if task_name_from_payload else task_name
+                funny_messages = [
+                    f"🍳 '{display_task_name}' c'est la 3ème fois ! Max 2 fois par jour en cuisine 😅",
+                    f"⚡ Wow ! '{display_task_name}' déjà 2 fois aujourd'hui ! Repose-toi ! 💪",
+                    f"🏆 '{display_task_name}' × 2 c'est déjà super ! On s'arrête là 😊",
+                ]
+                funny_message = random.choice(funny_messages)
+                _dbg(f"   Message envoyé (cuisine max 2): '{funny_message}'")
+                return jsonify({'success': False, 'error': funny_message, 'duplicate': True}), 200
+        else:
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at, 'localtime')=?", 
                      (player_email, category, task_name, today))
             result = c.fetchone()
@@ -8419,7 +9302,7 @@ def api_validate_task():
             _dbg(f"🚀 Tentative d'envoi WebSocket pour house_id={user_house_id}, player={player_email}")
             try:
                 # Rouvrir une connexion pour récupérer les données à jour
-                conn_ws = sqlite3.connect(DB)
+                conn_ws = get_db_connection()
                 c_ws = conn_ws.cursor()
                 c_ws.execute("""
                     SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
@@ -8552,7 +9435,7 @@ def api_daily_tasks():
     if 'user' not in session:
         return {'tasks': []}, 200
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -8642,7 +9525,7 @@ def api_players_points():
     if 'user' not in session:
         return {'players': []}, 200
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     try:
@@ -8698,7 +9581,7 @@ def api_unread_counts():
         return jsonify({'error': 'Non authentifié'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Récupérer house_id
@@ -8815,7 +9698,7 @@ def api_push_test():
             return {'success': False, 'error': 'Aucune subscription trouvée'}, 404
         
         notification_data = {
-            'title': '🧹 CleanBeat Test',
+            'title': '🧹 Dust Test',
             'body': 'Vos notifications push fonctionnent correctement !',
             'icon': '/static/images/logo.png',
             'url': '/menu'
@@ -8886,7 +9769,7 @@ def api_test_reminder():
         return {'success': False, 'error': 'Non authentifié'}, 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         row = c.fetchone()
@@ -8950,7 +9833,7 @@ def baby_tracking(cat, task_id):
         return redirect(url_for('task_enhanced', cat=cat, task_id=task_id))
     
     # Récupérer l'historique des 5 derniers enregistrements
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -8997,7 +9880,7 @@ def save_baby_tracking():
     
     _dbg(f"📝 Données reçues: task_type={task_type}, time={tracking_time}, ml={bottle_ml}")
     
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     
     # Récupérer house_id
@@ -9042,7 +9925,7 @@ def save_baby_tracking():
     # Envoyer le message directement dans la base de données
     try:
         from datetime import datetime
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         
         c.execute("""
@@ -9088,7 +9971,7 @@ def invitation_partner():
         return redirect(url_for('login'))
     
     # Récupérer le code et le nom de la maison
-    conn = sqlite3.connect(DB)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
@@ -9108,7 +9991,7 @@ def invitation_partner():
         return redirect(url_for('menu'))
     
     # Construire l'URL d'invitation
-    join_url = f"{request.host_url}join_house?code={house_code}"
+    join_url = f"{request.host_url}invite/{house_code}"
     
     return render_template('invitation_partner.html', 
                          house_code=house_code,
@@ -9139,7 +10022,7 @@ if SOCKETIO_AVAILABLE:
             return
         
         try:
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT house_id FROM users WHERE email=?", (user_email,))
             row = c.fetchone()
@@ -9162,7 +10045,7 @@ if SOCKETIO_AVAILABLE:
             if not user_email:
                 return
             
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT house_id FROM users WHERE email=?", (user_email,))
             row = c.fetchone()
@@ -9205,7 +10088,7 @@ if SOCKETIO_AVAILABLE:
             if not user_email:
                 return
             
-            conn = sqlite3.connect(DB)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT house_id, name, avatar, avatar_url, avatar_file FROM users WHERE email=?", (user_email,))
             row = c.fetchone()
@@ -9240,7 +10123,7 @@ def test_house_encouragement():
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
         user_row = c.fetchone()
@@ -9268,7 +10151,7 @@ def test_house_sermon():
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
         user_row = c.fetchone()
@@ -9296,7 +10179,7 @@ def test_house_sermon_lazy():
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     
     try:
-        conn = sqlite3.connect(DB)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         user_row = c.fetchone()
@@ -9318,6 +10201,9 @@ def test_house_sermon_lazy():
 # 🏠 ========== FIN ROUTES TEST MESSAGES MAISON ==========
 
 
+# ─── KEEP-ALIVE supprimé (plan payant Render → serveur toujours allumé) ──────
+
+
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
     try:
@@ -9330,7 +10216,7 @@ if __name__ == '__main__':
 
     # Forcer le port 8000
     chosen_port = 8000
-    print(f"Démarrage de CleanBeat sur le port {chosen_port}...")
+    print(f"Démarrage de Dust sur le port {chosen_port}...")
     print("⚠️  Mode développement : pour une meilleure stabilité, utilisez un serveur WSGI en production")
     
     # Démarrer avec SocketIO si disponible, sinon utiliser Flask standard
