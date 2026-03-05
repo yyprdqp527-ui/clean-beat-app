@@ -4451,12 +4451,13 @@
                 // ==========================================
                 (function() {
                     try {
-                        // Configuration Socket.IO avec polling prioritaire pour éviter les crashes WebSocket
+                        // 🚀 WebSocket uniquement (polling désactivé — trop lourd en RAM sur Render)
                         const socket = io({
-                            transports: ['polling', 'websocket'],
+                            transports: ['websocket'],
                             reconnection: true,
-                            reconnectionDelay: 1000,
-                            reconnectionAttempts: 5
+                            reconnectionDelay: 2000,
+                            reconnectionAttempts: 3,
+                            timeout: 10000
                         });
                         const userEmail = "{{ session.get('user', '') }}";
                         

@@ -378,7 +378,7 @@ function playSuccessSound() {
 // 🔌 WebSocket pour mise à jour en temps réel des points
 (function() {
     try {
-        const socket = io();
+        const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
         const userEmail = '{{ session.user }}';
         
         socket.on('connect', function() {

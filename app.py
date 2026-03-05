@@ -425,7 +425,7 @@ def _invalidate_house_cache(email: str):
 
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
-    # Configurer SocketIO avec les bons paramètres pour WebSocket
+    # Configurer SocketIO — WebSocket uniquement, polling désactivé (trop lourd en RAM)
     # En local macOS : forcer threading (eventlet/kqueue bug sur macOS)
     _async_mode = 'eventlet' if os.environ.get('RENDER') else 'threading'
     socketio = SocketIO(
@@ -433,8 +433,8 @@ if SOCKETIO_AVAILABLE:
         cors_allowed_origins="*",
         logger=False,
         engineio_logger=False,
-        ping_timeout=60,
-        ping_interval=25,
+        ping_timeout=120,
+        ping_interval=60,
         async_mode=_async_mode
     )
     print("✅ WebSocket activé pour la synchronisation en temps réel")

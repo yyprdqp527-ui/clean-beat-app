@@ -371,7 +371,7 @@
 <script>
 // 🔌 WebSocket pour synchronisation en temps réel
 if (typeof io !== 'undefined') {
-    const socket = io();
+    const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
     
     socket.on('connect', function() {
         console.log('🔌 WebSocket connecté sur add_players');

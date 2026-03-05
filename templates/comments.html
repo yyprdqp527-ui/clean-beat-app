@@ -1191,7 +1191,7 @@
         // 🔌 WebSocket pour synchroniser les messages en temps réel
         (function() {
             try {
-                const socket = io();
+                const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
                 const userEmail = "{{ email }}";
                 
                 // 🔔 Son de notification pour les nouveaux messages

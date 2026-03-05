@@ -726,7 +726,7 @@ window.addEventListener('DOMContentLoaded', function(){
         }
         
         console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
-        const socket = io();
+        const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
         const userEmail = "{{ session.get('user', '') }}";
         
         console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');
