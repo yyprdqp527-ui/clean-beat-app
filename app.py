@@ -63,12 +63,49 @@ _RE_ALTER_ADD = re.compile(
     r'(ALTER\s+TABLE\s+\S+\s+ADD\s+COLUMN\s+)(?!IF\s+NOT\s+EXISTS\s)',
     re.IGNORECASE
 )
-# Traduction SQLite → PostgreSQL : fonctions de date
+# ─── Traduction SQLite → PostgreSQL : fonctions de date ───────────────────────
+# strftime('%w', DATE(col,'localtime')) → EXTRACT(DOW ...)
 _RE_STRFTIME_W = re.compile(
     r"CAST\s*\(\s*strftime\s*\(\s*'%w'\s*,\s*DATE\s*\(([^,)]+),\s*'localtime'\s*\)\s*\)\s+AS\s+INTEGER\s*\)",
     re.IGNORECASE
 )
+# datetime(date('now','localtime','+N day')) → (CURRENT_DATE + INTERVAL 'N day')::timestamp
+_RE_DATETIME_DATE_NOW_OFFSET = re.compile(
+    r"datetime\s*\(\s*date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'([^']+)'\s*\)\s*\)",
+    re.IGNORECASE
+)
+# datetime(date('now','localtime')) → CURRENT_TIMESTAMP
+_RE_DATETIME_DATE_NOW_LOCAL = re.compile(
+    r"datetime\s*\(\s*date\s*\(\s*'now'\s*,\s*'localtime'\s*\)\s*\)",
+    re.IGNORECASE
+)
+# datetime(col) → col::timestamp
+_RE_DATETIME_COL = re.compile(
+    r"datetime\s*\(\s*([^()]+?)\s*\)",
+    re.IGNORECASE
+)
+# date('now','localtime','+N day') → CURRENT_DATE + INTERVAL 'N day'
+_RE_DATE_NOW_OFFSET = re.compile(
+    r"date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'([^']+)'\s*\)",
+    re.IGNORECASE
+)
+# date('now','localtime') → CURRENT_DATE
+_RE_DATE_NOW_LOCAL = re.compile(
+    r"date\s*\(\s*'now'\s*,\s*'localtime'\s*\)",
+    re.IGNORECASE
+)
+# date('now') → CURRENT_DATE
+_RE_DATE_NOW = re.compile(
+    r"date\s*\(\s*'now'\s*\)",
+    re.IGNORECASE
+)
+# DATE(col, 'localtime') → col::date  (doit être APRÈS les patterns ci-dessus)
 _RE_DATE_LOCALTIME = re.compile(r"DATE\(([^,)]+),\s*'localtime'\)", re.IGNORECASE)
+# date(col) isolé (sans 'now') → col::date
+_RE_DATE_COL = re.compile(
+    r"\bdate\s*\(\s*([^'(),]+?)\s*\)",
+    re.IGNORECASE
+)
 
 
 class _CompatCursor:
@@ -93,10 +130,26 @@ class _CompatCursor:
         sql = sql.replace('?', '%s')
         sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
         sql = _RE_ALTER_ADD.sub(r'\1IF NOT EXISTS ', sql)
-        # SQLite → PostgreSQL : CAST(strftime('%w', DATE(col,'localtime')) AS INTEGER) → EXTRACT DOW
+        # ─── SQLite → PostgreSQL : Traduction des fonctions de date ───
+        # ORDRE CRITIQUE : les patterns les plus spécifiques d'abord
+        # 1) strftime('%w', ...) → EXTRACT DOW
         sql = _RE_STRFTIME_W.sub(r'EXTRACT(DOW FROM \1::date)::integer', sql)
-        # SQLite → PostgreSQL : DATE(col, 'localtime') → col::date
+        # 2) datetime(date('now','localtime','+N day')) → (CURRENT_DATE + INTERVAL 'N day')::timestamp
+        sql = _RE_DATETIME_DATE_NOW_OFFSET.sub(r"(CURRENT_DATE + INTERVAL '\1')::timestamp", sql)
+        # 3) datetime(date('now','localtime')) → CURRENT_TIMESTAMP
+        sql = _RE_DATETIME_DATE_NOW_LOCAL.sub('CURRENT_TIMESTAMP', sql)
+        # 4) datetime(col) → col::timestamp
+        sql = _RE_DATETIME_COL.sub(r'\1::timestamp', sql)
+        # 5) date('now','localtime','+N day') → CURRENT_DATE + INTERVAL 'N day'
+        sql = _RE_DATE_NOW_OFFSET.sub(r"CURRENT_DATE + INTERVAL '\1'", sql)
+        # 6) date('now','localtime') → CURRENT_DATE
+        sql = _RE_DATE_NOW_LOCAL.sub('CURRENT_DATE', sql)
+        # 7) date('now') → CURRENT_DATE
+        sql = _RE_DATE_NOW.sub('CURRENT_DATE', sql)
+        # 8) DATE(col, 'localtime') → col::date
         sql = _RE_DATE_LOCALTIME.sub(r'\1::date', sql)
+        # 9) date(col) isolé → col::date
+        sql = _RE_DATE_COL.sub(r'\1::date', sql)
         return sql
 
     def execute(self, sql, params=()):
