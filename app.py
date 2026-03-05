@@ -2010,7 +2010,7 @@ TASKS_CONFIG = {
     'chambre_bebe': [
         {
             'name': 'Donner le biberon',
-            'image': 'chambre bébé/Donner le biberon.webp',
+            'image': 'chambre bébé/donner le biberon.webp',
             'description': 'Nourrir bébé avec amour !',
             'points': 5,
             'fun_text': '🍼 L\'heure du biberon !',
