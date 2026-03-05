@@ -270,27 +270,25 @@
     /* Utilisation des styles communs pour les avatars */
     .player-avatar-preview {
         position: relative;
-        width: 100px !important;
-        height: 100px !important;
-        min-width: 100px !important;
-        min-height: 100px !important;
-        max-width: 100px !important;
-        max-height: 100px !important;
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
+        min-height: 100px;
         border-radius: 12px;
         background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
         backdrop-filter: blur(10px) saturate(140%);
         -webkit-backdrop-filter: blur(10px) saturate(140%);
         border: 3px solid transparent;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         box-shadow: 
             0 4px 12px rgba(0,0,0,0.08);
-        flex: 0 0 100px !important;
+        flex: 0 0 auto;
         transition: all 0.25s ease;
         cursor: pointer;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
+        overflow: visible;
+        box-sizing: border-box;
     }
     
     /* Effet glassmorphism sur la bordure uniquement */
@@ -352,13 +350,11 @@
     /* Effets hover/active supprimés - seront réajoutés de manière harmonieuse */
 
     .player-avatar-preview img {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         border-radius: 10px;
-        display: block !important;
-        flex-shrink: 0 !important;
-        min-width: 0 !important;
+        display: block;
     }
     
     /* Animation de validation supprimée */
@@ -431,12 +427,9 @@
             height: 100px !important;
             min-width: 100px !important;
             min-height: 100px !important;
-            max-width: 100px !important;
-            max-height: 100px !important;
             border-width: 3px !important;
             border-style: solid !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
         }
         
         #baby-tracking-form {
@@ -651,94 +644,10 @@
             border-radius: 16px;
         }
     }
-
-    /* Header catégorie orangé glassmorphisme (identique à tasks.html) */
-    .room-header {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        padding: 20px;
-        margin-bottom: 20px;
-        text-align: center;
-        border: 2px solid rgba(253,174,84,0.3);
-        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
-        max-width: 600px;
-        width: 100%;
-        margin-left: auto;
-        margin-right: auto;
-        box-sizing: border-box;
-    }
-    .room-header .room-icon {
-        font-size: 48px;
-        margin-bottom: 8px;
-        display: block;
-    }
-    .room-header .room-name {
-        font-size: 22px;
-        font-weight: 800;
-        color: #153036;
-        margin: 0;
-    }
-    .room-header .room-subtitle {
-        font-size: 14px;
-        color: #597176;
-        margin-top: 4px;
-    }
-
-    /* Bouton retour glassmorphisme */
-    .back-btn-glass {
-        position: fixed;
-        top: 24px;
-        left: 24px;
-        z-index: 2001;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #153036;
-        font-size: 28px;
-        font-weight: bold;
-        text-decoration: none;
-        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-    }
-    .back-btn-glass:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    }
-    .back-btn-glass:active {
-        transform: scale(0.95);
-    }
-    @media (max-width: 520px) {
-        .back-btn-glass {
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-        }
-    }
 </style>
 
 <!-- Bouton retour vers le menu -->
-<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
-
-<!-- Header catégorie orangé glassmorphisme -->
-<div style="padding: 90px 16px 0; max-width:640px; margin:0 auto;">
-    <div class="room-header">
-        <span class="room-icon">{{ category_icon|default('🏠') }}</span>
-        <h1 class="room-name">{{ category_name|default(category|replace('_', ' ')|capitalize) }}</h1>
-        <p class="room-subtitle">{{ task_name }}</p>
-    </div>
-</div>
+<a href="{{ url_for('menu') }}" style="position:fixed;top:24px;left:24px;z-index:2001;width:56px;height:56px;background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.5);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#153036;font-size:28px;font-weight:bold;text-decoration:none;box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);transition:all 0.3s ease;" aria-label="Retour au menu">←</a>
 
 <div class="task-main-container">
 
@@ -1023,7 +932,7 @@ function validateTaskAjax(playerEmail) {
     
     // Ajouter un timeout pour éviter les blocages
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 10s timeout
     
     fetch('/api/validate_task', {
         method: 'POST',
@@ -1742,7 +1651,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }
         
         console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
-        const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
+        const socket = io();
         const userEmail = "{{ session.get('user', '') }}";
         
         console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');
