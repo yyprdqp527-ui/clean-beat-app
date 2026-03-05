@@ -3,7 +3,7 @@ services:
     name: dust
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 --worker-connections 1000 --preload wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 75 --log-level warning
+    startCommand: gunicorn --worker-class eventlet -w 1 --worker-connections 1000 wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 75 --log-level warning
     envVars:
       - key: SECRET_KEY
         generateValue: true

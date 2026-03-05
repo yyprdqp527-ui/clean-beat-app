@@ -10169,7 +10169,14 @@ _start_keep_alive()
 # Backup : s'assure que le keep-alive tourne même si gunicorn --preload a tué le thread
 @app.before_request
 def _ensure_keep_alive():
-    if not _keep_alive_running:
+    global _keep_alive_running
+    import threading as _threading
+    # --preload de gunicorn fork le worker APRÈS avoir chargé l'app :
+    # le thread keep-alive lancé dans le master NE SURVIT PAS au fork.
+    # _keep_alive_running est True (hérité) mais le thread est mort → on le vérifie vraiment.
+    thread_alive = any(t.name == 'keep-alive' for t in _threading.enumerate())
+    if not thread_alive:
+        _keep_alive_running = False  # Force la relance
         _start_keep_alive()
 # ─────────────────────────────────────────────────────────────────────────────
 
