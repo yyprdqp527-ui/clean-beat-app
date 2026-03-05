@@ -2704,7 +2704,9 @@ CREATE TABLE IF NOT EXISTS users (
         reminder_frequency TEXT DEFAULT 'daily',
         quiet_hours_start TEXT DEFAULT '22:00',
         quiet_hours_end TEXT DEFAULT '08:00'
-    );
+    )
+    """)
+    c.execute("""
     CREATE TABLE IF NOT EXISTS beta_feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
