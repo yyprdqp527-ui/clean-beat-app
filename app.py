@@ -1332,9 +1332,16 @@ def get_db_connection(timeout=30.0):
                 return _CompatConn(conn, is_pg=True, pool=pool)
             except Exception:
                 pass
-        # Fallback: connexion directe sans pool
-        conn = psycopg2.connect(_PG_URL, connect_timeout=10)
-        return _CompatConn(conn, is_pg=True)
+        # Fallback: connexion directe sans pool (avec retry SSL)
+        for attempt in range(3):
+            try:
+                conn = psycopg2.connect(_PG_URL, connect_timeout=10)
+                return _CompatConn(conn, is_pg=True)
+            except Exception as e:
+                if attempt < 2:
+                    import time; time.sleep(0.5)
+                else:
+                    raise
     else:
         raw = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
         # Optimisations SQLite
