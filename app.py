@@ -66,7 +66,7 @@ _RE_ALTER_ADD = re.compile(
 # ─── Traduction SQLite → PostgreSQL : fonctions de date ───────────────────────
 # strftime('%w', DATE(col)) → EXTRACT(DOW ...)
 _RE_STRFTIME_W = re.compile(
-    r"CAST\s*\(\s*strftime\s*\(\s*'%w'\s*,\s*DATE\s*\(([^,)]+),\s*'localtime'\s*\)\s*\)\s+AS\s+INTEGER\s*\)",
+    r"CAST\s*\(\s*strftime\s*\(\s*'%w'\s*,\s*DATE\s*\(([^,)]+?)(?:,\s*'localtime')?\s*\)\s*\)\s+AS\s+INTEGER\s*\)",
     re.IGNORECASE
 )
 # datetime(date('now','localtime','+N day')) → (CURRENT_DATE + INTERVAL 'N day')::timestamp
