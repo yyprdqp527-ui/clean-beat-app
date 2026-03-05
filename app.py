@@ -4949,7 +4949,7 @@ def comments():
             (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
             OR (m.sender_type = 'house' AND m.message_type NOT IN ('task_completed'))
         )
-        ORDER BY datetime(substr(m.timestamp, 1, 19)) DESC, m.id DESC
+        ORDER BY m.id DESC
         LIMIT 100
     """, (session['user'], house_id, session['user'], session['user']))
     
