@@ -232,7 +232,7 @@
                 <div class="gift-status revealed">✨ Révélé ! ✨</div>
                 <div class="revealed-info">
                     🎉 Révélé par {{ gift.revealed_by }}<br>
-                    📅 Le {{ gift.revealed_date.split('T')[0] if gift.revealed_date else 'aujourd\'hui' }}
+                    📅 Le {{ gift.revealed_date.strftime('%Y-%m-%d') if gift.revealed_date.__class__.__name__ == 'datetime' else (gift.revealed_date.split('T')[0] if gift.revealed_date else 'aujourd\'hui') }}
                 </div>
                 
             {% elif can_open_gifts %}
