@@ -2345,8 +2345,6 @@ def get_player_colors_map(player_emails):
 def init_db():
     conn = get_db_connection()
     c = conn.cursor()
-    # Sur PostgreSQL, skip les ALTER TABLE qui sont lents
-    _skip_alter = _USE_PG
     c.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2363,70 +2361,59 @@ CREATE TABLE IF NOT EXISTS users (
 """)
 
     # Ajouter les nouvelles colonnes users si elles n'existent pas
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN name TEXT")
     except Exception:
         pass
     
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN photo_filename TEXT")
     except Exception:
         pass
     
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
     except Exception:
         pass
 
     # Colonnes pour les comptes enfants
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN is_child_account INTEGER DEFAULT 0")
     except Exception:
         pass
     
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN created_by TEXT")
     except Exception:
         pass
     
     # Colonne pour la couleur personnelle du joueur
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN player_color TEXT")
     except Exception:
         pass
     
     # Colonnes pour le système d'avatars DiceBear
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN avatar_style TEXT DEFAULT 'lorelei'")
     except Exception:
         pass
     
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN avatar_file TEXT")
     except Exception:
         pass
     
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN registration_step TEXT")
     except Exception:
         pass
 
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN firstname TEXT")
     except Exception:
         pass
 
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
     except Exception:
@@ -2444,43 +2431,36 @@ CREATE TABLE IF NOT EXISTS users (
         """)
     
     # Ajouter les nouvelles colonnes houses si elles n'existent pas
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN house_name TEXT")
     except Exception:
         pass
     
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN progress INTEGER DEFAULT 0")
     except Exception:
         pass
 
     # Colonnes ajoutées dans des versions ultérieures
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN health INTEGER DEFAULT 100")
     except Exception:
         pass
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN level INTEGER DEFAULT 1")
     except Exception:
         pass
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN mood TEXT DEFAULT 'happy'")
     except Exception:
         pass
     # Réinitialisation quotidienne: stocker la dernière date de reset
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN last_reset_date TEXT")
     except Exception:
         pass
     
     # Type de foyer pour les récompenses (family, couple, coloc)
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE houses ADD COLUMN house_type TEXT DEFAULT 'family'")
     except Exception:
@@ -2526,7 +2506,6 @@ CREATE TABLE IF NOT EXISTS users (
     """)
     
     # Ajouter la colonne purchased_date si elle n'existe pas (pour les bases existantes)
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE user_rewards ADD COLUMN purchased_date DATE DEFAULT CURRENT_DATE")
     except Exception:
@@ -2571,7 +2550,6 @@ CREATE TABLE IF NOT EXISTS users (
     """)
     
     # Ajouter la colonne recipient_email pour les messages privés
-    if not _skip_alter:
     try:
         c.execute("ALTER TABLE messages ADD COLUMN recipient_email TEXT")
     except Exception:
