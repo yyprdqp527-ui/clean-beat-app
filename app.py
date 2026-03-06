@@ -7589,7 +7589,7 @@ def menu():
             print(f"🏠 MENU CHECK: name={user_name}, avatar={user_avatar}, file={user_avatar_file}, step={registration_step}", flush=True)
             
             # Si le parcours d'inscription n'est pas terminé
-            if registration_step != 'profile_created':
+            if registration_step not in ('profile_created', 'complete'):
                 conn.close()
                 flash("Complète ton profil pour commencer à jouer ! 🎭", "info")
                 return redirect(url_for('create_profile'))
