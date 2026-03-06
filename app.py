@@ -6555,7 +6555,7 @@ def login():
             avatar_file = user[3] or ''
 
             # Rediriger vers create_profile seulement si l'inscription n'est pas terminée
-            if registration_step == 'email_signup':
+            if registration_step == 'email_signup' and not avatar and not avatar_file:
                 flash("✨ Complète ton profil pour commencer !", "info")
                 return redirect(url_for('create_profile'))
 
