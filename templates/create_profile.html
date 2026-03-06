@@ -1041,41 +1041,7 @@
             closeAvatarModal();
         }
         
-        // ===== VALIDATION FORMULAIRE =====
-        
-        document.getElementById('profileForm').addEventListener('submit', function(e) {
-            const avatar = document.getElementById('selectedAvatar').value;
-            const avatarStyle = document.getElementById('avatarStyle').value;
-            const photo = document.getElementById('selectedPhoto').value;
-            const name = document.querySelector('input[name="name"]').value.trim();
-            
-            console.log('🔍 Validation formulaire:', { name, avatar, avatarStyle, photo: photo ? 'présente' : 'aucune' });
-            
-            // Vérifier le nom en premier
-            if (!name || name.length < 2) {
-                showGlassPopup('📝 Veuillez entrer un prénom valide (minimum 2 caractères).', 'warning', 3000);
-                e.preventDefault();
-                return false;
-            }
-            
-            // Vérifier qu'un avatar est sélectionné (seulement en mode création)
-            {% if not change_avatar %}
-            if (!avatar && !photo) {
-                showGlassPopup('👤 Veuillez choisir un avatar ou charger une photo avant de continuer.', 'warning', 3000);
-                e.preventDefault();
-                return false;
-            }
-            {% endif %}
-            
-            console.log('✅ Formulaire valide - soumission en cours');
-        });
-        
-        // Fermer le modal en cliquant à l'extérieur
-        document.getElementById('avatarModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeAvatarModal();
-            }
-        });
+
         
         // ===== INITIALISATION =====
         
@@ -1143,6 +1109,40 @@
             }
             {% endif %}
             {% endif %}
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            const avatar = document.getElementById('selectedAvatar').value;
+            const avatarStyle = document.getElementById('avatarStyle').value;
+            const photo = document.getElementById('selectedPhoto').value;
+            const name = document.querySelector('input[name="name"]').value.trim();
+            
+            console.log('🔍 Validation formulaire:', { name, avatar, avatarStyle, photo: photo ? 'présente' : 'aucune' });
+            
+            // Vérifier le nom en premier
+            if (!name || name.length < 2) {
+                showGlassPopup('📝 Veuillez entrer un prénom valide (minimum 2 caractères).', 'warning', 3000);
+                e.preventDefault();
+                return false;
+            }
+            
+            // Vérifier qu'un avatar est sélectionné (seulement en mode création)
+            {% if not change_avatar %}
+            if (!avatar && !photo) {
+                showGlassPopup('👤 Veuillez choisir un avatar ou charger une photo avant de continuer.', 'warning', 3000);
+                e.preventDefault();
+                return false;
+            }
+            {% endif %}
+            
+            console.log('✅ Formulaire valide - soumission en cours');
+        });
+        
+        // Fermer le modal en cliquant à l'extérieur
+        document.getElementById('avatarModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAvatarModal();
+            }
+        });
+        
             // Note: En mode création, l'image par défaut est déjà dans le HTML, pas besoin de la recréer
         });
     </script>
