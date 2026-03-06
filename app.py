@@ -6824,9 +6824,9 @@ def update_profile():
     query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
     try:
         c.execute(query, update_values)
-        _dbg(f"✅ UPDATE OK: fields={update_fields}, values={update_values}")
+        print(f"✅ UPDATE OK: fields={update_fields}", flush=True)
     except Exception as e:
-        _dbg(f"❌ ERREUR UPDATE: {e}, query={query}, values={update_values}")
+        print(f"❌ ERREUR UPDATE: {e}, query={query}", flush=True)
         import traceback; traceback.print_exc()
         conn.rollback()
         conn.close()
