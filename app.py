@@ -7594,7 +7594,7 @@ def menu():
                 flash("Complète ton profil pour commencer à jouer ! 🎭", "info")
                 return redirect(url_for('create_profile'))
             
-            if not user_name or (not user_avatar and not user_avatar_file):
+            if not user_name:
                 conn.close()
                 flash("Complète ton profil pour commencer à jouer ! 🎭", "info")
                 return redirect(url_for('create_profile'))
