@@ -2343,7 +2343,10 @@ def get_player_colors_map(player_emails):
 # BASE DE DONNÉES
 # ===============================
 def init_db():
+    import sys
+    print('init_db START', flush=True)
     conn = get_db_connection()
+    print('init_db DB connected', flush=True)
     c = conn.cursor()
     c.execute("""
 CREATE TABLE IF NOT EXISTS users (
@@ -2360,6 +2363,11 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+    # Sur PostgreSQL, les colonnes existent deja - skip ALTER TABLE
+    if _USE_PG:
+        conn.commit()
+        conn.close()
+        return
     # Ajouter les nouvelles colonnes users si elles n'existent pas
     try:
         c.execute("ALTER TABLE users ADD COLUMN name TEXT")
