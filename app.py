@@ -2753,7 +2753,8 @@ CREATE TABLE IF NOT EXISTS users (
     conn.commit()
     conn.close()
 
-init_db()
+import threading
+threading.Thread(target=init_db, daemon=True).start()
 
 # === CONFIGURATION DU CACHE POUR LES FICHIERS STATIQUES ===
 @app.after_request
