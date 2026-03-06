@@ -6822,7 +6822,16 @@ def update_profile():
     # Exécuter la mise à jour
     update_values.append(session['user'])
     query = f"UPDATE users SET {', '.join(update_fields)} WHERE email=?"
-    c.execute(query, update_values)
+    try:
+        c.execute(query, update_values)
+        _dbg(f"✅ UPDATE OK: fields={update_fields}, values={update_values}")
+    except Exception as e:
+        _dbg(f"❌ ERREUR UPDATE: {e}, query={query}, values={update_values}")
+        import traceback; traceback.print_exc()
+        conn.rollback()
+        conn.close()
+        flash(f"Erreur sauvegarde: {e}", "danger")
+        return redirect(url_for('create_profile'))
     
     # 📛 Propager le changement de nom dans les messages existants
     if name and old_name and name != old_name and profile_house_id:
