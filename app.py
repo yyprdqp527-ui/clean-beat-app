@@ -7586,6 +7586,7 @@ def menu():
                 return redirect(url_for('welcome'))
             
             user_name, user_avatar, user_avatar_file, house_id, registration_step = user_row
+            print(f"🏠 MENU CHECK: name={user_name}, avatar={user_avatar}, file={user_avatar_file}, step={registration_step}", flush=True)
             
             # Si le parcours d'inscription n'est pas terminé
             if registration_step != 'profile_created':
