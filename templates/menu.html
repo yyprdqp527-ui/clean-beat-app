@@ -2444,8 +2444,8 @@
                                                     <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
-                                            <!-- Badge pour les messages que VOUS avez envoyés à p2 et qu'il n'a pas lus -->
-                                            {% set p2_unread = unread_sent_to.get(p2.email, 0) if unread_sent_to else 0 %}
+                                            <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
+                                            {% set p2_unread = unread_by_sender.get(p2.email, 0) if unread_by_sender else (unread_sent_to.get(p2.email, 0) if unread_sent_to else 0) %}
                                             {% if p2_unread > 0 %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             {% endif %}
@@ -2488,8 +2488,8 @@
                                                         <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
-                                                <!-- Badge pour les messages que VOUS avez envoyés à ce joueur et qu'il n'a pas lus -->
-                                                {% set p_unread = unread_sent_to.get(p.email, 0) if unread_sent_to else 0 %}
+                                                <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
+                                                {% set p_unread = unread_by_sender.get(p.email, 0) if unread_by_sender else (unread_sent_to.get(p.email, 0) if unread_sent_to else 0) %}
                                                 {% if p_unread > 0 %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 {% endif %}
@@ -4415,16 +4415,18 @@
                     }
                 }
                 
-                // Mettre à jour les badges par destinataire sur les avatars (messages que VOUS avez envoyés)
+                // Mettre à jour les badges par joueur sur les avatars (messages non lus par expéditeur)
                 function updateUnreadSentTo(unreadSentTo) {
-                    // unreadSentTo est un objet { email_destinataire: count, ... }
+                    const currentUserEmail = "{{ session.get('user', '') }}";
+                    const countsMap = unreadSentTo || {};
+
                     // Mettre à jour les badges existants
                     document.querySelectorAll('.avatar-notification-badge[data-recipient]').forEach(badge => {
                         const recipientEmail = badge.getAttribute('data-recipient');
                         // Ne pas traiter le badge de l'utilisateur actuel ici
-                        if (recipientEmail === userEmail) return;
+                        if (recipientEmail === currentUserEmail) return;
                         
-                        const count = unreadSentTo[recipientEmail] || 0;
+                        const count = countsMap[recipientEmail] || 0;
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = 'flex';
@@ -4434,7 +4436,7 @@
                     });
                     
                     // Ajouter des badges manquants si nécessaire
-                    for (const [recipientEmail, count] of Object.entries(unreadSentTo)) {
+                    for (const [recipientEmail, count] of Object.entries(countsMap)) {
                         if (count > 0) {
                             const existingBadge = document.querySelector(`.avatar-notification-badge[data-recipient="${recipientEmail}"]`);
                             if (!existingBadge) {
@@ -4712,7 +4714,9 @@
                             }
                             
                             // Mettre à jour les badges sur les avatars des autres joueurs (messages envoyés par vous)
-                            if (data.unread_sent_to) {
+                            if (data.unread_by_sender) {
+                                updateUnreadSentTo(data.unread_by_sender);
+                            } else if (data.unread_sent_to) {
                                 updateUnreadSentTo(data.unread_sent_to);
                             }
                         });
@@ -4722,8 +4726,10 @@
                             console.log('💬 WebSocket: Compteur messages non lus mis à jour', data);
                             if (data.user_email === userEmail) {
                                 updateUnreadBadge(data.count);
-                                // Mettre à jour les badges sur les avatars des autres (messages envoyés)
-                                if (data.unread_sent_to) {
+                                // Mettre à jour les badges sur les avatars des autres joueurs
+                                if (data.unread_by_sender) {
+                                    updateUnreadSentTo(data.unread_by_sender);
+                                } else if (data.unread_sent_to) {
                                     updateUnreadSentTo(data.unread_sent_to);
                                 }
                             }
@@ -4749,7 +4755,9 @@
                                     if (counts.unread_received !== undefined) {
                                         updateUnreadBadge(counts.unread_received);
                                     }
-                                    if (counts.unread_sent_to) {
+                                    if (counts.unread_by_sender) {
+                                        updateUnreadSentTo(counts.unread_by_sender);
+                                    } else if (counts.unread_sent_to) {
                                         updateUnreadSentTo(counts.unread_sent_to);
                                     }
                                     console.log('✅ Badges mis à jour via API');
@@ -4781,7 +4789,9 @@
                             if (counts.unread_received !== undefined) {
                                 updateUnreadBadge(counts.unread_received);
                             }
-                            if (counts.unread_sent_to) {
+                            if (counts.unread_by_sender) {
+                                updateUnreadSentTo(counts.unread_by_sender);
+                            } else if (counts.unread_sent_to) {
                                 updateUnreadSentTo(counts.unread_sent_to);
                             }
                             console.log('✅ Badges rafraîchis:', counts);
