@@ -395,19 +395,11 @@ def _invalidate_house_cache(email: str):
 
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
-    # Configurer SocketIO — en prod on privilégie gevent, fallback eventlet/threading
+    # Configurer SocketIO — UNIQUEMENT gevent en production (plus d'eventlet)
     if os.environ.get('RENDER'):
-        try:
-            import gevent  # noqa: F401
-            _async_mode = 'gevent'
-        except Exception:
-            try:
-                import eventlet  # noqa: F401
-                _async_mode = 'eventlet'
-            except Exception:
-                _async_mode = 'threading'
+        _async_mode = 'gevent'  # Forcé, pas de fallback
     else:
-        _async_mode = 'threading'
+        _async_mode = 'threading'  # Local dev
 
     socketio = SocketIO(
         app,

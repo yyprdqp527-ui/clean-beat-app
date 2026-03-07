@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: clean-beat-app
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn_config.py wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        sync: false
