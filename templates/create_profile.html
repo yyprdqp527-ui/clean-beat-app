@@ -644,7 +644,7 @@
             <div class="photo-section">
                 <div class="photo-container">
                     <div class="photo-preview" id="photoPreview" data-dicebear-seed="alice" onclick="openAvatarModal()">
-                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=alice&backgroundColor=transparent" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block;">
+                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=alice" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block;">
                     </div>
                 </div>
                 
@@ -973,7 +973,7 @@
                 const style = categoryId;
                 
                 seeds.forEach(seed => {
-                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
                     const option = document.createElement('div');
                     option.className = 'avatar-option';
                     option.style.backgroundImage = `url('${url}')`;
@@ -1095,7 +1095,7 @@
                         }
                     }
                     
-                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
                     preview.innerHTML = `<img src="${url}" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
                     selectedAvatarData = { type: 'dicebear', seed: seed, style: style, url: url };
                     document.getElementById('selectedAvatar').value = currentAvatar;
