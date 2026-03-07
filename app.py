@@ -6011,6 +6011,7 @@ def admin_feedback_csv():
 
 @app.route('/rewards')
 def rewards():
+    import json
     if 'user' not in session:
         flash("Connecte-toi pour accéder aux récompenses", "warning")
         return redirect(url_for('login'))
