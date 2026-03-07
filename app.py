@@ -9189,7 +9189,7 @@ def custom_task_page(task_id):
                         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                             AND DATE(ct.completed_at) = DATE('now')
                         WHERE u.house_id = ?
-                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
+                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
                         ORDER BY daily_points DESC, u.points DESC
                     """, (user_house_id,))
                     players_data = []
@@ -9549,7 +9549,7 @@ def task_enhanced(cat, task_id):
                         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                             AND DATE(ct.completed_at) = DATE('now')
                         WHERE u.house_id = ?
-                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
+                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
                         ORDER BY daily_points DESC, u.points DESC
                     """, (house_id,))
                     players_data = []
@@ -10000,7 +10000,7 @@ def api_validate_task():
                     LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
                         AND DATE(ct.completed_at) = DATE('now')
                     WHERE u.house_id = ?
-                    GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
+                    GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
                     ORDER BY daily_points DESC, u.points DESC
                 """, (user_house_id,))
                 players_data = []
