@@ -6523,6 +6523,47 @@ def open_reward_box():
     except:
         pass
     
+    # Créer la table reward_boxes si elle n'existe pas
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS reward_boxes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            house_id INTEGER NOT NULL,
+            box_number INTEGER NOT NULL,
+            reward_text TEXT NOT NULL,
+            opened_by TEXT NOT NULL,
+            opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            week_start DATE NOT NULL,
+            FOREIGN KEY (house_id) REFERENCES houses(id),
+            FOREIGN KEY (opened_by) REFERENCES users(email)
+        )
+    """)
+    
+    # Ajouter les colonnes manquantes pour reward_boxes si elles n'existent pas
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN week_start DATE")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN box_number INTEGER")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN reward_text TEXT")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_by TEXT")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+    
     # Charger les récompenses personnalisées ou les récompenses par défaut
     # Grille Parents/Enfants (40 récompenses par défaut)
     default_rewards_family = [
