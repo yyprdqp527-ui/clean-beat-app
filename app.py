@@ -9522,16 +9522,18 @@ def api_daily_tasks():
         
         house_id = row[0]
         
-        # Récupérer les tâches du jour avec heure locale
-        from datetime import date
-        today = date.today().isoformat()
-        
+        # Récupérer les tâches récentes puis filtrer en Python sur "aujourd'hui"
+        # (robuste SQLite/PostgreSQL + robustesse timezone)
+        from datetime import date, datetime
+        today_local = date.today()
+        local_tz = datetime.now().astimezone().tzinfo
+
         c.execute("""
             SELECT 
                 ct.user_email, 
                 ct.task_name, 
                 ct.points, 
-                datetime(ct.completed_at, 'localtime') as completed_at_local,
+                ct.completed_at,
                 u.name,
                 u.avatar_url,
                 u.avatar_file
@@ -9539,10 +9541,9 @@ def api_daily_tasks():
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
               AND u.house_id = ?
-              AND DATE(ct.completed_at) = ?
             ORDER BY ct.completed_at DESC
-            LIMIT 10
-        """, (house_id, house_id, today))
+            LIMIT 300
+        """, (house_id, house_id))
         
         rows = c.fetchall()
         tasks = []
@@ -9560,20 +9561,41 @@ def api_daily_tasks():
             else:
                 final_avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
             
-            # Extraire l'heure de completed_at_local (str ou datetime selon backend)
+            # Extraire date/heure locale (str ou datetime selon backend)
+            completed_date = None
+            time_str = '??:??'
             try:
                 if hasattr(completed_at, 'strftime'):
-                    time_str = completed_at.strftime('%H:%M')
+                    local_dt = completed_at
+                    if getattr(completed_at, 'tzinfo', None):
+                        local_dt = completed_at.astimezone(local_tz)
+                    completed_date = local_dt.date()
+                    time_str = local_dt.strftime('%H:%M')
                 else:
                     completed_at_str = str(completed_at or '')
-                    if ' ' in completed_at_str:
-                        time_str = completed_at_str.split(' ')[1][:5]
-                    elif 'T' in completed_at_str:
-                        time_str = completed_at_str.split('T')[1][:5]
-                    else:
-                        time_str = '??:??'
+                    dt = datetime.fromisoformat(completed_at_str.replace('Z', '+00:00'))
+                    if dt.tzinfo:
+                        dt = dt.astimezone(local_tz)
+                    completed_date = dt.date()
+                    time_str = dt.strftime('%H:%M')
             except Exception:
-                time_str = '??:??'
+                completed_at_str = str(completed_at or '')
+                # Fallback permissif si format inattendu
+                try:
+                    if ' ' in completed_at_str:
+                        dt = datetime.strptime(completed_at_str[:19], '%Y-%m-%d %H:%M:%S')
+                        completed_date = dt.date()
+                        time_str = dt.strftime('%H:%M')
+                    elif 'T' in completed_at_str:
+                        dt = datetime.fromisoformat(completed_at_str[:19])
+                        completed_date = dt.date()
+                        time_str = dt.strftime('%H:%M')
+                except Exception:
+                    pass
+
+            # Ne garder que les tâches du jour local
+            if completed_date != today_local:
+                continue
             
             tasks.append({
                 'player_name': name if name else email.split('@')[0],
@@ -9583,6 +9605,10 @@ def api_daily_tasks():
                 'avatar': final_avatar,
                 'is_current_user': (email == session['user'])
             })
+
+            # Limiter l'affichage au top 10 du jour
+            if len(tasks) >= 10:
+                break
         
         return {'tasks': tasks}, 200
         
