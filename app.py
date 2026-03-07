@@ -6156,9 +6156,14 @@ def rewards():
         )
     """)
     
-    # Ajouter la colonne week_start si elle n'existe pas
+    # Ajouter les colonnes manquantes si elles n'existent pas
     try:
         c.execute("ALTER TABLE reward_boxes ADD COLUMN week_start DATE")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN box_number INTEGER")
     except:
         pass
     
