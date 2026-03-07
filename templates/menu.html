@@ -4731,6 +4731,11 @@
                             if (data.recipient_email === userEmail) {
                                 updateUnreadBadge(data.unread_count);
                                 
+                                // Mettre à jour les badges sur les avatars (messages reçus uniquement)
+                                if (data.unread_by_sender) {
+                                    updateUnreadBySender(data.unread_by_sender);
+                                }
+                                
                                 // 🔔 Jouer le son de notification
                                 playMessageSound();
                                 
@@ -4738,11 +4743,6 @@
                                 if (typeof showToast === 'function') {
                                     showToast(`💬 Nouveau message de ${data.sender}`);
                                 }
-                            }
-                            
-                            // Mettre à jour les badges sur les avatars (messages reçus uniquement)
-                            if (data.unread_by_sender) {
-                                updateUnreadBySender(data.unread_by_sender);
                             }
                         });
                         
@@ -4769,6 +4769,13 @@
                         // 🔌 Synchroniser la liste des messages pour tous les utilisateurs
                         socket.on('messages_list_update', function(data) {
                             console.log('📬 WebSocket Menu: Mise à jour de la liste des messages', data);
+                            
+                            // ✅ Si c'est MOI qui ai envoyé le message, ne pas recharger MES badges
+                            // (ils sont déjà à jour car le message est marqué comme lu pour l'expéditeur)
+                            if (data.sender_email && data.sender_email === userEmail) {
+                                console.log('✅ Message envoyé par moi, pas de rechargement de mes badges');
+                                return;
+                            }
                             
                             // Recharger les compteurs de messages pour rafraîchir les badges
                             // On ne recharge pas la page entière pour ne pas interrompre la navigation

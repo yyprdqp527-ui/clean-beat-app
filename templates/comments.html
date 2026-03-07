@@ -1277,10 +1277,22 @@
                 // 🔌 Synchroniser la liste des messages pour tous
                 socket.on('messages_list_update', function(data) {
                     console.log('📬 WebSocket Comments: Mise à jour liste messages', data);
-                    // ✅ Rafraîchir la page pour tous (expéditeur ET destinataire)
-                    // Cela met à jour les badges et la liste des messages
-                    console.log('🔄 Rafraîchissement de la messagerie...');
-                    location.reload();
+                    
+                    // ✅ Si c'est MOI qui ai envoyé le message, rafraîchir quand même
+                    // pour voir mon message dans la liste (mais sans pastille)
+                    if (data.action === 'new_message') {
+                        console.log('🔄 Nouveau message détecté, rafraîchissement...');
+                        location.reload();
+                    }
+                    // ✅ Si quelqu'un a LU un message, rafraîchir pour tout le monde
+                    else if (data.action === 'message_read') {
+                        console.log('✅ Message marqué comme lu, rafraîchissement...');
+                        location.reload();
+                    }
+                    else {
+                        console.log('🔄 Rafraîchissement de la messagerie...');
+                        location.reload();
+                    }
                 });
                 
                 // Écouter les mises à jour de points
