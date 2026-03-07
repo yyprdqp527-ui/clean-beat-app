@@ -1174,12 +1174,18 @@
                 let audioUnlocked = false;
                 function unlockAudio() {
                     if (!audioUnlocked) {
+                        // Sauvegarder le volume actuel
+                        const savedVolume = messageNotifSound.volume;
+                        messageNotifSound.volume = 0;  // Mettre en silence pour le déverrouillage
                         messageNotifSound.play().then(() => {
                             messageNotifSound.pause();
                             messageNotifSound.currentTime = 0;
+                            messageNotifSound.volume = savedVolume;  // Restaurer le volume
                             audioUnlocked = true;
                             console.log('✅ Audio débloqué pour les notifications');
-                        }).catch(() => {});
+                        }).catch(() => {
+                            messageNotifSound.volume = savedVolume;  // Restaurer même en cas d'erreur
+                        });
                     }
                 }
                 // Débloquer au premier clic/touch sur la page

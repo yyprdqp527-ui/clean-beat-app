@@ -4426,12 +4426,12 @@
                     const mergedCounts = window.__unreadBySender || {};
 
                     // Mettre à jour les badges existants
-                    document.querySelectorAll('.avatar-notification-badge[data-recipient]').forEach(badge => {
-                        const recipientEmail = badge.getAttribute('data-recipient');
+                    document.querySelectorAll('.avatar-notification-badge[data-sender]').forEach(badge => {
+                        const senderEmail = badge.getAttribute('data-sender');
                         // Ne pas traiter le badge de l'utilisateur actuel ici
-                        if (recipientEmail === currentUserEmail) return;
+                        if (senderEmail === currentUserEmail) return;
                         
-                        const count = mergedCounts[recipientEmail] || 0;
+                        const count = mergedCounts[senderEmail] || 0;
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = 'flex';
@@ -4441,16 +4441,16 @@
                     });
                     
                     // Ajouter des badges manquants si nécessaire
-                    for (const [recipientEmail, count] of Object.entries(mergedCounts)) {
+                    for (const [senderEmail, count] of Object.entries(mergedCounts)) {
                         if (count > 0) {
-                            const existingBadge = document.querySelector(`.avatar-notification-badge[data-recipient="${recipientEmail}"]`);
+                            const existingBadge = document.querySelector(`.avatar-notification-badge[data-sender="${senderEmail}"]`);
                             if (!existingBadge) {
-                                // Trouver le wrapper de l'avatar correspondant
-                                const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${recipientEmail}"]`);
+                                // Trouver le wrapper de l'avatar correspondant (l'avatar de l'expéditeur)
+                                const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${senderEmail}"]`);
                                 if (avatarWrapper) {
                                     const badge = document.createElement('span');
                                     badge.className = 'avatar-notification-badge';
-                                    badge.setAttribute('data-recipient', recipientEmail);
+                                    badge.setAttribute('data-sender', senderEmail);
                                     badge.textContent = count < 100 ? count : '99+';
                                     badge.onclick = () => window.location.href = '{{ url_for("comments") }}';
                                     avatarWrapper.appendChild(badge);
@@ -4489,12 +4489,18 @@
                         let audioUnlocked = false;
                         function unlockAudio() {
                             if (!audioUnlocked) {
+                                // Sauvegarder le volume actuel
+                                const savedVolume = messageNotifSound.volume;
+                                messageNotifSound.volume = 0;  // Mettre en silence pour le déverrouillage
                                 messageNotifSound.play().then(() => {
                                     messageNotifSound.pause();
                                     messageNotifSound.currentTime = 0;
+                                    messageNotifSound.volume = savedVolume;  // Restaurer le volume
                                     audioUnlocked = true;
                                     console.log('✅ Audio débloqué pour les notifications');
-                                }).catch(() => {});
+                                }).catch(() => {
+                                    messageNotifSound.volume = savedVolume;  // Restaurer même en cas d'erreur
+                                });
                             }
                         }
                         // Débloquer au premier clic/touch sur la page
