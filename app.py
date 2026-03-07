@@ -3318,13 +3318,29 @@ def send_push_notification(subscription, notification_data):
     try:
         from pywebpush import webpush, WebPushException
         import json
+        import base64
         
-        # VAPID keys - À GÉNÉRER ET STOCKER DE MANIÈRE SÉCURISÉE
-        # Pour générer: from pywebpush import webpush; webpush.generate_vapid_keys()
-        VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
-        VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+        # VAPID keys - Supporte format normal ou base64
+        # Pour base64: VAPID_PUBLIC_KEY_B64 et VAPID_PRIVATE_KEY_B64
+        # Pour normal: VAPID_PUBLIC_KEY et VAPID_PRIVATE_KEY
+        
+        # Essayer d'abord le format base64
+        vapid_private_b64 = os.environ.get('VAPID_PRIVATE_KEY_B64', '')
+        vapid_public_b64 = os.environ.get('VAPID_PUBLIC_KEY_B64', '')
+        
+        if vapid_private_b64 and vapid_public_b64:
+            # Décoder depuis base64
+            VAPID_PRIVATE_KEY = base64.b64decode(vapid_private_b64).decode('utf-8')
+            VAPID_PUBLIC_KEY = base64.b64decode(vapid_public_b64).decode('utf-8')
+        else:
+            # Utiliser le format normal
+            VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+            VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+        
+        # Email VAPID
+        vapid_email = os.environ.get('VAPID_EMAIL', 'mailto:contact@cleanbeat.app')
         VAPID_CLAIMS = {
-            "sub": "mailto:contact@dust.app"
+            "sub": vapid_email
         }
         
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
@@ -10151,8 +10167,19 @@ def api_push_unsubscribe():
 def api_push_vapid_key():
     """
     Retourne la clé publique VAPID pour les subscriptions push.
+    Supporte les formats normal et base64.
     """
-    vapid_public_key = os.environ.get('VAPID_PUBLIC_KEY', '')
+    import base64
+    
+    # Essayer d'abord le format base64
+    vapid_public_b64 = os.environ.get('VAPID_PUBLIC_KEY_B64', '')
+    
+    if vapid_public_b64:
+        # Décoder depuis base64
+        vapid_public_key = base64.b64decode(vapid_public_b64).decode('utf-8')
+    else:
+        # Utiliser le format normal
+        vapid_public_key = os.environ.get('VAPID_PUBLIC_KEY', '')
     
     if not vapid_public_key:
         return {'error': 'VAPID key non configurée'}, 500
