@@ -6494,6 +6494,35 @@ def open_reward_box():
     
     _dbg(f"[DEBUG open_reward_box] house_id={house_id}, house_type={house_type}, box_number={box_number}")
     
+    # Créer la table custom_rewards si elle n'existe pas
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS custom_rewards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            house_id INTEGER NOT NULL,
+            house_type TEXT NOT NULL,
+            rewards_json TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (house_id) REFERENCES houses(id),
+            UNIQUE(house_id, house_type)
+        )
+    """)
+    
+    # Ajouter les colonnes manquantes si elles n'existent pas
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN house_type TEXT")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN rewards_json TEXT")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+    
     # Charger les récompenses personnalisées ou les récompenses par défaut
     # Grille Parents/Enfants (40 récompenses par défaut)
     default_rewards_family = [
