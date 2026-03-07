@@ -48,34 +48,9 @@ if _USE_PG:
     except ImportError:
         _USE_PG = False
 
-# 🚀 POOL DE CONNEXIONS PostgreSQL - évite de recréer une connexion à chaque requête
-# (sur Render, chaque nouvelle connexion coûte ~100-300ms)
-# Utilisation de SimpleConnectionPool au lieu de ThreadedConnectionPool
-# pour éviter les conflits de RLock avec gevent/eventlet
-_pg_pool = None
-_pool_lock = None
-
-def _get_pg_pool():
-    """Initialise et retourne le pool de connexions PostgreSQL (singleton)."""
-    global _pg_pool, _pool_lock
-    if _pg_pool is None and _USE_PG:
-        try:
-            # SimpleConnectionPool pour gevent/eventlet (pas de RLock natifs)
-            _pg_pool = psycopg2.pool.SimpleConnectionPool(
-                minconn=1,
-                maxconn=3,
-                dsn=_PG_URL,
-                connect_timeout=10
-            )
-            # Lock compatible gevent pour protéger l'accès au pool
-            try:
-                import threading
-                _pool_lock = threading.Lock()
-            except:
-                _pool_lock = None
-        except Exception as e:
-            print(f"⚠️ Pool PG non créé: {e}")
-    return _pg_pool
+# ⚠️ POOL DÉSACTIVÉ : Les pools psycopg2 ne sont pas compatibles avec gevent/eventlet
+# Les connexions directes sont plus stables, même si légèrement plus lentes
+# (alternative: utiliser psycogreen avec gevent, mais ajoute une dépendance)
 
 _RE_INSERT = re.compile(r'^\s*INSERT\s+', re.IGNORECASE)
 _RE_ALTER_ADD = re.compile(
@@ -234,7 +209,7 @@ class _CompatConn:
     def __init__(self, conn, is_pg=False, pool=None):
         self._conn = conn
         self._is_pg = is_pg
-        self._pool = pool  # 🚀 Référence au pool pour retourner la connexion
+        # pool ignoré - conservé pour compatibilité avec ancien code
 
     def cursor(self):
         return _CompatCursor(self._conn.cursor(), self._is_pg)
@@ -252,24 +227,10 @@ class _CompatConn:
         self._conn.rollback()
 
     def close(self):
-        if self._pool and self._is_pg:
-            # 🚀 Retourner au pool au lieu de fermer (bien plus rapide)
-            try:
-                self._conn.rollback()  # S'assurer que la connexion est propre
-                # Protection du pool par lock (SimpleConnectionPool n'est pas thread-safe)
-                global _pool_lock
-                if _pool_lock:
-                    with _pool_lock:
-                        self._pool.putconn(self._conn)
-                else:
-                    self._pool.putconn(self._conn)
-            except Exception:
-                try:
-                    self._conn.close()
-                except Exception:
-                    pass
-        else:
+        try:
             self._conn.close()
+        except Exception:
+            pass
 
     def __enter__(self):
         return self
@@ -1364,32 +1325,10 @@ def get_db_connection(timeout=30.0):
     """
     Connexion DB unifiée : SQLite en local, PostgreSQL sur Render.
     Retourne un _CompatConn compatible avec l'API sqlite3.
-    🚀 Sur Render: réutilise une connexion du pool (évite ~100-300ms/requête)
+    ⚠️ Connexions directes PostgreSQL (pas de pool pour compatibilité gevent/eventlet)
     """
     if _USE_PG:
-        pool = _get_pg_pool()
-        if pool:
-            try:
-                # Protection du pool par lock (SimpleConnectionPool n'est pas thread-safe)
-                global _pool_lock
-                if _pool_lock:
-                    with _pool_lock:
-                        conn = pool.getconn()
-                else:
-                    conn = pool.getconn()
-                # Vérifier rapidement que la connexion est vivante (sans SELECT 1 coûteux)
-                if conn.closed:
-                    if _pool_lock:
-                        with _pool_lock:
-                            pool.putconn(conn, close=True)
-                            conn = pool.getconn()
-                    else:
-                        pool.putconn(conn, close=True)
-                        conn = pool.getconn()
-                return _CompatConn(conn, is_pg=True, pool=pool)
-            except Exception:
-                pass
-        # Fallback: connexion directe sans pool (avec retry SSL)
+        # Connexion directe PostgreSQL (compatible gevent/eventlet)
         for attempt in range(3):
             try:
                 conn = psycopg2.connect(_PG_URL, connect_timeout=10)
