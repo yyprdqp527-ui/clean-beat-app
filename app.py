@@ -1,16 +1,21 @@
 # ⚡ CRITIQUE: monkey_patch DOIT être la toute première instruction
-# En production Render, on privilégie gevent (eventlet est déprécié côté Gunicorn)
-# Fallback sûr: eventlet puis exécution sans patch si indisponible.
+# Le patch est fait dans wsgi.py pour Render, on évite de le refaire ici
+# pour éviter les conflits avec les RLock du pool PostgreSQL
 import os as _os
-if _os.environ.get('RENDER'):
+import sys as _sys
+
+# Ne patcher QUE si on n'est pas déjà dans un contexte patché (wsgi.py)
+if _os.environ.get('RENDER') and not hasattr(_sys.modules.get('threading', None), '_original_lock'):
     try:
         from gevent import monkey as _gevent_monkey
-        _gevent_monkey.patch_all()
+        if not _gevent_monkey.is_module_patched('threading'):
+            _gevent_monkey.patch_all()
     except ImportError:
         try:
             import eventlet
-            eventlet.monkey_patch()
-        except ImportError:
+            if not eventlet.patcher.is_monkey_patched('thread'):
+                eventlet.monkey_patch()
+        except (ImportError, AttributeError):
             pass
 
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
@@ -45,19 +50,29 @@ if _USE_PG:
 
 # 🚀 POOL DE CONNEXIONS PostgreSQL - évite de recréer une connexion à chaque requête
 # (sur Render, chaque nouvelle connexion coûte ~100-300ms)
+# Utilisation de SimpleConnectionPool au lieu de ThreadedConnectionPool
+# pour éviter les conflits de RLock avec gevent/eventlet
 _pg_pool = None
+_pool_lock = None
 
 def _get_pg_pool():
     """Initialise et retourne le pool de connexions PostgreSQL (singleton)."""
-    global _pg_pool
+    global _pg_pool, _pool_lock
     if _pg_pool is None and _USE_PG:
         try:
-            _pg_pool = psycopg2.pool.ThreadedConnectionPool(
+            # SimpleConnectionPool pour gevent/eventlet (pas de RLock natifs)
+            _pg_pool = psycopg2.pool.SimpleConnectionPool(
                 minconn=1,
                 maxconn=3,
                 dsn=_PG_URL,
                 connect_timeout=10
             )
+            # Lock compatible gevent pour protéger l'accès au pool
+            try:
+                import threading
+                _pool_lock = threading.Lock()
+            except:
+                _pool_lock = None
         except Exception as e:
             print(f"⚠️ Pool PG non créé: {e}")
     return _pg_pool
@@ -241,7 +256,13 @@ class _CompatConn:
             # 🚀 Retourner au pool au lieu de fermer (bien plus rapide)
             try:
                 self._conn.rollback()  # S'assurer que la connexion est propre
-                self._pool.putconn(self._conn)
+                # Protection du pool par lock (SimpleConnectionPool n'est pas thread-safe)
+                global _pool_lock
+                if _pool_lock:
+                    with _pool_lock:
+                        self._pool.putconn(self._conn)
+                else:
+                    self._pool.putconn(self._conn)
             except Exception:
                 try:
                     self._conn.close()
@@ -1349,11 +1370,22 @@ def get_db_connection(timeout=30.0):
         pool = _get_pg_pool()
         if pool:
             try:
-                conn = pool.getconn()
+                # Protection du pool par lock (SimpleConnectionPool n'est pas thread-safe)
+                global _pool_lock
+                if _pool_lock:
+                    with _pool_lock:
+                        conn = pool.getconn()
+                else:
+                    conn = pool.getconn()
                 # Vérifier rapidement que la connexion est vivante (sans SELECT 1 coûteux)
                 if conn.closed:
-                    pool.putconn(conn, close=True)
-                    conn = pool.getconn()
+                    if _pool_lock:
+                        with _pool_lock:
+                            pool.putconn(conn, close=True)
+                            conn = pool.getconn()
+                    else:
+                        pool.putconn(conn, close=True)
+                        conn = pool.getconn()
                 return _CompatConn(conn, is_pg=True, pool=pool)
             except Exception:
                 pass
