@@ -1277,10 +1277,10 @@
                 // 🔌 Synchroniser la liste des messages pour tous
                 socket.on('messages_list_update', function(data) {
                     console.log('📬 WebSocket Comments: Mise à jour liste messages', data);
-                    if (data.sender_email !== userEmail) {
-                        console.log('🔄 Rafraîchissement de la messagerie...');
-                        location.reload();
-                    }
+                    // ✅ Rafraîchir la page pour tous (expéditeur ET destinataire)
+                    // Cela met à jour les badges et la liste des messages
+                    console.log('🔄 Rafraîchissement de la messagerie...');
+                    location.reload();
                 });
                 
                 // Écouter les mises à jour de points
