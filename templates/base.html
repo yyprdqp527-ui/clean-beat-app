@@ -9,7 +9,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dust">
+    <meta name="apple-mobile-web-app-title" content="CleanBeat">
     <meta name="theme-color" content="#597176">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='points_style.css') }}">
@@ -1065,6 +1065,21 @@ window.showGlassPopup = function(message, category = 'info', duration = 3000) {
     
     console.log('🔊 Sons chargés');
 })();
+</script>
+
+<!-- 📱 Service Worker pour PWA (mode app native) -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/service-worker.js')
+            .then(registration => {
+                console.log('✅ Service Worker enregistré:', registration.scope);
+            })
+            .catch(error => {
+                console.log('❌ Erreur Service Worker:', error);
+            });
+    });
+}
 </script>
 
 {% block extra_scripts %}{% endblock %}
