@@ -6091,6 +6091,9 @@ def rewards():
             conn.close()
             flash("Tu dois rejoindre une maison pour accéder aux récompenses", "warning")
             return redirect(url_for('menu'))
+    except Exception as e:
+        print(f"❌ Erreur rewards: {e}", flush=True)
+        return redirect(url_for('menu'))
     
     house_id = user_row[0]
     user_name = user_row[1]
