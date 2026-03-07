@@ -839,12 +839,22 @@ def sats():
             else:
                 avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
             
-            # Extraire l'heure
+            # Extraire l'heure (compatible str ISO et objet datetime)
             try:
-                dt = datetime.fromisoformat(completed_at.replace('Z', '+00:00'))
-                time_str = dt.strftime('%H:%M')
-            except:
-                time_str = completed_at.split(' ')[1][:5] if ' ' in completed_at else '??:??'
+                if hasattr(completed_at, 'strftime'):
+                    time_str = completed_at.strftime('%H:%M')
+                else:
+                    completed_at_str = str(completed_at or '')
+                    dt = datetime.fromisoformat(completed_at_str.replace('Z', '+00:00'))
+                    time_str = dt.strftime('%H:%M')
+            except Exception:
+                completed_at_str = str(completed_at or '')
+                if ' ' in completed_at_str:
+                    time_str = completed_at_str.split(' ')[1][:5]
+                elif 'T' in completed_at_str:
+                    time_str = completed_at_str.split('T')[1][:5]
+                else:
+                    time_str = '??:??'
             
             tasks_history.append({
                 'email': email,
@@ -9550,11 +9560,19 @@ def api_daily_tasks():
             else:
                 final_avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
             
-            # Extraire l'heure de completed_at_local (déjà en heure locale grâce à SQLite)
+            # Extraire l'heure de completed_at_local (str ou datetime selon backend)
             try:
-                # Format: 2026-01-27 08:50:22 (déjà en heure locale)
-                time_str = completed_at.split(' ')[1][:5] if ' ' in completed_at else '??:??'
-            except:
+                if hasattr(completed_at, 'strftime'):
+                    time_str = completed_at.strftime('%H:%M')
+                else:
+                    completed_at_str = str(completed_at or '')
+                    if ' ' in completed_at_str:
+                        time_str = completed_at_str.split(' ')[1][:5]
+                    elif 'T' in completed_at_str:
+                        time_str = completed_at_str.split('T')[1][:5]
+                    else:
+                        time_str = '??:??'
+            except Exception:
                 time_str = '??:??'
             
             tasks.append({
