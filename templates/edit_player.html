@@ -690,19 +690,36 @@
 </div>
 
 <script>
+    // Gestionnaire d'erreurs global pour débogage
+    window.addEventListener('error', function(e) {
+        console.error('❌ ERREUR GLOBALE:', e.message, 'à', e.filename, 'ligne', e.lineno);
+        console.error('   Stack:', e.error);
+    });
+    
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('❌ PROMESSE REJETÉE:', e.reason);
+    });
+    
+    console.log('🚀 Script edit_player chargé');
+    
     // Variables globales
     let avatarsData = null;
     let selectedAvatarData = null;
     let currentCategory = 'images';
     
+    console.log('✅ Variables globales initialisées');
+    
     // ===== FONCTIONS PHOTOS =====
     function takePhoto() {
+        console.log('📷 takePhoto() appelée');
         document.getElementById('cameraInput').click();
     }
     
     function handlePhotoCapture(event) {
+        console.log('📸 handlePhotoCapture() appelée');
         const file = event.target.files[0];
         if (file) {
+            console.log(`📁 Fichier capturé: ${file.name} (${file.size} octets)`);
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('photoPreview');
@@ -711,6 +728,7 @@
                 document.getElementById('avatar-type').value = 'photo';
                 selectedAvatarData = null; // Reset avatar selection
                 document.getElementById('selectedAvatar').value = '';
+                console.log('✅ Photo chargée et aperçu mis à jour');
             };
             reader.readAsDataURL(file);
         }
@@ -902,40 +920,65 @@
     });
     
     // ===== SOUMISSION FORMULAIRE =====
-    document.getElementById('edit-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        
-        // Ajouter le fichier photo si upload depuis galerie
-        const fileInput = document.getElementById('fileInput');
-        if (fileInput.files.length > 0) {
-            formData.append('avatar_file', fileInput.files[0]);
-        }
-        
-        // Ajouter le fichier photo si prise avec caméra
-        const cameraInput = document.getElementById('cameraInput');
-        if (cameraInput.files.length > 0) {
-            formData.append('avatar_file', cameraInput.files[0]);
-        }
-        
-        try {
-            const response = await fetch('/update_player', {
-                method: 'POST',
-                body: formData
-            });
+    const editForm = document.getElementById('edit-form');
+    if (editForm) {
+        console.log('✅ Formulaire trouvé, ajout du listener...');
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('🔍 Formulaire soumis');
             
-            const result = await response.json();
+            const formData = new FormData(this);
             
-            if (result.success) {
-                window.location.href = '{{ url_for("manage_players") }}';
-            } else {
-                alert('Erreur: ' + (result.error || 'Impossible de mettre à jour le joueur'));
+            // Debug: afficher tous les champs du formulaire
+            console.log('📋 Données du formulaire:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-            alert('Erreur lors de la sauvegarde');
-        }
-    });
+            
+            // Ajouter le fichier photo si upload depuis galerie
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length > 0) {
+                formData.append('avatar_file', fileInput.files[0]);
+                console.log('📁 Fichier ajouté depuis galerie');
+            }
+            
+            // Ajouter le fichier photo si prise avec caméra
+            const cameraInput = document.getElementById('cameraInput');
+            if (cameraInput.files.length > 0) {
+                formData.append('avatar_file', cameraInput.files[0]);
+                console.log('📷 Fichier ajouté depuis caméra');
+            }
+            
+            console.log('📤 Envoi vers /update_player...');
+            
+            try {
+                const response = await fetch('/update_player', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log(`📨 Réponse reçue: ${response.status}`);
+                
+                const result = await response.json();
+                console.log('📊 Résultat:', result);
+                
+                if (result.success) {
+                    console.log('✅ Succès ! Redirection...');
+                    window.location.href = '{{ url_for("manage_players") }}';
+                } else {
+                    console.error('❌ Erreur:', result.error);
+                    alert('Erreur: ' + (result.error || 'Impossible de mettre à jour le joueur'));
+                }
+            } catch (error) {
+                console.error('❌ Exception:', error);
+                alert('Erreur lors de la sauvegarde: ' + error.message);
+            }
+        });
+        console.log('✅ Listener de soumission ajouté au formulaire');
+    } else {
+        console.error('❌ Formulaire edit-form non trouvé !');
+    }
+    
+    console.log('🏁 Fin du script edit_player');
 </script>
 {% endblock %}
