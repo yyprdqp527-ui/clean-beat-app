@@ -4982,10 +4982,8 @@ def comments():
     house_code = house_row[0] if house_row else None
     house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
 
-    # Récupérer les messages privés (envoyés ou reçus par l'utilisateur connecté)
-    # ET les messages de la maison (sender_type = 'house') Y COMPRIS les messages de suivi bébé
-    # mais SAUF les messages de validation de tâches simples
-    # Ajouter une sous-requête pour vérifier si le message a été lu par le destinataire
+    # Récupérer UNIQUEMENT les messages privés entre joueurs (messagerie normale)
+    # EXCLURE les messages de type baby_tracking et task_added
     _dbg(f"🔍 /comments - Récupération messages pour house_id={house_id}, user={session['user']}")
     _dbg(f"🔍 /comments - Requête SQL va être exécutée...")
     c.execute("""
@@ -5002,10 +5000,8 @@ def comments():
         LEFT JOIN users sender ON m.sender_email = sender.email
         LEFT JOIN users recipient ON m.recipient_email = recipient.email
         WHERE m.house_id = ?
-        AND (
-            (m.message_type = 'private' AND (m.sender_email = ? OR m.recipient_email = ?))
-            OR (m.sender_type = 'house' AND m.message_type NOT IN ('task_completed'))
-        )
+        AND m.message_type = 'private'
+        AND (m.sender_email = ? OR m.recipient_email = ?)
         ORDER BY m.id DESC
         LIMIT 100
     """, (session['user'], house_id, session['user'], session['user']))
@@ -5261,6 +5257,187 @@ def comments():
                          house_name=house_name,
                          current_user_name=current_user_name,
                          unread_count=unread_count,
+                         menu_page=True)
+
+@app.route('/baby_messages')
+def baby_messages():
+    """
+    Page dédiée aux messages de tracking bébé uniquement.
+    Accessible via le bouton rose sous le menu burger.
+    """
+    if 'user' not in session:
+        flash("Connecte-toi pour accéder aux messages bébé", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # Récupérer la maison de l'utilisateur
+    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        flash("Tu dois rejoindre une maison pour accéder aux messages", "warning")
+        return redirect(url_for('menu'))
+    
+    house_id = user_row[0]
+    current_user_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
+
+    # Récupérer le code et le nom de la maison
+    c.execute("SELECT code, name FROM houses WHERE id=?", (house_id,))
+    house_row = c.fetchone()
+    house_code = house_row[0] if house_row else None
+    house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
+
+    # Récupérer UNIQUEMENT les messages de type baby_tracking
+    _dbg(f"🔍 /baby_messages - Récupération messages bébé pour house_id={house_id}")
+    c.execute("""
+        SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+               ) THEN 1 ELSE 0 END as is_read_by_me
+        FROM messages m
+        LEFT JOIN users sender ON m.sender_email = sender.email
+        WHERE m.house_id = ?
+        AND m.message_type = 'baby_tracking'
+        ORDER BY m.id DESC
+        LIMIT 100
+    """, (session['user'], house_id))
+    
+    all_rows = c.fetchall()
+    _dbg(f"🔍 /baby_messages - Nombre de messages bébé récupérés: {len(all_rows)}")
+    
+    messages_data = []
+    for row in all_rows:
+        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, is_read_by_me = row
+        
+        # Préparer l'avatar de l'expéditeur
+        display_sender_avatar = None
+        if validate_avatar_file(sender_avatar_file):
+            display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
+        elif sender_avatar_url:
+            if 'dicebear.com/8.x' in sender_avatar_url:
+                sender_avatar_url = sender_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+            display_sender_avatar = sender_avatar_url
+        elif sender_avatar and len(str(sender_avatar)) <= 4:
+            display_sender_avatar = sender_avatar
+        elif sender_avatar:
+            sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'
+            display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
+        else:
+            display_sender_avatar = '👤'
+        
+        if not sender_name or sender_name.strip() == '':
+            sender_name = sender_email.split('@')[0] if sender_email else 'Inconnu'
+        
+        messages_data.append({
+            'id': msg_id,
+            'sender_email': sender_email,
+            'sender_name': sender_name,
+            'sender_avatar': display_sender_avatar,
+            'content': content,
+            'timestamp': timestamp,
+            'sender_type': sender_type,
+            'message_type': message_type,
+            'is_me': sender_email == session['user'],
+            'is_read_by_me': bool(is_read_by_me),
+            'color': '#F472B6',  # Rose pour les messages bébé
+            'bg_color': 'rgba(244, 114, 182, 0.15)'
+        })
+    
+    # Récupérer tous les joueurs pour l'affichage
+    players = get_house_players_points(house_id)
+    
+    conn.close()
+
+    return render_template('baby_messages.html', 
+                         messages=messages_data,
+                         email=session['user'], 
+                         players=players,
+                         house_code=house_code,
+                         house_name=house_name,
+                         current_user_name=current_user_name,
+                         menu_page=True)
+
+@app.route('/mission_messages')
+def mission_messages():
+    """
+    Page dédiée aux messages d'ajout de mission uniquement.
+    Accessible via le bouton orange sous le menu burger.
+    """
+    if 'user' not in session:
+        flash("Connecte-toi pour accéder aux messages de mission", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # Récupérer la maison de l'utilisateur
+    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        flash("Tu dois rejoindre une maison pour accéder aux messages", "warning")
+        return redirect(url_for('menu'))
+    
+    house_id = user_row[0]
+    current_user_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
+
+    # Récupérer le code et le nom de la maison
+    c.execute("SELECT code, name FROM houses WHERE id=?", (house_id,))
+    house_row = c.fetchone()
+    house_code = house_row[0] if house_row else None
+    house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
+
+    # Récupérer UNIQUEMENT les messages de type task_added
+    _dbg(f"🔍 /mission_messages - Récupération messages mission pour house_id={house_id}")
+    c.execute("""
+        SELECT m.id, m.sender_email, m.content, m.timestamp, m.sender_type, m.message_type,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+               ) THEN 1 ELSE 0 END as is_read_by_me
+        FROM messages m
+        WHERE m.house_id = ?
+        AND m.message_type = 'task_added'
+        ORDER BY m.id DESC
+        LIMIT 100
+    """, (session['user'], house_id))
+    
+    all_rows = c.fetchall()
+    _dbg(f"🔍 /mission_messages - Nombre de messages mission récupérés: {len(all_rows)}")
+    
+    messages_data = []
+    for row in all_rows:
+        msg_id, sender_email, content, timestamp, sender_type, message_type, is_read_by_me = row
+        
+        messages_data.append({
+            'id': msg_id,
+            'sender_email': sender_email,
+            'sender_name': house_name,
+            'sender_avatar': '🏠',
+            'content': content,
+            'timestamp': timestamp,
+            'sender_type': sender_type,
+            'message_type': message_type,
+            'is_me': False,
+            'is_read_by_me': bool(is_read_by_me),
+            'color': '#FB923C',  # Orange pour les messages mission
+            'bg_color': 'rgba(251, 146, 60, 0.15)'
+        })
+    
+    # Récupérer tous les joueurs pour l'affichage
+    players = get_house_players_points(house_id)
+    
+    conn.close()
+
+    return render_template('mission_messages.html', 
+                         messages=messages_data,
+                         email=session['user'], 
+                         players=players,
+                         house_code=house_code,
+                         house_name=house_name,
+                         current_user_name=current_user_name,
                          menu_page=True)
 
 @app.route('/mark_all_messages_read', methods=['POST'])

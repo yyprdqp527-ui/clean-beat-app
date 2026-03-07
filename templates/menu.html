@@ -2293,13 +2293,13 @@
                     {% if show_baby or show_mission %}
                     <div class="burger-alerts">
                         {% if show_baby %}
-                        <div class="burger-alert-pill baby" onclick="window.location.href='{{ url_for('comments') }}'" title="Nouveau suivi bébé">
+                        <div class="burger-alert-pill baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé">
                             <span class="pill-icon">👶</span>
                             <span class="pill-count">{{ unread_baby_tracking }}</span>
                         </div>
                         {% endif %}
                         {% if show_mission %}
-                        <div class="burger-alert-pill mission" onclick="window.location.href='{{ url_for('comments') }}'" title="Nouvelle mission ajoutée">
+                        <div class="burger-alert-pill mission" onclick="window.location.href='{{ url_for('mission_messages') }}'" title="Nouvelle mission ajoutée">
                             <span class="pill-icon">⚡</span>
                             <span class="pill-count">{{ unread_task_added }}</span>
                         </div>
