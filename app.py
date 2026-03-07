@@ -5440,6 +5440,11 @@ def baby_messages():
     """
     Page dédiée aux messages de tracking bébé uniquement.
     Accessible via le bouton rose sous le menu burger.
+    
+    COMPORTEMENT :
+    - Messages consultables uniquement (pas de notif, pas de marquage lu/non-lu)
+    - Suppression automatique après 1 mois
+    - Historique visible par tous les membres de la maison
     """
     if 'user' not in session:
         flash("Connecte-toi pour accéder aux messages bébé", "warning")
@@ -5459,34 +5464,46 @@ def baby_messages():
     house_id = user_row[0]
     current_user_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
 
+    # 🗑️ NETTOYAGE AUTOMATIQUE : Supprimer les messages de plus d'un mois
+    from datetime import datetime, timedelta
+    one_month_ago = (datetime.now() - timedelta(days=30)).isoformat()
+    
+    c.execute("""
+        DELETE FROM messages 
+        WHERE house_id = ? 
+        AND message_type = 'baby_tracking' 
+        AND timestamp < ?
+    """, (house_id, one_month_ago))
+    deleted_count = c.rowcount
+    if deleted_count > 0:
+        _dbg(f"🗑️ Supprimé {deleted_count} messages baby_tracking de plus d'un mois pour house_id={house_id}")
+    conn.commit()
+
     # Récupérer le code et le nom de la maison
     c.execute("SELECT code, name FROM houses WHERE id=?", (house_id,))
     house_row = c.fetchone()
     house_code = house_row[0] if house_row else None
     house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
 
-    # Récupérer UNIQUEMENT les messages de type baby_tracking
+    # Récupérer UNIQUEMENT les messages de type baby_tracking (moins d'un mois)
     _dbg(f"🔍 /baby_messages - Récupération messages bébé pour house_id={house_id}")
     c.execute("""
         SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
-               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
-               CASE WHEN EXISTS (
-                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-               ) THEN 1 ELSE 0 END as is_read_by_me
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style
         FROM messages m
         LEFT JOIN users sender ON m.sender_email = sender.email
         WHERE m.house_id = ?
         AND m.message_type = 'baby_tracking'
         ORDER BY m.id DESC
         LIMIT 100
-    """, (session['user'], house_id))
+    """, (house_id,))
     
     all_rows = c.fetchall()
     _dbg(f"🔍 /baby_messages - Nombre de messages bébé récupérés: {len(all_rows)}")
     
     messages_data = []
     for row in all_rows:
-        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, is_read_by_me = row
+        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style = row
         
         # Préparer l'avatar de l'expéditeur
         display_sender_avatar = None
@@ -5517,7 +5534,7 @@ def baby_messages():
             'sender_type': sender_type,
             'message_type': message_type,
             'is_me': sender_email == session['user'],
-            'is_read_by_me': bool(is_read_by_me),
+            'is_read_by_me': False,  # ✅ Messages baby_tracking jamais marqués comme lus
             'color': '#F472B6',  # Rose pour les messages bébé
             'bg_color': 'rgba(244, 114, 182, 0.15)'
         })
@@ -8187,7 +8204,8 @@ def menu():
             unread_messages_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
             unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
             unread_sent_to = get_unread_messages_sent_to(session['user'], house_id, existing_conn=conn)
-            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
+            # ✅ Messages baby_tracking : CONSULTATION UNIQUEMENT (pas de notif, pas de badge)
+            unread_baby_tracking = 0  # Toujours 0 - ces messages ne génèrent pas de notifications
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}")
             
