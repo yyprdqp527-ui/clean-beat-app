@@ -6010,7 +6010,7 @@ def feedback():
 
 
 # Clé secrète admin (à changer !) — accessible via /admin_feedback?key=CETTE_CLE
-ADMIN_FEEDBACK_KEY = "cleanbeat_admin_2026"
+ADMIN_FEEDBACK_KEY = os.environ.get("ADMIN_FEEDBACK_KEY", "cleanbeat_admin_2026")
 
 
 @app.route('/admin_feedback')
