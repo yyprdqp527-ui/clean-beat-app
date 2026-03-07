@@ -6063,16 +6063,17 @@ def rewards():
         flash("Connecte-toi pour accéder aux récompenses", "warning")
         return redirect(url_for('login'))
 
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    # Récupérer la maison de l'utilisateur
-    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
-    user_row = c.fetchone()
-    if not user_row or not user_row[0]:
-        conn.close()
-        flash("Tu dois rejoindre une maison pour accéder aux récompenses", "warning")
-        return redirect(url_for('menu'))
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Récupérer la maison de l'utilisateur
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
+        user_row = c.fetchone()
+        if not user_row or not user_row[0]:
+            conn.close()
+            flash("Tu dois rejoindre une maison pour accéder aux récompenses", "warning")
+            return redirect(url_for('menu'))
     
     house_id = user_row[0]
     user_name = user_row[1]
@@ -6150,10 +6151,14 @@ def rewards():
     # opened_boxes = [row[0] for row in c.fetchall()]
     opened_boxes = []  # Mode test - toutes les cases apparaissent comme non ouvertes
     
-    # Récupérer le type de foyer
-    c.execute("SELECT house_type FROM houses WHERE id=?", (house_id,))
-    house_type_row = c.fetchone()
-    house_type = house_type_row[0] if house_type_row and house_type_row[0] else 'family'
+    # Récupérer le type de foyer (avec gestion d'erreur si la colonne n'existe pas)
+    try:
+        c.execute("SELECT house_type FROM houses WHERE id=?", (house_id,))
+        house_type_row = c.fetchone()
+        house_type = house_type_row[0] if house_type_row and house_type_row[0] else 'family'
+    except Exception as e:
+        _dbg(f"⚠️ Erreur récupération house_type: {e}")
+        house_type = 'family'  # Valeur par défaut
     
     # Créer la table des récompenses personnalisées si elle n'existe pas
     c.execute("""
@@ -6252,32 +6257,53 @@ def rewards():
     ]
     
     # Utiliser les récompenses personnalisées si elles existent, sinon les valeurs par défaut
-    rewards_family_list = json.loads(family_custom[0]) if family_custom else default_rewards_family
-    rewards_couple_list = json.loads(couple_custom[0]) if couple_custom else default_rewards_couple
-    rewards_coloc_list = json.loads(coloc_custom[0]) if coloc_custom else default_rewards_coloc
+    try:
+        rewards_family_list = json.loads(family_custom[0]) if family_custom else default_rewards_family
+    except Exception as e:
+        _dbg(f"⚠️ Erreur parsing JSON family rewards: {e}")
+        rewards_family_list = default_rewards_family
+    
+    try:
+        rewards_couple_list = json.loads(couple_custom[0]) if couple_custom else default_rewards_couple
+    except Exception as e:
+        _dbg(f"⚠️ Erreur parsing JSON couple rewards: {e}")
+        rewards_couple_list = default_rewards_couple
+    
+    try:
+        rewards_coloc_list = json.loads(coloc_custom[0]) if coloc_custom else default_rewards_coloc
+    except Exception as e:
+        _dbg(f"⚠️ Erreur parsing JSON coloc rewards: {e}")
+        rewards_coloc_list = default_rewards_coloc
 
     
-    response = make_response(render_template('rewards.html', 
-                         house_code=house_code, 
-                         is_winner=is_winner,
-                         winner_name=winner_name,
-                         user_name=user_name,
-                         opened_boxes=opened_boxes,
-                         can_open=can_open,
-                         already_opened_this_week=already_opened_this_week,
-                         last_reward=last_reward,
-                         email=session['user'],
-                         rewards_family=rewards_family_list,
-                         rewards_couple=rewards_couple_list,
-                         rewards_coloc=rewards_coloc_list,
-                         house_type=house_type))
+        response = make_response(render_template('rewards.html', 
+                             house_code=house_code, 
+                             is_winner=is_winner,
+                             winner_name=winner_name,
+                             user_name=user_name,
+                             opened_boxes=opened_boxes,
+                             can_open=can_open,
+                             already_opened_this_week=already_opened_this_week,
+                             last_reward=last_reward,
+                             email=session['user'],
+                             rewards_family=rewards_family_list,
+                             rewards_couple=rewards_couple_list,
+                             rewards_coloc=rewards_coloc_list,
+                             house_type=house_type))
+        
+        # Empêcher la mise en cache
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        
+        return response
     
-    # Empêcher la mise en cache
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    
-    return response
+    except Exception as e:
+        _dbg(f"❌ Erreur dans /rewards: {e}")
+        import traceback
+        traceback.print_exc()
+        flash("Une erreur s'est produite lors du chargement de la grille", "danger")
+        return redirect(url_for('menu'))
 
 
 @app.route('/update_rewards', methods=['POST'])
