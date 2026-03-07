@@ -1307,9 +1307,10 @@
                             location.reload(); 
                         }, 500);
                     }
-                    // ✅ Si le destinataire est un ENFANT → tous les adultes rechargent
+                    // ✅ Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) rechargent
                     else if (data.recipient_is_child === true) {
-                        console.log('👶 Message pour un enfant, rechargement pour tous les adultes');
+                        console.log('👶 Message pour ENFANT détecté !');
+                        console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Rechargement avec son');
                         // 🔔 Jouer le son de notification
                         playMessageSound();
                         // Délai plus long pour laisser le son se jouer avant le reload

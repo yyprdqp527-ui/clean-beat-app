@@ -5045,12 +5045,16 @@ def comments():
                 recipient_data = c.fetchone()
                 is_recipient_child = recipient_data and recipient_data[0] == 1
                 
+                _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email}")
+                _dbg(f"👶 Destinataire est enfant: {is_recipient_child}")
+                if is_recipient_child:
+                    _dbg(f"🔔 IMPORTANT: Message pour ENFANT → TOUS les adultes de la maison verront la pastille !")
+                
                 # Notifier le destinataire via WebSocket
                 # Compter le nombre de messages non lus pour le destinataire
                 unread_count = get_unread_message_count(recipient_email, house_id)
                 unread_by_sender = get_unread_messages_by_sender(recipient_email, house_id)
                 
-                _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email} (enfant={is_recipient_child})")
                 _dbg(f"📊 Compteur DESTINATAIRE {recipient_email} après envoi: {unread_count}")
                 _dbg(f"📊 unread_by_sender={unread_by_sender}")
                 

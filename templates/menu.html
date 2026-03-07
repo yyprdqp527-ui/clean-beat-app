@@ -4803,18 +4803,22 @@
                                 return;  // Important : sortir ici
                             }
                             
-                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → tous les adultes (sauf l'expéditeur) reçoivent
+                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) reçoivent
                             if (data.recipient_is_child === true) {
-                                console.log('👶 Message pour enfant, je suis un adulte → Son + Badge');
+                                console.log('👶 Message pour ENFANT détecté !');
+                                console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Je dois voir la pastille + entendre le son');
+                                console.log('📱 Activation : Son + Rechargement compteur');
                                 
                                 // 🔔 SON
                                 playMessageSound();
                                 
-                                // Recharger les compteurs
+                                // Recharger les compteurs pour voir les messages de l'enfant
                                 fetch('/api/unread_counts', { cache: 'no-store' })
                                     .then(response => response.json())
                                     .then(counts => {
+                                        console.log('📊 Compteurs reçus pour message enfant:', counts);
                                         if (counts.unread_received !== undefined) {
+                                            console.log('✅ Mise à jour badge parent avec count:', counts.unread_received);
                                             updateUnreadBadge(counts.unread_received);
                                         }
                                     })
