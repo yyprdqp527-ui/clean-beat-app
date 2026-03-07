@@ -3116,13 +3116,15 @@ def mark_message_as_read(message_id, user_email):
         conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
-            INSERT OR IGNORE INTO message_reads (message_id, user_email)
+            INSERT INTO message_reads (message_id, user_email)
             VALUES (?, ?)
+            ON CONFLICT(message_id, user_email) DO NOTHING
         """, (message_id, user_email))
         conn.commit()
         conn.close()
         return True
-    except Exception:
+    except Exception as e:
+        _dbg(f"❌ mark_message_as_read échoué: message_id={message_id}, user_email={user_email}, err={e}")
         return False
 
 
@@ -5371,7 +5373,9 @@ def mark_single_message_read_for_child():
         return jsonify({'success': False, 'error': 'Message non trouvé'}), 404
     
     # Marquer le message comme lu au nom de l'enfant
-    mark_message_as_read(message_id, child_email)
+    if not mark_message_as_read(message_id, child_email):
+        conn.close()
+        return jsonify({'success': False, 'error': 'Impossible de marquer ce message comme lu'}), 500
     
     # Calculer le nouveau nombre de messages non lus pour cet enfant (envoyés par l'utilisateur courant)
     c.execute("""
@@ -5452,7 +5456,9 @@ def mark_single_message_read():
     sender_email = msg_row[2]
     
     # Marquer le message comme lu
-    mark_message_as_read(message_id, session['user'])
+    if not mark_message_as_read(message_id, session['user']):
+        conn.close()
+        return jsonify({'success': False, 'error': 'Impossible de marquer ce message comme lu'}), 500
     
     # Calculer le nouveau nombre total de messages non lus
     unread_count = get_unread_message_count(session['user'], house_id)
