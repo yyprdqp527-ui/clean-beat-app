@@ -677,7 +677,16 @@ window.addEventListener('DOMContentLoaded', function() {
     </div>
     </div>
 
-<div id="toast" class="toast"></div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}
+        {% if category == 'success' %}
+            <div id="toast" class="toast show" data-toast-msg="{{ msg|escape }}"></div>
+        {% endif %}
+    {% endfor %}
+    {% if not messages %}
+        <div id="toast" class="toast"></div>
+    {% endif %}
+{% endwith %}
 
 {% endblock %}
 
@@ -726,7 +735,7 @@ window.addEventListener('DOMContentLoaded', function(){
         }
         
         console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
-        const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
+        const socket = io();
         const userEmail = "{{ session.get('user', '') }}";
         
         console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');

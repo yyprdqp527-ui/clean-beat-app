@@ -639,9 +639,9 @@
                 <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handlePhotoCapture(event)">
                 <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
                 <input type="hidden" id="selectedPhoto" name="photo_data">
-                <input type="hidden" id="selectedAvatar" name="avatar">
-                <input type="hidden" id="avatarStyle" name="avatar_style">
-                <input type="hidden" name="avatar_type" id="avatar-type" value="">
+                <input type="hidden" id="selectedAvatar" name="avatar" value="{% if player.avatar_file %}{{ player.avatar_file }}{% elif player.avatar %}{{ player.avatar }}{% endif %}">
+                <input type="hidden" id="avatarStyle" name="avatar_style" value="{% if player.avatar_style %}{{ player.avatar_style }}{% else %}adventurer{% endif %}">
+                <input type="hidden" name="avatar_type" id="avatar-type" value="{% if player.avatar_file %}file{% elif player.avatar_url %}dicebear{% elif player.avatar %}emoji{% endif %}">
             </div>
 
             <!-- Nom -->

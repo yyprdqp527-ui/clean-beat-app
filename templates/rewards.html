@@ -1662,6 +1662,7 @@
                 try {
                     const response = await fetch('/update_rewards', {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -1670,8 +1671,15 @@
                             rewards: rewards
                         })
                     });
-                    
-                    const data = await response.json();
+
+                    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                    const isJson = contentType.includes('application/json');
+                    const data = isJson ? await response.json() : { success: false, message: await response.text() };
+
+                    if (!response.ok) {
+                        throw new Error(data.message || ('HTTP ' + response.status));
+                    }
+
                     console.log('📥 Réponse serveur:', data);
                     
                     if (data.success) {
@@ -1700,7 +1708,7 @@
                     console.error('Erreur:', error);
                     button.disabled = false;
                     button.textContent = '✓ Enregistrer';
-                    alert('❌ Erreur de connexion');
+                    alert('❌ Impossible de sauvegarder en local. Vérifiez que le serveur tourne puis réessayez.');
                 }
             }
         </script>

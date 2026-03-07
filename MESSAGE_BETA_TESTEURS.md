@@ -12,7 +12,7 @@ Je teste une nouvelle app pour gérer les tâches ménagères en famille : Clean
 🧪 C'est une version BETA, j'ai besoin de tes retours pour l'améliorer.
 
 📲 **Lien de l'app :**
-[TON-URL-RENDER.onrender.com]
+https://clean-beat-app.onrender.com
 
 🔧 **Installation (3 étapes simples) :**
 
@@ -62,7 +62,7 @@ Cette application est en **phase de test**. Ton avis et tes retours sont précie
 
 ### 📲 Accéder à l'Application
 
-**Lien :** [TON-URL-RENDER.onrender.com]
+**Lien :** https://clean-beat-app.onrender.com
 
 ### 🔧 Installation sur Écran d'Accueil
 

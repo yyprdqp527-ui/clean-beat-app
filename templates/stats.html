@@ -130,3 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 window.location.reload();
             }, 500);
+        });
+    } catch (e) {
+        console.warn('WebSocket non disponible pour stats:', e);
+    }
+});
+</script>
+
+{% endblock %}

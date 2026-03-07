@@ -4521,22 +4521,25 @@ def update_house_name():
 def update_player():
     """Mettre à jour le nom et l'avatar d'un joueur"""
     if 'user' not in session:
+        _dbg("❌ UPDATE_PLAYER: Utilisateur non connecté")
         return jsonify({'success': False, 'error': 'Non connecté'})
     
     try:
         email = request.form.get('email')
         name = request.form.get('name', '').strip()
-        avatar_type = request.form.get('avatar_type')
+        avatar_type = request.form.get('avatar_type', '').strip()
         
         _dbg("🔍 UPDATE_PLAYER - Données reçues:")
         _dbg(f"   email: {email}")
         _dbg(f"   name: {name}")
-        _dbg(f"   avatar_type: {avatar_type}")
+        _dbg(f"   avatar_type: '{avatar_type}'")
         _dbg(f"   avatar: {request.form.get('avatar')}")
         _dbg(f"   avatar_style: {request.form.get('avatar_style')}")
+        _dbg(f"   session['user']: {session.get('user')}")
         _dbg(f"   Tous les champs: {dict(request.form)}")
         
         if not email:
+            _dbg("❌ UPDATE_PLAYER: Email manquant")
             return jsonify({'success': False, 'error': 'Email requis'})
         
         conn = get_db_connection()
@@ -4549,9 +4552,18 @@ def update_player():
         c.execute("SELECT house_id FROM users WHERE email=?", (email,))
         player_house = c.fetchone()
         
-        if not user_house or not player_house or user_house[0] != player_house[0]:
+        _dbg(f"   user_house: {user_house}")
+        _dbg(f"   player_house: {player_house}")
+        
+        if not user_house or not player_house:
             conn.close()
-            return jsonify({'success': False, 'error': 'Non autorisé'})
+            _dbg("❌ UPDATE_PLAYER: Utilisateur ou joueur non trouvé")
+            return jsonify({'success': False, 'error': 'Utilisateur ou joueur non trouvé'})
+            
+        if user_house[0] != player_house[0]:
+            conn.close()
+            _dbg("❌ UPDATE_PLAYER: Maisons différentes, non autorisé")
+            return jsonify({'success': False, 'error': 'Non autorisé - vous devez être dans la même maison'})
         
         # 📛 Récupérer l'ancien nom AVANT la mise à jour (pour propager le changement)
         c.execute("SELECT name FROM users WHERE email=?", (email,))
@@ -4565,8 +4577,9 @@ def update_player():
         if name:
             update_parts.append("name=?")
             update_values.append(name)
+            _dbg(f"   ✅ Ajout du nom à la mise à jour: '{name}'")
         
-        # Gérer l'avatar
+        # Gérer l'avatar SEULEMENT si avatar_type est fourni et valide
         if avatar_type == 'emoji':
             emoji = request.form.get('avatar', '').strip() or request.form.get('avatar_emoji', '').strip()
             if emoji:
@@ -4579,6 +4592,7 @@ def update_player():
                     update_values.append(None)
                     update_parts.append("avatar_url=?")
                     update_values.append(None)
+                    _dbg(f"   ✅ Avatar emoji: {emoji}")
         
         elif avatar_type == 'dicebear':
             # Avatar DiceBear : récupérer le seed et construire l'URL
@@ -4604,6 +4618,7 @@ def update_player():
         elif avatar_type == 'file':
             # Sélection d'une image PNG existante depuis la galerie
             avatar_filename = request.form.get('avatar', '').strip()
+            _dbg(f"   Avatar file détecté: {avatar_filename}")
             if avatar_filename and avatar_filename.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 update_parts.append("avatar_file=?")
                 update_values.append(avatar_filename)
@@ -4612,6 +4627,7 @@ def update_player():
                 update_values.append(None)
                 update_parts.append("avatar_url=?")
                 update_values.append(None)
+                _dbg(f"   ✅ Avatar file conservé: {avatar_filename}")
         
         elif avatar_type == 'photo':
             # Gérer l'upload de fichier
@@ -4634,10 +4650,16 @@ def update_player():
                     update_values.append(None)
                     update_parts.append("avatar_url=?")
                     update_values.append(None)
+                    _dbg(f"   ✅ Photo uploadée: {unique_filename}")
+        else:
+            # Si avatar_type est vide ou inconnu, ne pas toucher à l'avatar
+            _dbg(f"   ℹ️ Avatar type vide ou inconnu ('{avatar_type}'), conservation de l'avatar actuel")
         
         if update_parts:
             update_values.append(email)
             query = f"UPDATE users SET {', '.join(update_parts)} WHERE email=?"
+            _dbg(f"   📝 Requête SQL: {query}")
+            _dbg(f"   📝 Valeurs: {update_values}")
             c.execute(query, update_values)
             
             # 📛 Propager le changement de nom dans les messages existants
@@ -4653,6 +4675,7 @@ def update_player():
                         session['name'] = name
             
             conn.commit()
+            _dbg("   ✅ Modifications sauvegardées en base de données")
             
             # 🔌 WEBSOCKET: Notifier tous les joueurs du changement
             if SOCKETIO_AVAILABLE and socketio:
@@ -4669,13 +4692,18 @@ def update_player():
                     _dbg(f"🔌 WebSocket: Diffusion changement pour {email} (room: house_{house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
+        else:
+            _dbg("   ⚠️ Aucune modification à effectuer (update_parts vide)")
         
         conn.close()
         
+        _dbg("   ✅✅✅ UPDATE_PLAYER terminé avec succès")
         return jsonify({'success': True})
         
     except Exception as e:
-        _dbg(f"[ERROR update_player] {e}")
+        _dbg(f"❌❌❌ [ERROR update_player] {e}")
+        import traceback
+        _dbg(traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)})
 
 
