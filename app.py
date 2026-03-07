@@ -6918,8 +6918,9 @@ def create_profile():
         
         _dbg(f"   📊 User data: name={current_name}, registration_step={registration_step}, house_id={house_id}")
         
-        # Si l'utilisateur a COMPLÉTÉ son profil OU a déjà un nom/avatar, c'est une modification
-        if registration_step == 'profile_created' or current_name:
+        # Mode modification uniquement si le profil est réellement terminé
+        # (évite de basculer en édition pendant l'onboarding quand un nom existe déjà)
+        if registration_step in ('profile_created', 'complete'):
             change_avatar = True
             _dbg(f"   ⚠️ Profil déjà présent (name={current_name}, step={registration_step}) -> mode modification")
         else:
