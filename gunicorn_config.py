@@ -27,7 +27,7 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"
 # Logging
 accesslog = '-'
 errorlog = '-'
-loglevel = 'warning'
+loglevel = 'info'  # Changé de 'warning' à 'info' pour voir les erreurs WebSocket
 
 # Préchargement de l'app (plus rapide au démarrage)
 preload_app = False  # False pour éviter les problèmes de monkey patching
@@ -35,3 +35,6 @@ preload_app = False  # False pour éviter les problèmes de monkey patching
 # Max requests avant restart worker (évite les fuites mémoire)
 max_requests = 1000
 max_requests_jitter = 50
+
+# Options supplémentaires pour WebSocket
+worker_connections = 1000  # Nombre max de connexions simultanées par worker
