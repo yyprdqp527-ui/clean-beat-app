@@ -943,11 +943,18 @@
                                     {{ msg.timestamp.strftime('%Y-%m-%d %H:%M:%S') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp) }}
                                 </div>
                                 
-                                {# ✅ MESSAGERIE TYPE IPHONE : Pas d'accusé de réception pour les messages envoyés #}
-                                {# Dans iPhone SMS classique, on ne voit PAS si quelqu'un a lu notre message #}
-                                
-                                {# Marquage automatique pour les messages REÇUS - déjà géré côté serveur #}
-                                {# Les messages reçus sont automatiquement marqués comme lus à l'ouverture #}
+                                {# Bouton "Marquer comme lu" visible uniquement pour les messages REÇUS (pas envoyés par moi) #}
+                                {% if msg.is_received_by_me and not msg.is_me and msg.message_type == 'private' %}
+                                    {% if msg.is_read_by_me %}
+                                        <div class="read-status">✓ Lu</div>
+                                    {% else %}
+                                        <button class="mark-read-btn" 
+                                                data-msg-id="{{ msg.id }}"
+                                                onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
+                                            ✓ Marquer comme lu
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
