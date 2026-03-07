@@ -2953,7 +2953,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'action': 'system_message',
                     'message_type': message_type,
                     'sender_name': sender_name
-                }, room=f'house_{house_id}')
+                }, room=f'house_{house_id}', broadcast=True)
                 _dbg(f"🔌 WebSocket: Synchronisation messagerie système pour house_{house_id}")
         except Exception as ws_err:
             _dbg(f"⚠️ Erreur WebSocket message système: {ws_err}")
@@ -4658,14 +4658,14 @@ def update_player():
             if SOCKETIO_AVAILABLE and socketio:
                 try:
                     house_id = user_house[0]
-                    socketio.emit('avatar_updated', {'email': email}, namespace='/', room=f'house_{house_id}')
+                    socketio.emit('avatar_updated', {'email': email}, namespace='/', room=f'house_{house_id}', broadcast=True)
                     # Si le nom a changé, notifier aussi pour rafraîchir les affichages
                     if name and old_name and name != old_name:
                         socketio.emit('player_name_updated', {
                             'email': email, 
                             'old_name': old_name, 
                             'new_name': name
-                        }, namespace='/', room=f'house_{house_id}')
+                        }, namespace='/', room=f'house_{house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Diffusion changement pour {email} (room: house_{house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
@@ -4968,7 +4968,7 @@ def add_child():
                 'players': players_data,
                 'new_player': child_name,
                 'action': 'child_added'
-            }, namespace='/', room=f'house_{house_id}')
+            }, namespace='/', room=f'house_{house_id}', broadcast=True)
             _dbg(f"🔌 WebSocket: Enfant '{child_name}' ajouté (room: house_{house_id})")
         except Exception as ws_err:
             _dbg(f"⚠️ Erreur WebSocket ajout enfant: {ws_err}")
@@ -5069,13 +5069,13 @@ def comments():
                     'recipient_email': recipient_email,
                     'recipient_is_child': is_recipient_child,  # ✅ Indique si c'est un enfant sans téléphone
                     'unread_by_sender': unread_by_sender
-                }, room=f'house_{house_id}')
+                }, room=f'house_{house_id}', broadcast=True)
                 
                 # Mettre à jour le compteur avec les badges par joueur
                 socketio.emit('unread_by_sender_update', {
                     'user_email': recipient_email,
                     'unread_by_sender': unread_by_sender
-                }, room=f'house_{house_id}')
+                }, room=f'house_{house_id}', broadcast=True)
                 
                 # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
                 socketio.emit('messages_list_update', {
@@ -5083,7 +5083,7 @@ def comments():
                     'action': 'new_message',
                     'sender_email': session['user'],
                     'recipient_email': recipient_email
-                }, room=f'house_{house_id}')
+                }, room=f'house_{house_id}', broadcast=True)
                 _dbg(f"🔌 WebSocket: Synchronisation messagerie pour house_{house_id}")
                 
                 # 🔔 Envoyer une notification push au destinataire
@@ -5690,20 +5690,20 @@ def mark_all_messages_read():
         'count': unread_count,
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
     
     # Notifier que cet utilisateur a tout lu (pour mettre à jour l'UI des autres)
     socketio.emit('all_messages_read', {
         'reader_email': session['user'],
         'message_ids': unread_message_ids
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
 
     # Forcer un refresh des compteurs côté menu/comments sur tous les appareils.
     socketio.emit('messages_list_update', {
         'house_id': house_id,
         'action': 'all_read',
         'reader_email': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
     
     conn.close()
     
@@ -5779,14 +5779,14 @@ def mark_single_message_read_for_child():
         'child_email': child_email,
         'new_count': new_unread_count,
         'updated_by': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
     socketio.emit('message_read_update', {
         'message_id': int(message_id),
         'reader_email': child_email,
         'read_by': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
     
     return jsonify({
         'success': True,
@@ -5862,27 +5862,27 @@ def mark_single_message_read():
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender,
         'unread_sent_to': unread_sent_to
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
 
     if sender_email and sender_email != session['user']:
         socketio.emit('unread_sent_to_update', {
             'user_email': sender_email,
             'unread_sent_to': sender_unread_sent_to
-        }, room=f'house_{house_id}')
+        }, room=f'house_{house_id}', broadcast=True)
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
     socketio.emit('message_read_update', {
         'message_id': int(message_id),
         'reader_email': session['user'],
         'read_by': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
 
     socketio.emit('messages_list_update', {
         'house_id': house_id,
         'action': 'message_read',
         'reader_email': session['user'],
         'message_id': int(message_id)
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', broadcast=True)
     
     return jsonify({
         'success': True,
@@ -7460,7 +7460,7 @@ def update_profile():
                     'email': session['user'],
                     'old_name': old_name,
                     'new_name': name
-                }, namespace='/', room=f'house_{profile_house_id}')
+                }, namespace='/', room=f'house_{profile_house_id}', broadcast=True)
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket changement nom: {ws_err}")
     
@@ -7770,7 +7770,7 @@ def join_house():
                     'players': players_data,
                     'new_player': user[2],
                     'action': 'player_joined'
-                }, namespace='/', room=f'house_{house_id}')
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
                 _dbg(f"🔌 WebSocket: Joueur '{user[2]}' a rejoint la maison (room: house_{house_id})")
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket join house: {ws_err}")
@@ -7851,7 +7851,7 @@ def join_house():
                         'players': players_data,
                         'new_player': user_name,
                         'action': 'player_registered'
-                    }, namespace='/', room=f'house_{house_id}')
+                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Nouveau joueur '{user_name}' inscrit (room: house_{house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket registration: {ws_err}")
@@ -9177,11 +9177,11 @@ def custom_task_page(task_id):
                         })
                     
                     # Utiliser socketio.emit() directement pour émettre depuis une route HTTP
-                    # ✅ room= envoie à TOUS les clients de la room
+                    # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
                     socketio.emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
-                    }, namespace='/', room=f'house_{user_house_id}')
+                    }, namespace='/', room=f'house_{user_house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{user_house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
@@ -9537,11 +9537,11 @@ def task_enhanced(cat, task_id):
                         })
                     
                     # Utiliser socketio.emit() directement pour émettre depuis une route HTTP
-                    # ✅ room= envoie à TOUS les clients de la room
+                    # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
                     socketio.emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
-                    }, namespace='/', room=f'house_{house_id}')
+                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
@@ -9995,10 +9995,10 @@ def api_validate_task():
                 _dbg(f"   🔍 DEBUG: socketio object = {socketio}")
                 _dbg(f"   🔍 DEBUG: SOCKETIO_AVAILABLE = {SOCKETIO_AVAILABLE}")
                 
-                # ✅ room= envoie déjà à TOUS les clients de la room (pas besoin de broadcast=True)
+                # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
                 socketio.emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
-                }, namespace='/', room=room_name)
+                }, namespace='/', room=room_name, broadcast=True)
                 
                 _dbg(f"✅ WebSocket: Notification envoyée à room {room_name} pour {player_email} (+{task_points} pts)")
                 _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
@@ -10010,7 +10010,7 @@ def api_validate_task():
                         'action': 'baby_tracking',
                         'sender_email': player_email,
                         'sender_name': player_name
-                    }, namespace='/', room=room_name)
+                    }, namespace='/', room=room_name, broadcast=True)
                     _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{user_house_id}")
                     
             except Exception as ws_err:
@@ -10661,7 +10661,7 @@ def save_baby_tracking():
                     'sender_email': session['user'],
                     'sender_name': user_name,
                     'task_type': task_type
-                }, room=f'house_{house_id}')
+                }, room=f'house_{house_id}', broadcast=True)
                 _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
         except Exception as ws_err:
             _dbg(f"⚠️ Erreur WebSocket baby_tracking: {ws_err}")
