@@ -4406,34 +4406,80 @@
                     console.log('👤 currentUserEmail:', currentUserEmail);
                     const avatarWrapper = document.getElementById('current-player-avatar-wrapper');
                     console.log('🎯 avatarWrapper trouvé:', avatarWrapper);
-                    if (avatarWrapper) {
-                        let avatarBadge = avatarWrapper.querySelector('.avatar-notification-badge');
-                        console.log('🔴 Badge existant:', avatarBadge);
-                        if (count > 0) {
-                            if (!avatarBadge) {
-                                console.log('➕ Création d\'un nouveau badge...');
-                                avatarBadge = document.createElement('span');
-                                avatarBadge.className = 'avatar-notification-badge';
-                                avatarBadge.setAttribute('data-recipient', currentUserEmail);
-                                avatarBadge.style.cssText = 'position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF4444 0%, #FF6B6B 100%); color: white; font-size: 10px; font-weight: 800; min-width: 22px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; padding: 0 6px; box-shadow: 0 3px 12px rgba(255, 68, 68, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4); animation: pulse-badge 2s ease-in-out infinite; border: 1.5px solid white; z-index: 10; font-family: Montserrat, sans-serif; cursor: pointer; transition: transform 0.2s ease;';
-                                avatarBadge.onclick = (e) => {
-                                    e.stopPropagation();
-                                    window.location.href = '{{ url_for("comments") }}';
-                                };
-                                avatarWrapper.appendChild(avatarBadge);
-                                console.log('✅ Badge créé et ajouté');
-                            }
-                            avatarBadge.textContent = count < 100 ? count : '99+';
+                    
+                    if (!avatarWrapper) {
+                        console.error('❌ avatarWrapper non trouvé ! ID: current-player-avatar-wrapper');
+                        console.log('🔍 Éléments avec classe avatar-square-wrapper:', document.querySelectorAll('.avatar-square-wrapper').length);
+                        return;
+                    }
+                    
+                    let avatarBadge = avatarWrapper.querySelector('.avatar-notification-badge');
+                    console.log('🔴 Badge existant:', avatarBadge);
+                    
+                    if (count > 0) {
+                        if (!avatarBadge) {
+                            console.log('➕ Création d\'un nouveau badge...');
+                            avatarBadge = document.createElement('span');
+                            avatarBadge.className = 'avatar-notification-badge';
+                            avatarBadge.setAttribute('data-recipient', currentUserEmail);
+                            // Appliquer TOUS les styles nécessaires
+                            avatarBadge.style.position = 'absolute';
+                            avatarBadge.style.top = '-4px';
+                            avatarBadge.style.right = '-4px';
+                            avatarBadge.style.background = 'linear-gradient(135deg, #FF4444 0%, #FF6B6B 100%)';
+                            avatarBadge.style.color = 'white';
+                            avatarBadge.style.fontSize = '10px';
+                            avatarBadge.style.fontWeight = '800';
+                            avatarBadge.style.minWidth = '22px';
+                            avatarBadge.style.height = '22px';
+                            avatarBadge.style.borderRadius = '11px';
                             avatarBadge.style.display = 'flex';
-                            avatarBadge.style.visibility = 'visible';
-                            avatarBadge.style.opacity = '1';
-                            console.log('✅ Badge avatar affiché:', avatarBadge.textContent);
-                        } else if (avatarBadge) {
-                            avatarBadge.style.display = 'none';
-                            console.log('❌ Badge avatar caché');
+                            avatarBadge.style.alignItems = 'center';
+                            avatarBadge.style.justifyContent = 'center';
+                            avatarBadge.style.padding = '0 6px';
+                            avatarBadge.style.boxShadow = '0 3px 12px rgba(255, 68, 68, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4)';
+                            avatarBadge.style.border = '1.5px solid white';
+                            avatarBadge.style.zIndex = '100';  // Z-index très élevé
+                            avatarBadge.style.fontFamily = 'Montserrat, sans-serif';
+                            avatarBadge.style.cursor = 'pointer';
+                            avatarBadge.style.transition = 'transform 0.2s ease';
+                            avatarBadge.style.pointerEvents = 'auto';
+                            avatarBadge.style.animation = 'pulse-badge 2s ease-in-out infinite';
+                            
+                            avatarBadge.onclick = (e) => {
+                                e.stopPropagation();
+                                window.location.href = '{{ url_for("comments") }}';
+                            };
+                            
+                            // S'assurer que le wrapper a position: relative
+                            if (window.getComputedStyle(avatarWrapper).position === 'static') {
+                                avatarWrapper.style.position = 'relative';
+                                console.log('✅ Position relative appliquée au wrapper');
+                            }
+                            
+                            avatarWrapper.appendChild(avatarBadge);
+                            console.log('✅ Badge créé et ajouté au DOM');
+                            console.log('🔍 Position du badge:', avatarBadge.getBoundingClientRect());
                         }
-                    } else {
-                        console.error('❌ Impossible de trouver avatarWrapper !');
+                        
+                        // Mettre à jour le contenu et forcer l'affichage
+                        avatarBadge.textContent = count < 100 ? count : '99+';
+                        avatarBadge.style.display = 'flex';
+                        avatarBadge.style.visibility = 'visible';
+                        avatarBadge.style.opacity = '1';
+                        avatarBadge.style.pointerEvents = 'auto';
+                        
+                        console.log('✅ Badge avatar affiché:', avatarBadge.textContent);
+                        console.log('🔍 Styles finaux badge:', {
+                            display: avatarBadge.style.display,
+                            visibility: avatarBadge.style.visibility,
+                            opacity: avatarBadge.style.opacity,
+                            zIndex: avatarBadge.style.zIndex,
+                            position: avatarBadge.style.position
+                        });
+                    } else if (avatarBadge) {
+                        avatarBadge.style.display = 'none';
+                        console.log('❌ Badge avatar caché');
                     }
                 }
                 
@@ -4849,10 +4895,13 @@
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
                 // (cache navigateur, bfcache, retour arrière, Service Worker, etc.)
                 function refreshAllBadges() {
+                    console.log('🔄 Rafraîchissement des badges...');
                     fetch('/api/unread_counts', { cache: 'no-store' })
                         .then(response => response.json())
                         .then(counts => {
+                            console.log('📊 Compteurs reçus de l\'API:', counts);
                             if (counts.unread_received !== undefined) {
+                                console.log('🔔 Mise à jour badge avec count:', counts.unread_received);
                                 updateUnreadBadge(counts.unread_received);
                             }
                             if (counts.unread_by_sender) {
@@ -4861,8 +4910,16 @@
                             // ✅ MESSAGERIE TYPE IPHONE : Pas de compteur pour messages envoyés
                             console.log('✅ Badges rafraîchis:', counts);
                         })
-                        .catch(error => console.error('Erreur rafraîchissement badges:', error));
+                        .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
                 }
+                
+                // 🧪 Fonction de test manuelle disponible dans la console
+                window.testMessageBadge = function(count) {
+                    console.log('🧪 TEST: Affichage du badge avec count =', count);
+                    updateUnreadBadge(count);
+                };
+                
+                console.log('💡 Pour tester le badge manuellement, tapez dans la console: testMessageBadge(5)');
                 
                 // 🚀 Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
                 refreshAllBadges();
