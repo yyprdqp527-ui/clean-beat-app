@@ -1,12 +1,8 @@
 """WSGI entry point for production (Gunicorn + gevent + Flask-SocketIO).
 
-CRITIQUE: Utilise UNIQUEMENT gevent (pas de fallback eventlet) pour éviter
-les conflits de monkey patching et les erreurs "cannot release un-acquired lock".
+CRITIQUE: Le monkey patching est fait dans gunicorn_config.py (avant import de ce fichier)
+pour garantir qu'il est fait en TOUT PREMIER, avant que gunicorn charge quoi que ce soit.
 """
-
-# ⚡ MONKEY PATCH EN TOUT PREMIER - avant TOUT import
-from gevent import monkey
-monkey.patch_all()
 
 import os
 from app import app, socketio  # type: ignore

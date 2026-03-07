@@ -1,5 +1,9 @@
 """Configuration Gunicorn pour CleanBeat sur Render avec gevent."""
 
+# ⚡ MONKEY PATCH EN TOUT PREMIER - avant même l'import de app
+from gevent import monkey
+monkey.patch_all()
+
 import multiprocessing
 import os
 
