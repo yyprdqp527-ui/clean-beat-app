@@ -4481,9 +4481,26 @@
                         const userEmail = "{{ session.get('user', '') }}";
                         
                         // 🔔 Son de notification pour les nouveaux messages
-                        const messageNotifSound = new Audio('/static/audio/notification-pings-335496.mp3');
+                        const messageNotifSound = new Audio('/static/audio/livechat-129007.mp3');
                         messageNotifSound.preload = 'auto';
-                        messageNotifSound.volume = 0.5;
+                        messageNotifSound.volume = 0.8;  // Volume augmenté pour être plus audible
+                        
+                        // 🔓 Débloquer l'audio dès la première interaction utilisateur
+                        let audioUnlocked = false;
+                        function unlockAudio() {
+                            if (!audioUnlocked) {
+                                messageNotifSound.play().then(() => {
+                                    messageNotifSound.pause();
+                                    messageNotifSound.currentTime = 0;
+                                    audioUnlocked = true;
+                                    console.log('✅ Audio débloqué pour les notifications');
+                                }).catch(() => {});
+                            }
+                        }
+                        // Débloquer au premier clic/touch sur la page
+                        ['click', 'touchstart'].forEach(event => {
+                            document.addEventListener(event, unlockAudio, { once: true });
+                        });
                         
                         function playMessageSound() {
                             try {
