@@ -4417,52 +4417,18 @@
                     }
                 }
                 
-                // ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS
-                // Pas de compteur pour les messages envoyés
+                // ✅ MESSAGERIE : La pastille rouge apparaît uniquement sur l'avatar du DESTINATAIRE (celui qui a des messages non lus)
+                // Pas besoin de badges par expéditeur - chaque joueur voit une pastille sur SON avatar s'il a des messages non lus
                 window.__unreadBySender = window.__unreadBySender || {};
 
                 function applyAvatarUnreadBadges() {
-                    const currentUserEmail = "{{ session.get('user', '') }}";
-                    const mergedCounts = window.__unreadBySender || {};
-
-                    // Mettre à jour les badges existants
-                    document.querySelectorAll('.avatar-notification-badge[data-sender]').forEach(badge => {
-                        const senderEmail = badge.getAttribute('data-sender');
-                        // Ne pas traiter le badge de l'utilisateur actuel ici
-                        if (senderEmail === currentUserEmail) return;
-                        
-                        const count = mergedCounts[senderEmail] || 0;
-                        if (count > 0) {
-                            badge.textContent = count < 100 ? count : '99+';
-                            badge.style.display = 'flex';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    });
-                    
-                    // Ajouter des badges manquants si nécessaire
-                    for (const [senderEmail, count] of Object.entries(mergedCounts)) {
-                        if (count > 0) {
-                            const existingBadge = document.querySelector(`.avatar-notification-badge[data-sender="${senderEmail}"]`);
-                            if (!existingBadge) {
-                                // Trouver le wrapper de l'avatar correspondant (l'avatar de l'expéditeur)
-                                const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${senderEmail}"]`);
-                                if (avatarWrapper) {
-                                    const badge = document.createElement('span');
-                                    badge.className = 'avatar-notification-badge';
-                                    badge.setAttribute('data-sender', senderEmail);
-                                    badge.textContent = count < 100 ? count : '99+';
-                                    badge.onclick = () => window.location.href = '{{ url_for("comments") }}';
-                                    avatarWrapper.appendChild(badge);
-                                }
-                            }
-                        }
-                    }
+                    // Cette fonction n'est plus nécessaire car updateUnreadBadge gère déjà la pastille sur l'avatar de l'utilisateur actuel
+                    // On la garde vide pour compatibilité avec les appels existants
                 }
 
                 function updateUnreadBySender(unreadBySender) {
                     window.__unreadBySender = unreadBySender || {};
-                    applyAvatarUnreadBadges();
+                    // Ne rien faire - les badges sont gérés par updateUnreadBadge
                 }
                 
                 // ==========================================
