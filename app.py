@@ -6221,6 +6221,11 @@ def rewards():
     
     # Ajouter les colonnes manquantes si elles n'existent pas
     try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN house_type TEXT")
+    except:
+        pass
+    
+    try:
         c.execute("ALTER TABLE custom_rewards ADD COLUMN rewards_json TEXT")
     except:
         pass
