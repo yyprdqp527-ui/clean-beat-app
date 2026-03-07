@@ -960,7 +960,7 @@
                                 {% endif %}
                                 
                                 {# Bouton Lu pour les messages REÇUS par moi et que je n'ai pas encore lus #}
-                                {% if not msg.is_me and msg.message_type == 'private' %}
+                                {% if msg.is_received_by_me and msg.message_type == 'private' %}
                                     {% if msg.is_read_by_me %}
                                         <div class="read-status read">✓ Lu</div>
                                     {% else %}

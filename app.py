@@ -5125,6 +5125,7 @@ def comments():
             'sender_type': sender_type,
             'message_type': message_type,
             'is_me': sender_email == session['user'],
+            'is_received_by_me': recipient_email == session['user'],
             'is_read_by_recipient': bool(is_read_by_recipient),
             'is_read_by_me': bool(is_read_by_me)
         })
@@ -5286,7 +5287,7 @@ def mark_all_messages_read():
     # Récupérer tous les messages non lus reçus par l'utilisateur
     # ⚠️ Utiliser la MÊME logique que get_unread_message_count pour éviter les décalages
     c.execute("""
-        SELECT m.id
+        SELECT m.id, m.sender_email
         FROM messages m
         WHERE m.house_id = ?
         AND (m.sender_email IS NULL OR m.sender_email != ?)
@@ -5300,7 +5301,12 @@ def mark_all_messages_read():
         )
     """, (house_id, session['user'], session['user'], session['user'], session['user']))
     
-    unread_message_ids = [row[0] for row in c.fetchall()]
+    unread_rows = c.fetchall()
+    unread_message_ids = [row[0] for row in unread_rows]
+    impacted_senders = set()
+    for _, sender_email in unread_rows:
+        if sender_email and sender_email != session['user']:
+            impacted_senders.add(sender_email)
     
     # Marquer tous ces messages comme lus
     for msg_id in unread_message_ids:
@@ -5309,18 +5315,35 @@ def mark_all_messages_read():
     # Récupérer le nouveau compteur
     unread_count = get_unread_message_count(session['user'], house_id)
     unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
+    unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
     
     # Notifier via WebSocket
     socketio.emit('unread_count_update', {
         'count': unread_count,
         'user_email': session['user'],
-        'unread_by_sender': unread_by_sender
+        'unread_by_sender': unread_by_sender,
+        'unread_sent_to': unread_sent_to
     }, room=f'house_{house_id}')
+
+    # Mettre à jour les badges "envoyés non lus" pour les expéditeurs impactés.
+    for sender_email in impacted_senders:
+        sender_unread_sent_to = get_unread_messages_sent_to(sender_email, house_id)
+        socketio.emit('unread_sent_to_update', {
+            'user_email': sender_email,
+            'unread_sent_to': sender_unread_sent_to
+        }, room=f'house_{house_id}')
     
     # Notifier que cet utilisateur a tout lu (pour mettre à jour l'UI des autres)
     socketio.emit('all_messages_read', {
         'reader_email': session['user'],
         'message_ids': unread_message_ids
+    }, room=f'house_{house_id}')
+
+    # Forcer un refresh des compteurs côté menu/comments sur tous les appareils.
+    socketio.emit('messages_list_update', {
+        'house_id': house_id,
+        'action': 'all_read',
+        'reader_email': session['user']
     }, room=f'house_{house_id}')
     
     conn.close()
@@ -5463,6 +5486,11 @@ def mark_single_message_read():
     # Calculer le nouveau nombre total de messages non lus
     unread_count = get_unread_message_count(session['user'], house_id)
     unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
+    unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+
+    sender_unread_sent_to = {}
+    if sender_email and sender_email != session['user']:
+        sender_unread_sent_to = get_unread_messages_sent_to(sender_email, house_id)
     
     conn.close()
     
@@ -5470,8 +5498,15 @@ def mark_single_message_read():
     socketio.emit('unread_count_update', {
         'count': unread_count,
         'user_email': session['user'],
-        'unread_by_sender': unread_by_sender
+        'unread_by_sender': unread_by_sender,
+        'unread_sent_to': unread_sent_to
     }, room=f'house_{house_id}')
+
+    if sender_email and sender_email != session['user']:
+        socketio.emit('unread_sent_to_update', {
+            'user_email': sender_email,
+            'unread_sent_to': sender_unread_sent_to
+        }, room=f'house_{house_id}')
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
     socketio.emit('message_read_update', {
@@ -5479,13 +5514,21 @@ def mark_single_message_read():
         'reader_email': session['user'],
         'read_by': session['user']
     }, room=f'house_{house_id}')
+
+    socketio.emit('messages_list_update', {
+        'house_id': house_id,
+        'action': 'message_read',
+        'reader_email': session['user'],
+        'message_id': int(message_id)
+    }, room=f'house_{house_id}')
     
     return jsonify({
         'success': True,
         'message_id': message_id,
         'sender_email': sender_email,
         'new_unread_count': unread_count,
-        'unread_by_sender': unread_by_sender
+        'unread_by_sender': unread_by_sender,
+        'unread_sent_to': unread_sent_to
     })
 
 
