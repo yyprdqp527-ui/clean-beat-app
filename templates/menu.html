@@ -4776,103 +4776,118 @@
                             console.log('💬 WebSocket: Nouveau message reçu', data);
                             console.log('💬 recipient_email:', data.recipient_email);
                             console.log('💬 userEmail:', userEmail);
-                            console.log('💬 Match:', data.recipient_email === userEmail);
                             console.log('💬 sender_email:', data.sender_email);
                             console.log('💬 recipient_is_child:', data.recipient_is_child);
                             
-                            // ❌ Si JE suis l'expéditeur → ne rien faire (pas de pastille pour moi)
+                            // ❌ RÈGLE #1 : Si JE suis l'expéditeur → RIEN faire (pas de badge, pas de son)
                             if (data.sender_email === userEmail) {
-                                console.log('⏭️ Je suis l\'expéditeur, je ne reçois pas de pastille');
+                                console.log('⏭️ Je suis l\'expéditeur, AUCUNE action');
                                 return;
                             }
                             
-                            // ✅ Si JE suis le destinataire → afficher la pastille et le son
+                            // ✅ RÈGLE #2 : Si JE suis le destinataire direct → son + badge
                             if (data.recipient_email === userEmail) {
-                                console.log('✅ Je suis le destinataire ! Mise à jour du badge avec count:', data.unread_count);
+                                console.log('✅ Je suis le DESTINATAIRE ! Badge + Son');
+                                console.log('📊 Compteur: ', data.unread_count);
                                 
-                                // 🔔 Jouer le son de notification EN PREMIER (avant de mettre à jour le DOM)
-                                console.log('🔔 Tentative de lecture du son...');
+                                // 🔔 SON EN PREMIER
                                 playMessageSound();
                                 
-                                // Mettre à jour le badge
+                                // Badge
                                 updateUnreadBadge(data.unread_count);
                                 
-                                // Mettre à jour les badges sur les avatars (messages reçus uniquement)
                                 if (data.unread_by_sender) {
                                     updateUnreadBySender(data.unread_by_sender);
                                 }
                                 
-                                // Afficher une notification toast (optionnel)
-                                if (typeof showToast === 'function') {
-                                    showToast(`💬 Nouveau message de ${data.sender}`);
-                                }
+                                return;  // Important : sortir ici
                             }
-                            // ✅ Si le destinataire est un ENFANT (sans téléphone) → tous les adultes voient la pastille
-                            else if (data.recipient_is_child === true) {
-                                console.log('👶 Message pour un enfant, tous les adultes voient la pastille');
+                            
+                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → tous les adultes (sauf l'expéditeur) reçoivent
+                            if (data.recipient_is_child === true) {
+                                console.log('👶 Message pour enfant, je suis un adulte → Son + Badge');
                                 
-                                // 🔔 Jouer le son de notification EN PREMIER
-                                console.log('🔔 Tentative de lecture du son (enfant)...');
+                                // 🔔 SON
                                 playMessageSound();
                                 
-                                // Recharger les compteurs pour voir les messages de l'enfant
-                                fetch('/api/unread_messages_count')
+                                // Recharger les compteurs
+                                fetch('/api/unread_counts', { cache: 'no-store' })
                                     .then(response => response.json())
-                                    .then(result => {
-                                        if (result.success) {
-                                            updateUnreadBadge(result.unread_count);
+                                    .then(counts => {
+                                        if (counts.unread_received !== undefined) {
+                                            updateUnreadBadge(counts.unread_received);
                                         }
                                     })
                                     .catch(error => console.error('Erreur rechargement compteur:', error));
+                                    
+                                return;
                             }
-                            else {
-                                console.log('⏭️ Pas pour moi, je skip');
-                            }
+                            
+                            // ❌ Sinon : rien faire
+                            console.log('⏭️ Ce message ne me concerne pas');
                         });
                         
                         // Écouter les mises à jour des badges sur les avatars
                         socket.on('unread_by_sender_update', function(data) {
-                            console.log('💬 WebSocket: Mise à jour des badges avatars', data);
+                            console.log('💬 WebSocket: unread_by_sender_update reçu', data);
+                            console.log('💬 user_email:', data.user_email, '/ userEmail:', userEmail);
+                            
+                            // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail && data.unread_by_sender) {
+                                console.log('✅ Mise à jour MY badges avatars');
                                 updateUnreadBySender(data.unread_by_sender);
+                            } else {
+                                console.log('⏭️ Badges avatars pas pour moi');
                             }
                         });
                         
                         // Écouter les mises à jour du compteur de messages non lus
                         socket.on('unread_count_update', function(data) {
-                            console.log('💬 WebSocket: Compteur messages non lus mis à jour', data);
+                            console.log('💬 WebSocket: unread_count_update reçu', data);
+                            console.log('💬 user_email:', data.user_email, '/ userEmail:', userEmail, '/ count:', data.count);
+                            
+                            // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail) {
+                                console.log('✅ Mise à jour MON compteur:', data.count);
                                 updateUnreadBadge(data.count);
-                                // Mettre à jour les badges sur les avatars (messages reçus uniquement)
+                                
                                 if (data.unread_by_sender) {
                                     updateUnreadBySender(data.unread_by_sender);
                                 }
+                            } else {
+                                console.log('⏭️ Compteur pas pour moi');
                             }
                         });
                         
                         // 🔌 Synchroniser la liste des messages pour tous les utilisateurs
                         socket.on('messages_list_update', function(data) {
-                            console.log('📬 WebSocket Menu: Mise à jour de la liste des messages', data);
+                            console.log('📬 WebSocket: messages_list_update reçu', data);
+                            console.log('📬 action:', data.action, 'sender:', data.sender_email, 'userEmail:', userEmail);
                             
-                            // ✅ Si c'est MOI qui ai envoyé le message, ne pas recharger MES badges
-                            // (ils sont déjà à jour car le message est marqué comme lu pour l'expéditeur)
-                            if (data.sender_email && data.sender_email === userEmail) {
-                                console.log('✅ Message envoyé par moi, pas de rechargement de mes badges');
+                            // ❌ Si JE suis l'expéditeur du nouveau message → NE PAS recharger mes badges
+                            if (data.action === 'new_message' && data.sender_email === userEmail) {
+                                console.log('⏭️ Message envoyé par MOI, pas de rechargement');
                                 return;
                             }
                             
-                            // Recharger les compteurs de messages pour rafraîchir les badges
-                            // On ne recharge pas la page entière pour ne pas interrompre la navigation
+                            // ❌ Si quelqu'un d'autre a marqué comme lu → NE PAS recharger mes badges
+                            if (data.action === 'message_read' && data.reader_email !== userEmail) {
+                                console.log('⏭️ Quelqu\'un d\'autre a marqué comme lu, pas mon affaire');
+                                return;
+                            }
+                            
+                            // ✅ Sinon, recharger mes compteurs (je suis le destinataire)
+                            console.log('✅ Rechargement de MES badges via API');
                             fetch('/api/unread_counts', { cache: 'no-store' })
                                 .then(response => response.json())
                                 .then(counts => {
+                                    console.log('📊 Compteurs API reçus:', counts);
                                     if (counts.unread_received !== undefined) {
                                         updateUnreadBadge(counts.unread_received);
                                     }
                                     if (counts.unread_by_sender) {
                                         updateUnreadBySender(counts.unread_by_sender);
                                     }
-                                    console.log('✅ Badges mis à jour via API');
                                 })
                                 .catch(error => console.error('❌ Erreur rechargement badges:', error));
                         });

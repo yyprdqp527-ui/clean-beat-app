@@ -5036,6 +5036,10 @@ def comments():
                 mark_message_as_read(message_id, session['user'])
                 _dbg(f"✅ Message ID {message_id} automatiquement marqué comme lu pour l'expéditeur {session['user']}")
                 
+                # Vérifier le compteur de l'expéditeur (doit rester à 0 ou inchangé)
+                sender_unread = get_unread_message_count(session['user'], house_id)
+                _dbg(f"📊 Compteur EXPÉDITEUR {session['user']} après envoi: {sender_unread}")
+                
                 # Vérifier si le destinataire est un enfant (sans téléphone)
                 c.execute("SELECT is_child_account FROM users WHERE email = ?", (recipient_email,))
                 recipient_data = c.fetchone()
@@ -5047,7 +5051,7 @@ def comments():
                 unread_by_sender = get_unread_messages_by_sender(recipient_email, house_id)
                 
                 _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email} (enfant={is_recipient_child})")
-                _dbg(f"📊 Compteur destinataire APRÈS envoi: unread_count={unread_count}")
+                _dbg(f"📊 Compteur DESTINATAIRE {recipient_email} après envoi: {unread_count}")
                 _dbg(f"📊 unread_by_sender={unread_by_sender}")
                 
                 # Émettre l'événement WebSocket
