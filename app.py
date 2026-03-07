@@ -6219,6 +6219,17 @@ def rewards():
         )
     """)
     
+    # Ajouter les colonnes manquantes si elles n'existent pas
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN rewards_json TEXT")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+    
     # Charger les récompenses personnalisées ou utiliser les valeurs par défaut
     c.execute("SELECT rewards_json FROM custom_rewards WHERE house_id=? AND house_type=?", (house_id, 'family'))
     family_custom = c.fetchone()
