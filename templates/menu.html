@@ -2445,7 +2445,7 @@
                                                 {% endif %}
                                             </div>
                                             <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                            {% set p2_unread = unread_by_sender.get(p2.email, 0) if unread_by_sender else (unread_sent_to.get(p2.email, 0) if unread_sent_to else 0) %}
+                                            {% set p2_unread = (unread_by_sender.get(p2.email, 0) if unread_by_sender else 0) + (unread_sent_to.get(p2.email, 0) if unread_sent_to else 0) %}
                                             {% if p2_unread > 0 %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             {% endif %}
@@ -2489,7 +2489,7 @@
                                                     {% endif %}
                                                 </div>
                                                 <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                                {% set p_unread = unread_by_sender.get(p.email, 0) if unread_by_sender else (unread_sent_to.get(p.email, 0) if unread_sent_to else 0) %}
+                                                {% set p_unread = (unread_by_sender.get(p.email, 0) if unread_by_sender else 0) + (unread_sent_to.get(p.email, 0) if unread_sent_to else 0) %}
                                                 {% if p_unread > 0 %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 {% endif %}
@@ -4415,10 +4415,20 @@
                     }
                 }
                 
-                // Mettre à jour les badges par joueur sur les avatars (messages non lus par expéditeur)
-                function updateUnreadSentTo(unreadSentTo) {
+                // Caches locaux des compteurs pour fusionner les deux sens de lecture
+                window.__unreadBySender = window.__unreadBySender || {};
+                window.__unreadSentTo = window.__unreadSentTo || {};
+
+                function applyAvatarUnreadBadges() {
                     const currentUserEmail = "{{ session.get('user', '') }}";
-                    const countsMap = unreadSentTo || {};
+                    const mergedCounts = {};
+
+                    Object.keys(window.__unreadBySender || {}).forEach(email => {
+                        mergedCounts[email] = (mergedCounts[email] || 0) + (window.__unreadBySender[email] || 0);
+                    });
+                    Object.keys(window.__unreadSentTo || {}).forEach(email => {
+                        mergedCounts[email] = (mergedCounts[email] || 0) + (window.__unreadSentTo[email] || 0);
+                    });
 
                     // Mettre à jour les badges existants
                     document.querySelectorAll('.avatar-notification-badge[data-recipient]').forEach(badge => {
@@ -4426,7 +4436,7 @@
                         // Ne pas traiter le badge de l'utilisateur actuel ici
                         if (recipientEmail === currentUserEmail) return;
                         
-                        const count = countsMap[recipientEmail] || 0;
+                        const count = mergedCounts[recipientEmail] || 0;
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = 'flex';
@@ -4436,7 +4446,7 @@
                     });
                     
                     // Ajouter des badges manquants si nécessaire
-                    for (const [recipientEmail, count] of Object.entries(countsMap)) {
+                    for (const [recipientEmail, count] of Object.entries(mergedCounts)) {
                         if (count > 0) {
                             const existingBadge = document.querySelector(`.avatar-notification-badge[data-recipient="${recipientEmail}"]`);
                             if (!existingBadge) {
@@ -4453,6 +4463,17 @@
                             }
                         }
                     }
+                }
+
+                // Compat: conserver ce nom appelé ailleurs, mais stocker dans le bon cache
+                function updateUnreadSentTo(unreadSentTo) {
+                    window.__unreadSentTo = unreadSentTo || {};
+                    applyAvatarUnreadBadges();
+                }
+
+                function updateUnreadBySender(unreadBySender) {
+                    window.__unreadBySender = unreadBySender || {};
+                    applyAvatarUnreadBadges();
                 }
                 
                 // ==========================================
@@ -4715,8 +4736,9 @@
                             
                             // Mettre à jour les badges sur les avatars des autres joueurs (messages envoyés par vous)
                             if (data.unread_by_sender) {
-                                updateUnreadSentTo(data.unread_by_sender);
-                            } else if (data.unread_sent_to) {
+                                updateUnreadBySender(data.unread_by_sender);
+                            }
+                            if (data.unread_sent_to) {
                                 updateUnreadSentTo(data.unread_sent_to);
                             }
                         });
@@ -4728,8 +4750,9 @@
                                 updateUnreadBadge(data.count);
                                 // Mettre à jour les badges sur les avatars des autres joueurs
                                 if (data.unread_by_sender) {
-                                    updateUnreadSentTo(data.unread_by_sender);
-                                } else if (data.unread_sent_to) {
+                                    updateUnreadBySender(data.unread_by_sender);
+                                }
+                                if (data.unread_sent_to) {
                                     updateUnreadSentTo(data.unread_sent_to);
                                 }
                             }
@@ -4756,8 +4779,9 @@
                                         updateUnreadBadge(counts.unread_received);
                                     }
                                     if (counts.unread_by_sender) {
-                                        updateUnreadSentTo(counts.unread_by_sender);
-                                    } else if (counts.unread_sent_to) {
+                                        updateUnreadBySender(counts.unread_by_sender);
+                                    }
+                                    if (counts.unread_sent_to) {
                                         updateUnreadSentTo(counts.unread_sent_to);
                                     }
                                     console.log('✅ Badges mis à jour via API');
@@ -4790,8 +4814,9 @@
                                 updateUnreadBadge(counts.unread_received);
                             }
                             if (counts.unread_by_sender) {
-                                updateUnreadSentTo(counts.unread_by_sender);
-                            } else if (counts.unread_sent_to) {
+                                updateUnreadBySender(counts.unread_by_sender);
+                            }
+                            if (counts.unread_sent_to) {
                                 updateUnreadSentTo(counts.unread_sent_to);
                             }
                             console.log('✅ Badges rafraîchis:', counts);
