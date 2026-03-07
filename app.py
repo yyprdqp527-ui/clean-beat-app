@@ -5017,12 +5017,14 @@ def comments():
         _dbg(f"     content={content[:40]}...")
     
     messages_data = []
+    messages_to_mark_read = []  # Liste des messages à marquer comme lus
     for row in all_rows:
         msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, recipient_avatar_style, is_read_by_recipient, is_read_by_me = row
         
-        # Ne plus marquer automatiquement comme lu - attendre le clic sur "Tout validé"
-        # if sender_email != session['user']:
-        #     mark_message_as_read(msg_id, session['user'])
+        # ✅ MESSAGERIE TYPE IPHONE : Marquer automatiquement comme lus tous les messages reçus (non envoyés par soi)
+        # Marquer uniquement les messages privés reçus qui ne sont pas encore lus
+        if recipient_email == session['user'] and not is_read_by_me and message_type == 'private':
+            messages_to_mark_read.append(msg_id)
         
         # Préparer l'avatar et nom de l'expéditeur
         if sender_type == 'house':
@@ -5243,7 +5245,28 @@ def comments():
             msg['color'] = color_map.get(msg['sender_email'], '#4A90E2')
             msg['bg_color'] = 'rgba(255, 255, 255, 0.15)'  # Fond blanc transparent
     
-    # Compter les messages non lus
+    # ✅ MESSAGERIE TYPE IPHONE : Marquer tous les messages reçus comme lus
+    if messages_to_mark_read:
+        _dbg(f"📬 Marquage automatique de {len(messages_to_mark_read)} messages comme lus (type iPhone)")
+        for msg_id in messages_to_mark_read:
+            mark_message_as_read(msg_id, session['user'])
+        
+        # Recalculer les compteurs après marquage
+        new_unread_count = get_unread_message_count(session['user'], house_id)
+        unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
+        unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+        
+        # Émettre un événement WebSocket pour mettre à jour les pastilles en temps réel
+        socketio.emit('unread_count_update', {
+            'count': new_unread_count,
+            'user_email': session['user'],
+            'unread_by_sender': unread_by_sender,
+            'unread_sent_to': unread_sent_to
+        }, room=f"house_{house_id}")
+        
+        _dbg(f"📬 WebSocket émis : unread_count={new_unread_count}, unread_by_sender={unread_by_sender}")
+    
+    # Compter les messages non lus (devrait être 0 maintenant)
     unread_count = get_unread_message_count(session['user'], house_id)
 
     conn.close()
