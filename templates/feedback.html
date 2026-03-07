@@ -348,20 +348,10 @@
                     <button type="button" class="yesno-btn" id="btnNon" onclick="setPayer(0)">❌ Non</button>
                 </div>
 
-                <div id="prixSection" style="display:none; margin-top:14px;">
+                                <div id="prixSection" style="display:none; margin-top:14px;">
                     <label class="field-label">Combien accepterais-tu de payer ?</label>
-                    <select name="prix_acceptable">
-                        <option value="">— Choisis un montant —</option>
-                        <option value="gratuit_seulement">Seulement si c'est gratuit</option>
-                        <option value="moins_1">Moins de 1 € / mois</option>
-                        <option value="1_2">1 – 2 € / mois</option>
-                        <option value="2_5">2 – 5 € / mois</option>
-                        <option value="5_10">5 – 10 € / mois</option>
-                        <option value="plus_10">Plus de 10 € / mois</option>
-                        <option value="achat_unique">Achat unique (pas d'abonnement)</option>
-                    </select>
+                    <input type="text" name="prix_acceptable" placeholder="Ex: 2euros/mois, achat unique..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                 </div>
-            </div>
 
             <!-- ─── Section 4 : Recommandation ─── -->
             <div class="section-card">
