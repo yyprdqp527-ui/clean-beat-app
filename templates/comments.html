@@ -943,47 +943,11 @@
                                     {{ msg.timestamp.strftime('%Y-%m-%d %H:%M:%S') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp) }}
                                 </div>
                                 
-                                {# Accusé de réception pour les messages envoyés par moi #}
-                                {% if msg.is_me and msg.recipient_email and msg.message_type == 'private' %}
-                                    {% if msg.is_read_by_recipient %}
-                                        <div class="read-status read">✓✓ Lu par {{ msg.recipient_name }}</div>
-                                    {% elif 'cleanbeat' in msg.recipient_email %}
-                                        {# Bouton "Marquer comme lu" uniquement pour les enfants (compte parent) #}
-                                        <button class="mark-read-btn" 
-                                                data-msg-id="{{ msg.id }}" 
-                                                data-child-email="{{ msg.recipient_email }}" 
-                                                data-child-name="{{ msg.recipient_name }}"
-                                                onclick="markMessageAsRead(this.dataset.msgId, this.dataset.childEmail, this.dataset.childName, this);">
-                                            ✓ Marquer comme lu
-                                        </button>
-                                    {% endif %}
-                                {% endif %}
+                                {# ✅ MESSAGERIE TYPE IPHONE : Pas d'accusé de réception pour les messages envoyés #}
+                                {# Dans iPhone SMS classique, on ne voit PAS si quelqu'un a lu notre message #}
                                 
-                                {# Bouton Lu pour les messages REÇUS par moi et que je n'ai pas encore lus #}
-                                {% if msg.is_received_by_me and msg.message_type == 'private' %}
-                                    {% if msg.is_read_by_me %}
-                                        <div class="read-status read">✓ Lu</div>
-                                    {% else %}
-                                        <button class="mark-read-btn received-msg" 
-                                                data-msg-id="{{ msg.id }}"
-                                                onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
-                                            ✓ Marquer comme lu
-                                        </button>
-                                    {% endif %}
-                                {% endif %}
-                                
-                                {# Bouton Lu pour les messages de la MAISON (task_added, etc.) que je n'ai pas encore lus #}
-                                {% if msg.sender_type == 'house' and msg.message_type != 'task_completed' %}
-                                    {% if msg.is_read_by_me %}
-                                        <div class="read-status read">✓ Lu</div>
-                                    {% else %}
-                                        <button class="mark-read-btn house-msg" 
-                                                data-msg-id="{{ msg.id }}"
-                                                onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
-                                            ✓ Marquer comme lu
-                                        </button>
-                                    {% endif %}
-                                {% endif %}
+                                {# Marquage automatique pour les messages REÇUS - déjà géré côté serveur #}
+                                {# Les messages reçus sont automatiquement marqués comme lus à l'ouverture #}
                             </div>
                         </div>
                     </div>

@@ -5359,14 +5359,15 @@ def comments():
         # Recalculer les compteurs après marquage
         new_unread_count = get_unread_message_count(session['user'], house_id)
         unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
-        unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+        
+        # ✅ MESSAGERIE TYPE IPHONE : Pas de statut "lu" pour les messages envoyés
+        # On ne notifie que les messages REÇUS
         
         # Émettre un événement WebSocket pour mettre à jour les pastilles en temps réel
         socketio.emit('unread_count_update', {
             'count': new_unread_count,
             'user_email': session['user'],
-            'unread_by_sender': unread_by_sender,
-            'unread_sent_to': unread_sent_to
+            'unread_by_sender': unread_by_sender
         }, room=f"house_{house_id}")
         
         _dbg(f"📬 WebSocket émis : unread_count={new_unread_count}, unread_by_sender={unread_by_sender}")
@@ -5620,23 +5621,16 @@ def mark_all_messages_read():
     # Récupérer le nouveau compteur
     unread_count = get_unread_message_count(session['user'], house_id)
     unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
-    unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+    
+    # ✅ MESSAGERIE TYPE IPHONE : Pas de statut "lu" pour les messages envoyés
+    # On ne notifie que les messages REÇUS
     
     # Notifier via WebSocket
     socketio.emit('unread_count_update', {
         'count': unread_count,
         'user_email': session['user'],
-        'unread_by_sender': unread_by_sender,
-        'unread_sent_to': unread_sent_to
+        'unread_by_sender': unread_by_sender
     }, room=f'house_{house_id}')
-
-    # Mettre à jour les badges "envoyés non lus" pour les expéditeurs impactés.
-    for sender_email in impacted_senders:
-        sender_unread_sent_to = get_unread_messages_sent_to(sender_email, house_id)
-        socketio.emit('unread_sent_to_update', {
-            'user_email': sender_email,
-            'unread_sent_to': sender_unread_sent_to
-        }, room=f'house_{house_id}')
     
     # Notifier que cet utilisateur a tout lu (pour mettre à jour l'UI des autres)
     socketio.emit('all_messages_read', {

@@ -2445,7 +2445,8 @@
                                                 {% endif %}
                                             </div>
                                             <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                            {% set p2_unread = (unread_by_sender.get(p2.email, 0) if unread_by_sender else 0) + (unread_sent_to.get(p2.email, 0) if unread_sent_to else 0) %}
+                                            {# ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS, pas les envoyés #}
+                                            {% set p2_unread = unread_by_sender.get(p2.email, 0) if unread_by_sender else 0 %}
                                             {% if p2_unread > 0 %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             {% endif %}
@@ -2489,7 +2490,8 @@
                                                     {% endif %}
                                                 </div>
                                                 <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                                {% set p_unread = (unread_by_sender.get(p.email, 0) if unread_by_sender else 0) + (unread_sent_to.get(p.email, 0) if unread_sent_to else 0) %}
+                                                {# ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS, pas les envoyés #}
+                                                {% set p_unread = unread_by_sender.get(p.email, 0) if unread_by_sender else 0 %}
                                                 {% if p_unread > 0 %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 {% endif %}
@@ -4415,20 +4417,13 @@
                     }
                 }
                 
-                // Caches locaux des compteurs pour fusionner les deux sens de lecture
+                // ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS
+                // Pas de compteur pour les messages envoyés
                 window.__unreadBySender = window.__unreadBySender || {};
-                window.__unreadSentTo = window.__unreadSentTo || {};
 
                 function applyAvatarUnreadBadges() {
                     const currentUserEmail = "{{ session.get('user', '') }}";
-                    const mergedCounts = {};
-
-                    Object.keys(window.__unreadBySender || {}).forEach(email => {
-                        mergedCounts[email] = (mergedCounts[email] || 0) + (window.__unreadBySender[email] || 0);
-                    });
-                    Object.keys(window.__unreadSentTo || {}).forEach(email => {
-                        mergedCounts[email] = (mergedCounts[email] || 0) + (window.__unreadSentTo[email] || 0);
-                    });
+                    const mergedCounts = window.__unreadBySender || {};
 
                     // Mettre à jour les badges existants
                     document.querySelectorAll('.avatar-notification-badge[data-recipient]').forEach(badge => {
@@ -4463,12 +4458,6 @@
                             }
                         }
                     }
-                }
-
-                // Compat: conserver ce nom appelé ailleurs, mais stocker dans le bon cache
-                function updateUnreadSentTo(unreadSentTo) {
-                    window.__unreadSentTo = unreadSentTo || {};
-                    applyAvatarUnreadBadges();
                 }
 
                 function updateUnreadBySender(unreadBySender) {
@@ -4734,12 +4723,9 @@
                                 }
                             }
                             
-                            // Mettre à jour les badges sur les avatars des autres joueurs (messages envoyés par vous)
+                            // Mettre à jour les badges sur les avatars (messages reçus uniquement)
                             if (data.unread_by_sender) {
                                 updateUnreadBySender(data.unread_by_sender);
-                            }
-                            if (data.unread_sent_to) {
-                                updateUnreadSentTo(data.unread_sent_to);
                             }
                         });
                         
@@ -4748,21 +4734,10 @@
                             console.log('💬 WebSocket: Compteur messages non lus mis à jour', data);
                             if (data.user_email === userEmail) {
                                 updateUnreadBadge(data.count);
-                                // Mettre à jour les badges sur les avatars des autres joueurs
+                                // Mettre à jour les badges sur les avatars (messages reçus uniquement)
                                 if (data.unread_by_sender) {
                                     updateUnreadBySender(data.unread_by_sender);
                                 }
-                                if (data.unread_sent_to) {
-                                    updateUnreadSentTo(data.unread_sent_to);
-                                }
-                            }
-                        });
-                        
-                        // Écouter spécifiquement les mises à jour des messages envoyés
-                        socket.on('unread_sent_to_update', function(data) {
-                            console.log('💬 WebSocket: Badges messages envoyés mis à jour', data);
-                            if (data.user_email === userEmail && data.unread_sent_to) {
-                                updateUnreadSentTo(data.unread_sent_to);
                             }
                         });
                         
@@ -4780,9 +4755,6 @@
                                     }
                                     if (counts.unread_by_sender) {
                                         updateUnreadBySender(counts.unread_by_sender);
-                                    }
-                                    if (counts.unread_sent_to) {
-                                        updateUnreadSentTo(counts.unread_sent_to);
                                     }
                                     console.log('✅ Badges mis à jour via API');
                                 })
@@ -4816,9 +4788,7 @@
                             if (counts.unread_by_sender) {
                                 updateUnreadBySender(counts.unread_by_sender);
                             }
-                            if (counts.unread_sent_to) {
-                                updateUnreadSentTo(counts.unread_sent_to);
-                            }
+                            // ✅ MESSAGERIE TYPE IPHONE : Pas de compteur pour messages envoyés
                             console.log('✅ Badges rafraîchis:', counts);
                         })
                         .catch(error => console.error('Erreur rafraîchissement badges:', error));
