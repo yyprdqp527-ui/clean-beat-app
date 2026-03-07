@@ -1279,7 +1279,24 @@
                 // Écouter les nouveaux messages pour rafraîchir la page
                 socket.on('new_message_notification', function(data) {
                     console.log('💬 WebSocket Comments: Nouveau message reçu', data);
+                    
+                    // ❌ Si JE suis l'expéditeur → ne rien faire (je vois déjà mon message)
+                    if (data.sender_email === userEmail) {
+                        console.log('⏭️ Je suis l\'expéditeur, pas de rechargement');
+                        return;
+                    }
+                    
+                    // ✅ Si JE suis le destinataire → recharger la page avec le son
                     if (data.recipient_email === userEmail) {
+                        console.log('✅ Je suis le destinataire ! Rechargement...');
+                        // 🔔 Jouer le son de notification
+                        playMessageSound();
+                        // Petit délai pour laisser le son démarrer avant le reload
+                        setTimeout(function() { location.reload(); }, 300);
+                    }
+                    // ✅ Si le destinataire est un ENFANT → tous les adultes rechargent
+                    else if (data.recipient_is_child === true) {
+                        console.log('👶 Message pour un enfant, rechargement pour tous les adultes');
                         // 🔔 Jouer le son de notification
                         playMessageSound();
                         // Petit délai pour laisser le son démarrer avant le reload

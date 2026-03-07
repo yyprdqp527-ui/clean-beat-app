@@ -4385,35 +4385,49 @@
                 // 🔔 GESTION DES BADGES DE MESSAGES NON LUS
                 // ==========================================
                 function updateUnreadBadge(count) {
+                    console.log('🔔 updateUnreadBadge appelé avec count:', count);
+                    
                     // Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
+                    console.log('🍔 Badges burger trouvés:', burgerBadges.length);
                     burgerBadges.forEach(badge => {
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = 'flex';
+                            console.log('✅ Badge burger affiché:', badge.textContent);
                         } else {
                             badge.style.display = 'none';
+                            console.log('❌ Badge burger caché');
                         }
                     });
                     
                     // 🔔 Mettre à jour aussi le badge sur l'avatar de l'utilisateur connecté
                     const currentUserEmail = "{{ session.get('user', '') }}";
+                    console.log('👤 currentUserEmail:', currentUserEmail);
                     const avatarWrapper = document.getElementById('current-player-avatar-wrapper');
+                    console.log('🎯 avatarWrapper trouvé:', avatarWrapper);
                     if (avatarWrapper) {
                         let avatarBadge = avatarWrapper.querySelector('.avatar-notification-badge');
+                        console.log('🔴 Badge existant:', avatarBadge);
                         if (count > 0) {
                             if (!avatarBadge) {
+                                console.log('➕ Création d\'un nouveau badge...');
                                 avatarBadge = document.createElement('span');
                                 avatarBadge.className = 'avatar-notification-badge';
                                 avatarBadge.setAttribute('data-recipient', currentUserEmail);
                                 avatarBadge.onclick = () => window.location.href = '{{ url_for("comments") }}';
                                 avatarWrapper.appendChild(avatarBadge);
+                                console.log('✅ Badge créé et ajouté');
                             }
                             avatarBadge.textContent = count < 100 ? count : '99+';
                             avatarBadge.style.display = 'flex';
+                            console.log('✅ Badge avatar affiché:', avatarBadge.textContent);
                         } else if (avatarBadge) {
                             avatarBadge.style.display = 'none';
+                            console.log('❌ Badge avatar caché');
                         }
+                    } else {
+                        console.error('❌ Impossible de trouver avatarWrapper !');
                     }
                 }
                 
@@ -4698,9 +4712,19 @@
                         // Écouter les notifications de nouveaux messages
                         socket.on('new_message_notification', function(data) {
                             console.log('💬 WebSocket: Nouveau message reçu', data);
+                            console.log('💬 recipient_email:', data.recipient_email);
+                            console.log('💬 userEmail:', userEmail);
+                            console.log('💬 Match:', data.recipient_email === userEmail);
                             
-                            // Si l'utilisateur actuel est le DESTINATAIRE : mettre à jour son propre badge
+                            // ❌ Si JE suis l'expéditeur → ne rien faire (pas de pastille pour moi)
+                            if (data.sender_email === userEmail) {
+                                console.log('⏭️ Je suis l\'expéditeur, je ne reçois pas de pastille');
+                                return;
+                            }
+                            
+                            // ✅ Si JE suis le destinataire → afficher la pastille et le son
                             if (data.recipient_email === userEmail) {
+                                console.log('✅ Je suis le destinataire ! Mise à jour du badge avec count:', data.unread_count);
                                 updateUnreadBadge(data.unread_count);
                                 
                                 // Mettre à jour les badges sur les avatars (messages reçus uniquement)
@@ -4715,6 +4739,25 @@
                                 if (typeof showToast === 'function') {
                                     showToast(`💬 Nouveau message de ${data.sender}`);
                                 }
+                            }
+                            // ✅ Si le destinataire est un ENFANT (sans téléphone) → tous les adultes voient la pastille
+                            else if (data.recipient_is_child === true) {
+                                console.log('👶 Message pour un enfant, tous les adultes voient la pastille');
+                                // Recharger les compteurs pour voir les messages de l'enfant
+                                fetch('/api/unread_messages_count')
+                                    .then(response => response.json())
+                                    .then(result => {
+                                        if (result.success) {
+                                            updateUnreadBadge(result.unread_count);
+                                        }
+                                    })
+                                    .catch(error => console.error('Erreur rechargement compteur:', error));
+                                
+                                // 🔔 Jouer le son de notification
+                                playMessageSound();
+                            }
+                            else {
+                                console.log('⏭️ Pas pour moi, je skip');
                             }
                         });
                         

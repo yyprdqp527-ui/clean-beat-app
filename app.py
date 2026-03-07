@@ -5036,18 +5036,31 @@ def comments():
                 mark_message_as_read(message_id, session['user'])
                 _dbg(f"✅ Message ID {message_id} automatiquement marqué comme lu pour l'expéditeur {session['user']}")
                 
+                # Vérifier si le destinataire est un enfant (sans téléphone)
+                c.execute("SELECT is_child_account FROM users WHERE email = ?", (recipient_email,))
+                recipient_data = c.fetchone()
+                is_recipient_child = recipient_data and recipient_data[0] == 1
+                
                 # Notifier le destinataire via WebSocket
                 # Compter le nombre de messages non lus pour le destinataire
                 unread_count = get_unread_message_count(recipient_email, house_id)
                 unread_by_sender = get_unread_messages_by_sender(recipient_email, house_id)
                 
-                # Émettre l'événement WebSocket au destinataire
+                _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email} (enfant={is_recipient_child})")
+                _dbg(f"📊 Compteur destinataire APRÈS envoi: unread_count={unread_count}")
+                _dbg(f"📊 unread_by_sender={unread_by_sender}")
+                
+                # Émettre l'événement WebSocket
+                # Si destinataire = enfant → tous les adultes de la maison voient la pastille
+                # Si destinataire = adulte → seul le destinataire voit la pastille
                 socketio.emit('new_message_notification', {
                     'sender': current_user_name,
+                    'sender_email': session['user'],
                     'content': content[:50] + ('...' if len(content) > 50 else ''),
                     'unread_count': unread_count,
                     'recipient_email': recipient_email,
-                    'unread_by_sender': unread_by_sender  # ✅ Inclure les badges par expéditeur
+                    'recipient_is_child': is_recipient_child,  # ✅ Indique si c'est un enfant sans téléphone
+                    'unread_by_sender': unread_by_sender
                 }, room=f'house_{house_id}')
                 
                 # Mettre à jour le compteur avec les badges par joueur
@@ -5871,6 +5884,44 @@ def mark_single_message_read():
         'unread_by_sender': unread_by_sender,
         'unread_sent_to': unread_sent_to
     })
+
+
+@app.route('/api/unread_messages_count', methods=['GET'])
+def api_unread_messages_count():
+    """
+    API pour récupérer le nombre de messages non lus de l'utilisateur actuel.
+    Utilisé pour rafraîchir les badges après réception d'un message pour enfant.
+    """
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Récupérer la maison de l'utilisateur
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        user_row = c.fetchone()
+        if not user_row or not user_row[0]:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Pas de maison'}), 400
+        
+        house_id = user_row[0]
+        
+        # Compter les messages non lus
+        unread_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
+        unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'unread_count': unread_count,
+            'unread_by_sender': unread_by_sender
+        })
+    except Exception as e:
+        _dbg(f"❌ Erreur API unread_messages_count: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
 
 
 @app.route('/mark_messages_read_for_child', methods=['POST'])
