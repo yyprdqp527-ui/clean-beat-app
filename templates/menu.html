@@ -2673,7 +2673,8 @@
             
             <div class="dashboard-floating minimized" id="dashboardFloating">
                 <!-- Bouton toggle -->
-                <button class="dashboard-toggle" id="dashboardToggle" aria-label="Afficher/masquer le classement">
+                <button class="dashboard-toggle" id="dashboardToggle" aria-label="Afficher/masquer le classement"
+                    onclick="(function(btn){var d=btn&&btn.closest('#dashboardFloating'); if(!d) return; d.classList.toggle('minimized'); try{localStorage.setItem('dashboardMinimized', d.classList.contains('minimized'));}catch(e){} if(!d.classList.contains('minimized') && typeof window.loadDailyRanking==='function'){window.loadDailyRanking();}})(this)">
                     <div class="dashboard-toggle-handle"></div>
                     <span class="dashboard-toggle-text"></span>
                 </button>
@@ -2840,6 +2841,9 @@
                             }
                         });
                 }
+
+                // Exposer la fonction pour les autres scripts / fallback inline
+                window.loadDailyRanking = loadDailyRanking;
                 
                 // Charger au démarrage
                 loadDailyRanking();
@@ -3851,7 +3855,7 @@
                         <div class="burger-nav-divider">Version bêta</div>
 
                         <!-- 💌 FEEDBACK TESTEURS -->
-                        <a href="{{ url_for('feedback') }}" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
+                        <a href="#" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
                             <span class="burger-nav-icon">💌</span>
                             <span class="burger-nav-text" style="color:#153036;">Donner mon avis</span>
                         </a>
@@ -4329,6 +4333,7 @@
                         try {
                             const response = await fetch('/api/reminders/settings', {
                                 method: 'POST',
+                                credentials: 'same-origin',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 },
@@ -4344,6 +4349,7 @@
                                         // Envoyer un rappel test
                                         const testResponse = await fetch('/api/reminders/test', {
                                             method: 'POST',
+                                            credentials: 'same-origin',
                                             headers: {
                                                 'Content-Type': 'application/json'
                                             },
@@ -4363,8 +4369,9 @@
                             }
                         } catch (e) {
                             console.error('Erreur:', e);
-                            alert('❌ Erreur de connexion');
+                            alert('❌ Impossible de joindre le serveur local. Vérifiez que l\'application tourne bien, puis réessayez.');
                             remindersEnabled = !remindersEnabled; // Rollback
+                            updateReminderUI();
                         }
                     });
                     
@@ -4507,8 +4514,8 @@
                             }
                             
                             // Rafraîchir le dashboard si visible
-                            const dashboardElement = document.getElementById('dashboard-floating');
-                            if (dashboardElement && dashboardElement.classList.contains('active')) {
+                            const dashboardElement = document.getElementById('dashboardFloating');
+                            if (dashboardElement && !dashboardElement.classList.contains('minimized')) {
                                 if (typeof loadDailyRanking === 'function') {
                                     loadDailyRanking();
                                 }
@@ -4588,8 +4595,8 @@
                             }
                             
                             // ✅ 3. Rafraîchir le dashboard si visible
-                            const dashboardElement = document.getElementById('dashboard-floating');
-                            if (dashboardElement && dashboardElement.classList.contains('active')) {
+                            const dashboardElement = document.getElementById('dashboardFloating');
+                            if (dashboardElement && !dashboardElement.classList.contains('minimized')) {
                                 if (typeof loadDailyRanking === 'function') {
                                     loadDailyRanking();
                                 }
