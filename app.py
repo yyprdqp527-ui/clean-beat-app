@@ -5023,6 +5023,14 @@ def comments():
                 """, (house_id, session['user'], recipient_email, content))
                 conn.commit()
                 
+                # IMPORTANT : Récupérer l'ID du message qui vient d'être créé
+                message_id = c.lastrowid
+                
+                # ✅ CORRECTION : Marquer automatiquement le message comme "lu" pour l'EXPÉDITEUR
+                # Un joueur qui envoie un message ne doit jamais voir son propre message comme "non lu"
+                mark_message_as_read(message_id, session['user'])
+                _dbg(f"✅ Message ID {message_id} automatiquement marqué comme lu pour l'expéditeur {session['user']}")
+                
                 # Notifier le destinataire via WebSocket
                 # Compter le nombre de messages non lus pour le destinataire
                 unread_count = get_unread_message_count(recipient_email, house_id)
