@@ -5489,21 +5489,24 @@ def baby_messages():
     _dbg(f"🔍 /baby_messages - Récupération messages bébé pour house_id={house_id}")
     c.execute("""
         SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
-               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+               ) THEN 1 ELSE 0 END as is_read_by_me
         FROM messages m
         LEFT JOIN users sender ON m.sender_email = sender.email
         WHERE m.house_id = ?
         AND m.message_type = 'baby_tracking'
         ORDER BY m.id DESC
         LIMIT 100
-    """, (house_id,))
+    """, (session['user'], house_id))
     
     all_rows = c.fetchall()
     _dbg(f"🔍 /baby_messages - Nombre de messages bébé récupérés: {len(all_rows)}")
     
     messages_data = []
     for row in all_rows:
-        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style = row
+        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, is_read_by_me = row
         
         # Préparer l'avatar de l'expéditeur
         display_sender_avatar = None
@@ -5534,7 +5537,7 @@ def baby_messages():
             'sender_type': sender_type,
             'message_type': message_type,
             'is_me': sender_email == session['user'],
-            'is_read_by_me': False,  # ✅ Messages baby_tracking jamais marqués comme lus
+            'is_read_by_me': bool(is_read_by_me),  # ✅ Vérifier si ce message a été lu par l'utilisateur
             'color': '#F472B6',  # Rose pour les messages bébé
             'bg_color': 'rgba(244, 114, 182, 0.15)'
         })
@@ -5748,7 +5751,7 @@ def mark_single_message_read_for_child():
     
     # Vérifier que le message existe et que le destinataire est l'enfant
     c.execute("""
-        SELECT id, recipient_email 
+        SELECT id, recipient_email, message_type 
         FROM messages 
         WHERE id = ? AND house_id = ? AND recipient_email = ?
     """, (message_id, house_id, child_email))
@@ -5757,6 +5760,8 @@ def mark_single_message_read_for_child():
     if not msg_row:
         conn.close()
         return jsonify({'success': False, 'error': 'Message non trouvé'}), 404
+    
+    message_type = msg_row[2]
     
     # Marquer le message comme lu au nom de l'enfant
     if not mark_message_as_read(message_id, child_email):
@@ -5828,7 +5833,7 @@ def mark_single_message_read():
     # - soit l'utilisateur est le destinataire (recipient_email = user)
     # - soit c'est un message "house" (sender_type = 'house', recipient_email vide/null)
     c.execute("""
-        SELECT id, recipient_email, sender_email, sender_type 
+        SELECT id, recipient_email, sender_email, sender_type, message_type 
         FROM messages 
         WHERE id = ? AND house_id = ? 
         AND (recipient_email = ? OR (sender_type = 'house' AND (recipient_email IS NULL OR recipient_email = '')))
@@ -5840,6 +5845,7 @@ def mark_single_message_read():
         return jsonify({'success': False, 'error': 'Message non trouvé'}), 404
     
     sender_email = msg_row[2]
+    message_type = msg_row[4]
     
     # Marquer le message comme lu
     if not mark_message_as_read(message_id, session['user']):
@@ -8207,8 +8213,8 @@ def menu():
             unread_messages_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
             unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
             unread_sent_to = get_unread_messages_sent_to(session['user'], house_id, existing_conn=conn)
-            # ✅ Messages baby_tracking : CONSULTATION UNIQUEMENT (pas de notif, pas de badge)
-            unread_baby_tracking = 0  # Toujours 0 - ces messages ne génèrent pas de notifications
+            # ✅ Messages baby_tracking : afficher le nombre de messages non lus (pastille visible)
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}")
             
@@ -10503,6 +10509,11 @@ def save_baby_tracking():
         conn.close()
         
         _dbg(f"✅ Message baby_tracking créé avec ID: {message_id} pour {user_name}")
+        
+        # ✅ IMPORTANT : Marquer automatiquement comme "lu" pour l'auteur de l'action
+        # L'auteur ne doit PAS voir de notification pour sa propre action
+        mark_message_as_read(message_id, session['user'])
+        _dbg(f"✅ Message baby_tracking ID {message_id} marqué comme lu pour l'auteur {session['user']}")
         
         # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
         try:
