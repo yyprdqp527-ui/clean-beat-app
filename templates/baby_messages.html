@@ -314,14 +314,17 @@
                                     {{ msg.timestamp.strftime('%d/%m/%Y %H:%M') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp) }}
                                 </div>
                                 
-                                {% if msg.is_read_by_me %}
-                                    <div class="read-status">✓ Lu</div>
-                                {% else %}
-                                    <button class="mark-read-btn" 
-                                            data-msg-id="{{ msg.id }}"
-                                            onclick="markAsRead(this.dataset.msgId, this);">
-                                        ✓ Marquer comme lu
-                                    </button>
+                                {% if not msg.is_me %}
+                                    {# Afficher le bouton "Marquer comme lu" uniquement pour les messages des AUTRES joueurs #}
+                                    {% if msg.is_read_by_me %}
+                                        <div class="read-status">✓ Lu</div>
+                                    {% else %}
+                                        <button class="mark-read-btn" 
+                                                data-msg-id="{{ msg.id }}"
+                                                onclick="markAsRead(this.dataset.msgId, this);">
+                                            ✓ Marquer comme lu
+                                        </button>
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         </div>
