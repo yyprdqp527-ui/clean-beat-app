@@ -643,8 +643,8 @@
             <!-- Section Photo/Avatar -->
             <div class="photo-section">
                 <div class="photo-container">
-                    <div class="photo-preview" id="photoPreview" data-dicebear-seed="adventurer-default" onclick="openAvatarModal()">
-                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=adventurer-default&backgroundColor=transparent" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block;">
+                    <div class="photo-preview" id="photoPreview" data-dicebear-seed="alice" onclick="openAvatarModal()">
+                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=alice&backgroundColor=transparent" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block;">
                     </div>
                 </div>
                 
@@ -664,7 +664,7 @@
                 <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
                 <input type="hidden" id="selectedPhoto" name="photo_data" value="">
                 <input type="hidden" id="selectedAvatar" name="avatar" value="{{ current_avatar or '' }}">
-                <input type="hidden" id="avatarStyle" name="avatar_style" value="{{ current_avatar_style or 'lorelei' }}">
+                <input type="hidden" id="avatarStyle" name="avatar_style" value="{{ current_avatar_style or 'adventurer' }}">
             </div>
 
             {% if change_avatar %}
@@ -973,7 +973,7 @@
                 const style = categoryId;
                 
                 seeds.forEach(seed => {
-                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
                     const option = document.createElement('div');
                     option.className = 'avatar-option';
                     option.style.backgroundImage = `url('${url}')`;
@@ -1046,15 +1046,15 @@
         // ===== INITIALISATION =====
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Avatar Lorelei par défaut (comme dans l'ancien code)
-            const defaultSeed = 'lorelei-default';
-            const defaultStyle = 'lorelei';
+            // Avatar par défaut (premier seed de la liste)
+            const defaultSeed = 'alice';
+            const defaultStyle = 'adventurer';
             
             // Initialiser les champs cachés avec l'avatar par défaut
             document.getElementById('selectedAvatar').value = defaultSeed;
             document.getElementById('avatarStyle').value = defaultStyle;
             
-            console.log('✅ Avatar Lorelei par défaut initialisé:', { seed: defaultSeed, style: defaultStyle });
+            console.log('✅ Avatar par défaut initialisé:', { seed: defaultSeed, style: defaultStyle });
             
             {% if change_avatar %}
             // Mode édition : pré-remplir l'avatar actuel si existant
@@ -1095,7 +1095,7 @@
                         }
                     }
                     
-                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
                     preview.innerHTML = `<img src="${url}" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
                     selectedAvatarData = { type: 'dicebear', seed: seed, style: style, url: url };
                     document.getElementById('selectedAvatar').value = currentAvatar;
