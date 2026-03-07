@@ -876,6 +876,9 @@ body {
     </div>
 
     <form method="post" id="inviteForm" style="width:100%;max-width:500px;">
+        {% if from_manage %}
+        <input type="hidden" name="invite_source" value="manage">
+        {% endif %}
         <input type="hidden" name="partners" id="partnersJSON" value="[]">
         <input type="hidden" name="children" id="childrenJSON" value="[]">
 
@@ -961,7 +964,7 @@ body {
                 {% if from_registration %}
                     Continuer →
                 {% else %}
-                    ✅ Enregistrer
+                    Enregistrer
                 {% endif %}
             </button>
         </div>
