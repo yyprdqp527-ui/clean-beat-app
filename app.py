@@ -6172,6 +6172,16 @@ def rewards():
     except:
         pass
     
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_by TEXT")
+    except:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+    
     # Vérifier si l'utilisateur a déjà ouvert une case cette semaine
     c.execute("""
         SELECT box_number, reward_text FROM reward_boxes 
