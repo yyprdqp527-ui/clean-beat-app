@@ -1,13 +1,17 @@
 # ⚡ CRITIQUE: monkey_patch DOIT être la toute première instruction
-# Flask-SocketIO + eventlet l'exige AVANT tout import standard (socket, ssl…)
-# En local macOS : désactivé (bug eventlet/kqueue macOS)
+# En production Render, on privilégie gevent (eventlet est déprécié côté Gunicorn)
+# Fallback sûr: eventlet puis exécution sans patch si indisponible.
 import os as _os
 if _os.environ.get('RENDER'):
     try:
-        import eventlet
-        eventlet.monkey_patch()
+        from gevent import monkey as _gevent_monkey
+        _gevent_monkey.patch_all()
     except ImportError:
-        pass
+        try:
+            import eventlet
+            eventlet.monkey_patch()
+        except ImportError:
+            pass
 
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
@@ -425,9 +429,20 @@ def _invalidate_house_cache(email: str):
 
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
-    # Configurer SocketIO — WebSocket uniquement, polling désactivé (trop lourd en RAM)
-    # En local macOS : forcer threading (eventlet/kqueue bug sur macOS)
-    _async_mode = 'eventlet' if os.environ.get('RENDER') else 'threading'
+    # Configurer SocketIO — en prod on privilégie gevent, fallback eventlet/threading
+    if os.environ.get('RENDER'):
+        try:
+            import gevent  # noqa: F401
+            _async_mode = 'gevent'
+        except Exception:
+            try:
+                import eventlet  # noqa: F401
+                _async_mode = 'eventlet'
+            except Exception:
+                _async_mode = 'threading'
+    else:
+        _async_mode = 'threading'
+
     socketio = SocketIO(
         app,
         cors_allowed_origins="*",
@@ -4050,7 +4065,8 @@ def signup_email():
                 session['registration_step'] = 'email_signup'
                 session.pop('invite_code', None)
                 flash(f"Bienvenue {firstname} ! 🎉", "success")
-                return redirect(url_for('invite_partner'))
+                # Joueur principal: passer par le choix du type de foyer
+                return redirect(url_for('choose_house_type'))
             else:
                 # Compte complet → rediriger vers login
                 flash("Cet email est déjà utilisé. Connecte-toi avec ton mot de passe.", "danger")
@@ -4095,8 +4111,8 @@ def signup_email():
             if house_id_to_join:
                 return redirect(url_for('create_profile'))
 
-            # Joueur principal → invite_partner (nom de la maison + invitations)
-            return redirect(url_for('invite_partner'))
+            # Joueur principal: étape dédiée de choix famille/couple/coloc
+            return redirect(url_for('choose_house_type'))
 
         except _DBIntegrityError:
             flash("Erreur lors de la création du compte. Réessaie.", "danger")
@@ -4138,6 +4154,10 @@ def onboarding_invite():
     if 'user' not in session:
         flash("Veuillez d'abord vous inscrire", "warning")
         return redirect(url_for('signup_email'))
+
+    # En inscription, imposer le passage par l'étape "type de logement"
+    if session.get('registration_step') == 'email_signup' and not session.get('house_type'):
+        return redirect(url_for('choose_house_type'))
     
     # Récupérer ou créer le code de la maison
     conn = get_db_connection()
@@ -7304,11 +7324,20 @@ def invite_partner():
     conn.close()
 
     # Déterminer le contexte : inscription ou depuis manage_players
-    source = request.args.get('source', '')
-    if source == 'manage':
+    source = (request.args.get('source', '') or '').strip().lower()
+    posted_source = (request.form.get('invite_source', '') or '').strip().lower() if request.method == 'POST' else ''
+
+    if source == 'manage' or posted_source == 'manage':
         session['invite_source'] = 'manage'
-    from_manage = (session.get('invite_source') == 'manage')
-    from_registration = (session.get('registration_step') == 'email_signup')
+    elif source:
+        # Si une autre source explicite est passée, on nettoie le flag précédent
+        session.pop('invite_source', None)
+
+    from_manage = (source == 'manage' or posted_source == 'manage' or session.get('invite_source') == 'manage')
+
+    # IMPORTANT: cette page doit rester SIMPLE par défaut.
+    # Le mode "configuration maison" ne s'active que si explicitement demandé.
+    from_registration = (not from_manage) and (source == 'registration' or posted_source == 'registration')
 
     if request.method == 'POST':
         import json
