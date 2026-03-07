@@ -1174,6 +1174,7 @@
                 let audioUnlocked = false;
                 function unlockAudio() {
                     if (!audioUnlocked) {
+                        console.log('🔓 Tentative de déblocage audio...');
                         // Sauvegarder le volume actuel
                         const savedVolume = messageNotifSound.volume;
                         messageNotifSound.volume = 0;  // Mettre en silence pour le déverrouillage
@@ -1183,22 +1184,31 @@
                             messageNotifSound.volume = savedVolume;  // Restaurer le volume
                             audioUnlocked = true;
                             console.log('✅ Audio débloqué pour les notifications');
-                        }).catch(() => {
+                        }).catch((err) => {
                             messageNotifSound.volume = savedVolume;  // Restaurer même en cas d'erreur
+                            console.log('⚠️ Échec déblocage audio:', err.message);
                         });
                     }
                 }
                 // Débloquer au premier clic/touch sur la page
-                ['click', 'touchstart'].forEach(event => {
+                ['click', 'touchstart', 'keydown'].forEach(event => {
                     document.addEventListener(event, unlockAudio, { once: true });
                 });
                 
                 function playMessageSound() {
+                    console.log('🔔 playMessageSound() appelée');
+                    console.log('🔔 audioUnlocked:', audioUnlocked);
                     try {
                         messageNotifSound.currentTime = 0;
-                        messageNotifSound.play().catch(function(e) {
-                            console.log('🔇 Son notification bloqué (interaction utilisateur requise):', e.message);
-                        });
+                        const playPromise = messageNotifSound.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                console.log('✅ Son de notification joué avec succès');
+                            }).catch(function(e) {
+                                console.log('🔇 Son notification bloqué (interaction utilisateur requise):', e.message);
+                                console.log('💡 Essayez de cliquer sur la page pour débloquer l\'audio');
+                            });
+                        }
                     } catch(e) {
                         console.log('🔇 Erreur son notification:', e);
                     }
@@ -1288,19 +1298,25 @@
                     
                     // ✅ Si JE suis le destinataire → recharger la page avec le son
                     if (data.recipient_email === userEmail) {
-                        console.log('✅ Je suis le destinataire ! Rechargement...');
+                        console.log('✅ Je suis le destinataire ! Son et rechargement...');
                         // 🔔 Jouer le son de notification
                         playMessageSound();
-                        // Petit délai pour laisser le son démarrer avant le reload
-                        setTimeout(function() { location.reload(); }, 300);
+                        // Délai plus long pour laisser le son se jouer avant le reload
+                        setTimeout(function() { 
+                            console.log('🔄 Rechargement de la page...');
+                            location.reload(); 
+                        }, 500);
                     }
                     // ✅ Si le destinataire est un ENFANT → tous les adultes rechargent
                     else if (data.recipient_is_child === true) {
                         console.log('👶 Message pour un enfant, rechargement pour tous les adultes');
                         // 🔔 Jouer le son de notification
                         playMessageSound();
-                        // Petit délai pour laisser le son démarrer avant le reload
-                        setTimeout(function() { location.reload(); }, 300);
+                        // Délai plus long pour laisser le son se jouer avant le reload
+                        setTimeout(function() { 
+                            console.log('🔄 Rechargement de la page...');
+                            location.reload(); 
+                        }, 500);
                     }
                 });
                 
