@@ -6301,7 +6301,7 @@ def rewards():
         _dbg(f"⚠️ Erreur parsing JSON coloc rewards: {e}")
         rewards_coloc_list = default_rewards_coloc
 
-    
+    try:
         response = make_response(render_template('rewards.html', 
                              house_code=house_code, 
                              is_winner=is_winner,
