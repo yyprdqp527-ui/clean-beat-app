@@ -4746,6 +4746,14 @@
                             }
                         });
                         
+                        // Écouter les mises à jour des badges sur les avatars
+                        socket.on('unread_by_sender_update', function(data) {
+                            console.log('💬 WebSocket: Mise à jour des badges avatars', data);
+                            if (data.user_email === userEmail && data.unread_by_sender) {
+                                updateUnreadBySender(data.unread_by_sender);
+                            }
+                        });
+                        
                         // Écouter les mises à jour du compteur de messages non lus
                         socket.on('unread_count_update', function(data) {
                             console.log('💬 WebSocket: Compteur messages non lus mis à jour', data);

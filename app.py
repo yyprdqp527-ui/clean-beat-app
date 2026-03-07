@@ -5046,7 +5046,8 @@ def comments():
                     'sender': current_user_name,
                     'content': content[:50] + ('...' if len(content) > 50 else ''),
                     'unread_count': unread_count,
-                    'recipient_email': recipient_email
+                    'recipient_email': recipient_email,
+                    'unread_by_sender': unread_by_sender  # ✅ Inclure les badges par expéditeur
                 }, room=f'house_{house_id}')
                 
                 # Mettre à jour le compteur avec les badges par joueur
