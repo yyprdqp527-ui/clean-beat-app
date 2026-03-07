@@ -5035,6 +5035,23 @@ def comments():
                 }, room=f'house_{house_id}')
                 _dbg(f"🔌 WebSocket: Synchronisation messagerie pour house_{house_id}")
                 
+                # 🔔 Envoyer une notification push au destinataire
+                try:
+                    subscriptions = get_user_push_subscriptions(recipient_email)
+                    if subscriptions:
+                        notification_data = {
+                            'title': f'💬 Message de {current_user_name}',
+                            'body': content[:100] + ('...' if len(content) > 100 else ''),
+                            'icon': '/static/images/logo.png',
+                            'url': '/comments',
+                            'badge': unread_count
+                        }
+                        for sub in subscriptions:
+                            send_push_notification(sub, notification_data)
+                        _dbg(f"🔔 Notification push envoyée à {recipient_email}")
+                except Exception as e:
+                    _dbg(f"⚠️ Erreur envoi notification push: {e}")
+                
                 flash(f"Message envoyé à {recipient[1] if recipient[1] else recipient[0]}", "success")
             else:
                 flash("Destinataire invalide.", "danger")
