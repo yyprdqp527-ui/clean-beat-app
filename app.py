@@ -2473,6 +2473,11 @@ CREATE TABLE IF NOT EXISTS users (
         c.execute("ALTER TABLE houses ADD COLUMN progress INTEGER DEFAULT 0")
     except Exception:
         pass
+    
+    try:
+        c.execute("ALTER TABLE houses ADD COLUMN house_type TEXT DEFAULT 'family'")
+    except Exception:
+        pass
 
     # Colonnes ajoutées dans des versions ultérieures
     try:
