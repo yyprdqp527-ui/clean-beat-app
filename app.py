@@ -1,22 +1,6 @@
-# ⚡ CRITIQUE: monkey_patch DOIT être la toute première instruction
-# Le patch est fait dans wsgi.py pour Render, on évite de le refaire ici
-# pour éviter les conflits avec les RLock du pool PostgreSQL
-import os as _os
-import sys as _sys
-
-# Ne patcher QUE si on n'est pas déjà dans un contexte patché (wsgi.py)
-if _os.environ.get('RENDER') and not hasattr(_sys.modules.get('threading', None), '_original_lock'):
-    try:
-        from gevent import monkey as _gevent_monkey
-        if not _gevent_monkey.is_module_patched('threading'):
-            _gevent_monkey.patch_all()
-    except ImportError:
-        try:
-            import eventlet
-            if not eventlet.patcher.is_monkey_patched('thread'):
-                eventlet.monkey_patch()
-        except (ImportError, AttributeError):
-            pass
+# ⚠️ IMPORTANT: Le monkey patching est fait UNIQUEMENT dans wsgi.py
+# Ne JAMAIS patcher ici pour éviter les conflits de locks avec gevent/eventlet
+# Sur Render, wsgi.py est le point d'entrée et fait le patching avant tout import
 
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
@@ -44,7 +28,7 @@ _USE_PG = bool(_PG_URL)
 if _USE_PG:
     try:
         import psycopg2
-        import psycopg2.pool
+        # psycopg2.pool N'EST PLUS UTILISÉ (incompatible avec gevent/eventlet)
     except ImportError:
         _USE_PG = False
 
