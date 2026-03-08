@@ -4946,10 +4946,14 @@
                                 console.log('🔔 Mise à jour badge avec count:', counts.unread_received);
                                 updateUnreadBadge(counts.unread_received);
                             }
-                            if (counts.unread_by_sender) {
-                                updateUnreadBySender(counts.unread_by_sender);
+                            // Fusionner unread_by_sender + unread_sent_to pour les pastilles avatars
+                            const merged = Object.assign({}, counts.unread_by_sender || {});
+                            if (counts.unread_sent_to) {
+                                Object.keys(counts.unread_sent_to).forEach(function(email) {
+                                    merged[email] = Math.max(merged[email] || 0, counts.unread_sent_to[email]);
+                                });
                             }
-                            // ✅ MESSAGERIE TYPE IPHONE : Pas de compteur pour messages envoyés
+                            updateUnreadBySender(merged);
                             console.log('✅ Badges rafraîchis:', counts);
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
