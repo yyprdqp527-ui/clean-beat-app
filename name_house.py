@@ -1,12 +1,13 @@
 
 from flask import Blueprint, request, redirect, url_for, session, flash
-import sqlite3
-DB = "users.db"
 
 bp = Blueprint('name_house', __name__)
 
 @bp.route('/name_house', methods=['POST'])
 def name_house():
+    # Import circulaire évité en important ici
+    from app import get_db_connection
+    
     if 'user' not in session:
         flash("Connecte-toi pour nommer ta maison.", "warning")
         return redirect(url_for('login'))
@@ -14,7 +15,8 @@ def name_house():
     if not house_name:
         flash("Le nom de la maison ne peut pas être vide.", "danger")
         return redirect(url_for('menu'))
-    conn = sqlite3.connect(DB)
+    
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     row = c.fetchone()
