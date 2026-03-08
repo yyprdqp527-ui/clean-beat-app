@@ -4637,7 +4637,7 @@ def update_player():
                         session['name'] = name
             
             conn.commit()
-            _dbg("   ✅ Modifications sauvegardées en base de données")
+            print("✅ COMMIT OK", flush=True)
             
             # 🔌 WEBSOCKET: Notifier tous les joueurs du changement
             if SOCKETIO_AVAILABLE and socketio:
