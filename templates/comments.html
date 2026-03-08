@@ -1317,23 +1317,11 @@
                         console.log('✅ Je suis le destinataire ! Son et rechargement...');
                         // 🔔 Jouer le son de notification
                         playMessageSound();
-                        // Délai plus long pour laisser le son se jouer avant le reload
-                        setTimeout(function() { 
-                            console.log('🔄 Rechargement de la page...');
-                            location.reload(); 
-                        }, 500);
+                        setTimeout(function() { location.reload(); }, 1500);
                     }
-                    // ✅ Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) rechargent
                     else if (data.recipient_is_child === true) {
-                        console.log('👶 Message pour ENFANT détecté !');
-                        console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Rechargement avec son');
-                        // 🔔 Jouer le son de notification
                         playMessageSound();
-                        // Délai plus long pour laisser le son se jouer avant le reload
-                        setTimeout(function() { 
-                            console.log('🔄 Rechargement de la page...');
-                            location.reload(); 
-                        }, 500);
+                        setTimeout(function() { location.reload(); }, 1500);
                     }
                 });
                 
