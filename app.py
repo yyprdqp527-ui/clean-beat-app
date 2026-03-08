@@ -5138,7 +5138,8 @@ def comments():
                    ) THEN 1 ELSE 0 END as is_read_by_recipient,
                    CASE WHEN EXISTS (
                        SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                   ) THEN 1 ELSE 0 END as is_read_by_me
+                   ) THEN 1 ELSE 0 END as is_read_by_me,
+                   COALESCE(recipient.is_child_account, 0) as recipient_is_child
             FROM messages m
             LEFT JOIN users sender ON m.sender_email = sender.email
             LEFT JOIN users recipient ON m.recipient_email = recipient.email
@@ -5159,7 +5160,8 @@ def comments():
                    ) THEN 1 ELSE 0 END as is_read_by_recipient,
                    CASE WHEN EXISTS (
                        SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                   ) THEN 1 ELSE 0 END as is_read_by_me
+                   ) THEN 1 ELSE 0 END as is_read_by_me,
+                   COALESCE(recipient.is_child_account, 0) as recipient_is_child
             FROM messages m
             LEFT JOIN users sender ON m.sender_email = sender.email
             LEFT JOIN users recipient ON m.recipient_email = recipient.email
@@ -5187,7 +5189,7 @@ def comments():
     
     messages_data = []
     for row in all_rows:
-        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, recipient_avatar_style, is_read_by_recipient, is_read_by_me = row
+        msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, recipient_avatar_style, is_read_by_recipient, is_read_by_me, recipient_is_child = row
         
         # Préparer l'avatar et nom de l'expéditeur
         if sender_type == 'house':
@@ -5288,7 +5290,8 @@ def comments():
             'is_me': sender_email == session['user'],
             'is_received_by_me': recipient_email == session['user'],
             'is_read_by_recipient': bool(is_read_by_recipient),
-            'is_read_by_me': bool(is_read_by_me)
+            'is_read_by_me': bool(is_read_by_me),
+            'recipient_is_child': bool(recipient_is_child) if 'recipient_is_child' in dir() else False
         })
     
     # Ne plus envoyer automatiquement de mise à jour WebSocket ici

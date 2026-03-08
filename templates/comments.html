@@ -943,16 +943,32 @@
                                     {{ msg.timestamp.strftime('%Y-%m-%d %H:%M:%S') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp.split('.')[0] if '.' in msg.timestamp else msg.timestamp) }}
                                 </div>
                                 
-                                {# Bouton "Marquer comme lu" visible uniquement pour les messages REÇUS (pas envoyés par moi) #}
-                                {% if msg.is_received_by_me and not msg.is_me and msg.message_type == 'private' %}
-                                    {% if msg.is_read_by_me %}
-                                        <div class="read-status">✓ Lu</div>
-                                    {% else %}
-                                        <button class="mark-read-btn" 
-                                                data-msg-id="{{ msg.id }}"
-                                                onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
-                                            ✓ Marquer comme lu
-                                        </button>
+                                {# Bouton "Marquer comme lu" #}
+                                {% if msg.message_type == 'private' and not msg.is_me %}
+                                    {% if msg.is_received_by_me %}
+                                        {# Message reçu directement par moi #}
+                                        {% if msg.is_read_by_me %}
+                                            <div class="read-status">✓ Lu</div>
+                                        {% else %}
+                                            <button class="mark-read-btn"
+                                                    data-msg-id="{{ msg.id }}"
+                                                    onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
+                                                ✓ Marquer comme lu
+                                            </button>
+                                        {% endif %}
+                                    {% elif msg.recipient_is_child %}
+                                        {# Message envoyé à un enfant - les parents peuvent marquer comme lu #}
+                                        {% if msg.is_read_by_recipient %}
+                                            <div class="read-status">✓ Lu par {{ msg.recipient_name }}</div>
+                                        {% else %}
+                                            <button class="mark-read-btn"
+                                                    data-msg-id="{{ msg.id }}"
+                                                    data-child-email="{{ msg.recipient_email }}"
+                                                    data-child-name="{{ msg.recipient_name }}"
+                                                    onclick="markMessageAsRead(this.dataset.msgId, this.dataset.childEmail, this.dataset.childName, this);">
+                                                ✓ Lu pour {{ msg.recipient_name }}
+                                            </button>
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                             </div>
