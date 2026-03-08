@@ -1321,6 +1321,7 @@ def get_db_connection(timeout=30.0):
         for attempt in range(3):
             try:
                 conn = psycopg2.connect(_PG_URL, connect_timeout=10)
+                conn.autocommit = False
                 return _CompatConn(conn, is_pg=True)
             except Exception as e:
                 if attempt < 2:
@@ -4623,7 +4624,7 @@ def update_player():
             _dbg(f"   📝 Requête SQL: {query}")
             _dbg(f"   📝 Valeurs: {update_values}")
             c.execute(query, update_values)
-            print(f"✅ UPDATE_PLAYER SQL OK", flush=True)
+            print(f"✅ UPDATE_PLAYER SQL OK rowcount={c.rowcount}", flush=True)
             
             # 📛 Propager le changement de nom dans les messages existants
             if name and old_name and name != old_name:
