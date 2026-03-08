@@ -4653,7 +4653,7 @@ def update_player():
                         }, namespace='/', room=f'house_{house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Diffusion changement pour {email} (room: house_{house_id})")
                 except Exception as ws_err:
-                    _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
+                    print(f"⚠️ Erreur WebSocket: {ws_err}", flush=True)
         else:
             _dbg("   ⚠️ Aucune modification à effectuer (update_parts vide)")
         
