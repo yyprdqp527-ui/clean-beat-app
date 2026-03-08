@@ -2446,7 +2446,7 @@
                                             </div>
                                             <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
                                             {# ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS, pas les envoyés #}
-                                            {% set p2_unread = unread_by_sender.get(p2.email, 0) if unread_by_sender else 0 %}
+                                            {% set p2_unread = [unread_by_sender.get(p2.email, 0) if unread_by_sender else 0, unread_sent_to.get(p2.email, 0) if unread_sent_to else 0]|max %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
                                                 <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: {{ color_p2 }};"></div>
@@ -2489,7 +2489,7 @@
                                                 </div>
                                                 <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
                                                 {# ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS, pas les envoyés #}
-                                                {% set p_unread = unread_by_sender.get(p.email, 0) if unread_by_sender else 0 %}
+                                                {% set p_unread = [unread_by_sender.get(p.email, 0) if unread_by_sender else 0, unread_sent_to.get(p.email, 0) if unread_sent_to else 0]|max %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">
                                                     <div class="vbar-fill" style="height: {{ fill }}%; background: {{ color }};"></div>
@@ -4905,9 +4905,27 @@
                         socket.on('all_messages_read', function(data) {
                             console.log('✅ WebSocket: Messages marqués comme lus', data);
                             if (data.reader_email === userEmail) {
-                                // C'est MOI qui ai lu mes messages → retirer mon badge avatar
                                 updateUnreadBadge(0);
                             }
+                        });
+
+                        // 🔔 Pastille sur avatar enfant quand message envoyé À lui
+                        socket.on('unread_sent_to_update', function(data) {
+                            console.log('👶 WebSocket: unread_sent_to_update reçu', data);
+                            if (!data.unread_sent_to) return;
+                            // Mettre à jour les pastilles de tous les avatars concernés
+                            Object.keys(data.unread_sent_to).forEach(function(recipientEmail) {
+                                const count = data.unread_sent_to[recipientEmail];
+                                const badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + recipientEmail + '"]');
+                                badges.forEach(function(badge) {
+                                    if (count > 0) {
+                                        badge.textContent = count < 100 ? count : '99+';
+                                        badge.style.display = '';
+                                    } else {
+                                        badge.style.display = 'none';
+                                    }
+                                });
+                            });
                         });
                         
                         console.log('✅ WebSocket: Système de synchronisation initialisé');
