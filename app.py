@@ -4390,6 +4390,7 @@ def manage_players():
     
     conn.close()
     
+    print(f'🏠 MANAGE_PLAYERS players={[(p["email"],p["name"],p["avatar"],p["avatar_url"]) for p in players]}', flush=True)
     return render_template('manage_players.html', 
                          players=players, 
                          house_name=house_name,
