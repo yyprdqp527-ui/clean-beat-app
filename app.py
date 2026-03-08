@@ -4659,7 +4659,7 @@ def update_player():
         
         conn.close()
         
-        _dbg("   ✅✅✅ UPDATE_PLAYER terminé avec succès")
+        print("✅✅✅ UPDATE_PLAYER terminé avec succès", flush=True)
         return jsonify({'success': True})
         
     except Exception as e:
