@@ -5291,7 +5291,7 @@ def comments():
             'is_received_by_me': recipient_email == session['user'],
             'is_read_by_recipient': bool(is_read_by_recipient),
             'is_read_by_me': bool(is_read_by_me),
-            'recipient_is_child': bool(recipient_is_child) if 'recipient_is_child' in dir() else False
+            'recipient_is_child': bool(recipient_is_child)
         })
     
     # Ne plus envoyer automatiquement de mise à jour WebSocket ici
