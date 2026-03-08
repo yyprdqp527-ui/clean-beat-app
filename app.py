@@ -316,14 +316,8 @@ import base64
 import uuid
 import json
 import requests
-# Pour l'envoi de SMS (Twilio)
 
-import base64
-import uuid
-import json
-import requests
 # Pour l'envoi de SMS (Twilio)
-
 try:
     from twilio.rest import Client
     TWILIO_AVAILABLE = True
