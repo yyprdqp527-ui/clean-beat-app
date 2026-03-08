@@ -4622,6 +4622,7 @@ def update_player():
             _dbg(f"   📝 Requête SQL: {query}")
             _dbg(f"   📝 Valeurs: {update_values}")
             c.execute(query, update_values)
+            print(f"✅ UPDATE_PLAYER SQL OK", flush=True)
             
             # 📛 Propager le changement de nom dans les messages existants
             if name and old_name and name != old_name:
