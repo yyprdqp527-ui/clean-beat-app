@@ -4661,7 +4661,7 @@ def update_player():
         return jsonify({'success': True})
         
     except Exception as e:
-        _dbg(f"❌❌❌ [ERROR update_player] {e}")
+        print(f"❌❌❌ [ERROR update_player] {e}", flush=True)
         import traceback
         _dbg(traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)})
