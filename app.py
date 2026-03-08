@@ -5073,6 +5073,12 @@ def comments():
                     'unread_by_sender': unread_by_sender
                 }, room=f'house_{house_id}')
                 
+                # Si destinataire enfant → pastille sur avatar enfant sur TOUS les téléphones
+                if is_recipient_child:
+                    socketio.emit('unread_sent_to_update', {
+                        'unread_sent_to': {recipient_email: unread_count}
+                    }, room=f'house_{house_id}')
+                
                 # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
                 socketio.emit('messages_list_update', {
                     'house_id': house_id,
