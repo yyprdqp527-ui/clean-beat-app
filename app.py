@@ -4489,8 +4489,8 @@ def update_player():
         name = request.form.get('name', '').strip()
         avatar_type = request.form.get('avatar_type', '').strip()
         
-        _dbg("🔍 UPDATE_PLAYER - Données reçues:")
-        _dbg(f"   email: {email}")
+        print("🔍 UPDATE_PLAYER - Données reçues:", flush=True)
+        print(f"🔍 UPDATE_PLAYER email={email} name={name} avatar_type={avatar_type}", flush=True)
         _dbg(f"   name: {name}")
         _dbg(f"   avatar_type: '{avatar_type}'")
         _dbg(f"   avatar: {request.form.get('avatar')}")
