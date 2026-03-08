@@ -944,8 +944,8 @@
                                 </div>
                                 
                                 {# Bouton "Marquer comme lu" #}
-                                {% if msg.message_type == 'private' and not msg.is_me %}
-                                    {% if msg.is_received_by_me %}
+                                {% if msg.message_type == 'private' %}
+                                    {% if msg.is_received_by_me and not msg.is_me and not msg.recipient_is_child %}
                                         {# Message reçu directement par moi #}
                                         {% if msg.is_read_by_me %}
                                             <div class="read-status">✓ Lu</div>
