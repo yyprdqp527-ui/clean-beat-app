@@ -336,6 +336,13 @@ except ImportError:
 
 
 app = Flask(__name__)
+
+def jinja2_index(lst, item):
+    try:
+        return lst.index(item)
+    except ValueError:
+        return -1
+app.jinja_env.filters['index'] = jinja2_index
 app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
 # 🔧 ProxyFix : indispensable sur Render (reverse proxy HTTPS)
