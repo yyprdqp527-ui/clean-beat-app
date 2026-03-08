@@ -8,7 +8,7 @@ import multiprocessing
 import os
 
 # Worker class - DOIT être gevent pour Flask-SocketIO
-worker_class = 'gevent'
+worker_class = 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
 
 # Nombre de workers (1-2 sur Render free tier pour éviter OOM)
 workers = 1
