@@ -4615,6 +4615,7 @@ def update_player():
             # Si avatar_type est vide ou inconnu, ne pas toucher à l'avatar
             _dbg(f"   ℹ️ Avatar type vide ou inconnu ('{avatar_type}'), conservation de l'avatar actuel")
         
+        print(f"📋 update_parts={update_parts}, avatar_type={avatar_type}, seed={request.form.get(chr(97)+chr(118)+chr(97)+chr(116)+chr(97)+chr(114))}", flush=True)
         if update_parts:
             update_values.append(email)
             query = f"UPDATE users SET {', '.join(update_parts)} WHERE email=?"
