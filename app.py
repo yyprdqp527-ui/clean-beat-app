@@ -4643,14 +4643,14 @@ def update_player():
             if SOCKETIO_AVAILABLE and socketio:
                 try:
                     house_id = user_house[0]
-                    socketio.emit('avatar_updated', {'email': email}, namespace='/', room=f'house_{house_id}', broadcast=True)
+                    socketio.emit('avatar_updated', {'email': email}, namespace='/', to=f'house_{house_id}')
                     # Si le nom a changé, notifier aussi pour rafraîchir les affichages
                     if name and old_name and name != old_name:
                         socketio.emit('player_name_updated', {
                             'email': email, 
                             'old_name': old_name, 
                             'new_name': name
-                        }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                        }, namespace='/', to=f'house_{house_id}')
                     _dbg(f"🔌 WebSocket: Diffusion changement pour {email} (room: house_{house_id})")
                 except Exception as ws_err:
                     print(f"⚠️ Erreur WebSocket: {ws_err}", flush=True)
