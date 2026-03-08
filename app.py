@@ -4626,10 +4626,17 @@ def update_player():
             c.execute(query, update_values)
             print(f"✅ UPDATE_PLAYER SQL OK rowcount={c.rowcount}", flush=True)
             
+            conn.commit()
+            print("✅ COMMIT OK", flush=True)
+            
             # 📛 Propager le changement de nom dans les messages existants
             if name and old_name and name != old_name:
                 house_id = user_house[0]
-                propagate_player_name_change(c, email, old_name, name, house_id)
+                try:
+                    propagate_player_name_change(c, email, old_name, name, house_id)
+                    conn.commit()
+                except Exception as prop_err:
+                    print(f"⚠️ propagate ignoré: {prop_err}", flush=True)
                 _dbg(f"📛 Nom du joueur changé: '{old_name}' → '{name}' pour {email}")
                 
                 # Mettre à jour la session si c'est l'utilisateur connecté
@@ -4637,9 +4644,6 @@ def update_player():
                     session['user_name'] = name
                     if 'name' in session:
                         session['name'] = name
-            
-            conn.commit()
-            print("✅ COMMIT OK", flush=True)
             
             # 🔌 WEBSOCKET: Notifier tous les joueurs du changement
             if SOCKETIO_AVAILABLE and socketio:
