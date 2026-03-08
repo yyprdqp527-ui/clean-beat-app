@@ -954,6 +954,7 @@
             try {
                 const response = await fetch('/update_player', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     body: formData
                 });
                 
