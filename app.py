@@ -7444,9 +7444,23 @@ def update_profile():
         flash(f"Erreur sauvegarde: {e}", "danger")
         return redirect(url_for('create_profile'))
     
+    # Mettre à jour le nom de la maison
+    if house_name_input:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        user_house = c.fetchone()
+        if user_house and user_house[0]:
+            c.execute("UPDATE houses SET house_name=?, name=? WHERE id=?", 
+                      (house_name_input, house_name_input, user_house[0]))
+    
+    conn.commit()
+    
     # 📛 Propager le changement de nom dans les messages existants
     if name and old_name and name != old_name and profile_house_id:
-        propagate_player_name_change(c, session['user'], old_name, name, profile_house_id)
+        try:
+            propagate_player_name_change(c, session['user'], old_name, name, profile_house_id)
+            conn.commit()
+        except Exception as prop_err:
+            print(f"⚠️ propagate ignoré: {prop_err}", flush=True)
         _dbg(f"📛 Pseudo mis à jour via profil: '{old_name}' → '{name}' pour {session['user']}")
         
         # 🔌 Notifier via WebSocket
@@ -7459,16 +7473,6 @@ def update_profile():
                 }, namespace='/', room=f'house_{profile_house_id}')
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket changement nom: {ws_err}")
-    
-    # Mettre à jour le nom de la maison
-    if house_name_input:
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        user_house = c.fetchone()
-        if user_house and user_house[0]:
-            c.execute("UPDATE houses SET house_name=?, name=? WHERE id=?", 
-                      (house_name_input, house_name_input, user_house[0]))
-    
-    conn.commit()
     conn.close()
     
     flash("Profil mis à jour avec succès ! ✨", "success")
