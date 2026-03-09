@@ -9309,7 +9309,7 @@ def custom_task_page(task_id):
                     socketio.emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
-                    }, namespace='/', room=f'house_{user_house_id}')
+                    }, namespace='/', room=f'house_{user_house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{user_house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
@@ -9669,7 +9669,7 @@ def task_enhanced(cat, task_id):
                     socketio.emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
-                    }, namespace='/', room=f'house_{house_id}')
+                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{house_id})")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
@@ -10126,7 +10126,7 @@ def api_validate_task():
                 # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
                 socketio.emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
-                }, namespace='/', room=room_name)
+                }, namespace='/', room=room_name, broadcast=True)
                 
                 _dbg(f"✅ WebSocket: Notification envoyée à room {room_name} pour {player_email} (+{task_points} pts)")
                 _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
