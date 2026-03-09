@@ -8727,7 +8727,7 @@ def personnaliser_maison():
         {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/sdbwoop.webp',                'fixed': True},
         {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/Wc2.webp',                    'fixed': True},
         {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/buanderie5.webp',              'fixed': True},
-        {'key': 'garage',            'default_name': 'Garage',        'image': 'images/Garage2.webp',                'fixed': True},
+        {'key': 'garage',            'default_name': 'Garage',        'image': 'images/Garage2.webp',                'fixed': False},
     ]
 
     if request.method == 'POST':
