@@ -307,6 +307,45 @@
                     {% endfor %}
                 </div>
 
+
+                <p class="section-label">Garage</p>
+
+                <div class="rooms-list">
+                    {% for room in rooms if room.key == 'garage' %}
+                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                        <div class="room-thumb">
+                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.default_name }}" loading="lazy">
+                        </div>
+
+                        <div class="room-info">
+                            <div class="room-default-name">{{ room.default_name }}</div>
+                            <input
+                                class="room-name-input"
+                                type="text"
+                                name="name_{{ room.key }}"
+                                value="{{ room.current_name }}"
+                                placeholder="Nom personnalisé…"
+                                maxlength="30"
+                            >
+                        </div>
+
+                        <div class="toggle-wrap">
+                            <span class="toggle-label-txt">Masquer</span>
+                            <label class="toggle">
+                                <input
+                                    type="checkbox"
+                                    name="hidden_{{ room.key }}"
+                                    {% if room.is_hidden %}checked{% endif %}
+                                    onchange="document.getElementById('item-{{ room.key }}').classList.toggle('is-hidden-item', this.checked)"
+                                >
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+
                 <button type="submit" class="btn-save">Enregistrer</button>
 
             </div>
