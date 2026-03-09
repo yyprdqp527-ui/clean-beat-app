@@ -601,6 +601,9 @@ def sats():
         house_id = row[0]
         today = date.today().isoformat()
         
+        # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
+        check_weekly_reset(house_id, conn)
+        
         # === RÉCUPÉRER LES JOUEURS DE LA MAISON ===
         c.execute("""
             SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style, player_color
@@ -698,6 +701,30 @@ def sats():
             weekly_points = int(weekly[0]) if weekly[0] else 0
             weekly_tasks = int(weekly[1]) if weekly[1] else 0
             
+            # Points du mois (depuis le 1er du mois)
+            month_start = date.today().replace(day=1).isoformat()
+            c.execute("""
+                SELECT COALESCE(SUM(points), 0), COUNT(*) 
+                FROM completed_tasks 
+                WHERE user_email=? AND DATE(completed_at) >= ?
+            """, (email, month_start))
+            monthly = c.fetchone()
+            monthly_points = int(monthly[0]) if monthly[0] else 0
+            monthly_tasks = int(monthly[1]) if monthly[1] else 0
+            
+            # Progression hebdomadaire sur les 4 dernières semaines
+            weekly_progression = []
+            for week_offset in range(4, 0, -1):
+                week_start_offset = (date.today() - timedelta(days=date.today().weekday() + (week_offset - 1) * 7)).isoformat()
+                week_end_offset = (date.today() - timedelta(days=date.today().weekday() + (week_offset - 2) * 7)).isoformat()
+                c.execute("""
+                    SELECT COALESCE(SUM(points), 0)
+                    FROM completed_tasks 
+                    WHERE user_email=? AND DATE(completed_at) >= ? AND DATE(completed_at) < ?
+                """, (email, week_start_offset, week_end_offset))
+                week_points = c.fetchone()
+                weekly_progression.append(int(week_points[0]) if week_points and week_points[0] else 0)
+            
             # Détails des tâches de la semaine pour ce joueur
             c.execute("""
                 SELECT task_name, points, category
@@ -731,6 +758,9 @@ def sats():
                 'daily_tasks': daily_tasks,
                 'weekly_points': weekly_points,
                 'weekly_tasks': weekly_tasks,
+                'monthly_points': monthly_points,
+                'monthly_tasks': monthly_tasks,
+                'weekly_progression': weekly_progression,
                 'weekly_tasks_details': weekly_tasks_details,
                 'is_current_user': (email == session['user']),
                 'color': p_color  # Couleur identitaire du joueur
@@ -1048,6 +1078,9 @@ def stats_graphique():
         today = date.today()
         week_start = (today - timedelta(days=today.weekday())).isoformat()
         
+        # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
+        check_weekly_reset(house_id, conn)
+        
         # === DONNÉES POUR GRAPHIQUE 1: Évolution des points sur 7 jours ===
         daily_points_labels = []
         daily_points_values = []
@@ -1336,6 +1369,75 @@ def get_db_connection(timeout=30.0):
         raw.execute('PRAGMA cache_size=10000')
         raw.execute('PRAGMA temp_store=MEMORY')
         return _CompatConn(raw, is_pg=False)
+
+# ===============================
+# RÉINITIALISATION HEBDOMADAIRE
+# ===============================
+
+def check_weekly_reset(house_id, conn=None):
+    """
+    Vérifie et effectue la réinitialisation hebdomadaire des statistiques.
+    - Supprime les tâches complétées de la semaine précédente (plus de 7 jours)
+    - Se déclenche le lundi matin (début de nouvelle semaine)
+    - Garde seulement les tâches de la semaine en cours
+    
+    Paramètres:
+        house_id: ID de la maison
+        conn: Connexion DB existante (optionnelle, sinon en crée une)
+    
+    Retour:
+        True si une réinitialisation a été effectuée, False sinon
+    """
+    from datetime import date, timedelta
+    
+    should_close = False
+    if not conn:
+        conn = get_db_connection()
+        should_close = True
+    
+    c = conn.cursor()
+    reset_performed = False
+    
+    try:
+        today = date.today()
+        current_week_start = (today - timedelta(days=today.weekday())).isoformat()  # Lundi de cette semaine
+        
+        # Récupérer la date de dernière réinitialisation hebdomadaire
+        c.execute("SELECT last_weekly_reset_date FROM houses WHERE id=?", (house_id,))
+        row = c.fetchone()
+        
+        last_weekly_reset = row[0] if row and row[0] else None
+        
+        # Si on n'a jamais fait de reset hebdomadaire, ou si le dernier reset date d'avant cette semaine
+        if not last_weekly_reset or last_weekly_reset < current_week_start:
+            # On est dans une nouvelle semaine, réinitialiser les statistiques
+            
+            # Supprimer les tâches complétées de la semaine précédente (avant le lundi de cette semaine)
+            c.execute("""
+                DELETE FROM completed_tasks 
+                WHERE house_id=? AND DATE(completed_at) < ?
+            """, (house_id, current_week_start))
+            
+            deleted_count = c.rowcount
+            
+            # Mettre à jour la date de dernière réinitialisation hebdomadaire
+            c.execute("UPDATE houses SET last_weekly_reset_date=? WHERE id=?", 
+                     (current_week_start, house_id))
+            
+            conn.commit()
+            reset_performed = True
+            
+            _dbg(f"✅ Réinitialisation hebdomadaire effectuée pour house_id={house_id}: {deleted_count} tâches archivées")
+        
+    except Exception as e:
+        _dbg(f"❌ Erreur lors de la réinitialisation hebdomadaire: {e}")
+        if conn:
+            conn.rollback()
+    finally:
+        if should_close and conn:
+            conn.close()
+    
+    return reset_performed
 
 # ===============================
 # FONCTIONS UTILITAIRES
@@ -2456,6 +2558,12 @@ CREATE TABLE IF NOT EXISTS users (
     # Réinitialisation quotidienne: stocker la dernière date de reset
     try:
         c.execute("ALTER TABLE houses ADD COLUMN last_reset_date TEXT")
+    except Exception:
+        pass
+    
+    # Réinitialisation hebdomadaire: stocker la dernière date de reset hebdomadaire  
+    try:
+        c.execute("ALTER TABLE houses ADD COLUMN last_weekly_reset_date TEXT")
     except Exception:
         pass
     
@@ -6140,6 +6248,9 @@ def rewards():
     house_id = user_row[0]
     user_name = user_row[1]
     
+    # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
+    check_weekly_reset(house_id, conn)
+    
     # Récupérer le code de la maison
     c.execute("SELECT code FROM houses WHERE id=?", (house_id,))
     house_code = c.fetchone()[0]
@@ -7022,6 +7133,9 @@ def gifts():
     # Récupérer house_id de l'utilisateur
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
     house_id = c.fetchone()[0]
+    
+    # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
+    check_weekly_reset(house_id, conn)
     
     # Récupérer les informations de la maison (utilise 'house_name' si présent, sinon 'name')
     c.execute("SELECT code, name, house_name FROM houses WHERE id=?", (house_id,))
@@ -8261,6 +8375,9 @@ def menu():
                             conn.commit()
                 except Exception:
                     pass
+            
+            # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
+            check_weekly_reset(house_id, conn)
             
             # 🚀 Réutiliser la connexion pour get_house_players_points (évite d'en ouvrir une 2ème)
             players = get_house_players_points(house_id, existing_conn=conn)
