@@ -8,7 +8,7 @@
 {% block content %}
 
 <style>
-    /* ========== COULEURS DYNAMIQUES PAR PIÈCE ========== */
+    /* ========== COULEURS DYNAMIQUES PAR PIÈCE (extraites des images) ========== */
     :root {
         {% if 'Salon' in category or 'salon' in category|lower %}
             /* Salon - Orange chaleureux */
@@ -18,38 +18,46 @@
             /* Cuisine - Beige chaud crémeux */
             --brown-warm: #F5E6D3;
             --brown-dark: #D4AF37;
-        {% elif 'Chambre Parentale' in category or 'chambre 1' in category|lower or 'parentale' in category|lower %}
-            /* Chambre Parentale - Beige rosé doux */
-            --brown-warm: #DEB887;
-            --brown-dark: #C09F80;
-        {% elif 'Chambre Enfant' in category or 'chambre enfant' in category|lower %}
-            /* Chambre Enfant - Orange vif énergétique */
-            --brown-warm: #FF9F47;
-            --brown-dark: #FF7F00;
-        {% elif 'Bébé' in category or 'bebe' in category|lower or 'bébé' in category|lower %}
-            /* Chambre Bébé - Rose tendre */
-            --brown-warm: #FFB6C1;
-            --brown-dark: #FF69B4;
+        {% elif 'chambre_parentale' in category|lower or ('Chambre' in category and '1' in category) %}
+            /* Chambre 1 - Chambre parentale marron */
+            --brown-warm: #947650;
+            --brown-dark: #7a5f40;
+        {% elif 'chambre1' in category|lower or ('Chambre' in category and '2' in category) %}
+            /* Chambre 2 - Beige brun */
+            --brown-warm: #9a867d;
+            --brown-dark: #80705f;
+        {% elif 'chambre_enfant' in category|lower or 'Chambre Enfant' in category %}
+            /* Chambre enfant - Marron rosé */
+            --brown-warm: #a08476;
+            --brown-dark: #856d5e;
+        {% elif 'chambre_garcon' in category|lower or 'garcon' in category|lower %}
+            /* Chambre garçon - Marron */
+            --brown-warm: #a08476;
+            --brown-dark: #856d5e;
+        {% elif 'chambre_bebe' in category|lower or 'Bébé' in category or 'bebe' in category|lower or 'bébé' in category|lower %}
+            /* Chambre bébé - Rose */
+            --brown-warm: #fda596;
+            --brown-dark: #e88b7c;
         {% elif 'Bureau' in category or 'Bonus' in category or 'bureau' in category|lower or 'bonus' in category|lower %}
-            /* Bureau/Pièce Bonus - Vert olive calme */
-            --brown-warm: #8FBC8F;
-            --brown-dark: #556B2F;
-        {% elif 'Salle de bain' in category or 'sdb' in category|lower or 'bain' in category|lower %}
-            /* Salle de bain - Bleu turquoise frais */
-            --brown-warm: #87CEEB;
-            --brown-dark: #5F9EA0;
+            /* Bureau - Jaune pâle */
+            --brown-warm: #fbdf7d;
+            --brown-dark: #e8c664;
+        {% elif 'Salle de bain' in category or 'sdb' in category|lower or 'bain' in category|lower or 'salle_bain' in category|lower %}
+            /* Salle de bain - Turquoise vif */
+            --brown-warm: #75f2f1;
+            --brown-dark: #5fd9d8;
         {% elif 'WC' in category or 'Toilettes' in category or 'wc' in category|lower or 'toilette' in category|lower %}
-            /* WC/Toilettes - Blanc et gris propre */
-            --brown-warm: #F5F5F5;
-            --brown-dark: #BEBEBE;
+            /* WC/Toilettes - Rose pâle */
+            --brown-warm: #e7acab;
+            --brown-dark: #d39392;
         {% elif 'Buanderie' in category or 'buanderie' in category|lower %}
-            /* Buanderie - Bleu clair apaisant */
-            --brown-warm: #ADD8E6;
-            --brown-dark: #87CEEB;
+            /* Buanderie - Vert gris */
+            --brown-warm: #9ca693;
+            --brown-dark: #838d7a;
         {% elif 'Garage' in category or 'garage' in category|lower %}
-            /* Garage - Gris sobre */
-            --brown-warm: #696969;
-            --brown-dark: #2F4F4F;
+            /* Garage - Rouge foncé */
+            --brown-warm: #782121;
+            --brown-dark: #5f1a1a;
         {% else %}
             /* Défaut - Marron original */
             --brown-warm: #4a3428;

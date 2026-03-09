@@ -25,10 +25,51 @@
 :root{
     --teal-light:#A6D3DC; /* A6D3DC */
     --teal-dark:#597176;  /* 597176 */
-    --brown-warm: #4a3428;
-    --brown-dark: #1a1410;
     --gold:#FDAE54;       /* FDAE54 */
     --peach:#F4C68D;      /* F4C68D */
+    
+    /* 🎨 Couleurs dynamiques selon la pièce (extraites des images) */
+    {% if 'Salon' in category or 'salon' in category|lower %}
+        --brown-warm: #E67E22; /* Orange salon */
+        --brown-dark: #D35400;
+    {% elif 'Cuisine' in category or 'cuisine' in category|lower %}
+        --brown-warm: #F5E6D3; /* Beige crème cuisine */
+        --brown-dark: #D4AF37;
+    {% elif 'chambre_parentale' in category|lower or ('Chambre' in category and '1' in category) %}
+        --brown-warm: #947650; /* Chambre 1 - Chambre parentale marron */
+        --brown-dark: #7a5f40;
+    {% elif 'chambre1' in category|lower or ('Chambre' in category and '2' in category) %}
+        --brown-warm: #9a867d; /* Chambre 2 - Beige brun */
+        --brown-dark: #80705f;
+    {% elif 'chambre_enfant' in category|lower or 'Chambre Enfant' in category %}
+        --brown-warm: #a08476; /* Chambre enfant - Marron rosé */
+        --brown-dark: #856d5e;
+    {% elif 'chambre_garcon' in category|lower or 'garcon' in category|lower %}
+        --brown-warm: #a08476; /* Chambre garçon - Marron */
+        --brown-dark: #856d5e;
+    {% elif 'chambre_bebe' in category|lower or 'Bébé' in category or 'bebe' in category|lower %}
+        --brown-warm: #fda596; /* Chambre bébé - Rose */
+        --brown-dark: #e88b7c;
+    {% elif 'Bureau' in category or 'Bonus' in category or 'bonus' in category|lower %}
+        --brown-warm: #fbdf7d; /* Bureau - Jaune pâle */
+        --brown-dark: #e8c664;
+    {% elif 'Salle' in category or 'Bain' in category or 'salle_bain' in category|lower %}
+        --brown-warm: #75f2f1; /* Salle de bain - Turquoise vif */
+        --brown-dark: #5fd9d8;
+    {% elif 'WC' in category or 'Toilettes' in category or 'toilettes' in category|lower or 'wc' in category|lower %}
+        --brown-warm: #e7acab; /* WC/Toilettes - Rose pâle */
+        --brown-dark: #d39392;
+    {% elif 'Buanderie' in category or 'buanderie' in category|lower %}
+        --brown-warm: #9ca693; /* Buanderie - Vert gris */
+        --brown-dark: #838d7a;
+    {% elif 'Garage' in category or 'garage' in category|lower %}
+        --brown-warm: #782121; /* Garage - Rouge foncé */
+        --brown-dark: #5f1a1a;
+    {% else %}
+        /* Marron par défaut */
+        --brown-warm: #4a3428;
+        --brown-dark: #1a1410;
+    {% endif %}
 }
 body {
     background: linear-gradient(135deg, var(--brown-warm) 0%, var(--brown-dark) 100%);
