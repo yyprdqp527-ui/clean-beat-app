@@ -653,9 +653,9 @@
 
     <div class="task-card">
         
-        <!-- Titre de la tâche -->
+        <!-- Titre de la tâche avec cadre orange comme page catégorie -->
         <div style="text-align:center;margin-bottom:16px;">
-            <h2 style="margin:0 0 12px 0;color:#153036;font-size:22px;font-weight:800;">{{ task_name }}</h2>
+            <h2 style="margin:0 auto 12px auto;padding:8px 16px;font-size:18px;font-weight:700;color:#1a1410;background:linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:10px;display:inline-block;max-width:90%;box-shadow:0 4px 12px rgba(255,159,71,0.25);">{{ task_name }}</h2>
         </div>
         
         {% if task_description %}
@@ -701,7 +701,7 @@
         {% set is_baby_task = 'biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower() %}
         {% if is_baby_task %}
         <div id="baby-tracking-form" style="margin:24px auto;max-width:520px;width:calc(100% - 32px);background:rgba(255, 255, 255, 0.24);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.55);box-shadow:0 20px 60px rgba(21, 48, 54, 0.15), inset 0 1px 0 rgba(255,255,255,0.35);box-sizing:border-box;">
-            <h4 style="text-align:center;color:#153036;margin-bottom:20px;font-weight:700;font-size:18px;">
+            <h4 style="text-align:center;margin:0 auto 20px auto;padding:8px 16px;font-size:16px;font-weight:700;color:#1a1410;background:linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:10px;display:inline-block;max-width:90%;box-shadow:0 4px 12px rgba(255,159,71,0.25);">
                 {% if 'biberon' in task_name.lower() %}🍼 Suivi du biberon
                 {% elif 'couche' in task_name.lower() %}👶 Suivi des couches
                 {% else %}😴 Suivi du sommeil{% endif %}
