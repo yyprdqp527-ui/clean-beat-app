@@ -3122,11 +3122,46 @@
                         } catch(e) { /* Ignorer si pas de son */ }
                     }
                     
+                    // 🎵 Son harmonieux pour l'animation de zoom des pièces (swoosh doux + montée)
+                    function playRoomZoomSound() {
+                        try {
+                            const ctx = getAudioContext();
+                            
+                            // Oscillateur 1: swoosh grave montant
+                            const osc1 = ctx.createOscillator();
+                            const gain1 = ctx.createGain();
+                            osc1.connect(gain1);
+                            gain1.connect(ctx.destination);
+                            osc1.type = 'sine';
+                            osc1.frequency.setValueAtTime(200, ctx.currentTime);
+                            osc1.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 1.2);
+                            gain1.gain.setValueAtTime(0.08, ctx.currentTime);
+                            gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
+                            osc1.start(ctx.currentTime);
+                            osc1.stop(ctx.currentTime + 1.2);
+                            
+                            // Oscillateur 2: harmonique aigüe (magie)
+                            const osc2 = ctx.createOscillator();
+                            const gain2 = ctx.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(ctx.destination);
+                            osc2.type = 'triangle';
+                            osc2.frequency.setValueAtTime(800, ctx.currentTime + 0.3);
+                            osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.9);
+                            gain2.gain.setValueAtTime(0, ctx.currentTime + 0.3);
+                            gain2.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.5);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.9);
+                            osc2.start(ctx.currentTime + 0.3);
+                            osc2.stop(ctx.currentTime + 0.9);
+                        } catch(e) { /* Ignorer si pas de son */ }
+                    }
+                    
                     // Exposer les fonctions globalement
                     window.DustSounds = {
                         click: playClickSound,
                         success: playSuccessSound,
-                        nav: playNavSound
+                        nav: playNavSound,
+                        roomZoom: playRoomZoomSound
                     };
                     
                     // Ajouter automatiquement les sons aux éléments cliquables
@@ -5239,6 +5274,11 @@
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
+                                // 🔊 Son de clic immédiat
+                                if (window.DustSounds && window.DustSounds.click) {
+                                    window.DustSounds.click();
+                                }
+                                
                                 // Récupérer les infos de la carte
                                 const targetUrl = card.getAttribute('href');
                                 if (!targetUrl || targetUrl === '#') {
@@ -5274,6 +5314,11 @@
                                 // Démarrer l'animation après un petit délai
                                 setTimeout(function() {
                                     container.classList.add('animating');
+                                    
+                                    // 🎵 Son harmonieux pendant l'animation de zoom
+                                    if (window.DustSounds && window.DustSounds.roomZoom) {
+                                        window.DustSounds.roomZoom();
+                                    }
                                 }, 50);
                                 
                                 // Timing optimisé pour fluidité :
