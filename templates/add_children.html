@@ -439,7 +439,7 @@
         <form id="addChildForm" method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label class="form-label">Prénom de l'enfant *</label>
-                <input type="text" name="child_name" class="form-input" placeholder="Ex: Emma, Lucas..." required>
+                <input type="text" name="child_name" class="form-input" placeholder="Ex: Emma, Lucas..." required oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
             
             <div class="form-group">

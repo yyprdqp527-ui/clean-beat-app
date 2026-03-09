@@ -279,7 +279,8 @@
             <div style="flex:1;">
                 <label for="firstname">Prénom</label>
                 <input type="text" id="firstname" name="firstname" required
-                       placeholder="Ton prénom" autocomplete="given-name">
+                       placeholder="Ton prénom" autocomplete="given-name"
+                       oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
             <div style="flex:1;">
                 <label for="name">Nom</label>

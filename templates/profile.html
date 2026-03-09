@@ -480,7 +480,8 @@ body {
             <div class="form-group">
                 <label class="form-label">Prénom / Pseudo</label>
                 <input type="text" class="form-input" name="name" id="nameInput" 
-                       value="{{ user_name or '' }}" placeholder="Votre prénom...">
+                       value="{{ user_name or '' }}" placeholder="Votre prénom..."
+                       oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
         </div>
 

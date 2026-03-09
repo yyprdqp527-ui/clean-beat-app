@@ -673,13 +673,13 @@
             <!-- Mode édition profil -->
             <div class="form-group">
                 <label class="form-label">Votre prénom ou pseudo</label>
-                <input type="text" name="name" id="name" class="form-input" placeholder="Entrez votre prénom ou pseudo" value="{{ current_name if current_name else '' }}" minlength="2">
+                <input type="text" name="name" id="name" class="form-input" placeholder="Entrez votre prénom ou pseudo" value="{{ current_name if current_name else '' }}" minlength="2" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
             {% else %}
             <!-- Mode création -->
             <div class="form-group">
                 <label class="form-label">Votre prénom ou pseudo</label>
-                <input type="text" id="name" name="name" class="form-input" placeholder="Entrez votre prénom ou pseudo" value="{{ current_name }}" required minlength="2">
+                <input type="text" id="name" name="name" class="form-input" placeholder="Entrez votre prénom ou pseudo" value="{{ current_name }}" required minlength="2" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
             {% endif %}
 

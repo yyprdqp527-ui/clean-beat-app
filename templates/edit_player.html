@@ -649,7 +649,7 @@
             <!-- Nom -->
             <div class="form-group">
                 <label class="form-label">Nom du joueur</label>
-                <input type="text" class="form-input" name="name" id="nameInput" value="{{ player.name or '' }}" placeholder="Entrez le nom" required minlength="2">
+                <input type="text" class="form-input" name="name" id="nameInput" value="{{ player.name or '' }}" placeholder="Entrez le nom" required minlength="2" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
 
             <button type="submit" class="btn-submit" id="submitBtn">
