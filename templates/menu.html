@@ -2166,9 +2166,12 @@
             animation: dissolveSmooth 0.5s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
 
+        /* 🎨 OVERLAY BLANC pendant dissolution pour masquer page menu */
         .room-zoom-overlay.dissolving {
-            opacity: 0;
-            transition: opacity 0.5s cubic-bezier(0.4, 0, 1, 1);
+            background: rgba(255, 255, 255, 1) !important;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            transition: background 0.3s cubic-bezier(0.4, 0, 1, 1);
         }
 
         /* Keyframes - animations plus douces */
