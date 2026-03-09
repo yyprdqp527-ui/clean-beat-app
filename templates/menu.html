@@ -435,7 +435,7 @@
           .header-right { margin-left: 8px; }
         .avatar-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:0 0 var(--avatar-size); max-width: var(--avatar-size); width: var(--avatar-size); box-sizing: border-box; }
         .avatar-row { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
-        .avatar-name { text-align:center; color:#153036; max-width: calc(var(--avatar-size) * 2.2); font-size:12px; font-weight:800; line-height:1.2; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; text-shadow: 0 1px 3px rgba(255,255,255,0.8); letter-spacing: 0.3px; }
+        .avatar-name { text-align:center; color:#ffffff; max-width: calc(var(--avatar-size) * 2.2); font-size:12px; font-weight:800; line-height:1.2; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); letter-spacing: 0.3px; }
         .others-avatar-size { --avatar-size: 56px; }
         .avatar-square { 
             position: relative; 
@@ -856,7 +856,7 @@
         }
         .health-bar { width:100%; height:12px; background: rgba(0,0,0,0.08); border-radius:10px; overflow:hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,0.06); }
         .health-fill { height:100%; width:0%; background: linear-gradient(90deg, var(--gold), var(--peach)); border-radius:10px; transition: width 0.6s ease; }
-        .avatar-points { font-size:12px; font-weight:800; color:#153036; margin-top:6px; white-space:nowrap; text-align:center; display:block !important; visibility: visible !important; opacity: 1 !important; min-height: 16px; }
+        .avatar-points { font-size:12px; font-weight:800; color:#ffffff; margin-top:6px; white-space:nowrap; text-align:center; display:block !important; visibility: visible !important; opacity: 1 !important; min-height: 16px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
         /* Debug: ajoute un contour visible aux vbar lorsque debug activé via ?vbar_debug=1 */
         .vbar.vbar-debug { outline: 2px solid rgba(255,60,60,0.85); box-shadow: 0 0 0 2px rgba(255,60,60,0.06) inset; }
         
@@ -940,8 +940,9 @@
             padding: 4px 8px;
             font-size: clamp(10px, 2.5vw, 13px);
             font-weight: 600;
-            color: #153036;
-            background: rgba(255, 255, 255, 0.75);
+            color: #1a1410;
+            /* 🎨 Fond orange élégant pour bien ressortir */
+            background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border-radius: 8px;
@@ -1339,7 +1340,7 @@
         
         /* Styles pour les infos de la maison - VERSION COMPACTE */
         .house-info { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 6px; margin-bottom: 0; }
-        .house-name { font-weight: 800; color: #1a2a3a; text-align: center; font-size: 14px; }
+        .house-name { font-weight: 800; color: #ffffff; text-align: center; font-size: 14px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); }
         .house-health-bar { width: 100%; max-width: 280px; height: 10px; background: rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,0.06); }
         
         @media (max-width: 480px) {
@@ -2082,99 +2083,157 @@
             font-weight: 600;
         }
 
-        /* ✨ ANIMATION ZOOM PIÈCES - Effet "Entrer dans la pièce" ✨ */
+        /* ========== ✨ ANIMATION ZOOM PIÈCE - VERSION REFAITE À ZÉRO ✨ ========== */
         
-        /* Overlay qui s'assombrit pendant l'animation */
+        /* Overlay sombre avec blur */
         .room-zoom-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(21, 48, 54, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            inset: 0;
+            background: rgba(26, 20, 16, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 9998;
             opacity: 0;
             pointer-events: none;
-            z-index: 9998;
-            transition: opacity 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transition: opacity 0.6s ease;
         }
 
         .room-zoom-overlay.active {
             opacity: 1;
+            pointer-events: all;
         }
 
-        /* Carte en cours de zoom */
-        .room-card.zooming {
-            position: fixed !important;
-            z-index: 9999 !important;
-            transition: all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
+        /* Container pour l'image zoomée */
+        .room-zoom-container {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
             pointer-events: none;
         }
 
-        /* Animation de la carte qui grossit - SANS le cadre une fois agrandi */
-        .room-card.zooming .room-card-visual {
-            background: transparent !important;
-            box-shadow: none !important;
-            border: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            padding: 0 !important;
-            transition: all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-
-        .room-card.zooming .room-card-visual img {
-            transform: scale(1) !important;
-            filter: brightness(1.1) saturate(1.15) drop-shadow(0 0 40px rgba(0,0,0,0.6));
-            transition: all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-            border-radius: 0 !important;
-        }
-
-        /* Titre qui RESTE VISIBLE et s'agrandit légèrement AU DESSUS de l'image */
-        .room-card.zooming .room-card-title {
-            opacity: 1 !important;
-            transform: translateY(-40px) scale(1.05) !important;
-            transition: all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-            margin-top: 0 !important;
-            padding: 8px 16px !important;
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            background: rgba(255, 255, 255, 0.9) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            box-shadow: 0 4px 20px rgba(21, 48, 54, 0.25) !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.7) !important;
-            border-radius: 12px !important;
-            color: #153036 !important;
-            white-space: nowrap !important;
-        }
-
-        /* Effet dissolution finale avant transition */
-        .room-card.zooming.dissolving {
+        /* Titre fixe AU-DESSUS en glassmorphism */
+        .room-zoom-title {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
             opacity: 0;
-            transform: scale(1.05);
-            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.6, 1);
+            z-index: 10000;
+        }
+
+        /* Image qui se déplie */
+        .room-zoom-image {
+            width: 280px;
+            height: 210px;
+            object-fit: cover;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        /* États d'animation */
+        .room-zoom-container.animating .room-zoom-image {
+            animation: unfoldZoom 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .room-zoom-container.animating .room-zoom-title {
+            animation: fadeInTitle 0.8s ease 0.6s forwards;
+        }
+
+        /* Dissolution finale */
+        .room-zoom-container.dissolving .room-zoom-image,
+        .room-zoom-container.dissolving .room-zoom-title {
+            animation: dissolve 0.7s ease forwards;
         }
 
         .room-zoom-overlay.dissolving {
             opacity: 0;
-            transition: opacity 0.6s cubic-bezier(0.4, 0.0, 0.6, 1);
+            transition: opacity 0.7s ease;
         }
 
-        /* Responsive - adapter la taille max selon l'appareil */
+        /* Keyframes */
+        @keyframes unfoldZoom {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotateX(20deg);
+            }
+            60% {
+                opacity: 1;
+                transform: scale(1.05) rotateX(0deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotateX(0deg);
+            }
+        }
+
+        @keyframes fadeInTitle {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes dissolve {
+            0% {
+                opacity: 1;
+                filter: blur(0);
+            }
+            100% {
+                opacity: 0;
+                filter: blur(10px);
+            }
+        }
+
+        /* Responsive */
         @media (max-width: 600px) {
-            .room-card.zooming {
-                /* Sur mobile, remplir tout l'écran pour effet immersif */
-                max-width: 100vw;
-                max-height: 100vh;
+            .room-zoom-image {
+                width: 90vw;
+                max-width: 400px;
+                height: auto;
+                aspect-ratio: 4/3;
+            }
+            
+            .room-zoom-title {
+                top: 60px;
+                font-size: 18px;
+                padding: 10px 20px;
             }
         }
 
         @media (min-width: 601px) and (max-width: 1024px) {
-            .room-card.zooming {
-                /* Sur tablette, presque plein écran */
-                max-width: 85vw;
-                max-height: 85vh;
+            .room-zoom-image {
+                width: 500px;
+                height: 375px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .room-zoom-image {
+                width: 600px;
+                height: 450px;
             }
         }
 
@@ -5131,25 +5190,39 @@
                 user-select: none;
             ">β bêta</div>
 
-            <!-- ✨ SCRIPT ANIMATION ZOOM PIÈCES ✨ -->
+            <!-- ✨ SCRIPT ANIMATION ZOOM PIÈCES - VERSION REFAITE ✨ -->
             <script>
                 (function() {
                     'use strict';
                     
-                    // Attendre que le DOM soit chargé
+                    // Créer les éléments d'animation
+                    const overlay = document.createElement('div');
+                    overlay.className = 'room-zoom-overlay';
+                    
+                    const container = document.createElement('div');
+                    container.className = 'room-zoom-container';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'room-zoom-title';
+                    
+                    const image = document.createElement('img');
+                    image.className = 'room-zoom-image';
+                    
+                    container.appendChild(title);
+                    container.appendChild(image);
+                    
+                    // Attendre que le DOM soit prêt
                     if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', initRoomZoomAnimation);
+                        document.addEventListener('DOMContentLoaded', init);
                     } else {
-                        initRoomZoomAnimation();
+                        init();
                     }
                     
-                    function initRoomZoomAnimation() {
-                        // Créer l'overlay pour l'animation
-                        let overlay = document.createElement('div');
-                        overlay.className = 'room-zoom-overlay';
+                    function init() {
                         document.body.appendChild(overlay);
+                        document.body.appendChild(container);
                         
-                        // Récupérer toutes les cartes de pièces
+                        // Écouter les clics sur les cartes de pièces
                         const roomCards = document.querySelectorAll('.room-card');
                         
                         roomCards.forEach(function(card) {
@@ -5157,92 +5230,60 @@
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
-                                // Récupérer l'URL de destination depuis le lien <a>
+                                // Récupérer les infos de la carte
                                 const targetUrl = card.getAttribute('href');
-                                console.log('🎯 Navigation vers:', targetUrl);
-                                
                                 if (!targetUrl || targetUrl === '#') {
-                                    console.error('⚠️ Pas d\'URL valide trouvée');
+                                    console.error('❌ Pas d\'URL valide');
                                     return;
                                 }
                                 
-                                // Empêcher les clics multiples pendant l'animation
-                                card.style.pointerEvents = 'none';
+                                const imgElement = card.querySelector('.room-card-visual img');
+                                const titleElement = card.querySelector('.room-card-title');
                                 
-                                // Cloner la carte pour l'animation (évite les problèmes de layout)
-                                const cardClone = card.cloneNode(true);
-                                const cardRect = card.getBoundingClientRect();
+                                if (!imgElement || !titleElement) {
+                                    console.error('❌ Éléments manquants dans la carte');
+                                    return;
+                                }
                                 
-                                // Positionner le clone exactement sur la carte originale
-                                cardClone.style.position = 'fixed';
-                                cardClone.style.top = cardRect.top + 'px';
-                                cardClone.style.left = cardRect.left + 'px';
-                                cardClone.style.width = cardRect.width + 'px';
-                                cardClone.style.height = cardRect.height + 'px';
-                                cardClone.style.margin = '0';
-                                cardClone.style.zIndex = '9999';
-                                cardClone.classList.add('zooming');
+                                // Bloquer les clics multiples
+                                if (container.classList.contains('animating')) return;
                                 
-                                // Cacher la carte originale
-                                card.style.opacity = '0';
+                                console.log('🎬 Démarrage animation pour:', titleElement.textContent);
                                 
-                                // Ajouter le clone au DOM
-                                document.body.appendChild(cardClone);
+                                // Configurer l'image et le titre
+                                image.src = imgElement.src;
+                                image.alt = imgElement.alt || '';
+                                title.textContent = titleElement.textContent;
+                                
+                                // Reset des styles
+                                container.classList.remove('dissolving');
+                                overlay.classList.remove('dissolving');
                                 
                                 // Activer l'overlay
                                 overlay.classList.add('active');
                                 
-                                // Petit délai pour que le navigateur prenne en compte le style initial
-                                requestAnimationFrame(function() {
-                                    requestAnimationFrame(function() {
-                                        // Calculer les dimensions cibles selon l'appareil
-                                        const viewportWidth = window.innerWidth;
-                                        const viewportHeight = window.innerHeight;
-                                        
-                                        let targetWidth, targetHeight, scale;
-                                        
-                                        // Mobile - effet immersif plein écran
-                                        if (viewportWidth <= 600) {
-                                            targetWidth = viewportWidth;
-                                            targetHeight = viewportHeight * 0.85;
-                                        }
-                                        // Tablette - presque plein écran
-                                        else if (viewportWidth <= 1024) {
-                                            targetWidth = viewportWidth * 0.85;
-                                            targetHeight = viewportHeight * 0.75;
-                                        }
-                                        // Desktop - grand mais pas trop
-                                        else {
-                                            targetWidth = viewportWidth * 0.65;
-                                            targetHeight = viewportHeight * 0.65;
-                                        }
-                                        
-                                        // Calculer le scale nécessaire
-                                        scale = Math.min(targetWidth / cardRect.width, targetHeight / cardRect.height);
-                                        
-                                        // Calculer la position centrée
-                                        const targetLeft = (viewportWidth - (cardRect.width * scale)) / 2;
-                                        const targetTop = (viewportHeight - (cardRect.height * scale)) / 2;
-                                        
-                                        // Appliquer la transformation
-                                        cardClone.style.transform = `translate(${targetLeft - cardRect.left}px, ${targetTop - cardRect.top}px) scale(${scale})`;
-                                        cardClone.style.transformOrigin = 'top left';
-                                    });
-                                });
-                                
-                                // Effet dissolution avant de changer de page - commence après 1.6s
+                                // Démarrer l'animation après un petit délai
                                 setTimeout(function() {
-                                    console.log('💨 Début dissolution');
-                                    cardClone.classList.add('dissolving');
+                                    container.classList.add('animating');
+                                }, 50);
+                                
+                                // Phase 1: Dépliage (1.4s)
+                                // Phase 2: Pause pour voir (1.0s)
+                                // Phase 3: Dissolution (0.7s)
+                                // Total: 3.1s
+                                
+                                // Commencer la dissolution après 2.4s (1.4s animation + 1.0s pause)
+                                setTimeout(function() {
+                                    console.log('💨 Dissolution');
+                                    container.classList.add('dissolving');
                                     overlay.classList.add('dissolving');
-                                }, 1600);
+                                }, 2400);
                                 
-                                // Rediriger après l'animation complète (2.2s total)
-                                // Séquence : 1.2s zoom + 0.4s pause + 0.6s dissolution = 2.2s
+                                // Navigation après dissolution complète
                                 setTimeout(function() {
-                                    console.log('🚀 Navigation vers:', targetUrl);
+                                    console.log('🚀 Navigation:', targetUrl);
                                     window.location.href = targetUrl;
-                                }, 2200);
+                                }, 3100);
                             });
                         });
                     }
