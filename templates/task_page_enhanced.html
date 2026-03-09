@@ -653,16 +653,15 @@
 
     <div class="task-card">
         
-        <!-- Titre de la tâche avec cadre orange comme page catégorie -->
-        <div style="text-align:center;margin-bottom:16px;">
-            <h2 style="margin:0 auto 12px auto;padding:8px 16px;font-size:18px;font-weight:700;color:#1a1410;background:linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:10px;display:inline-block;max-width:90%;box-shadow:0 4px 12px rgba(255,159,71,0.25);">{{ task_name }}</h2>
+        <!-- 🎨 Header titre glassmorphisme comme page catégorie -->
+        <div class="room-header" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);backdrop-filter: blur(20px);-webkit-backdrop-filter: blur(20px);border-radius: 20px;padding: 20px;margin-bottom: 20px;text-align: center;border: 2px solid rgba(253,174,84,0.3);box-shadow: 0 8px 32px rgba(89,113,118,0.15);">
+            <h2 class="room-name" style="font-size: 22px;font-weight: 800;color: #153036;margin: 0 0 4px 0;">{{ task_name }}</h2>
+            {% if task_description %}
+            <p class="room-subtitle" style="font-size: 14px;color: #597176;margin: 0;">{{ task_description }}</p>
+            {% elif fun_text %}
+            <p class="room-subtitle" style="font-size: 14px;color: #597176;margin: 0;">{{ fun_text }}</p>
+            {% endif %}
         </div>
-        
-        {% if task_description %}
-        <p style="text-align:center;color:#555;margin:0 0 16px 0;">{{ task_description }}</p>
-        {% elif fun_text %}
-        <p style="text-align:center;color:#597176;font-size:15px;font-weight:600;margin:0 0 16px 0;">{{ fun_text }}</p>
-        {% endif %}
 
         <!-- Image centrée avec pastille de points - RESPONSIVE & FIXE -->
         <div class="task-image-container">
