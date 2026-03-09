@@ -5283,16 +5283,14 @@
                                 
                                 // Commencer la dissolution après 2.0s (1.2s animation + 0.8s pause)
                                 setTimeout(function() {
-                                    console.log('💨 Dissolution et navigation');
+                                    console.log('💨 Dissolution et navigation immédiate');
                                     container.classList.add('dissolving');
                                     overlay.classList.add('dissolving');
                                     
-                                    // Navigation PENDANT la dissolution (0.2s après le début)
-                                    // Donne l'impression que la page suivante remplace l'image
-                                    setTimeout(function() {
-                                        console.log('🚀 Navigation vers:', targetUrl);
-                                        window.location.href = targetUrl;
-                                    }, 200);
+                                    // Navigation IMMÉDIATE au début de la dissolution
+                                    // La page charge pendant que l'image disparaît = transition fluide sans écran vide
+                                    console.log('🚀 Navigation vers:', targetUrl);
+                                    window.location.href = targetUrl;
                                 }, 2000);
                             });
                         });
