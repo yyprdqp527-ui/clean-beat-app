@@ -2078,6 +2078,82 @@
             font-weight: 600;
         }
 
+        /* ✨ ANIMATION ZOOM PIÈCES - Style iOS ✨ */
+        
+        /* Overlay qui s'assombrit pendant l'animation */
+        .room-zoom-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(21, 48, 54, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transition: opacity 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .room-zoom-overlay.active {
+            opacity: 1;
+        }
+
+        /* Carte en cours de zoom */
+        .room-card.zooming {
+            position: fixed !important;
+            z-index: 9999 !important;
+            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
+            pointer-events: none;
+        }
+
+        /* Animation de la carte qui grossit */
+        .room-card.zooming .room-card-visual {
+            transform: scale(1);
+            box-shadow: 0 20px 60px rgba(21, 48, 54, 0.4) !important;
+            border-radius: 24px;
+            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .room-card.zooming .room-card-visual img {
+            transform: scale(1) !important;
+            filter: brightness(1.05) drop-shadow(0 0 0 transparent);
+            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        /* Titre qui disparaît pendant le zoom */
+        .room-card.zooming .room-card-title {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        /* Responsive - adapter la taille max selon l'appareil */
+        @media (max-width: 600px) {
+            .room-card.zooming {
+                /* Sur mobile, remplir 90% de l'écran */
+                max-width: 90vw;
+                max-height: 90vh;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .room-card.zooming {
+                /* Sur tablette, un peu plus petit */
+                max-width: 70vw;
+                max-height: 70vh;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .room-card.zooming {
+                /* Sur desktop, encore plus petit */
+                max-width: 50vw;
+                max-height: 50vh;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -5022,6 +5098,107 @@
                 z-index: 9999;
                 user-select: none;
             ">β bêta</div>
+
+            <!-- ✨ SCRIPT ANIMATION ZOOM PIÈCES ✨ -->
+            <script>
+                (function() {
+                    'use strict';
+                    
+                    // Attendre que le DOM soit chargé
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', initRoomZoomAnimation);
+                    } else {
+                        initRoomZoomAnimation();
+                    }
+                    
+                    function initRoomZoomAnimation() {
+                        // Créer l'overlay pour l'animation
+                        let overlay = document.createElement('div');
+                        overlay.className = 'room-zoom-overlay';
+                        document.body.appendChild(overlay);
+                        
+                        // Récupérer toutes les cartes de pièces
+                        const roomCards = document.querySelectorAll('.room-card');
+                        
+                        roomCards.forEach(function(card) {
+                            card.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                // Récupérer l'URL de destination
+                                const targetUrl = card.getAttribute('href');
+                                if (!targetUrl) return;
+                                
+                                // Cloner la carte pour l'animation (évite les problèmes de layout)
+                                const cardClone = card.cloneNode(true);
+                                const cardRect = card.getBoundingClientRect();
+                                
+                                // Positionner le clone exactement sur la carte originale
+                                cardClone.style.position = 'fixed';
+                                cardClone.style.top = cardRect.top + 'px';
+                                cardClone.style.left = cardRect.left + 'px';
+                                cardClone.style.width = cardRect.width + 'px';
+                                cardClone.style.height = cardRect.height + 'px';
+                                cardClone.style.margin = '0';
+                                cardClone.style.zIndex = '9999';
+                                cardClone.classList.add('zooming');
+                                
+                                // Cacher la carte originale
+                                card.style.opacity = '0';
+                                
+                                // Ajouter le clone au DOM
+                                document.body.appendChild(cardClone);
+                                
+                                // Activer l'overlay
+                                overlay.classList.add('active');
+                                
+                                // Petit délai pour que le navigateur prenne en compte le style initial
+                                requestAnimationFrame(function() {
+                                    requestAnimationFrame(function() {
+                                        // Calculer les dimensions cibles selon l'appareil
+                                        const viewportWidth = window.innerWidth;
+                                        const viewportHeight = window.innerHeight;
+                                        
+                                        let targetWidth, targetHeight, scale;
+                                        
+                                        // Mobile
+                                        if (viewportWidth <= 600) {
+                                            targetWidth = viewportWidth * 0.9;
+                                            targetHeight = viewportHeight * 0.7;
+                                        }
+                                        // Tablette
+                                        else if (viewportWidth <= 1024) {
+                                            targetWidth = viewportWidth * 0.7;
+                                            targetHeight = viewportHeight * 0.6;
+                                        }
+                                        // Desktop
+                                        else {
+                                            targetWidth = viewportWidth * 0.5;
+                                            targetHeight = viewportHeight * 0.5;
+                                        }
+                                        
+                                        // Calculer le scale nécessaire
+                                        scale = Math.min(targetWidth / cardRect.width, targetHeight / cardRect.height);
+                                        
+                                        // Calculer la position centrée
+                                        const targetLeft = (viewportWidth - (cardRect.width * scale)) / 2;
+                                        const targetTop = (viewportHeight - (cardRect.height * scale)) / 2;
+                                        
+                                        // Appliquer la transformation
+                                        cardClone.style.transform = `translate(${targetLeft - cardRect.left}px, ${targetTop - cardRect.top}px) scale(${scale})`;
+                                        cardClone.style.transformOrigin = 'top left';
+                                    });
+                                });
+                                
+                                // Rediriger après l'animation (600ms = durée de la transition CSS)
+                                setTimeout(function() {
+                                    window.location.href = targetUrl;
+                                }, 600);
+                            });
+                        });
+                    }
+                })();
+            </script>
 
             </body>
             </html>
