@@ -2133,11 +2133,11 @@
         /* Titre qui RESTE VISIBLE et s'agrandit élégamment */
         .room-card.zooming .room-card-title {
             opacity: 1 !important;
-            transform: translateY(0) scale(1.5) !important;
+            transform: translateY(0) scale(1.2) !important;
             transition: all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-            margin-top: 30px !important;
-            padding: 12px 24px !important;
-            font-size: clamp(16px, 3vw, 22px) !important;
+            margin-top: 24px !important;
+            padding: 10px 20px !important;
+            font-size: clamp(14px, 2.5vw, 18px) !important;
             font-weight: 700 !important;
             background: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(12px) !important;
@@ -2146,6 +2146,18 @@
             border: 2px solid rgba(255, 255, 255, 0.8) !important;
             color: #153036 !important;
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Effet dissolution finale avant transition */
+        .room-card.zooming.dissolving {
+            opacity: 0;
+            transform: scale(1.05);
+            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.6, 1);
+        }
+
+        .room-zoom-overlay.dissolving {
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(0.4, 0.0, 0.6, 1);
         }
 
         /* Responsive - adapter la taille max selon l'appareil */
@@ -5209,11 +5221,17 @@
                                     });
                                 });
                                 
-                                // Rediriger après l'animation - 2 secondes pour laisser le temps d'apprécier l'image
+                                // Effet dissolution avant de changer de page - commence après 1.6s
+                                setTimeout(function() {
+                                    cardClone.classList.add('dissolving');
+                                    overlay.classList.add('dissolving');
+                                }, 1600);
+                                
+                                // Rediriger après l'animation complète (2s total : 1.2s zoom + 0.4s pause + 0.4s dissolution)
                                 // L'utilisateur a l'impression de "rentrer" dans la pièce progressivement
                                 setTimeout(function() {
                                     window.location.href = targetUrl;
-                                }, 2000);
+                                }, 2200);
                             });
                         });
                     }
