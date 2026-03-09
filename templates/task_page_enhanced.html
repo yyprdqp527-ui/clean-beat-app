@@ -8,6 +8,62 @@
 {% block content %}
 
 <style>
+    /* ========== COULEURS DYNAMIQUES PAR PIÈCE ========== */
+    :root {
+        {% if 'Salon' in category or 'salon' in category|lower %}
+            /* Salon - Orange chaleureux */
+            --brown-warm: #E67E22;
+            --brown-dark: #D35400;
+        {% elif 'Cuisine' in category or 'cuisine' in category|lower %}
+            /* Cuisine - Beige chaud crémeux */
+            --brown-warm: #F5E6D3;
+            --brown-dark: #D4AF37;
+        {% elif 'Chambre Parentale' in category or 'chambre 1' in category|lower or 'parentale' in category|lower %}
+            /* Chambre Parentale - Beige rosé doux */
+            --brown-warm: #DEB887;
+            --brown-dark: #C09F80;
+        {% elif 'Chambre Enfant' in category or 'chambre enfant' in category|lower %}
+            /* Chambre Enfant - Orange vif énergétique */
+            --brown-warm: #FF9F47;
+            --brown-dark: #FF7F00;
+        {% elif 'Bébé' in category or 'bebe' in category|lower or 'bébé' in category|lower %}
+            /* Chambre Bébé - Rose tendre */
+            --brown-warm: #FFB6C1;
+            --brown-dark: #FF69B4;
+        {% elif 'Bureau' in category or 'Bonus' in category or 'bureau' in category|lower or 'bonus' in category|lower %}
+            /* Bureau/Pièce Bonus - Vert olive calme */
+            --brown-warm: #8FBC8F;
+            --brown-dark: #556B2F;
+        {% elif 'Salle de bain' in category or 'sdb' in category|lower or 'bain' in category|lower %}
+            /* Salle de bain - Bleu turquoise frais */
+            --brown-warm: #87CEEB;
+            --brown-dark: #5F9EA0;
+        {% elif 'WC' in category or 'Toilettes' in category or 'wc' in category|lower or 'toilette' in category|lower %}
+            /* WC/Toilettes - Blanc et gris propre */
+            --brown-warm: #F5F5F5;
+            --brown-dark: #BEBEBE;
+        {% elif 'Buanderie' in category or 'buanderie' in category|lower %}
+            /* Buanderie - Bleu clair apaisant */
+            --brown-warm: #ADD8E6;
+            --brown-dark: #87CEEB;
+        {% elif 'Garage' in category or 'garage' in category|lower %}
+            /* Garage - Gris sobre */
+            --brown-warm: #696969;
+            --brown-dark: #2F4F4F;
+        {% else %}
+            /* Défaut - Marron original */
+            --brown-warm: #4a3428;
+            --brown-dark: #1a1410;
+        {% endif %}
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--brown-warm) 0%, var(--brown-dark) 100%) !important;
+        min-height: 100vh;
+    }
+    
+    /* ========== FIN COULEURS DYNAMIQUES ========== */
+    
     /* Masquer le header game */
     .header-menu {
         display: none !important;
