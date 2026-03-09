@@ -2445,8 +2445,15 @@
                                                 {% endif %}
                                             </div>
                                             <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                            {# ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS, pas les envoyés #}
-                                            {% set p2_unread = [unread_by_sender.get(p2.email, 0) if unread_by_sender else 0, unread_sent_to.get(p2.email, 0) if unread_sent_to else 0]|max %}
+                                            {# ✅ MESSAGERIE TYPE IPHONE : 
+                                               - ENFANT : badge = messages envoyés à lui non lus (visible par tous)
+                                               - ADULTE : badge = messages reçus de lui non lus (visible par destinataire uniquement)
+                                            #}
+                                            {% if p2.is_child_account %}
+                                                {% set p2_unread = unread_sent_to.get(p2.email, 0) if unread_sent_to else 0 %}
+                                            {% else %}
+                                                {% set p2_unread = unread_by_sender.get(p2.email, 0) if unread_by_sender else 0 %}
+                                            {% endif %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
                                                 <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: {{ color_p2 }};"></div>
@@ -2488,8 +2495,15 @@
                                                     {% endif %}
                                                 </div>
                                                 <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                                {# ✅ MESSAGERIE TYPE IPHONE : Uniquement les messages REÇUS, pas les envoyés #}
-                                                {% set p_unread = [unread_by_sender.get(p.email, 0) if unread_by_sender else 0, unread_sent_to.get(p.email, 0) if unread_sent_to else 0]|max %}
+                                                {# ✅ MESSAGERIE TYPE IPHONE : 
+                                                   - ENFANT : badge = messages envoyés à lui non lus (visible par tous)
+                                                   - ADULTE : badge = messages reçus de lui non lus (visible par destinataire uniquement)
+                                                #}
+                                                {% if p.is_child_account %}
+                                                    {% set p_unread = unread_sent_to.get(p.email, 0) if unread_sent_to else 0 %}
+                                                {% else %}
+                                                    {% set p_unread = unread_by_sender.get(p.email, 0) if unread_by_sender else 0 %}
+                                                {% endif %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">
                                                     <div class="vbar-fill" style="height: {{ fill }}%; background: {{ color }};"></div>

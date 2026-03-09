@@ -3975,7 +3975,7 @@ def get_house_players_points(house_id, existing_conn=None):
     
     # Récupérer tous les champs nécessaires pour les avatars
     c.execute("""
-        SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style 
+        SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style, is_child_account 
         FROM users WHERE house_id=?
     """, (house_id,))
     rows = c.fetchall()
@@ -4004,9 +4004,10 @@ def get_house_players_points(house_id, existing_conn=None):
         name = r[5] if r[5] else (email.split('@')[0] if email else '')
         player_color = r[6] if len(r) > 6 else None
         avatar_style = r[7] if len(r) > 7 else 'adventurer'  # Style DiceBear par défaut
+        is_child_account = r[8] if len(r) > 8 else 0  # Statut enfant (0 = adulte, 1 = enfant)
         
         _dbg(f"\n🔍 Traitement joueur: {name} ({email}) - NOUVEAU CODE ACTIF!")
-        _dbg(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}")
+        _dbg(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}, is_child={is_child_account}")
         
         # Assigner une couleur si le joueur n'en a pas encore
         if not player_color:
@@ -4160,7 +4161,8 @@ def get_house_players_points(house_id, existing_conn=None):
             'daily_tasks': daily_tasks,
             'color': color_vertical if color_vertical else player_color,  # Gradient pour v-bar verticale (ou hex en fallback)
             'color_h': color_horizontal if color_horizontal else player_color,  # Gradient pour v-bar horizontale (ou hex en fallback)
-            'player_color_hex': player_color  # Couleur hex brute pour bordure d'avatar
+            'player_color_hex': player_color,  # Couleur hex brute pour bordure d'avatar
+            'is_child_account': is_child_account  # 0 = adulte, 1 = enfant (pour badges messagerie)
         })
 
     if _own_conn:
