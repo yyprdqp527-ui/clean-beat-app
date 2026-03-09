@@ -8509,6 +8509,7 @@ def menu():
         {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/chambre bébé4 .webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
         {'key': 'salon',    'name': 'Salon',        'image': 'images/salonorange.webp',  'category': 'salon',      'fixed': True},
+        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/bureau.webp',       'category': 'bonus',      'fixed': True},
         {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/cuisinewoop.webp',  'category': 'cuisine',    'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/sdbwoop.webp',     'category': 'salle_bain', 'fixed': True},
         {'key': 'toilettes','name': 'Toilettes',    'image': 'images/Wc2.webp',          'category': 'wc',         'fixed': True},
