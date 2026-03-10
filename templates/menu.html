@@ -5185,35 +5185,55 @@
                         
                         // 🔌 Synchroniser la liste des messages pour tous les utilisateurs
                         socket.on('messages_list_update', function(data) {
-                            console.log('📬 WebSocket: messages_list_update reçu', data);
-                            console.log('📬 action:', data.action, 'sender:', data.sender_email, 'userEmail:', userEmail);
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            console.log('📬 WebSocket: messages_list_update reçu');
+                            console.log('   action:', data.action);
+                            console.log('   sender_email:', data.sender_email);
+                            console.log('   recipient_email:', data.recipient_email);
+                            console.log('   userEmail (MOI):', userEmail);
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
-                            // ❌ Si JE suis l'expéditeur du nouveau message → NE PAS recharger mes badges
+                            // ❌ Si JE suis l'expéditeur du nouveau message → NE RIEN FAIRE
+                            // (new_message_notification s'occupe des badges du destinataire)
                             if (data.action === 'new_message' && data.sender_email === userEmail) {
-                                console.log('⏭️ Message envoyé par MOI, pas de rechargement');
+                                console.log('⏭️ JE SUIS L\'EXPÉDITEUR → Ignoré (new_message_notification gère les badges)');
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;
                             }
                             
-                            // ❌ Si quelqu'un d'autre a marqué comme lu → NE PAS recharger mes badges
-                            if (data.action === 'message_read' && data.reader_email !== userEmail) {
-                                console.log('⏭️ Quelqu\'un d\'autre a marqué comme lu, pas mon affaire');
+                            // ❌ Si JE suis le destinataire d'un nouveau message → NE RIEN FAIRE NON PLUS
+                            // (new_message_notification s'occupe déjà de mes badges !)
+                            if (data.action === 'new_message' && data.recipient_email === userEmail) {
+                                console.log('⏭️ JE SUIS LE DESTINATAIRE → Ignoré (new_message_notification a déjà géré mes badges)');
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;
                             }
                             
-                            // ✅ Sinon, recharger mes compteurs (je suis le destinataire)
-                            console.log('✅ Rechargement de MES badges via API');
-                            fetch('/api/unread_counts', { cache: 'no-store' })
-                                .then(response => response.json())
-                                .then(counts => {
-                                    console.log('📊 Compteurs API reçus:', counts);
-                                    if (counts.unread_received !== undefined) {
-                                        updateUnreadBadge(counts.unread_received);
-                                    }
-                                    if (counts.unread_by_sender) {
-                                        updateUnreadBySender(counts.unread_by_sender);
-                                    }
-                                })
-                                .catch(error => console.error('❌ Erreur rechargement badges:', error));
+                            // ✅ Si quelqu'un a marqué un message comme lu ET que c'est MOI
+                            if (data.action === 'message_read' && data.reader_email === userEmail) {
+                                console.log('✅ J\'AI MARQUÉ UN MESSAGE COMME LU → Recharger MES badges via API');
+                                fetch('/api/unread_counts', { cache: 'no-store' })
+                                    .then(response => response.json())
+                                    .then(counts => {
+                                        console.log('📊 Compteurs API reçus:', counts);
+                                        if (counts.unread_received !== undefined) {
+                                            updateUnreadBadge(counts.unread_received);
+                                        }
+                                        if (counts.unread_by_sender) {
+                                            updateUnreadBySender(counts.unread_by_sender);
+                                        }
+                                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+                                    })
+                                    .catch(error => {
+                                        console.error('❌ Erreur rechargement badges:', error);
+                                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+                                    });
+                                return;
+                            }
+                            
+                            // ❌ Sinon, ignorer (autres actions ou autres utilisateurs)
+                            console.log('⏭️ Action ou utilisateur non concerné → Ignoré');
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                         });
                         
                         // 🔔 Écouter quand un utilisateur a marqué tous ses messages comme lus

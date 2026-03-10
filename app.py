@@ -5083,8 +5083,16 @@ def comments():
                 _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email}")
                 _dbg(f"👶 Destinataire est enfant: {is_recipient_child}")
                 _dbg(f"📊 Compteur DESTINATAIRE {recipient_email} après envoi: {recipient_unread_count}")
+                _dbg(f"🎯 Données à envoyer via WebSocket:")
+                _dbg(f"   - sender: {current_user_name}")
+                _dbg(f"   - sender_email: {session['user']}")
+                _dbg(f"   - recipient_email: {recipient_email}")
+                _dbg(f"   - recipient_is_child: {is_recipient_child}")
+                _dbg(f"   - recipient_unread_count: {recipient_unread_count}")
+                _dbg(f"   - children_unread: {children_unread}")
                 
                 # ✅ Émettre l'événement WebSocket SIMPLIFIÉ
+                # ⚠️ IMPORTANT: broadcast=True est OBLIGATOIRE depuis une route HTTP pour envoyer à TOUS les clients de la room
                 socketio.emit('new_message_notification', {
                     'sender': current_user_name,
                     'sender_email': session['user'],
@@ -5093,7 +5101,8 @@ def comments():
                     'recipient_is_child': is_recipient_child,
                     'recipient_unread_count': recipient_unread_count,
                     'children_unread': children_unread  # Pour mettre à jour tous les avatars enfants
-                }, room=f'house_{house_id}')
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                _dbg(f"✅ WebSocket new_message_notification émis vers house_{house_id} (broadcast=True)")
                 
                 # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
                 socketio.emit('messages_list_update', {
@@ -5101,8 +5110,8 @@ def comments():
                     'action': 'new_message',
                     'sender_email': session['user'],
                     'recipient_email': recipient_email
-                }, room=f'house_{house_id}')
-                _dbg(f"🔌 WebSocket: Synchronisation messagerie pour house_{house_id}")
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                _dbg(f"✅ WebSocket messages_list_update émis vers house_{house_id} (broadcast=True)")
                 
                 # 🔔 Envoyer une notification push au destinataire
                 try:
