@@ -1745,9 +1745,11 @@ document.addEventListener('DOMContentLoaded', function(){
         // Écouter les mises à jour de points en temps réel
         socket.on('players_points_update', function(data) {
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📊 WebSocket: Mise à jour des points reçue (task_page)');
-            console.log('   Joueurs:', data.players);
-            console.log('   Joueur modifié:', data.updated_player);
+            console.log('📊 WebSocket: Mise à jour des points reçue (task_page_enhanced.html)');
+            console.log('   🕐 Timestamp:', new Date().toLocaleTimeString());
+            console.log('   🎯 Joueur modifié:', data.updated_player);
+            console.log('   👥 Nombre de joueurs:', data.players ? data.players.length : 0);
+            console.log('   📊 Données complètes:', data);
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
             // Mettre à jour l'affichage des points dans la barre latérale

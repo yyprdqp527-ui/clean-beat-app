@@ -4842,30 +4842,24 @@
                             console.log('❌ WebSocket: Déconnecté du serveur');
                         });
                         
-                        // Écouter les mises à jour de points (nom d'événement principal)
-                        socket.on('points_updated', function(data) {
-                            console.log('📊 WebSocket: Points mis à jour pour', data.email);
-                            
-                            // Rafraîchir l'affichage des points
-                            if (typeof updatePlayersPointsMenu === 'function') {
-                                updatePlayersPointsMenu();
-                            }
-                            
-                            // Rafraîchir le dashboard si visible
-                            const dashboardElement = document.getElementById('dashboardFloating');
-                            if (dashboardElement && !dashboardElement.classList.contains('minimized')) {
-                                if (typeof loadDailyRanking === 'function') {
-                                    loadDailyRanking();
-                                }
-                            }
+                        socket.on('connect_error', function(error) {
+                            console.error('❌ WebSocket: Erreur de connexion', error);
+                        });
+                        
+                        socket.on('reconnect', function(attemptNumber) {
+                            console.log('🔄 WebSocket: Reconnecté après', attemptNumber, 'tentatives');
+                            socket.emit('join_house', { email: userEmail });
                         });
                         
                         // Écouter les mises à jour de points en temps réel avec données complètes
                         socket.on('players_points_update', function(data) {
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                            console.log('📊 WebSocket: Mise à jour des points reçue');
-                            console.log('   Joueurs:', data.players);
-                            console.log('   Joueur modifié:', data.updated_player);
+                            console.log('📊 WebSocket: Mise à jour des points reçue (menu.html)');
+                            console.log('   🕐 Timestamp:', new Date().toLocaleTimeString());
+                            console.log('   📧 userEmail (MOI):', userEmail);
+                            console.log('   🎯 Joueur modifié:', data.updated_player);
+                            console.log('   👥 Nombre de joueurs:', data.players ? data.players.length : 0);
+                            console.log('   📊 Données complètes:', data);
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
                             // ✅ Utiliser directement les données WebSocket (pas d'appel API !)

@@ -10746,7 +10746,10 @@ if SOCKETIO_AVAILABLE:
     def handle_join_house(data):
         """Un joueur rejoint la room de sa maison"""
         user_email = data.get('email')
+        _dbg(f'📩 join_house reçu : email={user_email}, sid={request.sid}')
+        
         if not user_email:
+            _dbg(f'⚠️ join_house : email manquant !')
             return
         
         try:
@@ -10761,9 +10764,12 @@ if SOCKETIO_AVAILABLE:
                 room = f"house_{house_id}"
                 join_room(room)
                 emit('joined_room', {'room': room, 'email': user_email})
-                _dbg(f'🏠 {user_email} a rejoint la room {room}')
+                _dbg(f'✅ {user_email} (sid={request.sid}) a REJOINT la room {room}')
+                _dbg(f'   🔍 Clients dans la room : utiliser socketio.server.manager.rooms pour voir')
+            else:
+                _dbg(f'⚠️ {user_email} : house_id introuvable !')
         except Exception as e:
-            _dbg(f'❌ Erreur join_house: {e}')
+            _dbg(f'❌ Erreur join_house pour {user_email}: {e}')
     
     @socketio.on('points_updated')
     def handle_points_updated(data):
