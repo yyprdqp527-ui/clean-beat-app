@@ -4719,8 +4719,14 @@
                 function updateUnreadBySender(unreadBySender) {
                     window.__unreadBySender = unreadBySender || {};
                     document.querySelectorAll('.avatar-notification-badge').forEach(function(badge) {
-                        const senderEmail = badge.getAttribute('data-recipient');
-                        const count = (unreadBySender && unreadBySender[senderEmail]) ? unreadBySender[senderEmail] : 0;
+                        const recipientEmail = badge.getAttribute('data-recipient');
+                        
+                        // ✅ Si cet email n'est PAS dans unreadBySender, on l'ignore (ne pas toucher aux badges enfants gérés par updateChildrenBadges)
+                        if (!unreadBySender || !unreadBySender.hasOwnProperty(recipientEmail)) {
+                            return; // Ignorer ce badge (peut être un badge enfant)
+                        }
+                        
+                        const count = unreadBySender[recipientEmail] || 0;
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = '';
