@@ -248,6 +248,36 @@ def _dbg(*args, **kwargs):
     if _DEBUG:
         print(*args, **kwargs)
 
+def safe_socketio_emit(event, data, **kwargs):
+    """
+    🛡️ Wrapper sécurisé pour socketio.emit() qui gère les sessions invalides.
+    
+    Sur Render, quand le service s'endort ou redémarre, les sessions SocketIO deviennent
+    invalides et socketio.emit() peut lever des exceptions 'Invalid session' ou 
+    'Session is disconnected', causant des erreurs HTTP 500.
+    
+    Cette fonction entoure l'appel avec try/except pour éviter les crashs.
+    
+    Args:
+        event: Nom de l'événement WebSocket
+        data: Données à envoyer
+        **kwargs: Arguments passés à socketio.emit (namespace, room, broadcast, etc.)
+    
+    Returns:
+        True si l'émission a réussi, False sinon
+    """
+    if not SOCKETIO_AVAILABLE or not socketio:
+        _dbg(f"⚠️ WebSocket non disponible, impossible d'émettre '{event}'")
+        return False
+    
+    try:
+        socketio.emit(event, data, **kwargs)
+        return True
+    except Exception as e:
+        # Erreurs typiques sur Render : 'Invalid session', 'Session is disconnected'
+        _dbg(f"⚠️ Erreur WebSocket lors de l'émission '{event}': {e}")
+        return False
+
 # Pour l'envoi de SMS (Twilio)
 
 import base64
@@ -3015,17 +3045,14 @@ def create_system_message(house_id, content, message_type='system', related_task
         conn.close()
         
         # � Synchroniser la messagerie pour tous les utilisateurs de la maison
-        try:
-            if SOCKETIO_AVAILABLE and socketio:
-                socketio.emit('messages_list_update', {
-                    'house_id': house_id,
-                    'action': 'system_message',
-                    'message_type': message_type,
-                    'sender_name': sender_name
-                }, room=f'house_{house_id}')
-                _dbg(f"🔌 WebSocket: Synchronisation messagerie système pour house_{house_id}")
-        except Exception as ws_err:
-            _dbg(f"⚠️ Erreur WebSocket message système: {ws_err}")
+        if SOCKETIO_AVAILABLE and socketio:
+            safe_socketio_emit('messages_list_update', {
+                'house_id': house_id,
+                'action': 'system_message',
+                'message_type': message_type,
+                'sender_name': sender_name
+            }, room=f'house_{house_id}', namespace='/', broadcast=True)
+            _dbg(f"🔌 WebSocket: Synchronisation messagerie système pour house_{house_id}")
         
         # �🔔 Envoyer une notification push si activé
         if send_push:
@@ -5091,27 +5118,26 @@ def comments():
                 _dbg(f"   - recipient_unread_count: {recipient_unread_count}")
                 _dbg(f"   - children_unread: {children_unread}")
                 
-                # ✅ Émettre l'événement WebSocket SIMPLIFIÉ
-                # ⚠️ IMPORTANT: broadcast=True est OBLIGATOIRE depuis une route HTTP pour envoyer à TOUS les clients de la room
-                socketio.emit('new_message_notification', {
+                # ✅ Émettre l'événement WebSocket SIMPLIFIÉ avec protection contre sessions invalides
+                safe_socketio_emit('new_message_notification', {
                     'sender': current_user_name,
                     'sender_email': session['user'],
                     'content': content[:50] + ('...' if len(content) > 50 else ''),
                     'recipient_email': recipient_email,
                     'recipient_is_child': is_recipient_child,
                     'recipient_unread_count': recipient_unread_count,
-                    'children_unread': children_unread  # Pour mettre à jour tous les avatars enfants
+                    'children_unread': children_unread
                 }, namespace='/', room=f'house_{house_id}', broadcast=True)
-                _dbg(f"✅ WebSocket new_message_notification émis vers house_{house_id} (broadcast=True)")
+                _dbg(f"✅ WebSocket new_message_notification émis vers house_{house_id}")
                 
-                # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
-                socketio.emit('messages_list_update', {
+                # 🔌 Synchroniser la liste des messages pour tous les utilisateurs
+                safe_socketio_emit('messages_list_update', {
                     'house_id': house_id,
                     'action': 'new_message',
                     'sender_email': session['user'],
                     'recipient_email': recipient_email
                 }, namespace='/', room=f'house_{house_id}', broadcast=True)
-                _dbg(f"✅ WebSocket messages_list_update émis vers house_{house_id} (broadcast=True)")
+                _dbg(f"✅ WebSocket messages_list_update émis vers house_{house_id}")
                 
                 # 🔔 Envoyer une notification push au destinataire
                 try:
@@ -5677,25 +5703,25 @@ def mark_all_messages_read():
     # ✅ MESSAGERIE TYPE IPHONE : Pas de statut "lu" pour les messages envoyés
     # On ne notifie que les messages REÇUS
     
-    # Notifier via WebSocket
-    socketio.emit('unread_count_update', {
+    # Notifier via WebSocket avec protection contre sessions invalides
+    safe_socketio_emit('unread_count_update', {
         'count': unread_count,
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
     
     # Notifier que cet utilisateur a tout lu (pour mettre à jour l'UI des autres)
-    socketio.emit('all_messages_read', {
+    safe_socketio_emit('all_messages_read', {
         'reader_email': session['user'],
         'message_ids': unread_message_ids
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
 
     # Forcer un refresh des compteurs côté menu/comments sur tous les appareils.
-    socketio.emit('messages_list_update', {
+    safe_socketio_emit('messages_list_update', {
         'house_id': house_id,
         'action': 'all_read',
         'reader_email': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
     
     conn.close()
     
@@ -5767,18 +5793,18 @@ def mark_single_message_read_for_child():
     conn.close()
     
     # Émettre un événement WebSocket pour mettre à jour les pastilles en temps réel
-    socketio.emit('badge_update', {
+    safe_socketio_emit('badge_update', {
         'child_email': child_email,
         'new_count': new_unread_count,
         'updated_by': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
-    socketio.emit('message_read_update', {
+    safe_socketio_emit('message_read_update', {
         'message_id': int(message_id),
         'reader_email': child_email,
         'read_by': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
     
     return jsonify({
         'success': True,
@@ -5849,27 +5875,27 @@ def mark_single_message_read():
     conn.close()
     
     # Émettre un événement WebSocket pour mettre à jour les badges en temps réel
-    socketio.emit('unread_count_update', {
+    safe_socketio_emit('unread_count_update', {
         'count': unread_count,
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender,
         'unread_sent_to': unread_sent_to
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
 
     if sender_email and sender_email != session['user']:
-        socketio.emit('unread_sent_to_update', {
+        safe_socketio_emit('unread_sent_to_update', {
             'user_email': sender_email,
             'unread_sent_to': sender_unread_sent_to
-        }, room=f'house_{house_id}')
+        }, room=f'house_{house_id}', namespace='/', broadcast=True)
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
-    socketio.emit('message_read_update', {
+    safe_socketio_emit('message_read_update', {
         'message_id': int(message_id),
         'reader_email': session['user'],
         'read_by': session['user']
-    }, room=f'house_{house_id}')
+    }, room=f'house_{house_id}', namespace='/', broadcast=True)
 
-    socketio.emit('messages_list_update', {
+    safe_socketio_emit('messages_list_update', {
         'house_id': house_id,
         'action': 'message_read',
         'reader_email': session['user'],
@@ -9191,13 +9217,12 @@ def custom_task_page(task_id):
                             'daily_points': int(p[6]) if p[6] else 0
                         })
                     
-                    # Utiliser socketio.emit() directement pour émettre depuis une route HTTP
-                    # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
-                    socketio.emit('players_points_update', {
+                    # Utiliser safe_socketio_emit() pour gérer les sessions invalides
+                    safe_socketio_emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
                     }, namespace='/', room=f'house_{user_house_id}', broadcast=True)
-                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{user_house_id})")
+                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
             
@@ -9551,13 +9576,12 @@ def task_enhanced(cat, task_id):
                             'daily_points': int(p[6]) if p[6] else 0
                         })
                     
-                    # Utiliser socketio.emit() directement pour émettre depuis une route HTTP
-                    # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
-                    socketio.emit('players_points_update', {
+                    # Utiliser safe_socketio_emit() pour gérer les sessions invalides
+                    safe_socketio_emit('players_points_update', {
                         'players': players_data,
                         'updated_player': player_email
                     }, namespace='/', room=f'house_{house_id}', broadcast=True)
-                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email} (room: house_{house_id})")
+                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
             
@@ -10010,22 +10034,22 @@ def api_validate_task():
                 _dbg(f"   🔍 DEBUG: socketio object = {socketio}")
                 _dbg(f"   🔍 DEBUG: SOCKETIO_AVAILABLE = {SOCKETIO_AVAILABLE}")
                 
-                # ✅ broadcast=True envoie à TOUS les clients de la room (obligatoire depuis route HTTP)
-                socketio.emit('players_points_update', {
+                # Utiliser safe_socketio_emit() pour gérer les sessions invalides
+                safe_socketio_emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
                 }, namespace='/', room=room_name, broadcast=True)
                 
-                _dbg(f"✅ WebSocket: Notification envoyée à room {room_name} pour {player_email} (+{task_points} pts)")
+                _dbg(f"✅ WebSocket: Notification envoyée pour {player_email} (+{task_points} pts)")
                 _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
                 
                 # 🔌 Synchroniser la messagerie si un message baby_tracking a été créé
                 if baby_tracking_created:
-                    socketio.emit('messages_list_update', {
+                    safe_socketio_emit('messages_list_update', {
                         'house_id': user_house_id,
                         'action': 'baby_tracking',
                         'sender_email': player_email,
                         'sender_name': player_name
-                    }, namespace='/', room=room_name)
+                    }, namespace='/', room=room_name, broadcast=True)
                     _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{user_house_id}")
                     
             except Exception as ws_err:
@@ -10668,18 +10692,15 @@ def save_baby_tracking():
         _dbg(f"✅ Message baby_tracking ID {message_id} marqué comme lu pour l'auteur {session['user']}")
         
         # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
-        try:
-            if SOCKETIO_AVAILABLE and socketio:
-                socketio.emit('messages_list_update', {
-                    'house_id': house_id,
-                    'action': 'baby_tracking',
-                    'sender_email': session['user'],
-                    'sender_name': user_name,
-                    'task_type': task_type
-                }, room=f'house_{house_id}')
-                _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
-        except Exception as ws_err:
-            _dbg(f"⚠️ Erreur WebSocket baby_tracking: {ws_err}")
+        if SOCKETIO_AVAILABLE and socketio:
+            safe_socketio_emit('messages_list_update', {
+                'house_id': house_id,
+                'action': 'baby_tracking',
+                'sender_email': session['user'],
+                'sender_name': user_name,
+                'task_type': task_type
+            }, room=f'house_{house_id}', namespace='/', broadcast=True)
+            _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
     except Exception as e:
         _dbg(f"❌ Erreur création message baby_tracking: {e}")
         import traceback
