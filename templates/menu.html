@@ -4731,21 +4731,31 @@
                 }
                 
                 // ✅ Mettre à jour les pastilles sur les avatars des enfants (visible par tous les adultes)
+                let childrenBadgesUpdateTimer = null;
                 function updateChildrenBadges(childrenUnread) {
                     if (!childrenUnread) return;
                     
-                    Object.keys(childrenUnread).forEach(function(childEmail) {
-                        const count = childrenUnread[childEmail];
-                        const badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + childEmail + '"]');
-                        badges.forEach(function(badge) {
-                            if (count > 0) {
-                                badge.textContent = count < 100 ? count : '99+';
-                                badge.style.display = '';
-                            } else {
-                                badge.style.display = 'none';
-                            }
+                    // Debounce: annuler la mise à jour précédente si elle n'est pas encore appliquée
+                    if (childrenBadgesUpdateTimer) {
+                        clearTimeout(childrenBadgesUpdateTimer);
+                    }
+                    
+                    childrenBadgesUpdateTimer = setTimeout(function() {
+                        console.log('🔄 Mise à jour badges enfants (debounced):', childrenUnread);
+                        Object.keys(childrenUnread).forEach(function(childEmail) {
+                            const count = childrenUnread[childEmail];
+                            const badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + childEmail + '"]');
+                            console.log(`   - ${childEmail}: ${count} messages (${badges.length} badges trouvés)`);
+                            badges.forEach(function(badge) {
+                                if (count > 0) {
+                                    badge.textContent = count < 100 ? count : '99+';
+                                    badge.style.display = '';
+                                } else {
+                                    badge.style.display = 'none';
+                                }
+                            });
                         });
-                    });
+                    }, 100);  // Attendre 100ms avant d'appliquer la mise à jour
                 }
                 
                 // ==========================================
@@ -5024,34 +5034,41 @@
                         
                         // Écouter les notifications de nouveaux messages
                         socket.on('new_message_notification', function(data) {
-                            console.log('💬 WebSocket: Nouveau message reçu', data);
-                            console.log('💬 recipient_email:', data.recipient_email);
-                            console.log('💬 userEmail:', userEmail);
-                            console.log('💬 sender_email:', data.sender_email);
-                            console.log('💬 recipient_is_child:', data.recipient_is_child);
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            console.log('💬 WebSocket: Nouveau message reçu');
+                            console.log('📧 sender_email:', data.sender_email);
+                            console.log('📧 recipient_email:', data.recipient_email);  console.log('👤 userEmail (MOI):', userEmail);
+                            console.log('👶 recipient_is_child:', data.recipient_is_child);
+                            console.log('📊 recipient_unread_count:', data.recipient_unread_count);
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
                             // ❌ RÈGLE #1 : Si JE suis l'expéditeur → RIEN faire (pas de badge, pas de son)
                             if (data.sender_email === userEmail) {
-                                console.log('⏭️ Je suis l\'expéditeur, AUCUNE action');
+                                console.log('⏭️ JE SUIS L\'EXPÉDITEUR → AUCUNE action (pas de son, pas de badge)');
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;
                             }
                             
                             // ✅ RÈGLE #2 : Si JE suis le destinataire direct → son + badge
                             if (data.recipient_email === userEmail) {
-                                console.log('✅ Je suis le DESTINATAIRE ! Badge + Son');
-                                console.log('📊 Compteur: ', data.recipient_unread_count);
+                                console.log('✅ JE SUIS LE DESTINATAIRE ! → Badge + Son');
+                                console.log('📊 Mon compteur de messages non lus:', data.recipient_unread_count);
                                 
                                 // 🔔 SON EN PREMIER
+                                console.log('🔔 Lecture du son de réception...');
                                 playMessageSound();
                                 
                                 // Badge
+                                console.log('🔴 Mise à jour de mon badge...');
                                 updateUnreadBadge(data.recipient_unread_count);
                                 
                                 // ✅ Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
+                                    console.log('👶 Mise à jour badges enfants:', data.children_unread);
                                     updateChildrenBadges(data.children_unread);
                                 }
                                 
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;  // Important : sortir ici
                             }
                             
@@ -5059,9 +5076,9 @@
                             if (data.recipient_is_child === true) {
                                 console.log('👶 Message pour ENFANT détecté !');
                                 console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Je dois voir la pastille + entendre le son');
-                                console.log('📱 Activation : Son + Mise à jour badges enfants');
                                 
                                 // 🔔 SON
+                                console.log('🔔 Lecture du son de réception (message enfant)...');
                                 playMessageSound();
                                 
                                 // ✅ Mettre à jour les pastilles sur tous les avatars enfants
@@ -5069,12 +5086,14 @@
                                     console.log('📊 Mise à jour badges enfants:', data.children_unread);
                                     updateChildrenBadges(data.children_unread);
                                 }
-                                    
+                                
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');    
                                 return;
                             }
                             
                             // ❌ Sinon : rien faire
-                            console.log('⏭️ Ce message ne me concerne pas');
+                            console.log('⏭️ Ce message ne me concerne pas (pas expéditeur, pas destinataire, pas parent d\'enfant)');
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                         });
                         
                         // Écouter les mises à jour des badges sur les avatars

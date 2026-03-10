@@ -1332,25 +1332,42 @@
                 
                 // Écouter les nouveaux messages pour rafraîchir la page
                 socket.on('new_message_notification', function(data) {
-                    console.log('💬 WebSocket Comments: Nouveau message reçu', data);
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('💬 WebSocket Comments: Nouveau message reçu');
+                    console.log('📧 sender_email:', data.sender_email);
+                    console.log('📧 recipient_email:', data.recipient_email);
+                    console.log('👤 userEmail (MOI):', userEmail);
+                    console.log('👶 recipient_is_child:', data.recipient_is_child);
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     
                     // ❌ Si JE suis l'expéditeur → ne rien faire (je vois déjà mon message)
                     if (data.sender_email === userEmail) {
-                        console.log('⏭️ Je suis l\'expéditeur, pas de rechargement');
+                        console.log('⏭️ JE SUIS L\'EXPÉDITEUR → pas de rechargement, pas de son');
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                         return;
                     }
                     
                     // ✅ Si JE suis le destinataire → recharger la page avec le son
                     if (data.recipient_email === userEmail) {
-                        console.log('✅ Je suis le destinataire ! Son et rechargement...');
+                        console.log('✅ JE SUIS LE DESTINATAIRE ! → Son + Rechargement...');
                         // 🔔 Jouer le son de notification
                         playMessageSound();
                         setTimeout(function() { location.reload(); }, 1500);
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+                        return;
                     }
-                    else if (data.recipient_is_child === true) {
+                    
+                    // ✅ Si le destinataire est un ENFANT et je suis parent
+                    if (data.recipient_is_child === true) {
+                        console.log('👶 Message pour ENFANT → Son + Rechargement (parents voient)...');
                         playMessageSound();
                         setTimeout(function() { location.reload(); }, 1500);
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+                        return;
                     }
+                    
+                    console.log('⏭️ Ce message ne me concerne pas');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                 });
                 
                 // 🔌 Synchroniser la liste des messages pour tous
