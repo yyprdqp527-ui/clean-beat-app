@@ -4774,7 +4774,7 @@
                             transports: ['websocket'],
                             reconnection: true,
                             reconnectionDelay: 2000,
-                            reconnectionAttempts: 3,
+                            reconnectionAttempts: 10,
                             timeout: 10000
                         });
                         const userEmail = "{{ session.get('user', '') }}";
@@ -4853,8 +4853,11 @@
                         });
                         
                         socket.on('reconnect', function(attemptNumber) {
-                            console.log('🔄 WebSocket: Reconnecté après', attemptNumber, 'tentatives');
+                            console.log('🔄 WebSocket: Reconnecté après', attemptNumber, 'tentatives - Rejoin room');
                             socket.emit('join_house', { email: userEmail });
+                            // ✅ Recharger les badges immédiatement après reconnexion
+                            // (évite d'attendre le prochain événement WebSocket)
+                            setTimeout(function() { refreshAllBadges(); }, 500);
                         });
                         
                         // Écouter les mises à jour de points en temps réel avec données complètes
@@ -5289,6 +5292,10 @@
                                 });
                             }
                             updateUnreadBySender(merged);
+                            // ✅ Mettre à jour aussi les badges des enfants
+                            if (counts.children_unread) {
+                                updateChildrenBadges(counts.children_unread);
+                            }
                             console.log('✅ Badges rafraîchis:', counts);
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));

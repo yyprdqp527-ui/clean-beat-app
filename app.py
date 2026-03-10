@@ -10332,13 +10332,15 @@ def api_unread_counts():
         unread_received = get_unread_message_count(session['user'], house_id)
         unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
         unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
+        children_unread = get_children_unread_counts(house_id)
         
         conn.close()
         
         return jsonify({
             'unread_received': unread_received,
             'unread_by_sender': unread_by_sender,
-            'unread_sent_to': unread_sent_to
+            'unread_sent_to': unread_sent_to,
+            'children_unread': children_unread
         }), 200
         
     except Exception as e:
