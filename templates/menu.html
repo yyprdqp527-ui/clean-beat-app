@@ -2620,15 +2620,21 @@
                                                     <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
-                                            <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                            {# ✅ MESSAGERIE TYPE IPHONE : 
-                                               - ENFANT : badge = messages envoyés à lui non lus (visible par tous)
-                                               - ADULTE : badge = messages reçus de lui non lus (visible par destinataire uniquement)
+                                            <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
+                                            {# Logique simple:
+                                               - Si c'est MOI → afficher mes messages reçus non lus (visible uniquement sur mon téléphone)
+                                               - Si c'est un ENFANT → afficher ses messages reçus non lus (visible par TOUS)
+                                               - Si c'est un AUTRE ADULTE → PAS de pastille
                                             #}
-                                            {% if p2.is_child_account %}
-                                                {% set p2_unread = unread_sent_to.get(p2.email, 0) if unread_sent_to else 0 %}
+                                            {% if p2.email == session.get('user') %}
+                                                {# C'est MON avatar → afficher MES messages reçus #}
+                                                {% set p2_unread = unread_messages_count|default(0) %}
+                                            {% elif p2.is_child_account %}
+                                                {# C'est un ENFANT → afficher ses messages (visible par tous) #}
+                                                {% set p2_unread = children_unread.get(p2.email, 0) if children_unread else 0 %}
                                             {% else %}
-                                                {% set p2_unread = unread_by_sender.get(p2.email, 0) if unread_by_sender else 0 %}
+                                                {# C'est un AUTRE ADULTE → pas de pastille #}
+                                                {% set p2_unread = 0 %}
                                             {% endif %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
@@ -2670,15 +2676,21 @@
                                                         <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
-                                                <!-- Badge des messages non lus de ce joueur (reçus par vous) -->
-                                                {# ✅ MESSAGERIE TYPE IPHONE : 
-                                                   - ENFANT : badge = messages envoyés à lui non lus (visible par tous)
-                                                   - ADULTE : badge = messages reçus de lui non lus (visible par destinataire uniquement)
+                                                <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
+                                                {# Logique simple:
+                                                   - Si c'est MOI → afficher mes messages reçus non lus (visible uniquement sur mon téléphone)
+                                                   - Si c'est un ENFANT → afficher ses messages reçus non lus (visible par TOUS)
+                                                   - Si c'est un AUTRE ADULTE → PAS de pastille
                                                 #}
-                                                {% if p.is_child_account %}
-                                                    {% set p_unread = unread_sent_to.get(p.email, 0) if unread_sent_to else 0 %}
+                                                {% if p.email == session.get('user') %}
+                                                    {# C'est MON avatar → afficher MES messages reçus #}
+                                                    {% set p_unread = unread_messages_count|default(0) %}
+                                                {% elif p.is_child_account %}
+                                                    {# C'est un ENFANT → afficher ses messages (visible par tous) #}
+                                                    {% set p_unread = children_unread.get(p.email, 0) if children_unread else 0 %}
                                                 {% else %}
-                                                    {% set p_unread = unread_by_sender.get(p.email, 0) if unread_by_sender else 0 %}
+                                                    {# C'est un AUTRE ADULTE → pas de pastille #}
+                                                    {% set p_unread = 0 %}
                                                 {% endif %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">

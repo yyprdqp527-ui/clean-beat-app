@@ -3069,55 +3069,30 @@ def create_system_message(house_id, content, message_type='system', related_task
 
 def get_unread_message_count(user_email, house_id, existing_conn=None):
     """
-    Retourne le nombre de messages non lus pour un utilisateur dans sa maison.
+    ✅ LOGIQUE MESSAGERIE SIMPLIFIÉE:
+    Retourne le nombre de messages privés reçus par cet utilisateur qui ne sont PAS encore lus.
     
-    LOGIQUE MESSAGERIE TYPE IPHONE :
-    - Joueur avec téléphone (adulte) : voit uniquement SES messages reçus
-    - PLUS : voit les messages des ENFANTS (sans téléphone) → visibles par tous les adultes
-    
-    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
+    IMPORTANT: Ne compte QUE les messages reçus par cette personne.
+    - Pastille sur avatar utilisateur = messages reçus non lus (visible sur son téléphone uniquement)
+    - Pour les enfants, utiliser get_children_unread_counts() (visible par tous)
     """
     try:
         _own = existing_conn is None
         conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         
-        # Vérifier si l'utilisateur est un enfant
-        c.execute("SELECT is_child_account FROM users WHERE email = ?", (user_email,))
-        user_row = c.fetchone()
-        is_child = user_row and user_row[0] == 1
-        
-        if is_child:
-            # Un enfant ne voit que ses propres messages
-            c.execute("""
-                SELECT COUNT(*) FROM messages m
-                WHERE m.house_id = ?
-                AND m.recipient_email = ?
-                AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                )
-                AND (m.sender_email IS NULL OR m.sender_email != ?)
-                AND m.message_type = 'private'
-            """, (house_id, user_email, user_email, user_email))
-        else:
-            # Un adulte voit : SES messages + messages des ENFANTS de la maison
-            c.execute("""
-                SELECT COUNT(*) FROM messages m
-                LEFT JOIN users recipient ON m.recipient_email = recipient.email
-                WHERE m.house_id = ?
-                AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                )
-                AND (m.sender_email IS NULL OR m.sender_email != ?)
-                AND m.message_type = 'private'
-                AND (
-                    -- Messages reçus par l'adulte lui-même
-                    m.recipient_email = ?
-                    OR
-                    -- Messages reçus par un ENFANT (visible par tous les adultes)
-                    (recipient.is_child_account = 1 AND recipient.house_id = ?)
-                )
-            """, (house_id, user_email, user_email, user_email, house_id))
+        # Compter uniquement les messages reçus par cet utilisateur qui ne sont pas encore marqués comme lus
+        c.execute("""
+            SELECT COUNT(*) FROM messages m
+            WHERE m.house_id = ?
+            AND m.recipient_email = ?
+            AND m.message_type = 'private'
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr 
+                WHERE mr.message_id = m.id 
+                AND mr.user_email = ?
+            )
+        """, (house_id, user_email, user_email))
         
         count = c.fetchone()[0]
         if _own:
@@ -3127,13 +3102,11 @@ def get_unread_message_count(user_email, house_id, existing_conn=None):
         _dbg(f"❌ Erreur get_unread_message_count: {e}")
         return 0
 
-def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
+def get_children_unread_counts(house_id, existing_conn=None):
     """
-    Retourne un dict {sender_email: count} des messages privés reçus non lus.
-    
-    LOGIQUE MESSAGERIE TYPE IPHONE :
-    - Adulte : voit ses messages reçus + messages des enfants
-    - Enfant : voit uniquement ses messages reçus
+    ✅ LOGIQUE ENFANTS SANS TÉLÉPHONE:
+    Retourne un dict {child_email: count} des messages reçus non lus pour TOUS les enfants de la maison.
+    Ces pastilles sont visibles par TOUS les adultes de la maison.
     
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
@@ -3142,60 +3115,41 @@ def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
         conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
         
-        # Vérifier si l'utilisateur est un enfant
-        c.execute("SELECT is_child_account FROM users WHERE email = ?", (user_email,))
-        user_row = c.fetchone()
-        is_child = user_row and user_row[0] == 1
-        
-        if is_child:
-            # Un enfant ne voit que ses propres messages
-            c.execute("""
-                SELECT m.sender_email, COUNT(*) as unread_count
-                FROM messages m
-                WHERE m.house_id = ?
-                AND m.message_type = 'private'
-                AND m.recipient_email = ?
-                AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                )
-                AND m.sender_email IS NOT NULL
-                AND m.sender_email != ?
-                GROUP BY m.sender_email
-            """, (house_id, user_email, user_email, user_email))
-        else:
-            # Un adulte voit : SES messages + messages des ENFANTS
-            c.execute("""
-                SELECT m.sender_email, COUNT(*) as unread_count
-                FROM messages m
-                LEFT JOIN users recipient ON m.recipient_email = recipient.email
-                WHERE m.house_id = ?
+        # Pour chaque enfant de la maison, compter ses messages non lus
+        c.execute("""
+            SELECT u.email, COUNT(m.id) as unread_count
+            FROM users u
+            LEFT JOIN messages m ON m.recipient_email = u.email 
+                AND m.house_id = ? 
                 AND m.message_type = 'private'
                 AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+                    SELECT 1 FROM message_reads mr 
+                    WHERE mr.message_id = m.id 
+                    AND mr.user_email = u.email
                 )
-                AND m.sender_email IS NOT NULL
-                AND m.sender_email != ?
-                AND (
-                    -- Messages reçus par l'adulte lui-même
-                    m.recipient_email = ?
-                    OR
-                    -- Messages reçus par un ENFANT
-                    (recipient.is_child_account = 1 AND recipient.house_id = ?)
-                )
-                GROUP BY m.sender_email
-            """, (house_id, user_email, user_email, user_email, house_id))
+            WHERE u.house_id = ?
+            AND u.is_child_account = 1
+            GROUP BY u.email
+        """, (house_id, house_id))
         
-        received_unread = {sender: count for sender, count in c.fetchall()}
+        children_unread = {email: count for email, count in c.fetchall()}
         if _own:
             conn.close()
-        return received_unread
+        return children_unread
     except Exception as e:
-        _dbg(f"Erreur get_unread_messages_by_sender: {e}")
+        _dbg(f"❌ Erreur get_children_unread_counts: {e}")
         return {}
+
+def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
+    """
+    ⚠️ FONCTION DEPRECATED - À SUPPRIMER
+    Utiliser get_unread_message_count() et get_children_unread_counts() à la place.
+    """
+    return {}
 
 def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
     """
-    Retourne le nombre de messages non lus d'un type donné.
+    Retourne le nombre de messages non lus d'un type donné (baby_tracking, task_added, etc).
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
@@ -3219,35 +3173,10 @@ def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=N
 
 def get_unread_messages_sent_to(user_email, house_id, existing_conn=None):
     """
-    Retourne un dict {recipient_email: count} des messages envoyés non lus par destinataires.
-    Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
+    ⚠️ FONCTION DEPRECATED - À SUPPRIMER
+    Utiliser get_unread_message_count() et get_children_unread_counts() à la place.
     """
-    try:
-        _own = existing_conn is None
-        conn = existing_conn if existing_conn else get_db_connection()
-        c = conn.cursor()
-        c.execute("""
-            SELECT m.recipient_email, COUNT(*) as unread_count
-            FROM messages m
-            WHERE m.house_id = ?
-            AND m.message_type = 'private'
-            AND m.sender_email = ?
-            AND m.recipient_email IS NOT NULL
-            AND m.recipient_email != ?
-            AND NOT EXISTS (
-                SELECT 1 FROM message_reads mr 
-                WHERE mr.message_id = m.id 
-                AND mr.user_email = m.recipient_email
-            )
-            GROUP BY m.recipient_email
-        """, (house_id, user_email, user_email))
-        sent_unread = {recipient: count for recipient, count in c.fetchall()}
-        if _own:
-            conn.close()
-        return sent_unread
-    except Exception as e:
-        _dbg(f"❌ Erreur get_unread_messages_sent_to: {e}")
-        return {}
+    return {}
 
 def mark_message_as_read(message_id, user_email):
     """
@@ -5142,52 +5071,29 @@ def comments():
                 mark_message_as_read(message_id, session['user'])
                 _dbg(f"✅ Message ID {message_id} automatiquement marqué comme lu pour l'expéditeur {session['user']}")
                 
-                # Vérifier le compteur de l'expéditeur (doit rester à 0 ou inchangé)
-                sender_unread = get_unread_message_count(session['user'], house_id)
-                _dbg(f"📊 Compteur EXPÉDITEUR {session['user']} après envoi: {sender_unread}")
-                
                 # Vérifier si le destinataire est un enfant (sans téléphone)
                 c.execute("SELECT is_child_account FROM users WHERE email = ?", (recipient_email,))
                 recipient_data = c.fetchone()
                 is_recipient_child = recipient_data and recipient_data[0] == 1
                 
+                # ✅ Compteurs simplifiés
+                recipient_unread_count = get_unread_message_count(recipient_email, house_id)
+                children_unread = get_children_unread_counts(house_id)
+                
                 _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email}")
                 _dbg(f"👶 Destinataire est enfant: {is_recipient_child}")
-                if is_recipient_child:
-                    _dbg(f"🔔 IMPORTANT: Message pour ENFANT → TOUS les adultes de la maison verront la pastille !")
+                _dbg(f"📊 Compteur DESTINATAIRE {recipient_email} après envoi: {recipient_unread_count}")
                 
-                # Notifier le destinataire via WebSocket
-                # Compter le nombre de messages non lus pour le destinataire
-                unread_count = get_unread_message_count(recipient_email, house_id)
-                unread_by_sender = get_unread_messages_by_sender(recipient_email, house_id)
-                
-                _dbg(f"📊 Compteur DESTINATAIRE {recipient_email} après envoi: {unread_count}")
-                _dbg(f"📊 unread_by_sender={unread_by_sender}")
-                
-                # Émettre l'événement WebSocket
-                # Si destinataire = enfant → tous les adultes de la maison voient la pastille
-                # Si destinataire = adulte → seul le destinataire voit la pastille
+                # ✅ Émettre l'événement WebSocket SIMPLIFIÉ
                 socketio.emit('new_message_notification', {
                     'sender': current_user_name,
                     'sender_email': session['user'],
                     'content': content[:50] + ('...' if len(content) > 50 else ''),
-                    'unread_count': unread_count,
                     'recipient_email': recipient_email,
-                    'recipient_is_child': is_recipient_child,  # ✅ Indique si c'est un enfant sans téléphone
-                    'unread_by_sender': unread_by_sender
+                    'recipient_is_child': is_recipient_child,
+                    'recipient_unread_count': recipient_unread_count,
+                    'children_unread': children_unread  # Pour mettre à jour tous les avatars enfants
                 }, room=f'house_{house_id}')
-                
-                # Mettre à jour le compteur avec les badges par joueur
-                socketio.emit('unread_by_sender_update', {
-                    'user_email': recipient_email,
-                    'unread_by_sender': unread_by_sender
-                }, room=f'house_{house_id}')
-                
-                # Si destinataire enfant → pastille sur avatar enfant sur TOUS les téléphones
-                if is_recipient_child:
-                    socketio.emit('unread_sent_to_update', {
-                        'unread_sent_to': {recipient_email: unread_count}
-                    }, room=f'house_{house_id}')
                 
                 # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
                 socketio.emit('messages_list_update', {
@@ -5229,68 +5135,30 @@ def comments():
     house_code = house_row[0] if house_row else None
     house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
 
-    # Vérifier si l'utilisateur actuel est un enfant
-    c.execute("SELECT is_child_account FROM users WHERE email = ?", (session['user'],))
-    is_child_row = c.fetchone()
-    is_child_user = is_child_row and is_child_row[0] == 1
-
-    # Récupérer UNIQUEMENT les messages privés entre joueurs (messagerie normale)
-    # EXCLURE les messages de type baby_tracking et task_added
-    # 
-    # LOGIQUE MESSAGERIE TYPE IPHONE :
-    # - Enfant : voit uniquement ses messages (envoyés ou reçus)
-    # - Adulte : voit ses messages + les messages des ENFANTS de la maison
-    _dbg(f"🔍 /comments - Récupération messages pour house_id={house_id}, user={session['user']}, is_child={is_child_user}")
-    _dbg(f"🔍 /comments - Requête SQL va être exécutée...")
+    # ✅ Récupérer UNIQUEMENT les messages privés où l'utilisateur est impliqué (envoyeur OU destinataire)
+    # Logique simplifiée : chaque utilisateur ne voit QUE ses propres conversations
+    _dbg(f"🔍 /comments - Récupération messages pour house_id={house_id}, user={session['user']}")
     
-    if is_child_user:
-        # Un enfant ne voit QUE ses messages
-        c.execute("""
-            SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
-                   sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
-                   recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url, recipient.avatar_style,
-                   CASE WHEN EXISTS (
-                       SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = m.recipient_email
-                   ) THEN 1 ELSE 0 END as is_read_by_recipient,
-                   CASE WHEN EXISTS (
-                       SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                   ) THEN 1 ELSE 0 END as is_read_by_me,
-                   COALESCE(recipient.is_child_account, 0) as recipient_is_child
-            FROM messages m
-            LEFT JOIN users sender ON m.sender_email = sender.email
-            LEFT JOIN users recipient ON m.recipient_email = recipient.email
-            WHERE m.house_id = ?
-            AND m.message_type = 'private'
-            AND (m.sender_email = ? OR m.recipient_email = ?)
-            ORDER BY m.id DESC
-            LIMIT 100
-        """, (session['user'], house_id, session['user'], session['user']))
-    else:
-        # Un adulte voit : SES messages + messages des ENFANTS
-        c.execute("""
-            SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
-                   sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
-                   recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url, recipient.avatar_style,
-                   CASE WHEN EXISTS (
-                       SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = m.recipient_email
-                   ) THEN 1 ELSE 0 END as is_read_by_recipient,
-                   CASE WHEN EXISTS (
-                       SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-                   ) THEN 1 ELSE 0 END as is_read_by_me,
-                   COALESCE(recipient.is_child_account, 0) as recipient_is_child
-            FROM messages m
-            LEFT JOIN users sender ON m.sender_email = sender.email
-            LEFT JOIN users recipient ON m.recipient_email = recipient.email
-            WHERE m.house_id = ?
-            AND m.message_type = 'private'
-            AND (
-                m.sender_email = ? 
-                OR m.recipient_email = ?
-                OR (recipient.is_child_account = 1 AND recipient.house_id = ?)
-            )
-            ORDER BY m.id DESC
-            LIMIT 100
-        """, (session['user'], house_id, session['user'], session['user'], house_id))
+    c.execute("""
+        SELECT m.id, m.sender_email, m.recipient_email, m.content, m.timestamp, m.sender_type, m.message_type,
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
+               recipient.name, recipient.avatar, recipient.avatar_file, recipient.avatar_url, recipient.avatar_style,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = m.recipient_email
+               ) THEN 1 ELSE 0 END as is_read_by_recipient,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+               ) THEN 1 ELSE 0 END as is_read_by_me,
+               COALESCE(recipient.is_child_account, 0) as recipient_is_child
+        FROM messages m
+        LEFT JOIN users sender ON m.sender_email = sender.email
+        LEFT JOIN users recipient ON m.recipient_email = recipient.email
+        WHERE m.house_id = ?
+        AND m.message_type = 'private'
+        AND (m.sender_email = ? OR m.recipient_email = ?)
+        ORDER BY m.id DESC
+        LIMIT 100
+    """, (session['user'], house_id, session['user'], session['user']))
     
     
     all_rows = c.fetchall()
@@ -8315,8 +8183,9 @@ def menu():
     player2_points = 0
     player2_avatar_url = None
     unread_messages_count = 0
-    unread_by_sender = {}
-    unread_sent_to = {}
+    children_unread = {}  # ✅ Nouvelles pastilles enfants
+    unread_by_sender = {}  # Deprecated
+    unread_sent_to = {}    # Deprecated
     unread_baby_tracking = 0
     unread_task_added = 0
     house_id = None
@@ -8475,13 +8344,20 @@ def menu():
                 daily_report = []
 
             # 🔔 Messages non lus — MÊME connexion pour toutes les requêtes
+            # ✅ LOGIQUE SIMPLIFIÉE:
+            # - unread_messages_count = MES messages reçus non lus (pour mon burger menu)
+            # - children_unread = {child_email: count} pour afficher pastilles sur avatars enfants (visible par tous)
             unread_messages_count = get_unread_message_count(session['user'], house_id, existing_conn=conn)
-            unread_by_sender = get_unread_messages_by_sender(session['user'], house_id, existing_conn=conn)
-            unread_sent_to = get_unread_messages_sent_to(session['user'], house_id, existing_conn=conn)
-            # ✅ Messages baby_tracking : afficher le nombre de messages non lus (pastille visible)
+            children_unread = get_children_unread_counts(house_id, existing_conn=conn)
+            
+            # Deprecated - à supprimer progressivement
+            unread_by_sender = {}  # Non utilisé dans nouvelle logique
+            unread_sent_to = {}    # Non utilisé dans nouvelle logique
+            
+            # ✅ Messages baby_tracking et task_added : compteur pour badges burger
             unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
-            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}")
+            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
             custom_rooms_db = {}
@@ -8625,8 +8501,9 @@ def menu():
         player2_points=player2_points,
         player2_avatar_url=player2_avatar_url,
         unread_messages_count=unread_messages_count,
-        unread_by_sender=unread_by_sender,
-        unread_sent_to=unread_sent_to,
+        children_unread=children_unread,  # ✅ Nouvelles pastilles enfants simplifiées
+        unread_by_sender=unread_by_sender,  # Deprecated - à supprimer
+        unread_sent_to=unread_sent_to,      # Deprecated - à supprimer
         unread_baby_tracking=unread_baby_tracking,
         unread_task_added=unread_task_added,
         custom_rooms=custom_rooms_data,
