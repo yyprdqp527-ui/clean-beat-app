@@ -4730,6 +4730,24 @@
                     });
                 }
                 
+                // ✅ Mettre à jour les pastilles sur les avatars des enfants (visible par tous les adultes)
+                function updateChildrenBadges(childrenUnread) {
+                    if (!childrenUnread) return;
+                    
+                    Object.keys(childrenUnread).forEach(function(childEmail) {
+                        const count = childrenUnread[childEmail];
+                        const badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + childEmail + '"]');
+                        badges.forEach(function(badge) {
+                            if (count > 0) {
+                                badge.textContent = count < 100 ? count : '99+';
+                                badge.style.display = '';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        });
+                    });
+                }
+                
                 // ==========================================
                 // �🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
                 // ==========================================
@@ -5021,41 +5039,36 @@
                             // ✅ RÈGLE #2 : Si JE suis le destinataire direct → son + badge
                             if (data.recipient_email === userEmail) {
                                 console.log('✅ Je suis le DESTINATAIRE ! Badge + Son');
-                                console.log('📊 Compteur: ', data.unread_count);
+                                console.log('📊 Compteur: ', data.recipient_unread_count);
                                 
                                 // 🔔 SON EN PREMIER
                                 playMessageSound();
                                 
                                 // Badge
-                                updateUnreadBadge(data.unread_count);
+                                updateUnreadBadge(data.recipient_unread_count);
                                 
-                                if (data.unread_by_sender) {
-                                    updateUnreadBySender(data.unread_by_sender);
+                                // ✅ Mettre à jour les pastilles sur tous les avatars enfants
+                                if (data.children_unread) {
+                                    updateChildrenBadges(data.children_unread);
                                 }
                                 
                                 return;  // Important : sortir ici
                             }
                             
-                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) reçoivent
+                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) voient la pastille
                             if (data.recipient_is_child === true) {
                                 console.log('👶 Message pour ENFANT détecté !');
                                 console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Je dois voir la pastille + entendre le son');
-                                console.log('📱 Activation : Son + Rechargement compteur');
+                                console.log('📱 Activation : Son + Mise à jour badges enfants');
                                 
                                 // 🔔 SON
                                 playMessageSound();
                                 
-                                // Recharger les compteurs pour voir les messages de l'enfant
-                                fetch('/api/unread_counts', { cache: 'no-store' })
-                                    .then(response => response.json())
-                                    .then(counts => {
-                                        console.log('📊 Compteurs reçus pour message enfant:', counts);
-                                        if (counts.unread_received !== undefined) {
-                                            console.log('✅ Mise à jour badge parent avec count:', counts.unread_received);
-                                            updateUnreadBadge(counts.unread_received);
-                                        }
-                                    })
-                                    .catch(error => console.error('Erreur rechargement compteur:', error));
+                                // ✅ Mettre à jour les pastilles sur tous les avatars enfants
+                                if (data.children_unread) {
+                                    console.log('📊 Mise à jour badges enfants:', data.children_unread);
+                                    updateChildrenBadges(data.children_unread);
+                                }
                                     
                                 return;
                             }
