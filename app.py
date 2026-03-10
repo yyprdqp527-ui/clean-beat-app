@@ -5113,7 +5113,7 @@ def comments():
                             'body': content[:100] + ('...' if len(content) > 100 else ''),
                             'icon': '/static/images/logo.png',
                             'url': '/comments',
-                            'badge': unread_count
+                            'badge': recipient_unread_count
                         }
                         for sub in subscriptions:
                             send_push_notification(sub, notification_data)

@@ -1181,10 +1181,14 @@
                 const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
                 const userEmail = "{{ email }}";
                 
-                // 🔔 Son de notification pour les nouveaux messages
-                const messageNotifSound = new Audio('/static/audio/livechat-129007.mp3');
+                // 🔔 Sons de notification
+                const messageNotifSound = new Audio('/static/audio/livechat-129007.mp3');  // Son de RÉCEPTION
                 messageNotifSound.preload = 'auto';
-                messageNotifSound.volume = 0.8;  // Volume augmenté pour être plus audible
+                messageNotifSound.volume = 0.8;
+                
+                const messageSendSound = new Audio('/static/audio/notification-smooth-modern-stereo-332449.mp3');  // Son d'ENVOI
+                messageSendSound.preload = 'auto';
+                messageSendSound.volume = 0.6;  // Plus discret que le son de réception
                 
                 // 🔓 Débloquer l'audio dès la première interaction utilisateur
                 let audioUnlocked = false;
@@ -1211,6 +1215,20 @@
                     document.addEventListener(event, unlockAudio, { once: true });
                 });
                 
+                // 📤 Son d'envoi de message
+                function playSendSound() {
+                    console.log('📤 playSendSound() appelée');
+                    try {
+                        messageSendSound.currentTime = 0;
+                        messageSendSound.play()
+                            .then(() => console.log('✅ Son d\'envoi joué avec succès'))
+                            .catch((e) => console.log('🔇 Son envoi bloqué:', e.message));
+                    } catch(e) {
+                        console.log('🔇 Erreur son envoi:', e);
+                    }
+                }
+                
+                // 📥 Son de réception de message
                 function playMessageSound() {
                     console.log('🔔 playMessageSound() appelée');
                     console.log('🔔 audioUnlocked:', audioUnlocked);
@@ -1228,6 +1246,16 @@
                     } catch(e) {
                         console.log('🔇 Erreur son notification:', e);
                     }
+                }
+                
+                // 📤 Ajouter le son d'envoi au formulaire
+                const messageForm = document.querySelector('form[action="{{ url_for('comments') }}"]');
+                if (messageForm) {
+                    messageForm.addEventListener('submit', function(e) {
+                        console.log('📤 Formulaire soumis - jouer son d\'envoi');
+                        playSendSound();
+                        // Le formulaire se soumet normalement
+                    });
                 }
                 
                 if (!userEmail) {
