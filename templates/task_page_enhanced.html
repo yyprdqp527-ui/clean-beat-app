@@ -1744,38 +1744,61 @@ document.addEventListener('DOMContentLoaded', function(){
         
         // Écouter les mises à jour de points en temps réel
         socket.on('players_points_update', function(data) {
-            console.log('📊 WebSocket: Mise à jour des points reçue', data);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📊 WebSocket: Mise à jour des points reçue (task_page)');
+            console.log('   Joueurs:', data.players);
+            console.log('   Joueur modifié:', data.updated_player);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
             // Mettre à jour l'affichage des points dans la barre latérale
             if (data.players && Array.isArray(data.players)) {
                 data.players.forEach(function(player) {
+                    console.log(`   🔄 Mise à jour ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
+                    
                     // Chercher les éléments de points pour ce joueur dans la sidebar
                     const playerCard = document.querySelector('.player-card[data-player-email="' + player.email + '"]');
                     if (playerCard) {
+                        console.log(`      ✅ Carte trouvée pour ${player.name}`);
+                        
                         // Mettre à jour les points quotidiens
                         const dailyEl = playerCard.querySelector('.daily-points');
                         if (dailyEl) {
+                            const oldDailyPoints = parseInt(dailyEl.textContent) || 0;
                             const newDailyPoints = player.daily_points || 0;
+                            
+                            console.log(`      📊 Points quotidiens: ${oldDailyPoints} → ${newDailyPoints}`);
+                            
                             dailyEl.textContent = newDailyPoints + ' pts';
                             
-                            // Animation visuelle
-                            dailyEl.style.transition = 'all 0.3s ease';
-                            dailyEl.style.transform = 'scale(1.2)';
-                            dailyEl.style.color = '#28a745';
-                            setTimeout(function() {
-                                dailyEl.style.transform = 'scale(1)';
-                                dailyEl.style.color = '';
-                            }, 600);
+                            // Animation visuelle si changement
+                            if (oldDailyPoints !== newDailyPoints) {
+                                dailyEl.style.transition = 'all 0.3s ease';
+                                dailyEl.style.transform = 'scale(1.3)';
+                                dailyEl.style.color = '#28a745';
+                                dailyEl.style.fontWeight = '900';
+                                
+                                setTimeout(function() {
+                                    dailyEl.style.transform = 'scale(1)';
+                                    dailyEl.style.color = '';
+                                    dailyEl.style.fontWeight = '';
+                                }, 600);
+                            }
                         }
                         
                         // Mettre à jour les points totaux
                         const totalEl = playerCard.querySelector('.total-points');
                         if (totalEl) {
                             const newTotalPoints = player.total_points || 0;
+                            console.log(`      💎 Points totaux: → ${newTotalPoints}`);
                             totalEl.textContent = newTotalPoints;
                         }
+                    } else {
+                        console.log(`      ⚠️ Carte non trouvée pour ${player.name}`);
                     }
                 });
+                
+                console.log('✅ Mise à jour des points terminée (task_page)');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
             }
         });
         

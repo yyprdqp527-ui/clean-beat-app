@@ -4862,74 +4862,129 @@
                         
                         // Écouter les mises à jour de points en temps réel avec données complètes
                         socket.on('players_points_update', function(data) {
-                            console.log('📊 WebSocket: Mise à jour des points reçue', data);
-                            console.log('   Joueurs mis à jour:', data.players);
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            console.log('📊 WebSocket: Mise à jour des points reçue');
+                            console.log('   Joueurs:', data.players);
+                            console.log('   Joueur modifié:', data.updated_player);
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
-                            // ✅ 1. Mettre à jour les points dans les cartes joueurs (podium)
-                            if (typeof updatePlayersPointsMenu === 'function') {
-                                console.log('🔄 Appel de updatePlayersPointsMenu()');
-                                updatePlayersPointsMenu();
-                            }
-                            
-                            // ✅ 2. Mettre à jour les points dans le GAME HEADER
+                            // ✅ Utiliser directement les données WebSocket (pas d'appel API !)
                             if (data.players && Array.isArray(data.players)) {
                                 data.players.forEach(function(player) {
-                                    // Chercher les wrappers d'avatar avec data-player-email
-                                    const avatarWrappers = document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + player.email + '"]');
+                                    console.log(`   🔄 Mise à jour ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
                                     
-                                    avatarWrappers.forEach(function(wrapper) {
-                                        // Trouver l'élément de points (div.avatar-points) dans le parent
-                                        const parentCol = wrapper.closest('.avatar-col');
-                                        if (parentCol) {
-                                            const pointsEl = parentCol.querySelector('.avatar-points');
-                                            if (pointsEl) {
-                                                const newPoints = player.daily_points || 0;
-                                                
-                                                console.log(`   🎯 Mise à jour header ${player.name}: ${newPoints} pts`);
-                                                
-                                                // Mettre à jour le texte
-                                                pointsEl.textContent = newPoints + ' pts';
-                                                
-                                                // Animation flash
-                                                pointsEl.style.transition = 'all 0.3s ease';
-                                                pointsEl.style.transform = 'scale(1.3)';
-                                                pointsEl.style.fontWeight = '900';
-                                                pointsEl.style.color = '#28a745';
-                                                
-                                                setTimeout(function() {
-                                                    pointsEl.style.transform = 'scale(1)';
-                                                    pointsEl.style.fontWeight = '';
-                                                    pointsEl.style.color = '';
-                                                }, 600);
-                                                
-                                                // Mettre à jour aussi la barre de progression verticale
-                                                const vbar = wrapper.querySelector('.vbar');
-                                                if (vbar) {
-                                                    const vbarFill = vbar.querySelector('.vbar-fill');
-                                                    let fillPct = Math.min(100, Math.max(2, newPoints));
-                                                    if (vbarFill) {
-                                                        vbarFill.style.height = fillPct + '%';
+                                    // ✅ 1. Mettre à jour les CARTES PODIUM (.player-stat-card)
+                                    const playerCards = document.querySelectorAll('.player-name-link');
+                                    playerCards.forEach(function(card) {
+                                        const cardName = card.textContent.trim();
+                                        if (cardName === player.name) {
+                                            const statCard = card.closest('.player-stat-card');
+                                            if (statCard) {
+                                                const pointsElement = statCard.querySelector('.player-stat-value');
+                                                if (pointsElement) {
+                                                    const oldPoints = parseInt(pointsElement.textContent) || 0;
+                                                    const newPoints = player.daily_points || 0;
+                                                    
+                                                    console.log(`      ✅ Carte podium ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                    
+                                                    pointsElement.textContent = newPoints;
+                                                    
+                                                    // Animation si changement
+                                                    if (oldPoints !== newPoints) {
+                                                        pointsElement.style.transition = 'all 0.3s ease';
+                                                        pointsElement.style.transform = 'scale(1.3)';
+                                                        pointsElement.style.color = '#28a745';
+                                                        pointsElement.style.fontWeight = '900';
+                                                        
+                                                        setTimeout(function() {
+                                                            pointsElement.style.transform = 'scale(1)';
+                                                            pointsElement.style.color = '';
+                                                            pointsElement.style.fontWeight = '';
+                                                        }, 600);
                                                     }
-                                                    vbar.setAttribute('data-points', newPoints);
-                                                    vbar.setAttribute('data-fill', fillPct);
-                                                    vbar.setAttribute('title', fillPct + '%');
-                                                }
-                                                
-                                                // Mettre à jour la barre horizontale pour mobile
-                                                const vbarHoriz = parentCol.querySelector('.vbar-horizontal');
-                                                if (vbarHoriz) {
-                                                    const vbarFillH = vbarHoriz.querySelector('.vbar-fill');
-                                                    let fillPct = Math.min(100, Math.max(2, newPoints));
-                                                    if (vbarFillH) {
-                                                        vbarFillH.style.width = fillPct + '%';
-                                                    }
-                                                    vbarHoriz.setAttribute('data-points', newPoints);
-                                                    vbarHoriz.setAttribute('data-fill', fillPct);
                                                 }
                                             }
                                         }
                                     });
+                                    
+                                    // ✅ 2. Mettre à jour les AVATARS HEADER (game-header)
+                                    const avatarWrappers = document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + player.email + '"]');
+                                    avatarWrappers.forEach(function(wrapper) {
+                                        // Texte des points
+                                        const parentCol = wrapper.closest('.avatar-col');
+                                        if (parentCol) {
+                                            const pointsEl = parentCol.querySelector('.avatar-points');
+                                            if (pointsEl) {
+                                                const oldPoints = parseInt(pointsEl.textContent) || 0;
+                                                const newPoints = player.daily_points || 0;
+                                                
+                                                console.log(`      ✅ Avatar header ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                
+                                                pointsEl.textContent = newPoints + ' pts';
+                                                
+                                                // Animation
+                                                if (oldPoints !== newPoints) {
+                                                    pointsEl.style.transition = 'all 0.3s ease';
+                                                    pointsEl.style.transform = 'scale(1.3)';
+                                                    pointsEl.style.fontWeight = '900';
+                                                    pointsEl.style.color = '#28a745';
+                                                    
+                                                    setTimeout(function() {
+                                                        pointsEl.style.transform = 'scale(1)';
+                                                        pointsEl.style.fontWeight = '';
+                                                        pointsEl.style.color = '';
+                                                    }, 600);
+                                                }
+                                            }
+                                            
+                                            // Barre verticale
+                                            const vbar = wrapper.querySelector('.vbar');
+                                            if (vbar) {
+                                                const newPoints = player.daily_points || 0;
+                                                const maxPoints = 30;
+                                                let fillPercent = Math.min(100, (newPoints / maxPoints) * 100);
+                                                fillPercent = Math.max(2, fillPercent);
+                                                
+                                                const vbarFill = vbar.querySelector('.vbar-fill');
+                                                if (vbarFill) {
+                                                    vbarFill.style.height = fillPercent + '%';
+                                                    
+                                                    // Flash animation
+                                                    vbarFill.style.transition = 'none';
+                                                    vbarFill.style.filter = 'brightness(1.5)';
+                                                    setTimeout(function() {
+                                                        vbarFill.style.transition = 'height 0.4s ease, filter 0.3s ease';
+                                                        vbarFill.style.filter = 'brightness(1)';
+                                                    }, 100);
+                                                }
+                                                
+                                                vbar.setAttribute('data-points', newPoints);
+                                                vbar.setAttribute('data-fill', fillPercent);
+                                                vbar.setAttribute('title', newPoints + ' points aujourd\'hui');
+                                            }
+                                            
+                                            // Barre horizontale (mobile)
+                                            const vbarHoriz = parentCol.querySelector('.vbar-horizontal');
+                                            if (vbarHoriz) {
+                                                const newPoints = player.daily_points || 0;
+                                                const maxPoints = 30;
+                                                let fillPercent = Math.min(100, (newPoints / maxPoints) * 100);
+                                                fillPercent = Math.max(2, fillPercent);
+                                                
+                                                const vbarFillH = vbarHoriz.querySelector('.vbar-fill');
+                                                if (vbarFillH) {
+                                                    vbarFillH.style.width = fillPercent + '%';
+                                                }
+                                                
+                                                vbarHoriz.setAttribute('data-points', newPoints);
+                                                vbarHoriz.setAttribute('data-fill', fillPercent);
+                                            }
+                                        }
+                                    });
                                 });
+                                
+                                console.log('✅ Mise à jour des points terminée');
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                             }
                             
                             // ✅ 3. Rafraîchir le dashboard si visible
