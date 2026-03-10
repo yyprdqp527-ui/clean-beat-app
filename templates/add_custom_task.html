@@ -293,6 +293,90 @@ body {
     color: var(--dark);
 }
 
+/* Sélecteur de points */
+.points-picker-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(253,174,84,0.18) 0%, rgba(244,198,141,0.22) 100%);
+    border: 2px solid rgba(253,174,84,0.55);
+    border-radius: 16px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+.points-picker-btn:hover {
+    background: linear-gradient(135deg, rgba(253,174,84,0.28) 0%, rgba(244,198,141,0.32) 100%);
+    border-color: var(--gold);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.25);
+}
+.points-picker-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--dark);
+}
+.points-picker-hint {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    opacity: 0.7;
+}
+.points-picker-panel {
+    margin-top: 10px;
+    background: white;
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    animation: fadeInDown 0.2s ease;
+}
+.points-picker-panel input[type="number"] {
+    flex: 1;
+    height: 56px;
+    font-size: 26px;
+    font-weight: 800;
+    text-align: center;
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 12px;
+    padding: 8px;
+    color: var(--dark);
+    min-width: 0;
+    font-family: inherit;
+}
+.points-picker-panel input[type="number"]:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.2);
+}
+.points-picker-ok {
+    height: 56px;
+    padding: 0 22px;
+    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(253,174,84,0.35);
+}
+.points-picker-ok:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(253,174,84,0.5);
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Aide */
 .help-text {
     background: linear-gradient(135deg, rgba(253,174,84,0.1) 0%, rgba(244,198,141,0.15) 100%);
@@ -449,15 +533,22 @@ body {
                 <textarea id="task_description" name="task_description" 
                           placeholder="Décris les détails de ta mission..." 
                           rows="3" maxlength="200">{{ task.description if task else '' }}</textarea>
-                <div class="help-text">Ajoute des détails pour te rappeler ce qu'il faut faire !</div>
             </div>
 
             <div class="form-group">
-                <label for="points">💎 Valeur en points</label>
-                <input type="number" id="points" name="points" min="1" max="999"
-                       value="{{ task.points if task else 10 }}"
-                       placeholder="Ex : 10">
-                <div class="help-text">Plus la mission est difficile, plus elle rapporte de points ! 💪</div>
+                <label>💎 Valeur en points</label>
+                <input type="hidden" id="points" name="points" value="{{ task.points if task else 10 }}">
+                <button type="button" class="points-picker-btn" onclick="openPointsPicker()">
+                    <span class="points-picker-value">💎 <span id="pointsPickerDisplay">{{ task.points if task else 10 }}</span> pts</span>
+                    <span class="points-picker-hint">Appuie pour modifier ✏️</span>
+                </button>
+                <div class="points-picker-panel" id="pointsPickerPanel" style="display:none;">
+                    <input type="number" id="pointsPickerInput" min="1" max="999"
+                           value="{{ task.points if task else 10 }}"
+                           placeholder="Ex : 10"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();confirmPoints();}">
+                    <button type="button" class="points-picker-ok" onclick="confirmPoints()">✓ OK</button>
+                </div>
             </div>
 
             <div class="form-group">
@@ -476,7 +567,6 @@ body {
             </div>
 
             <div class="btn-container">
-                <a href="{{ url_for('categorie', cat=category) }}" class="btn btn-secondary">← Retour</a>
                 <button type="submit" class="btn btn-primary">
                     {% if task %}💾 Enregistrer{% else %}✨ Créer{% endif %}
                 </button>
@@ -499,6 +589,28 @@ body {
 </div>
 
 <script>
+function openPointsPicker() {
+    const panel = document.getElementById('pointsPickerPanel');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'flex';
+    if (!isOpen) {
+        const inp = document.getElementById('pointsPickerInput');
+        inp.focus();
+        inp.select();
+    }
+}
+
+function confirmPoints() {
+    const inp = document.getElementById('pointsPickerInput');
+    let val = parseInt(inp.value) || 1;
+    if (val < 1) val = 1;
+    if (val > 999) val = 999;
+    document.getElementById('points').value = val;
+    document.getElementById('pointsPickerDisplay').textContent = val;
+    inp.value = val;
+    document.getElementById('pointsPickerPanel').style.display = 'none';
+}
+
 function previewImage(event) {
     const input = event.target;
     const preview = document.getElementById('imagePreview');
