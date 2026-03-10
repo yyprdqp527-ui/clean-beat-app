@@ -377,6 +377,53 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Tuiles de points */
+.points-tiles {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+.points-tile {
+    flex: 1;
+    background: rgba(255,255,255,0.8);
+    border: 2px solid rgba(166,211,220,0.5);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.25s ease;
+}
+.points-tile:hover {
+    border-color: var(--gold);
+    background: rgba(253,174,84,0.1);
+    transform: translateY(-2px);
+}
+.points-tile.selected {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(253,174,84,0.2) 0%, rgba(244,198,141,0.25) 100%);
+    box-shadow: 0 4px 14px rgba(253,174,84,0.3);
+}
+.points-tile .tile-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.points-tile .tile-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--dark);
+    line-height: 1.2;
+    margin-top: 4px;
+}
+.points-tile .tile-pts {
+    font-size: 11px;
+    color: var(--teal-dark);
+    font-weight: 600;
+}
+
 /* Aide */
 .help-text {
     background: linear-gradient(135deg, rgba(253,174,84,0.1) 0%, rgba(244,198,141,0.15) 100%);
@@ -514,7 +561,7 @@ body {
 <div class="add-task-container">
     <!-- Formulaire -->
     <div class="add-task-card">
-        <h2>{% if task %}✏️ Modifier ta mission{% else %}✨ Crée ta mission{% endif %}</h2>
+        <h2>{% if task %}Modifier ta mission{% else %}Crée ta mission{% endif %}</h2>
 
         <form method="POST" enctype="multipart/form-data">
             {% if task %}
@@ -522,40 +569,46 @@ body {
             {% endif %}
             
             <div class="form-group">
-                <label for="task_name">⚡ Nom de la mission</label>
+                <label for="task_name">Nom de la mission</label>
                 <input type="text" id="task_name" name="task_name" 
                        value="{{ task.name if task else '' }}"
                        placeholder="Ex: Ranger le placard" required maxlength="50">
             </div>
 
             <div class="form-group">
-                <label for="task_description">📝 Description (optionnel)</label>
+                <label for="task_description">Description (optionnel)</label>
                 <textarea id="task_description" name="task_description" 
                           placeholder="Décris les détails de ta mission..." 
                           rows="3" maxlength="200">{{ task.description if task else '' }}</textarea>
             </div>
 
             <div class="form-group">
-                <label>💎 Valeur en points</label>
+                <label>Points</label>
                 <input type="hidden" id="points" name="points" value="{{ task.points if task else 10 }}">
-                <button type="button" class="points-picker-btn" onclick="openPointsPicker()">
-                    <span class="points-picker-value">💎 <span id="pointsPickerDisplay">{{ task.points if task else 10 }}</span> pts</span>
-                    <span class="points-picker-hint">Appuie pour modifier ✏️</span>
-                </button>
-                <div class="points-picker-panel" id="pointsPickerPanel" style="display:none;">
-                    <input type="number" id="pointsPickerInput" min="1" max="999"
-                           value="{{ task.points if task else 10 }}"
-                           placeholder="Ex : 10"
-                           onkeydown="if(event.key==='Enter'){event.preventDefault();confirmPoints();}">
-                    <button type="button" class="points-picker-ok" onclick="confirmPoints()">✓ OK</button>
+                <div class="points-tiles">
+                    <button type="button" class="points-tile{% if not task or task.points == 5 %} selected{% endif %}" onclick="selectPointsTile(this, 5)">
+                        <div class="tile-label">Facile</div>
+                        <div class="tile-value">5</div>
+                        <div class="tile-pts">points</div>
+                    </button>
+                    <button type="button" class="points-tile{% if task and task.points == 10 %} selected{% endif %}" onclick="selectPointsTile(this, 10)">
+                        <div class="tile-label">Moyen</div>
+                        <div class="tile-value">10</div>
+                        <div class="tile-pts">points</div>
+                    </button>
+                    <button type="button" class="points-tile{% if task and task.points == 20 %} selected{% endif %}" onclick="selectPointsTile(this, 20)">
+                        <div class="tile-label">Difficile</div>
+                        <div class="tile-value">20</div>
+                        <div class="tile-pts">points</div>
+                    </button>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>� Illustre ta mission (optionnel)</label>
+                <label>Illustre ta mission (optionnel)</label>
                 <div class="file-upload">
                     <input type="file" id="task_image" name="task_image" accept="image/*" onchange="previewImage(event)">
-                    <div class="file-upload-btn">📷 Ajouter une photo pour illustrer la mission</div>
+                    <div class="file-upload-btn">Ajouter une photo</div>
                 </div>
                 <input type="hidden" name="task_image_select" id="taskImageSelect"
                        value="{{ task.image if task else '' }}">
@@ -568,14 +621,14 @@ body {
 
             <div class="btn-container">
                 <button type="submit" class="btn btn-primary">
-                    {% if task %}💾 Enregistrer{% else %}✨ Créer{% endif %}
+                    {% if task %}Enregistrer{% else %}Créer{% endif %}
                 </button>
             </div>
             
             {% if task %}
             <div class="btn-container" style="margin-top: 16px;">
                 <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                    🗑️ Supprimer cette mission
+                    Supprimer cette mission
                 </button>
             </div>
             {% endif %}
@@ -589,27 +642,24 @@ body {
 </div>
 
 <script>
-function openPointsPicker() {
-    const panel = document.getElementById('pointsPickerPanel');
-    const isOpen = panel.style.display !== 'none';
-    panel.style.display = isOpen ? 'none' : 'flex';
-    if (!isOpen) {
-        const inp = document.getElementById('pointsPickerInput');
-        inp.focus();
-        inp.select();
-    }
+function selectPointsTile(el, val) {
+    document.querySelectorAll('.points-tile').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('points').value = val;
 }
 
-function confirmPoints() {
-    const inp = document.getElementById('pointsPickerInput');
-    let val = parseInt(inp.value) || 1;
-    if (val < 1) val = 1;
-    if (val > 999) val = 999;
-    document.getElementById('points').value = val;
-    document.getElementById('pointsPickerDisplay').textContent = val;
-    inp.value = val;
-    document.getElementById('pointsPickerPanel').style.display = 'none';
-}
+// Pré-sélectionner la tuile correspondante à la valeur initiale
+document.addEventListener('DOMContentLoaded', function() {
+    const current = parseInt(document.getElementById('points').value) || 10;
+    const tiles = document.querySelectorAll('.points-tile');
+    let matched = false;
+    tiles.forEach(t => {
+        const v = parseInt(t.querySelector('.tile-value').textContent);
+        if (v === current) { t.classList.add('selected'); matched = true; }
+        else t.classList.remove('selected');
+    });
+    if (!matched && tiles.length) tiles[1].classList.add('selected');
+});
 
 function previewImage(event) {
     const input = event.target;
