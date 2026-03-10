@@ -13,6 +13,10 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement -->
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}" defer></script>
+    <!-- Préchargement des images des pièces (critical path) -->
+    {% for room in custom_rooms %}
+    <link rel="preload" as="image" href="{{ url_for('static', filename=room.image) }}">
+    {% endfor %}
     <script>
         // Neutralise les messages de debug `console.log` pour éviter les affichages indésirables
         // Laisser les erreurs et warnings visibles (console.error / console.warn)
@@ -3997,7 +4001,7 @@
                                 <a href="/categorie/{{ room.category }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
                                     <div class="room-card-visual">
                                         <picture>
-                                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" loading="lazy">
+                                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" fetchpriority="high" decoding="async">
                                         </picture>
                                     </div>
                                     <div class="room-card-title">{{ room.name }}</div>
