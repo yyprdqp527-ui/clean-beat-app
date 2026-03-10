@@ -13,6 +13,12 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement -->
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}" defer></script>
+    <!-- Service Worker : cache des images en local pour chargement instantané -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(function(){});
+    }
+    </script>
     <!-- Préchargement des images des pièces (critical path) -->
     {% for room in custom_rooms %}
     <link rel="preload" as="image" href="{{ url_for('static', filename=room.image) }}">

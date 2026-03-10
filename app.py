@@ -8727,6 +8727,14 @@ def clear_cache_page():
     """Page pour vider le cache du navigateur"""
     return send_from_directory('.', 'clear_cache.html')
 
+# Service Worker — mis en cache les images depuis la racine du domaine
+@app.route('/sw.js')
+def service_worker():
+    response = make_response(send_from_directory('static', 'sw.js'))
+    response.headers['Content-Type'] = 'application/javascript'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
 # Page de nettoyage ULTIME (désinstalle les Service Workers)
 @app.route('/force_reload')
 def force_reload_page():
