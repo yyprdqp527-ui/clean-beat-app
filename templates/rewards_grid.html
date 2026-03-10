@@ -588,7 +588,6 @@
             </div>
             <div class="player-name">
                 {{ player.name }}
-                {% if player.is_current_user %}<span class="you-badge">TOI</span>{% endif %}
             </div>
             <div class="rewards-count {% if player.available_rewards %}has-rewards{% endif %}">
                 {{ player.available_rewards|length }} dispo
