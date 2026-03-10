@@ -30,44 +30,44 @@
     
     /* 🎨 Couleurs dynamiques selon la pièce - Dégradés harmonieux */
     {% if 'Salon' in category or 'salon' in category|lower %}
-        --brown-warm: #FFCCAA; /* Salon - Pêche clair */
+        --brown-warm: #FFCCAA; /* Salon - Pêche clair (OK) */
         --brown-dark: #FFB890;
     {% elif 'Cuisine' in category or 'cuisine' in category|lower %}
-        --brown-warm: #31aca8; /* Cuisine - Turquoise */
-        --brown-dark: #289490;
+        --brown-warm: #C8D96F; /* Cuisine - Vert anis */
+        --brown-dark: #B5C75E;
     {% elif 'chambre_parentale' in category|lower or ('Chambre' in category and '1' in category) %}
-        --brown-warm: #805741; /* Chambre 1 - Vert olive foncé */
-        --brown-dark: #6A4733;
+        --brown-warm: #8B7355; /* Chambre 1 - Marron */
+        --brown-dark: #75614A;
     {% elif 'chambre1' in category|lower or ('Chambre' in category and '2' in category) %}
-        --brown-warm: #E9AFAF; /* Chambre 2 - Rose pâle */
-        --brown-dark: #D99999;
+        --brown-warm: #D4C4A8; /* Chambre 2 - Beige */
+        --brown-dark: #C2B196;
     {% elif 'chambre2' in category|lower or ('Chambre' in category and '3' in category) %}
-        --brown-warm: #484537; /* Chambre 3 - Vert olive très foncé */
-        --brown-dark: #36342A;
+        --brown-warm: #8B8B5C; /* Chambre 3 - Olive */
+        --brown-dark: #75754A;
     {% elif 'chambre_enfant' in category|lower or 'Chambre Enfant' in category %}
-        --brown-warm: #D3DC5F; /* Chambre enfant 1 - Jaune-vert citron */
-        --brown-dark: #C5CF4F;
+        --brown-warm: #E5A67F; /* Chambre enfant 1 - Orangé */
+        --brown-dark: #D1925E;
     {% elif 'chambre_garcon' in category|lower or 'garcon' in category|lower %}
-        --brown-warm: #FFAAAA; /* Chambre enfant 2 - Rose saumon */
-        --brown-dark: #FF9090;
+        --brown-warm: #E8B5B5; /* Chambre enfant 2 - Rosé pâle */
+        --brown-dark: #D19E9E;
     {% elif 'chambre_bebe' in category|lower or 'Bébé' in category or 'bebe' in category|lower %}
-        --brown-warm: #FFD5D5; /* Chambre bébé - Rose pâle (conservé) */
-        --brown-dark: #FFB3B3;
+        --brown-warm: #F5A89A; /* Chambre bébé - Saumon */
+        --brown-dark: #E19080;
     {% elif 'Bureau' in category or 'Bonus' in category or 'bonus' in category|lower %}
-        --brown-warm: #E9DDAF; /* Bureau - Beige/jaune pâle */
+        --brown-warm: #E9DDAF; /* Bureau - Beige/jaune pâle (OK) */
         --brown-dark: #DCC88F;
     {% elif 'Salle' in category or 'Bain' in category or 'salle_bain' in category|lower %}
-        --brown-warm: #A8D8E0; /* Salle de bain - Bleu ciel */
+        --brown-warm: #A8D8E0; /* Salle de bain - Bleu ciel (OK) */
         --brown-dark: #8BC7D1;
     {% elif 'WC' in category or 'Toilettes' in category or 'toilettes' in category|lower or 'wc' in category|lower %}
-        --brown-warm: #DE8787; /* WC/Toilettes - Rose saumon */
-        --brown-dark: #CF7070;
+        --brown-warm: #BFBFBF; /* WC/Toilettes - Gris */
+        --brown-dark: #A8A8A8;
     {% elif 'Buanderie' in category or 'buanderie' in category|lower %}
-        --brown-warm: #a3a58f; /* Buanderie - Vert olive clair */
+        --brown-warm: #a3a58f; /* Buanderie - Vert olive clair (RÉFÉRENCE) */
         --brown-dark: #8F9177;
     {% elif 'Garage' in category or 'garage' in category|lower %}
-        --brown-warm: #441650; /* Garage - Violet foncé */
-        --brown-dark: #2F0F38;
+        --brown-warm: #7D3C3C; /* Garage - Bordeaux */
+        --brown-dark: #663030;
     {% else %}
         /* Beige neutre par défaut */
         --brown-warm: #F5F1E8;
