@@ -4,6 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CleanBeat">
     <title>Menu</title>
     <!-- Google Fonts Montserrat - chargement non-bloquant -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -911,7 +914,7 @@
             overflow: visible !important;
             position: relative;
             transition: transform 0.22s ease, filter 0.22s ease;
-            animation: tileAppear 0.45s ease-out backwards;
+            animation: tileAppear 0.38s cubic-bezier(0.22, 0.61, 0.36, 1);
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
@@ -986,22 +989,11 @@
         }
         .room-card:active { transform: scale(0.98); }
 
-        /* Animation d'apparition progressive */
-        .room-card:nth-child(1)  { animation-delay: 0.04s; }
-        .room-card:nth-child(2)  { animation-delay: 0.08s; }
-        .room-card:nth-child(3)  { animation-delay: 0.12s; }
-        .room-card:nth-child(4)  { animation-delay: 0.16s; }
-        .room-card:nth-child(5)  { animation-delay: 0.20s; }
-        .room-card:nth-child(6)  { animation-delay: 0.24s; }
-        .room-card:nth-child(7)  { animation-delay: 0.28s; }
-        .room-card:nth-child(8)  { animation-delay: 0.32s; }
-        .room-card:nth-child(9)  { animation-delay: 0.36s; }
-        .room-card:nth-child(10) { animation-delay: 0.40s; }
-        .room-card:nth-child(11) { animation-delay: 0.44s; }
+        /* Animation simultanée — cartes toujours visibles, effet de glissement uniquement */
 
         @keyframes tileAppear {
-            from { opacity: 0; transform: scale(0.88) translateY(20px); }
-            to   { opacity: 1; transform: scale(1) translateY(0); }
+            from { transform: scale(0.90) translateY(14px); }
+            to   { transform: scale(1) translateY(0); }
         }
         
         /* Responsive mobile - 3 colonnes aussi sur mobile */
@@ -4007,7 +3999,7 @@
                                 <a href="/categorie/{{ room.category }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
                                     <div class="room-card-visual">
                                         <picture>
-                                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" fetchpriority="high" decoding="async">
+                                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
                                         </picture>
                                     </div>
                                     <div class="room-card-title">{{ room.name }}</div>
