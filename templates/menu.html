@@ -3525,8 +3525,8 @@
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
                     
-                    // ⚡ Vérifier toutes les 30 secondes (le WebSocket gère le temps réel)
-                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 30000);
+                    // Rafraîchir via API toutes les 8 secondes (filet de sécurité si WebSocket déconnecté)
+                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 8000);
                     
                     // Première mise à jour après 1 seconde
                     setTimeout(updatePlayersPointsMenu, 1000);
@@ -4782,13 +4782,15 @@
                 // ==========================================
                 (function() {
                     try {
-                        // 🚀 WebSocket uniquement (polling désactivé — trop lourd en RAM sur Render)
+                        // WebSocket avec polling en fallback (Render free tier : réveil lent jusquà 60s)
                         const socket = io({
-                            transports: ['websocket'],
+                            transports: ['websocket', 'polling'],
+                            upgrade: true,
                             reconnection: true,
-                            reconnectionDelay: 2000,
-                            reconnectionAttempts: 10,
-                            timeout: 10000
+                            reconnectionDelay: 1000,
+                            reconnectionDelayMax: 8000,
+                            reconnectionAttempts: Infinity,
+                            timeout: 20000
                         });
                         const userEmail = "{{ session.get('user', '') }}";
                         
