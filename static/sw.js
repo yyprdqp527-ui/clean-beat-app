@@ -1,38 +1,37 @@
-// Service Worker — cache des images statiques CleanBeat
-const CACHE_NAME = 'cleanbeat-images-v1';
+// Service Worker CleanBeat - Notifications Push
 
-// Intercepte les requêtes d'images uniquement
-self.addEventListener('fetch', function(event) {
-    const url = event.request.url;
-    // Mettre en cache uniquement les images statiques
-    if (url.includes('/static/images/') || url.includes('/static/avatars/')) {
-        event.respondWith(
-            caches.open(CACHE_NAME).then(function(cache) {
-                return cache.match(event.request).then(function(cached) {
-                    if (cached) {
-                        // Retourner depuis le cache immédiatement
-                        return cached;
-                    }
-                    // Sinon télécharger et stocker
-                    return fetch(event.request).then(function(response) {
-                        if (response && response.status === 200) {
-                            cache.put(event.request, response.clone());
-                        }
-                        return response;
-                    });
-                });
-            })
-        );
-    }
+self.addEventListener('push', function(event) {
+    if (!event.data) return;
+    
+    const data = event.data.json();
+    const title = data.title || 'CleanBeat';
+    const options = {
+        body: data.body || '',
+        icon: data.icon || '/static/icon-192.png',
+        badge: '/static/icon-192.png',
+        vibrate: [200, 100, 200],
+        data: { url: data.url || '/' },
+        requireInteraction: false
+    };
+    
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
 });
 
-// Nettoyer les anciens caches à la mise à jour
-self.addEventListener('activate', function(event) {
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+    const url = event.notification.data.url || '/';
     event.waitUntil(
-        caches.keys().then(function(keys) {
-            return Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-            );
+        clients.matchAll({ type: 'window' }).then(function(clientList) {
+            for (const client of clientList) {
+                if (client.url === url && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(url);
+            }
         })
     );
 });
