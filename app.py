@@ -9198,42 +9198,6 @@ def custom_task_page(task_id):
                      (player_email, user_house_id, category, task_name, task_points))
             c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
             
-            # 🔌 WEBSOCKET: Notifier tous les joueurs de la mise à jour des points
-            if SOCKETIO_AVAILABLE and socketio:
-                try:
-                    # Récupérer les données de tous les joueurs pour mise à jour immédiate
-                    c_ws = conn.cursor()
-                    c_ws.execute("""
-                        SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
-                               COALESCE(SUM(ct.points), 0) as daily_points
-                        FROM users u
-                        LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                            AND DATE(ct.completed_at) = DATE('now')
-                        WHERE u.house_id = ?
-                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
-                        ORDER BY daily_points DESC, u.points DESC
-                    """, (user_house_id,))
-                    players_data = []
-                    for p in c_ws.fetchall():
-                        players_data.append({
-                            'email': p[0],
-                            'name': p[1],
-                            'avatar': p[2],
-                            'avatar_url': p[3],
-                            'avatar_file': p[4],
-                            'total_points': p[5] or 0,
-                            'daily_points': int(p[6]) if p[6] else 0
-                        })
-                    
-                    # Utiliser safe_socketio_emit() pour gérer les sessions invalides
-                    safe_socketio_emit('players_points_update', {
-                        'players': players_data,
-                        'updated_player': player_email
-                    }, namespace='/', room=f'house_{user_house_id}', broadcast=True)
-                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
-                except Exception as ws_err:
-                    _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
-            
             # Augmenter la santé de la maison
             try:
                 c.execute("SELECT health FROM houses WHERE id=?", (user_house_id,))
@@ -9261,7 +9225,33 @@ def custom_task_page(task_id):
 
             conn.commit()
             
-            # 👶 Sauvegarder les données de suivi bébé si présentes
+            # � WEBSOCKET: Notifier APRÈS commit pour garantir cohérence des données
+            if SOCKETIO_AVAILABLE and socketio:
+                try:
+                    conn_ws = get_db_connection()
+                    c_ws = conn_ws.cursor()
+                    c_ws.execute("""
+                        SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                               COALESCE(SUM(ct.points), 0) as daily_points
+                        FROM users u
+                        LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
+                            AND DATE(ct.completed_at) = DATE('now')
+                        WHERE u.house_id = ?
+                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
+                        ORDER BY daily_points DESC, u.points DESC
+                    """, (user_house_id,))
+                    players_data_ws = [{'email': p[0], 'name': p[1], 'avatar': p[2], 'avatar_url': p[3],
+                                        'avatar_file': p[4], 'total_points': p[5] or 0,
+                                        'daily_points': int(p[6]) if p[6] else 0} for p in c_ws.fetchall()]
+                    conn_ws.close()
+                    safe_socketio_emit('players_points_update', {
+                        'players': players_data_ws, 'updated_player': player_email
+                    }, namespace='/', room=f'house_{user_house_id}', broadcast=True)
+                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
+                except Exception as ws_err:
+                    _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
+
+            # �👶 Sauvegarder les données de suivi bébé si présentes
             tracking_time = request.form.get('tracking_time')
             bottle_ml = request.form.get('bottle_ml')
             observations = request.form.get('observations')
@@ -9557,42 +9547,6 @@ def task_enhanced(cat, task_id):
             _dbg(f"✅ [VALIDATION] Points attribués à: {player_email}")
             _dbg(f"✅ [VALIDATION] Montant: {final_task_points} points")
             
-            # 🔌 WEBSOCKET: Notifier tous les joueurs de la mise à jour des points
-            if SOCKETIO_AVAILABLE and socketio:
-                try:
-                    # Récupérer les données de tous les joueurs pour mise à jour immédiate
-                    c_ws = conn.cursor()
-                    c_ws.execute("""
-                        SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
-                               COALESCE(SUM(ct.points), 0) as daily_points
-                        FROM users u
-                        LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-                            AND DATE(ct.completed_at) = DATE('now')
-                        WHERE u.house_id = ?
-                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
-                        ORDER BY daily_points DESC, u.points DESC
-                    """, (house_id,))
-                    players_data = []
-                    for p in c_ws.fetchall():
-                        players_data.append({
-                            'email': p[0],
-                            'name': p[1],
-                            'avatar': p[2],
-                            'avatar_url': p[3],
-                            'avatar_file': p[4],
-                            'total_points': p[5] or 0,
-                            'daily_points': int(p[6]) if p[6] else 0
-                        })
-                    
-                    # Utiliser safe_socketio_emit() pour gérer les sessions invalides
-                    safe_socketio_emit('players_points_update', {
-                        'players': players_data,
-                        'updated_player': player_email
-                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
-                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
-                except Exception as ws_err:
-                    _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
-            
             # augmenter la santé/progression de la maison
             try:
                 # récupérer santé actuelle
@@ -9626,7 +9580,33 @@ def task_enhanced(cat, task_id):
 
             conn.commit()
             
-            # 👶 Sauvegarder les données de suivi bébé si présentes
+            # � WEBSOCKET: Notifier APRÈS commit pour garantir cohérence des données
+            if SOCKETIO_AVAILABLE and socketio:
+                try:
+                    conn_ws2 = get_db_connection()
+                    c_ws2 = conn_ws2.cursor()
+                    c_ws2.execute("""
+                        SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                               COALESCE(SUM(ct.points), 0) as daily_points
+                        FROM users u
+                        LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
+                            AND DATE(ct.completed_at) = DATE('now')
+                        WHERE u.house_id = ?
+                        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style, u.points
+                        ORDER BY daily_points DESC, u.points DESC
+                    """, (house_id,))
+                    players_data2 = [{'email': p[0], 'name': p[1], 'avatar': p[2], 'avatar_url': p[3],
+                                      'avatar_file': p[4], 'total_points': p[5] or 0,
+                                      'daily_points': int(p[6]) if p[6] else 0} for p in c_ws2.fetchall()]
+                    conn_ws2.close()
+                    safe_socketio_emit('players_points_update', {
+                        'players': players_data2, 'updated_player': player_email
+                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                    _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
+                except Exception as ws_err:
+                    _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
+
+            # �👶 Sauvegarder les données de suivi bébé si présentes
             tracking_time = request.form.get('tracking_time')
             bottle_ml = request.form.get('bottle_ml')
             observations = request.form.get('observations')

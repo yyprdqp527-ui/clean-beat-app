@@ -4868,9 +4868,11 @@
                         socket.on('reconnect', function(attemptNumber) {
                             console.log('🔄 WebSocket: Reconnecté après', attemptNumber, 'tentatives - Rejoin room');
                             socket.emit('join_house', { email: userEmail });
-                            // ✅ Recharger les badges immédiatement après reconnexion
-                            // (évite d'attendre le prochain événement WebSocket)
-                            setTimeout(function() { refreshAllBadges(); }, 500);
+                            // Recharger badges ET points après reconnexion
+                            setTimeout(function() {
+                                refreshAllBadges();
+                                if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
+                            }, 600);
                         });
                         
                         // Écouter les mises à jour de points en temps réel avec données complètes
@@ -5340,6 +5342,7 @@
                 window.addEventListener('pageshow', function(event) {
                     console.log('🔄 pageshow event, persisted=' + event.persisted);
                     refreshAllBadges();
+                    if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                 });
                 
                 // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
@@ -5347,6 +5350,7 @@
                     if (document.visibilityState === 'visible') {
                         console.log('🔄 Page redevenue visible');
                         refreshAllBadges();
+                        if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                     }
                 });
             </script>
