@@ -4400,8 +4400,8 @@
                     function updateNotificationUI() {
                         // Défensif : pushManager peut ne pas être initialisé ou remplacé
                         let status = 'unsupported';
-                        if (window.pushManager && typeof window.pushManager.getStatus === 'function') {
-                            status = window.pushManager.getStatus();
+                        if (window.cleanBeatPush && typeof window.cleanBeatPush.getStatus === 'function') {
+                            status = window.cleanBeatPush.getStatus();
                         } else {
                             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                                 status = 'unsupported';
@@ -4443,15 +4443,15 @@
                     
                     // Clic sur le bouton
                     notifToggle.addEventListener('click', async () => {
-                        if (!window.pushManager) {
+                        if (!window.cleanBeatPush) {
                             alert('❌ Votre navigateur ne supporte pas les notifications push');
                             return;
                         }
                         
                         // Défensif : obtenir le statut via pushManager si possible, sinon déduire
                         let status = 'unsupported';
-                        if (window.pushManager && typeof window.pushManager.getStatus === 'function') {
-                            status = window.pushManager.getStatus();
+                        if (window.cleanBeatPush && typeof window.cleanBeatPush.getStatus === 'function') {
+                            status = window.cleanBeatPush.getStatus();
                         } else {
                             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                                 status = 'unsupported';
@@ -4476,7 +4476,7 @@
                         
                         if (status === 'granted') {
                             // Envoyer une notification de test
-                            const testSuccess = await window.pushManager.sendTestNotification();
+                            const testSuccess = await window.cleanBeatPush.sendTestNotification();
                             if (testSuccess) {
                                 alert('✅ Notification test envoyée !\n\nVous recevrez des notifications quand :\n• Une tâche est validée\n• Une nouvelle tâche est ajoutée\n• Un message est envoyé');
                             } else {
@@ -4487,7 +4487,7 @@
                         
                         // Demander la permission
                         notifText.textContent = 'Activation...';
-                        const success = await window.pushManager.requestPermission();
+                        const success = await window.cleanBeatPush.requestPermission();
                         
                         if (success) {
                             updateNotificationUI();
@@ -4495,7 +4495,7 @@
                             
                             // Envoyer une notification de test
                             setTimeout(() => {
-                                window.pushManager.sendTestNotification();
+                                window.cleanBeatPush.sendTestNotification();
                             }, 1000);
                         } else {
                             updateNotificationUI();

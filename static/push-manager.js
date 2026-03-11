@@ -1,4 +1,4 @@
-window.pushManager = {
+window.cleanBeatPush = {
     vapidPublicKey: null,
     swRegistration: null,
 
