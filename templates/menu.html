@@ -3427,6 +3427,24 @@
                                                 }
                                             }
 
+                                            // Mettre à jour le texte "pts" et la barre horizontale (joueur courant inclus)
+                                            const parentEl = avatarWrapper.closest('.avatar-col') || avatarWrapper.parentElement;
+                                            if (parentEl) {
+                                                const newPoints = player.daily_points || 0;
+                                                const pointsText = parentEl.querySelector('.avatar-points');
+                                                if (pointsText) pointsText.textContent = newPoints + ' pts';
+                                                const maxPoints = 30;
+                                                let fillPercent = Math.min(100, (newPoints / maxPoints) * 100);
+                                                fillPercent = Math.max(2, fillPercent);
+                                                const vbarH = parentEl.querySelector('.vbar-horizontal');
+                                                if (vbarH) {
+                                                    const vbarFillH = vbarH.querySelector('.vbar-fill');
+                                                    if (vbarFillH) vbarFillH.style.width = fillPercent + '%';
+                                                    vbarH.setAttribute('data-points', newPoints);
+                                                    vbarH.setAttribute('data-fill', fillPercent);
+                                                }
+                                            }
+
                                             // Mettre à jour l'image de l'avatar si l'URL/fichier/seed a changé
                                             try {
                                                 const avatarSquare = avatarWrapper.querySelector('.avatar-square');
@@ -4931,7 +4949,8 @@
                                     const avatarWrappers = document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + player.email + '"]');
                                     avatarWrappers.forEach(function(wrapper) {
                                         // Texte des points
-                                        const parentCol = wrapper.closest('.avatar-col');
+                                        // Fallback sur parentElement si pas de .avatar-col (joueur courant)
+                                        const parentCol = wrapper.closest('.avatar-col') || wrapper.parentElement;
                                         if (parentCol) {
                                             const pointsEl = parentCol.querySelector('.avatar-points');
                                             if (pointsEl) {
