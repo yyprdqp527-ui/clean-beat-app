@@ -3340,7 +3340,7 @@
                     
                     // 🔄 MISE À JOUR AUTOMATIQUE DES POINTS EN TEMPS RÉEL
                     function updatePlayersPointsMenu() {
-                        fetch('/api/players_points')
+                        fetch('/api/players_points', { cache: 'no-store' })
                             .then(response => response.json())
                             .then(data => {
                                 // Debug: lister les wrappers d'avatar déjà présents dans le DOM
@@ -3543,16 +3543,17 @@
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
                     
-                    // Rafraîchir via API toutes les 8 secondes (filet de sécurité si WebSocket déconnecté)
-                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 8000);
+                    // Rafraîchir via API toutes les 5 secondes (filet de sécurité si WebSocket déconnecté)
+                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 5000);
                     
-                    // Rafraîchir les badges toutes les 10 secondes (filet de sécurité indépendant du WebSocket)
+                    // Rafraîchir les badges toutes les 5 secondes aussi
                     const badgeUpdateInterval = setInterval(function() {
                         if (typeof refreshAllBadges === 'function') refreshAllBadges();
-                    }, 10000);
+                    }, 5000);
                     
-                    // Première mise à jour après 1 seconde
-                    setTimeout(updatePlayersPointsMenu, 1000);
+                    // Première mise à jour après 500ms
+                    setTimeout(updatePlayersPointsMenu, 500);
+                    setTimeout(function() { if (typeof refreshAllBadges === 'function') refreshAllBadges(); }, 500);
                     
                     // Applique la largeur à la/aux barre(s) de santé
                     document.querySelectorAll('.health-fill').forEach(function(fill){

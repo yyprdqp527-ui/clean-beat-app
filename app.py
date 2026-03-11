@@ -10281,10 +10281,9 @@ def api_players_points():
         health_row = c.fetchone()
         house_health = health_row[0] if health_row and health_row[0] is not None else 100
         
-        return {
-            'players': players_data,
-            'house_health': house_health
-        }, 200
+        resp = jsonify({'players': players_data, 'house_health': house_health})
+        resp.headers['Cache-Control'] = 'no-store'
+        return resp, 200
         
     except Exception as e:
         _dbg(f"Erreur API players_points: {e}")
@@ -10324,12 +10323,14 @@ def api_unread_counts():
         
         conn.close()
         
-        return jsonify({
+        resp = jsonify({
             'unread_received': unread_received,
             'unread_by_sender': unread_by_sender,
             'unread_sent_to': unread_sent_to,
             'children_unread': children_unread
-        }), 200
+        })
+        resp.headers['Cache-Control'] = 'no-store'
+        return resp, 200
         
     except Exception as e:
         _dbg(f"❌ Erreur API unread_counts: {e}")
