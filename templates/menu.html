@@ -3546,6 +3546,11 @@
                     // Rafraîchir via API toutes les 8 secondes (filet de sécurité si WebSocket déconnecté)
                     const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 8000);
                     
+                    // Rafraîchir les badges toutes les 10 secondes (filet de sécurité indépendant du WebSocket)
+                    const badgeUpdateInterval = setInterval(function() {
+                        if (typeof refreshAllBadges === 'function') refreshAllBadges();
+                    }, 10000);
+                    
                     // Première mise à jour après 1 seconde
                     setTimeout(updatePlayersPointsMenu, 1000);
                     
