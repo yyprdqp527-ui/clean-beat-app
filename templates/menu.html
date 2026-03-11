@@ -4615,6 +4615,15 @@
                 function updateUnreadBadge(count) {
                     console.log('🔔 updateUnreadBadge appelé avec count:', count);
                     
+                    // 🏠 Badge icône écran d'accueil (PWA Badging API — iOS 16.4+, Android Chrome)
+                    if ('setAppBadge' in navigator) {
+                        if (count > 0) {
+                            navigator.setAppBadge(count).catch(function(){});
+                        } else {
+                            navigator.clearAppBadge().catch(function(){});
+                        }
+                    }
+                    
                     // Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
                     console.log('🍔 Badges burger trouvés:', burgerBadges.length);
@@ -5243,6 +5252,14 @@
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                         });
                         
+                        // 🔔 Pastille enfant mise à jour quand un adulte marque un message lu
+                        socket.on('badge_update', function(data) {
+                            if (!data.child_email) return;
+                            const childrenUnread = {};
+                            childrenUnread[data.child_email] = data.new_count || 0;
+                            updateChildrenBadges(childrenUnread);
+                        });
+
                         // 🔔 Écouter quand un utilisateur a marqué tous ses messages comme lus
                         socket.on('all_messages_read', function(data) {
                             console.log('✅ WebSocket: Messages marqués comme lus', data);

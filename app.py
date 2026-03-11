@@ -10821,10 +10821,14 @@ if SOCKETIO_AVAILABLE:
                 
                 # Récupérer les points de tous les joueurs de la maison
                 c.execute("""
-                    SELECT email, name, avatar, avatar_url, avatar_file, points 
-                    FROM users 
-                    WHERE house_id=? 
-                    ORDER BY points DESC
+                    SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                           COALESCE(SUM(ct.points), 0) as daily_points
+                    FROM users u
+                    LEFT JOIN completed_tasks ct ON u.email = ct.user_email
+                        AND DATE(ct.completed_at) = DATE('now')
+                    WHERE u.house_id = ?
+                    GROUP BY u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points
+                    ORDER BY daily_points DESC, u.points DESC
                 """, (house_id,))
                 players = []
                 for p in c.fetchall():
@@ -10834,7 +10838,8 @@ if SOCKETIO_AVAILABLE:
                         'avatar': p[2],
                         'avatar_url': p[3],
                         'avatar_file': p[4],
-                        'points': p[5] or 0
+                        'total_points': p[5] or 0,
+                        'daily_points': int(p[6]) if p[6] else 0
                     })
                 
                 conn.close()
