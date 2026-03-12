@@ -2887,6 +2887,22 @@ CREATE TABLE IF NOT EXISTS users (
     # Index sur custom_rooms
     c.execute("CREATE INDEX IF NOT EXISTS idx_custom_rooms_house ON custom_rooms(house_id)")
 
+    # Table pour les rappels personnels des joueurs (mini agenda / to-do list)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS player_reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT NOT NULL,
+        house_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        remind_at TEXT,
+        is_done INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_email) REFERENCES users(email),
+        FOREIGN KEY(house_id) REFERENCES houses(id)
+    )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_player_reminders_user ON player_reminders(user_email)")
+
     conn.commit()
     conn.close()
 
@@ -5040,6 +5056,132 @@ def add_child():
     except Exception as e:
         _dbg(f"[ERROR add_child] {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+
+# ========================================
+# Routes pour les rappels personnels (mini agenda / to-do list)
+# ========================================
+
+@app.route('/reminders')
+def reminders():
+    """Page des rappels personnels du joueur (mini agenda)"""
+    if 'user' not in session:
+        flash("Connecte-toi pour accéder à tes rappels", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
+    row = c.fetchone()
+    if not row or not row[0]:
+        conn.close()
+        flash("Tu dois d'abord rejoindre une maison", "warning")
+        return redirect(url_for('menu'))
+
+    house_id, player_name = row[0], row[1]
+
+    c.execute("""
+        SELECT id, title, remind_at, is_done, created_at
+        FROM player_reminders
+        WHERE user_email=? AND house_id=?
+        ORDER BY is_done ASC, CASE WHEN remind_at IS NULL THEN 1 ELSE 0 END, remind_at ASC, created_at ASC
+    """, (session['user'], house_id))
+    reminders_rows = c.fetchall()
+    conn.close()
+
+    reminders_list = [
+        {'id': r[0], 'title': r[1], 'remind_at': r[2], 'is_done': bool(r[3]), 'created_at': r[4]}
+        for r in reminders_rows
+    ]
+
+    active_reminders = [r for r in reminders_list if not r['is_done']]
+    done_reminders   = [r for r in reminders_list if r['is_done']]
+
+    return render_template('reminders.html',
+                           reminders=reminders_list,
+                           active_reminders=active_reminders,
+                           done_reminders=done_reminders,
+                           player_name=player_name,
+                           hide_header=True)
+
+
+@app.route('/reminders/add', methods=['POST'])
+def add_reminder():
+    """Ajouter un rappel personnel"""
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    title = request.form.get('title', '').strip()
+    remind_at = request.form.get('remind_at', '').strip() or None
+
+    if not title:
+        return jsonify({'success': False, 'error': 'Titre requis'})
+
+    # Valider le format remind_at HH:MM
+    if remind_at:
+        import re as _re_r
+        if not _re_r.match(r'^\d{2}:\d{2}$', remind_at):
+            remind_at = None
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    house_row = c.fetchone()
+    if not house_row or not house_row[0]:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Maison introuvable'})
+
+    house_id = house_row[0]
+    c.execute("""
+        INSERT INTO player_reminders (user_email, house_id, title, remind_at)
+        VALUES (?, ?, ?, ?)
+    """, (session['user'], house_id, title, remind_at))
+    new_id = c.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'id': new_id, 'title': title, 'remind_at': remind_at})
+
+
+@app.route('/reminders/toggle/<int:reminder_id>', methods=['POST'])
+def toggle_reminder(reminder_id):
+    """Cocher / décocher un rappel"""
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    # Vérifier que le rappel appartient bien à cet utilisateur
+    c.execute("SELECT is_done FROM player_reminders WHERE id=? AND user_email=?",
+              (reminder_id, session['user']))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Rappel introuvable'})
+
+    new_done = 0 if row[0] else 1
+    c.execute("UPDATE player_reminders SET is_done=? WHERE id=?", (new_done, reminder_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'is_done': bool(new_done)})
+
+
+@app.route('/reminders/delete/<int:reminder_id>', methods=['POST'])
+def delete_reminder(reminder_id):
+    """Supprimer un rappel"""
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM player_reminders WHERE id=? AND user_email=?",
+              (reminder_id, session['user']))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True})
 
 
 @app.route('/comments', methods=['GET','POST'])

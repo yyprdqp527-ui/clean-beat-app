@@ -251,12 +251,10 @@
 
     <!-- LISTE -->
     <div id="remindersList">
-        {% set active = reminders | selectattr('is_done', 'eq', false) | list %}
-        {% set done   = reminders | selectattr('is_done', 'eq', true)  | list %}
 
-        {% if active %}
-        <div class="section-title">À faire ({{ active|length }})</div>
-        {% for r in active %}
+        {% if active_reminders %}
+        <div class="section-title">À faire ({{ active_reminders|length }})</div>
+        {% for r in active_reminders %}
         <div class="reminder-card" id="card-{{ r.id }}">
             <div class="reminder-check" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">&#10003;</div>
             <div class="reminder-body">
@@ -270,9 +268,9 @@
         {% endfor %}
         {% endif %}
 
-        {% if done %}
-        <div class="section-title" style="margin-top: 24px;">Fait ({{ done|length }})</div>
-        {% for r in done %}
+        {% if done_reminders %}
+        <div class="section-title" style="margin-top: 24px;">Fait ({{ done_reminders|length }})</div>
+        {% for r in done_reminders %}
         <div class="reminder-card done" id="card-{{ r.id }}">
             <div class="reminder-check checked" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">✓</div>
             <div class="reminder-body">
