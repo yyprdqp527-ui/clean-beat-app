@@ -2483,12 +2483,8 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
-    # Sur PostgreSQL, les colonnes existent deja - skip ALTER TABLE
-    if _USE_PG:
-        conn.commit()
-        conn.close()
-        return
     # Ajouter les nouvelles colonnes users si elles n'existent pas
+    # (les ALTER TABLE sont traduits en ADD COLUMN IF NOT EXISTS pour PostgreSQL via _adapt())
     try:
         c.execute("ALTER TABLE users ADD COLUMN name TEXT")
     except Exception:
