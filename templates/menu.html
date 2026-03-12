@@ -3506,7 +3506,7 @@ function sendBonus(reason, points) {
 // Si l'utilisateur est lui-même accusé, ouvrir sur l'onglet À prouver
 {% set _current_skull_pending = false %}
 {% for p in players %}{% if p.is_current_user and p.skull_pending %}{% set _current_skull_pending = true %}{% endif %}{% endfor %}
-var _proofCurrentTab = {{ "'incoming'" if _current_skull_pending else "'ask'" }};
+var _proofCurrentTab = "{{ 'incoming' if _current_skull_pending else 'ask' }}";
 var _proofSubmitId = null;
 var _contestPending = null; // {taskId, email, taskName, taskPoints}
 
