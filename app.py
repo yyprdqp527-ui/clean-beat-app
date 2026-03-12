@@ -2902,7 +2902,12 @@ CREATE TABLE IF NOT EXISTS users (
     conn.commit()
     conn.close()
 
-init_db()
+try:
+    init_db()
+except Exception as _init_db_err:
+    import traceback
+    print(f'❌ ERREUR CRITIQUE init_db(): {_init_db_err}', flush=True)
+    traceback.print_exc()
 
 # === CONFIGURATION DU CACHE POUR LES FICHIERS STATIQUES ===
 @app.after_request
@@ -5189,6 +5194,15 @@ def comments():
     - Système de lu/non-lu
     - Badge de notification
     """
+    try:
+        return _comments_inner()
+    except Exception as _e:
+        import traceback
+        print(f'❌ ERREUR /comments: {_e}', flush=True)
+        traceback.print_exc()
+        raise
+
+def _comments_inner():
     if 'user' not in session:
         flash("Connecte-toi pour accéder à la messagerie", "warning")
         return redirect(url_for('login'))
