@@ -374,14 +374,14 @@
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
               et centrer le groupe d'avatars (les avatars doivent être côte-à-côte au centre) */
-          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 96px 0 8px; order: 1; }
+          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 8px 0 144px; order: 1; }
 
         /* Rangée centrée d'avatars : espace entre chaque avatar */
         .avatar-strip { display:flex; gap:56px; align-items:center; justify-content:center; }
 
         @media (max-width:520px){
             .header-menu{ padding:10px 8px; }
-            .header-inner{ max-width:calc(100% - 16px); padding:0 88px 0 8px; }
+            .header-inner{ max-width:calc(100% - 16px); padding:0 8px 0 118px; }
             /* Sur mobile, recentrer les avatars */
             .header-inner { justify-content: center; }
             .header-right { margin-left: 10px; gap: 8px; }
@@ -2476,19 +2476,19 @@
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <!-- Bouton burger caché (déclenché depuis la barre du bas) -->
-                <button id="burgerBtn" aria-hidden="true" style="display:none;" tabindex="-1"></button>
-
-                <!-- Bouton Preuve (vigilance sociale) -->
-                <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:2001;">
-                    <button class="proof-header-btn" id="proofHeaderBtn" onclick="openProofSheet()">
-                        🔍 Preuve
-                        {% if pending_proofs|default(0) > 0 %}
-                        <span class="proof-header-badge">{{ pending_proofs }}</span>
-                        {% endif %}
+                <!-- Boutons d'action gauche : burger + bébé + ajouter mission -->
+                <div class="header-left-actions">
+                    <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
+                        <span></span><span></span><span></span>
                     </button>
+                    <a class="header-action-pill" href="{{ url_for('baby_messages') }}" title="Bébé" aria-label="Suivi bébé">
+                        👶{% if unread_baby_tracking|default(0) > 0 %}<span class="header-pill-badge">{{ unread_baby_tracking }}</span>{% endif %}
+                    </a>
+                    <a class="header-action-pill" href="{{ url_for('add_task_page', cat='Bonus') }}" title="Ajouter une mission" aria-label="Ajouter mission">
+                        ⭐
+                    </a>
                 </div>
-                
+
                 <div class="header-inner">
                         <script>
                             const MENU_DICEBEAR_FALLBACK = "{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}";
@@ -2960,6 +2960,40 @@ body { padding-bottom: 72px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 
+/* ══ Boutons gauche du header (burger + pills) ══ */
+.header-left-actions {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    z-index: 2001; display: flex; align-items: center; gap: 5px;
+}
+.header-left-actions .burger-menu { width: 40px; height: 40px; border-radius: 12px; }
+.header-action-pill {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255,255,255,0.6);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; cursor: pointer; text-decoration: none;
+    position: relative;
+    box-shadow: 0 3px 10px rgba(21,48,54,0.13);
+    transition: transform 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+    color: inherit;
+}
+.header-action-pill:active { transform: scale(0.92); }
+.header-pill-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
+    min-width: 14px; height: 14px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; border: 1px solid white;
+}
+@media (max-width: 360px) {
+    .header-left-actions { gap: 3px; }
+    .header-left-actions .burger-menu { width: 34px; height: 34px; }
+    .header-action-pill { width: 30px; height: 30px; font-size: 17px; }
+}
+
 /* ══ Onglets de navigation en bas ══ */
 .cw-tabs {
     display: flex; width: 100%;
@@ -3090,20 +3124,24 @@ body { padding-bottom: 72px !important; }
 <div class="cw-wrap" id="cwWrap">
     <!-- Onglets de navigation (toujours visibles) -->
     <div class="cw-tabs">
-        <button class="cw-tab" onclick="openBurgerMenu()">
-            <span class="cw-tab-icon">☰</span>
-            <span class="cw-tab-label">Menu</span>
-        </button>
-        <button class="cw-tab" onclick="window.location.href='{{ url_for('baby_messages') }}'">
-            <span class="cw-tab-icon">👶</span>
-            <span class="cw-tab-label">Bébé</span>
-            {% if unread_baby_tracking|default(0) > 0 %}
-            <span class="cw-tab-badge">{{ unread_baby_tracking }}</span>
+        <button class="cw-tab" onclick="openProofSheet()">
+            <span class="cw-tab-icon">🔍</span>
+            <span class="cw-tab-label">Preuve</span>
+            {% if pending_proofs|default(0) > 0 %}
+            <span class="cw-tab-badge">{{ pending_proofs }}</span>
             {% endif %}
         </button>
+        <button class="cw-tab" onclick="openGlobalMalus()">
+            <span class="cw-tab-icon">💀</span>
+            <span class="cw-tab-label">Malus</span>
+        </button>
+        <button class="cw-tab" onclick="openGlobalBonus()">
+            <span class="cw-tab-icon">🎁</span>
+            <span class="cw-tab-label">Bonus</span>
+        </button>
         <button class="cw-tab" onclick="toggleCW()" id="cwTabScore">
-            <span class="cw-tab-icon">🏆</span>
-            <span class="cw-tab-label">Classement</span>
+            <span class="cw-tab-icon" id="compteurIcon">📅</span>
+            <span class="cw-tab-label" id="compteurLabel">Dimanche</span>
             <span class="cw-tab-arrow" id="cwArrow">▲</span>
         </button>
     </div>
@@ -3179,6 +3217,54 @@ body { padding-bottom: 72px !important; }
     </div>
 </div>
 
+<!-- Picker joueur (malus/bonus global) -->
+<div class="malus-overlay" id="playerPickerOverlay" onclick="if(event.target===this)closePlayerPicker()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title" id="playerPickerTitle">Pour qui ?</div>
+        {% if players %}{% for p in players %}{% if not p.is_current_user %}
+        <div class="malus-option" onclick="selectPlayer('{{ p.email|e }}','{{ p.name|e }}')">
+            <div class="malus-option-icon">{% if p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
+            <div class="malus-option-label">{{ p.name }}</div>
+            <div class="cw-pts">{{ p.weekly_points|default(0) }} pts/sem</div>
+        </div>
+        {% endif %}{% endfor %}{% endif %}
+        <button class="malus-cancel" onclick="closePlayerPicker()">Annuler</button>
+    </div>
+</div>
+
+<!-- Overlay Bonus -->
+<div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">🎁 Bonus pour <span id="bonusTargetName">…</span></div>
+        <div class="malus-option" onclick="sendBonus('bravo',10)">
+            <div class="malus-option-icon">🌟</div>
+            <div class="malus-option-label">Super travail aujourd'hui !</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+10 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('help',8)">
+            <div class="malus-option-icon">🤝</div>
+            <div class="malus-option-label">M'a aidé sans qu'on lui demande</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+8 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('extra',12)">
+            <div class="malus-option-icon">💪</div>
+            <div class="malus-option-label">A fait plus que demandé !</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('nice',5)">
+            <div class="malus-option-icon">😊</div>
+            <div class="malus-option-label">Bonne ambiance dans la maison</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+5 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('streak',15)">
+            <div class="malus-option-icon">🔥</div>
+            <div class="malus-option-label">Streak incroyable — sans relâche !</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+15 pts</div>
+        </div>
+        <button class="malus-cancel" onclick="closeBonus()">Annuler</button>
+    </div>
+</div>
+
 <script>
 (function(){
     function updateCWCountdown(){
@@ -3202,6 +3288,37 @@ body { padding-bottom: 72px !important; }
     updateCWCountdown();
     setInterval(updateCWCountdown, 60000);
 
+    function updateCompteurTab() {
+        var now = new Date();
+        var d = now.getDay(); // 0=dim,1=lun...
+        var daysToSun = (7 - d) % 7;
+        if (daysToSun === 0 && now.getHours() >= 10) daysToSun = 7;
+        var sunday = new Date(now);
+        sunday.setDate(now.getDate() + daysToSun);
+        sunday.setHours(10, 0, 0, 0);
+        var diff = sunday - now;
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var icon = document.getElementById('compteurIcon');
+        var label = document.getElementById('compteurLabel');
+        if (!label) return;
+        if (daysToSun === 0) {
+            if (icon) icon.textContent = '\uD83C\uDF81';
+            label.textContent = 'Cadeaux !';
+        } else if (days >= 2) {
+            if (icon) icon.textContent = '\uD83D\uDCC5';
+            label.textContent = 'Dim. ' + days + 'j';
+        } else if (days === 1) {
+            if (icon) icon.textContent = '\uD83C\uDF80';
+            label.textContent = 'Demain !';
+        } else {
+            if (icon) icon.textContent = '\u23F3';
+            label.textContent = hours + 'h';
+        }
+    }
+    updateCompteurTab();
+    setInterval(updateCompteurTab, 60000);
+
     function animateBars(){
         document.querySelectorAll('.cw-bar-fill').forEach(function(el){
             var pct = el.getAttribute('data-pct') || '0';
@@ -3222,6 +3339,56 @@ function toggleCW(){
             });
         }, 60);
     }
+}
+
+// ══ Malus/Bonus global (sélecteur de joueur) ══
+window._playerPickerMode = 'malus';
+function openGlobalMalus() {
+    window._playerPickerMode = 'malus';
+    document.getElementById('playerPickerTitle').textContent = '\uD83D\uDC80 Malus pour qui ?';
+    document.getElementById('playerPickerOverlay').classList.add('open');
+}
+function openGlobalBonus() {
+    window._playerPickerMode = 'bonus';
+    document.getElementById('playerPickerTitle').textContent = '\uD83C\uDF81 Bonus pour qui ?';
+    document.getElementById('playerPickerOverlay').classList.add('open');
+}
+function closePlayerPicker() {
+    document.getElementById('playerPickerOverlay').classList.remove('open');
+}
+function selectPlayer(email, name) {
+    closePlayerPicker();
+    if (window._playerPickerMode === 'malus') {
+        openMalus(email, name);
+    } else {
+        openBonus(email, name);
+    }
+}
+var _bonusEmail = null;
+function openBonus(email, name) {
+    _bonusEmail = email;
+    document.getElementById('bonusTargetName').textContent = name;
+    document.getElementById('bonusOverlay').classList.add('open');
+}
+function closeBonus() {
+    document.getElementById('bonusOverlay').classList.remove('open');
+    _bonusEmail = null;
+}
+function sendBonus(reason, points) {
+    if (!_bonusEmail) return;
+    fetch('/api/send_bonus', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({target_email: _bonusEmail, reason: reason, points: points})
+    }).then(function(r){ return r.json(); }).then(function(data) {
+        closeBonus();
+        if (data.success) {
+            showToast(data.message || 'Bonus envoy\u00e9 ! \uD83C\uDF81', '#2ecc71');
+            setTimeout(function(){ window.location.reload(); }, 2200);
+        } else {
+            showToast(data.error || 'Erreur', '#e74c3c');
+        }
+    }).catch(function(){ showToast('Erreur r\u00e9seau', '#e74c3c'); });
 }
 
 // ══════════════════════════════════════════════

@@ -8840,6 +8840,70 @@ def api_send_malus():
         conn.close()
 
 
+@app.route('/api/send_bonus', methods=['POST'])
+def api_send_bonus():
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    target_email = str(data.get('target_email', '')).strip()
+    reason = str(data.get('reason', '')).strip()
+    points = int(data.get('points', 5))
+    sender_email = session['user']
+
+    if points < 0:
+        points = abs(points)
+    if points > 50:
+        points = 50
+
+    if not target_email or target_email == sender_email:
+        return jsonify({'success': False, 'error': 'Cible invalide'}), 400
+
+    reason_labels = {
+        'bravo':  'Super travail',
+        'help':   'A aidé',
+        'extra':  'Effort supplémentaire',
+        'nice':   'Bonne ambiance',
+        'streak': 'Streak remarquable',
+    }
+    reason_label = reason_labels.get(reason, 'Bonus')
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (sender_email,))
+        sender_row = c.fetchone()
+        if not sender_row:
+            return jsonify({'success': False, 'error': 'Expéditeur introuvable'}), 400
+        house_id = sender_row[0]
+        sender_name = sender_row[1] or sender_email.split('@')[0]
+
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (target_email,))
+        target_row = c.fetchone()
+        if not target_row or target_row[0] != house_id:
+            return jsonify({'success': False, 'error': 'Cible introuvable dans cette maison'}), 400
+        target_name = target_row[1] or target_email.split('@')[0]
+
+        task_name = f'🎁 Bonus de {sender_name} : {reason_label}'
+        c.execute("""
+            INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+            VALUES (?, ?, 'bonus', ?, ?, CURRENT_TIMESTAMP)
+        """, (target_email, task_name, points, house_id))
+        conn.commit()
+
+        return jsonify({'success': True, 'message': f'🎁 Bonus envoyé à {target_name} ! (+{points} pts)'})
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_send_bonus: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
 # ════════════════════════════════════════════════════════════
 # 🔍 SYSTÈME DE PREUVES — Vigilance sociale
 # ════════════════════════════════════════════════════════════
