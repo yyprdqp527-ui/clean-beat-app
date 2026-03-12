@@ -647,13 +647,19 @@ def sats():
         players = []
         for u in users_rows:
             email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw, skull_count, skull_expires_at_raw = u
-            # Vérifier si le crâne est actif (dans les 24h)
+            # Vérifier si le crâne est actif (tricherie prouvée dans les 24h)
             skull_active = False
             if skull_expires_at_raw:
                 try:
                     skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > datetime.utcnow()
                 except Exception:
                     pass
+            # Vérifier si le joueur est accusé (preuve en attente)
+            c.execute("""SELECT COUNT(*) FROM proof_requests
+                         WHERE target_email=? AND house_id=? AND status='pending'""",
+                      (email, house_id))
+            pending_row = c.fetchone()
+            skull_pending = bool(pending_row and pending_row[0] > 0)
             
             # Résoudre l'avatar : détection du type + reconstruction URL DiceBear
             resolved_avatar_file = None
@@ -805,7 +811,8 @@ def sats():
                 'is_current_user': (email == session['user']),
                 'color': p_color,  # Couleur identitaire du joueur
                 'skull_count': int(skull_count) if skull_count else 0,
-                'skull_active': skull_active,  # Crâne actif (tricherie dans les 24h)
+                'skull_active': skull_active,    # Crâne actif (tricherie prouvée, 24h)
+                'skull_pending': skull_pending,  # Crâne suspicion (accusation en cours)
             })
         
         # Trier par points de la semaine (pour le classement général et le leader)

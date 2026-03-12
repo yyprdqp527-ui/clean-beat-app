@@ -2625,7 +2625,7 @@
                                                     <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
-                                            {% if p2.skull_active|default(false) %}<span class="skull-overlay">💀</span>{% endif %}
+                                            {% if p2.skull_active|default(false) %}<span class="skull-overlay">💀</span>{% elif p2.skull_pending|default(false) %}<span class="skull-overlay-pending">💀</span>{% endif %}
                                             <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
                                             {% if p2.email == session.get('user') %}
                                                 {# C'est MON avatar → afficher MES messages reçus #}
@@ -2677,7 +2677,7 @@
                                                         <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
-                                                {% if p.skull_active|default(false) %}<span class="skull-overlay">💀</span>{% endif %}
+                                                {% if p.skull_active|default(false) %}<span class="skull-overlay">💀</span>{% elif p.skull_pending|default(false) %}<span class="skull-overlay-pending">💀</span>{% endif %}
                                                 <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
                                                 {# Logique simple:
                                                    - Si c'est MOI → afficher mes messages reçus non lus (visible uniquement sur mon téléphone)
@@ -3189,8 +3189,38 @@ body { padding-bottom: 72px !important; }
     color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif;
     margin-top: 10px;
 }
-/* upload photo hidden input */
-#proofPhotoInput { display: none; }
+/* Boutons photo (caméra / galerie) */
+.proof-photo-btns { display: flex; gap: 8px; margin-top: 2px; }
+.proof-photo-btn {
+    flex: 1; padding: 11px 8px; border-radius: 13px; border: none;
+    font-size: 13px; font-weight: 800; cursor: pointer;
+    font-family: 'Montserrat', sans-serif; text-align: center;
+    -webkit-tap-highlight-color: transparent; transition: background 0.15s;
+}
+.proof-photo-btn-cam {
+    background: linear-gradient(135deg, #153036, #2d636e);
+    color: #fff;
+}
+.proof-photo-btn-gal {
+    background: rgba(166,211,220,0.25);
+    border: 1.5px solid rgba(166,211,220,0.6);
+    color: #153036;
+}
+/* Skull suspicion (accusation en attente) */
+.skull-overlay-pending {
+    position: absolute; bottom: -4px; right: -4px;
+    font-size: 18px; line-height: 1;
+    filter: drop-shadow(0 0 4px rgba(253,174,84,0.8));
+    animation: skullPulse 1.4s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes skullPulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.18); opacity: 0.75; }
+}
+/* upload photo hidden inputs */
+#proofPhotoInputCam { display: none; }
+#proofPhotoInputGal { display: none; }
 </style>
 
 {% if players %}
@@ -3250,7 +3280,7 @@ body { padding-bottom: 72px !important; }
             </div>
         </div>
         <div class="cw-pts">{{ p.weekly_points|default(0) }} pts</div>
-        {% if p.skull_active|default(false) %}<span class="cw-skull" title="Tricheur — 💀 actif 24h">💀</span>{% elif p.skull_count|default(0) > 0 %}<span class="cw-skull" title="Tricheur prouvé {{ p.skull_count }} fois">💀×{{ p.skull_count }}</span>{% endif %}
+        {% if p.skull_active|default(false) %}<span class="cw-skull" title="Tricheur — 💀 actif 24h">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" title="Sous accusation — doit fournir une preuve" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0) > 0 %}<span class="cw-skull" title="Tricheur prouvé {{ p.skull_count }} fois">💀×{{ p.skull_count }}</span>{% endif %}
         {% if not p.is_current_user %}
         <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
         {% endif %}
@@ -3544,7 +3574,10 @@ function showProofTab(tab){
                         +     '<div class="proof-task-meta">' + escHtml(pr.requester_name) + ' conteste cette tâche — envoie ta preuve !</div>'
                         +   '</div>'
                         + '</div>'
-                        + '<button class="proof-ask-btn" style="margin-top:2px;" onclick="doSubmitProof(' + pr.id + ')">📸 Envoyer ma preuve photo</button>'
+                        + '<div class="proof-photo-btns">'
+                        +   '<button class="proof-photo-btn proof-photo-btn-cam" onclick="(_proofSubmitId=' + pr.id + ', document.getElementById(\'proofPhotoInputCam\').click())">📷 Prendre une photo</button>'
+                        +   '<button class="proof-photo-btn proof-photo-btn-gal" onclick="(_proofSubmitId=' + pr.id + ', document.getElementById(\'proofPhotoInputGal\').click())">🖼 Galerie</button>'
+                        + '</div>'
                         + '</div>';
                 }).join('');
             }
@@ -3586,14 +3619,28 @@ function doRequestProof(taskId, email, taskName, taskPoints){
     showContestConfirm(taskId, email, taskName, taskPoints);
 }
 function doSubmitProof(proofId){
-    var input = document.getElementById('proofPhotoInput');
     _proofSubmitId = proofId;
-    input.click();
+    var content = document.getElementById('proofContent');
+    // Afficher choix caméra / galerie
+    content.insertAdjacentHTML('beforeend',
+        '<div id="proofPhotoChoice" class="proof-photo-btns" style="margin-top:10px;">'
+        + '<button class="proof-photo-btn proof-photo-btn-cam" onclick="_pickPhoto(true)">📷 Prendre une photo</button>'
+        + '<button class="proof-photo-btn proof-photo-btn-gal" onclick="_pickPhoto(false)">🖼️ Choisir dans la galerie</button>'
+        + '</div>'
+    );
 }
-document.getElementById('proofPhotoInput').addEventListener('change', function(){
-    var file = this.files[0];
+function _pickPhoto(useCamera){
+    var choice = document.getElementById('proofPhotoChoice');
+    if(choice) choice.remove();
+    if(useCamera){
+        document.getElementById('proofPhotoInputCam').click();
+    } else {
+        document.getElementById('proofPhotoInputGal').click();
+    }
+}
+function _handleProofFile(file){
     if(!file || !_proofSubmitId) return;
-    if(file.size > 3000000){ showToast('Photo trop grande (max 3 Mo)','#e74c3c'); return; }
+    if(file.size > 5000000){ showToast('Photo trop grande (max 5 Mo)','#e74c3c'); return; }
     var reader = new FileReader();
     reader.onload = function(e){
         fetch('/api/proof/submit',{
@@ -3606,7 +3653,12 @@ document.getElementById('proofPhotoInput').addEventListener('change', function()
         _proofSubmitId = null;
     };
     reader.readAsDataURL(file);
-    this.value = '';
+}
+document.getElementById('proofPhotoInputCam').addEventListener('change', function(){
+    _handleProofFile(this.files[0]); this.value = '';
+});
+document.getElementById('proofPhotoInputGal').addEventListener('change', function(){
+    _handleProofFile(this.files[0]); this.value = '';
 });
 function doValidateProof(proofId, verdict){
     fetch('/api/proof/validate',{
@@ -3678,7 +3730,8 @@ function sendMalus(reason, points){
 <!-- FIN WIDGET COMPETITION -->
 
 <!-- ══ OVERLAY CONTESTER ══ -->
-<input type="file" id="proofPhotoInput" accept="image/*" capture="environment">
+<input type="file" id="proofPhotoInputCam" accept="image/*" capture="environment">
+<input type="file" id="proofPhotoInputGal" accept="image/*">
 <div class="proof-overlay" id="proofOverlay" onclick="if(event.target===this)closeProofSheet()">
     <div class="proof-sheet">
         <div class="proof-sheet-title">🕵️ Contester une tâche</div>
