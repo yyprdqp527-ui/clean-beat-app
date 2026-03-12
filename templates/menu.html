@@ -3560,8 +3560,9 @@ function showProofTab(tab){
                         +     '<div class="proof-task-meta">Contestation envers ' + escHtml(pr.target_name) + ' · ' + statusLabel(pr.status) + '</div>'
                         +   '</div>'
                         + '</div>';
-                    if(pr.status === 'submitted' && pr.photo){
-                        html += '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(pr.photo) + '" alt="Preuve"></div>'
+                    var _photoSrc = pr.photo_data || pr.photo || '';
+                    if(pr.status === 'submitted' && _photoSrc){
+                        html += '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(_photoSrc) + '" alt="Preuve"></div>'
                             + '<div class="proof-verdict-btns">'
                             + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + pr.id + ',\'validated\')">✅ Preuve valide<br><small>tu perds −10 pts, l\'accusé(e) gagne ses pts</small></button>'
                             + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + pr.id + ',\'refuted\')">💀 Fausse preuve<br><small>l\'accusé(e) perd −10 pts + 💀 24h</small></button>'
@@ -3581,11 +3582,21 @@ function showProofTab(tab){
                         +   '</div>'
                         + '</div>'
                         + '<div class="proof-photo-btns">'
-                        +   '<button class="proof-photo-btn proof-photo-btn-cam" onclick="(_proofSubmitId=' + pr.id + ', document.getElementById(\'proofPhotoInputCam\').click())">📷 Prendre une photo</button>'
-                        +   '<button class="proof-photo-btn proof-photo-btn-gal" onclick="(_proofSubmitId=' + pr.id + ', document.getElementById(\'proofPhotoInputGal\').click())">🖼 Galerie</button>'
+                        +   '<button class="proof-photo-btn proof-photo-btn-cam" data-proof-id="' + pr.id + '" data-cam="1">📷 Prendre une photo</button>'
+                        +   '<button class="proof-photo-btn proof-photo-btn-gal" data-proof-id="' + pr.id + '" data-cam="0">🖼 Galerie</button>'
                         + '</div>'
                         + '</div>';
                 }).join('');
+                content.querySelectorAll('[data-proof-id]').forEach(function(btn){
+                    btn.addEventListener('click', function(){
+                        _proofSubmitId = parseInt(this.getAttribute('data-proof-id'));
+                        if(this.getAttribute('data-cam') === '1'){
+                            document.getElementById('proofPhotoInputCam').click();
+                        } else {
+                            document.getElementById('proofPhotoInputGal').click();
+                        }
+                    });
+                });
             }
         }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
     }
