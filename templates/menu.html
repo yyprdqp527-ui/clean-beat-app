@@ -2476,30 +2476,17 @@
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <div class="burger-wrapper">
-                    <button class="burger-menu" id="burgerBtn" aria-label="Menu">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                <!-- Bouton burger caché (déclenché depuis la barre du bas) -->
+                <button id="burgerBtn" aria-hidden="true" style="display:none;" tabindex="-1"></button>
+
+                <!-- Bouton Preuve (vigilance sociale) -->
+                <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:2001;">
+                    <button class="proof-header-btn" id="proofHeaderBtn" onclick="openProofSheet()">
+                        🔍 Preuve
+                        {% if pending_proofs|default(0) > 0 %}
+                        <span class="proof-header-badge">{{ pending_proofs }}</span>
+                        {% endif %}
                     </button>
-                    {% set show_baby = unread_baby_tracking|default(0) > 0 %}
-                    {% set show_mission = unread_task_added|default(0) > 0 %}
-                    {% if show_baby or show_mission %}
-                    <div class="burger-alerts">
-                        {% if show_baby %}
-                        <div class="burger-alert-pill baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé">
-                            <span class="pill-icon">👶</span>
-                            <span class="pill-count">{{ unread_baby_tracking }}</span>
-                        </div>
-                        {% endif %}
-                        {% if show_mission %}
-                        <div class="burger-alert-pill mission" onclick="window.location.href='{{ url_for('mission_messages') }}'" title="Nouvelle mission ajoutée">
-                            <span class="pill-icon">⚡</span>
-                            <span class="pill-count">{{ unread_task_added }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
                 </div>
                 
                 <div class="header-inner">
@@ -2638,12 +2625,8 @@
                                                     <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
+                                            {% if p2.skull_count|default(0) > 0 %}<span class="skull-overlay">💀</span>{% endif %}
                                             <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
-                                            {# Logique simple:
-                                               - Si c'est MOI → afficher mes messages reçus non lus (visible uniquement sur mon téléphone)
-                                               - Si c'est un ENFANT → afficher ses messages reçus non lus (visible par TOUS)
-                                               - Si c'est un AUTRE ADULTE → PAS de pastille
-                                            #}
                                             {% if p2.email == session.get('user') %}
                                                 {# C'est MON avatar → afficher MES messages reçus #}
                                                 {% set p2_unread = unread_messages_count|default(0) %}
@@ -2694,6 +2677,7 @@
                                                         <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
+                                                {% if p.skull_count|default(0) > 0 %}<span class="skull-overlay">💀</span>{% endif %}
                                                 <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
                                                 {# Logique simple:
                                                    - Si c'est MOI → afficher mes messages reçus non lus (visible uniquement sur mon téléphone)
@@ -2946,6 +2930,152 @@
 }
 /* Espace pour la barre fixe en bas */
 body { padding-bottom: 72px !important; }
+
+/* ══ Bouton Preuve dans le header ══ */
+.proof-header-btn {
+    position: relative;
+    background: rgba(253,174,84,0.18);
+    border: 1px solid rgba(253,174,84,0.4);
+    border-radius: 20px;
+    padding: 5px 11px;
+    font-size: 12px; font-weight: 700; color: #153036;
+    cursor: pointer; font-family: 'Montserrat', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap; flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+    box-shadow: 0 2px 8px rgba(253,174,84,0.2);
+    transition: background 0.15s;
+}
+.proof-header-btn:active { background: rgba(253,174,84,0.32); }
+.proof-header-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
+    min-width: 15px; height: 15px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; border: 1px solid white;
+}
+
+/* ══ Onglets de navigation en bas ══ */
+.cw-tabs {
+    display: flex; width: 100%;
+    border-bottom: 1px solid rgba(21,48,54,0.07);
+}
+.cw-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px;
+    padding: 8px 4px 10px 4px;
+    background: none; border: none; cursor: pointer;
+    position: relative; -webkit-tap-highlight-color: transparent;
+    font-family: 'Montserrat', sans-serif;
+    transition: background 0.15s;
+    text-decoration: none;
+}
+.cw-tab:active { background: rgba(21,48,54,0.06); }
+.cw-tab + .cw-tab { border-left: 1px solid rgba(21,48,54,0.06); }
+.cw-tab-icon { font-size: 20px; line-height: 1; }
+.cw-tab-label {
+    font-size: 10px; font-weight: 700; color: #597176;
+    letter-spacing: 0.3px; text-transform: uppercase; line-height: 1;
+}
+.cw-tab-badge {
+    position: absolute; top: 5px; right: calc(50% - 14px);
+    background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
+    min-width: 14px; height: 14px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; border: 1px solid white;
+}
+.cw-tab-arrow {
+    font-size: 9px; color: rgba(21,48,54,0.3);
+    transition: transform 0.3s; display: inline-block; margin-top: 1px;
+}
+.cw-wrap.expanded .cw-tab-arrow { transform: rotate(180deg); }
+
+/* ══ Skull badge sur les avatars ══ */
+.skull-overlay {
+    position: absolute; bottom: -3px; right: -3px;
+    font-size: 13px; line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+    pointer-events: none;
+}
+/* Dans le widget classement */
+.cw-skull { font-size: 11px; color: #e74c3c; font-weight: 800; flex-shrink: 0; }
+
+/* ══ Overlay Preuve (bottom sheet) ══ */
+.proof-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(21,48,54,0.45);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    z-index: 9600; align-items: flex-end; justify-content: center;
+}
+.proof-overlay.open { display: flex; }
+.proof-sheet {
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,0.8);
+    padding: 16px 16px 80px 16px;
+    width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
+    animation: cwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.proof-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.proof-tab-btn {
+    flex: 1; padding: 8px 4px; border-radius: 10px; border: none;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: 'Montserrat', sans-serif; transition: background 0.15s;
+    background: rgba(21,48,54,0.06); color: #597176;
+}
+.proof-tab-btn.active { background: #153036; color: white; }
+.proof-sheet-title {
+    font-size: 15px; font-weight: 800; color: #153036;
+    text-align: center; margin-bottom: 4px;
+    font-family: 'Montserrat', sans-serif;
+}
+.proof-sheet-sub {
+    font-size: 11px; color: #597176; text-align: center;
+    margin-bottom: 14px; font-weight: 600;
+}
+.proof-task-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px; border-radius: 14px;
+    background: rgba(21,48,54,0.04); border: 1px solid rgba(21,48,54,0.06);
+    margin-bottom: 8px;
+}
+.proof-task-info { flex: 1; min-width: 0; }
+.proof-task-name {
+    font-size: 13px; font-weight: 700; color: #153036;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.proof-task-meta { font-size: 11px; color: #597176; margin-top: 2px; }
+.proof-task-pts { font-size: 13px; font-weight: 800; color: #FDAE54; flex-shrink: 0; }
+.proof-ask-btn {
+    background: rgba(231,76,60,0.10); border: 1px solid rgba(231,76,60,0.25);
+    border-radius: 9px; padding: 6px 10px; font-size: 12px; font-weight: 700;
+    color: #c0392b; cursor: pointer; font-family: 'Montserrat', sans-serif;
+    -webkit-tap-highlight-color: transparent; white-space: nowrap; flex-shrink: 0;
+    transition: background 0.15s;
+}
+.proof-ask-btn:active { background: rgba(231,76,60,0.22); }
+.proof-ask-btn:disabled { opacity: 0.4; cursor: default; }
+.proof-photo-wrap { text-align: center; margin: 10px 0; }
+.proof-photo-img { max-width: 100%; border-radius: 12px; max-height: 200px; object-fit: cover; }
+.proof-verdict-btns { display: flex; gap: 8px; margin-top: 8px; }
+.proof-verdict-btn {
+    flex: 1; padding: 10px; border-radius: 12px; border: none;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+}
+.proof-verdict-ok { background: rgba(46,204,113,0.15); color: #1a7a44; border: 1px solid rgba(46,204,113,0.3); }
+.proof-verdict-fake { background: rgba(231,76,60,0.12); color: #c0392b; border: 1px solid rgba(231,76,60,0.3); }
+.proof-empty { text-align: center; color: #597176; font-size: 13px; padding: 20px 0; }
+.proof-cancel {
+    width: 100%; padding: 13px; border: none; border-radius: 14px;
+    background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700;
+    color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif;
+    margin-top: 10px;
+}
+/* upload photo hidden input */
+#proofPhotoInput { display: none; }
 </style>
 
 {% if players %}
@@ -2953,24 +3083,28 @@ body { padding-bottom: 72px !important; }
 {% for p in players %}{% if (p.weekly_points|default(0)) > max_pts.v %}{% set max_pts.v = p.weekly_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='weekly_points', reverse=True) %}
 <div class="cw-wrap" id="cwWrap">
-    <!-- Handle compact (toujours visible) -->
-    <div class="cw-handle" onclick="toggleCW()">
-        <div class="cw-handle-pill"></div>
-        <div class="cw-handle-row">
-            {% for p in sorted_by_week[:3] %}
-            {% if loop.index == 1 %}{% set medal = '🥇' %}
-            {% elif loop.index == 2 %}{% set medal = '🥈' %}
-            {% else %}{% set medal = '🥉' %}{% endif %}
-            {% if not loop.first %}<span class="cw-handle-sep">·</span>{% endif %}
-            <span class="cw-handle-player"><span class="cw-handle-medal">{{ medal }}</span><span>{{ p.name.split(' ')[0] }}</span><span class="cw-handle-pts">{{ p.weekly_points|default(0) }}pts</span></span>
-            {% endfor %}
-            <span class="cw-handle-countdown" id="cwCountdown">…</span>
-            <span class="cw-handle-arrow">▲</span>
-        </div>
+    <!-- Onglets de navigation (toujours visibles) -->
+    <div class="cw-tabs">
+        <button class="cw-tab" onclick="openBurgerMenu()">
+            <span class="cw-tab-icon">☰</span>
+            <span class="cw-tab-label">Menu</span>
+        </button>
+        <button class="cw-tab" onclick="window.location.href='{{ url_for('baby_messages') }}'">
+            <span class="cw-tab-icon">👶</span>
+            <span class="cw-tab-label">Bébé</span>
+            {% if unread_baby_tracking|default(0) > 0 %}
+            <span class="cw-tab-badge">{{ unread_baby_tracking }}</span>
+            {% endif %}
+        </button>
+        <button class="cw-tab" onclick="toggleCW()" id="cwTabScore">
+            <span class="cw-tab-icon">🏆</span>
+            <span class="cw-tab-label">Classement</span>
+            <span class="cw-tab-arrow" id="cwArrow">▲</span>
+        </button>
     </div>
     <!-- Corps expansible -->
     <div class="cw-body" id="cwBody">
-    <div class="cw-head"><div class="cw-title">🏆 Classement de la semaine</div></div>
+    <div class="cw-head"><div class="cw-title">🏆 Classement de la semaine</div><div class="cw-countdown" id="cwCountdown">…</div></div>
     {% for p in sorted_by_week %}
     {% if loop.index == 1 %}{% set medal = '🥇' %}
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
@@ -2997,6 +3131,7 @@ body { padding-bottom: 72px !important; }
             </div>
         </div>
         <div class="cw-pts">{{ p.weekly_points|default(0) }} pts</div>
+        {% if p.skull_count|default(0) > 0 %}<span class="cw-skull" title="Tricheur prouvé {{ p.skull_count }} fois">💀×{{ p.skull_count }}</span>{% endif %}
         {% if not p.is_current_user %}
         <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
         {% endif %}
@@ -3084,6 +3219,148 @@ function toggleCW(){
     }
 }
 
+// ══════════════════════════════════════════════
+// 🔍 SYSTÈME DE PREUVES
+// ══════════════════════════════════════════════
+var _proofCurrentTab = 'ask';
+var _proofSubmitId = null;
+
+function openProofSheet(){
+    document.getElementById('proofOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showProofTab(_proofCurrentTab);
+}
+function closeProofSheet(){
+    document.getElementById('proofOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function showProofTab(tab){
+    _proofCurrentTab = tab;
+    ['ask','my','incoming'].forEach(function(t){
+        var btn = document.getElementById('proofTab'+t.charAt(0).toUpperCase()+t.slice(1));
+        if(btn) btn.classList.toggle('active', t === tab);
+    });
+    var content = document.getElementById('proofContent');
+    content.innerHTML = '<div class="proof-empty">Chargement…</div>';
+    if(tab === 'ask'){
+        fetch('/api/proof/tasks').then(function(r){return r.json();}).then(function(tasks){
+            if(!tasks.length){ content.innerHTML = '<div class="proof-empty">Aucune tâche récente à contester ✅</div>'; return; }
+            content.innerHTML = tasks.map(function(t){
+                var disabled = t.already_requested ? 'disabled' : '';
+                var label = t.already_requested ? '✓ Demandé' : '🔍 −3 pts';
+                return '<div class="proof-task-item">'
+                    + '<div class="proof-task-info">'
+                    +   '<div class="proof-task-name">' + escHtml(t.task) + '</div>'
+                    +   '<div class="proof-task-meta">Par ' + escHtml(t.name) + ' · ' + fmtAgo(t.at) + '</div>'
+                    + '</div>'
+                    + '<div class="proof-task-pts">+' + t.points + ' pts</div>'
+                    + '<button class="proof-ask-btn" ' + disabled + ' onclick="doRequestProof(' + t.id + ',\'' + escJs(t.email) + '\',\'' + escJs(t.task) + '\',' + t.points + ')">' + label + '</button>'
+                    + '</div>';
+            }).join('');
+        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
+    } else {
+        fetch('/api/proof/pending').then(function(r){return r.json();}).then(function(data){
+            if(tab === 'my'){
+                var items = data.sent || [];
+                if(!items.length){ content.innerHTML = '<div class="proof-empty">Aucune demande envoyée en cours</div>'; return; }
+                content.innerHTML = items.map(function(pr){
+                    var html = '<div class="proof-task-item" style="flex-direction:column;align-items:stretch;gap:8px;">'
+                        + '<div style="display:flex;align-items:center;gap:8px;">'
+                        +   '<div class="proof-task-info">'
+                        +     '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
+                        +     '<div class="proof-task-meta">Suspicion envers ' + escHtml(pr.target_name) + ' · ' + statusLabel(pr.status) + '</div>'
+                        +   '</div>'
+                        + '</div>';
+                    if(pr.status === 'submitted' && pr.photo){
+                        html += '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(pr.photo) + '" alt="Preuve"></div>'
+                            + '<div class="proof-verdict-btns">'
+                            + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + pr.id + ',\'validated\')">✅ C\'était vrai (+bonus toi)</button>'
+                            + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + pr.id + ',\'refuted\')">💀 C\'est faux ! (+10 toi)</button>'
+                            + '</div>';
+                    }
+                    return html + '</div>';
+                }).join('');
+            } else {
+                var items = data.received || [];
+                if(!items.length){ content.innerHTML = '<div class="proof-empty">Personne ne te suspecte 😇</div>'; return; }
+                content.innerHTML = items.map(function(pr){
+                    return '<div class="proof-task-item" style="flex-direction:column;align-items:stretch;gap:8px;">'
+                        + '<div style="display:flex;align-items:center;gap:8px;">'
+                        +   '<div class="proof-task-info">'
+                        +     '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
+                        +     '<div class="proof-task-meta">' + escHtml(pr.requester_name) + ' te demande une preuve !</div>'
+                        +   '</div>'
+                        + '</div>'
+                        + '<button class="proof-ask-btn" style="align-self:flex-end;" onclick="doSubmitProof(' + pr.id + ')">📸 Envoyer une photo</button>'
+                        + '</div>';
+                }).join('');
+            }
+        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
+    }
+}
+
+function doRequestProof(taskId, email, taskName, taskPoints){
+    fetch('/api/proof/request', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({task_id: taskId, target_email: email, task_name: taskName, task_points: taskPoints})
+    }).then(function(r){return r.json();}).then(function(d){
+        if(d.success){ showToast(d.message||'Demande envoyée','#153036'); showProofTab('ask'); }
+        else { showToast(d.error||'Erreur','#e74c3c'); }
+    }).catch(function(){ showToast('Erreur réseau','#e74c3c'); });
+}
+function doSubmitProof(proofId){
+    var input = document.getElementById('proofPhotoInput');
+    _proofSubmitId = proofId;
+    input.click();
+}
+document.getElementById('proofPhotoInput').addEventListener('change', function(){
+    var file = this.files[0];
+    if(!file || !_proofSubmitId) return;
+    if(file.size > 3000000){ showToast('Photo trop grande (max 3 Mo)','#e74c3c'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+        fetch('/api/proof/submit',{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({proof_id: _proofSubmitId, photo_data: e.target.result})
+        }).then(function(r){return r.json();}).then(function(d){
+            if(d.success){ showToast(d.message||'Preuve envoyée !','#153036'); showProofTab('incoming'); }
+            else { showToast(d.error||'Erreur','#e74c3c'); }
+        }).catch(function(){ showToast('Erreur réseau','#e74c3c'); });
+        _proofSubmitId = null;
+    };
+    reader.readAsDataURL(file);
+});
+function doValidateProof(proofId, verdict){
+    fetch('/api/proof/validate',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({proof_id: proofId, verdict: verdict})
+    }).then(function(r){return r.json();}).then(function(d){
+        if(d.success){
+            showToast(d.message||'Verdict enregistré','#153036');
+            setTimeout(function(){ window.location.reload(); }, 2200);
+            closeProofSheet();
+        } else { showToast(d.error||'Erreur','#e74c3c'); }
+    }).catch(function(){ showToast('Erreur réseau','#e74c3c'); });
+}
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function statusLabel(s){
+    return s==='pending'?'⏳ En attente de photo': s==='submitted'?'📸 Photo reçue — À toi de juger':s==='validated'?'✅ Validée':s==='refuted'?'💀 Réfutée':'?';
+}
+function fmtAgo(dt){
+    var diff = (Date.now() - new Date(dt).getTime()) / 60000;
+    if(diff < 60) return Math.round(diff)+'m';
+    if(diff < 1440) return Math.round(diff/60)+'h';
+    return Math.round(diff/1440)+'j';
+}
+function showToast(msg, bg){
+    var t = document.createElement('div');
+    t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+bg+';color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.25);text-align:center;max-width:320px;';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 2600);
+}
+
 var _malusEmail = null;
 function openMalus(email, name){
     _malusEmail = email;
@@ -3121,6 +3398,25 @@ function sendMalus(reason, points){
 }
 </script>
 <!-- FIN WIDGET COMPETITION -->
+
+<!-- ══ OVERLAY PREUVE ══ -->
+<input type="file" id="proofPhotoInput" accept="image/*" capture="environment">
+<div class="proof-overlay" id="proofOverlay" onclick="if(event.target===this)closeProofSheet()">
+    <div class="proof-sheet">
+        <div class="proof-sheet-title">🔍 Vigilance</div>
+        <div class="proof-sheet-sub">Demander une preuve coûte −3 pts · Fausse accusation = −10 pts · Tricherie = +10 pts pour toi</div>
+        <div class="proof-tabs">
+            <button class="proof-tab-btn active" id="proofTabAsk" onclick="showProofTab('ask')">🕵️ Contester</button>
+            <button class="proof-tab-btn" id="proofTabMy" onclick="showProofTab('my')">📬 Mes demandes</button>
+            <button class="proof-tab-btn" id="proofTabIncoming" onclick="showProofTab('incoming')">📸 À prouver</button>
+        </div>
+        <div id="proofContent">
+            <div class="proof-empty">Chargement…</div>
+        </div>
+        <button class="proof-cancel" onclick="closeProofSheet()">Fermer</button>
+    </div>
+</div>
+<!-- FIN OVERLAY PREUVE -->
 
                 <script>
                 // 🔊 SYSTÈME DE SONS AU CLIC
@@ -4338,38 +4634,38 @@ function sendMalus(reason, points){
 
             <script>
                 // 🍔 GESTION DU MENU BURGER
+                // Fonction globale pour ouvrir depuis la barre du bas
+                window.openBurgerMenu = function() {
+                    document.getElementById('burgerOverlay').classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                };
+                window.closeBurgerMenu = function() {
+                    document.getElementById('burgerOverlay').classList.remove('active');
+                    if(typeof closeProfilePanel === 'function') closeProfilePanel();
+                    document.body.style.overflow = '';
+                };
                 (function() {
                     const burgerBtn = document.getElementById('burgerBtn');
                     const burgerOverlay = document.getElementById('burgerOverlay');
                     const burgerClose = document.getElementById('burgerClose');
-                    
-                    burgerBtn.addEventListener('click', () => {
-                        burgerOverlay.classList.add('active');
-                        document.body.style.overflow = 'hidden';
-                    });
-                    
-                    burgerClose.addEventListener('click', () => {
-                        burgerOverlay.classList.remove('active');
-                        closeProfilePanel();
-                        document.body.style.overflow = '';
-                    });
-                    
+
+                    if(burgerBtn) burgerBtn.addEventListener('click', openBurgerMenu);
+
+                    burgerClose.addEventListener('click', closeBurgerMenu);
+
                     burgerOverlay.addEventListener('click', (e) => {
                         if (e.target === burgerOverlay) {
-                            burgerOverlay.classList.remove('active');
-                            closeProfilePanel();
-                            document.body.style.overflow = '';
+                            closeBurgerMenu();
                         }
                     });
-                    
+
                     document.addEventListener('keydown', (e) => {
                         if (e.key === 'Escape' && burgerOverlay.classList.contains('active')) {
                             const panel = document.getElementById('profilePanel');
                             if (panel && panel.classList.contains('active')) {
                                 closeProfilePanel();
                             } else {
-                                burgerOverlay.classList.remove('active');
-                                document.body.style.overflow = '';
+                                closeBurgerMenu();
                             }
                         }
                     });
