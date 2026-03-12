@@ -374,14 +374,14 @@
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
               et centrer le groupe d'avatars (les avatars doivent être côte-à-côte au centre) */
-          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 8px; order: 1; }
+          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 96px 0 8px; order: 1; }
 
         /* Rangée centrée d'avatars : espace entre chaque avatar */
         .avatar-strip { display:flex; gap:56px; align-items:center; justify-content:center; }
 
         @media (max-width:520px){
             .header-menu{ padding:10px 8px; }
-            .header-inner{ max-width:calc(100% - 16px); padding:0 8px; }
+            .header-inner{ max-width:calc(100% - 16px); padding:0 88px 0 8px; }
             /* Sur mobile, recentrer les avatars */
             .header-inner { justify-content: center; }
             .header-right { margin-left: 10px; gap: 8px; }
@@ -2480,7 +2480,7 @@
                 <button id="burgerBtn" aria-hidden="true" style="display:none;" tabindex="-1"></button>
 
                 <!-- Bouton Preuve (vigilance sociale) -->
-                <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:2001;">
+                <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:2001;">
                     <button class="proof-header-btn" id="proofHeaderBtn" onclick="openProofSheet()">
                         🔍 Preuve
                         {% if pending_proofs|default(0) > 0 %}
@@ -2945,6 +2945,11 @@ body { padding-bottom: 72px !important; }
     display: flex; align-items: center; gap: 5px;
     box-shadow: 0 2px 8px rgba(253,174,84,0.2);
     transition: background 0.15s;
+    max-width: 90px; /* empêche le débordement sur mobile */
+}
+@media (max-width: 360px) {
+    .proof-header-btn { font-size: 11px; padding: 4px 8px; max-width: 72px; }
+    .proof-header-btn .proof-label { display: none; }
 }
 .proof-header-btn:active { background: rgba(253,174,84,0.32); }
 .proof-header-badge {
