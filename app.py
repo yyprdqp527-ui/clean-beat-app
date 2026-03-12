@@ -8678,6 +8678,11 @@ def menu():
             else:
                 player['color'] = 'linear-gradient(180deg, #95A5A6 0%, #7F8C8D 100%)'
                 player['color_h'] = 'linear-gradient(90deg, #95A5A6 0%, #7F8C8D 100%)'
+            # Garantir weekly_points pour tous les joueurs (widget compétition)
+            if 'weekly_points' not in player:
+                player['weekly_points'] = 0
+            if 'is_current_user' not in player:
+                player['is_current_user'] = (player.get('email') == session.get('user'))
     
     resp = make_response(render_template(
         'menu.html',

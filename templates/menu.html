@@ -2922,8 +2922,8 @@ body { padding-bottom: 0 !important; }
 
 {% if players %}
 {% set max_pts = namespace(v=1) %}
-{% for p in players %}{% if p.weekly_points > max_pts.v %}{% set max_pts.v = p.weekly_points %}{% endif %}{% endfor %}
-{% set sorted_by_week = players|sort(attribute='weekly_points', reverse=True) %}
+{% for p in players %}{% if (p.weekly_points|default(0)) > max_pts.v %}{% set max_pts.v = p.weekly_points|default(0) %}{% endif %}{% endfor %}
+{% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='weekly_points', reverse=True) %}
 <div class="cw-wrap">
     <div class="cw-head">
         <div class="cw-title">🏆 Semaine en cours</div>
@@ -2934,7 +2934,7 @@ body { padding-bottom: 0 !important; }
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
     {% elif loop.index == 3 %}{% set medal = '🥉' %}
     {% else %}{% set medal = loop.index|string + '.' %}{% endif %}
-    {% set bar_pct = ((p.weekly_points / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
+    {% set bar_pct = (((p.weekly_points|default(0)) / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
     <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}">
         <div class="cw-rank">{{ medal }}</div>
         {% if p.avatar_file %}
@@ -2954,7 +2954,7 @@ body { padding-bottom: 0 !important; }
                 <div class="cw-bar-fill" data-pct="{{ bar_pct }}" style="width:0%;"></div>
             </div>
         </div>
-        <div class="cw-pts">{{ p.weekly_points }} pts</div>
+        <div class="cw-pts">{{ p.weekly_points|default(0) }} pts</div>
         {% if not p.is_current_user %}
         <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
         {% endif %}
