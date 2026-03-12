@@ -2466,6 +2466,12 @@ def init_db():
     import sys
     print('init_db START', flush=True)
     conn = get_db_connection()
+    # ⚠️ IMPORTANT PostgreSQL: autocommit=True pour que chaque DDL soit sa propre transaction.
+    # Avec autocommit=False (défaut), si une instruction échoue et déclenche un ROLLBACK,
+    # TOUTES les tables créées dans la même transaction sont annulées.
+    # autocommit=True évite ce problème : chaque CREATE TABLE/INDEX est atomique.
+    if _USE_PG and hasattr(conn._conn, 'autocommit'):
+        conn._conn.autocommit = True
     print('init_db DB connected', flush=True)
     c = conn.cursor()
     c.execute("""
@@ -2860,31 +2866,6 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
-    # === INDEX POUR AMÉLIORER LES PERFORMANCES ===
-    # Index sur completed_tasks pour les requêtes fréquentes
-    c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_user ON completed_tasks(user_email)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_house ON completed_tasks(house_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_date ON completed_tasks(completed_at)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_completed_tasks_user_date ON completed_tasks(user_email, completed_at)")
-    
-    # Index sur users pour les lookups rapides
-    c.execute("CREATE INDEX IF NOT EXISTS idx_users_house ON users(house_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
-    
-    # Index sur houses
-    c.execute("CREATE INDEX IF NOT EXISTS idx_houses_code ON houses(code)")
-
-    # 🚀 Index sur messages pour les requêtes de notifications (critiques pour PostgreSQL)
-    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_house ON messages(house_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_type ON messages(house_id, message_type)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_email)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_email)")
-    # Index sur message_reads pour les sous-requêtes NOT IN / NOT EXISTS
-    c.execute("CREATE INDEX IF NOT EXISTS idx_message_reads_user ON message_reads(user_email, message_id)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_message_reads_msg ON message_reads(message_id)")
-    # Index sur custom_rooms
-    c.execute("CREATE INDEX IF NOT EXISTS idx_custom_rooms_house ON custom_rooms(house_id)")
-
     # Table pour les rappels personnels des joueurs (mini agenda / to-do list)
     c.execute("""
     CREATE TABLE IF NOT EXISTS player_reminders (
@@ -2897,9 +2878,36 @@ CREATE TABLE IF NOT EXISTS users (
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
-    c.execute("CREATE INDEX IF NOT EXISTS idx_player_reminders_user ON player_reminders(user_email)")
 
-    conn.commit()
+    # === INDEX POUR AMÉLIORER LES PERFORMANCES ===
+    # Chaque CREATE INDEX est dans try/except : si une table/colonne n'existe pas encore,
+    # on logue l'erreur mais on ne crash pas init_db()
+    _indexes = [
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_user ON completed_tasks(user_email)",
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_house ON completed_tasks(house_id)",
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_date ON completed_tasks(completed_at)",
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_user_date ON completed_tasks(user_email, completed_at)",
+        "CREATE INDEX IF NOT EXISTS idx_users_house ON users(house_id)",
+        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
+        "CREATE INDEX IF NOT EXISTS idx_houses_code ON houses(code)",
+        "CREATE INDEX IF NOT EXISTS idx_messages_house ON messages(house_id)",
+        "CREATE INDEX IF NOT EXISTS idx_messages_type ON messages(house_id, message_type)",
+        "CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_email)",
+        "CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_email)",
+        "CREATE INDEX IF NOT EXISTS idx_message_reads_user ON message_reads(user_email, message_id)",
+        "CREATE INDEX IF NOT EXISTS idx_message_reads_msg ON message_reads(message_id)",
+        "CREATE INDEX IF NOT EXISTS idx_custom_rooms_house ON custom_rooms(house_id)",
+        "CREATE INDEX IF NOT EXISTS idx_player_reminders_user ON player_reminders(user_email)",
+    ]
+    for _idx_sql in _indexes:
+        try:
+            c.execute(_idx_sql)
+        except Exception as _idx_err:
+            print(f'⚠️ init_db index ignoré ({_idx_err})', flush=True)
+
+    # Sur SQLite : commit final nécessaire. Sur PostgreSQL (autocommit=True) : no-op, chaque statement déjà commité.
+    if not _USE_PG:
+        conn.commit()
     conn.close()
 
 try:
