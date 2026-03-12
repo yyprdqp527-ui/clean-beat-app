@@ -2956,7 +2956,7 @@ body { padding-bottom: 0 !important; }
         </div>
         <div class="cw-pts">{{ p.weekly_points }} pts</div>
         {% if not p.is_current_user %}
-        <button class="cw-malus-btn" onclick="openMalus('{{ p.email|e }}','{{ p.name|replace(&quot;'&quot;, &quot;\\'&quot;) }}')" title="Envoyer un malus">💀</button>
+        <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
         {% endif %}
     </div>
     {% endfor %}
