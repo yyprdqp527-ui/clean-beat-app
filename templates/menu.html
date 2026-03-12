@@ -991,6 +991,20 @@
         }
         .room-card:active { transform: scale(0.98); }
 
+        /* Ordre de superposition : gauche devant droite (la carte gauche recouvre la carte droite) */
+        .rooms-isometric .room-card:nth-child(1)  { z-index: 20; }
+        .rooms-isometric .room-card:nth-child(2)  { z-index: 19; }
+        .rooms-isometric .room-card:nth-child(3)  { z-index: 18; }
+        .rooms-isometric .room-card:nth-child(4)  { z-index: 17; }
+        .rooms-isometric .room-card:nth-child(5)  { z-index: 16; }
+        .rooms-isometric .room-card:nth-child(6)  { z-index: 15; }
+        .rooms-isometric .room-card:nth-child(7)  { z-index: 14; }
+        .rooms-isometric .room-card:nth-child(8)  { z-index: 13; }
+        .rooms-isometric .room-card:nth-child(9)  { z-index: 12; }
+        .rooms-isometric .room-card:nth-child(10) { z-index: 11; }
+        .rooms-isometric .room-card:nth-child(11) { z-index: 10; }
+        .rooms-isometric .room-card:nth-child(12) { z-index: 9; }
+
         /* Animation simultanée — cartes toujours visibles, effet de glissement uniquement */
 
         @keyframes tileAppear {
