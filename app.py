@@ -639,14 +639,21 @@ def sats():
         # === RÉCUPÉRER LES JOUEURS DE LA MAISON ===
         c.execute("""
             SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style, player_color,
-                   COALESCE(skull_count, 0)
+                   COALESCE(skull_count, 0), skull_expires_at
             FROM users WHERE house_id=?
         """, (house_id,))
         users_rows = c.fetchall()
         
         players = []
         for u in users_rows:
-            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw, skull_count = u
+            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw, skull_count, skull_expires_at_raw = u
+            # Vérifier si le crâne est actif (dans les 24h)
+            skull_active = False
+            if skull_expires_at_raw:
+                try:
+                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > datetime.utcnow()
+                except Exception:
+                    pass
             
             # Résoudre l'avatar : détection du type + reconstruction URL DiceBear
             resolved_avatar_file = None
@@ -798,6 +805,7 @@ def sats():
                 'is_current_user': (email == session['user']),
                 'color': p_color,  # Couleur identitaire du joueur
                 'skull_count': int(skull_count) if skull_count else 0,
+                'skull_active': skull_active,  # Crâne actif (tricherie dans les 24h)
             })
         
         # Trier par points de la semaine (pour le classement général et le leader)
@@ -2553,6 +2561,11 @@ CREATE TABLE IF NOT EXISTS users (
 
     try:
         c.execute("ALTER TABLE users ADD COLUMN skull_count INTEGER DEFAULT 0")
+    except Exception:
+        pass
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN skull_expires_at TEXT")
     except Exception:
         pass
 
@@ -8986,19 +8999,18 @@ def api_proof_request():
         c.execute("SELECT id FROM proof_requests WHERE completed_task_id=? AND requester_email=?",
                   (completed_task_id, requester_email))
         if c.fetchone():
-            return jsonify({'success': False, 'error': 'Tu as déjà demandé une preuve pour cette tâche'}), 400
-        # Déduire 3 pts du demandeur
-        c.execute("""
-            INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
-            VALUES (?, ?, 'proof_penalty', -3, ?, CURRENT_TIMESTAMP)
-        """, (requester_email, f'🔍 Demande de preuve : {task_name}', house_id))
-        # Créer la demande
+            return jsonify({'success': False, 'error': 'Tu as déjà contesté cette tâche'}), 400
+        # Récupérer le nom de la cible pour le message
+        c.execute("SELECT name FROM users WHERE email=?", (target_email,))
+        tgt_name_row = c.fetchone()
+        target_name_display = tgt_name_row[0] if tgt_name_row and tgt_name_row[0] else target_email.split('@')[0]
+        # Créer la demande (sans déduction immédiate — points débités à la validation)
         c.execute("""
             INSERT INTO proof_requests (house_id, requester_email, target_email, task_name, task_points, completed_task_id, status)
             VALUES (?, ?, ?, ?, ?, ?, 'pending')
         """, (house_id, requester_email, target_email, task_name, task_points, completed_task_id))
         conn.commit()
-        return jsonify({'success': True, 'message': f'🔍 Preuve demandée à {tgt_row[0]} ! (−3 pts)'})
+        return jsonify({'success': True, 'message': f'🕵️ Contestation lancée ! {target_name_display} doit maintenant envoyer une preuve photo.'})
     except Exception as e:
         conn.rollback()
         _dbg(f"ERREUR api_proof_request: {e}")
@@ -9048,9 +9060,10 @@ def api_proof_validate():
     """
     Valider (preuve ok) ou réfuter (tricherie) une preuve soumise.
     verdict = 'validated' : accusateur perd 10 pts, accusé gagne task_points en bonus
-    verdict = 'refuted'   : accusateur gagne 10 pts, accusé perd 10 pts + skull_count++
+    verdict = 'refuted'   : accusateur gagne 10 pts, accusé perd 10 pts + skull 24h
     """
     from flask import jsonify
+    from datetime import datetime, timedelta
     if 'user' not in session:
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
     data = request.get_json() or {}
@@ -9089,17 +9102,20 @@ def api_proof_validate():
             conn.commit()
             return jsonify({'success': True, 'message': f'✅ Preuve validée ! {target_name} gagne {bonus} pts bonus. Tu perds 10 pts pour fausse accusation.'})
         else:
-            # Tricherie confirmée → accusateur gagne 10 pts, accusé perd 10 pts + skull
+            # Tricherie confirmée → accusateur gagne 10 pts, accusé perd 10 pts + skull 24h
             c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
                          VALUES (?, ?, 'proof_bonus', 10, ?, CURRENT_TIMESTAMP)""",
                       (requester_email, f'🕵️ Tricherie prouvée : {target_name}', house_id))
             c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
                          VALUES (?, ?, 'proof_penalty', -10, ?, CURRENT_TIMESTAMP)""",
                       (target_email, f'💀 Tricherie prouvée sur : {task_name}', house_id))
-            c.execute("UPDATE users SET skull_count = COALESCE(skull_count, 0) + 1 WHERE email=?", (target_email,))
+            skull_expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            c.execute("""UPDATE users SET skull_count = COALESCE(skull_count, 0) + 1,
+                                          skull_expires_at = ?
+                         WHERE email=?""", (skull_expires, target_email))
             c.execute("UPDATE proof_requests SET status='refuted' WHERE id=?", (proof_id,))
             conn.commit()
-            return jsonify({'success': True, 'message': f'💀 Tricherie prouvée ! {target_name} perd 10 pts et hérite d\'une 💀. Tu gagnes 10 pts !'})
+            return jsonify({'success': True, 'message': f'💀 Tricherie prouvée ! {target_name} perd 10 pts et hérite d\'une 💀 24h. Tu gagnes 10 pts !'})
     except Exception as e:
         conn.rollback()
         _dbg(f"ERREUR api_proof_validate: {e}")
