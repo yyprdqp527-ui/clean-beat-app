@@ -374,14 +374,14 @@
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
               et centrer le groupe d'avatars (les avatars doivent être côte-à-côte au centre) */
-          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 8px 0 144px; order: 1; }
+          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 56px 0 8px; order: 1; }
 
         /* Rangée centrée d'avatars : espace entre chaque avatar */
         .avatar-strip { display:flex; gap:56px; align-items:center; justify-content:center; }
 
         @media (max-width:520px){
             .header-menu{ padding:10px 8px; }
-            .header-inner{ max-width:calc(100% - 16px); padding:0 8px 0 118px; }
+            .header-inner{ max-width:calc(100% - 16px); padding:0 48px 0 8px; }
             /* Sur mobile, recentrer les avatars */
             .header-inner { justify-content: center; }
             .header-right { margin-left: 10px; gap: 8px; }
@@ -2476,15 +2476,15 @@
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <!-- Boutons d'action gauche : burger + bébé + ajouter mission -->
-                <div class="header-left-actions">
+                <!-- Boutons d'action droite : burger + bébé + ajouter mission (colonne) -->
+                <div class="header-right-actions">
                     <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
                         <span></span><span></span><span></span>
                     </button>
-                    <a class="header-action-pill" href="{{ url_for('baby_messages') }}" title="Bébé" aria-label="Suivi bébé">
+                    <a class="header-action-pill pill-baby" href="{{ url_for('baby_messages') }}" title="Bébé" aria-label="Suivi bébé">
                         👶{% if unread_baby_tracking|default(0) > 0 %}<span class="header-pill-badge">{{ unread_baby_tracking }}</span>{% endif %}
                     </a>
-                    <a class="header-action-pill" href="{{ url_for('add_task_page', cat='Bonus') }}" title="Ajouter une mission" aria-label="Ajouter mission">
+                    <a class="header-action-pill pill-mission" href="{{ url_for('add_task_page', cat='Bonus') }}" title="Ajouter une mission" aria-label="Ajouter mission">
                         ⭐
                     </a>
                 </div>
@@ -2763,12 +2763,12 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 1001;
-    background: rgba(255,255,255,0.97);
-    backdrop-filter: saturate(180%) blur(28px);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    background: linear-gradient(160deg, rgba(255,255,255,0.97) 0%, rgba(166,211,220,0.14) 100%);
+    backdrop-filter: saturate(200%) blur(30px);
+    -webkit-backdrop-filter: saturate(200%) blur(30px);
     border-radius: 20px 20px 0 0;
-    border-top: 1px solid rgba(255,255,255,0.7);
-    box-shadow: 0 -8px 32px rgba(21,48,54,0.15);
+    border-top: 2px solid rgba(253,174,84,0.38);
+    box-shadow: 0 -10px 40px rgba(21,48,54,0.18), inset 0 1px 0 rgba(255,255,255,0.85);
     overflow: hidden;
 }
 .cw-handle {
@@ -2960,27 +2960,37 @@ body { padding-bottom: 72px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 
-/* ══ Boutons gauche du header (burger + pills) ══ */
-.header-left-actions {
-    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-    z-index: 2001; display: flex; align-items: center; gap: 5px;
+/* ══ Boutons d'action droite du header (burger + bébé + mission) ══ */
+.header-right-actions {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    z-index: 2001; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.header-left-actions .burger-menu { width: 40px; height: 40px; border-radius: 12px; }
+.header-right-actions .burger-menu {
+    width: 36px; height: 36px; border-radius: 11px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.25) 100%);
+}
 .header-action-pill {
-    width: 36px; height: 36px;
-    background: rgba(255,255,255,0.88);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255,255,255,0.6);
+    width: 34px; height: 34px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border-radius: 11px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 19px; cursor: pointer; text-decoration: none;
+    font-size: 18px; cursor: pointer; text-decoration: none;
     position: relative;
-    box-shadow: 0 3px 10px rgba(21,48,54,0.13);
-    transition: transform 0.18s ease;
+    border: 1.5px solid rgba(255,255,255,0.7);
+    box-shadow: 0 3px 12px rgba(21,48,54,0.14), inset 0 1px 0 rgba(255,255,255,0.55);
+    transition: transform 0.18s ease, box-shadow 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     color: inherit;
 }
-.header-action-pill:active { transform: scale(0.92); }
+.header-action-pill.pill-baby {
+    background: linear-gradient(135deg, rgba(244,114,182,0.28) 0%, rgba(236,72,153,0.15) 100%);
+    border-color: rgba(236,72,153,0.38);
+}
+.header-action-pill.pill-mission {
+    background: linear-gradient(135deg, rgba(253,174,84,0.30) 0%, rgba(244,198,141,0.18) 100%);
+    border-color: rgba(253,174,84,0.48);
+}
+.header-action-pill:active { transform: scale(0.90); box-shadow: 0 1px 6px rgba(21,48,54,0.12); }
 .header-pill-badge {
     position: absolute; top: -4px; right: -4px;
     background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
@@ -2989,32 +2999,45 @@ body { padding-bottom: 72px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 @media (max-width: 360px) {
-    .header-left-actions { gap: 3px; }
-    .header-left-actions .burger-menu { width: 34px; height: 34px; }
-    .header-action-pill { width: 30px; height: 30px; font-size: 17px; }
+    .header-right-actions { gap: 3px; }
+    .header-right-actions .burger-menu { width: 30px; height: 30px; }
+    .header-action-pill { width: 28px; height: 28px; font-size: 15px; }
 }
 
 /* ══ Onglets de navigation en bas ══ */
 .cw-tabs {
     display: flex; width: 100%;
-    border-bottom: 1px solid rgba(21,48,54,0.07);
+    border-bottom: 1px solid rgba(21,48,54,0.06);
+    background: transparent;
 }
 .cw-tab {
     flex: 1; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 2px;
+    justify-content: center; gap: 4px;
     padding: 8px 4px 10px 4px;
     background: none; border: none; cursor: pointer;
     position: relative; -webkit-tap-highlight-color: transparent;
     font-family: 'Montserrat', sans-serif;
-    transition: background 0.15s;
+    transition: background 0.2s;
     text-decoration: none;
 }
-.cw-tab:active { background: rgba(21,48,54,0.06); }
+.cw-tab:active { background: rgba(253,174,84,0.10); }
 .cw-tab + .cw-tab { border-left: 1px solid rgba(21,48,54,0.06); }
-.cw-tab-icon { font-size: 20px; line-height: 1; }
+/* Icônes : petits carrés arrondis colorés */
+.cw-tab-icon {
+    font-size: 17px; line-height: 1;
+    width: 30px; height: 30px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s ease;
+}
+.cw-tab:active .cw-tab-icon { transform: scale(0.88); }
+/* Couleur de chaque onglet */
+.cw-tab:nth-child(1) .cw-tab-icon { background: rgba(166,211,220,0.30); box-shadow: 0 2px 6px rgba(89,113,118,0.15); }
+.cw-tab:nth-child(2) .cw-tab-icon { background: rgba(231,76,60,0.13); box-shadow: 0 2px 6px rgba(231,76,60,0.15); }
+.cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,204,113,0.15); box-shadow: 0 2px 6px rgba(46,204,113,0.15); }
+.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(253,174,84,0.22); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
 .cw-tab-label {
-    font-size: 10px; font-weight: 700; color: #597176;
-    letter-spacing: 0.3px; text-transform: uppercase; line-height: 1;
+    font-size: 9px; font-weight: 700; color: #597176;
+    letter-spacing: 0.4px; text-transform: uppercase; line-height: 1;
 }
 .cw-tab-badge {
     position: absolute; top: 5px; right: calc(50% - 14px);
