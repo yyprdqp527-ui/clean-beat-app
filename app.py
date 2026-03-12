@@ -107,6 +107,8 @@ class _CompatCursor:
             return sql
         sql = sql.replace('?', '%s')
         sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+        sql = sql.replace('DATETIME DEFAULT CURRENT_TIMESTAMP', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        sql = sql.replace(' DATETIME ', ' TIMESTAMP ')
         sql = _RE_ALTER_ADD.sub(r'\1IF NOT EXISTS ', sql)
         # ─── SQLite → PostgreSQL : Traduction des fonctions de date ───
         # ORDRE CRITIQUE : les patterns les plus spécifiques d'abord
@@ -2896,9 +2898,7 @@ CREATE TABLE IF NOT EXISTS users (
         title TEXT NOT NULL,
         remind_at TEXT,
         is_done INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_email) REFERENCES users(email),
-        FOREIGN KEY(house_id) REFERENCES houses(id)
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
     c.execute("CREATE INDEX IF NOT EXISTS idx_player_reminders_user ON player_reminders(user_email)")
