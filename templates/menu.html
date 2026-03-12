@@ -3230,10 +3230,13 @@ body { padding-bottom: 72px !important; }
 <div class="cw-wrap" id="cwWrap">
     <!-- Onglets de navigation (toujours visibles) -->
     <div class="cw-tabs">
-        <button class="cw-tab" onclick="openProofSheet()">
+        {% set _me_accused = [] %}{% for p in players %}{% if p.is_current_user and p.skull_pending|default(false) %}{% if _me_accused.append(1) %}{% endif %}{% endif %}{% endfor %}
+        <button class="cw-tab" onclick="openProofSheet()" style="position:relative;">
             <span class="cw-tab-icon">�️</span>
             <span class="cw-tab-label">Contester</span>
-            {% if pending_proofs|default(0) > 0 %}
+            {% if _me_accused|length > 0 %}
+            <span style="position:absolute;top:2px;right:4px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;font-family:Montserrat,sans-serif;line-height:1.6;">📸 Prouve !</span>
+            {% elif pending_proofs|default(0) > 0 %}
             <span class="cw-tab-badge">{{ pending_proofs }}</span>
             {% endif %}
         </button>
@@ -3500,7 +3503,10 @@ function sendBonus(reason, points) {
 // ══════════════════════════════════════════════
 // �️ SYSTÈME CONTESTER
 // ══════════════════════════════════════════════
-var _proofCurrentTab = 'ask';
+// Si l'utilisateur est lui-même accusé, ouvrir sur l'onglet À prouver
+{% set _current_skull_pending = false %}
+{% for p in players %}{% if p.is_current_user and p.skull_pending %}{% set _current_skull_pending = true %}{% endif %}{% endfor %}
+var _proofCurrentTab = {{ "'incoming'" if _current_skull_pending else "'ask'" }};
 var _proofSubmitId = null;
 var _contestPending = null; // {taskId, email, taskName, taskPoints}
 
@@ -3684,11 +3690,27 @@ function fmtAgo(dt){
     return Math.round(diff/1440)+'j';
 }
 function showToast(msg, bg){
+    // Glassmorphisme : fond semi-transparent + blur + bordure
+    var isError = bg && (bg === '#e74c3c' || bg.indexOf('e74c3c') !== -1);
+    var isSuccess = bg && (bg === '#2ecc71' || bg.indexOf('2ecc71') !== -1);
     var t = document.createElement('div');
-    t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+bg+';color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.25);text-align:center;max-width:320px;';
+    var accentColor = isError ? 'rgba(231,76,60,0.85)' : isSuccess ? 'rgba(46,204,113,0.85)' : 'rgba(21,48,54,0.9)';
+    var borderColor = isError ? 'rgba(231,76,60,0.4)' : isSuccess ? 'rgba(46,204,113,0.4)' : 'rgba(166,211,220,0.5)';
+    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-10px);'
+        + 'background:' + accentColor + ';'
+        + 'backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);'
+        + 'border:1.5px solid ' + borderColor + ';'
+        + 'color:#fff;padding:13px 22px;border-radius:18px;font-weight:700;'
+        + 'z-index:99999;font-size:13px;font-family:Montserrat,sans-serif;'
+        + 'box-shadow:0 8px 32px rgba(21,48,54,0.22);text-align:center;max-width:320px;'
+        + 'transition:opacity 0.3s,transform 0.3s;opacity:0;';
     t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(function(){ t.remove(); }, 2600);
+    requestAnimationFrame(function(){ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+    setTimeout(function(){
+        t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-10px)';
+        setTimeout(function(){ t.remove(); }, 300);
+    }, 2600);
 }
 
 var _malusEmail = null;

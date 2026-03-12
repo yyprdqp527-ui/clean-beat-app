@@ -3999,12 +3999,27 @@ def get_house_players_points(house_id, existing_conn=None):
     
     # Récupérer tous les champs nécessaires pour les avatars
     c.execute("""
-        SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style, is_child_account 
+        SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style, is_child_account,
+               COALESCE(skull_count, 0), skull_expires_at
         FROM users WHERE house_id=?
     """, (house_id,))
     rows = c.fetchall()
     players = []
-    
+
+    # 🚀 BATCH: skull_pending pour tous les joueurs en 1 requête
+    _skull_pending_map = set()  # emails accusés (proof_request pending)
+    _skull_active_map = {}  # {email: bool}
+    try:
+        from datetime import datetime as _dt
+        c.execute("""
+            SELECT DISTINCT target_email FROM proof_requests
+            WHERE house_id=? AND status='pending'
+        """, (house_id,))
+        for row_sp in c.fetchall():
+            _skull_pending_map.add(row_sp[0])
+    except Exception:
+        pass
+
     # 🚀 BATCH: calculer daily_points pour TOUS les joueurs en 1 seule requête
     _daily_map = {}  # {email: (points, tasks)}
     try:
@@ -4029,6 +4044,17 @@ def get_house_players_points(house_id, existing_conn=None):
         player_color = r[6] if len(r) > 6 else None
         avatar_style = r[7] if len(r) > 7 else 'adventurer'  # Style DiceBear par défaut
         is_child_account = r[8] if len(r) > 8 else 0  # Statut enfant (0 = adulte, 1 = enfant)
+        skull_count_raw = r[9] if len(r) > 9 else 0
+        skull_expires_at_raw = r[10] if len(r) > 10 else None
+        # Crâne actif (tricherie prouvée dans les 24h)
+        skull_active = False
+        if skull_expires_at_raw:
+            try:
+                from datetime import datetime as _dt2
+                skull_active = _dt2.fromisoformat(str(skull_expires_at_raw)) > _dt2.utcnow()
+            except Exception:
+                pass
+        skull_pending = email in _skull_pending_map
         
         _dbg(f"\n🔍 Traitement joueur: {name} ({email}) - NOUVEAU CODE ACTIF!")
         _dbg(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}, is_child={is_child_account}")
@@ -4186,7 +4212,10 @@ def get_house_players_points(house_id, existing_conn=None):
             'color': color_vertical if color_vertical else player_color,  # Gradient pour v-bar verticale (ou hex en fallback)
             'color_h': color_horizontal if color_horizontal else player_color,  # Gradient pour v-bar horizontale (ou hex en fallback)
             'player_color_hex': player_color,  # Couleur hex brute pour bordure d'avatar
-            'is_child_account': is_child_account  # 0 = adulte, 1 = enfant (pour badges messagerie)
+            'is_child_account': is_child_account,  # 0 = adulte, 1 = enfant (pour badges messagerie)
+            'skull_count': int(skull_count_raw) if skull_count_raw else 0,
+            'skull_active': skull_active,
+            'skull_pending': skull_pending,
         })
 
     if _own_conn:
