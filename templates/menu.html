@@ -2770,307 +2770,305 @@
                 })();
             </script>
 
-            <!-- 🎯 DASHBOARD FLOTTANT EN BAS -->
-            <style>
-                .dashboard-floating {
-                    position: fixed;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    z-index: 1000;
-                    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(166,211,220,0.15) 100%);
-                    backdrop-filter: saturate(180%) blur(30px);
-                    -webkit-backdrop-filter: saturate(180%) blur(30px);
-                    border-radius: 24px 24px 0 0;
-                    box-shadow: 0 -12px 50px rgba(89,113,118,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
-                    border-top: 2px solid rgba(255,255,255,0.5);
-                    border-left: 1px solid rgba(255,255,255,0.3);
-                    border-right: 1px solid rgba(255,255,255,0.3);
-                    padding: 0 12px 16px 12px;
-                    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                    max-height: 70vh;
-                    overflow: hidden;
-                }
-                
-                /* Espace en bas pour que la maison ne soit pas cachée par le dashboard */
-                body {
-                    padding-bottom: 60px !important;
-                }
-                
-                .dashboard-floating.minimized {
-                    transform: translateY(calc(100% - 52px));
-                }
-                
-                .dashboard-toggle {
-                    width: 100%;
-                    padding: 10px 0;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 4px;
-                    cursor: pointer;
-                    background: none;
-                    border: none;
-                    -webkit-tap-highlight-color: transparent;
-                }
-                
-                .dashboard-toggle-handle {
-                    width: 48px;
-                    height: 5px;
-                    background: linear-gradient(135deg, rgba(166,211,220,0.7) 0%, rgba(253,174,84,0.5) 100%);
-                    border-radius: 3px;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 2px 8px rgba(166,211,220,0.3);
-                }
-                
-                .dashboard-toggle:active .dashboard-toggle-handle {
-                    width: 64px;
-                    background: linear-gradient(135deg, rgba(253,174,84,0.9) 0%, rgba(244,198,141,0.8) 100%);
-                    box-shadow: 0 4px 12px rgba(253,174,84,0.5);
-                }
-                
-                .dashboard-toggle-text {
-                    font-size: 11px;
-                    font-weight: 700;
-                    color: #ffffff;
-                    transition: all 0.3s ease;
-                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-                }
-                
-                .dashboard-floating.minimized .dashboard-toggle-text::after {
-                    content: ' ▲ Classement';
-                }
-                
-                .dashboard-floating:not(.minimized) .dashboard-toggle-text::after {
-                    content: '▼ Réduire';
-                }
-                
-                .dashboard-content {
-                    opacity: 1;
-                    transition: opacity 0.3s ease;
-                }
-                
-                .dashboard-floating.minimized .dashboard-content {
-                    opacity: 0;
-                    pointer-events: none;
-                }
-                
-                /* Style amélioré du classement */
-                #dailyRankingContainer {
-                    width: 100%;
-                    max-height: 400px;
-                    overflow-y: auto;
-                    padding: 10px 5px;
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(166,211,220,0.5) transparent;
-                }
-                
-                #dailyRankingContainer::-webkit-scrollbar {
-                    width: 6px;
-                }
-                
-                #dailyRankingContainer::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                
-                #dailyRankingContainer::-webkit-scrollbar-thumb {
-                    background: rgba(166,211,220,0.5);
-                    border-radius: 3px;
-                }
-                
-                #dailyRankingContainer::-webkit-scrollbar-thumb:hover {
-                    background: rgba(166,211,220,0.7);
-                }
-                
-                @media (max-width: 380px) {
-                    .dashboard-floating {
-                        padding: 0 8px 12px 8px;
-                    }
-                }
-            </style>
-            
-            <div class="dashboard-floating minimized" id="dashboardFloating">
-                <!-- Bouton toggle -->
-                <button class="dashboard-toggle" id="dashboardToggle" aria-label="Afficher/masquer le classement"
-                    onclick="(function(btn){var d=btn&&btn.closest('#dashboardFloating'); if(!d) return; d.classList.toggle('minimized'); try{localStorage.setItem('dashboardMinimized', d.classList.contains('minimized'));}catch(e){} if(!d.classList.contains('minimized') && typeof window.loadDailyRanking==='function'){window.loadDailyRanking();}})(this)">
-                    <div class="dashboard-toggle-handle"></div>
-                    <span class="dashboard-toggle-text"></span>
-                </button>
-                
-                <!-- Contenu du dashboard -->
-                <div class="dashboard-content">
-                    <!-- Classement quotidien -->
-                    <div id="dailyRankingContainer" style="width: 100%; max-height: 400px; overflow-y: auto; padding: 10px 5px;">
-                        <div style="text-align: center; color: #597176; font-size: 13px; padding: 20px;">
-                            Chargement du classement...
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
-            // 🎯 GESTION DU DASHBOARD FLOTTANT
-            (function() {
-                const dashboard = document.getElementById('dashboardFloating');
-                const toggleBtn = document.getElementById('dashboardToggle');
-                
-                if (!dashboard || !toggleBtn) return;
-                
-                // Toggle au clic
-                toggleBtn.addEventListener('click', function() {
-                    dashboard.classList.toggle('minimized');
-                    // Sauvegarder l'état
-                    localStorage.setItem('dashboardMinimized', dashboard.classList.contains('minimized'));
-                });
-                
-                // Swipe gesture pour mobile
-                let startY = 0;
-                let currentY = 0;
-                
-                dashboard.addEventListener('touchstart', function(e) {
-                    startY = e.touches[0].clientY;
-                }, { passive: true });
-                
-                dashboard.addEventListener('touchmove', function(e) {
-                    currentY = e.touches[0].clientY;
-                }, { passive: true });
-                
-                dashboard.addEventListener('touchend', function() {
-                    const diff = startY - currentY;
-                    if (Math.abs(diff) > 50) {
-                        if (diff > 0) {
-                            // Swipe up - ouvrir
-                            dashboard.classList.remove('minimized');
-                        } else {
-                            // Swipe down - fermer
-                            dashboard.classList.add('minimized');
-                        }
-                        localStorage.setItem('dashboardMinimized', dashboard.classList.contains('minimized'));
-                    }
-                });
-                
-                // Restaurer l'état au chargement
-                const savedState = localStorage.getItem('dashboardMinimized');
-                if (savedState === 'false') {
-                    dashboard.classList.remove('minimized');
-                }
-            })();
-            
-            // 🏆 CHARGEMENT DU CLASSEMENT QUOTIDIEN
-            (function() {
-                function loadDailyRanking() {
-                    fetch('/api/daily_tasks')
-                        .then(response => response.json())
-                        .then(data => {
-                            const container = document.getElementById('dailyRankingContainer');
-                            if (!container) return;
-                            
-                            if (!data.tasks || data.tasks.length === 0) {
-                                container.innerHTML = `
-                                    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.1) 100%); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-radius: 20px; padding: 30px 20px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); border: 2px solid rgba(255,255,255,0.5);">
-                                        <div style="font-size: 48px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(166,211,220,0.3));">🎯</div>
-                                        <div style="font-weight: 800; font-size: 16px; color: #153036; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">Aucune tâche aujourd'hui</div>
-                                        <div style="font-size: 13px; color: #597176; font-weight: 600;">Sois le premier à valider une tâche !</div>
-                                    </div>
-                                `;
-                                return;
-                            }
-                            
-                            // Grouper les tâches par joueur
-                            const playerTasks = {};
-                            data.tasks.forEach(task => {
-                                if (!playerTasks[task.player_name]) {
-                                    playerTasks[task.player_name] = {
-                                        name: task.player_name,
-                                        avatar: task.avatar,
-                                        tasks: [],
-                                        totalPoints: 0
-                                    };
-                                }
-                                playerTasks[task.player_name].tasks.push({
-                                    name: task.task_name,
-                                    time: task.time,
-                                    points: task.points || 0
-                                });
-                                playerTasks[task.player_name].totalPoints += (task.points || 0);
-                            });
-                            
-                            // Trier les joueurs par nombre de points (puis par nombre de tâches en cas d'égalité)
-                            const sortedPlayers = Object.values(playerTasks).sort((a, b) => b.totalPoints - a.totalPoints || b.tasks.length - a.tasks.length);
-                            
-                            // Médailles
-                            const medals = ['🥇', '🥈', '🥉'];
-                            const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-                            
-                            // Générer le HTML
-                            let html = '';
-                            sortedPlayers.forEach((player, index) => {
-                                const medal = index < 3 ? medals[index] : `${index + 1}`;
-                                const medalColor = index < 3 ? medalColors[index] : '#597176';
-                                const borderColor = index < 3 ? medalColor : 'rgba(166,211,220,0.3)';
-                                
-                                html += `
-                                    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.1) 100%); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-radius: 20px; padding: 14px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); border: 2px solid ${borderColor === 'rgba(166,211,220,0.3)' ? 'rgba(255,255,255,0.5)' : borderColor};">
-                                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                                            <div style="font-size: 32px; font-weight: 900; color: ${medalColor}; min-width: 38px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">
-                                                ${medal}
-                                            </div>
-                                            <div style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 3px solid ${borderColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                                                <img src="${player.avatar}" alt="${player.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                                            </div>
-                                            <div style="font-weight: 800; font-size: 15px; color: #153036; flex: 1; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">
-                                                ${player.name}
-                                            </div>
-                                            <div style="font-size: 13px; font-weight: 800; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 4px 10px; border-radius: 10px; white-space: nowrap;">
-                                                ${player.totalPoints} pts
-                                            </div>
-                                        </div>
-                                        <div style="padding-left: 50px; font-size: 12px; background: rgba(255,255,255,0.4); border-radius: 12px; padding: 8px 12px; backdrop-filter: blur(10px);">
-                                `;
-                                
-                                player.tasks.forEach(task => {
-                                    html += `
-                                        <div style="display: flex; align-items: center; gap: 10px; padding: 5px 0; color: #597176;">
-                                            <div style="width: 6px; height: 6px; background: linear-gradient(135deg, #A6D3DC 0%, #89b4bb 100%); border-radius: 50%; box-shadow: 0 2px 4px rgba(166,211,220,0.4);"></div>
-                                            <div style="flex: 1; font-weight: 600; color: #153036;">${task.name}</div>
-                                            <div style="font-size: 11px; color: #597176; font-weight: 600; margin-right: 4px;">${task.points} pt${task.points > 1 ? 's' : ''}</div>
-                                            <div style="font-size: 11px; color: #FDAE54; font-weight: 800; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px;">${task.time}</div>
-                                        </div>
-                                    `;
-                                });
-                                
-                                html += `
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                            
-                            container.innerHTML = html;
-                        })
-                        .catch(error => {
-                            console.error('Erreur chargement classement:', error);
-                            const container = document.getElementById('dailyRankingContainer');
-                            if (container) {
-                                container.innerHTML = `
-                                    <div style="text-align: center; color: #e74c3c; font-size: 13px; padding: 20px;">
-                                        Erreur de chargement du classement
-                                    </div>
-                                `;
-                            }
-                        });
-                }
+            <!-- ═══════════════════════════════════════════════
+     🏆 WIDGET COMPÉTITION — Classement semaine
+     ═══════════════════════════════════════════════ -->
+<style>
+/* ══ Widget Compétition ══ */
+.cw-wrap {
+    margin: 10px 12px 16px 12px;
+    background: rgba(255,255,255,0.22);
+    backdrop-filter: saturate(180%) blur(28px);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: 0 8px 32px rgba(21,48,54,0.12), inset 0 1px 0 rgba(255,255,255,0.4);
+    padding: 14px 14px 10px 14px;
+}
+.cw-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.cw-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #153036;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.cw-countdown {
+    font-size: 11px;
+    font-weight: 700;
+    color: #FDAE54;
+    background: rgba(253,174,84,0.15);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(253,174,84,0.3);
+    white-space: nowrap;
+}
+.cw-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(21,48,54,0.07);
+}
+.cw-player:last-of-type { border-bottom: none; }
+.cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
+.cw-avatar-img {
+    width: 32px; height: 32px; border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(21,48,54,0.15);
+    flex-shrink: 0;
+}
+.cw-avatar-emoji {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.9);
+}
+.cw-info { flex: 1; min-width: 0; }
+.cw-name {
+    font-size: 12px; font-weight: 700; color: #153036;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cw-me .cw-name::after {
+    content: ' (moi)';
+    font-size: 10px; color: #A6D3DC; font-weight: 600;
+}
+.cw-bar-wrap {
+    height: 6px; background: rgba(21,48,54,0.08);
+    border-radius: 99px; margin-top: 4px; overflow: hidden;
+}
+.cw-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+    background: linear-gradient(90deg, #A6D3DC, #7bb8c4);
+}
+.cw-pts {
+    font-size: 12px; font-weight: 800; color: #FDAE54;
+    white-space: nowrap; min-width: 54px; text-align: right;
+}
+.cw-malus-btn {
+    background: rgba(231,76,60,0.10);
+    border: 1px solid rgba(231,76,60,0.22);
+    border-radius: 9px; padding: 5px 8px;
+    font-size: 14px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+}
+.cw-malus-btn:active { transform: scale(0.88); background: rgba(231,76,60,0.22); }
+/* Popup malus */
+.malus-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(21,48,54,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9500;
+    align-items: flex-end;
+    justify-content: center;
+}
+.malus-overlay.open { display: flex; }
+.malus-sheet {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.8);
+    padding: 20px 16px 36px 16px;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
+    animation: cwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes cwSheetUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+.malus-sheet-title {
+    font-size: 16px; font-weight: 800; color: #153036;
+    text-align: center; margin-bottom: 16px;
+    font-family: 'Montserrat', sans-serif;
+}
+.malus-option {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 14px; border-radius: 14px;
+    background: rgba(21,48,54,0.04);
+    border: 1px solid rgba(21,48,54,0.06);
+    margin-bottom: 8px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+}
+.malus-option:active { background: rgba(231,76,60,0.10); }
+.malus-option-icon { font-size: 24px; }
+.malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036; }
+.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c; }
+.malus-cancel {
+    width: 100%; margin-top: 10px; padding: 14px;
+    border: none; border-radius: 14px;
+    background: rgba(21,48,54,0.07);
+    font-size: 14px; font-weight: 700; color: #597176; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+}
+/* Supprimer le padding-bottom ajouté par l'ancien dashboard */
+body { padding-bottom: 0 !important; }
+</style>
 
-                // Exposer la fonction pour les autres scripts / fallback inline
-                window.loadDailyRanking = loadDailyRanking;
-                
-                // Charger au démarrage
-                loadDailyRanking();
-                
-                // Recharger toutes les 30 secondes
-                setInterval(loadDailyRanking, 30000);
-            })();
-            </script>
-            <!-- FIN DASHBOARD FLOTTANT -->
+{% if players %}
+{% set max_pts = namespace(v=1) %}
+{% for p in players %}{% if p.weekly_points > max_pts.v %}{% set max_pts.v = p.weekly_points %}{% endif %}{% endfor %}
+{% set sorted_by_week = players|sort(attribute='weekly_points', reverse=True) %}
+<div class="cw-wrap">
+    <div class="cw-head">
+        <div class="cw-title">🏆 Semaine en cours</div>
+        <div class="cw-countdown" id="cwCountdown">…</div>
+    </div>
+    {% for p in sorted_by_week %}
+    {% if loop.index == 1 %}{% set medal = '🥇' %}
+    {% elif loop.index == 2 %}{% set medal = '🥈' %}
+    {% elif loop.index == 3 %}{% set medal = '🥉' %}
+    {% else %}{% set medal = loop.index|string + '.' %}{% endif %}
+    {% set bar_pct = ((p.weekly_points / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
+    <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}">
+        <div class="cw-rank">{{ medal }}</div>
+        {% if p.avatar_file %}
+            <img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="{{ p.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="cw-avatar-emoji" style="display:none;">👤</div>
+        {% elif p.avatar_url %}
+            <img class="cw-avatar-img" src="{{ p.avatar_url }}" alt="{{ p.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="cw-avatar-emoji" style="display:none;">👤</div>
+        {% elif p.avatar %}
+            <div class="cw-avatar-emoji">{{ p.avatar }}</div>
+        {% else %}
+            <div class="cw-avatar-emoji">👤</div>
+        {% endif %}
+        <div class="cw-info">
+            <div class="cw-name">{{ p.name }}</div>
+            <div class="cw-bar-wrap">
+                <div class="cw-bar-fill" data-pct="{{ bar_pct }}" style="width:0%;"></div>
+            </div>
+        </div>
+        <div class="cw-pts">{{ p.weekly_points }} pts</div>
+        {% if not p.is_current_user %}
+        <button class="cw-malus-btn" onclick="openMalus('{{ p.email|e }}','{{ p.name|replace(&quot;'&quot;, &quot;\\'&quot;) }}')" title="Envoyer un malus">💀</button>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Popup malus -->
+<div class="malus-overlay" id="malusOverlay" onclick="if(event.target===this)closeMalus()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">💀 Malus pour <span id="malusTargetName">…</span></div>
+        <div class="malus-option" onclick="sendMalus('lazy',-10)">
+            <div class="malus-option-icon">😴</div>
+            <div class="malus-option-label">Fainéant·e — rien fait depuis 24h</div>
+            <div class="malus-option-pts">−10 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('messy',-5)">
+            <div class="malus-option-icon">🗑️</div>
+            <div class="malus-option-label">A laissé traîner ses affaires</div>
+            <div class="malus-option-pts">−5 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('dishes',-8)">
+            <div class="malus-option-icon">🍽️</div>
+            <div class="malus-option-label">N'a pas rangé la vaisselle</div>
+            <div class="malus-option-pts">−8 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('forgot',-6)">
+            <div class="malus-option-icon">🤷</div>
+            <div class="malus-option-label">A oublié une tâche promise</div>
+            <div class="malus-option-pts">−6 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('sabotage',-15)">
+            <div class="malus-option-icon">😈</div>
+            <div class="malus-option-label">Sabotage flagrant !</div>
+            <div class="malus-option-pts">−15 pts</div>
+        </div>
+        <button class="malus-cancel" onclick="closeMalus()">Annuler</button>
+    </div>
+</div>
+
+<script>
+(function(){
+    function updateCWCountdown(){
+        var now = new Date();
+        var d = now.getDay();
+        var daysToFri = (5 - d + 7) % 7;
+        if(daysToFri === 0 && now.getHours() >= 22) daysToFri = 7;
+        var friday = new Date(now);
+        friday.setDate(now.getDate() + daysToFri);
+        friday.setHours(22,0,0,0);
+        var diff = friday - now;
+        var days = Math.floor(diff/86400000);
+        var hours = Math.floor((diff%86400000)/3600000);
+        var el = document.getElementById('cwCountdown');
+        if(!el) return;
+        if(days > 1) el.textContent = '\uD83C\uDF81 Vendredi dans '+days+'j';
+        else if(days === 1) el.textContent = '\uD83C\uDF81 Demain !';
+        else if(hours > 0) el.textContent = '\uD83C\uDF81 Ce soir dans '+hours+'h !';
+        else el.textContent = '\uD83C\uDF81 Ce soir !';
+    }
+    updateCWCountdown();
+    setInterval(updateCWCountdown, 60000);
+
+    function animateBars(){
+        document.querySelectorAll('.cw-bar-fill').forEach(function(el){
+            var pct = el.getAttribute('data-pct') || '0';
+            el.style.width = pct + '%';
+        });
+    }
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', function(){ setTimeout(animateBars, 200); });
+    } else {
+        setTimeout(animateBars, 200);
+    }
+})();
+
+var _malusEmail = null;
+function openMalus(email, name){
+    _malusEmail = email;
+    document.getElementById('malusTargetName').textContent = name;
+    document.getElementById('malusOverlay').classList.add('open');
+}
+function closeMalus(){
+    document.getElementById('malusOverlay').classList.remove('open');
+    _malusEmail = null;
+}
+function sendMalus(reason, points){
+    if(!_malusEmail) return;
+    var targetName = document.getElementById('malusTargetName').textContent;
+    fetch('/api/send_malus',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({target_email:_malusEmail, reason:reason, points:points})
+    }).then(function(r){return r.json();}).then(function(data){
+        closeMalus();
+        if(data.success){
+            var msg = data.message || 'Malus envoy\u00e9 !';
+            if(window.showSuccessPopup){ window.showSuccessPopup(msg,'\uD83D\uDC80'); }
+            else {
+                var t=document.createElement('div');
+                t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#e74c3c;color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 8px 24px rgba(231,76,60,0.4);text-align:center;';
+                t.textContent=msg;
+                document.body.appendChild(t);
+                setTimeout(function(){t.remove();},2500);
+            }
+            setTimeout(function(){ window.location.reload(); }, 2000);
+        } else {
+            alert(data.error || 'Erreur');
+        }
+    }).catch(function(){ closeMalus(); alert('Erreur r\u00e9seau'); });
+}
+</script>
+<!-- FIN WIDGET COMPETITION -->
 
                 <script>
                 // 🔊 SYSTÈME DE SONS AU CLIC

@@ -8713,6 +8713,90 @@ def menu():
     return resp
 
 
+# ════════════════════════════════════════════════════════════
+# 💀 API MALUS — Envoyer un malus à un adversaire
+# ════════════════════════════════════════════════════════════
+@app.route('/api/send_malus', methods=['POST'])
+def api_send_malus():
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    target_email = str(data.get('target_email', '')).strip()
+    reason = str(data.get('reason', '')).strip()
+    points = int(data.get('points', -5))
+    sender_email = session['user']
+
+    # Sécurité : les points doivent être négatifs et bornés
+    if points > 0:
+        points = -abs(points)
+    if points < -50:
+        points = -50
+
+    if not target_email or target_email == sender_email:
+        return jsonify({'success': False, 'error': 'Cible invalide'}), 400
+
+    reason_labels = {
+        'lazy':     'Fainéant·e',
+        'messy':    'A laissé traîner',
+        'dishes':   'Vaisselle non rangée',
+        'forgot':   'Tâche oubliée',
+        'sabotage': 'Sabotage !',
+    }
+    reason_label = reason_labels.get(reason, 'Malus')
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (sender_email,))
+        sender_row = c.fetchone()
+        if not sender_row:
+            return jsonify({'success': False, 'error': 'Expéditeur introuvable'}), 400
+        house_id = sender_row[0]
+        sender_name = sender_row[1] or sender_email.split('@')[0]
+
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (target_email,))
+        target_row = c.fetchone()
+        if not target_row or target_row[0] != house_id:
+            return jsonify({'success': False, 'error': 'Cible introuvable dans cette maison'}), 400
+        target_name = target_row[1] or target_email.split('@')[0]
+
+        # Limiter à 3 malus envoyés par expéditeur par jour vers la même cible
+        from datetime import date as _date
+        today = _date.today().isoformat()
+        c.execute("""
+            SELECT COUNT(*) FROM completed_tasks
+            WHERE user_email=? AND category='malus'
+            AND task_name LIKE ? AND DATE(completed_at)=?
+        """, (target_email, '%' + sender_name + '%', today))
+        count_today = c.fetchone()[0]
+        if count_today >= 3:
+            return jsonify({'success': False, 'error': f'Tu as déjà envoyé 3 malus à {target_name} aujourd\'hui !'}), 200
+
+        # Insérer le malus comme tâche avec points négatifs
+        task_name = f'💀 Malus de {sender_name} : {reason_label}'
+        c.execute("""
+            INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+            VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
+        """, (target_email, task_name, points, house_id))
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'💀 Malus envoyé à {target_name} ! ({points} pts)'
+        })
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_send_malus: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
 # Simple route de test pour vérifier la connectivité (retourne OK en texte brut)
 @app.route('/ping')
 def ping():
