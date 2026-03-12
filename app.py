@@ -5156,7 +5156,10 @@ def comments():
                 except Exception as e:
                     _dbg(f"⚠️ Erreur envoi notification push: {e}")
                 
-                flash(f"Message envoyé à {recipient[1] if recipient[1] else recipient[0]}", "success")
+                # Pas de flash() ici → évite double notification (flash sur /comments + flash sur /menu)
+                # La confirmation est faite via ?sent=1 (toast JS local, sans session flash)
+                recipient_name = recipient[1] if recipient[1] else recipient[0]
+                return redirect(url_for('comments') + f'?sent=1&to={recipient_name}')
             else:
                 flash("Destinataire invalide.", "danger")
         else:
