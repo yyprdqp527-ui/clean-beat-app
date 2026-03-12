@@ -3195,6 +3195,18 @@ body { padding-bottom: 72px !important; }
 }
 .proof-verdict-ok { background: rgba(46,204,113,0.12); color: #1a7a44; border: 1.5px solid rgba(46,204,113,0.3); }
 .proof-verdict-fake { background: rgba(231,76,60,0.10); color: #c0392b; border: 1.5px solid rgba(231,76,60,0.3); }
+.proof-contest-badge {
+    font-size: 11px; font-weight: 700; color: #8a1a1a;
+    background: rgba(231,76,60,0.08); border-radius: 10px;
+    padding: 6px 10px; border: 1px solid rgba(231,76,60,0.18);
+    font-family: 'Montserrat', sans-serif;
+}
+.proof-mine-badge {
+    font-size: 11px; font-weight: 600; color: #1a7a44;
+    background: rgba(46,204,113,0.08); border-radius: 10px;
+    padding: 4px 10px; border: 1px solid rgba(46,204,113,0.15);
+    font-family: 'Montserrat', sans-serif;
+}
 .proof-empty { text-align: center; color: #597176; font-size: 13px; padding: 24px 0; font-weight: 600; }
 .proof-cancel {
     width: 100%; padding: 13px; border: none; border-radius: 14px;
@@ -3510,105 +3522,64 @@ function sendBonus(reason, points) {
 // �️ SYSTÈME CONTESTER
 // ══════════════════════════════════════════════
 // Si l'utilisateur est lui-même accusé, ouvrir sur l'onglet À prouver
-{% set _current_skull_pending = false %}
-{% for p in players %}{% if p.is_current_user and p.skull_pending %}{% set _current_skull_pending = true %}{% endif %}{% endfor %}
-var _proofCurrentTab = "{{ 'incoming' if _current_skull_pending else 'ask' }}";
 var _proofSubmitId = null;
 var _contestPending = null; // {taskId, email, taskName, taskPoints}
 
 function openProofSheet(){
     document.getElementById('proofOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
-    showProofTab(_proofCurrentTab);
+    loadProofAll();
 }
 function closeProofSheet(){
     document.getElementById('proofOverlay').classList.remove('open');
     document.body.style.overflow = '';
     _contestPending = null;
 }
-function showProofTab(tab){
-    _proofCurrentTab = tab;
-    _contestPending = null;
-    ['ask','incoming'].forEach(function(t){
-        var btn = document.getElementById('proofTab'+t.charAt(0).toUpperCase()+t.slice(1));
-        if(btn) btn.classList.toggle('active', t === tab);
-    });
+function loadProofAll(){
     var content = document.getElementById('proofContent');
     content.innerHTML = '<div class="proof-empty">Chargement…</div>';
-    if(tab === 'ask'){
-        Promise.all([
-            fetch('/api/proof/tasks').then(function(r){return r.json();}),
-            fetch('/api/proof/pending').then(function(r){return r.json();})
-        ]).then(function(res){
-            var tasks = Array.isArray(res[0]) ? res[0] : [];
-            var sent = (res[1].sent || []).filter(function(pr){ return pr.status === 'submitted'; });
-            var html = '';
-            if(sent.length){
-                html += '<div class="proof-verdict-section">'
-                    + '<div class="proof-verdict-section-title">📸 ' + sent.length + ' preuve(s) en attente de ton verdict</div>';
-                sent.forEach(function(pr){
-                    var photoSrc = pr.photo_data || pr.photo || '';
-                    html += '<div class="proof-task-card">'
-                        + '<div class="proof-task-info">'
-                        +   '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
-                        +   '<div class="proof-task-meta">Preuve envoy\u00e9e par ' + escHtml(pr.target_name) + '</div>'
-                        + '</div>';
-                    if(photoSrc){
-                        html += '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(photoSrc) + '" alt="Preuve"></div>'
-                            + '<div class="proof-verdict-btns">'
-                            + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + pr.id + ',\'validated\')">\u2705 Preuve valide \u2014 je retire ma contestation</button>'
-                            + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + pr.id + ',\'refuted\')">\uD83D\uDC80 Fausse preuve \u2014 cr\u00e2ne 24h</button>'
-                            + '</div>';
-                    } else {
-                        html += '<div class="proof-empty" style="padding:6px 0 0;font-size:12px;">⏳ En attente de la photo…</div>';
-                    }
-                    html += '</div>';
-                });
-                html += '</div>';
-            }
-            if(!tasks.length){
-                html += '<div class="proof-empty">Aucune t\u00e2che r\u00e9cente \u00e0 contester \u2705</div>';
-            } else {
-                html += tasks.map(function(t){
-                    var disabled = t.already_requested ? 'disabled' : '';
-                    var btnLabel = t.already_requested ? '\u2713 D\u00e9j\u00e0 contest\u00e9' : '\uD83D\uDD75\uFE0F Contester';
-                    return '<div class="proof-task-card">'
-                        + '<div class="proof-task-header">'
-                        +   '<div class="proof-task-info">'
-                        +     '<div class="proof-task-name">' + escHtml(t.task) + '</div>'
-                        +     '<div class="proof-task-meta">Par ' + escHtml(t.name) + ' \u00b7 ' + fmtAgo(t.at) + '</div>'
-                        +   '</div>'
-                        +   '<div class="proof-task-pts">+' + t.points + ' pts</div>'
-                        + '</div>'
-                        + '<button class="proof-ask-btn" ' + disabled + ' onclick="showContestConfirm(' + t.id + ',\'' + escJs(t.email) + '\',\'' + escJs(t.task) + '\',' + t.points + ')">' + btnLabel + '</button>'
-                        + '</div>';
-                }).join('');
-            }
-            content.innerHTML = html;
-        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur r\u00e9seau</div>'; });
-    } else {
-        fetch('/api/proof/pending').then(function(r){return r.json();}).then(function(data){
-            var items = data.received || [];
-            if(!items.length){ content.innerHTML = '<div class="proof-empty">Personne ne te conteste \uD83D\uDE07</div>'; return; }
-            content.innerHTML = items.map(function(pr){
-                return '<div class="proof-task-card">'
-                    + '<div class="proof-task-header">'
-                    +   '<div class="proof-task-info">'
-                    +     '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
-                    +     '<div class="proof-task-meta">' + escHtml(pr.requester_name) + ' conteste \u2014 prouve que tu l\'as fait\u00a0!</div>'
-                    +   '</div>'
-                    + '</div>'
-                    + '<button class="proof-photo-btn" data-proof-id="' + pr.id + '">\uD83D\uDCF7 Prendre une photo comme preuve</button>'
+    fetch('/api/proof/all').then(function(r){return r.json();}).then(function(tasks){
+        if(!tasks.length){
+            content.innerHTML = '<div class="proof-empty">Aucune tâche aujourd\'hui</div>';
+            return;
+        }
+        content.innerHTML = tasks.map(function(t){
+            var html = '<div class="proof-task-card">'
+                + '<div class="proof-task-header">'
+                +   '<div class="proof-task-info">'
+                +     '<div class="proof-task-name">' + escHtml(t.task) + '</div>'
+                +     '<div class="proof-task-meta">Par ' + escHtml(t.name) + ' · ' + fmtAgo(t.at) + '</div>'
+                +   '</div>'
+                +   '<div class="proof-task-pts">+' + t.points + ' pts</div>'
+                + '</div>';
+            if(t.can_contest){
+                html += '<button class="proof-ask-btn" onclick="showContestConfirm(' + t.id + ',\'' + escJs(t.email) + '\',\'' + escJs(t.task) + '\',' + t.points + ')">Contester</button>';
+            } else if(t.am_target && t.proof_status === 'pending'){
+                html += '<div class="proof-contest-badge">Contesté par ' + escHtml(t.requester_name) + '</div>'
+                    + '<button class="proof-photo-btn" data-proof-id="' + t.proof_id + '">Prendre une photo comme preuve</button>';
+            } else if(t.am_requester && t.proof_status === 'submitted' && t.photo_data){
+                html += '<div class="proof-contest-badge">Preuve reçue de ' + escHtml(t.name) + ' — ton verdict :</div>'
+                    + '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(t.photo_data) + '" alt="Preuve"></div>'
+                    + '<div class="proof-verdict-btns">'
+                    + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + t.proof_id + ',\'validated\')">✅ Preuve valide</button>'
+                    + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + t.proof_id + ',\'refuted\')">☠️ Fausse preuve</button>'
                     + '</div>';
-            }).join('');
-            content.querySelectorAll('[data-proof-id]').forEach(function(btn){
-                btn.addEventListener('click', function(){
-                    _proofSubmitId = parseInt(this.getAttribute('data-proof-id'));
-                    document.getElementById('proofPhotoInputCam').click();
-                });
+            } else if(t.am_requester && t.proof_status === 'pending'){
+                html += '<div class="proof-contest-badge">⏳ En attente de la photo de ' + escHtml(t.name) + '</div>';
+            } else if(t.am_target && t.proof_status === 'submitted'){
+                html += '<div class="proof-mine-badge">Photo envoyée — en attente du verdict</div>';
+            } else if(t.is_mine){
+                html += '<div class="proof-mine-badge">Ta tâche</div>';
+            }
+            return html + '</div>';
+        }).join('');
+        content.querySelectorAll('[data-proof-id]').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                _proofSubmitId = parseInt(this.getAttribute('data-proof-id'));
+                document.getElementById('proofPhotoInputCam').click();
             });
-        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur r\u00e9seau</div>'; });
-    }
+        });
+    }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
 }
 
 function showContestConfirm(taskId, email, taskName, taskPoints){
@@ -3622,7 +3593,7 @@ function showContestConfirm(taskId, email, taskName, taskPoints){
         +   '💀 Si la preuve est <strong>fausse</strong> (tricherie) → l\'accusé(e) perdra <strong>−10 pts</strong> et aura un 💀 sur son avatar pendant <strong>24h</strong>.'
         + '</div>'
         + '<div class="proof-confirm-btns">'
-        +   '<button class="proof-confirm-no" onclick="showProofTab(\'ask\')">Annuler</button>'
+        +   '<button class="proof-confirm-no" onclick="loadProofAll()">Annuler</button>'
         +   '<button class="proof-confirm-yes" onclick="confirmContest()">🕵️ Oui, contester !</button>'
         + '</div>'
         + '</div>';
@@ -3636,9 +3607,9 @@ function confirmContest(){
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({task_id: p.taskId, target_email: p.email, task_name: p.taskName, task_points: p.taskPoints})
     }).then(function(r){return r.json();}).then(function(d){
-        if(d.success){ showToast(d.message||'Contestation lancée !','#153036'); showProofTab('ask'); }
-        else { showToast(d.error||'Erreur','#e74c3c'); showProofTab('ask'); }
-    }).catch(function(){ showToast('Erreur réseau','#e74c3c'); showProofTab('ask'); });
+        if(d.success){ showToast(d.message||'Contestation lancée !','#153036'); loadProofAll(); }
+        else { showToast(d.error||'Erreur','#e74c3c'); loadProofAll(); }
+    }).catch(function(){ showToast('Erreur réseau','#e74c3c'); loadProofAll(); });
 }
 
 function doRequestProof(taskId, email, taskName, taskPoints){
@@ -3673,7 +3644,7 @@ function _handleProofFile(file){
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({proof_id: _proofSubmitId, photo_data: e.target.result})
         }).then(function(r){return r.json();}).then(function(d){
-            if(d.success){ showToast(d.message||'Preuve envoyée !','#153036'); showProofTab('incoming'); }
+            if(d.success){ showToast(d.message||'Preuve envoyée !','#153036'); loadProofAll(); }
             else { showToast(d.error||'Erreur','#e74c3c'); }
         }).catch(function(){ showToast('Erreur réseau','#e74c3c'); });
         _proofSubmitId = null;
@@ -3774,11 +3745,7 @@ function sendMalus(reason, points){
 <div class="proof-overlay" id="proofOverlay" onclick="if(event.target===this)closeProofSheet()">
     <div class="proof-sheet">
         <div class="proof-sheet-title">🕵️ Contester une tâche</div>
-        <div class="proof-sheet-sub">📸 Photo valide → tu perds −10 pts · 💀 Photo fausse → l'accusé(e) perd −10 pts + 💀 24h</div>
-        <div class="proof-tabs">
-            <button class="proof-tab-btn active" id="proofTabAsk" onclick="showProofTab('ask')">🕵️ Contester</button>
-            <button class="proof-tab-btn" id="proofTabIncoming" onclick="showProofTab('incoming')">📸 À prouver</button>
-        </div>
+                <div class="proof-sheet-sub">Tâches du jour · Contestez, prouvez, validez</div>
         <div id="proofContent">
             <div class="proof-empty">Chargement…</div>
         </div>

@@ -9002,6 +9002,67 @@ def api_proof_tasks():
         conn.close()
 
 
+
+@app.route('/api/proof/all')
+def api_proof_all():
+    """Vue unifiée : toutes les tâches du jour avec statut contestation pour TOUS les joueurs."""
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify([])
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify([])
+        house_id = row[0]
+        me = session['user']
+        # Toutes les tâches des 24 dernières heures de la maison
+        c.execute("""
+            SELECT ct.id, ct.user_email, ct.task_name, ct.points, ct.completed_at,
+                   u.name,
+                   pr.id, pr.status, pr.requester_email, pr.photo_data,
+                   (SELECT name FROM users WHERE email = pr.requester_email)
+            FROM completed_tasks ct
+            JOIN users u ON u.email = ct.user_email
+            LEFT JOIN proof_requests pr
+                ON pr.completed_task_id = ct.id
+                AND pr.status NOT IN ('validated','refuted')
+            WHERE ct.house_id = ?
+            AND ct.category NOT IN ('malus','proof_penalty','proof_bonus')
+            AND ct.completed_at >= DATETIME('now', '-1 day')
+            ORDER BY ct.completed_at DESC
+            LIMIT 60
+        """, (house_id,))
+        tasks = []
+        for r in c.fetchall():
+            task_email = r[1]
+            proof_id = r[6]
+            proof_status = r[7]
+            requester_email = r[8]
+            photo_data = r[9]
+            req_name = r[10]
+            is_mine = (task_email == me)
+            am_requester = (requester_email == me)
+            am_target = (task_email == me and proof_id is not None)
+            can_contest = (not is_mine and proof_id is None)
+            tasks.append({
+                'id': r[0], 'email': task_email, 'task': r[2],
+                'points': r[3], 'at': str(r[4]), 'name': r[5],
+                'is_mine': is_mine, 'can_contest': can_contest,
+                'proof_id': proof_id, 'proof_status': proof_status,
+                'photo_data': photo_data,
+                'am_requester': am_requester, 'am_target': am_target,
+                'requester_name': req_name or ''
+            })
+        return jsonify(tasks)
+    except Exception as e:
+        _dbg(f"ERREUR api_proof_all: {e}")
+        return jsonify([])
+    finally:
+        conn.close()
+
 @app.route('/api/proof/request', methods=['POST'])
 def api_proof_request():
     """Demander une preuve photo : coûte 3 pts au demandeur."""
