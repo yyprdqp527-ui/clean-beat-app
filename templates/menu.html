@@ -2776,39 +2776,67 @@
 <style>
 /* ══ Widget Compétition ══ */
 .cw-wrap {
-    margin: 10px 12px 16px 12px;
-    background: rgba(255,255,255,0.22);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 1001;
+    background: rgba(255,255,255,0.97);
     backdrop-filter: saturate(180%) blur(28px);
     -webkit-backdrop-filter: saturate(180%) blur(28px);
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.55);
-    box-shadow: 0 8px 32px rgba(21,48,54,0.12), inset 0 1px 0 rgba(255,255,255,0.4);
-    padding: 14px 14px 10px 14px;
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 -8px 32px rgba(21,48,54,0.15);
+    overflow: hidden;
+}
+.cw-handle {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 14px 8px 14px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.cw-handle-pill {
+    width: 36px; height: 4px;
+    background: rgba(21,48,54,0.15);
+    border-radius: 99px; margin-bottom: 7px;
+}
+.cw-handle-row {
+    display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden;
+}
+.cw-handle-player {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 12px; font-weight: 700; color: #153036;
+    white-space: nowrap; flex-shrink: 0;
+}
+.cw-handle-medal { font-size: 14px; }
+.cw-handle-pts { color: #FDAE54; font-size: 11px; font-weight: 800; }
+.cw-handle-sep { color: rgba(21,48,54,0.2); font-size: 14px; flex-shrink: 0; }
+.cw-handle-countdown {
+    font-size: 11px; font-weight: 700; color: #FDAE54;
+    background: rgba(253,174,84,0.12);
+    padding: 2px 8px; border-radius: 20px;
+    border: 1px solid rgba(253,174,84,0.28);
+    white-space: nowrap; flex-shrink: 0; margin-left: auto;
+}
+.cw-handle-arrow {
+    font-size: 10px; color: rgba(21,48,54,0.35);
+    flex-shrink: 0; margin-left: 6px;
+    transition: transform 0.3s ease; display: inline-block;
+}
+.cw-wrap.expanded .cw-handle-arrow { transform: rotate(180deg); }
+.cw-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    padding: 0 14px;
+}
+.cw-wrap.expanded .cw-body {
+    max-height: 55vh; overflow-y: auto;
+    padding: 0 14px 16px 14px;
 }
 .cw-head {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 12px; padding-top: 6px;
 }
-.cw-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: #153036;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.cw-countdown {
-    font-size: 11px;
-    font-weight: 700;
-    color: #FDAE54;
-    background: rgba(253,174,84,0.15);
-    padding: 3px 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(253,174,84,0.3);
-    white-space: nowrap;
-}
+.cw-title { font-size: 13px; font-weight: 800; color: #153036; }
 .cw-player {
     display: flex;
     align-items: center;
@@ -2916,19 +2944,33 @@
     font-size: 14px; font-weight: 700; color: #597176; cursor: pointer;
     font-family: 'Montserrat', sans-serif;
 }
-/* Supprimer le padding-bottom ajouté par l'ancien dashboard */
-body { padding-bottom: 0 !important; }
+/* Espace pour la barre fixe en bas */
+body { padding-bottom: 72px !important; }
 </style>
 
 {% if players %}
 {% set max_pts = namespace(v=1) %}
 {% for p in players %}{% if (p.weekly_points|default(0)) > max_pts.v %}{% set max_pts.v = p.weekly_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='weekly_points', reverse=True) %}
-<div class="cw-wrap">
-    <div class="cw-head">
-        <div class="cw-title">🏆 Semaine en cours</div>
-        <div class="cw-countdown" id="cwCountdown">…</div>
+<div class="cw-wrap" id="cwWrap">
+    <!-- Handle compact (toujours visible) -->
+    <div class="cw-handle" onclick="toggleCW()">
+        <div class="cw-handle-pill"></div>
+        <div class="cw-handle-row">
+            {% for p in sorted_by_week[:3] %}
+            {% if loop.index == 1 %}{% set medal = '🥇' %}
+            {% elif loop.index == 2 %}{% set medal = '🥈' %}
+            {% else %}{% set medal = '🥉' %}{% endif %}
+            {% if not loop.first %}<span class="cw-handle-sep">·</span>{% endif %}
+            <span class="cw-handle-player"><span class="cw-handle-medal">{{ medal }}</span><span>{{ p.name.split(' ')[0] }}</span><span class="cw-handle-pts">{{ p.weekly_points|default(0) }}pts</span></span>
+            {% endfor %}
+            <span class="cw-handle-countdown" id="cwCountdown">…</span>
+            <span class="cw-handle-arrow">▲</span>
+        </div>
     </div>
+    <!-- Corps expansible -->
+    <div class="cw-body" id="cwBody">
+    <div class="cw-head"><div class="cw-title">🏆 Classement de la semaine</div></div>
     {% for p in sorted_by_week %}
     {% if loop.index == 1 %}{% set medal = '🥇' %}
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
@@ -2960,6 +3002,7 @@ body { padding-bottom: 0 !important; }
         {% endif %}
     </div>
     {% endfor %}
+    </div><!-- fin cw-body -->
 </div>
 {% endif %}
 
@@ -3025,12 +3068,21 @@ body { padding-bottom: 0 !important; }
             el.style.width = pct + '%';
         });
     }
-    if(document.readyState === 'loading'){
-        document.addEventListener('DOMContentLoaded', function(){ setTimeout(animateBars, 200); });
-    } else {
-        setTimeout(animateBars, 200);
-    }
 })();
+
+var _cwAnimated = false;
+function toggleCW(){
+    var wrap = document.getElementById('cwWrap');
+    wrap.classList.toggle('expanded');
+    if(wrap.classList.contains('expanded') && !_cwAnimated){
+        _cwAnimated = true;
+        setTimeout(function(){
+            document.querySelectorAll('.cw-bar-fill').forEach(function(el){
+                el.style.width = (el.getAttribute('data-pct') || '0') + '%';
+            });
+        }, 60);
+    }
+}
 
 var _malusEmail = null;
 function openMalus(email, name){
