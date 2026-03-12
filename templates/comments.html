@@ -1392,19 +1392,27 @@
                 // 🔌 Synchroniser la liste des messages pour tous
                 socket.on('messages_list_update', function(data) {
                     console.log('📬 WebSocket Comments: Mise à jour liste messages', data);
-                    
-                    // ✅ Si c'est MOI qui ai envoyé le message, rafraîchir quand même
-                    // pour voir mon message dans la liste (mais sans pastille)
+
+                    // ❌ Si JE suis l'expéditeur → NE PAS recharger
+                    // La redirection Flask vers /comments?sent=1 gère déjà le rafraîchissement
+                    // Un reload ici causerait un 2ème affichage du toast
+                    if (data.action === 'new_message' && data.sender_email === userEmail) {
+                        console.log('⏭️ messages_list_update ignoré : je suis l\'expéditeur, pas de rechargement supplémentaire');
+                        return;
+                    }
+
+                    // ✅ Avant tout rechargement, nettoyer ?sent=1 pour éviter double toast
+                    if (window.location.search.includes('sent=1')) {
+                        history.replaceState(null, '', window.location.pathname);
+                    }
+
                     if (data.action === 'new_message') {
                         console.log('🔄 Nouveau message détecté, rafraîchissement...');
                         location.reload();
-                    }
-                    // ✅ Si quelqu'un a LU un message, rafraîchir pour tout le monde
-                    else if (data.action === 'message_read') {
+                    } else if (data.action === 'message_read') {
                         console.log('✅ Message marqué comme lu, rafraîchissement...');
                         location.reload();
-                    }
-                    else {
+                    } else {
                         console.log('🔄 Rafraîchissement de la messagerie...');
                         location.reload();
                     }
@@ -1427,16 +1435,24 @@
     <script>
     // Toast local "Message envoyé" — remplace le flash Flask pour éviter la double notification
     (function() {
+        // Nettoyer l'URL EN PREMIER (avant tout rechargement potentiel via WebSocket)
         const params = new URLSearchParams(window.location.search);
-        if (params.get('sent') === '1') {
-            const to = params.get('to') || '';
+        const isSent = params.get('sent') === '1';
+        const toName = params.get('to') || '';
+        if (isSent) {
+            // Nettoyer immédiatement avant que quoi que ce soit puisse reload avec ce param
+            history.replaceState(null, '', window.location.pathname);
             const toast = document.createElement('div');
-            toast.textContent = '✅ Message envoyé' + (to ? ' à ' + to : '');
+            toast.textContent = '✅ Message envoyé' + (toName ? ' à ' + toName : '');
             toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(21,48,54,0.92);color:#fff;padding:12px 24px;border-radius:20px;font-weight:700;font-size:15px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:opacity 0.4s ease;';
             document.body.appendChild(toast);
             setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 400); }, 2500);
-            // Nettoyer l'URL sans recharger
-            history.replaceState(null, '', window.location.pathname);
         }
+        // Gérer le bfcache (retour via bouton précédent) — ne jamais afficher le toast sur le retour
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted && window.location.search.includes('sent=1')) {
+                history.replaceState(null, '', window.location.pathname);
+            }
+        });
     })();
     </script>
