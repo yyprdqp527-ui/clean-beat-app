@@ -8935,7 +8935,7 @@ def api_proof_tasks():
         if not row or not row[0]:
             return jsonify([])
         house_id = row[0]
-        # Tâches des AUTRES joueurs dernières 48h, hors malus et preuves
+        # Tâches des AUTRES joueurs (7 derniers jours), hors malus et preuves
         c.execute("""
             SELECT ct.id, ct.user_email, ct.task_name, ct.points, ct.completed_at,
                    u.name,
@@ -8946,9 +8946,9 @@ def api_proof_tasks():
             JOIN users u ON u.email = ct.user_email
             WHERE ct.house_id=? AND ct.user_email != ?
             AND ct.category NOT IN ('malus','proof_penalty','proof_bonus')
-            AND ct.completed_at >= DATETIME('now', '-48 hours')
+            AND ct.completed_at >= DATETIME('now', '-7 days')
             ORDER BY ct.completed_at DESC
-            LIMIT 30
+            LIMIT 50
         """, (session['user'], house_id, session['user']))
         rows = c.fetchall()
         tasks = []
