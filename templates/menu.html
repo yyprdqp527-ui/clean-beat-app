@@ -3096,16 +3096,29 @@ body { padding-bottom: 72px !important; }
     font-family: 'Montserrat', sans-serif; transition: background 0.15s;
     background: rgba(21,48,54,0.06); color: #597176;
 }
-.proof-tab-btn.active { background: #153036; color: white; }
-/* Cartes tâche — style cohérent avec la palette de l'appli */
+.proof-tab-btn.active { background: linear-gradient(135deg, #153036, #2d636e); color: white; box-shadow: 0 4px 12px rgba(21,48,54,0.2); }
+/* Cartes tâche — style manage_players */
 .proof-task-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(166,211,220,0.10));
-    border-radius: 18px;
-    box-shadow: 0 2px 14px rgba(21,48,54,0.10), inset 0 1px 0 rgba(255,255,255,0.9);
-    border: 1.5px solid rgba(166,211,220,0.45);
-    padding: 12px 14px 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 1.5px solid rgba(255,255,255,0.7);
     margin-bottom: 10px;
-    display: flex; flex-direction: column; gap: 8px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+/* Section preuves à valider */
+.proof-verdict-section {
+    background: linear-gradient(135deg, rgba(253,174,84,0.10), rgba(255,255,255,0.9));
+    border-radius: 16px;
+    border: 1.5px solid rgba(253,174,84,0.3);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+.proof-verdict-section-title {
+    font-size: 11px; font-weight: 800; color: #c8720a;
+    margin-bottom: 8px; font-family: 'Montserrat', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.5px;
 }
 .proof-task-header {
     display: flex; align-items: center; gap: 10px;
@@ -3189,23 +3202,17 @@ body { padding-bottom: 72px !important; }
     color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif;
     margin-top: 10px;
 }
-/* Boutons photo (caméra / galerie) */
-.proof-photo-btns { display: flex; gap: 8px; margin-top: 2px; }
+/* Bouton photo (caméra uniquement) */
 .proof-photo-btn {
-    flex: 1; padding: 11px 8px; border-radius: 13px; border: none;
+    width: 100%; padding: 13px 8px; border-radius: 14px; border: none;
     font-size: 13px; font-weight: 800; cursor: pointer;
     font-family: 'Montserrat', sans-serif; text-align: center;
-    -webkit-tap-highlight-color: transparent; transition: background 0.15s;
-}
-.proof-photo-btn-cam {
+    -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
     background: linear-gradient(135deg, #153036, #2d636e);
     color: #fff;
+    box-shadow: 0 4px 12px rgba(21,48,54,0.2);
 }
-.proof-photo-btn-gal {
-    background: rgba(166,211,220,0.25);
-    border: 1.5px solid rgba(166,211,220,0.6);
-    color: #153036;
-}
+.proof-photo-btn:active { opacity: 0.8; }
 /* Skull suspicion (accusation en attente) */
 .skull-overlay-pending {
     position: absolute; bottom: -4px; right: -4px;
@@ -3220,7 +3227,6 @@ body { padding-bottom: 72px !important; }
 }
 /* upload photo hidden inputs */
 #proofPhotoInputCam { display: none; }
-#proofPhotoInputGal { display: none; }
 </style>
 
 {% if players %}
@@ -3523,82 +3529,85 @@ function closeProofSheet(){
 function showProofTab(tab){
     _proofCurrentTab = tab;
     _contestPending = null;
-    ['ask','my','incoming'].forEach(function(t){
+    ['ask','incoming'].forEach(function(t){
         var btn = document.getElementById('proofTab'+t.charAt(0).toUpperCase()+t.slice(1));
         if(btn) btn.classList.toggle('active', t === tab);
     });
     var content = document.getElementById('proofContent');
     content.innerHTML = '<div class="proof-empty">Chargement…</div>';
     if(tab === 'ask'){
-        fetch('/api/proof/tasks').then(function(r){return r.json();}).then(function(tasks){
-            if(!tasks.length){ content.innerHTML = '<div class="proof-empty">Aucune tâche récente à contester ✅</div>'; return; }
-            content.innerHTML = tasks.map(function(t){
-                var disabled = t.already_requested ? 'disabled' : '';
-                var btnLabel = t.already_requested ? '✓ Déjà contesté' : '🕵️ Contester';
-                return '<div class="proof-task-card">'
-                    + '<div class="proof-task-header">'
-                    +   '<div class="proof-task-info">'
-                    +     '<div class="proof-task-name">' + escHtml(t.task) + '</div>'
-                    +     '<div class="proof-task-meta">Par ' + escHtml(t.name) + ' · ' + fmtAgo(t.at) + '</div>'
-                    +   '</div>'
-                    +   '<div class="proof-task-pts">+' + t.points + ' pts</div>'
-                    + '</div>'
-                    + '<button class="proof-ask-btn" ' + disabled + ' onclick="showContestConfirm(' + t.id + ',\'' + escJs(t.email) + '\',\'' + escJs(t.task) + '\',' + t.points + ')">' + btnLabel + '</button>'
-                    + '</div>';
-            }).join('');
-        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
-    } else {
-        fetch('/api/proof/pending').then(function(r){return r.json();}).then(function(data){
-            if(tab === 'my'){
-                var items = data.sent || [];
-                if(!items.length){ content.innerHTML = '<div class="proof-empty">Aucune contestation en cours</div>'; return; }
-                content.innerHTML = items.map(function(pr){
-                    var html = '<div class="proof-task-card" style="gap:8px;">'
-                        + '<div class="proof-task-header">'
-                        +   '<div class="proof-task-info">'
-                        +     '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
-                        +     '<div class="proof-task-meta">Contestation envers ' + escHtml(pr.target_name) + ' · ' + statusLabel(pr.status) + '</div>'
-                        +   '</div>'
+        Promise.all([
+            fetch('/api/proof/tasks').then(function(r){return r.json();}),
+            fetch('/api/proof/pending').then(function(r){return r.json();})
+        ]).then(function(res){
+            var tasks = Array.isArray(res[0]) ? res[0] : [];
+            var sent = (res[1].sent || []).filter(function(pr){ return pr.status === 'submitted'; });
+            var html = '';
+            if(sent.length){
+                html += '<div class="proof-verdict-section">'
+                    + '<div class="proof-verdict-section-title">📸 ' + sent.length + ' preuve(s) en attente de ton verdict</div>';
+                sent.forEach(function(pr){
+                    var photoSrc = pr.photo_data || pr.photo || '';
+                    html += '<div class="proof-task-card">'
+                        + '<div class="proof-task-info">'
+                        +   '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
+                        +   '<div class="proof-task-meta">Preuve envoy\u00e9e par ' + escHtml(pr.target_name) + '</div>'
                         + '</div>';
-                    var _photoSrc = pr.photo_data || pr.photo || '';
-                    if(pr.status === 'submitted' && _photoSrc){
-                        html += '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(_photoSrc) + '" alt="Preuve"></div>'
+                    if(photoSrc){
+                        html += '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(photoSrc) + '" alt="Preuve"></div>'
                             + '<div class="proof-verdict-btns">'
-                            + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + pr.id + ',\'validated\')">✅ Preuve valide<br><small>tu perds −10 pts, l\'accusé(e) gagne ses pts</small></button>'
-                            + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + pr.id + ',\'refuted\')">💀 Fausse preuve<br><small>l\'accusé(e) perd −10 pts + 💀 24h</small></button>'
+                            + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + pr.id + ',\'validated\')">\u2705 Preuve valide \u2014 je retire ma contestation</button>'
+                            + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + pr.id + ',\'refuted\')">\uD83D\uDC80 Fausse preuve \u2014 cr\u00e2ne 24h</button>'
                             + '</div>';
+                    } else {
+                        html += '<div class="proof-empty" style="padding:6px 0 0;font-size:12px;">⏳ En attente de la photo…</div>';
                     }
-                    return html + '</div>';
-                }).join('');
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            if(!tasks.length){
+                html += '<div class="proof-empty">Aucune t\u00e2che r\u00e9cente \u00e0 contester \u2705</div>';
             } else {
-                var items = data.received || [];
-                if(!items.length){ content.innerHTML = '<div class="proof-empty">Personne ne te conteste 😇</div>'; return; }
-                content.innerHTML = items.map(function(pr){
+                html += tasks.map(function(t){
+                    var disabled = t.already_requested ? 'disabled' : '';
+                    var btnLabel = t.already_requested ? '\u2713 D\u00e9j\u00e0 contest\u00e9' : '\uD83D\uDD75\uFE0F Contester';
                     return '<div class="proof-task-card">'
                         + '<div class="proof-task-header">'
                         +   '<div class="proof-task-info">'
-                        +     '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
-                        +     '<div class="proof-task-meta">' + escHtml(pr.requester_name) + ' conteste cette tâche — envoie ta preuve !</div>'
+                        +     '<div class="proof-task-name">' + escHtml(t.task) + '</div>'
+                        +     '<div class="proof-task-meta">Par ' + escHtml(t.name) + ' \u00b7 ' + fmtAgo(t.at) + '</div>'
                         +   '</div>'
+                        +   '<div class="proof-task-pts">+' + t.points + ' pts</div>'
                         + '</div>'
-                        + '<div class="proof-photo-btns">'
-                        +   '<button class="proof-photo-btn proof-photo-btn-cam" data-proof-id="' + pr.id + '" data-cam="1">📷 Prendre une photo</button>'
-                        +   '<button class="proof-photo-btn proof-photo-btn-gal" data-proof-id="' + pr.id + '" data-cam="0">🖼 Galerie</button>'
-                        + '</div>'
+                        + '<button class="proof-ask-btn" ' + disabled + ' onclick="showContestConfirm(' + t.id + ',\'' + escJs(t.email) + '\',\'' + escJs(t.task) + '\',' + t.points + ')">' + btnLabel + '</button>'
                         + '</div>';
                 }).join('');
-                content.querySelectorAll('[data-proof-id]').forEach(function(btn){
-                    btn.addEventListener('click', function(){
-                        _proofSubmitId = parseInt(this.getAttribute('data-proof-id'));
-                        if(this.getAttribute('data-cam') === '1'){
-                            document.getElementById('proofPhotoInputCam').click();
-                        } else {
-                            document.getElementById('proofPhotoInputGal').click();
-                        }
-                    });
-                });
             }
-        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
+            content.innerHTML = html;
+        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur r\u00e9seau</div>'; });
+    } else {
+        fetch('/api/proof/pending').then(function(r){return r.json();}).then(function(data){
+            var items = data.received || [];
+            if(!items.length){ content.innerHTML = '<div class="proof-empty">Personne ne te conteste \uD83D\uDE07</div>'; return; }
+            content.innerHTML = items.map(function(pr){
+                return '<div class="proof-task-card">'
+                    + '<div class="proof-task-header">'
+                    +   '<div class="proof-task-info">'
+                    +     '<div class="proof-task-name">' + escHtml(pr.task) + '</div>'
+                    +     '<div class="proof-task-meta">' + escHtml(pr.requester_name) + ' conteste \u2014 prouve que tu l\'as fait\u00a0!</div>'
+                    +   '</div>'
+                    + '</div>'
+                    + '<button class="proof-photo-btn" data-proof-id="' + pr.id + '">\uD83D\uDCF7 Prendre une photo comme preuve</button>'
+                    + '</div>';
+            }).join('');
+            content.querySelectorAll('[data-proof-id]').forEach(function(btn){
+                btn.addEventListener('click', function(){
+                    _proofSubmitId = parseInt(this.getAttribute('data-proof-id'));
+                    document.getElementById('proofPhotoInputCam').click();
+                });
+            });
+        }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur r\u00e9seau</div>'; });
     }
 }
 
@@ -3627,7 +3636,7 @@ function confirmContest(){
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({task_id: p.taskId, target_email: p.email, task_name: p.taskName, task_points: p.taskPoints})
     }).then(function(r){return r.json();}).then(function(d){
-        if(d.success){ showToast(d.message||'Contestation lancée !','#153036'); showProofTab('my'); }
+        if(d.success){ showToast(d.message||'Contestation lancée !','#153036'); showProofTab('ask'); }
         else { showToast(d.error||'Erreur','#e74c3c'); showProofTab('ask'); }
     }).catch(function(){ showToast('Erreur réseau','#e74c3c'); showProofTab('ask'); });
 }
@@ -3674,9 +3683,7 @@ function _handleProofFile(file){
 document.getElementById('proofPhotoInputCam').addEventListener('change', function(){
     _handleProofFile(this.files[0]); this.value = '';
 });
-document.getElementById('proofPhotoInputGal').addEventListener('change', function(){
-    _handleProofFile(this.files[0]); this.value = '';
-});
+
 function doValidateProof(proofId, verdict){
     fetch('/api/proof/validate',{
         method:'POST', headers:{'Content-Type':'application/json'},
@@ -3764,14 +3771,12 @@ function sendMalus(reason, points){
 
 <!-- ══ OVERLAY CONTESTER ══ -->
 <input type="file" id="proofPhotoInputCam" accept="image/*" capture="environment">
-<input type="file" id="proofPhotoInputGal" accept="image/*">
 <div class="proof-overlay" id="proofOverlay" onclick="if(event.target===this)closeProofSheet()">
     <div class="proof-sheet">
         <div class="proof-sheet-title">🕵️ Contester une tâche</div>
-        <div class="proof-sheet-sub">📸 Photo valide → tu perds −10 pts · 💀 Photo fausse → l'accusé(e) perd −10 pts + crâne 24h</div>
+        <div class="proof-sheet-sub">📸 Photo valide → tu perds −10 pts · 💀 Photo fausse → l'accusé(e) perd −10 pts + 💀 24h</div>
         <div class="proof-tabs">
             <button class="proof-tab-btn active" id="proofTabAsk" onclick="showProofTab('ask')">🕵️ Contester</button>
-            <button class="proof-tab-btn" id="proofTabMy" onclick="showProofTab('my')">📬 Mes contestations</button>
             <button class="proof-tab-btn" id="proofTabIncoming" onclick="showProofTab('incoming')">📸 À prouver</button>
         </div>
         <div id="proofContent">
