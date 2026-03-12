@@ -519,9 +519,53 @@ body {
 }
 
 /* Bouton ajouter tâche flottant */
-.add-task-btn { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color:white; padding:18px 25px; border-radius:50px; text-decoration:none; font-weight:800; box-shadow:0 8px 25px rgba(253, 174, 84, 0.4); transition: all .3s ease; z-index:1000; display:flex; align-items:center; gap:10px; font-size: 15px; }
+.add-task-btn { position: fixed; bottom: 82px; right: 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color:white; padding:18px 25px; border-radius:50px; text-decoration:none; font-weight:800; box-shadow:0 8px 25px rgba(253, 174, 84, 0.4); transition: all .3s ease; z-index:1000; display:flex; align-items:center; gap:10px; font-size: 15px; }
 
 .add-task-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow:0 12px 35px rgba(253, 174, 84, 0.6); }
+
+/* ===== BARRE DE NAVIGATION FIXE EN BAS ===== */
+body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important; }
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: saturate(180%) blur(28px);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 -8px 32px rgba(21,48,54,0.15);
+    display: flex;
+    overflow: hidden;
+}
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 4px 10px 4px;
+    background: none;
+    border: none;
+    border-left: 1px solid rgba(21,48,54,0.06);
+    cursor: pointer;
+    text-decoration: none;
+    color: #597176;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    transition: background 0.15s ease;
+}
+.bottom-nav-item:first-child { border-left: none; }
+.bottom-nav-item:active { background: rgba(21,48,54,0.06); }
+.bottom-nav-icon { font-size: 20px; line-height: 1; }
 
 /* Badge pour missions personnalisées */
 .custom-badge{
@@ -706,7 +750,21 @@ window.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
-<!-- Bouton Menu harmonisé en bas de page -->
+<!-- Barre de navigation fixe en bas de page -->
+<nav class="bottom-nav" aria-label="Navigation principale">
+    <a class="bottom-nav-item" href="{{ url_for('menu') }}">
+        <span class="bottom-nav-icon">🏠</span>
+        <span>Menu</span>
+    </a>
+    <a class="bottom-nav-item" href="{{ url_for('baby_messages') }}">
+        <span class="bottom-nav-icon">👶</span>
+        <span>Bébé</span>
+    </a>
+    <a class="bottom-nav-item" href="{{ url_for('add_task_page', cat=category) }}">
+        <span class="bottom-nav-icon">⭐</span>
+        <span>Ajouter</span>
+    </a>
+</nav>
 
 
 <!-- Modal édition des points -->
