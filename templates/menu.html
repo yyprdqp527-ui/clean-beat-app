@@ -3248,16 +3248,6 @@ body { padding-bottom: 72px !important; }
 <div class="cw-wrap" id="cwWrap">
     <!-- Onglets de navigation (toujours visibles) -->
     <div class="cw-tabs">
-        {% set _me_accused = [] %}{% for p in players %}{% if p.is_current_user and p.skull_pending|default(false) %}{% if _me_accused.append(1) %}{% endif %}{% endif %}{% endfor %}
-        <button class="cw-tab" onclick="openProofSheet()" style="position:relative;">
-            <span class="cw-tab-icon">�️</span>
-            <span class="cw-tab-label">Contester</span>
-            {% if _me_accused|length > 0 %}
-            <span style="position:absolute;top:2px;right:4px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;font-family:Montserrat,sans-serif;line-height:1.6;">📸 Prouve !</span>
-            {% elif pending_proofs|default(0) > 0 %}
-            <span class="cw-tab-badge">{{ pending_proofs }}</span>
-            {% endif %}
-        </button>
         <button class="cw-tab" onclick="openGlobalMalus()">
             <span class="cw-tab-icon">💀</span>
             <span class="cw-tab-label">Malus</span>
