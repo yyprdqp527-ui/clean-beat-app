@@ -11005,7 +11005,9 @@ def api_daily_tasks():
                 ct.completed_at,
                 u.name,
                 u.avatar_url,
-                u.avatar_file
+                u.avatar_file,
+                u.avatar,
+                u.avatar_style
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
@@ -11018,17 +11020,19 @@ def api_daily_tasks():
         tasks = []
         
         for row in rows:
-            email, task_name, points, completed_at, name, avatar_url, avatar_file = row
+            email, task_name, points, completed_at, name, avatar_url, avatar_file, avatar_seed, avatar_style = row
             
             # Résoudre l'avatar
             final_avatar = None
             valid_file = validate_avatar_file(avatar_file)
             if valid_file:
-                final_avatar = url_for('static', filename=f'avatars/{valid_file}')
-            elif avatar_url:
+                final_avatar = url_for('static', filename=f'avatars/{valid_file}', _external=True)
+            elif avatar_url and avatar_url.startswith('http'):
                 final_avatar = avatar_url
             else:
-                final_avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
+                seed = avatar_seed or (name or email.split('@')[0])
+                style = avatar_style or 'adventurer'
+                final_avatar = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
             
             # Extraire date/heure locale (str ou datetime selon backend)
             completed_date = None
