@@ -9017,9 +9017,9 @@ def api_give_malus():
             VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
         """, (target_email, malus_task_name, points, house_id))
 
-        # 💀 SKULL : Ajouter un skull pendant 24h
+        # 💀 SKULL : Ajouter un skull pendant 1h
         from datetime import timedelta
-        skull_expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        skull_expires = (datetime.utcnow() + timedelta(hours=1)).isoformat()
         c.execute("""
             UPDATE users 
             SET skull_count = COALESCE(skull_count, 0) + 1,
@@ -9031,7 +9031,7 @@ def api_give_malus():
 
         return jsonify({
             'success': True,
-            'message': f'💀 Malus envoyé à {target_name} ! ({points} pts + skull 24h)'
+            'message': f'💀 Malus envoyé à {target_name} ! ({points} pts + skull 1h)'
         })
     except Exception as e:
         conn.rollback()
