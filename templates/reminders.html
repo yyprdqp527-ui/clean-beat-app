@@ -83,9 +83,8 @@
     }
     .form-row {
         display: flex; gap: 10px; align-items: flex-end;
-        flex-wrap: wrap;
     }
-    .form-field { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 6px; }
+    .form-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
     .form-field label {
         font-size: 12px; font-weight: 700; color: #153036;
         text-transform: uppercase; letter-spacing: 0.5px;
@@ -215,7 +214,6 @@
     @media (max-width: 520px) {
         .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
         .reminders-container { padding-top: 90px; }
-        .form-row { flex-direction: column; }
     }
 </style>
 
@@ -235,14 +233,10 @@
         <h2>➕ Ajouter un rappel</h2>
         <form id="addForm" autocomplete="off">
             <div class="form-row">
-                <div class="form-field" style="flex: 2;">
+                <div class="form-field">
                     <label for="title">Tâche ou rappel</label>
                     <input type="text" id="title" name="title" class="form-input"
                            placeholder="Ex : Acheter du lait…" maxlength="120" required>
-                </div>
-                <div class="form-field" style="min-width:110px; max-width:130px;">
-                    <label for="remind_at">Heure (optionnel)</label>
-                    <input type="time" id="remind_at" name="remind_at" class="form-input">
                 </div>
                 <button type="submit" class="btn-add">Ajouter</button>
             </div>
@@ -259,9 +253,6 @@
             <div class="reminder-check" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">&#10003;</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
-                {% if r.remind_at %}
-                <div class="reminder-time">🕐 {{ r.remind_at[:5] }}</div>
-                {% endif %}
             </div>
             <button class="btn-delete" onclick="deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
@@ -275,9 +266,6 @@
             <div class="reminder-check checked" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
-                {% if r.remind_at %}
-                <div class="reminder-time">🕐 {{ r.remind_at[:5] }}</div>
-                {% endif %}
             </div>
             <button class="btn-delete" onclick="deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
@@ -315,7 +303,6 @@
 
         const fd = new FormData();
         fd.append('title', title);
-        fd.append('remind_at', remind_at);
 
         fetch('/reminders/add', { method: 'POST', body: fd })
             .then(function(r){ return r.json(); })
@@ -335,13 +322,11 @@
                     '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">&#10003;</div>' +
                     '<div class="reminder-body">' +
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
-                        (data.remind_at ? '<div class="reminder-time">🕐 ' + data.remind_at.slice(0,5) + '</div>' : '') +
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
                 list.insertBefore(card, list.firstChild);
 
                 document.getElementById('title').value = '';
-                document.getElementById('remind_at').value = '';
                 showToast('✅ Rappel ajouté !');
             })
             .catch(function(){ showToast('❌ Erreur réseau'); });
