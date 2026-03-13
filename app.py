@@ -9044,7 +9044,9 @@ def api_give_malus():
 @app.route('/api/active_malus', methods=['GET'])
 def api_active_malus():
     """
-    Renvoie la liste des joueurs qui ont un skull actif (malus dans les dernières 24h).
+    Renvoie la liste des joueurs qui ont un skull actif
+    = ayant reçu un malus dans les 60 dernières minutes.
+    Basé sur completed_tasks (robuste, pas besoin de skull_expires_at).
     """
     from flask import jsonify
     if 'user' not in session:
@@ -9057,40 +9059,37 @@ def api_active_malus():
         row = c.fetchone()
         if not row or not row[0]:
             return jsonify({'malus': []}), 200
-        
+
         house_id = row[0]
 
-        # Récupérer tous les joueurs de la maison avec skull actif
-        # Utiliser NOW() côté DB pour compatibilité SQLite et PostgreSQL
-        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        c.execute("""
-            SELECT email, name, skull_expires_at
-            FROM users 
-            WHERE house_id=? 
-            AND skull_expires_at IS NOT NULL
-            AND skull_expires_at > ?
-        """, (house_id, now_str))
-        
-        malus_rows = c.fetchall()
-        malus_list = []
-        for email, name, skull_expires_at in malus_rows:
-            # Récupérer la tâche qui a causé le dernier malus
-            c.execute("""
-                SELECT task_name FROM completed_tasks
-                WHERE user_email=? AND category='malus'
-                ORDER BY completed_at DESC LIMIT 1
-            """, (email,))
-            task_row = c.fetchone()
-            task_name = task_row[0] if task_row else None
-            
-            malus_list.append({
-                'email': email,
-                'name': name or email.split('@')[0],
-                'task_name': task_name,
-                'expires_at': skull_expires_at
-            })
+        # Seuil = il y a 60 minutes
+        from datetime import timedelta
+        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
-        return jsonify({'malus': malus_list})
+        # Joueurs ayant reçu un malus dans la dernière heure
+        c.execute("""
+            SELECT ct.user_email, u.name, ct.task_name
+            FROM completed_tasks ct
+            INNER JOIN users u ON ct.user_email = u.email
+            WHERE ct.house_id = ?
+              AND ct.category = 'malus'
+              AND ct.completed_at >= ?
+            ORDER BY ct.completed_at DESC
+        """, (house_id, since))
+
+        rows = c.fetchall()
+
+        # Dédupliquer par email (garder le malus le plus récent)
+        seen = {}
+        for email, name, task_name in rows:
+            if email not in seen:
+                seen[email] = {
+                    'email': email,
+                    'name': name or email.split('@')[0],
+                    'task_name': task_name,
+                }
+
+        return jsonify({'malus': list(seen.values())})
     except Exception as e:
         _dbg(f"ERREUR api_active_malus: {e}")
         return jsonify({'malus': [], 'error': str(e)}), 500
