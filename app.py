@@ -9019,7 +9019,7 @@ def api_give_malus():
 
         # 💀 SKULL : Ajouter un skull pendant 1h
         from datetime import timedelta
-        skull_expires = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+        skull_expires = (datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
         c.execute("""
             UPDATE users 
             SET skull_count = COALESCE(skull_count, 0) + 1,
@@ -9061,13 +9061,15 @@ def api_active_malus():
         house_id = row[0]
 
         # Récupérer tous les joueurs de la maison avec skull actif
+        # Utiliser NOW() côté DB pour compatibilité SQLite et PostgreSQL
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         c.execute("""
             SELECT email, name, skull_expires_at
             FROM users 
             WHERE house_id=? 
             AND skull_expires_at IS NOT NULL
             AND skull_expires_at > ?
-        """, (house_id, datetime.utcnow().isoformat()))
+        """, (house_id, now_str))
         
         malus_rows = c.fetchall()
         malus_list = []
