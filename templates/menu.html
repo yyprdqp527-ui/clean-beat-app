@@ -3243,25 +3243,25 @@ body { padding-bottom: 72px !important; }
 
 {% if players %}
 {% set max_pts = namespace(v=1) %}
-{% for p in players %}{% if (p.weekly_points|default(0)) > max_pts.v %}{% set max_pts.v = p.weekly_points|default(0) %}{% endif %}{% endfor %}
-{% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='weekly_points', reverse=True) %}
+{% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
+{% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='daily_points', reverse=True) %}
 <div class="cw-wrap" id="cwWrap">
     <!-- Onglets de navigation (toujours visibles) -->
     <div class="cw-tabs">
         <button class="cw-tab" onclick="openGlobalMalus()" id="cwTabScore">
-            <span class="cw-tab-icon" id="compteurIcon">💀</span>
-            <span class="cw-tab-label" id="compteurLabel">Malus</span>
+            <span class="cw-tab-icon" id="compteurIcon">🏆</span>
+            <span class="cw-tab-label" id="compteurLabel">Classement quotidien</span>
         </button>
     </div>
     <!-- Corps expansible -->
     <div class="cw-body" id="cwBody">
-    <div class="cw-head"><div class="cw-title">🏆 Classement de la semaine</div><div class="cw-countdown" id="cwCountdown">…</div></div>
+    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div><div class="cw-countdown" id="cwCountdown">…</div></div>
     {% for p in sorted_by_week %}
     {% if loop.index == 1 %}{% set medal = '🥇' %}
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
     {% elif loop.index == 3 %}{% set medal = '🥉' %}
     {% else %}{% set medal = loop.index|string + '.' %}{% endif %}
-    {% set bar_pct = (((p.weekly_points|default(0)) / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
+    {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
     <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}">
         <div class="cw-rank">{{ medal }}</div>
         {% if p.avatar_file %}
@@ -3281,7 +3281,7 @@ body { padding-bottom: 72px !important; }
                 <div class="cw-bar-fill" data-pct="{{ bar_pct }}" style="width:0%;"></div>
             </div>
         </div>
-        <div class="cw-pts">{{ p.weekly_points|default(0) }} pts</div>
+        <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
         {% if p.skull_active|default(false) %}<span class="cw-skull" title="Tricheur — 💀 actif 24h">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" title="Sous accusation — doit fournir une preuve" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0) > 0 %}<span class="cw-skull" title="Tricheur prouvé {{ p.skull_count }} fois">💀×{{ p.skull_count }}</span>{% endif %}
         {% if not p.is_current_user %}
         <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
@@ -3333,7 +3333,7 @@ body { padding-bottom: 72px !important; }
         <div class="malus-option" onclick="selectPlayer('{{ p.email|e }}','{{ p.name|e }}')">
             <div class="malus-option-icon">{% if p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
             <div class="malus-option-label">{{ p.name }}</div>
-            <div class="cw-pts">{{ p.weekly_points|default(0) }} pts/sem</div>
+            <div class="cw-pts">{{ p.daily_points|default(0) }} pts/sem</div>
         </div>
         {% endif %}{% endfor %}{% endif %}
         <button class="malus-cancel" onclick="closePlayerPicker()">Annuler</button>
