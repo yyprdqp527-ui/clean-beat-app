@@ -3396,6 +3396,8 @@ body { padding-bottom: 72px !important; }
     updateCWCountdown();
     setInterval(updateCWCountdown, 60000);
 
+    // Desactive: le bouton reste toujours 'Malus' avec le skull
+    /*
     function updateCompteurTab() {
         var now = new Date();
         var d = now.getDay(); // 0=dim,1=lun...
@@ -3426,6 +3428,7 @@ body { padding-bottom: 72px !important; }
     }
     updateCompteurTab();
     setInterval(updateCompteurTab, 60000);
+    */
 
     function animateBars(){
         document.querySelectorAll('.cw-bar-fill').forEach(function(el){
