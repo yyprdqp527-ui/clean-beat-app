@@ -8957,6 +8957,145 @@ def api_send_bonus():
 # 🔍 SYSTÈME DE PREUVES — Vigilance sociale
 # ════════════════════════════════════════════════════════════
 
+@app.route('/api/give_malus', methods=['POST'])
+def api_give_malus():
+    """
+    Donne un malus à un joueur : retire des points ET ajoute un skull pendant 24h.
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    target_email = str(data.get('target_email', '')).strip()
+    task_name = str(data.get('task_name', '')).strip()
+    sender_email = session['user']
+
+    if not target_email or target_email == sender_email:
+        return jsonify({'success': False, 'error': 'Cible invalide'}), 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        # Vérifier que l'expéditeur et la cible sont dans la même maison
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (sender_email,))
+        sender_row = c.fetchone()
+        if not sender_row:
+            return jsonify({'success': False, 'error': 'Expéditeur introuvable'}), 400
+        house_id = sender_row[0]
+        sender_name = sender_row[1] or sender_email.split('@')[0]
+
+        c.execute("SELECT house_id, name, COALESCE(skull_count, 0) FROM users WHERE email=?", (target_email,))
+        target_row = c.fetchone()
+        if not target_row or target_row[0] != house_id:
+            return jsonify({'success': False, 'error': 'Cible introuvable dans cette maison'}), 400
+        target_name = target_row[1] or target_email.split('@')[0]
+        current_skull_count = target_row[2]
+
+        # Limiter à 3 malus par jour vers la même cible
+        from datetime import date as _date
+        today = _date.today().isoformat()
+        c.execute("""
+            SELECT COUNT(*) FROM completed_tasks
+            WHERE user_email=? AND category='malus'
+            AND task_name LIKE ? AND DATE(completed_at)=?
+        """, (target_email, '%' + sender_name + '%', today))
+        count_today = c.fetchone()[0]
+        if count_today >= 3:
+            return jsonify({'success': False, 'error': f'Tu as déjà envoyé 3 malus à {target_name} aujourd\'hui !'}), 200
+
+        # Points du malus (négatif)
+        points = -10
+
+        # Insérer le malus comme tâche avec points négatifs
+        malus_task_name = f'💀 Malus de {sender_name}' + (f' : {task_name}' if task_name else '')
+        c.execute("""
+            INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+            VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
+        """, (target_email, malus_task_name, points, house_id))
+
+        # 💀 SKULL : Ajouter un skull pendant 24h
+        from datetime import timedelta
+        skull_expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        c.execute("""
+            UPDATE users 
+            SET skull_count = COALESCE(skull_count, 0) + 1,
+                skull_expires_at = ?
+            WHERE email=?
+        """, (skull_expires, target_email))
+
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'💀 Malus envoyé à {target_name} ! ({points} pts + skull 24h)'
+        })
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_give_malus: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/active_malus', methods=['GET'])
+def api_active_malus():
+    """
+    Renvoie la liste des joueurs qui ont un skull actif (malus dans les dernières 24h).
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'malus': []}), 200
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify({'malus': []}), 200
+        
+        house_id = row[0]
+
+        # Récupérer tous les joueurs de la maison avec skull actif
+        c.execute("""
+            SELECT email, name, skull_expires_at
+            FROM users 
+            WHERE house_id=? 
+            AND skull_expires_at IS NOT NULL
+            AND skull_expires_at > ?
+        """, (house_id, datetime.utcnow().isoformat()))
+        
+        malus_rows = c.fetchall()
+        malus_list = []
+        for email, name, skull_expires_at in malus_rows:
+            # Récupérer la tâche qui a causé le dernier malus
+            c.execute("""
+                SELECT task_name FROM completed_tasks
+                WHERE user_email=? AND category='malus'
+                ORDER BY completed_at DESC LIMIT 1
+            """, (email,))
+            task_row = c.fetchone()
+            task_name = task_row[0] if task_row else None
+            
+            malus_list.append({
+                'email': email,
+                'name': name or email.split('@')[0],
+                'task_name': task_name,
+                'expires_at': skull_expires_at
+            })
+
+        return jsonify({'malus': malus_list})
+    except Exception as e:
+        _dbg(f"ERREUR api_active_malus: {e}")
+        return jsonify({'malus': [], 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/api/proof/tasks')
 def api_proof_tasks():
     """Tâches récentes des colocataires (dernières 24h) qu'on peut contester."""
@@ -10929,6 +11068,7 @@ def api_daily_tasks():
             
             tasks.append({
                 'player_name': name if name else email.split('@')[0],
+                'player_email': email,  # Pour pouvoir donner des malus
                 'task_name': task_name,
                 'points': points,
                 'time': time_str,
