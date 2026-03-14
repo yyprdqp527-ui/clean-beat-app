@@ -326,7 +326,11 @@
                 {% for msg in messages %}
                     <div class="message-item" data-message-id="{{ msg.id }}">
                         <div class="message-avatar">
-                            🏠
+                            {% if msg.sender_avatar and (msg.sender_avatar.startswith('/static') or msg.sender_avatar.startswith('http')) %}
+                                <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}">
+                            {% else %}
+                                {{ msg.sender_avatar }}
+                            {% endif %}
                         </div>
                         
                         <div class="message-content">

@@ -5836,10 +5836,12 @@ def mission_messages():
     _dbg(f"🔍 /mission_messages - Récupération messages mission pour house_id={house_id}")
     c.execute("""
         SELECT m.id, m.sender_email, m.content, m.timestamp, m.sender_type, m.message_type,
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
                CASE WHEN EXISTS (
                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
                ) THEN 1 ELSE 0 END as is_read_by_me
         FROM messages m
+        LEFT JOIN users sender ON m.sender_email = sender.email
         WHERE m.house_id = ?
         AND m.message_type = 'task_added'
         ORDER BY m.id DESC
@@ -5851,18 +5853,37 @@ def mission_messages():
     
     messages_data = []
     for row in all_rows:
-        msg_id, sender_email, content, timestamp, sender_type, message_type, is_read_by_me = row
-        
+        msg_id, sender_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, is_read_by_me = row
+
+        # Préparer l'avatar de l'expéditeur (même logique que baby_messages)
+        display_sender_avatar = None
+        if validate_avatar_file(sender_avatar_file):
+            display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
+        elif sender_avatar_url:
+            if 'dicebear.com/8.x' in sender_avatar_url:
+                sender_avatar_url = sender_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+            display_sender_avatar = sender_avatar_url
+        elif sender_avatar and len(str(sender_avatar)) <= 4:
+            display_sender_avatar = sender_avatar
+        elif sender_avatar:
+            sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'
+            display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
+        else:
+            display_sender_avatar = '👤'
+
+        if not sender_name or sender_name.strip() == '':
+            sender_name = sender_email.split('@')[0] if sender_email else 'Inconnu'
+
         messages_data.append({
             'id': msg_id,
             'sender_email': sender_email,
-            'sender_name': house_name,
-            'sender_avatar': '🏠',
+            'sender_name': sender_name,
+            'sender_avatar': display_sender_avatar,
             'content': content,
             'timestamp': timestamp,
             'sender_type': sender_type,
             'message_type': message_type,
-            'is_me': False,
+            'is_me': sender_email == session['user'],
             'is_read_by_me': bool(is_read_by_me),
             'color': '#FB923C',  # Orange pour les messages mission
             'bg_color': 'rgba(251, 146, 60, 0.15)'
