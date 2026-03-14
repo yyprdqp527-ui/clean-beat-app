@@ -215,24 +215,6 @@
         100% { opacity: 0; transform: translateY(-90px) scale(0.9); }
     }
 
-    /* ===== BADGE POINTS DANS LE HEADER ===== */
-    .pts-badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        background: linear-gradient(135deg, rgba(39,174,96,0.18), rgba(46,204,113,0.12));
-        border: 1.5px solid rgba(39,174,96,0.35);
-        border-radius: 12px;
-        padding: 4px 12px;
-        font-size: 13px; font-weight: 800; color: #1a7a3a;
-        margin-top: 8px;
-        transition: all 0.4s ease;
-    }
-    .pts-badge.bump {
-        transform: scale(1.25);
-        background: linear-gradient(135deg, rgba(39,174,96,0.35), rgba(46,204,113,0.25));
-        border-color: rgba(39,174,96,0.7);
-        color: #145e2b;
-    }
-
     /* ===== TOAST ===== */
     #reminder-toast {
         position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
@@ -258,10 +240,9 @@
 
     <!-- EN-TÊTE -->
     <div class="reminders-header">
-        <span class="header-icon">�</span>
+        <span class="header-icon">🛒</span>
         <h1>Liste de courses</h1>
-        <div class="subtitle">Coche un article pour gagner des points ⭐</div>
-        <div class="pts-badge" id="ptsBadge">⭐ Chargement…</div>
+
     </div>
 
     <!-- FORMULAIRE AJOUT -->
@@ -330,26 +311,6 @@
         setTimeout(function(){ t.classList.remove('show'); }, duration || 2200);
     }
 
-    // ─── Badge points : chargement initial ─────────────────────────────────────
-    (function loadInitialPoints() {
-        fetch('/api/players_points')
-            .then(function(r){ return r.json(); })
-            .then(function(data) {
-                if (!data.players) return;
-                // Trouver le joueur courant (premier de la liste = joueur connecté)
-                var me = data.players[0];
-                if (me) updatePtsBadge(me.daily_points || 0);
-            }).catch(function(){});
-    })();
-
-    function updatePtsBadge(pts) {
-        var badge = document.getElementById('ptsBadge');
-        if (!badge) return;
-        badge.textContent = '⭐ ' + pts + ' pts aujourd\'hui';
-        badge.classList.add('bump');
-        setTimeout(function(){ badge.classList.remove('bump'); }, 600);
-    }
-
     // ─── Animation +1 pt ────────────────────────────────────────────────────────
     function showPlusOne(checkEl) {
         var rect = checkEl.getBoundingClientRect();
@@ -415,7 +376,6 @@
                     // Animation +1 pt
                     if (data.points_earned > 0 && checkEl) {
                         showPlusOne(checkEl);
-                        updatePtsBadge(data.new_total_points);
                     }
                     // pas de toast
                 } else {
