@@ -3101,6 +3101,15 @@ body { padding-bottom: 72px !important; }
     transition: transform 0.3s; display: inline-block; margin-top: 1px;
 }
 .cw-wrap.expanded .cw-tab-arrow { transform: rotate(180deg); }
+.cw-tab-sunday {
+    font-size: 9px; font-weight: 800; color: #FDAE54;
+    background: rgba(253,174,84,0.12);
+    padding: 2px 6px; border-radius: 20px;
+    border: 1px solid rgba(253,174,84,0.28);
+    white-space: nowrap; flex-shrink: 0;
+    display: none;
+}
+.cw-tab-sunday.visible { display: inline-flex; align-items: center; }
 
 /* ══ Skull badge sur les avatars ══ */
 .skull-overlay {
@@ -3301,11 +3310,12 @@ body { padding-bottom: 72px !important; }
         <button class="cw-tab" onclick="toggleCW()" id="cwTabScore">
             <span class="cw-tab-icon" id="compteurIcon">🏆</span>
             <span class="cw-tab-label" id="compteurLabel">Classement quotidien</span>
+            <span class="cw-tab-sunday" id="cwSundayCountdown"></span>
         </button>
     </div>
     <!-- Corps expansible -->
     <div class="cw-body" id="cwBody">
-    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div><div class="cw-countdown" id="cwCountdown">…</div></div>
+    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div></div>
     {% for p in sorted_by_week %}
     {% if loop.index == 1 %}{% set medal = '🥇' %}
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
@@ -3426,26 +3436,27 @@ body { padding-bottom: 72px !important; }
 
 <script>
 (function(){
-    function updateCWCountdown(){
+    function updateCWSundayCountdown(){
         var now = new Date();
         var d = now.getDay();
-        var daysToFri = (5 - d + 7) % 7;
-        if(daysToFri === 0 && now.getHours() >= 22) daysToFri = 7;
-        var friday = new Date(now);
-        friday.setDate(now.getDate() + daysToFri);
-        friday.setHours(22,0,0,0);
-        var diff = friday - now;
+        var daysToSun = (7 - d) % 7;
+        if(daysToSun === 0 && now.getHours() >= 22) daysToSun = 7;
+        var sunday = new Date(now);
+        sunday.setDate(now.getDate() + daysToSun);
+        sunday.setHours(22,0,0,0);
+        var diff = sunday - now;
         var days = Math.floor(diff/86400000);
         var hours = Math.floor((diff%86400000)/3600000);
-        var el = document.getElementById('cwCountdown');
+        var el = document.getElementById('cwSundayCountdown');
         if(!el) return;
-        if(days > 1) el.textContent = '\uD83C\uDF81 Vendredi dans '+days+'j';
+        el.classList.add('visible');
+        if(days > 1) el.textContent = '\uD83C\uDF81 Dim. dans '+days+'j';
         else if(days === 1) el.textContent = '\uD83C\uDF81 Demain !';
         else if(hours > 0) el.textContent = '\uD83C\uDF81 Ce soir dans '+hours+'h !';
         else el.textContent = '\uD83C\uDF81 Ce soir !';
     }
-    updateCWCountdown();
-    setInterval(updateCWCountdown, 60000);
+    updateCWSundayCountdown();
+    setInterval(updateCWSundayCountdown, 60000);
 
     // Desactive: le bouton reste toujours 'Malus' avec le skull
     /*
