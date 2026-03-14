@@ -6391,5 +6391,142 @@ function sendMalus(reason, points){
 
             </script>
 
-            </body>
+            
+            <!-- === DASHBOARD FLOTTANT BAS === -->
+            <style>
+                .dash-bar {
+                    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+                    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+                    backdrop-filter: saturate(180%) blur(28px);
+                    -webkit-backdrop-filter: saturate(180%) blur(28px);
+                    border-radius: 22px 22px 0 0;
+                    box-shadow: 0 -8px 40px rgba(89,113,118,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
+                    border-top: 2px solid rgba(255,255,255,0.55);
+                    transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+                }
+                .dash-bar.closed { transform: translateY(calc(100% - 54px)); }
+                .dash-handle {
+                    width: 100%; padding: 10px 16px 6px 16px;
+                    display: flex; align-items: center; justify-content: space-between;
+                    cursor: pointer; background: none; border: none;
+                    -webkit-tap-highlight-color: transparent;
+                }
+                .dash-grip {
+                    width: 44px; height: 5px;
+                    background: linear-gradient(135deg, rgba(166,211,220,0.7), rgba(253,174,84,0.5));
+                    border-radius: 3px; margin: 0 auto 4px auto;
+                }
+                .dash-meta {
+                    display: flex; align-items: center; justify-content: space-between;
+                    width: 100%; padding: 0 4px;
+                }
+                .dash-time { font-size:12px; font-weight:800; color:#153036; }
+                .dash-label { font-size:11px; font-weight:700; color:#597176; }
+                .dash-gift { font-size:12px; font-weight:800; color:#FDAE54; }
+                .dash-body { padding: 4px 12px 16px 12px; max-height: 55vh; overflow-y: auto; }
+                .dash-bar.closed .dash-body { display: none; }
+                .dash-card {
+                    background: rgba(255,255,255,0.95); border-radius: 16px;
+                    padding: 12px 14px; margin-bottom: 10px;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1.5px solid rgba(255,255,255,0.6);
+                    display: flex; align-items: center; gap: 12px;
+                }
+                .dash-medal { font-size:26px; min-width:32px; text-align:center; }
+                .dash-avatar { width:42px; height:42px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+                .dash-name { font-size:14px; font-weight:800; color:#153036; flex:1; }
+                .dash-pts { font-size:12px; font-weight:800; color:#FDAE54; background:rgba(253,174,84,0.15); padding:3px 9px; border-radius:9px; }
+                .dash-tasks { font-size:11px; color:#597176; margin-top:4px; }
+                .dash-empty { text-align:center; padding:24px; color:#597176; font-size:13px; font-weight:600; }
+            </style>
+
+            <div class="dash-bar closed" id="dashBar">
+                <button class="dash-handle" id="dashHandle"
+                    onclick="var b=document.getElementById('dashBar'); b.classList.toggle('closed'); try{localStorage.setItem('dashClosed',b.classList.contains('closed'));}catch(e){} if(!b.classList.contains('closed'))window._loadDash&&window._loadDash();">
+                    <div style="width:100%">
+                        <div class="dash-grip"></div>
+                        <div class="dash-meta">
+                            <span class="dash-time" id="dashTime"></span>
+                            <span class="dash-label" id="dashArrow">▲ Classement</span>
+                            <span class="dash-gift" id="dashGift"></span>
+                        </div>
+                    </div>
+                </button>
+                <div class="dash-body" id="dashBody">
+                    <div class="dash-empty" id="dashLoading">Chargement...</div>
+                </div>
+            </div>
+
+            <script>
+            (function(){
+                var medals = ['🏆', '🥈', '🥉'];
+
+                // Horloge + compte à rebours
+                function tick() {
+                    var now = new Date();
+                    var h = String(now.getHours()).padStart(2,'0');
+                    var m = String(now.getMinutes()).padStart(2,'0');
+                    var el = document.getElementById('dashTime');
+                    if (el) el.textContent = h + ':' + m;
+                    var midnight = new Date(now); midnight.setHours(24,0,0,0);
+                    var diff = Math.floor((midnight - now) / 1000);
+                    var hL = Math.floor(diff/3600);
+                    var mL = Math.floor((diff%3600)/60);
+                    var gel = document.getElementById('dashGift');
+                    if (gel) gel.textContent = '🎁 ' + (hL > 0 ? hL+'h'+(mL>0?String(mL).padStart(2,'0'):'') : mL+'min');
+                    // Flèche
+                    var arr = document.getElementById('dashArrow');
+                    if (arr) {
+                        var closed = document.getElementById('dashBar').classList.contains('closed');
+                        arr.textContent = closed ? '▲ Classement' : '▼ Réduire';
+                    }
+                }
+                tick();
+                setInterval(tick, 30000);
+
+                // Charger le classement
+                function loadDash() {
+                    fetch('/api/daily_tasks')
+                        .then(function(r){ return r.json(); })
+                        .then(function(data) {
+                            var body = document.getElementById('dashBody');
+                            if (!body) return;
+                            if (!data.tasks || data.tasks.length === 0) {
+                                body.innerHTML = '<div class="dash-empty">🎯 Aucune tâche aujourd\'hui<br><small>Sois le premier !</small></div>';
+                                return;
+                            }
+                            // Grouper par joueur
+                            var players = {};
+                            data.tasks.forEach(function(t) {
+                                if (!players[t.player_name]) players[t.player_name] = { name:t.player_name, avatar:t.avatar, total:0, tasks:[] };
+                                players[t.player_name].total += (t.points||0);
+                                players[t.player_name].tasks.push(t.task_name + ' (' + (t.points||0) + 'pt' + (t.points>1?'s':'') + ' · ' + t.time + ')');
+                            });
+                            var sorted = Object.values(players).sort(function(a,b){ return b.total-a.total || b.tasks.length-a.tasks.length; });
+                            var html = '';
+                            sorted.forEach(function(p, i) {
+                                html += '<div class="dash-card">' +
+                                    '<div class="dash-medal">' + (medals[i]||('#'+(i+1))) + '</div>' +
+                                    '<img class="dash-avatar" src="'+p.avatar+'" alt="'+p.name+'">' +
+                                    '<div style="flex:1;min-width:0">' +
+                                        '<div class="dash-name">'+p.name+'</div>' +
+                                        '<div class="dash-tasks">'+p.tasks.slice(0,3).join(' • ')+'</div>' +
+                                    '</div>' +
+                                    '<div class="dash-pts">'+p.total+' pts</div>' +
+                                '</div>';
+                            });
+                            body.innerHTML = html;
+                        })
+                        .catch(function(){ var b=document.getElementById('dashBody'); if(b) b.innerHTML='<div class="dash-empty">Erreur réseau</div>'; });
+                }
+
+                window._loadDash = loadDash;
+                loadDash();
+                setInterval(loadDash, 30000);
+
+                // Restaurer état
+                try { if (localStorage.getItem('dashClosed') === 'false') { document.getElementById('dashBar').classList.remove('closed'); } } catch(e){}
+            })();
+            </script>
+            <!-- === FIN DASHBOARD === -->
+</body>
             </html>
