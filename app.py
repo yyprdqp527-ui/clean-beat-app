@@ -446,13 +446,13 @@ if SOCKETIO_AVAILABLE:
         cors_allowed_origins="*",
         logger=False,
         engineio_logger=False,
-        ping_timeout=60,
-        ping_interval=25,
+        ping_timeout=60,      # Réduit de 120 à 60 secondes
+        ping_interval=25,     # Réduit de 60 à 25 secondes
         async_mode=_async_mode,
-        manage_session=False,
+        # Paramètres supplémentaires pour gunicorn + gevent
         engineio_options={
-            'max_http_buffer_size': 1000000,
-            'transports': ['websocket', 'polling'],
+            'max_http_buffer_size': 1000000,  # 1MB buffer
+            'transports': ['websocket', 'polling'],  # WebSocket en priorité
         }
     )
     print("✅ WebSocket activé pour la synchronisation en temps réel")
