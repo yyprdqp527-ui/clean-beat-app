@@ -2833,11 +2833,42 @@
 .cw-player {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     padding: 7px 0;
     border-bottom: 1px solid rgba(21,48,54,0.07);
 }
 .cw-player:last-of-type { border-bottom: none; }
+.cw-tasks-list {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 0 2px 30px;
+}
+.cw-tasks-list.has-tasks { display: flex; }
+.cw-task-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #597176;
+    line-height: 1.3;
+}
+.cw-task-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #A6D3DC;
+    flex-shrink: 0;
+}
+.cw-task-name { flex: 1; font-weight: 600; color: #153036; }
+.cw-task-pts { font-weight: 700; color: #FDAE54; white-space: nowrap; }
+.cw-task-time {
+    font-size: 10px; font-weight: 700; color: #A6D3DC;
+    background: rgba(166,211,220,0.15);
+    padding: 1px 5px; border-radius: 6px;
+    white-space: nowrap;
+}
 .cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
 .cw-avatar-img {
     width: 32px; height: 32px; border-radius: 50%;
@@ -3271,7 +3302,7 @@ body { padding-bottom: 72px !important; }
     {% elif loop.index == 3 %}{% set medal = '🥉' %}
     {% else %}{% set medal = loop.index|string + '.' %}{% endif %}
     {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
-    <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}">
+    <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}" data-cw-player-name="{{ p.name|e }}">
         <div class="cw-rank">{{ medal }}</div>
         {% if p.avatar_file %}
             <img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="{{ p.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -3295,6 +3326,7 @@ body { padding-bottom: 72px !important; }
         {% if not p.is_current_user %}
         <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
         {% endif %}
+        <div class="cw-tasks-list"></div>
     </div>
     {% endfor %}
     </div><!-- fin cw-body -->
@@ -3448,6 +3480,36 @@ body { padding-bottom: 72px !important; }
 })();
 
 var _cwAnimated = false;
+function loadCWTasks(){
+    fetch('/api/daily_tasks')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if (!data.tasks) return;
+            var byName = {};
+            data.tasks.forEach(function(t){
+                if (!byName[t.player_name]) byName[t.player_name] = [];
+                byName[t.player_name].push(t);
+            });
+            document.querySelectorAll('.cw-player[data-cw-player-name]').forEach(function(el){
+                var name = el.getAttribute('data-cw-player-name');
+                var list = el.querySelector('.cw-tasks-list');
+                if (!list) return;
+                var tasks = byName[name] || [];
+                if (tasks.length === 0) return;
+                list.innerHTML = tasks.map(function(t){
+                    return '<div class="cw-task-item">'
+                         + '<div class="cw-task-dot"></div>'
+                         + '<span class="cw-task-name">' + t.task_name + '</span>'
+                         + '<span class="cw-task-pts">+' + t.points + ' pts</span>'
+                         + '<span class="cw-task-time">' + t.time + '</span>'
+                         + '</div>';
+                }).join('');
+                list.classList.add('has-tasks');
+            });
+        })
+        .catch(function(){});
+}
+
 function toggleCW(){
     var wrap = document.getElementById('cwWrap');
     wrap.classList.toggle('expanded');
@@ -3458,6 +3520,9 @@ function toggleCW(){
                 el.style.width = (el.getAttribute('data-pct') || '0') + '%';
             });
         }, 60);
+        loadCWTasks();
+    } else if(wrap.classList.contains('expanded')){
+        loadCWTasks();
     }
 }
 
