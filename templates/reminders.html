@@ -298,7 +298,6 @@
     document.getElementById('addForm').addEventListener('submit', function(e){
         e.preventDefault();
         const title = document.getElementById('title').value.trim();
-        const remind_at = document.getElementById('remind_at').value;
         if (!title) return;
 
         const fd = new FormData();
