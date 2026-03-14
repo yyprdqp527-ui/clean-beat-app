@@ -862,8 +862,10 @@ body {
 {% block content %}
 <div class="invite-container">
 
-    <!-- Bouton retour -->
+    <!-- Bouton retour (masqué en contexte inscription) -->
+    {% if not from_registration %}
     <a href="{{ url_for('menu') }}" style="display:inline-flex; align-items:center; gap:6px; color:#153036; background:rgba(255,255,255,0.85); border-radius:12px; padding:8px 14px; font-weight:700; font-size:14px; text-decoration:none; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.12);">← Menu</a>
+    {% endif %}
 
     <!-- Header -->
     <div class="invite-header">
