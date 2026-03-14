@@ -277,7 +277,6 @@
         {% endif %}
 
         {% if done_reminders %}
-        <div class="section-title" style="margin-top: 24px;">Dans le panier ✅ ({{ done_reminders|length }})</div>
         {% for r in done_reminders %}
         <div class="reminder-card done" id="card-{{ r.id }}">
             <div class="reminder-check checked" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">✓</div>
