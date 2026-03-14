@@ -2481,7 +2481,7 @@
                     <a class="header-action-pill pill-baby" href="{{ url_for('baby_messages') }}" title="Bébé" aria-label="Suivi bébé">
                         👶{% if unread_baby_tracking|default(0) > 0 %}<span class="header-pill-badge">{{ unread_baby_tracking }}</span>{% endif %}
                     </a>
-                    <a class="header-action-pill pill-mission" href="{{ url_for('add_task_page', cat='Bonus') }}" title="Ajouter une mission" aria-label="Ajouter mission">
+                    <a class="header-action-pill pill-mission" href="{{ url_for('mission_messages') }}" title="Ajouter une mission" aria-label="Ajouter mission">
                         ⭐
                     </a>
                 </div>
