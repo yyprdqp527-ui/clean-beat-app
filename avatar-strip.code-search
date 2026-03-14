@@ -1,0 +1,18 @@
+# Query: avatar-strip
+# Flags: RegExp
+# ContextLines: 1
+
+3 résultats - 1 fichier
+
+templates/menu.html:
+  27          /* Rangée centrée d'avatars : espace entre chaque avatar */
+  28:         .avatar-strip { display:flex; gap:56px; align-items:center; justify-content:center; }
+  29  
+
+  38              /* Réduire l'écart entre avatars en mobile pour meilleure tenue */
+  39:             .avatar-strip { gap:px; }
+  40              .avatar-col { max-width: var(--avatar-size); }
+
+  93                  <div class="header-inner">
+  94:                     <div class="avatar-strip">
+  95                          <!-- Joueur 1 -->
