@@ -2965,14 +2965,15 @@ except Exception as _init_db_err:
 def add_cache_headers(response):
     """Ajouter des headers de cache pour les fichiers statiques"""
     if 'static' in request.path:
+        # manifest.json : jamais de cache (doit être contrôlé en priorité avant .js)
+        if 'manifest.json' in request.path:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         # Cache les images/avatars/SVG pendant 1 semaine
-        if any(ext in request.path for ext in ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.woff', '.woff2', '.ttf']):
+        elif any(ext in request.path for ext in ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.woff', '.woff2', '.ttf']):
             response.headers['Cache-Control'] = 'public, max-age=604800, immutable'  # 7 jours
         # Cache les CSS/JS pendant 1 jour
         elif any(ext in request.path for ext in ['.css', '.js']):
             response.headers['Cache-Control'] = 'public, max-age=86400'  # 1 jour
-        elif 'manifest.json' in request.path:
-            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         else:
             response.headers['Cache-Control'] = 'public, max-age=3600'  # 1h par défaut pour le reste
     else:
@@ -9614,6 +9615,13 @@ def service_worker():
     response = make_response(send_from_directory('static', 'sw.js'))
     response.headers['Content-Type'] = 'application/javascript'
     response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+@app.route('/manifest.json')
+def manifest():
+    response = make_response(send_from_directory('static', 'manifest.json'))
+    response.headers['Content-Type'] = 'application/manifest+json'
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response
 
 # Page de nettoyage ULTIME (désinstalle les Service Workers)
