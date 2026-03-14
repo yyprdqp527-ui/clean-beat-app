@@ -2555,9 +2555,6 @@
                                 {% set pct1 = points1|int %}
                                 {% if pct1 > 100 %}{% set pct1 = 100 %}{% endif %}
                                 {% set fill1 = 2 if pct1 > 0 and pct1 < 2 else pct1 %}
-                                {% set sorted_players = players|sort(attribute='email')|list %}
-                                {% set player1_idx = sorted_players|map(attribute='email')|list|index(current_user_name) %}
-                                {% set border1 = player_colors[player1_idx % player_colors|length] %}
                                 {% set current_player = players|selectattr('email', 'equalto', current_user_name)|first %}
                                 {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
@@ -2611,8 +2608,6 @@
                             {% set pct_p2 = points_p2|int %}
                             {% if pct_p2 > 100 %}{% set pct_p2 = 100 %}{% endif %}
                             {% set fill_p2 = 2 if pct_p2 > 0 and pct_p2 < 2 else pct_p2 %}
-                            {% set p2_idx = sorted_players|map(attribute='email')|list|index(p2.email) %}
-                            {% set border_p2 = player_colors[p2_idx % player_colors|length] %}
                             {% set color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else 'linear-gradient(180deg, rgba(180, 140, 200, 0.75) 0%, rgba(160, 120, 180, 0.65) 100%)')) %}
                             {% set color_p2_h = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color_h if p2.color_h else 'linear-gradient(90deg, rgba(180, 140, 200, 0.75) 0%, rgba(160, 120, 180, 0.65) 100%)')) %}
                             <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:6px;">
@@ -2668,8 +2663,6 @@
                                 {% set pct = points|int %}
                                 {% if pct > 100 %}{% set pct = 100 %}{% endif %}
                                 {% set fill = 2 if pct > 0 and pct < 2 else pct %}
-                                {% set p_idx = sorted_players|map(attribute='email')|list|index(p.email) %}
-                                {% set border_p = player_colors[p_idx % player_colors|length] %}
                                 {% set color = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color_h = (p.player_color_hex if p and p.player_color_hex else (p.color_h if p.color_h else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:4px;">
@@ -4896,8 +4889,8 @@ function sendMalus(reason, points){
                             <span class="burger-nav-text">Gérer les joueurs</span>
                         </a>
                         <a href="{{ url_for('reminders') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">📋</span>
-                            <span class="burger-nav-text">Mes rappels</span>
+                            <span class="burger-nav-icon">🛒</span>
+                            <span class="burger-nav-text">Liste de courses</span>
                         </a>
                         <a href="{{ url_for('comments') }}" class="burger-nav-item">
                             <span class="burger-nav-icon">
