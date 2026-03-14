@@ -325,7 +325,7 @@
             display: flex;
             align-items: center;
             gap: 3px;
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 2px 6px 2px 4px;
             font-size: 9px;
             font-weight: 700;
@@ -2788,7 +2788,7 @@
     border-radius: 99px; margin-bottom: 7px;
 }
 .cw-handle-row {
-    display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden;
+    display: flex; align-items: center; gap: 7px; width: 100%; overflow: hidden;
 }
 .cw-handle-player {
     display: flex; align-items: center; gap: 3px;
@@ -6402,37 +6402,37 @@ function sendMalus(reason, points){
                     border-top: 2px solid rgba(255,255,255,0.55);
                     transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
                 }
-                .dash-bar.closed { transform: translateY(calc(100% - 54px)); }
+                .dash-bar.closed { transform: translateY(calc(100% - 46px)); }
                 .dash-handle {
-                    width: 100%; padding: 10px 16px 6px 16px;
+                    width: 100%; padding: 9px 14px 5px 14px;
                     display: flex; align-items: center; justify-content: space-between;
                     cursor: pointer; background: none; border: none;
                     -webkit-tap-highlight-color: transparent;
                 }
                 .dash-grip {
-                    width: 44px; height: 5px;
+                    width: 37px; height: 4px;
                     background: linear-gradient(135deg, rgba(166,211,220,0.7), rgba(253,174,84,0.5));
-                    border-radius: 3px; margin: 0 auto 4px auto;
+                    border-radius: 3px; margin: 0 auto 3px auto;
                 }
                 .dash-meta {
                     display: flex; align-items: center; justify-content: space-between;
                     width: 100%; padding: 0 4px;
                 }
-                .dash-label { font-size:12px; font-weight:700; color:#597176; }
-                .dash-body { padding: 4px 12px 16px 12px; max-height: 55vh; overflow-y: auto; }
+                .dash-label { font-size:10px; font-weight:700; color:#597176; }
+                .dash-body { padding: 3px 10px 14px 10px; max-height: 55vh; overflow-y: auto; }
                 .dash-bar.closed .dash-body { display: none; }
                 .dash-card {
                     background: rgba(255,255,255,0.95); border-radius: 12px;
-                    padding: 8px 10px; margin-bottom: 7px;
+                    padding: 7px 9px; margin-bottom: 6px;
                     box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1.5px solid rgba(255,255,255,0.6);
                     display: flex; align-items: center; gap: 8px;
                 }
-                .dash-medal { font-size:19px; min-width:23px; text-align:center; }
-                .dash-avatar { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; }
-                .dash-name { font-size:10px; font-weight:800; color:#153036; flex:1; }
-                .dash-pts { font-size:12px; font-weight:800; color:#FDAE54; background:rgba(253,174,84,0.15); padding:3px 9px; border-radius:9px; }
-                .dash-tasks { font-size:11px; color:#597176; margin-top:4px; }
-                .dash-empty { text-align:center; padding:24px; color:#597176; font-size:13px; font-weight:600; }
+                .dash-medal { font-size:16px; min-width:20px; text-align:center; }
+                .dash-avatar { width:26px; height:26px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+                .dash-name { font-size:9px; font-weight:800; color:#153036; flex:1; }
+                .dash-pts { font-size:10px; font-weight:800; color:#FDAE54; background:rgba(253,174,84,0.15); padding:2px 7px; border-radius:8px; }
+                .dash-tasks { font-size:9px; color:#597176; margin-top:3px; }
+                .dash-empty { text-align:center; padding:20px; color:#597176; font-size:11px; font-weight:600; }
             </style>
 
             <div class="dash-bar closed" id="dashBar">
