@@ -3097,8 +3097,9 @@ body { padding-bottom: 72px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 .cw-tab-arrow {
-    font-size: 9px; color: rgba(21,48,54,0.3);
-    transition: transform 0.3s; display: inline-block; margin-top: 1px;
+    font-size: 10px; font-weight: 700; color: #597176;
+    transition: transform 0.3s ease; display: inline-block;
+    line-height: 1; user-select: none;
 }
 .cw-wrap.expanded .cw-tab-arrow { transform: rotate(180deg); }
 .cw-infobar {
@@ -3324,8 +3325,9 @@ body { padding-bottom: 72px !important; }
     <!-- Onglets de navigation (toujours visibles) -->
     <div class="cw-tabs">
         <button class="cw-tab" onclick="toggleCW()" id="cwTabScore">
-            <span class="cw-tab-icon" id="compteurIcon">▲</span>
+            <span class="cw-tab-icon" id="compteurIcon">🏆</span>
             <span class="cw-tab-label" id="compteurLabel">Classement du jour</span>
+            <span class="cw-tab-arrow">∧</span>
         </button>
     </div>
     <!-- Barre info toujours visible -->
