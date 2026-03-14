@@ -2475,15 +2475,27 @@
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
                 <!-- Boutons d'action droite : burger + bébé + ajouter mission (colonne) -->
                 <div class="header-right-actions">
-                    <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
-                        <span></span><span></span><span></span>
-                    </button>
-                    <a class="header-action-pill pill-baby" href="{{ url_for('baby_messages') }}" title="Bébé" aria-label="Suivi bébé">
-                        👶{% if unread_baby_tracking|default(0) > 0 %}<span class="header-pill-badge">{{ unread_baby_tracking }}</span>{% endif %}
-                    </a>
-                    <a class="header-action-pill pill-mission" href="{{ url_for('mission_messages') }}" title="Ajouter une mission" aria-label="Ajouter mission">
-                        ⭐
-                    </a>
+                    <div class="burger-wrapper">
+                        <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
+                            <span></span><span></span><span></span>
+                        </button>
+                        {% set show_baby = unread_baby_tracking|default(0) > 0 %}
+                        {% set show_mission = unread_task_added|default(0) > 0 %}
+                        {% if show_baby or show_mission %}
+                        <div class="burger-alerts">
+                            {% if show_baby %}
+                            <div class="burger-alert-pill baby" onclick="window.location.href='{{ url_for('baby_messages') }}'">
+                                <span class="pill-icon">👶</span><span class="pill-count">{{ unread_baby_tracking }}</span>
+                            </div>
+                            {% endif %}
+                            {% if show_mission %}
+                            <div class="burger-alert-pill mission" onclick="window.location.href='{{ url_for('mission_messages') }}'">
+                                <span class="pill-icon">⚡</span><span class="pill-count">{{ unread_task_added }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="header-inner">
