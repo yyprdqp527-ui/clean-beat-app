@@ -2971,6 +2971,8 @@ def add_cache_headers(response):
         # Cache les CSS/JS pendant 1 jour
         elif any(ext in request.path for ext in ['.css', '.js']):
             response.headers['Cache-Control'] = 'public, max-age=86400'  # 1 jour
+        elif 'manifest.json' in request.path:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         else:
             response.headers['Cache-Control'] = 'public, max-age=3600'  # 1h par défaut pour le reste
     else:
