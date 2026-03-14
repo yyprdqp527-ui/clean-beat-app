@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set hide_header = true %}
-{% block title %}Mes rappels{% endblock %}
+{% block title %}Liste de courses{% endblock %}
 
 {% block content %}
 <style>
@@ -198,6 +198,41 @@
     }
     .empty-state .empty-icon { font-size: 52px; display: block; margin-bottom: 12px; opacity: 0.6; }
 
+    /* ===== ANIMATION +1 PT ===== */
+    .pts-popup {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        font-size: 22px;
+        font-weight: 900;
+        color: #27AE60;
+        text-shadow: 0 2px 8px rgba(39,174,96,0.5);
+        animation: ptsFloat 1.4s ease-out forwards;
+    }
+    @keyframes ptsFloat {
+        0%   { opacity: 1; transform: translateY(0) scale(1); }
+        60%  { opacity: 1; transform: translateY(-55px) scale(1.15); }
+        100% { opacity: 0; transform: translateY(-90px) scale(0.9); }
+    }
+
+    /* ===== BADGE POINTS DANS LE HEADER ===== */
+    .pts-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: linear-gradient(135deg, rgba(39,174,96,0.18), rgba(46,204,113,0.12));
+        border: 1.5px solid rgba(39,174,96,0.35);
+        border-radius: 12px;
+        padding: 4px 12px;
+        font-size: 13px; font-weight: 800; color: #1a7a3a;
+        margin-top: 8px;
+        transition: all 0.4s ease;
+    }
+    .pts-badge.bump {
+        transform: scale(1.25);
+        background: linear-gradient(135deg, rgba(39,174,96,0.35), rgba(46,204,113,0.25));
+        border-color: rgba(39,174,96,0.7);
+        color: #145e2b;
+    }
+
     /* ===== TOAST ===== */
     #reminder-toast {
         position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
@@ -223,18 +258,19 @@
 
     <!-- EN-TÊTE -->
     <div class="reminders-header">
-        <span class="header-icon">📋</span>
-        <h1>Mes rappels</h1>
-        <div class="subtitle">Ta to-do list privée, {{ player_name or 'joueur' }} 🌟</div>
+        <span class="header-icon">�</span>
+        <h1>Liste de courses</h1>
+        <div class="subtitle">Coche un article pour gagner des points, {{ player_name or 'joueur' }} ⭐</div>
+        <div class="pts-badge" id="ptsBadge">⭐ Chargement…</div>
     </div>
 
     <!-- FORMULAIRE AJOUT -->
     <div class="add-form-card">
-        <h2>➕ Ajouter un rappel</h2>
+        <h2>➕ Ajouter un article</h2>
         <form id="addForm" autocomplete="off">
             <div class="form-row">
                 <div class="form-field">
-                    <label for="title">Tâche ou rappel</label>
+                    <label for="title">Article à acheter</label>
                     <input type="text" id="title" name="title" class="form-input"
                            placeholder="Ex : Acheter du lait…" maxlength="120" required>
                 </div>
@@ -247,7 +283,7 @@
     <div id="remindersList">
 
         {% if active_reminders %}
-        <div class="section-title">À faire ({{ active_reminders|length }})</div>
+        <div class="section-title">À acheter ({{ active_reminders|length }})</div>
         {% for r in active_reminders %}
         <div class="reminder-card" id="card-{{ r.id }}">
             <div class="reminder-check" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">&#10003;</div>
@@ -260,7 +296,7 @@
         {% endif %}
 
         {% if done_reminders %}
-        <div class="section-title" style="margin-top: 24px;">Fait ({{ done_reminders|length }})</div>
+        <div class="section-title" style="margin-top: 24px;">Dans le panier ✅ ({{ done_reminders|length }})</div>
         {% for r in done_reminders %}
         <div class="reminder-card done" id="card-{{ r.id }}">
             <div class="reminder-check checked" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">✓</div>
@@ -274,8 +310,8 @@
 
         {% if not reminders %}
         <div class="empty-state" id="emptyState">
-            <span class="empty-icon">🌿</span>
-            Aucun rappel pour l'instant.<br>Ajoute ta première tâche !
+            <span class="empty-icon">🛒</span>
+            La liste est vide !<br>Ajoute ton premier article.
         </div>
         {% endif %}
     </div>
@@ -292,6 +328,38 @@
         t.textContent = msg;
         t.classList.add('show');
         setTimeout(function(){ t.classList.remove('show'); }, duration || 2200);
+    }
+
+    // ─── Badge points : chargement initial ─────────────────────────────────────
+    (function loadInitialPoints() {
+        fetch('/api/players_points')
+            .then(function(r){ return r.json(); })
+            .then(function(data) {
+                if (!data.players) return;
+                // Trouver le joueur courant (premier de la liste = joueur connecté)
+                var me = data.players[0];
+                if (me) updatePtsBadge(me.daily_points || 0);
+            }).catch(function(){});
+    })();
+
+    function updatePtsBadge(pts) {
+        var badge = document.getElementById('ptsBadge');
+        if (!badge) return;
+        badge.textContent = '⭐ ' + pts + ' pts aujourd\'hui';
+        badge.classList.add('bump');
+        setTimeout(function(){ badge.classList.remove('bump'); }, 600);
+    }
+
+    // ─── Animation +1 pt ────────────────────────────────────────────────────────
+    function showPlusOne(checkEl) {
+        var rect = checkEl.getBoundingClientRect();
+        var popup = document.createElement('div');
+        popup.className = 'pts-popup';
+        popup.textContent = '+1 ⭐';
+        popup.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+        popup.style.top  = (rect.top + window.scrollY - 10) + 'px';
+        document.body.appendChild(popup);
+        setTimeout(function(){ popup.remove(); }, 1500);
     }
 
     // ─── Ajout ────────────────────────────────────────────────────────────────
@@ -326,24 +394,30 @@
                 list.insertBefore(card, list.firstChild);
 
                 document.getElementById('title').value = '';
-                showToast('✅ Rappel ajouté !');
+                showToast('✅ Article ajouté !');
             })
             .catch(function(){ showToast('❌ Erreur réseau'); });
     });
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
     window.toggleReminder = function(id) {
+        var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
         fetch('/reminders/toggle/' + id, { method: 'POST' })
             .then(function(r){ return r.json(); })
             .then(function(data){
                 if (!data.success) return;
-                const card = document.getElementById('card-' + id);
-                const check = card.querySelector('.reminder-check');
+                var card = document.getElementById('card-' + id);
+                var check = card.querySelector('.reminder-check');
                 if (data.is_done) {
                     card.classList.add('done');
                     check.classList.add('checked');
                     check.innerHTML = '✓';
-                    showToast('✅ Bravo, c\'est fait !');
+                    // Animation +1 pt
+                    if (data.points_earned > 0 && checkEl) {
+                        showPlusOne(checkEl);
+                        updatePtsBadge(data.new_total_points);
+                    }
+                    showToast('✅ Dans le panier ! +1 pt ⭐');
                 } else {
                     card.classList.remove('done');
                     check.classList.remove('checked');
@@ -367,10 +441,10 @@
                     const remaining = document.querySelectorAll('.reminder-card').length;
                     if (remaining === 0) {
                         const list = document.getElementById('remindersList');
-                        list.innerHTML = '<div class="empty-state" id="emptyState"><span class="empty-icon">🌿</span>Aucun rappel pour l\'instant.<br>Ajoute ta première tâche !</div>';
+                        list.innerHTML = '<div class="empty-state" id="emptyState"><span class="empty-icon">🛒</span>La liste est vide !<br>Ajoute ton premier article.</div>';
                     }
                 }, 300);
-                showToast('🗑 Rappel supprimé');
+                showToast('🗑 Article supprimé');
             });
     };
 

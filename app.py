@@ -5230,7 +5230,7 @@ def add_reminder():
 
 @app.route('/reminders/toggle/<int:reminder_id>', methods=['POST'])
 def toggle_reminder(reminder_id):
-    """Cocher / décocher un rappel"""
+    """Cocher / décocher un article de la liste de courses (+1 pt quand on coche)"""
     if 'user' not in session:
         return jsonify({'success': False, 'error': 'Non connecté'}), 401
 
@@ -5242,14 +5242,57 @@ def toggle_reminder(reminder_id):
     row = c.fetchone()
     if not row:
         conn.close()
-        return jsonify({'success': False, 'error': 'Rappel introuvable'})
+        return jsonify({'success': False, 'error': 'Article introuvable'})
 
     new_done = 0 if row[0] else 1
     c.execute("UPDATE player_reminders SET is_done=? WHERE id=?", (new_done, reminder_id))
+
+    # +1 point quand on coche un article
+    points_earned = 0
+    new_total_points = 0
+    house_id = None
+    if new_done == 1:
+        c.execute("SELECT points, house_id FROM users WHERE email=?", (session['user'],))
+        user_row = c.fetchone()
+        if user_row:
+            current_pts = user_row[0] or 0
+            house_id = user_row[1]
+            new_total_points = current_pts + 1
+            c.execute("UPDATE users SET points=? WHERE email=?", (new_total_points, session['user']))
+            points_earned = 1
+
     conn.commit()
+
+    # Diffuser la mise à jour des points via WebSocket
+    if points_earned > 0 and house_id:
+        try:
+            c.execute("""
+                SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                       COALESCE(SUM(ct.points), 0) as daily_points
+                FROM users u
+                LEFT JOIN completed_tasks ct ON u.email = ct.user_email
+                    AND DATE(ct.completed_at) = DATE('now')
+                WHERE u.house_id = ?
+                GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.points
+                ORDER BY daily_points DESC, u.points DESC
+            """, (house_id,))
+            players_ws = [{'email': p[0], 'name': p[1], 'avatar': p[2], 'avatar_url': p[3],
+                           'avatar_file': p[4], 'total_points': p[5] or 0,
+                           'daily_points': int(p[6]) if p[6] else 0} for p in c.fetchall()]
+            safe_socketio_emit('players_points_update', {
+                'players': players_ws, 'updated_player': session['user']
+            }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception as ws_err:
+            _dbg(f"⚠️ WebSocket liste courses: {ws_err}")
+
     conn.close()
 
-    return jsonify({'success': True, 'is_done': bool(new_done)})
+    return jsonify({
+        'success': True,
+        'is_done': bool(new_done),
+        'points_earned': points_earned,
+        'new_total_points': new_total_points
+    })
 
 
 @app.route('/reminders/delete/<int:reminder_id>', methods=['POST'])
