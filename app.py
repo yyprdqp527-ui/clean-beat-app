@@ -5165,12 +5165,13 @@ def reminders():
 
     house_id, player_name = row[0], row[1]
 
+    # Liste partagée par toute la maison (visible par tous les joueurs)
     c.execute("""
         SELECT id, title, remind_at, is_done, created_at
         FROM player_reminders
-        WHERE user_email=? AND house_id=?
+        WHERE house_id=?
         ORDER BY is_done ASC, CASE WHEN remind_at IS NULL THEN 1 ELSE 0 END, remind_at ASC, created_at ASC
-    """, (session['user'], house_id))
+    """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
 
@@ -5186,7 +5187,6 @@ def reminders():
                            reminders=reminders_list,
                            active_reminders=active_reminders,
                            done_reminders=done_reminders,
-                           player_name=player_name,
                            hide_header=True)
 
 
