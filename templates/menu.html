@@ -6194,6 +6194,95 @@ function sendMalus(reason, points){
                         });
                     }
                 })();
+            
+            // ═══════════════════════════════════════════════════════════
+            // 💀 SYSTÈME DE MALUS — Afficher skull sur avatars (1 heure)
+            // ═══════════════════════════════════════════════════════════
+
+            (function() {
+                // Tracking local des malus envoyés (pour affichage immédiat)
+                window._localMalusMap = window._localMalusMap || {}; // email → timestamp
+                
+                function loadActiveMalus() {
+                    console.log('🔍 loadActiveMalus - Début du chargement...');
+                    fetch('/api/active_malus')
+                    .then(r => r.json())
+                    .then(data => {
+                        // Supprimer tous les anciens badges skull
+                        document.querySelectorAll('.skull-badge').forEach(el => el.remove());
+                        
+                        // Fusionner malus API + malus locaux
+                        const now = Date.now();
+                        const ONE_HOUR = 60 * 60 * 1000;
+                        const apiMalus = data.malus || [];
+                        const allMalus = [...apiMalus];
+                        
+                        // Ajouter les malus locaux non expirés qui ne sont pas déjà dans l'API
+                        if (window._localMalusMap) {
+                            Object.keys(window._localMalusMap).forEach(function(email) {
+                                const timestamp = window._localMalusMap[email];
+                                // Vérifier si non expiré (< 1h)
+                                if (now - timestamp <= ONE_HOUR) {
+                                    // Vérifier si pas déjà dans les malus API
+                                    if (!apiMalus.find(m => m.email === email)) {
+                                        allMalus.push({ email: email, task_name: null });
+                                    }
+                                } else {
+                                    // Supprimer les malus locaux expirés
+                                    delete window._localMalusMap[email];
+                                }
+                            });
+                        }
+                        
+                        console.log('🔍 loadActiveMalus - Malus actifs:', allMalus);
+                        if (allMalus.length === 0) return;
+                        
+                        // Afficher le skull sur chaque joueur ayant un malus actif
+                        allMalus.forEach(m => {
+                            const skullTitle = 'Malus reçu' + (m.task_name ? ' pour : ' + m.task_name : '');
+                            console.log('💀 Ajout skull pour:', m.email);
+                            
+                            // Header : chercher le wrapper avatar avec data-player-email
+                            const avatarWrapper = document.querySelector('.avatar-square-wrapper[data-player-email="' + m.email + '"]');
+                            console.log('  → Wrapper trouvé:', avatarWrapper);
+                            
+                            if (avatarWrapper) {
+                                avatarWrapper.style.position = 'relative';
+                                const skull = document.createElement('span');
+                                skull.className = 'skull-badge';
+                                skull.textContent = '💀';
+                                skull.title = skullTitle;
+                                skull.style.cssText = 'position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullBounce 0.8s ease infinite alternate;';
+                                avatarWrapper.appendChild(skull);
+                                console.log('  ✅ Skull ajouté au header pour', m.email);
+                            } else {
+                                console.log('  ❌ Wrapper introuvable dans header pour', m.email);
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Erreur loadActiveMalus:', err);
+                    });
+                }
+                
+                // Exposer la fonction sur window pour accès global
+                window.loadActiveMalus = loadActiveMalus;
+                
+                // Anim CSS skull bounce
+                if (!document.getElementById('skullBounceAnim')) {
+                    const style = document.createElement('style');
+                    style.id = 'skullBounceAnim';
+                    style.textContent = '@keyframes skullBounce { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-4px); } }';
+                    document.head.appendChild(style);
+                }
+                
+                // Charger les malus au démarrage
+                loadActiveMalus();
+                // Rafraîchir toutes les 60 secondes
+                setInterval(loadActiveMalus, 60000);
+                console.log('✅ Système malus initialisé');
+            })();
+
             </script>
 
             </body>
