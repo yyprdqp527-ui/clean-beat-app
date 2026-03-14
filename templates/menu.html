@@ -3111,12 +3111,17 @@ body { padding-bottom: 72px !important; }
     white-space: nowrap;
 }
 .cw-infobar-sep { color: rgba(21,48,54,0.18); font-size: 11px; }
+@keyframes cwGiftPulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(253,174,84,0.35); }
+    50% { opacity: 0.85; transform: scale(1.04); box-shadow: 0 0 0 4px rgba(253,174,84,0); }
+}
 .cw-infobar-countdown {
     font-size: 11px; font-weight: 800; color: #FDAE54;
     background: rgba(253,174,84,0.12);
     padding: 2px 8px; border-radius: 20px;
     border: 1px solid rgba(253,174,84,0.25);
     white-space: nowrap;
+    animation: cwGiftPulse 2s ease-in-out infinite;
 }
 
 /* ══ Skull badge sur les avatars ══ */
