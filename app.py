@@ -3090,8 +3090,8 @@ def create_system_message(house_id, content, message_type='system', related_task
         conn = get_db_connection()
         c = conn.cursor()
         
-        # Pour les messages baby_tracking, utiliser l'email du joueur
-        if message_type == 'baby_tracking' and sender_email:
+        # Pour les messages baby_tracking et task_added, utiliser l'email du joueur
+        if message_type in ('baby_tracking', 'task_added') and sender_email:
             actual_sender = sender_email
         else:
             # Utiliser le nom de la maison ou un nom par défaut
@@ -9839,7 +9839,7 @@ def add_task_page(cat, task_id=None):
                 creator_name = creator_row[0] if creator_row and creator_row[0] else session['user'].split('@')[0]
                 
                 message_content = f"🆕 {creator_name} a ajouté une nouvelle tâche : '{task_name}' ({points} pts)"
-                create_system_message(house_id, message_content, 'task_added')
+                create_system_message(house_id, message_content, 'task_added', sender_email=session['user'])
             except Exception:
                 pass  # Ne pas bloquer si le message échoue
             
