@@ -5236,9 +5236,15 @@ def toggle_reminder(reminder_id):
 
     conn = get_db_connection()
     c = conn.cursor()
-    # Vérifier que le rappel appartient bien à cet utilisateur
-    c.execute("SELECT is_done FROM player_reminders WHERE id=? AND user_email=?",
-              (reminder_id, session['user']))
+    # Vérifier que l'article appartient à la même maison que le joueur connecté
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Maison introuvable'})
+    user_house = user_row[0]
+    c.execute("SELECT is_done FROM player_reminders WHERE id=? AND house_id=?",
+              (reminder_id, user_house))
     row = c.fetchone()
     if not row:
         conn.close()
@@ -5247,16 +5253,15 @@ def toggle_reminder(reminder_id):
     new_done = 0 if row[0] else 1
     c.execute("UPDATE player_reminders SET is_done=? WHERE id=?", (new_done, reminder_id))
 
-    # +1 point quand on coche un article
+    # +1 point quand on coche un article (au joueur connecté, pas au créateur)
     points_earned = 0
     new_total_points = 0
-    house_id = None
+    house_id = user_house
     if new_done == 1:
-        c.execute("SELECT points, house_id FROM users WHERE email=?", (session['user'],))
-        user_row = c.fetchone()
-        if user_row:
-            current_pts = user_row[0] or 0
-            house_id = user_row[1]
+        c.execute("SELECT points FROM users WHERE email=?", (session['user'],))
+        pts_row = c.fetchone()
+        if pts_row:
+            current_pts = pts_row[0] or 0
             new_total_points = current_pts + 1
             c.execute("UPDATE users SET points=? WHERE email=?", (new_total_points, session['user']))
             points_earned = 1
@@ -5264,7 +5269,7 @@ def toggle_reminder(reminder_id):
     conn.commit()
 
     # Diffuser la mise à jour des points via WebSocket
-    if points_earned > 0 and house_id:
+    if points_earned > 0:
         try:
             c.execute("""
                 SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
@@ -5303,8 +5308,12 @@ def delete_reminder(reminder_id):
 
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM player_reminders WHERE id=? AND user_email=?",
-              (reminder_id, session['user']))
+    # Permettre à n'importe quel membre de la maison de supprimer
+    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+    hr = c.fetchone()
+    if hr and hr[0]:
+        c.execute("DELETE FROM player_reminders WHERE id=? AND house_id=?",
+                  (reminder_id, hr[0]))
     conn.commit()
     conn.close()
 

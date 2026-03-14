@@ -260,7 +260,7 @@
     <div class="reminders-header">
         <span class="header-icon">�</span>
         <h1>Liste de courses</h1>
-        <div class="subtitle">Coche un article pour gagner des points, {{ player_name or 'joueur' }} ⭐</div>
+        <div class="subtitle">Coche un article pour gagner des points ⭐</div>
         <div class="pts-badge" id="ptsBadge">⭐ Chargement…</div>
     </div>
 
@@ -417,7 +417,7 @@
                         showPlusOne(checkEl);
                         updatePtsBadge(data.new_total_points);
                     }
-                    showToast('✅ Dans le panier ! +1 pt ⭐');
+                    // pas de toast
                 } else {
                     card.classList.remove('done');
                     check.classList.remove('checked');
