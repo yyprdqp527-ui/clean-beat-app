@@ -9067,13 +9067,14 @@ def api_active_malus():
         since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         # Joueurs ayant reçu un malus dans la dernière heure
+        # Cast explicite pour compatibilité PostgreSQL
         c.execute("""
             SELECT ct.user_email, u.name, ct.task_name
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
               AND ct.category = 'malus'
-              AND ct.completed_at >= ?
+              AND ct.completed_at >= CAST(? AS TIMESTAMP)
             ORDER BY ct.completed_at DESC
         """, (house_id, since))
 
