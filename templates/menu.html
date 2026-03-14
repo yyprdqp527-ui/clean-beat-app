@@ -6261,7 +6261,7 @@ function sendMalus(reason, points){
                                 skull.className = 'skull-badge';
                                 skull.textContent = '💀';
                                 skull.title = skullTitle;
-                                skull.style.cssText = 'position:absolute;top:50%;right:-22px;transform:translateY(calc(-50% - 40px));font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullBounce 0.8s ease infinite alternate;';
+                                skull.style.cssText = 'position:absolute;top:-10px;right:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullBounce 0.8s ease infinite alternate;';
                                 avatarWrapper.appendChild(skull);
                                 console.log('  ✅ Skull ajouté au header pour', m.email);
                             } else {
@@ -6281,7 +6281,7 @@ function sendMalus(reason, points){
                 if (!document.getElementById('skullBounceAnim')) {
                     const style = document.createElement('style');
                     style.id = 'skullBounceAnim';
-                    style.textContent = '@keyframes skullBounce { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-4px); } }';
+                    style.textContent = '@keyframes skullBounce { from { transform: translateY(0); } to { transform: translateY(-4px); } }';
                     document.head.appendChild(style);
                 }
                 
