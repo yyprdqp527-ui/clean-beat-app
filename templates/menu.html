@@ -86,7 +86,7 @@
         body { 
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
             /* 🎨 TEST : Dégradé brun chaud → noir profond (élégant et moderne) */
-            background: linear-gradient(135deg, var(--brown-warm) 0%, var(--brown-dark) 100%) !important; 
+            background: {{ bg_gradient }}; 
             background-attachment: fixed !important;
             background-repeat: no-repeat !important;
             background-size: cover !important;
@@ -172,7 +172,7 @@
             left: 0;
             width: 280px;
             height: 100%;
-            background: linear-gradient(180deg, rgba(166,211,220,0.98) 0%, rgba(89,113,118,0.95) 100%);
+            background: {{ bg_gradient }};
             backdrop-filter: blur(20px);
             box-shadow: 4px 0 30px rgba(0,0,0,0.3);
             transform: translateX(-100%);
@@ -2285,6 +2285,14 @@
             }
         }
 
+
+        {% if bg_theme_light %}
+        .avatar-name { color: #153036 !important; text-shadow: none !important; }
+        .avatar-points { color: #153036 !important; text-shadow: none !important; }
+        .house-name { color: #153036 !important; text-shadow: none !important; }
+        .room-button { color: #153036 !important; text-shadow: none !important; background: rgba(255,255,255,0.55) !important; border-color: rgba(21,48,54,0.25) !important; }
+        .burger-nav-divider { color: rgba(21,48,54,0.5) !important; }
+        {% endif %}
     </style>
 </head>
 <body>

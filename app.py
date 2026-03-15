@@ -510,6 +510,42 @@ def inject_house_name():
         'global_house_code': house_code,
     }
 
+# Thèmes de fond disponibles
+BG_THEMES = {
+    'marron':  'linear-gradient(135deg, #4a3428 0%, #1a1410 100%)',
+    'bleu':    'linear-gradient(135deg, #A6D3DC 0%, #597176 100%)',
+    'foret':   'linear-gradient(135deg, #1a3a2a 0%, #0d1f16 100%)',
+    'nuit':    'linear-gradient(135deg, #1e1e3a 0%, #0d0d20 100%)',
+    'ardoise': 'linear-gradient(135deg, #2c3e50 0%, #1a252f 100%)',
+    'prune':   'linear-gradient(135deg, #3a1a2e 0%, #1a0d16 100%)',
+    'sable':      'linear-gradient(135deg, #f0e4d0 0%, #d4b896 100%)',
+    'menthe':     'linear-gradient(135deg, #c8e6d8 0%, #8cbfaa 100%)',
+    'framboise':  'linear-gradient(135deg, #7a1f3f 0%, #3d0d1e 100%)',
+    'rose':       'linear-gradient(135deg, #f9c2d4 0%, #e88aab 100%)',
+    'peche':      'linear-gradient(135deg, #fdd9c8 0%, #f4a07a 100%)',
+}
+
+LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche'}
+
+@app.context_processor
+def inject_bg_theme():
+    bg = BG_THEMES['marron']
+    theme_name = 'marron'
+    try:
+        if 'user' in session:
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("""SELECT h.bg_theme FROM users u JOIN houses h ON u.house_id=h.id WHERE u.email=?""", (session['user'],))
+            row = c.fetchone()
+            conn.close()
+            if row and row[0] and row[0] in BG_THEMES:
+                theme_name = row[0]
+                bg = BG_THEMES[theme_name]
+    except Exception:
+        pass
+    is_light = theme_name in LIGHT_THEMES
+    return {'bg_gradient': bg, 'bg_theme_name': theme_name, 'bg_theme_light': is_light}
+
 # Filtre Jinja pour nettoyer l'intitulé des tâches à l'affichage
 def clean_task(value: str) -> str:
     try:
@@ -2602,6 +2638,13 @@ CREATE TABLE IF NOT EXISTS users (
         c.execute("ALTER TABLE houses ADD COLUMN house_type TEXT DEFAULT 'family'")
     except Exception:
         pass
+
+    # Migration: thème de fond
+    try:
+        c.execute("ALTER TABLE houses ADD COLUMN bg_theme TEXT DEFAULT 'marron'")
+        conn.commit()
+    except Exception:
+        pass  # Colonne déjà existante
 
     # Colonnes ajoutées dans des versions ultérieures
     try:
@@ -9541,6 +9584,27 @@ def avatar_proxy():
 # ════════════════════════════════════════════════════════════
 # 🏡 Personnalisation de la maison (pièces)
 # ════════════════════════════════════════════════════════════
+@app.route('/set_bg_theme', methods=['POST'])
+def set_bg_theme():
+    if 'user' not in session:
+        return {'ok': False, 'error': 'non connecté'}, 401
+    theme = request.json.get('theme', 'marron')
+    if theme not in BG_THEMES:
+        return {'ok': False, 'error': 'thème invalide'}, 400
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if row and row[0]:
+            c.execute("UPDATE houses SET bg_theme=? WHERE id=?", (theme, row[0]))
+            conn.commit()
+        conn.close()
+        return {'ok': True}
+    except Exception as e:
+        return {'ok': False, 'error': str(e)}, 500
+
+
 @app.route('/personnaliser_maison', methods=['GET', 'POST'])
 def personnaliser_maison():
     if 'user' not in session:
