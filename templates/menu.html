@@ -2124,7 +2124,7 @@
         .room-zoom-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(26, 20, 16, 0.96);
+            background: {{ bg_gradient }};
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             z-index: 9998;
@@ -2164,7 +2164,7 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            color: #ffffff;
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
             font-size: 20px;
             font-weight: 700;
             text-align: center;
@@ -2201,9 +2201,9 @@
             animation: dissolveSmooth 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
 
-        /* 🎨 OVERLAY BLANC pendant dissolution pour masquer page menu */
+        /* Dissolution - fond harmonisé avec le thème */
         .room-zoom-overlay.dissolving {
-            background: rgba(255, 255, 255, 1) !important;
+            background: {{ bg_gradient }} !important;
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
             transition: background 0.3s cubic-bezier(0.4, 0, 1, 1);
