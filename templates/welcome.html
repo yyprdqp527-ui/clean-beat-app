@@ -27,8 +27,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url("{{ url_for('static', filename='images/Ménage à Deux.png') }}");
-            background-size: contain;
+            background-image: url("{{ url_for('static', filename='images/Welcomepage.png') }}");
+            background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             z-index: -1;
@@ -37,7 +37,7 @@
         /* Optimisation pour les écrans très larges */
         @media (min-width: 1400px) {
             .background-image {
-                background-size: contain;
+                background-size: cover;
                 background-position: center;
             }
         }
@@ -45,7 +45,7 @@
         /* Optimisation pour les écrans mobiles */
         @media (max-width: 768px) {
             .background-image {
-                background-size: contain;
+                background-size: cover;
                 background-position: center center;
             }
         }
@@ -53,21 +53,21 @@
         /* Optimisation pour les très petits écrans */
         @media (max-width: 480px) {
             .background-image {
-                background-size: 90% auto;
+                background-size: cover;
                 background-position: center center;
             }
         }
         
         @media (max-width: 375px) {
             .background-image {
-                background-size: 85% auto;
+                background-size: cover;
             }
         }
         
         /* Optimisation pour les écrans en mode paysage mobile */
         @media (max-height: 500px) and (orientation: landscape) {
             .background-image {
-                background-size: contain;
+                background-size: cover;
                 background-position: center;
             }
         }
@@ -226,12 +226,6 @@
     <div class="overlay"></div>
     
     <div class="container" id="main-content" style="opacity:0; transition:opacity 0.5s ease;">
-        <div class="tagline">
-            <p class="description">
-                Transformez les tâches ménagères en compétition fun !<br>
-                Gagnez des points, défiez vos colocataires, et vivez mieux ensemble.
-            </p>
-        </div>
         <a href="/signup_email" class="cta-button">
             Que le meilleur gagne !
         </a>
