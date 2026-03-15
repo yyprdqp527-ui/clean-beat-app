@@ -2,6 +2,13 @@
 # Ne JAMAIS patcher ici pour éviter les conflits de locks avec gevent/eventlet
 # Sur Render, wsgi.py est le point d'entrée et fait le patching avant tout import
 
+# Charger les variables d'environnement depuis .env (développement local)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
 import re

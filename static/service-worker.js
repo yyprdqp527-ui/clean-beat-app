@@ -153,6 +153,11 @@ self.addEventListener('push', (event) => {
             actions: notificationData.actions,
             vibrate: [200, 100, 200],
             timestamp: Date.now()
+        }).then(() => {
+            // 🏠 Badge sur l'icône de l'app (écran d'accueil)
+            if ('setAppBadge' in navigator) {
+                return navigator.setAppBadge(1).catch(() => {});
+            }
         })
     );
 });

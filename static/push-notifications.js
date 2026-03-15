@@ -19,8 +19,8 @@ class PushNotificationManager {
         }
 
         try {
-            // Enregistrer le Service Worker
-            this.registration = await navigator.serviceWorker.register('/static/service-worker.js');
+            // Enregistrer le Service Worker (sw.js à la racine pour scope global + setAppBadge)
+            this.registration = await navigator.serviceWorker.register('/sw.js');
             console.log('✅ Service Worker enregistré');
 
             // Attendre qu'il soit actif
@@ -35,7 +35,15 @@ class PushNotificationManager {
             
             if (this.subscription) {
                 console.log('✅ Déjà abonné aux notifications');
+                // Ré-envoyer la subscription au serveur au cas où elle n'y serait pas (ex: après reset DB)
+                await this.sendSubscriptionToServer(this.subscription);
                 return true;
+            }
+
+            // Si permission déjà accordée et clé VAPID disponible → s'abonner automatiquement
+            if (Notification.permission === 'granted' && this.vapidPublicKey) {
+                console.log('🔄 Permission accordée, abonnement automatique...');
+                await this.subscribe();
             }
 
             return true;
