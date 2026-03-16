@@ -302,6 +302,48 @@
 
 <script>
 (function(){
+    // ─── Son succès (même code que task_page_enhanced) ───────────────────────
+    var _victoryAudio = new Audio('/static/audio/notification-sound-3-262896.mp3');
+    _victoryAudio.preload = 'auto';
+    _victoryAudio.volume = 1.0;
+
+    function playSuccessSound() {
+        console.log('🔊 playSuccessSound appelé');
+        try {
+            _victoryAudio.currentTime = 0;
+            var p = _victoryAudio.play();
+            console.log('🔊 play() appelé, promise:', p);
+            if (p) p.then(function() {
+                console.log('✅ Son joué !');
+            }).catch(function(e) {
+                console.warn('⚠️ MP3 bloqué:', e, '→ fallback Web Audio');
+                _playSuccessSoundWebAudio();
+            });
+        } catch(e) {
+            console.warn('❌ Erreur audio:', e);
+            _playSuccessSoundWebAudio();
+        }
+    }
+    function _playSuccessSoundWebAudio() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var now = ctx.currentTime;
+            var notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach(function(freq, i) {
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.15, now + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+                osc.start(now + i * 0.1);
+                osc.stop(now + i * 0.1 + 0.4);
+            });
+        } catch(e) {}
+    }
+
     // ─── Toast ────────────────────────────────────────────────────────────────
     function showToast(msg, duration) {
         const t = document.getElementById('reminder-toast');
@@ -362,6 +404,12 @@
     // ─── Toggle ───────────────────────────────────────────────────────────────
     window.toggleReminder = function(id) {
         var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
+        var card = document.getElementById('card-' + id);
+        var alreadyDone = card && card.classList.contains('done');
+        if (!alreadyDone) {
+            // Jouer le son MAINTENANT (dans le geste utilisateur, avant le fetch)
+            playSuccessSound();
+        }
         fetch('/reminders/toggle/' + id, { method: 'POST' })
             .then(function(r){ return r.json(); })
             .then(function(data){
@@ -376,7 +424,15 @@
                     if (data.points_earned > 0 && checkEl) {
                         showPlusOne(checkEl);
                     }
-                    // pas de toast
+                    // Rediriger vers le menu pour déclencher l'animation avatar
+                    if (data.points_earned > 0) {
+                        setTimeout(function() {
+                            window.location.href = '/menu?success=1&pts=' + (data.points_earned || 1)
+                                + '&ts=' + Date.now()
+                                + '&who=' + encodeURIComponent(data.player_email || '')
+                                + '&whon=' + encodeURIComponent(data.player_name || '');
+                        }, 1500);
+                    }
                 } else {
                     card.classList.remove('done');
                     check.classList.remove('checked');

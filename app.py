@@ -3133,7 +3133,7 @@ def propagate_player_name_change(cursor, email, old_name, new_name, house_id):
 def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None):
     """
     Crée un message système automatique pour la maison.
-    Types: 'system', 'task_completed', 'task_added', 'congratulation', 'reminder', 'sermon', 'baby_tracking'
+    Types: 'system', 'task_completed', 'task_added', 'congratulation', 'reminder', 'sermon', 'baby_tracking', 'courses_added'
     
     Si send_push=True, envoie également une notification push aux membres de la maison.
     sender_name: nom personnalisé pour l'expéditeur (ex: nom de la maison)
@@ -3144,7 +3144,7 @@ def create_system_message(house_id, content, message_type='system', related_task
         c = conn.cursor()
         
         # Pour les messages baby_tracking et task_added, utiliser l'email du joueur
-        if message_type in ('baby_tracking', 'task_added') and sender_email:
+        if message_type in ('baby_tracking', 'task_added', 'courses_added') and sender_email:
             actual_sender = sender_email
         else:
             # Utiliser le nom de la maison ou un nom par défaut
@@ -3297,7 +3297,7 @@ def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
 
 def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
     """
-    Retourne le nombre de messages non lus d'un type donné (baby_tracking, task_added, etc).
+    Retourne le nombre de messages non lus d'un type donné (baby_tracking, task_added, courses_added, etc).
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
@@ -5215,6 +5215,19 @@ def reminders():
 
     house_id, player_name = row[0], row[1]
 
+    # Marquer comme lus les messages courses_added UNIQUEMENT si on vient de la pastille
+    if request.args.get('from_badge') == '1':
+        try:
+            c.execute("""
+                SELECT m.id FROM messages m
+                WHERE m.house_id = ? AND m.message_type = 'courses_added'
+                AND NOT EXISTS (SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?)
+            """, (house_id, session['user']))
+            for msg_row in c.fetchall():
+                mark_message_as_read(msg_row[0], session['user'])
+        except Exception as e:
+            _dbg(f"⚠️ Erreur marquage courses_added: {e}")
+
     # Liste partagée par toute la maison (visible par tous les joueurs)
     c.execute("""
         SELECT id, title, remind_at, is_done, created_at
@@ -5273,6 +5286,17 @@ def add_reminder():
     """, (session['user'], house_id, title, remind_at))
     new_id = c.lastrowid
     conn.commit()
+
+    # 🛒 Créer un message automatique pour notifier l'ajout à la liste de courses
+    try:
+        c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
+        creator_row = c.fetchone()
+        creator_name = creator_row[0] if creator_row and creator_row[0] else session['user'].split('@')[0]
+        message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
+        create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
+    except Exception:
+        pass  # Ne pas bloquer si le message échoue
+
     conn.close()
 
     return jsonify({'success': True, 'id': new_id, 'title': title, 'remind_at': remind_at})
@@ -5343,13 +5367,25 @@ def toggle_reminder(reminder_id):
         except Exception as ws_err:
             _dbg(f"⚠️ WebSocket liste courses: {ws_err}")
 
+    # Récupérer nom du joueur pour l'animation avatar côté menu
+    player_name_resp = ''
+    try:
+        conn2 = get_db_connection()
+        pn = conn2.execute("SELECT name FROM users WHERE email=?", (session['user'],)).fetchone()
+        player_name_resp = pn[0] if pn else session['user'].split('@')[0]
+        conn2.close()
+    except Exception:
+        player_name_resp = session['user'].split('@')[0]
+
     conn.close()
 
     return jsonify({
         'success': True,
         'is_done': bool(new_done),
         'points_earned': points_earned,
-        'new_total_points': new_total_points
+        'new_total_points': new_total_points,
+        'player_email': session['user'],
+        'player_name': player_name_resp
     })
 
 
@@ -8587,6 +8623,7 @@ def menu():
     unread_sent_to = {}    # Deprecated
     unread_baby_tracking = 0
     unread_task_added = 0
+    unread_courses = 0
     house_id = None
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
@@ -8756,7 +8793,8 @@ def menu():
             # ✅ Messages baby_tracking et task_added : compteur pour badges burger
             unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
-            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
+            unread_courses = get_unread_count_by_type(session['user'], house_id, 'courses_added', existing_conn=conn)
+            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, courses={unread_courses}, children_unread={children_unread}")
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
             custom_rooms_db = {}
@@ -8924,6 +8962,7 @@ def menu():
         unread_sent_to=unread_sent_to,      # Deprecated - à supprimer
         unread_baby_tracking=unread_baby_tracking,
         unread_task_added=unread_task_added,
+        unread_courses=unread_courses,
         custom_rooms=custom_rooms_data,
         pending_proofs=pending_proofs,
     ))
