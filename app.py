@@ -440,6 +440,19 @@ def _invalidate_house_cache(email: str):
     """Appeler quand le nom/code de la maison change (edit_house, etc.)"""
     _house_info_cache.pop(email, None)
 
+
+def _log_login(email: str):
+    """Enregistre une connexion dans login_logs pour le suivi bêta-testeurs."""
+    try:
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("INSERT INTO login_logs (email, ip) VALUES (?, ?)", (email, ip))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
 # Initialiser SocketIO si disponible
 if SOCKETIO_AVAILABLE:
     # Configurer SocketIO — UNIQUEMENT gevent en production (plus d'eventlet)
@@ -2610,6 +2623,11 @@ CREATE TABLE IF NOT EXISTS users (
         pass
 
     try:
+        c.execute("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except Exception:
+        pass
+
+    try:
         c.execute("ALTER TABLE users ADD COLUMN skull_count INTEGER DEFAULT 0")
     except Exception:
         pass
@@ -2969,6 +2987,16 @@ CREATE TABLE IF NOT EXISTS users (
         status TEXT DEFAULT 'pending',
         photo_data TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Table logs de connexion (suivi bêta-testeurs)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS login_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ip TEXT
     )
     """)
 
@@ -4548,6 +4576,7 @@ def quick_login():
         session.permanent = True  # Session persistante après rafraîchissement
         session['user'] = email
         session['user_name'] = user[0]
+        _log_login(email)
         flash(f"🎉 Re-bienvenue {user[0]} ! Prêt(e) pour de nouvelles aventures ? 🚀", "success")
         return redirect(url_for('menu'))
     else:
@@ -7679,6 +7708,7 @@ def login():
         if user and check_password_hash(user[0], password):
             session.permanent = True
             session['user'] = email
+            _log_login(email)
 
             # Si le joueur a un code d'invitation, le rattacher à la maison
             if next_code:
@@ -7761,6 +7791,94 @@ def admin_clean_users():
     html += "<br><b>Réinitialiser un mot de passe :</b><br>"
     html += "<form method=get>Email: <input name=email style='width:250px'> Nouveau pwd: <input name=pwd> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
     return html
+
+# ─── Dashboard bêta-testeurs ────────────────────────────────────────────────
+@app.route('/admin/beta')
+def admin_beta():
+    key = request.args.get('key', '')
+    if key != 'dust2026admin':
+        return "Accès refusé", 403
+
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    # Tous les utilisateurs inscrits (hors comptes enfants)
+    c.execute("""
+        SELECT email, name, phone, created_at, registration_step
+        FROM users
+        WHERE is_child_account IS NULL OR is_child_account = 0
+        ORDER BY id DESC
+    """)
+    users_rows = c.fetchall()
+
+    # Connexions par jour (30 derniers jours)
+    c.execute("""
+        SELECT DATE(logged_at) as day, COUNT(*) as cnt
+        FROM login_logs
+        GROUP BY DATE(logged_at)
+        ORDER BY day DESC
+        LIMIT 30
+    """)
+    daily_rows = c.fetchall()
+
+    # Connexions par utilisateur (top 50)
+    c.execute("""
+        SELECT email, COUNT(*) as cnt, MAX(logged_at) as last_login
+        FROM login_logs
+        GROUP BY email
+        ORDER BY cnt DESC
+        LIMIT 50
+    """)
+    user_logins = c.fetchall()
+    conn.close()
+
+    total_users = len(users_rows)
+    total_logins = sum(r[1] for r in daily_rows)
+
+    css = """
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a2e; color: #eee; }
+        h1 { color: #e94560; } h2 { color: #0f3460; background:#16213e; padding:8px; border-radius:6px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+        th { background: #0f3460; color: #fff; padding: 8px 12px; text-align: left; }
+        td { padding: 6px 12px; border-bottom: 1px solid #333; }
+        tr:hover td { background: #1a2a4a; }
+        .stat { display: inline-block; background: #16213e; border: 2px solid #0f3460;
+                padding: 15px 25px; margin: 10px; border-radius: 10px; text-align: center; }
+        .stat h3 { margin: 0; font-size: 2em; color: #e94560; }
+        .stat p { margin: 5px 0 0; color: #aaa; }
+    </style>
+    """
+
+    html = f"{css}<h1>📊 Dashboard bêta-testeurs CleanBeat</h1>"
+    html += f"""
+    <div>
+        <div class='stat'><h3>{total_users}</h3><p>Utilisateurs inscrits</p></div>
+        <div class='stat'><h3>{total_logins}</h3><p>Connexions (30j)</p></div>
+    </div>
+    """
+
+    html += "<h2>👥 Utilisateurs inscrits</h2>"
+    html += "<table><tr><th>#</th><th>Email</th><th>Nom</th><th>Téléphone</th><th>Inscrit le</th><th>Step</th></tr>"
+    for i, r in enumerate(users_rows, 1):
+        email, name, phone, created_at, step = r
+        html += f"<tr><td>{i}</td><td>{email or '-'}</td><td>{name or '-'}</td><td>{phone or '-'}</td><td>{str(created_at)[:16] if created_at else '-'}</td><td>{step or '-'}</td></tr>"
+    html += "</table>"
+
+    html += "<h2>📅 Connexions par jour</h2>"
+    html += "<table><tr><th>Date</th><th>Nb connexions</th></tr>"
+    for r in daily_rows:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td></tr>"
+    html += "</table>"
+
+    html += "<h2>🔥 Connexions par utilisateur</h2>"
+    html += "<table><tr><th>Email</th><th>Nb connexions</th><th>Dernière connexion</th></tr>"
+    for r in user_logins:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{str(r[2])[:16] if r[2] else '-'}</td></tr>"
+    html += "</table>"
+
+    return html
+
 
 # ─── Mot de passe oublié ────────────────────────────────────────────────────
 @app.route('/forgot_password', methods=['GET', 'POST'])
@@ -8312,6 +8430,7 @@ def join_house():
             session.permanent = True
             session['user'] = email
             session['name'] = user[2]
+            _log_login(email)
             
             flash(f"🎉 Bienvenue {user[2]} ! Vous avez rejoint la maison !", "success")
             return redirect(url_for('menu'))
