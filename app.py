@@ -7806,10 +7806,13 @@ def admin_beta():
     # Tous les utilisateurs inscrits (hors comptes enfants)
     try:
         c.execute("""
-            SELECT email, name, phone, registration_step, created_at
-            FROM users
-            WHERE is_child_account IS NULL OR is_child_account = 0
-            ORDER BY id DESC
+            SELECT u.email, u.name, u.phone, u.registration_step,
+                   MIN(ct.completed_at) as premiere_activite
+            FROM users u
+            LEFT JOIN completed_tasks ct ON ct.user_email = u.email
+            WHERE u.is_child_account IS NULL OR u.is_child_account = 0
+            GROUP BY u.id, u.email, u.name, u.phone, u.registration_step
+            ORDER BY u.id DESC
         """)
         users_rows = c.fetchall()
     except Exception as e:
@@ -7920,11 +7923,11 @@ def admin_beta():
     """
 
     html += "<h2>👥 Utilisateurs inscrits</h2>"
-    html += "<table><tr><th>#</th><th>Email</th><th>Nom</th><th>Téléphone</th><th>Inscrit le</th><th>Step</th></tr>"
+    html += "<table><tr><th>#</th><th>Email</th><th>Nom</th><th>Téléphone</th><th>1ère activité</th><th>Step</th></tr>"
     for i, r in enumerate(users_rows, 1):
-        email, name, phone, step, created_at = r
-        inscrit = str(created_at)[:16] if created_at else '-'
-        html += f"<tr><td>{i}</td><td>{email or '-'}</td><td>{name or '-'}</td><td>{phone or '-'}</td><td>{inscrit}</td><td>{step or '-'}</td></tr>"
+        email, name, phone, step, premiere = r
+        date_str = str(premiere)[:16] if premiere else '-'
+        html += f"<tr><td>{i}</td><td>{email or '-'}</td><td>{name or '-'}</td><td>{phone or '-'}</td><td>{date_str}</td><td>{step or '-'}</td></tr>"
     html += "</table>"
 
     html += "<h2>🏃 Activité des joueurs (30 derniers jours)</h2>"
