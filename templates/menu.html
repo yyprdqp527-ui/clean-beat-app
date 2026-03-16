@@ -3487,27 +3487,35 @@ function sendBonus(reason, points) {
     }).catch(function(){ showToast('Erreur r\u00e9seau', '#e74c3c'); });
 }
 function showToast(msg, bg){
-    // Glassmorphisme : fond semi-transparent + blur + bordure
-    var isError = bg && (bg === '#e74c3c' || bg.indexOf('e74c3c') !== -1);
-    var isSuccess = bg && (bg === '#2ecc71' || bg.indexOf('2ecc71') !== -1);
+    var isError = bg && bg.indexOf('e74c3c') !== -1;
+    var isSuccess = bg && bg.indexOf('2ecc71') !== -1;
+    var gradient = isError
+        ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,107,107,0.3) 50%, rgba(231,76,60,0.2) 100%)'
+        : isSuccess
+        ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.3) 50%, rgba(253,174,84,0.4) 100%)'
+        : 'linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(166,211,220,0.6) 50%, rgba(244,198,141,0.4) 100%)';
+    var shadow = isError
+        ? '0 8px 32px rgba(231,76,60,0.25), 0 0 0 1px rgba(255,107,107,0.4), inset 0 1px 0 rgba(255,255,255,0.6)'
+        : isSuccess
+        ? '0 8px 32px rgba(255,215,0,0.3), 0 0 0 1px rgba(255,215,0,0.4), inset 0 1px 0 rgba(255,255,255,0.6)'
+        : '0 8px 32px rgba(21,48,54,0.25), 0 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 rgba(255,255,255,0.6)';
     var t = document.createElement('div');
-    var accentColor = isError ? 'rgba(231,76,60,0.85)' : isSuccess ? 'rgba(46,204,113,0.85)' : 'rgba(21,48,54,0.9)';
-    var borderColor = isError ? 'rgba(231,76,60,0.4)' : isSuccess ? 'rgba(46,204,113,0.4)' : 'rgba(166,211,220,0.5)';
-    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-10px);'
-        + 'background:' + accentColor + ';'
-        + 'backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);'
-        + 'border:1.5px solid ' + borderColor + ';'
-        + 'color:#fff;padding:13px 22px;border-radius:18px;font-weight:700;'
+    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-18px);opacity:0;'
+        + 'background:' + gradient + ';'
+        + 'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);'
+        + 'border:1px solid rgba(255,255,255,0.3);'
+        + 'color:#153036;padding:13px 22px;border-radius:20px;font-weight:700;'
         + 'z-index:99999;font-size:13px;font-family:Montserrat,sans-serif;'
-        + 'box-shadow:0 8px 32px rgba(21,48,54,0.22);text-align:center;max-width:320px;'
-        + 'transition:opacity 0.3s,transform 0.3s;opacity:0;';
+        + 'box-shadow:' + shadow + ';'
+        + 'text-align:center;max-width:320px;'
+        + 'transition:opacity 0.35s,transform 0.35s cubic-bezier(0.34,1.56,0.64,1);';
     t.textContent = msg;
     document.body.appendChild(t);
     requestAnimationFrame(function(){ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
     setTimeout(function(){
-        t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-10px)';
-        setTimeout(function(){ t.remove(); }, 300);
-    }, 2600);
+        t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-18px)';
+        setTimeout(function(){ t.remove(); }, 350);
+    }, 2800);
 }
 
 var _malusEmail = null;
