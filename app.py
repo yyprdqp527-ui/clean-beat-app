@@ -7804,7 +7804,7 @@ def admin_beta():
 
     # Tous les utilisateurs inscrits (hors comptes enfants)
     c.execute("""
-        SELECT email, name, phone, created_at, registration_step
+        SELECT email, name, phone, registration_step
         FROM users
         WHERE is_child_account IS NULL OR is_child_account = 0
         ORDER BY id DESC
@@ -7859,10 +7859,10 @@ def admin_beta():
     """
 
     html += "<h2>👥 Utilisateurs inscrits</h2>"
-    html += "<table><tr><th>#</th><th>Email</th><th>Nom</th><th>Téléphone</th><th>Inscrit le</th><th>Step</th></tr>"
+    html += "<table><tr><th>#</th><th>Email</th><th>Nom</th><th>Téléphone</th><th>Step</th></tr>"
     for i, r in enumerate(users_rows, 1):
-        email, name, phone, created_at, step = r
-        html += f"<tr><td>{i}</td><td>{email or '-'}</td><td>{name or '-'}</td><td>{phone or '-'}</td><td>{str(created_at)[:16] if created_at else '-'}</td><td>{step or '-'}</td></tr>"
+        email, name, phone, step = r
+        html += f"<tr><td>{i}</td><td>{email or '-'}</td><td>{name or '-'}</td><td>{phone or '-'}</td><td>{step or '-'}</td></tr>"
     html += "</table>"
 
     html += "<h2>📅 Connexions par jour</h2>"
