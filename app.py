@@ -5946,6 +5946,99 @@ def baby_messages():
                          current_user_name=current_user_name,
                          menu_page=True)
 
+@app.route('/courses_messages')
+def courses_messages():
+    """
+    Page dédiée aux notifications d'ajout dans la liste de courses.
+    Accessible via la pastille marron sous le menu burger.
+    """
+    if 'user' not in session:
+        flash("Connecte-toi pour accéder aux messages de courses", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    if not user_row or not user_row[0]:
+        conn.close()
+        flash("Tu dois rejoindre une maison pour accéder aux messages", "warning")
+        return redirect(url_for('menu'))
+
+    house_id = user_row[0]
+    current_user_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
+
+    c.execute("SELECT code, name FROM houses WHERE id=?", (house_id,))
+    house_row = c.fetchone()
+    house_code = house_row[0] if house_row else None
+    house_name = house_row[1] if house_row and house_row[1] else 'Ma Maison'
+
+    c.execute("""
+        SELECT m.id, m.sender_email, m.content, m.timestamp, m.sender_type, m.message_type,
+               sender.name, sender.avatar, sender.avatar_file, sender.avatar_url, sender.avatar_style,
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+               ) THEN 1 ELSE 0 END as is_read_by_me
+        FROM messages m
+        LEFT JOIN users sender ON m.sender_email = sender.email
+        WHERE m.house_id = ?
+        AND m.message_type = 'courses_added'
+        ORDER BY m.id DESC
+        LIMIT 100
+    """, (session['user'], house_id))
+
+    all_rows = c.fetchall()
+
+    messages_data = []
+    for row in all_rows:
+        msg_id, sender_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, is_read_by_me = row
+
+        display_sender_avatar = None
+        if validate_avatar_file(sender_avatar_file):
+            display_sender_avatar = f"/static/avatars/{sender_avatar_file}"
+        elif sender_avatar_url:
+            if 'dicebear.com/8.x' in sender_avatar_url:
+                sender_avatar_url = sender_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+            display_sender_avatar = sender_avatar_url
+        elif sender_avatar and len(str(sender_avatar)) <= 4:
+            display_sender_avatar = sender_avatar
+        elif sender_avatar:
+            sender_style = sender_avatar_style if sender_avatar_style else 'adventurer'
+            display_sender_avatar = f"https://api.dicebear.com/7.x/{sender_style}/svg?seed={sender_avatar}&backgroundColor=transparent"
+        else:
+            display_sender_avatar = '🛒'
+
+        if not sender_name or sender_name.strip() == '':
+            sender_name = sender_email.split('@')[0] if sender_email else 'Inconnu'
+
+        messages_data.append({
+            'id': msg_id,
+            'sender_email': sender_email,
+            'sender_name': sender_name,
+            'sender_avatar': display_sender_avatar,
+            'content': content,
+            'timestamp': timestamp,
+            'sender_type': sender_type,
+            'message_type': message_type,
+            'is_me': sender_email == session['user'],
+            'is_read_by_me': bool(is_read_by_me),
+            'color': '#92400E',
+            'bg_color': 'rgba(146, 64, 14, 0.15)'
+        })
+
+    players = get_house_players_points(house_id)
+    conn.close()
+
+    return render_template('courses_messages.html',
+                         messages=messages_data,
+                         email=session['user'],
+                         players=players,
+                         house_code=house_code,
+                         house_name=house_name,
+                         current_user_name=current_user_name,
+                         menu_page=True)
+
 @app.route('/mission_messages')
 def mission_messages():
     """
