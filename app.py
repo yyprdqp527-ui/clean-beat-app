@@ -7844,10 +7844,52 @@ def admin_beta():
         user_logins = []
         errors.append(f"login_logs user: {e}")
 
+    # Activité : tâches validées par joueur (30 derniers jours)
+    try:
+        c.execute("""
+            SELECT user_email, COUNT(*) as nb_taches, SUM(points) as total_pts,
+                   MAX(completed_at) as derniere_action
+            FROM completed_tasks
+            WHERE completed_at >= CURRENT_TIMESTAMP - INTERVAL '30 days'
+            GROUP BY user_email
+            ORDER BY nb_taches DESC
+            LIMIT 50
+        """)
+        activity_rows = c.fetchall()
+    except Exception:
+        try:
+            c.execute("""
+                SELECT user_email, COUNT(*) as nb_taches, SUM(points) as total_pts,
+                       MAX(completed_at) as derniere_action
+                FROM completed_tasks
+                WHERE DATE(completed_at) >= DATE('now','-30 days')
+                GROUP BY user_email
+                ORDER BY nb_taches DESC
+                LIMIT 50
+            """)
+            activity_rows = c.fetchall()
+        except Exception as e2:
+            activity_rows = []
+            errors.append(f"activity: {e2}")
+
+    # 20 dernières tâches validées (toutes personnes confondues)
+    try:
+        c.execute("""
+            SELECT user_email, task_name, points, completed_at
+            FROM completed_tasks
+            ORDER BY completed_at DESC
+            LIMIT 20
+        """)
+        recent_tasks = c.fetchall()
+    except Exception as e:
+        recent_tasks = []
+        errors.append(f"recent_tasks: {e}")
+
     conn.close()
 
     total_users = len(users_rows)
     total_logins = sum(r[1] for r in daily_rows)
+    total_tasks = sum(r[1] for r in activity_rows)
 
     css = """
     <style>
@@ -7873,6 +7915,7 @@ def admin_beta():
     <div>
         <div class='stat'><h3>{total_users}</h3><p>Utilisateurs inscrits</p></div>
         <div class='stat'><h3>{total_logins}</h3><p>Connexions (30j)</p></div>
+        <div class='stat'><h3>{total_tasks}</h3><p>Tâches validées (30j)</p></div>
     </div>
     """
 
@@ -7882,6 +7925,18 @@ def admin_beta():
         email, name, phone, step, created_at = r
         inscrit = str(created_at)[:16] if created_at else '-'
         html += f"<tr><td>{i}</td><td>{email or '-'}</td><td>{name or '-'}</td><td>{phone or '-'}</td><td>{inscrit}</td><td>{step or '-'}</td></tr>"
+    html += "</table>"
+
+    html += "<h2>🏃 Activité des joueurs (30 derniers jours)</h2>"
+    html += "<table><tr><th>Email</th><th>Tâches validées</th><th>Points gagnés</th><th>Dernière action</th></tr>"
+    for r in activity_rows:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{int(r[2] or 0)}</td><td>{str(r[3])[:16] if r[3] else '-'}</td></tr>"
+    html += "</table>"
+
+    html += "<h2>⚡ 20 dernières tâches validées</h2>"
+    html += "<table><tr><th>Joueur</th><th>Tâche</th><th>Points</th><th>Date</th></tr>"
+    for r in recent_tasks:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{str(r[3])[:16] if r[3] else '-'}</td></tr>"
     html += "</table>"
 
     html += "<h2>📅 Connexions par jour</h2>"
