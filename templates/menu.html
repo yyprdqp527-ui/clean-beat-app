@@ -6469,5 +6469,43 @@ function sendMalus(reason, points){
 
             
             <!-- === FIN DASHBOARD === -->
+
+<!-- ═══ BANNIÈRE INSTALLATION PWA ═══ -->
+<div id="pwa-install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#153036 0%,#1e4a52 100%); color:white; padding:14px 16px 20px; box-shadow:0 -4px 20px rgba(0,0,0,0.3); border-radius:20px 20px 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="display:flex; align-items:flex-start; gap:12px; max-width:500px; margin:0 auto;">
+        <img src="/static/icon-192.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
+        <div style="flex:1;">
+            <div style="font-size:15px;font-weight:80ENDOFFILE
+# above is empty - actual insert via python below
+cd '/Users/anne-gaelledaval/D"display:noncd '/Users/anne-gaelledaval/D"display:noncd '/Us255,255,0.85);">Pour recevoir les notifications : ouvre dans <strong>Safari</strong>, puis <strong>⬆️ Partager</strong> → <strong>"Sur l'écran d'accueil"</strong>.</div>
+            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.85);">Installe l'app sur ton écran d'accueil pour recevoir les notifications 🔔</div>
+        </div>
+        <button onclick="dismissPwaBanner()" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:0;line-height:1;">✕</button>
+    </div>
+    <div id="pwa-android-btn-wrap" style="display:none;max-width:500px;margin:12px auto 0;">
+        <button id="pwa-install-btn" style="width:100%;padding:12px;background:#FDAE54;color:#153036;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;">➕ Ajouter à l'écran d'accueil</button>
+    </div>
+</div>
+<script>
+(function(){
+    if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)return;
+    var d=localStorage.getItem('pwa_dismissed');
+    if(d&&(Date.now()-parseInt(d))<7*24*3600*1000)return;
+    var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    var banner=document.getElementById('pwa-install-banner');
+    var deferred=null;
+    window.addEventListener('beforeinstallprompt',function(e){
+        e.preventDefault();deferred=e;
+        document.getElementById('pwa-android-msg').style.display='block';
+        document.getElementById('pwa-android-btn-wrap').style.display='block';
+        banner.style.display='block';
+    });
+    document.getElementById('pwa-install-btn').addEventListener('click',function(){
+        if(deferred){deferred.prompt();deferred.userChoice.then(function(){banner.style.display='none';deferred=null;});}
+    });
+    if(isIOS){document.getElementById('pwa-ios-msg').style.display='block';banner.style.display='block';}
+    window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';localStorage.setItem('pwa_dismissed',Date.now());};
+})();
+</script>
 </body>
             </html>
