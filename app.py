@@ -2637,6 +2637,11 @@ CREATE TABLE IF NOT EXISTS users (
     except Exception:
         pass
 
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN has_seen_onboarding INTEGER DEFAULT 0")
+    except Exception:
+        pass
+
 # Table houses
     c.execute("""
         CREATE TABLE IF NOT EXISTS houses (
@@ -8926,6 +8931,7 @@ def menu():
     unread_task_added = 0
     unread_courses = 0
     house_id = None
+    show_onboarding = False
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
     if 'user' in session:
@@ -8934,14 +8940,29 @@ def menu():
         
         try:
             # Vérifier si le profil est complet (nom + avatar + registration_step)
-            c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
-            user_row = c.fetchone()
+            try:
+                c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, has_seen_onboarding FROM users WHERE email=?", (session['user'],))
+                user_row = c.fetchone()
+                if user_row:
+                    user_name, user_avatar, user_avatar_file, house_id, registration_step, has_seen_onboarding = user_row
+                else:
+                    user_row = None
+            except Exception:
+                # Fallback si colonne has_seen_onboarding absente (ancienne DB)
+                c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
+                _row = c.fetchone()
+                if _row:
+                    user_name, user_avatar, user_avatar_file, house_id, registration_step = _row
+                    has_seen_onboarding = 0
+                    user_row = _row
+                else:
+                    user_row = None
             
             if not user_row:
                 conn.close()
                 return redirect(url_for('welcome'))
             
-            user_name, user_avatar, user_avatar_file, house_id, registration_step = user_row
+            show_onboarding = not bool(has_seen_onboarding)
             print(f"🏠 MENU CHECK: name={user_name}, avatar={user_avatar}, file={user_avatar_file}, step={registration_step}", flush=True)
             
             # Si le parcours d'inscription n'est pas terminé
@@ -9238,6 +9259,10 @@ def menu():
         except Exception:
             pending_proofs = 0
     
+    # ⚙️ DEV: forcer l'affichage de l'onboarding via ?preview_onboarding=1
+    if request.args.get('preview_onboarding') == '1':
+        show_onboarding = True
+
     resp = make_response(render_template(
         'menu.html',
         players=players,
@@ -9266,12 +9291,31 @@ def menu():
         unread_courses=unread_courses,
         custom_rooms=custom_rooms_data,
         pending_proofs=pending_proofs,
+        show_onboarding=show_onboarding,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'
     return resp
+
+
+# ════════════════════════════════════════════════════════════
+# 🎓 ONBOARDING — Marquer comme vu
+# ════════════════════════════════════════════════════════════
+@app.route('/api/mark_onboarding_seen', methods=['POST'])
+def api_mark_onboarding_seen():
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False}), 401
+    try:
+        conn = get_db_connection()
+        conn.execute("UPDATE users SET has_seen_onboarding=1 WHERE email=?", (session['user'],))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ════════════════════════════════════════════════════════════

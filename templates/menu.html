@@ -6173,5 +6173,156 @@ function sendMalus(reason, points){
     window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';localStorage.setItem('pwa_dismissed',Date.now());};
 })();
 </script>
+{% if show_onboarding %}
+<!-- ═══ MODALE ONBOARDING PREMIÈRE CONNEXION ═══ -->
+<style>
+.ob-overlay {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(21,48,54,0.72);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    padding: 16px;
+}
+.ob-card {
+    background: rgba(255,255,255,0.28);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 28px;
+    box-shadow: 0 16px 48px rgba(21,48,54,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
+    padding: 32px 28px 24px;
+    max-width: 400px; width: 100%;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.ob-emoji { font-size: 42px; margin-bottom: 12px; display: block; }
+.ob-title { font-size: 22px; font-weight: 900; color: #153036; margin-bottom: 8px; }
+.ob-text { font-size: 14px; line-height: 1.6; color: #597176; margin-bottom: 20px; }
+.ob-text strong { color: #153036; }
+.ob-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(166,211,220,0.35); border: 1px solid rgba(166,211,220,0.5);
+    border-radius: 20px; padding: 5px 13px; font-size: 13px; font-weight: 700;
+    color: #153036; margin: 3px;
+}
+.ob-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.ob-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(89,113,118,0.3); transition: all 0.3s; }
+.ob-dot.active { background: #597176; width: 20px; border-radius: 4px; }
+.ob-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 16px;
+    font-size: 16px; font-weight: 800; cursor: pointer;
+    background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+    color: #fff; box-shadow: 0 4px 16px rgba(89,113,118,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.ob-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(89,113,118,0.25); }
+.ob-btn-last {
+    background: linear-gradient(135deg, #FDAE54 0%, #f59c35 100%);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.4);
+    font-size: 17px;
+}
+.ob-slide { display: none; }
+.ob-slide.active { display: block; }
+</style>
+
+<div class="ob-overlay" id="ob-overlay">
+  <div class="ob-card">
+    <!-- Slide 1 : Bienvenue -->
+    <div class="ob-slide active" id="ob-slide-1">
+      <span class="ob-emoji">🏠✨</span>
+      <div class="ob-title">Bienvenue sur Klean !</div>
+      <div class="ob-text">
+        <strong>Le jeu qui rend le ménage fun et équitable !</strong><br><br>
+        Principe simple :<br>
+        faire les tâches <strong>en vrai</strong> = gagner des <strong>points</strong> 🏆
+      </div>
+    </div>
+    <!-- Slide 2 : Pièces & tâches -->
+    <div class="ob-slide" id="ob-slide-2">
+      <span class="ob-emoji">🛋️🍳🛁</span>
+      <div class="ob-title">Choisis une pièce</div>
+      <div class="ob-text">
+        Clique sur une pièce → fais la tâche → valide → <strong>tu marques des points !</strong><br><br>
+        <span class="ob-tag">🧹 +10 pts</span>
+        <span class="ob-tag">🍽️ +5 pts</span>
+        <br><br>
+        ✏️ Tu peux <strong>modifier la valeur des points</strong><br>
+        ➕ Tu peux aussi <strong>ajouter tes propres tâches perso</strong>
+      </div>
+    </div>
+    <!-- Slide 3 : Liste de courses -->
+    <div class="ob-slide" id="ob-slide-3">
+      <span class="ob-emoji">🛒</span>
+      <div class="ob-title">Liste de courses partagée</div>
+      <div class="ob-text">
+        Cocher un article dans la liste de courses, ça rapporte des points aussi !<br><br>
+        <strong>Plus t'en fais, plus tu marques !</strong> 💪
+      </div>
+    </div>
+    <!-- Slide 4 : Malus -->
+    <div class="ob-slide" id="ob-slide-4">
+      <span class="ob-emoji">💀⚡</span>
+      <div class="ob-title">Envoie des malus !</div>
+      <div class="ob-text">
+        Tu peux envoyer un 💀 malus à l'autre joueur pour lui faire perdre des points.<br><br>
+        👇 <strong>Depuis le classement en bas de l'écran</strong>
+      </div>
+    </div>
+    <!-- Slide 5 : Gagnant -->
+    <div class="ob-slide" id="ob-slide-5">
+      <span class="ob-emoji">👑🎉</span>
+      <div class="ob-title">Le dimanche, un gagnant est couronné !</div>
+      <div class="ob-text">
+        🎁 <strong>Les perdants lui offrent un cadeau pour féliciter le gagnant !</strong><br><br>
+        Petit-déj au lit, soirée film au choix, massage…<br>
+        à toi de décider 👑
+      </div>
+    </div>
+
+    <div class="ob-dots">
+      <div class="ob-dot active" id="ob-d-1"></div>
+      <div class="ob-dot" id="ob-d-2"></div>
+      <div class="ob-dot" id="ob-d-3"></div>
+      <div class="ob-dot" id="ob-d-4"></div>
+      <div class="ob-dot" id="ob-d-5"></div>
+    </div>
+
+    <button class="ob-btn" id="ob-next-btn" onclick="obNext()">Suivant →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var current = 1;
+  var total = 5;
+  function obNext() {
+    if (current < total) {
+      document.getElementById('ob-slide-' + current).classList.remove('active');
+      document.getElementById('ob-d-' + current).classList.remove('active');
+      current++;
+      document.getElementById('ob-slide-' + current).classList.add('active');
+      document.getElementById('ob-d-' + current).classList.add('active');
+      if (current === total) {
+        var btn = document.getElementById('ob-next-btn');
+        btn.textContent = "C'est parti ! 🚀";
+        btn.classList.add('ob-btn-last');
+      }
+    } else {
+      obClose();
+    }
+  }
+  function obClose() {
+    document.getElementById('ob-overlay').style.display = 'none';
+    fetch('/api/mark_onboarding_seen', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+      credentials: 'same-origin'
+    });
+  }
+  window.obNext = obNext;
+})();
+</script>
+{% endif %}
+
 </body>
             </html>
