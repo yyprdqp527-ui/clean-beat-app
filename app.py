@@ -4417,6 +4417,9 @@ def choose_house_type():
         
         # Sauvegarder temporairement dans la session
         session['house_type'] = house_type
+        house_name_input = request.form.get('house_name', '').strip()
+        if house_name_input:
+            session['house_name'] = house_name_input
         session['registration_step'] = 'house_type_chosen'
         
         # Rediriger vers l'étape 3 : invitation partenaires

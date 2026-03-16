@@ -175,6 +175,22 @@
             cursor: not-allowed;
         }
 
+        .name-chip {
+            background: rgba(253,174,84,0.2);
+            border: 1.5px solid rgba(253,174,84,0.5);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #153036;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .name-chip:hover {
+            background: rgba(253,174,84,0.4);
+            border-color: #FDAE54;
+        }
+
         .flash {
             padding: 15px 20px;
             border-radius: 12px;
@@ -280,6 +296,20 @@
         </div>
 
         <input type="hidden" name="house_type" id="house_type" value="">
+
+        <!-- Nom de la maison -->
+        <div style="margin-bottom: 20px;">
+            <label for="house_name" style="display:block; font-size:14px; font-weight:700; color:#153036; margin-bottom:8px;">🏷️ Donnez un surnom à votre maison</label>
+            <input type="text" name="house_name" id="house_name" placeholder="Le QG, Notre Cocon, Sweet Home…"
+                   maxlength="40"
+                   style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid rgba(253,174,84,0.4); background:rgba(255,255,255,0.6); font-size:15px; font-weight:600; color:#153036; outline:none; transition:border-color 0.2s;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                <button type="button" class="name-chip" onclick="document.getElementById('house_name').value='Le QG'">Le QG</button>
+                <button type="button" class="name-chip" onclick="document.getElementById('house_name').value='Notre Cocon'">Notre Cocon</button>
+                <button type="button" class="name-chip" onclick="document.getElementById('house_name').value='Sweet Home'">Sweet Home</button>
+                <button type="button" class="name-chip" onclick="document.getElementById('house_name').value='La Base'">La Base</button>
+            </div>
+        </div>
 
         <button type="submit" class="submit-btn" id="submitBtn" disabled>
             Suivant →
