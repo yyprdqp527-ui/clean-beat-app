@@ -6471,16 +6471,15 @@ function sendMalus(reason, points){
             <!-- === FIN DASHBOARD === -->
 
 <!-- ═══ BANNIÈRE INSTALLATION PWA ═══ -->
-<div id="pwa-install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#153036 0%,#1e4a52 100%); color:white; padding:14px 16px 20px; box-shadow:0 -4px 20px rgba(0,0,0,0.3); border-radius:20px 20px 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div id="pwa-install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,rgba(255,255,255,0.88) 0%,rgba(166,211,220,0.55) 50%,rgba(253,174,84,0.35) 100%); color:#153036; padding:14px 16px 20px; box-shadow:0 -8px 32px rgba(21,48,54,0.18),0 0 0 1px rgba(255,255,255,0.5),inset 0 1px 0 rgba(255,255,255,0.65); border-radius:20px 20px 0 0; border:1px solid rgba(255,255,255,0.35); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
     <div style="display:flex; align-items:flex-start; gap:12px; max-width:500px; margin:0 auto;">
         <img src="/static/icon-192.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
         <div style="flex:1;">
-            <div style="font-size:15px;font-weight:80ENDOFFILE
-# above is empty - actual insert via python below
-cd '/Users/anne-gaelledaval/D"display:noncd '/Users/anne-gaelledaval/D"display:noncd '/Us255,255,0.85);">Pour recevoir les notifications : ouvre dans <strong>Safari</strong>, puis <strong>⬆️ Partager</strong> → <strong>"Sur l'écran d'accueil"</strong>.</div>
-            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.85);">Installe l'app sur ton écran d'accueil pour recevoir les notifications 🔔</div>
+            <div style="font-size:15px;font-weight:800;margin-bottom:4px;color:#153036;">📲 Installe CleanBeat sur ton écran d'accueil</div>
+            <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Pour recevoir les notifications : ouvre dans <strong>Safari</strong>, puis <strong>⬆️ Partager</strong> → <strong>"Sur l'écran d'accueil"</strong>.</div>
+            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Installe l'app sur ton écran d'accueil pour recevoir les notifications 🔔</div>
         </div>
-        <button onclick="dismissPwaBanner()" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:0;line-height:1;">✕</button>
+        <button onclick="dismissPwaBanner()" style="background:rgba(21,48,54,0.07);border:none;color:#153036;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;border-radius:50%;">✕</button>
     </div>
     <div id="pwa-android-btn-wrap" style="display:none;max-width:500px;margin:12px auto 0;">
         <button id="pwa-install-btn" style="width:100%;padding:12px;background:#FDAE54;color:#153036;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;">➕ Ajouter à l'écran d'accueil</button>
