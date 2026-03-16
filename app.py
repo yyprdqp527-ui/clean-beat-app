@@ -7801,35 +7801,49 @@ def admin_beta():
 
     conn = get_db_connection()
     c = conn.cursor()
+    errors = []
 
     # Tous les utilisateurs inscrits (hors comptes enfants)
-    c.execute("""
-        SELECT email, name, phone, registration_step
-        FROM users
-        WHERE is_child_account IS NULL OR is_child_account = 0
-        ORDER BY id DESC
-    """)
-    users_rows = c.fetchall()
+    try:
+        c.execute("""
+            SELECT email, name, phone, registration_step
+            FROM users
+            WHERE is_child_account IS NULL OR is_child_account = 0
+            ORDER BY id DESC
+        """)
+        users_rows = c.fetchall()
+    except Exception as e:
+        users_rows = []
+        errors.append(f"users: {e}")
 
     # Connexions par jour (30 derniers jours)
-    c.execute("""
-        SELECT DATE(logged_at) as day, COUNT(*) as cnt
-        FROM login_logs
-        GROUP BY DATE(logged_at)
-        ORDER BY day DESC
-        LIMIT 30
-    """)
-    daily_rows = c.fetchall()
+    try:
+        c.execute("""
+            SELECT DATE(logged_at) as day, COUNT(*) as cnt
+            FROM login_logs
+            GROUP BY DATE(logged_at)
+            ORDER BY day DESC
+            LIMIT 30
+        """)
+        daily_rows = c.fetchall()
+    except Exception as e:
+        daily_rows = []
+        errors.append(f"login_logs jour: {e}")
 
     # Connexions par utilisateur (top 50)
-    c.execute("""
-        SELECT email, COUNT(*) as cnt, MAX(logged_at) as last_login
-        FROM login_logs
-        GROUP BY email
-        ORDER BY cnt DESC
-        LIMIT 50
-    """)
-    user_logins = c.fetchall()
+    try:
+        c.execute("""
+            SELECT email, COUNT(*) as cnt, MAX(logged_at) as last_login
+            FROM login_logs
+            GROUP BY email
+            ORDER BY cnt DESC
+            LIMIT 50
+        """)
+        user_logins = c.fetchall()
+    except Exception as e:
+        user_logins = []
+        errors.append(f"login_logs user: {e}")
+
     conn.close()
 
     total_users = len(users_rows)
@@ -7847,10 +7861,14 @@ def admin_beta():
                 padding: 15px 25px; margin: 10px; border-radius: 10px; text-align: center; }
         .stat h3 { margin: 0; font-size: 2em; color: #e94560; }
         .stat p { margin: 5px 0 0; color: #aaa; }
+        .err { background:#5a1a1a; padding:8px; border-radius:4px; margin:5px 0; font-size:0.85em; }
     </style>
     """
 
     html = f"{css}<h1>📊 Dashboard bêta-testeurs CleanBeat</h1>"
+    if errors:
+        for err in errors:
+            html += f"<div class='err'>⚠️ {err}</div>"
     html += f"""
     <div>
         <div class='stat'><h3>{total_users}</h3><p>Utilisateurs inscrits</p></div>
