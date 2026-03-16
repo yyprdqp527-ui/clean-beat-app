@@ -8932,7 +8932,7 @@ def menu():
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/sdbwoop.webp',     'category': 'salle_bain', 'fixed': True},
         {'key': 'toilettes','name': 'Toilettes',    'image': 'images/Wc2.webp',          'category': 'wc',         'fixed': True},
         {'key': 'buanderie','name': 'Buanderie',    'image': 'images/buanderie5.webp',   'category': 'buanderie',  'fixed': True},
-        {'key': 'garage',   'name': 'Garage',       'image': 'images/Garage2.webp',      'category': 'garage',     'fixed': True},
+        {'key': 'garage',   'name': 'Garage',       'image': 'images/Garage2.webp',      'category': 'garage',     'fixed': False},
     ]
     if house_id:
         for room in ALL_DEFAULT_ROOMS:
