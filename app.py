@@ -9245,20 +9245,6 @@ def menu():
             if 'is_current_user' not in player:
                 player['is_current_user'] = (player.get('email') == session.get('user'))
 
-        # Compteur de preuves en attente d'action pour l'utilisateur courant
-        pending_proofs = 0
-        try:
-            c.execute("""
-                SELECT COUNT(*) FROM proof_requests
-                WHERE house_id=? AND (
-                    (status='pending'   AND target_email=?) OR
-                    (status='submitted' AND requester_email=?)
-                )
-            """, (house_id, current_user_name, current_user_name))
-            pending_proofs = c.fetchone()[0] or 0
-        except Exception:
-            pending_proofs = 0
-    
     # ⚙️ DEV: forcer l'affichage de l'onboarding via ?preview_onboarding=1
     if request.args.get('preview_onboarding') == '1':
         show_onboarding = True
@@ -9290,7 +9276,6 @@ def menu():
         unread_task_added=unread_task_added,
         unread_courses=unread_courses,
         custom_rooms=custom_rooms_data,
-        pending_proofs=pending_proofs,
         show_onboarding=show_onboarding,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
