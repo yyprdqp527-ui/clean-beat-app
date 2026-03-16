@@ -3185,9 +3185,18 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'congratulation': '🎉',
                     'reminder': '⏰',
                     'sermon': '🏠',
-                    'baby_tracking': '👶'
+                    'baby_tracking': '👶',
+                    'courses_added': '🛒'
                 }
                 icon_emoji = notification_icons.get(message_type, '💬')
+                
+                # URL de destination selon le type
+                notification_urls = {
+                    'baby_tracking': '/baby_messages',
+                    'task_added': '/mission_messages',
+                    'courses_added': '/courses_messages'
+                }
+                notif_url = notification_urls.get(message_type, '/comments')
                 
                 # Titre personnalisé pour les messages de la maison
                 if message_type in ['sermon', 'congratulation', 'reminder']:
@@ -3199,7 +3208,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'title': title,
                     'body': content,
                     'icon': '/static/images/logo.png',
-                    'url': '/comments',
+                    'url': notif_url,
                     'messageId': message_id,
                     'messageType': message_type
                 }
