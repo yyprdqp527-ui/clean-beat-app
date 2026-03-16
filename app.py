@@ -7793,7 +7793,7 @@ def admin_clean_users():
     return html
 
 # ─── Dashboard bêta-testeurs ────────────────────────────────────────────────
-@app.route('/admin/beta')
+@app.route('/admin_beta')
 def admin_beta():
     key = request.args.get('key', '')
     if key != 'dust2026admin':
