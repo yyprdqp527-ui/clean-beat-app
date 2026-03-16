@@ -5314,6 +5314,9 @@ def toggle_reminder(reminder_id):
             current_pts = pts_row[0] or 0
             new_total_points = current_pts + 1
             c.execute("UPDATE users SET points=? WHERE email=?", (new_total_points, session['user']))
+            # Insérer dans completed_tasks pour que daily_points du header soit correct
+            c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                      (session['user'], house_id, 'courses', 'Liste de courses', 1))
             points_earned = 1
 
     conn.commit()
