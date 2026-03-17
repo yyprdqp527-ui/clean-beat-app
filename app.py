@@ -10347,7 +10347,7 @@ def add_task_page(cat, task_id=None):
                 creator_row = c.fetchone()
                 creator_name = creator_row[0] if creator_row and creator_row[0] else session['user'].split('@')[0]
                 
-                message_content = f"🆕 {creator_name} a ajouté une nouvelle tâche : '{task_name}' ({points} pts)"
+                message_content = f"🆕 {creator_name} a ajouté une nouvelle tâche : '{task_name}' dans {category_name} ({points} pts)"
                 create_system_message(house_id, message_content, 'task_added', sender_email=session['user'])
             except Exception:
                 pass  # Ne pas bloquer si le message échoue
