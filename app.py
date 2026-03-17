@@ -3625,6 +3625,7 @@ def deactivate_push_subscription(endpoint):
 def notify_house_members(house_id, notification_data, exclude_email=None):
     """
     Envoie une notification push à tous les membres d'une maison.
+    Calcule le badge count réel par utilisateur pour mettre à jour l'icône d'accueil.
     
     notification_data: {
         'title': str,
@@ -3639,7 +3640,21 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
     
     success_count = 0
     for sub in subscriptions:
-        if send_push_notification(sub, notification_data):
+        user_email = sub.get('user_email')
+        # Calculer le badge count réel pour cet utilisateur
+        personalized_data = dict(notification_data)
+        if user_email:
+            try:
+                total = (
+                    get_unread_message_count(user_email, house_id) +
+                    get_unread_count_by_type(user_email, house_id, 'baby_tracking') +
+                    get_unread_count_by_type(user_email, house_id, 'task_added') +
+                    get_unread_count_by_type(user_email, house_id, 'courses_added')
+                )
+                personalized_data['badge'] = max(1, total)
+            except Exception:
+                personalized_data['badge'] = 1
+        if send_push_notification(sub, personalized_data):
             success_count += 1
     
     return success_count
