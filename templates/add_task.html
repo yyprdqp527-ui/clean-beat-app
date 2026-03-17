@@ -302,7 +302,7 @@
                     <option value="ranger ses vetements.webp">👔 Vêtements</option>
                     <option value="logo.png">🏠 Maison générale</option>
                 </select>
-                <img id="imagePreview" class="image-preview" style="display: none;" alt="Aperçu">
+                <img id="imagePreview" class="image-preview" src="/static/images/default.png" alt="Aperçu">
             </div>
 
             <div class="form-group">
@@ -357,13 +357,11 @@ function updateImagePreview() {
     
     if (select.value) {
         preview.src = "/static/images/" + select.value;
-        preview.style.display = 'block';
         preview.onerror = function() {
-            console.log('Erreur chargement image:', this.src);
-            this.style.display = 'none';
+            this.src = '/static/images/default.png';
         };
     } else {
-        preview.style.display = 'none';
+        preview.src = '/static/images/default.png';
     }
 }
 </script>
