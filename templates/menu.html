@@ -6373,5 +6373,56 @@ function sendMalus(reason, points){
 </script>
 {% endif %}
 
+
+<!-- 🔔 Bannière activation notifications push -->
+<div id="push-notif-banner" style="display:none; position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 32px); max-width:420px;">
+    <div style="background:linear-gradient(135deg,rgba(253,174,84,0.97),rgba(244,198,141,0.97)); backdrop-filter:blur(20px); border-radius:20px; padding:16px 20px; box-shadow:0 8px 32px rgba(0,0,0,0.18); border:2px solid rgba(255,255,255,0.5); display:flex; align-items:center; gap:14px;">
+        <span style="font-size:28px; flex-shrink:0;">🔔</span>
+        <div style="flex:1; min-width:0;">
+            <div style="font-weight:800; font-size:14px; color:#153036;">Activer les notifications</div>
+            <div style="font-size:12px; color:rgba(21,48,54,0.75); margin-top:2px;">Reçois les alertes même quand l'appli est fermée</div>
+        </div>
+        <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; flex-shrink:0; white-space:nowrap;">Activer</button>
+        <button id="push-notif-banner-close" style="background:none; border:none; color:rgba(21,48,54,0.5); font-size:20px; cursor:pointer; flex-shrink:0; padding:0 0 0 4px; line-height:1;">×</button>
+    </div>
+</div>
+<script>
+(function() {
+    function showPushBanner() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        if (Notification.permission !== 'default') return;
+        var banner = document.getElementById('push-notif-banner');
+        if (!banner) return;
+        setTimeout(function() { banner.style.display = 'block'; }, 3000);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        showPushBanner();
+        var btn = document.getElementById('push-notif-banner-btn');
+        var closeBtn = document.getElementById('push-notif-banner-close');
+        var banner = document.getElementById('push-notif-banner');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                if (banner) banner.style.display = 'none';
+            });
+        }
+        if (btn) {
+            btn.addEventListener('click', async function() {
+                if (banner) banner.style.display = 'none';
+                if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
+                    const ok = await window.cleanBeatPush.requestPermission();
+                    if (ok) {
+                        setTimeout(function() {
+                            alert('\u2705 Notifications activées\u00a0! Tu recevras les alertes même quand l''appli est fermée.');
+                        }, 500);
+                    }
+                } else {
+                    const perm = await Notification.requestPermission();
+                    if (perm === 'granted') alert('\u2705 Notifications activées\u00a0!');
+                }
+            });
+        }
+    });
+})();
+</script>
 </body>
             </html>
