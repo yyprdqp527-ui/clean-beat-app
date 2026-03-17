@@ -2516,7 +2516,7 @@
                                 <span class="pill-icon">⭐</span>
                                 <span class="pill-count" id="pill-mission-count">{{ unread_task_added|default(0) }}</span>
                             </div>
-                            <div class="burger-alert-pill courses" id="pill-courses" onclick="window.location.href='{{ url_for('reminders') }}?from_badge=1'" title="Nouvel article dans la liste de courses" {% if not unread_courses|default(0) %}style="display:none"{% endif %}>
+                            <div class="burger-alert-pill courses" id="pill-courses" onclick="window.location.href='{{ url_for('courses_messages') }}'" title="Nouvel article dans la liste de courses" {% if not unread_courses|default(0) %}style="display:none"{% endif %}>
                                 <span class="pill-icon">🛒</span>
                                 <span class="pill-count" id="pill-courses-count">{{ unread_courses|default(0) }}</span>
                             </div>
