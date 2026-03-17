@@ -368,6 +368,14 @@
             text-align: center;
         }
 
+        /* État "tout lu" : pill toujours visible mais discrète */
+        .burger-alert-pill.pill-read {
+            opacity: 0.38;
+            filter: saturate(0.4);
+            box-shadow: none;
+        }
+        .burger-alert-pill.pill-read .pill-count { display: none; }
+
         /* Wrapper pour le burger + alertes */
         .burger-wrapper {
             display: flex;
@@ -2508,15 +2516,15 @@
                             <span></span><span></span><span></span>
                         </button>
                         <div class="burger-alerts" id="burger-alerts">
-                            <div class="burger-alert-pill baby" id="pill-baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé" {% if not unread_baby_tracking|default(0) %}style="display:none"{% endif %}>
+                            <div class="burger-alert-pill baby {% if not unread_baby_tracking|default(0) %}pill-read{% endif %}" id="pill-baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Suivi bébé">
                                 <span class="pill-icon">👶</span>
                                 <span class="pill-count" id="pill-baby-count">{{ unread_baby_tracking|default(0) }}</span>
                             </div>
-                            <div class="burger-alert-pill mission" id="pill-mission" onclick="window.location.href='{{ url_for('mission_messages') }}'" title="Nouvelle mission ajoutée" {% if not unread_task_added|default(0) %}style="display:none"{% endif %}>
+                            <div class="burger-alert-pill mission {% if not unread_task_added|default(0) %}pill-read{% endif %}" id="pill-mission" onclick="window.location.href='{{ url_for('mission_messages') }}'" title="Missions">
                                 <span class="pill-icon">⭐</span>
                                 <span class="pill-count" id="pill-mission-count">{{ unread_task_added|default(0) }}</span>
                             </div>
-                            <div class="burger-alert-pill courses" id="pill-courses" onclick="window.location.href='{{ url_for('reminders') }}?from_badge=1'" title="Nouvel article dans la liste de courses" {% if not unread_courses|default(0) %}style="display:none"{% endif %}>
+                            <div class="burger-alert-pill courses {% if not unread_courses|default(0) %}pill-read{% endif %}" id="pill-courses" onclick="window.location.href='{{ url_for('reminders') }}'" title="Liste de courses">
                                 <span class="pill-icon">🛒</span>
                                 <span class="pill-count" id="pill-courses-count">{{ unread_courses|default(0) }}</span>
                             </div>
@@ -5851,11 +5859,13 @@ function sendMalus(reason, points){
                     var pill = document.getElementById(pillId);
                     var countEl = document.getElementById(countId);
                     if (!pill || !countEl) return;
+                    pill.style.display = '';
                     if (count > 0) {
                         countEl.textContent = count < 100 ? count : '99+';
-                        pill.style.display = '';
+                        pill.classList.remove('pill-read');
                     } else {
-                        pill.style.display = 'none';
+                        countEl.textContent = '';
+                        pill.classList.add('pill-read');
                     }
                 }
 
