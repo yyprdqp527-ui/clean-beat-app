@@ -40,10 +40,17 @@ class PushNotificationManager {
                 return true;
             }
 
-            // Si permission déjà accordée et clé VAPID disponible → s'abonner automatiquement
+            // Si permission déjà accordée → s'abonner automatiquement
             if (Notification.permission === 'granted' && this.vapidPublicKey) {
                 console.log('🔄 Permission accordée, abonnement automatique...');
                 await this.subscribe();
+            }
+
+            // Si permission jamais demandée → demander automatiquement maintenant
+            // (le SW est chargé = contexte valide pour demander la permission)
+            if (Notification.permission === 'default') {
+                console.log('🔔 Demande automatique de permission notifications...');
+                await this.requestPermission();
             }
 
             return true;
