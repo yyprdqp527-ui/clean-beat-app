@@ -18,8 +18,9 @@ self.addEventListener('push', function(event) {
     event.waitUntil(
         self.registration.showNotification(title, options).then(function() {
             // 🏠 Mettre à jour le badge icône écran d'accueil
-            if ('setAppBadge' in navigator) {
-                return navigator.setAppBadge(badgeCount).catch(function(){});
+            // Dans le Service Worker, l'API Badge est sur `self`, pas `navigator`
+            if ('setAppBadge' in self) {
+                return self.setAppBadge(badgeCount).catch(function(){});
             }
         }).then(function() {
             // Demander à toutes les fenêtres ouvertes de rafraîchir leurs badges
@@ -37,8 +38,8 @@ self.addEventListener('notificationclick', function(event) {
     const url = event.notification.data.url || '/';
     
     // 🏠 Effacer le badge icône au clic sur la notification
-    if ('clearAppBadge' in navigator) {
-        navigator.clearAppBadge().catch(function(){});
+    if ('clearAppBadge' in self) {
+        self.clearAppBadge().catch(function(){});
     }
     
     event.waitUntil(
