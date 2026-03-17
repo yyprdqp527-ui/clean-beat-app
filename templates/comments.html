@@ -858,6 +858,22 @@
         color: #856404;
         border: 2px solid rgba(255, 234, 167, 0.8);
     }
+
+    {% if bg_theme_light %}
+    /* === Thème clair : textes foncés pour lisibilité === */
+    .message-item:not(.message-me) .message-bubble,
+    .message-item.message-me .message-bubble { background: rgba(255,255,255,0.6) !important; }
+    .message-item:not(.message-me) .message-sender-name,
+    .message-item.message-me .message-sender-name { color: #153036 !important; text-shadow: none !important; }
+    .message-item:not(.message-me) .message-text,
+    .message-item.message-me .message-text { color: #153036 !important; text-shadow: none !important; }
+    .message-item.message-system .message-bubble { color: #153036 !important; text-shadow: none !important; }
+    .message-item:not(.message-me) .message-timestamp,
+    .message-item.message-me .message-timestamp { color: rgba(21,48,54,0.65) !important; }
+    .receipt-sent { color: rgba(21,48,54,0.4) !important; }
+    .read-status.read { color: #153036 !important; text-shadow: none !important; }
+    .empty-state { color: #153036 !important; }
+    {% endif %}
 </style>
 {% endblock %}
 
