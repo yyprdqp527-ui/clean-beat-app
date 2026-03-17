@@ -601,7 +601,7 @@ def clean_task(value: str) -> str:
             'chambre ado': 'la chambre ado',
             'chambre bébé': 'la chambre bébé',
             'zone ados': 'la zone ados',
-            'pièce bonus': 'la pièce bonus',
+            'bureau': 'le bureau',
             'buanderie': 'la buanderie',
             'cuisine': 'la cuisine',
             'salon': 'le salon',
@@ -1053,7 +1053,7 @@ def sats():
             'chambre_enfant': ('Chambre Enfant', '🧸'),
             'chambre_bebe': ('Chambre Bébé', '👶'),
             'chambre_ado': ('Zone Ados', '🎮'),
-            'piece_bonus': ('Pièce Bonus', '💎'),
+            'piece_bonus': ('Bureau', '🖥️'),
             'garage': ('Garage', '🚗'),
         }
         
@@ -2327,7 +2327,7 @@ def normalize_category(cat):
         'Salon': 'salon',
         'Cuisine': 'cuisine',
         'Chambre Ado': 'chambre_ado',
-        'Pièce Bonus': 'piece_bonus',
+        'Bureau': 'piece_bonus',
         'Chambre Parentale': 'chambre_parentale',
         'Salle Bain': 'salle_bain',
         'Chambre Enfant': 'chambre_enfant',
@@ -2343,6 +2343,7 @@ def normalize_category(cat):
         'piece bonus': 'piece_bonus',
         'pièce bonus': 'piece_bonus',
         'piece_bonus': 'piece_bonus',
+        'bureau': 'piece_bonus',
         'chambre parentale': 'chambre_parentale',
         'chambre_parentale': 'chambre_parentale',
         'salle bain': 'salle_bain',
@@ -10310,7 +10311,7 @@ CATEGORY_NAMES = {
     'chambre_garcon': ('Chambre Enfant', '🧸'),
     'chambre_bebe': ('Chambre Bébé', '👶'),
     'chambre_ado': ('Zone Ados', '🎮'),
-    'piece_bonus': ('Pièce Bonus', '💎'),
+    'piece_bonus': ('Bureau', '🖥️'),
     'garage': ('Garage', '🚗'),
 }
 
