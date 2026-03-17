@@ -13,6 +13,9 @@
     .header-menu {
         display: none !important;
     }
+    .header-page-spacer {
+        display: none !important;
+    }
     
     /* Variables harmonisées avec l'application */
     :root {
@@ -74,8 +77,8 @@
     /* Container principal */
     .messages-container {
         max-width: 800px;
-        margin: 20px auto 30px;
-        padding: 0 20px;
+        margin: 0 auto 30px;
+        padding: 20px 20px 0;
     }
     
     /* En-tête - style harmonisé avec task_page et create_profile */
@@ -305,7 +308,7 @@
     /* Responsive */
     @media (max-width: 768px) {
         .messages-container {
-            margin-top: 20px;
+            margin-top: 0;
             padding: 0 12px;
         }
     }
