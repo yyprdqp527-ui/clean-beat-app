@@ -5,12 +5,13 @@ self.addEventListener('push', function(event) {
     
     const data = event.data.json();
     const title = data.title || 'CleanBeat';
+    const badgeCount = data.badge || 1;
     const options = {
         body: data.body || '',
         icon: data.icon || '/static/images/logo.png',
         badge: '/static/images/logo.png',
         vibrate: [200, 100, 200],
-        data: { url: data.url || '/', badge_count: data.badge || 1 },
+        data: { url: data.url || '/', badge_count: badgeCount },
         requireInteraction: false
     };
     
@@ -18,8 +19,15 @@ self.addEventListener('push', function(event) {
         self.registration.showNotification(title, options).then(function() {
             // 🏠 Mettre à jour le badge icône écran d'accueil
             if ('setAppBadge' in navigator) {
-                return navigator.setAppBadge(data.badge || 1).catch(function(){});
+                return navigator.setAppBadge(badgeCount).catch(function(){});
             }
+        }).then(function() {
+            // Demander à toutes les fenêtres ouvertes de rafraîchir leurs badges
+            return self.clients.matchAll({ type: 'window' }).then(function(clients) {
+                clients.forEach(function(client) {
+                    client.postMessage({ type: 'REFRESH_BADGES' });
+                });
+            });
         })
     );
 });

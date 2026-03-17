@@ -2507,28 +2507,20 @@
                         <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
                             <span></span><span></span><span></span>
                         </button>
-                        {% set show_baby = unread_baby_tracking|default(0) > 0 %}
-                        {% set show_mission = unread_task_added|default(0) > 0 %}
-                        {% set show_courses = unread_courses|default(0) > 0 %}
-                        {% if show_baby or show_mission or show_courses %}
-                        <div class="burger-alerts">
-                            {% if show_baby %}
-                            <div class="burger-alert-pill baby" onclick="window.location.href='{{ url_for('baby_messages') }}'">
-                                <span class="pill-icon">👶</span><span class="pill-count">{{ unread_baby_tracking }}</span>
+                        <div class="burger-alerts" id="burger-alerts">
+                            <div class="burger-alert-pill baby" id="pill-baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé" {% if not unread_baby_tracking|default(0) %}style="display:none"{% endif %}>
+                                <span class="pill-icon">👶</span>
+                                <span class="pill-count" id="pill-baby-count">{{ unread_baby_tracking|default(0) }}</span>
                             </div>
-                            {% endif %}
-                            {% if show_mission %}
-                            <div class="burger-alert-pill mission" onclick="window.location.href='{{ url_for('mission_messages') }}'">
-                                <span class="pill-icon">⭐</span><span class="pill-count">{{ unread_task_added }}</span>
+                            <div class="burger-alert-pill mission" id="pill-mission" onclick="window.location.href='{{ url_for('mission_messages') }}'" title="Nouvelle mission ajoutée" {% if not unread_task_added|default(0) %}style="display:none"{% endif %}>
+                                <span class="pill-icon">⭐</span>
+                                <span class="pill-count" id="pill-mission-count">{{ unread_task_added|default(0) }}</span>
                             </div>
-                            {% endif %}
-                            {% if show_courses %}
-                            <div class="burger-alert-pill courses" onclick="window.location.href='{{ url_for('courses_messages') }}'" title="Nouvel article dans la liste de courses">
-                                <span class="pill-icon">🛒</span><span class="pill-count">{{ unread_courses }}</span>
+                            <div class="burger-alert-pill courses" id="pill-courses" onclick="window.location.href='{{ url_for('reminders') }}?from_badge=1'" title="Nouvel article dans la liste de courses" {% if not unread_courses|default(0) %}style="display:none"{% endif %}>
+                                <span class="pill-icon">🛒</span>
+                                <span class="pill-count" id="pill-courses-count">{{ unread_courses|default(0) }}</span>
                             </div>
-                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -5664,6 +5656,7 @@ function sendMalus(reason, points){
                                 // Badge
                                 console.log('🔴 Mise à jour de mon badge...');
                                 updateUnreadBadge(data.recipient_unread_count);
+                                updateAppBadge(data.recipient_unread_count);
                                 
                                 // ✅ Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
@@ -5779,6 +5772,20 @@ function sendMalus(reason, points){
                                 return;
                             }
                             
+                            // ✅ Si c'est un message système (baby/mission/courses) → rafraîchir les pills
+                            if (data.action === 'system_message') {
+                                console.log('🔔 Message système reçu (', data.message_type, ') → refreshAllBadges');
+                                refreshAllBadges();
+                                return;
+                            }
+
+                            // ✅ Si c'est un message système (baby/mission/courses) → rafraîchir les pills
+                            if (data.action === 'system_message') {
+                                console.log('🔔 Message système reçu (', data.message_type, ') → refreshAllBadges');
+                                refreshAllBadges();
+                                return;
+                            }
+
                             // ❌ Sinon, ignorer (autres actions ou autres utilisateurs)
                             console.log('⏭️ Action ou utilisateur non concerné → Ignoré');
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
@@ -5827,6 +5834,32 @@ function sendMalus(reason, points){
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
                 // (cache navigateur, bfcache, retour arrière, Service Worker, etc.)
+                // Met à jour une pill baby/mission/courses par son id
+                function updatePill(pillId, countId, count) {
+                    var pill = document.getElementById(pillId);
+                    var countEl = document.getElementById(countId);
+                    if (!pill || !countEl) return;
+                    if (count > 0) {
+                        countEl.textContent = count < 100 ? count : '99+';
+                        pill.style.display = '';
+                    } else {
+                        pill.style.display = 'none';
+                    }
+                }
+
+                // Badge PWA sur l'icône de l'app (iOS 16.4+ / Android Chrome installé)
+                function updateAppBadge(count) {
+                    try {
+                        if ('setAppBadge' in navigator) {
+                            if (count > 0) {
+                                navigator.setAppBadge(count).catch(function(){});
+                            } else {
+                                navigator.clearAppBadge().catch(function(){});
+                            }
+                        }
+                    } catch(e) {}
+                }
+
                 function refreshAllBadges() {
                     console.log('🔄 Rafraîchissement des badges...');
                     fetch('/api/unread_counts', { cache: 'no-store' })
@@ -5849,6 +5882,13 @@ function sendMalus(reason, points){
                             if (counts.children_unread) {
                                 updateChildrenBadges(counts.children_unread);
                             }
+                            // Pills baby / mission / courses
+                            updatePill('pill-baby', 'pill-baby-count', counts.unread_baby || 0);
+                            updatePill('pill-mission', 'pill-mission-count', counts.unread_task_added || 0);
+                            updatePill('pill-courses', 'pill-courses-count', counts.unread_courses || 0);
+                            // Badge icône PWA
+                            var totalBadge = (counts.unread_received || 0) + (counts.unread_baby || 0) + (counts.unread_task_added || 0) + (counts.unread_courses || 0);
+                            updateAppBadge(totalBadge);
                             console.log('✅ Badges rafraîchis:', counts);
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
@@ -5883,6 +5923,15 @@ function sendMalus(reason, points){
                         if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                     }
                 });
+                // Écouter les messages du Service Worker (ex: REFRESH_BADGES après push)
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.addEventListener('message', function(event) {
+                        if (event.data && event.data.type === 'REFRESH_BADGES') {
+                            console.log('🔔 SW: Rafraîchissement des badges demandé');
+                            refreshAllBadges();
+                        }
+                    });
+                }
             </script>
 
        

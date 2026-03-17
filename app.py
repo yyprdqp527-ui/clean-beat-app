@@ -3276,7 +3276,8 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'icon': '/static/images/logo.png',
                     'url': notif_url,
                     'messageId': message_id,
-                    'messageType': message_type
+                    'messageType': message_type,
+                    'badge': 1
                 }
                 
                 # Envoyer à tous les membres de la maison
@@ -11769,6 +11770,9 @@ def api_unread_counts():
         unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
         unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
         children_unread = get_children_unread_counts(house_id)
+        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
+        unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
+        unread_courses = get_unread_count_by_type(session['user'], house_id, 'courses_added')
         
         conn.close()
         
@@ -11776,7 +11780,10 @@ def api_unread_counts():
             'unread_received': unread_received,
             'unread_by_sender': unread_by_sender,
             'unread_sent_to': unread_sent_to,
-            'children_unread': children_unread
+            'children_unread': children_unread,
+            'unread_baby': unread_baby,
+            'unread_task_added': unread_task_added,
+            'unread_courses': unread_courses
         })
         resp.headers['Cache-Control'] = 'no-store'
         return resp, 200
