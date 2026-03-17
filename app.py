@@ -3038,6 +3038,32 @@ CREATE TABLE IF NOT EXISTS users (
         except Exception as _idx_err:
             print(f'⚠️ init_db index ignoré ({_idx_err})', flush=True)
 
+    # === Migration: Corriger les anciens messages avec nom de maison ou NULL comme sender_email ===
+    # Avant une certaine version, task_added/courses_added/baby_tracking stockaient le nom de la maison
+    # au lieu de l'email du joueur. On corrige en cherchant le créateur par son nom dans le contenu.
+    try:
+        c.execute("""
+            SELECT id, house_id, content FROM messages
+            WHERE message_type IN ('task_added', 'courses_added', 'baby_tracking')
+            AND (sender_email IS NULL OR sender_email NOT LIKE '%@%')
+        """)
+        _old_msgs = c.fetchall()
+        for _msg_id, _msg_house_id, _content in _old_msgs:
+            if not _msg_house_id or not _content:
+                continue
+            _m = re.search(r'^\S+ (.+?) a ', _content)
+            if not _m:
+                continue
+            _creator_name = _m.group(1).strip()
+            c.execute("SELECT email FROM users WHERE house_id=? AND name=?", (_msg_house_id, _creator_name))
+            _user_row = c.fetchone()
+            if _user_row:
+                c.execute("UPDATE messages SET sender_email=? WHERE id=?", (_user_row[0], _msg_id))
+        if _old_msgs:
+            print(f'✅ Migration sender_email: {len(_old_msgs)} message(s) corrigé(s)', flush=True)
+    except Exception as _mig_emails:
+        print(f'⚠️ Migration sender_email messages: {_mig_emails}', flush=True)
+
     # Sur SQLite : commit final nécessaire. Sur PostgreSQL (autocommit=True) : no-op, chaque statement déjà commité.
     if not _USE_PG:
         conn.commit()
@@ -10369,8 +10395,8 @@ def add_task_page(cat, task_id=None):
                 
                 message_content = f"🆕 {creator_name} a ajouté une nouvelle tâche : '{task_name}' dans {category_name} ({points} pts)"
                 create_system_message(house_id, message_content, 'task_added', sender_email=session['user'])
-            except Exception:
-                pass  # Ne pas bloquer si le message échoue
+            except Exception as _e_msg:
+                print(f'⚠️ Erreur création message task_added: {_e_msg}', flush=True)
             
             conn.close()
         
