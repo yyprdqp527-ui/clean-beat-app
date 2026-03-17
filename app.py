@@ -555,7 +555,7 @@ def inject_bg_theme():
         if 'user' in session:
             conn = get_db_connection()
             c = conn.cursor()
-            c.execute("""SELECT h.bg_theme FROM users u JOIN houses h ON u.house_id=h.id WHERE u.email=?""", (session['user'],))
+            c.execute("SELECT bg_theme FROM users WHERE email=?", (session['user'],))
             row = c.fetchone()
             conn.close()
             if row and row[0] and row[0] in BG_THEMES:
@@ -2641,6 +2641,13 @@ CREATE TABLE IF NOT EXISTS users (
         c.execute("ALTER TABLE users ADD COLUMN has_seen_onboarding INTEGER DEFAULT 0")
     except Exception:
         pass
+
+    # Thème de fond par joueur (indépendant de la maison)
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN bg_theme TEXT DEFAULT 'marron'")
+        conn.commit()
+    except Exception:
+        pass  # Colonne déjà existante
 
 # Table houses
     c.execute("""
@@ -9973,11 +9980,8 @@ def set_bg_theme():
     try:
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        row = c.fetchone()
-        if row and row[0]:
-            c.execute("UPDATE houses SET bg_theme=? WHERE id=?", (theme, row[0]))
-            conn.commit()
+        c.execute("UPDATE users SET bg_theme=? WHERE email=?", (theme, session['user']))
+        conn.commit()
         conn.close()
         return {'ok': True}
     except Exception as e:
