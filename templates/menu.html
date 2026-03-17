@@ -325,19 +325,19 @@
         }
 
         .burger-alert-pill {
-            position: relative;
             display: flex;
             align-items: center;
-            justify-content: center;
-            width: 36px;
-            min-height: 36px;
-            border-radius: 14px;
-            padding: 0;
+            gap: 4px;
+            border-radius: 12px;
+            padding: 4px 8px 4px 5px;
+            font-size: 10px;
+            font-weight: 700;
             color: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            box-shadow: 0 1px 5px rgba(0,0,0,0.18);
+            white-space: nowrap;
             border: 1px solid rgba(255,255,255,0.4);
             cursor: pointer;
-            transition: transform 0.15s ease, opacity 0.2s ease;
+            transition: opacity 0.2s ease, transform 0.15s ease;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -358,23 +358,15 @@
         }
 
         .burger-alert-pill .pill-icon {
-            font-size: 20px;
+            font-size: 13px;
             line-height: 1;
         }
 
         .burger-alert-pill .pill-count {
-            position: absolute;
-            top: 3px;
-            right: 4px;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 800;
-            min-width: 14px;
+            min-width: 13px;
             text-align: center;
-            background: rgba(0,0,0,0.25);
-            border-radius: 7px;
-            padding: 0 3px;
-            line-height: 14px;
-            height: 14px;
         }
 
         /* État "tout lu" : pill toujours visible mais discrète */
