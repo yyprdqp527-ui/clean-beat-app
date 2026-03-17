@@ -3347,6 +3347,7 @@ def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
 def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
     """
     Retourne le nombre de messages non lus d'un type donné (baby_tracking, task_added, courses_added, etc).
+    Exclut les messages envoyés par l'utilisateur lui-même.
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
@@ -3357,10 +3358,11 @@ def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=N
             SELECT COUNT(*) FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = ?
+            AND m.sender_email != ?
             AND NOT EXISTS (
                 SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
-        """, (house_id, message_type, user_email))
+        """, (house_id, message_type, user_email, user_email))
         count = c.fetchone()[0]
         if _own:
             conn.close()
@@ -5980,11 +5982,17 @@ def baby_messages():
             'sender_type': sender_type,
             'message_type': message_type,
             'is_me': sender_email == session['user'],
-            'is_read_by_me': bool(is_read_by_me),  # ✅ Vérifier si ce message a été lu par l'utilisateur
+            'is_read_by_me': bool(is_read_by_me),
             'color': '#F472B6',  # Rose pour les messages bébé
             'bg_color': 'rgba(244, 114, 182, 0.15)'
         })
-    
+
+    # ✅ Auto-marquer comme lu tous les messages des autres joueurs (ouvrir = lire)
+    for msg in messages_data:
+        if not msg['is_me'] and not msg['is_read_by_me']:
+            mark_message_as_read(msg['id'], session['user'])
+            msg['is_read_by_me'] = True
+
     # Récupérer tous les joueurs pour l'affichage
     players = get_house_players_points(house_id)
     
@@ -6079,6 +6087,12 @@ def courses_messages():
             'color': '#92400E',
             'bg_color': 'rgba(146, 64, 14, 0.15)'
         })
+
+    # ✅ Auto-marquer comme lu tous les messages des autres joueurs (ouvrir = lire)
+    for msg in messages_data:
+        if not msg['is_me'] and not msg['is_read_by_me']:
+            mark_message_as_read(msg['id'], session['user'])
+            msg['is_read_by_me'] = True
 
     players = get_house_players_points(house_id)
     conn.close()
@@ -6178,7 +6192,13 @@ def mission_messages():
             'color': '#FB923C',  # Orange pour les messages mission
             'bg_color': 'rgba(251, 146, 60, 0.15)'
         })
-    
+
+    # ✅ Auto-marquer comme lu tous les messages des autres joueurs (ouvrir = lire)
+    for msg in messages_data:
+        if not msg['is_me'] and not msg['is_read_by_me']:
+            mark_message_as_read(msg['id'], session['user'])
+            msg['is_read_by_me'] = True
+
     # Récupérer tous les joueurs pour l'affichage
     players = get_house_players_points(house_id)
     
