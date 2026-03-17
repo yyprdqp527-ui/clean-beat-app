@@ -727,6 +727,17 @@
         background: linear-gradient(135deg, rgba(231, 76, 60, 0.25), rgba(231, 76, 60, 0.1));
         border-color: rgba(231, 76, 60, 0.4);
     }
+
+    /* Coches de lecture style WhatsApp sur les messages envoyés */
+    .read-receipt {
+        text-align: right;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 4px;
+        letter-spacing: 1px;
+    }
+    .receipt-sent  { color: rgba(255, 255, 255, 0.55); }
+    .receipt-read  { color: #4fc3f7; }
     
     .read-status.read {
         color: white;
@@ -943,33 +954,15 @@
                                     {{ msg.timestamp.strftime('%H:%M') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp[11:16] if msg.timestamp and len(msg.timestamp) >= 16 else msg.timestamp) }}
                                 </div>
                                 
-                                {# Bouton "Marquer comme lu" #}
-                                {% if msg.message_type == 'private' %}
-                                    {% if msg.is_received_by_me and not msg.is_me and not msg.recipient_is_child %}
-                                        {# Message reçu directement par moi #}
-                                        {% if msg.is_read_by_me %}
-                                            <div class="read-status">✓ Lu</div>
-                                        {% else %}
-                                            <button class="mark-read-btn"
-                                                    data-msg-id="{{ msg.id }}"
-                                                    onclick="markReceivedMessageAsRead(this.dataset.msgId, this);">
-                                                ✓ Marquer comme lu
-                                            </button>
-                                        {% endif %}
-                                    {% elif msg.recipient_is_child %}
-                                        {# Message envoyé à un enfant - les parents peuvent marquer comme lu #}
+                                {# ✓/✓✓ Indicateur de lecture style WhatsApp sur les messages envoyés #}
+                                {% if msg.message_type == 'private' and msg.is_me %}
+                                    <div class="read-receipt {{ 'receipt-read' if msg.is_read_by_recipient else 'receipt-sent' }}">
                                         {% if msg.is_read_by_recipient %}
-                                            <div class="read-status">✓ Lu par {{ msg.recipient_name }}</div>
+                                            ✓✓
                                         {% else %}
-                                            <button class="mark-read-btn"
-                                                    data-msg-id="{{ msg.id }}"
-                                                    data-child-email="{{ msg.recipient_email }}"
-                                                    data-child-name="{{ msg.recipient_name }}"
-                                                    onclick="markMessageAsRead(this.dataset.msgId, this.dataset.childEmail, this.dataset.childName, this);">
-                                                ✓ Lu pour {{ msg.recipient_name }}
-                                            </button>
+                                            ✓
                                         {% endif %}
-                                    {% endif %}
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>

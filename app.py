@@ -5773,9 +5773,19 @@ def _comments_inner():
             'recipient_is_child': bool(recipient_is_child)
         })
     
-    # Ne plus envoyer automatiquement de mise à jour WebSocket ici
-    # L'utilisateur doit cliquer sur "Tout validé" pour marquer les messages comme lus
-    
+    # ✅ Auto-marquer comme lu à l'ouverture (comportement WhatsApp : ouvrir = lire)
+    for msg in messages_data:
+        if msg['message_type'] == 'private':
+            # Messages reçus directement par moi
+            if msg['is_received_by_me'] and not msg['is_me'] and not msg['is_read_by_me']:
+                mark_message_as_read(msg['id'], session['user'])
+                msg['is_read_by_me'] = True
+            # Messages pour un enfant : le parent lit au nom de l'enfant
+            # (l'enfant n'a pas de téléphone, il consulte sur le téléphone du parent)
+            if msg['recipient_is_child'] and not msg['is_read_by_recipient']:
+                mark_message_as_read(msg['id'], msg['recipient_email'])
+                msg['is_read_by_recipient'] = True
+
     # Récupérer tous les joueurs de la maison (sauf l'utilisateur actuel pour le sélecteur)
     _dbg(f"[DEBUG COMMENTS] house_id={house_id}, current_user={session['user']}")
     c.execute("""
