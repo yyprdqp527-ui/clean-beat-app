@@ -3441,7 +3441,7 @@ function loadCWWeekStats() {
                 if (p.avatar_file) {
                     avatarHtml = '<img src="/static/avatars/' + p.avatar_file + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
                 } else if (p.avatar_url) {
-                    avatarHtml = '<img src="' + p.avatar_url + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">';
+                    avatarHtml = '<img src="' + p.avatar_url + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.remove()">';
                 } else {
                     avatarHtml = '<span style="font-size:18px;flex-shrink:0;">👤</span>';
                 }
@@ -6506,7 +6506,7 @@ function sendMalus(reason, points){
                     const ok = await window.cleanBeatPush.requestPermission();
                     if (ok) {
                         setTimeout(function() {
-                            alert('\u2705 Notifications activées\u00a0! Tu recevras les alertes même quand l''appli est fermée.');
+                            alert('\u2705 Notifications activées\u00a0! Tu recevras les alertes même quand l\'appli est fermée.');
                         }, 500);
                     }
                 } else {
