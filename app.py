@@ -9444,7 +9444,9 @@ def api_send_malus():
         'messy':    'A laissé traîner',
         'dishes':   'Vaisselle non rangée',
         'forgot':   'Tâche oubliée',
-        'sabotage': 'Sabotage !',
+        'arrache':  'Fait à l\'arrache',
+        'presque':  'Presque… mais non',
+        'sabotage': 'Sabotage flagrant',
     }
     reason_label = reason_labels.get(reason, 'Malus')
 
@@ -9522,7 +9524,9 @@ def api_send_bonus():
     reason_labels = {
         'bravo':  'Super travail',
         'help':   'A aidé',
-        'extra':  'Effort supplémentaire',
+        'extra':  'A fait plus',
+        'effort': 'On sent l\'effort',
+        'wahouh': 'Wahouh incroyable',
         'nice':   'Bonne ambiance',
         'streak': 'Streak remarquable',
     }
