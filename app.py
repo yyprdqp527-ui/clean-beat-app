@@ -3375,7 +3375,7 @@ def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
 def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
     """
     Retourne le nombre de messages non lus d'un type donné (baby_tracking, task_added, courses_added, etc).
-    Exclut les messages envoyés par l'utilisateur lui-même.
+    Inclut les messages créés par l'utilisateur lui-même (pill = rappel visible pour tous).
     Si existing_conn est fourni, réutilise cette connexion (ne la ferme pas).
     """
     try:
@@ -3386,11 +3386,10 @@ def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=N
             SELECT COUNT(*) FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = ?
-            AND m.sender_email != ?
             AND NOT EXISTS (
                 SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
             )
-        """, (house_id, message_type, user_email, user_email))
+        """, (house_id, message_type, user_email))
         count = c.fetchone()[0]
         if _own:
             conn.close()
