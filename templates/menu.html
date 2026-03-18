@@ -3438,9 +3438,12 @@ function loadCWWeekStats() {
 }
 
 function toggleCW(){
-    var wrap = document.getElementById('cwWrap');
-    wrap.classList.toggle('expanded');
-    if(wrap.classList.contains('expanded') && !_cwAnimated){
+    var wraps = document.querySelectorAll('.cw-wrap');
+    var mainWrap = wraps[wraps.length - 1];
+    mainWrap.classList.toggle('expanded');
+    var expanding = mainWrap.classList.contains('expanded');
+    wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
+    if(expanding && !_cwAnimated){
         _cwAnimated = true;
         setTimeout(function(){
             document.querySelectorAll('.cw-bar-fill').forEach(function(el){
@@ -3449,7 +3452,7 @@ function toggleCW(){
         }, 60);
         loadCWTasks();
         loadCWWeekStats();
-    } else if(wrap.classList.contains('expanded')){
+    } else if(expanding){
         loadCWTasks();
         loadCWWeekStats();
     }
@@ -9989,9 +9992,12 @@ function loadCWWeekStats() {
 }
 
 function toggleCW(){
-    var wrap = document.getElementById('cwWrap');
-    wrap.classList.toggle('expanded');
-    if(wrap.classList.contains('expanded') && !_cwAnimated){
+    var wraps = document.querySelectorAll('.cw-wrap');
+    var mainWrap = wraps[wraps.length - 1];
+    mainWrap.classList.toggle('expanded');
+    var expanding = mainWrap.classList.contains('expanded');
+    wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
+    if(expanding && !_cwAnimated){
         _cwAnimated = true;
         setTimeout(function(){
             document.querySelectorAll('.cw-bar-fill').forEach(function(el){
@@ -10000,7 +10006,7 @@ function toggleCW(){
         }, 60);
         loadCWTasks();
         loadCWWeekStats();
-    } else if(wrap.classList.contains('expanded')){
+    } else if(expanding){
         loadCWTasks();
         loadCWWeekStats();
     }
@@ -13309,9 +13315,12 @@ function loadCWWeekStats() {
 }
 
 function toggleCW(){
-    var wrap = document.getElementById('cwWrap');
-    wrap.classList.toggle('expanded');
-    if(wrap.classList.contains('expanded') && !_cwAnimated){
+    var wraps = document.querySelectorAll('.cw-wrap');
+    var mainWrap = wraps[wraps.length - 1];
+    mainWrap.classList.toggle('expanded');
+    var expanding = mainWrap.classList.contains('expanded');
+    wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
+    if(expanding && !_cwAnimated){
         _cwAnimated = true;
         setTimeout(function(){
             document.querySelectorAll('.cw-bar-fill').forEach(function(el){
@@ -13320,7 +13329,7 @@ function toggleCW(){
         }, 60);
         loadCWTasks();
         loadCWWeekStats();
-    } else if(wrap.classList.contains('expanded')){
+    } else if(expanding){
         loadCWTasks();
         loadCWWeekStats();
     }
@@ -19860,9 +19869,12 @@ function loadCWWeekStats() {
 }
 
 function toggleCW(){
-    var wrap = document.getElementById('cwWrap');
-    wrap.classList.toggle('expanded');
-    if(wrap.classList.contains('expanded') && !_cwAnimated){
+    var wraps = document.querySelectorAll('.cw-wrap');
+    var mainWrap = wraps[wraps.length - 1];
+    mainWrap.classList.toggle('expanded');
+    var expanding = mainWrap.classList.contains('expanded');
+    wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
+    if(expanding && !_cwAnimated){
         _cwAnimated = true;
         setTimeout(function(){
             document.querySelectorAll('.cw-bar-fill').forEach(function(el){
@@ -19871,7 +19883,7 @@ function toggleCW(){
         }, 60);
         loadCWTasks();
         loadCWWeekStats();
-    } else if(wrap.classList.contains('expanded')){
+    } else if(expanding){
         loadCWTasks();
         loadCWWeekStats();
     }
