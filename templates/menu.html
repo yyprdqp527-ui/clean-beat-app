@@ -3262,7 +3262,7 @@ body { padding-bottom: 72px !important; }
 <!-- Overlay Bonus -->
 <div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
     <div class="malus-sheet">
-        <div class="malus-sheet-title">🎁 Bonus pour <span id="bonusTargetName">…</span></div>
+        <div class="malus-sheet-title">❤️ Bonus pour <span id="bonusTargetName">…</span></div>
         <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
         <div class="malus-option" onclick="sendBonus('bravo',10)">
             <div class="malus-option-icon">🌟</div>
@@ -3393,7 +3393,7 @@ function loadCWTasks(){
                     var actBtns = '';
                     if (!t.is_current_user) {
                         actBtns = '<button class="cw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus sur cette tâche">💀</button>'
-                                + '<button class="cw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus sur cette tâche">🎁</button>';
+                                + '<button class="cw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus sur cette tâche">❤️</button>';
                     }
                     return '<div class="cw-task-item">'
                          + '<div class="cw-task-dot"></div>'
@@ -3506,21 +3506,29 @@ function closeBonus() {
     var ctx = document.getElementById('bonusTaskContext');
     if (ctx) { ctx.style.display = 'none'; }
 }
-function sendBonus(reason, points) {
-    if (!_bonusEmail) return;
-    fetch('/api/send_bonus', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({target_email: _bonusEmail, reason: reason, points: points})
-    }).then(function(r){ return r.json(); }).then(function(data) {
+function sendBonus(reason, points){
+    if(!_bonusEmail) return;
+    fetch('/api/send_bonus',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({target_email:_bonusEmail, reason:reason, points:points})
+    }).then(function(r){return r.json();}).then(function(data){
         closeBonus();
-        if (data.success) {
-            showToast(data.message || 'Bonus envoy\u00e9 ! \uD83C\uDF81', '#2ecc71');
-            setTimeout(function(){ window.location.reload(); }, 2200);
+        if(data.success){
+            var msg = data.message || 'Bonus envoyé ! ❤️';
+            if(window.showSuccessPopup){ window.showSuccessPopup(msg,'❤️'); }
+            else {
+                var t=document.createElement('div');
+                t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2ecc71;color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 8px 24px rgba(46,204,113,0.4);text-align:center;';
+                t.textContent=msg;
+                document.body.appendChild(t);
+                setTimeout(function(){t.remove();},2500);
+            }
+            setTimeout(function(){ window.location.reload(); }, 2000);
         } else {
-            showToast(data.error || 'Erreur', '#e74c3c');
+            alert(data.error || 'Erreur');
         }
-    }).catch(function(){ showToast('Erreur r\u00e9seau', '#e74c3c'); });
+    }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
 }
 function showToast(msg, bg){
     var isError = bg && bg.indexOf('e74c3c') !== -1;
