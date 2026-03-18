@@ -9706,6 +9706,58 @@ def api_active_malus():
         conn.close()
 
 
+@app.route('/api/active_bonus', methods=['GET'])
+def api_active_bonus():
+    """
+    Renvoie la liste des joueurs qui ont reçu un bonus dans la dernière heure.
+    Miroir de api_active_malus mais pour la catégorie 'bonus'.
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'bonus': []}), 200
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify({'bonus': []}), 200
+
+        house_id = row[0]
+
+        from datetime import timedelta
+        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+        c.execute("""
+            SELECT ct.user_email, u.name, ct.task_name
+            FROM completed_tasks ct
+            INNER JOIN users u ON ct.user_email = u.email
+            WHERE ct.house_id = ?
+              AND ct.category = 'bonus'
+              AND ct.completed_at >= CAST(? AS TIMESTAMP)
+            ORDER BY ct.completed_at DESC
+        """, (house_id, since))
+
+        rows = c.fetchall()
+
+        seen = {}
+        for email, name, task_name in rows:
+            if email not in seen:
+                seen[email] = {
+                    'email': email,
+                    'name': name or email.split('@')[0],
+                    'task_name': task_name,
+                }
+
+        return jsonify({'bonus': list(seen.values())})
+    except Exception as e:
+        _dbg(f"ERREUR api_active_bonus: {e}")
+        return jsonify({'bonus': [], 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/api/proof/tasks')
 def api_proof_tasks():
     """Tâches récentes des colocataires (dernières 24h) qu'on peut contester."""

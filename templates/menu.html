@@ -3508,23 +3508,19 @@ function closeBonus() {
 }
 function sendBonus(reason, points){
     if(!_bonusEmail) return;
+    var targetEmail = _bonusEmail;
     fetch('/api/send_bonus',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({target_email:_bonusEmail, reason:reason, points:points})
+        body: JSON.stringify({target_email:targetEmail, reason:reason, points:points})
     }).then(function(r){return r.json();}).then(function(data){
         closeBonus();
         if(data.success){
-            var msg = data.message || 'Bonus envoyé ! ❤️';
-            if(window.showSuccessPopup){ window.showSuccessPopup(msg,'❤️'); }
-            else {
-                var t=document.createElement('div');
-                t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2ecc71;color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 8px 24px rgba(46,204,113,0.4);text-align:center;';
-                t.textContent=msg;
-                document.body.appendChild(t);
-                setTimeout(function(){t.remove();},2500);
-            }
-            setTimeout(function(){ window.location.reload(); }, 2000);
+            // Tracking local : afficher le coeur immédiatement
+            if(!window._localBonusMap) window._localBonusMap = {};
+            window._localBonusMap[targetEmail] = Date.now();
+            if(typeof window.loadActiveBonuses === 'function') window.loadActiveBonuses();
+            setTimeout(function(){ window.location.reload(); }, 1800);
         } else {
             alert(data.error || 'Erreur');
         }
@@ -6210,6 +6206,75 @@ function sendMalus(reason, points){
                 setInterval(loadActiveMalus, 60000);
                 console.log('✅ Système malus initialisé');
             })();
+
+            // ═══════════════════════════════════════════════════════════
+            // ❤️ SYSTÈME DE BONUS — Afficher coeur sur avatars (1 heure)
+            // ═══════════════════════════════════════════════════════════
+
+            (function() {
+                window._localBonusMap = window._localBonusMap || {};
+
+                function loadActiveBonuses() {
+                    fetch('/api/active_bonus')
+                    .then(r => r.json())
+                    .then(data => {
+                        // Supprimer les anciens badges coeur
+                        document.querySelectorAll('.heart-badge').forEach(el => el.remove());
+
+                        const now = Date.now();
+                        const ONE_HOUR = 60 * 60 * 1000;
+                        const apiBonus = data.bonus || [];
+                        const allBonus = [...apiBonus];
+
+                        // Ajouter les bonus locaux non expirés
+                        if (window._localBonusMap) {
+                            Object.keys(window._localBonusMap).forEach(function(email) {
+                                const timestamp = window._localBonusMap[email];
+                                if (now - timestamp <= ONE_HOUR) {
+                                    if (!apiBonus.find(b => b.email === email)) {
+                                        allBonus.push({ email: email, task_name: null });
+                                    }
+                                } else {
+                                    delete window._localBonusMap[email];
+                                }
+                            });
+                        }
+
+                        if (allBonus.length === 0) return;
+
+                        allBonus.forEach(b => {
+                            const avatarWrapper = document.querySelector('.avatar-square-wrapper[data-player-email="' + b.email + '"]');
+                            if (avatarWrapper) {
+                                avatarWrapper.style.position = 'relative';
+                                const heart = document.createElement('span');
+                                heart.className = 'heart-badge';
+                                heart.textContent = '\u2764\uFE0F';
+                                heart.title = 'Bonus reçu' + (b.task_name ? ' pour : ' + b.task_name : '');
+                                heart.style.cssText = 'position:absolute;top:-3px;left:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(46,204,113,0.5));animation:heartBounce 0.9s ease infinite alternate;';
+                                avatarWrapper.appendChild(heart);
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Erreur loadActiveBonuses:', err);
+                    });
+                }
+
+                window.loadActiveBonuses = loadActiveBonuses;
+
+                // Anim CSS heart bounce
+                if (!document.getElementById('heartBounceAnim')) {
+                    const style = document.createElement('style');
+                    style.id = 'heartBounceAnim';
+                    style.textContent = '@keyframes heartBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-5px) scale(1.15); } }';
+                    document.head.appendChild(style);
+                }
+
+                loadActiveBonuses();
+                setInterval(loadActiveBonuses, 60000);
+                console.log('\u2705 Syst\u00e8me bonus coeur initialis\u00e9');
+            })();
+
 
             </script>
 
