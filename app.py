@@ -11718,6 +11718,7 @@ def api_daily_tasks():
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
               AND u.house_id = ?
+              AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY ct.completed_at DESC
             LIMIT 300
         """, (house_id, house_id))
