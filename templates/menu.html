@@ -3219,6 +3219,30 @@ body { padding-bottom: 72px !important; }
         <div class="cw-tasks-list"></div>
     </div>
     {% endfor %}
+
+    <!-- Mes statistiques -->
+    <div style="padding: 10px 4px 4px 4px; border-top: 1px solid rgba(166,211,220,0.25); margin-top: 6px;">
+        <div style="font-size: 10px; font-weight: 800; color: #8a9fa3; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-left: 2px;">Mes stats</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 7px;">
+            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(255,255,255,0.7);">
+                <div style="font-size: 16px; font-weight: 900; color: #153036; line-height: 1;">{{ cp.total_points|default(0) if cp else 0 }}</div>
+                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Total</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(253,174,84,0.3);">
+                <div style="font-size: 16px; font-weight: 900; color: #FDAE54; line-height: 1;">{{ player1_points or 0 }}</div>
+                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Auj.</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(255,255,255,0.7);">
+                <div style="font-size: 16px; font-weight: 900; color: #153036; line-height: 1;">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
+                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Semaine</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(255,100,50,0.2);">
+                {% set streak_val = cp.streak|default(0) if cp else 0 %}
+                <div style="font-size: 16px; font-weight: 900; color: {% if streak_val > 0 %}#e05c1f{% else %}#153036{% endif %}; line-height: 1;">{{ streak_val }}{% if streak_val > 0 %}&thinsp;🔥{% endif %}</div>
+                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Streak</div>
+            </div>
+        </div>
+    </div>
     </div><!-- fin cw-body -->
 </div>
 {% endif %}
