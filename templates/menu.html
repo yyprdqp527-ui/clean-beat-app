@@ -3220,15 +3220,20 @@ body { padding-bottom: 72px !important; }
     </div>
     {% endfor %}
 
-    <!-- Classement de la semaine -->
-    <div id="cwWeekSection" style="padding: 0 0 8px 0; border-top: 1px solid rgba(166,211,220,0.25); margin-top: 6px;">
-        <div style="padding: 8px 2px 6px 2px;">
-            <div style="font-size: 10px; font-weight: 800; color: #8a9fa3; text-transform: uppercase; letter-spacing: 1px;">📅 Classement semaine</div>
-        </div>
-        <div id="cwWeekPlayers" style="display: flex; flex-direction: column; gap: 5px;">
-            <div style="text-align:center; padding: 8px; color: #8a9fa3; font-size: 12px;">...</div>
-        </div>
-        <a href="/sats" style="display: block; margin-top: 10px; padding: 11px 0; background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%); color: #fff; font-size: 14px; font-weight: 800; text-align: center; border-radius: 14px; text-decoration: none; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(253,174,84,0.35);">📊 Voir les stats</a>
+    <!-- Bouton stats -->
+    <div style="padding: 6px 0 4px 0; border-top: 1px solid rgba(166,211,220,0.25); margin-top: 6px;">
+        <style>
+        @keyframes cwStatsPulse {
+            0%   { transform: scale(1);    box-shadow: 0 4px 14px rgba(253,174,84,0.35); }
+            50%  { transform: scale(1.03); box-shadow: 0 6px 22px rgba(253,174,84,0.6); }
+            100% { transform: scale(1);    box-shadow: 0 4px 14px rgba(253,174,84,0.35); }
+        }
+        #cwStatsBtn {
+            animation: cwStatsPulse 2.4s ease-in-out infinite;
+        }
+        #cwStatsBtn:active { transform: scale(0.96) !important; }
+        </style>
+        <a id="cwStatsBtn" href="/sats" style="display: block; margin-top: 8px; padding: 12px 0; background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%); color: #fff; font-size: 14px; font-weight: 800; text-align: center; border-radius: 14px; text-decoration: none; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(253,174,84,0.35);">📊 Regarde les stats !</a>
     </div>
     </div><!-- fin cw-body -->
 </div>
