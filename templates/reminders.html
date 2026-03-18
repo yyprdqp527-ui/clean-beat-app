@@ -408,6 +408,23 @@
             .catch(function(){ showToast('❌ Erreur réseau'); });
     });
 
+    // ─── Accumulation des points avant redirection ────────────────────────────
+    var _pendingPts = 0;
+    var _redirectTimer = null;
+    var _lastWho = '', _lastWhoN = '';
+
+    function scheduleRedirect() {
+        if (_redirectTimer) clearTimeout(_redirectTimer);
+        _redirectTimer = setTimeout(function() {
+            if (_pendingPts > 0) {
+                window.location.href = '/menu?success=1&pts=' + _pendingPts
+                    + '&ts=' + Date.now()
+                    + '&who=' + encodeURIComponent(_lastWho)
+                    + '&whon=' + encodeURIComponent(_lastWhoN);
+            }
+        }, 2500);
+    }
+
     // ─── Toggle ───────────────────────────────────────────────────────────────
     window.toggleReminder = function(id) {
         var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
@@ -431,14 +448,12 @@
                     if (data.points_earned > 0 && checkEl) {
                         showPlusOne(checkEl);
                     }
-                    // Rediriger vers le menu pour déclencher l'animation avatar
+                    // Accumuler les points et décaler la redirection
                     if (data.points_earned > 0) {
-                        setTimeout(function() {
-                            window.location.href = '/menu?success=1&pts=' + (data.points_earned || 1)
-                                + '&ts=' + Date.now()
-                                + '&who=' + encodeURIComponent(data.player_email || '')
-                                + '&whon=' + encodeURIComponent(data.player_name || '');
-                        }, 1500);
+                        _pendingPts += data.points_earned;
+                        _lastWho  = data.player_email || '';
+                        _lastWhoN = data.player_name  || '';
+                        scheduleRedirect();
                     }
                 } else {
                     card.classList.remove('done');
