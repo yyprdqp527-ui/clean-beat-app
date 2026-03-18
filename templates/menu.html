@@ -2863,6 +2863,15 @@
     padding: 3px 8px; border-radius: 8px;
     white-space: nowrap;
 }
+.cw-task-malus-btn, .cw-task-bonus-btn {
+    border: none; background: none; cursor: pointer;
+    font-size: 14px; padding: 2px 3px; border-radius: 8px;
+    flex-shrink: 0; line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s, background 0.15s;
+}
+.cw-task-malus-btn:active { transform: scale(0.82); background: rgba(231,76,60,0.15); }
+.cw-task-bonus-btn:active { transform: scale(0.82); background: rgba(46,204,113,0.15); }
 .cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
 .cw-avatar-img {
     width: 32px; height: 32px; border-radius: 50%;
@@ -3178,9 +3187,6 @@ body { padding-bottom: 72px !important; }
         </div>
         <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
         {% if p.skull_active|default(false) %}<span class="cw-skull" title="Tricheur — 💀 actif 24h">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" title="Sous accusation — doit fournir une preuve" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0) > 0 %}<span class="cw-skull" title="Tricheur prouvé {{ p.skull_count }} fois">💀×{{ p.skull_count }}</span>{% endif %}
-        {% if not p.is_current_user %}
-        <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
-        {% endif %}
         <div class="cw-tasks-list"></div>
     </div>
     {% endfor %}
@@ -3208,6 +3214,7 @@ body { padding-bottom: 72px !important; }
 <div class="malus-overlay" id="malusOverlay" onclick="if(event.target===this)closeMalus()">
     <div class="malus-sheet">
         <div class="malus-sheet-title">💀 Malus pour <span id="malusTargetName">…</span></div>
+        <div class="malus-task-context" id="malusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(166,211,220,0.15); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="malusTaskName">…</span></div>
         <div class="malus-option" onclick="sendMalus('lazy',-10)">
             <div class="malus-option-icon">😴</div>
             <div class="malus-option-label">Fainéant·e — rien fait depuis 24h</div>
@@ -3256,6 +3263,7 @@ body { padding-bottom: 72px !important; }
 <div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
     <div class="malus-sheet">
         <div class="malus-sheet-title">🎁 Bonus pour <span id="bonusTargetName">…</span></div>
+        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
         <div class="malus-option" onclick="sendBonus('bravo',10)">
             <div class="malus-option-icon">🌟</div>
             <div class="malus-option-label">Super travail aujourd'hui !</div>
@@ -3381,11 +3389,18 @@ function loadCWTasks(){
                 var tasks = byName[name] || [];
                 if (tasks.length === 0) return;
                 list.innerHTML = tasks.map(function(t){
+                    var enc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+                    var actBtns = '';
+                    if (!t.is_current_user) {
+                        actBtns = '<button class="cw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus sur cette tâche">💀</button>'
+                                + '<button class="cw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus sur cette tâche">🎁</button>';
+                    }
                     return '<div class="cw-task-item">'
                          + '<div class="cw-task-dot"></div>'
-                         + '<span class="cw-task-name">' + t.task_name + '</span>'
+                         + '<span class="cw-task-name">' + enc(t.task_name) + '</span>'
                          + '<span class="cw-task-pts">+' + t.points + ' pts</span>'
-                         + '<span class="cw-task-time">' + t.time + '</span>'
+                         + '<span class="cw-task-time">' + enc(t.time) + '</span>'
+                         + actBtns
                          + '</div>';
                 }).join('');
                 list.classList.add('has-tasks');
@@ -3394,6 +3409,14 @@ function loadCWTasks(){
         .catch(function(){});
 }
 
+
+// ─── Délégation d'events pour boutons tâche ───
+document.addEventListener('click', function(e){
+    var btn = e.target.closest('.cw-task-malus-btn');
+    if (btn) { openTaskMalus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+    btn = e.target.closest('.cw-task-bonus-btn');
+    if (btn) { openTaskBonus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+});
 function loadCWWeekStats() {
     fetch('/api/weekly_stats')
         .then(function(r){ return r.json(); })
@@ -3480,6 +3503,8 @@ function openBonus(email, name) {
 function closeBonus() {
     document.getElementById('bonusOverlay').classList.remove('open');
     _bonusEmail = null;
+    var ctx = document.getElementById('bonusTaskContext');
+    if (ctx) { ctx.style.display = 'none'; }
 }
 function sendBonus(reason, points) {
     if (!_bonusEmail) return;
@@ -3538,6 +3563,24 @@ function openMalus(email, name){
 function closeMalus(){
     document.getElementById('malusOverlay').classList.remove('open');
     _malusEmail = null;
+    var ctx = document.getElementById('malusTaskContext');
+    if (ctx) { ctx.style.display = 'none'; }
+}
+function openTaskMalus(email, name, taskName){
+    _malusEmail = email;
+    document.getElementById('malusTargetName').textContent = name;
+    var ctx = document.getElementById('malusTaskContext');
+    var tn = document.getElementById('malusTaskName');
+    if (ctx && tn) { tn.textContent = taskName; ctx.style.display = 'block'; }
+    document.getElementById('malusOverlay').classList.add('open');
+}
+function openTaskBonus(email, name, taskName){
+    _bonusEmail = email;
+    document.getElementById('bonusTargetName').textContent = name;
+    var ctx = document.getElementById('bonusTaskContext');
+    var tn = document.getElementById('bonusTaskName');
+    if (ctx && tn) { tn.textContent = taskName; ctx.style.display = 'block'; }
+    document.getElementById('bonusOverlay').classList.add('open');
 }
 function sendMalus(reason, points){
     if(!_malusEmail) return;
