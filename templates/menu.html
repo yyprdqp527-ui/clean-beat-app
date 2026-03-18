@@ -3220,27 +3220,14 @@ body { padding-bottom: 72px !important; }
     </div>
     {% endfor %}
 
-    <!-- Mes statistiques -->
-    <div style="padding: 10px 4px 4px 4px; border-top: 1px solid rgba(166,211,220,0.25); margin-top: 6px;">
-        <div style="font-size: 10px; font-weight: 800; color: #8a9fa3; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-left: 2px;">Mes stats</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 7px;">
-            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(255,255,255,0.7);">
-                <div style="font-size: 16px; font-weight: 900; color: #153036; line-height: 1;">{{ cp.total_points|default(0) if cp else 0 }}</div>
-                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Total</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(253,174,84,0.3);">
-                <div style="font-size: 16px; font-weight: 900; color: #FDAE54; line-height: 1;">{{ player1_points or 0 }}</div>
-                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Auj.</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(255,255,255,0.7);">
-                <div style="font-size: 16px; font-weight: 900; color: #153036; line-height: 1;">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
-                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Semaine</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 9px 5px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 1.5px solid rgba(255,100,50,0.2);">
-                {% set streak_val = cp.streak|default(0) if cp else 0 %}
-                <div style="font-size: 16px; font-weight: 900; color: {% if streak_val > 0 %}#e05c1f{% else %}#153036{% endif %}; line-height: 1;">{{ streak_val }}{% if streak_val > 0 %}&thinsp;🔥{% endif %}</div>
-                <div style="font-size: 9px; font-weight: 700; color: #8a9fa3; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">Streak</div>
-            </div>
+    <!-- Classement de la semaine -->
+    <div id="cwWeekSection" style="padding: 0 0 4px 0; border-top: 1px solid rgba(166,211,220,0.25); margin-top: 6px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 2px 6px 2px;">
+            <div style="font-size: 10px; font-weight: 800; color: #8a9fa3; text-transform: uppercase; letter-spacing: 1px;">📅 Classement semaine</div>
+            <a href="/sats" style="font-size: 10px; color: #FDAE54; font-weight: 700; text-decoration: none;">Tout voir →</a>
+        </div>
+        <div id="cwWeekPlayers" style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="text-align:center; padding: 8px; color: #8a9fa3; font-size: 12px;">...</div>
         </div>
     </div>
     </div><!-- fin cw-body -->
@@ -3437,6 +3424,42 @@ function loadCWTasks(){
         .catch(function(){});
 }
 
+function loadCWWeekStats() {
+    fetch('/api/weekly_stats')
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var container = document.getElementById('cwWeekPlayers');
+            if (!container) return;
+            if (!data.players || data.players.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:8px; color:#8a9fa3; font-size:12px;">Aucun joueur</div>';
+                return;
+            }
+            var medals = ['🥇', '🥈', '🥉'];
+            container.innerHTML = data.players.map(function(p, i) {
+                var medal = medals[i] !== undefined ? medals[i] : (i + 1) + '.';
+                var avatarHtml;
+                if (p.avatar_file) {
+                    avatarHtml = '<img src="/static/avatars/' + p.avatar_file + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
+                } else if (p.avatar_url) {
+                    avatarHtml = '<img src="' + p.avatar_url + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">';
+                } else {
+                    avatarHtml = '<span style="font-size:18px;flex-shrink:0;">👤</span>';
+                }
+                var colorBand = p.player_color_hex ? 'border-left: 3px solid ' + p.player_color_hex + ';' : '';
+                var tasks = p.weekly_tasks;
+                var tasksLabel = tasks + ' tâche' + (tasks > 1 ? 's' : '');
+                return '<a href="/sats" style="display:flex; align-items:center; gap:7px; padding: 6px 8px; background: rgba(255,255,255,0.88); border-radius:10px; ' + colorBand + ' text-decoration:none;">'
+                    + '<span style="font-size:13px; min-width:20px; text-align:center;">' + medal + '</span>'
+                    + avatarHtml
+                    + '<span style="flex:1; font-size:12px; font-weight:700; color:#153036; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + p.name + '</span>'
+                    + '<span style="font-size:10px; color:#8a9fa3; white-space:nowrap;">' + tasksLabel + '</span>'
+                    + '<span style="font-size:13px; font-weight:900; color:#FDAE54; white-space:nowrap; margin-left:4px;">' + p.weekly_points + ' pts</span>'
+                    + '</a>';
+            }).join('');
+        })
+        .catch(function(){});
+}
+
 function toggleCW(){
     var wrap = document.getElementById('cwWrap');
     wrap.classList.toggle('expanded');
@@ -3448,8 +3471,10 @@ function toggleCW(){
             });
         }, 60);
         loadCWTasks();
+        loadCWWeekStats();
     } else if(wrap.classList.contains('expanded')){
         loadCWTasks();
+        loadCWWeekStats();
     }
 }
 
@@ -4611,10 +4636,7 @@ function sendMalus(reason, points){
                             </span>
                             <span class="burger-nav-text">Messagerie</span>
                         </a>
-                        <a href="{{ url_for('sats') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">📊</span>
-                            <span class="burger-nav-text">Stats</span>
-                        </a>
+
                         <a href="{{ url_for('mes_recompenses') }}" class="burger-nav-item">
                             <span class="burger-nav-icon">🎁</span>
                             <span class="burger-nav-text">Récompenses</span>

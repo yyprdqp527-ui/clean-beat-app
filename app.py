@@ -11807,6 +11807,71 @@ def api_players_points():
         conn.close()
 
 
+
+@app.route('/api/weekly_stats')
+def api_weekly_stats():
+    """
+    API pour les stats hebdomadaires de tous les joueurs.
+    Utilisé par le widget classement du bas dans menu.html
+    """
+    if 'user' not in session:
+        return jsonify({'players': []}), 200
+
+    from datetime import date, timedelta
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify({'players': []}), 200
+
+        house_id = row[0]
+
+        # Lundi de la semaine en cours
+        today = date.today()
+        monday = (today - timedelta(days=today.weekday())).isoformat()
+
+        players = get_house_players_points(house_id)
+
+        players_data = []
+        for p in players:
+            email = p['email']
+            c.execute("""
+                SELECT COALESCE(SUM(points), 0), COUNT(*)
+                FROM completed_tasks
+                WHERE user_email=? AND house_id=? AND DATE(completed_at) >= ?
+            """, (email, house_id, monday))
+            row_w = c.fetchone()
+            weekly_points = int(row_w[0]) if row_w and row_w[0] else 0
+            weekly_tasks  = int(row_w[1]) if row_w and row_w[1] else 0
+
+            players_data.append({
+                'email': email,
+                'name': p['name'],
+                'avatar_url': p.get('avatar_url') or '',
+                'avatar_file': p.get('avatar_file') or '',
+                'daily_points': p.get('daily_points', 0),
+                'weekly_points': weekly_points,
+                'weekly_tasks': weekly_tasks,
+                'total_points': p.get('points', 0),
+                'player_color_hex': p.get('player_color_hex') or '',
+            })
+
+        players_data.sort(key=lambda x: x['weekly_points'], reverse=True)
+
+        resp = jsonify({'players': players_data})
+        resp.headers['Cache-Control'] = 'no-store'
+        return resp, 200
+
+    except Exception as e:
+        _dbg(f"Erreur api_weekly_stats: {e}")
+        return jsonify({'players': [], 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/api/unread_counts')
 def api_unread_counts():
     """
