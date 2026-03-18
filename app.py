@@ -2558,8 +2558,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar TEXT DEFAULT 'lorelei-default',
     name TEXT,
     photo_filename TEXT,
-    avatar_url TEXT,
-    FOREIGN KEY(house_id) REFERENCES houses(id)
+    avatar_url TEXT
 )
 """)
 
