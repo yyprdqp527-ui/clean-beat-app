@@ -5442,6 +5442,37 @@ def toggle_reminder(reminder_id):
 
     conn.commit()
 
+    # Si l'article vient d'être coché, vérifier si TOUTE la liste est faite
+    # → marquer tous les courses_added non lus comme lus pour cet utilisateur
+    if new_done == 1:
+        try:
+            conn_check = get_db_connection()
+            c_check = conn_check.cursor()
+            c_check.execute(
+                "SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0",
+                (user_house,)
+            )
+            remaining = c_check.fetchone()[0]
+            if remaining == 0:
+                # Toute la liste est cochée → éteindre la pill courses pour cet utilisateur
+                c_check.execute("""
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ? AND m.message_type = 'courses_added'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM message_reads mr
+                        WHERE mr.message_id = m.id AND mr.user_email = ?
+                    )
+                """, (user_house, session['user']))
+                for msg_row in c_check.fetchall():
+                    c_check.execute("""
+                        INSERT INTO message_reads (message_id, user_email)
+                        VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
+                    """, (msg_row[0], session['user']))
+                conn_check.commit()
+            conn_check.close()
+        except Exception:
+            pass
+
     # Diffuser la mise à jour des points via WebSocket
     if points_earned > 0:
         try:
@@ -11441,6 +11472,25 @@ def api_validate_task():
         else:
             pass
         
+        # ✅ Marquer tous les messages task_added non lus comme lus pour ce joueur
+        # (il a validé une mission → le rappel peut s'éteindre)
+        try:
+            c.execute("""
+                SELECT m.id FROM messages m
+                WHERE m.house_id = ? AND m.message_type = 'task_added'
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+            """, (user_house_id, player_email))
+            for msg_row in c.fetchall():
+                c.execute("""
+                    INSERT INTO message_reads (message_id, user_email)
+                    VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
+                """, (msg_row[0], player_email))
+        except Exception:
+            pass
+
         # ✅ COMMIT en premier pour que les données soient disponibles pour les autres clients
         conn.commit()
         
