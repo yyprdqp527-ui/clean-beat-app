@@ -2382,18 +2382,18 @@ def generate_house_code(length=6):
 
 # ===== PALETTE DE COULEURS POUR LES JOUEURS =====
 PLAYER_COLOR_PALETTE = [
-    '#FF6B9D',  # Rose vif
-    '#4ECDC4',  # Turquoise
-    '#FFD93D',  # Jaune doré
-    '#95E1D3',  # Menthe
-    '#C7CEEA',  # Lavande
-    '#FFA07A',  # Saumon
-    '#98D8C8',  # Vert d'eau
-    '#F7B7A3',  # Pêche
-    '#A8DADC',  # Bleu ciel
-    '#FFB6B9',  # Rose poudré
-    '#B4A7D6',  # Violet pastel
-    '#FFE66D',  # Jaune pastel
+    '#FF4D6D',  # Rouge framboise
+    '#00B4D8',  # Bleu azur
+    '#06D6A0',  # Vert menthe vif
+    '#FFB703',  # Jaune soleil
+    '#8B5CF6',  # Violet électrique
+    '#F77F00',  # Orange vif
+    '#3A86FF',  # Bleu roi
+    '#FF006E',  # Rose choc
+    '#2DC653',  # Vert lime
+    '#FB5607',  # Orange brûlé
+    '#9B5DE5',  # Violet lilas
+    '#00F5D4',  # Turquoise néon
 ]
 
 
