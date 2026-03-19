@@ -1086,6 +1086,48 @@ if ('serviceWorker' in navigator) {
 
 {% block extra_scripts %}{% endblock %}
 
+<script>
+// ═══════════════════════════════════════════════════════
+//  cbToast — Toast glassmorphisme global (toutes pages)
+//  Usage : cbToast('message', 'success'|'warning'|'danger'|'info', duréeMs)
+// ═══════════════════════════════════════════════════════
+window.cbToast = function(message, type, duration) {
+    type     = type     || 'info';
+    duration = (duration === undefined) ? 2800 : duration;
+    var bg = {
+        success: 'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(255,215,0,.3) 50%,rgba(253,174,84,.4) 100%)',
+        warning: 'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(253,174,84,.4) 50%,rgba(244,198,141,.5) 100%)',
+        danger:  'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(255,107,107,.3) 50%,rgba(231,76,60,.2) 100%)',
+        info:    'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(166,211,220,.5) 50%,rgba(89,113,118,.3) 100%)'
+    };
+    var t = document.createElement('div');
+    t.style.cssText =
+        'position:fixed;bottom:28px;left:50%;' +
+        'transform:translateX(-50%) translateY(18px);' +
+        'background:' + (bg[type] || bg.info) + ';' +
+        'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);' +
+        'border:1px solid rgba(255,255,255,.3);' +
+        'border-radius:28px;padding:13px 26px;' +
+        'font-size:14px;font-weight:700;font-family:Montserrat,sans-serif;' +
+        'color:#153036;text-align:center;max-width:340px;width:90%;' +
+        'box-shadow:0 8px 32px rgba(21,48,54,.25),0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.6);' +
+        'z-index:99999;pointer-events:none;' +
+        'transition:opacity .35s cubic-bezier(.34,1.56,.64,1),transform .35s cubic-bezier(.34,1.56,.64,1);' +
+        'opacity:0;';
+    t.textContent = message;
+    document.body.appendChild(t);
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
+        t.style.transform = 'translateX(-50%) translateY(0)';
+        t.style.opacity   = '1';
+    }); });
+    setTimeout(function() {
+        t.style.transform = 'translateX(-50%) translateY(18px)';
+        t.style.opacity   = '0';
+        setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
+    }, duration);
+};
+</script>
+
 <!-- 🔔 Script Push Notifications - chargé à la fin pour éviter les erreurs de timing -->
 <script src="{{ url_for('static', filename='push-notifications.js') }}"></script>
 
