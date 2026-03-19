@@ -3182,7 +3182,7 @@ body { padding-bottom: 72px !important; }
         <div class="cw-info">
             <div class="cw-name">{{ p.name }}</div>
             <div class="cw-bar-wrap">
-                <div class="cw-bar-fill" data-pct="{{ bar_pct }}" style="width:0%;"></div>
+                <div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else "" }}" style="width:0%;"></div>
             </div>
         </div>
         <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
@@ -3347,6 +3347,8 @@ body { padding-bottom: 72px !important; }
         document.querySelectorAll('.cw-bar-fill').forEach(function(el){
             var pct = el.getAttribute('data-pct') || '0';
             el.style.width = pct + '%';
+            var col = el.getAttribute('data-color');
+            if (col) { el.style.background = col; }
         });
     }
 })();
