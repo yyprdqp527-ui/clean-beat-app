@@ -3280,8 +3280,9 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'badge': 1
                 }
                 
-                # Envoyer à tous les membres de la maison
-                notify_house_members(house_id, notification_data)
+                # Envoyer à tous les membres de la maison (sauf l'expéditeur si c'est un vrai utilisateur)
+                exclude = sender_email if message_type in ('task_added', 'courses_added', 'baby_tracking') else None
+                notify_house_members(house_id, notification_data, exclude_email=exclude)
                 
             except Exception as e:
                 _dbg(f"⚠️ Erreur envoi notification push: {e}")
