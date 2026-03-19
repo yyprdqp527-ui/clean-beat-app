@@ -11737,11 +11737,20 @@ def api_daily_tasks():
         
         house_id = row[0]
         
-        # Récupérer les tâches récentes puis filtrer en Python sur "aujourd'hui"
-        # (robuste SQLite/PostgreSQL + robustesse timezone)
-        from datetime import date, datetime
-        today_local = date.today()
-        local_tz = datetime.now().astimezone().tzinfo
+        # Filtrer sur "aujourd'hui" en heure de Paris (Render tourne en UTC)
+        from datetime import date, datetime, timezone
+        try:
+            from zoneinfo import ZoneInfo
+            paris_tz = ZoneInfo('Europe/Paris')
+        except ImportError:
+            try:
+                import pytz
+                paris_tz = pytz.timezone('Europe/Paris')
+            except ImportError:
+                paris_tz = None
+
+        now_paris = datetime.now(paris_tz) if paris_tz else datetime.now()
+        today_local = now_paris.date()
 
         c.execute("""
             SELECT 
@@ -11749,6 +11758,7 @@ def api_daily_tasks():
                 ct.task_name, 
                 ct.points, 
                 ct.completed_at,
+                ct.category,
                 u.name,
                 u.avatar_url,
                 u.avatar_file,
@@ -11764,10 +11774,10 @@ def api_daily_tasks():
         """, (house_id, house_id))
         
         rows = c.fetchall()
-        tasks = []
-        
+        raw_tasks = []
+
         for row in rows:
-            email, task_name, points, completed_at, name, avatar_url, avatar_file, avatar_seed, avatar_style = row
+            email, task_name, points, completed_at, category, name, avatar_url, avatar_file, avatar_seed, avatar_style = row
             
             # Résoudre l'avatar
             final_avatar = None
@@ -11781,56 +11791,102 @@ def api_daily_tasks():
                 style = avatar_style or 'adventurer'
                 final_avatar = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
             
-            # Extraire date/heure locale (str ou datetime selon backend)
+            # Convertir completed_at en heure de Paris
             completed_date = None
             time_str = '??:??'
             try:
                 if hasattr(completed_at, 'strftime'):
-                    local_dt = completed_at
-                    if getattr(completed_at, 'tzinfo', None):
-                        local_dt = completed_at.astimezone(local_tz)
-                    completed_date = local_dt.date()
-                    time_str = local_dt.strftime('%H:%M')
+                    dt = completed_at
+                    if not getattr(dt, 'tzinfo', None):
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    if paris_tz:
+                        dt = dt.astimezone(paris_tz)
+                    completed_date = dt.date()
+                    time_str = dt.strftime('%H:%M')
                 else:
-                    completed_at_str = str(completed_at or '')
-                    dt = datetime.fromisoformat(completed_at_str.replace('Z', '+00:00'))
-                    if dt.tzinfo:
-                        dt = dt.astimezone(local_tz)
+                    s = str(completed_at or '')
+                    dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
+                    if not dt.tzinfo:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    if paris_tz:
+                        dt = dt.astimezone(paris_tz)
                     completed_date = dt.date()
                     time_str = dt.strftime('%H:%M')
             except Exception:
-                completed_at_str = str(completed_at or '')
-                # Fallback permissif si format inattendu
                 try:
-                    if ' ' in completed_at_str:
-                        dt = datetime.strptime(completed_at_str[:19], '%Y-%m-%d %H:%M:%S')
-                        completed_date = dt.date()
-                        time_str = dt.strftime('%H:%M')
-                    elif 'T' in completed_at_str:
-                        dt = datetime.fromisoformat(completed_at_str[:19])
+                    s = str(completed_at or '')
+                    if ' ' in s:
+                        dt = datetime.strptime(s[:19], '%Y-%m-%d %H:%M:%S')
+                    elif 'T' in s:
+                        dt = datetime.fromisoformat(s[:19])
+                    else:
+                        dt = None
+                    if dt:
+                        # timestamp sans tz = UTC stocké sur Render → convertir
+                        dt = dt.replace(tzinfo=timezone.utc)
+                        if paris_tz:
+                            dt = dt.astimezone(paris_tz)
                         completed_date = dt.date()
                         time_str = dt.strftime('%H:%M')
                 except Exception:
                     pass
 
-            # Ne garder que les tâches du jour local
+            # Ne garder que les tâches du jour (heure de Paris)
             if completed_date != today_local:
                 continue
             
-            tasks.append({
+            raw_tasks.append({
                 'player_name': name if name else email.split('@')[0],
-                'player_email': email,  # Pour pouvoir donner des malus
+                'player_email': email,
                 'task_name': task_name,
-                'points': points,
+                'points': points or 0,
                 'time': time_str,
                 'avatar': final_avatar,
-                'is_current_user': (email == session['user'])
+                'is_current_user': (email == session['user']),
+                'category': category or ''
             })
 
-            # Limiter l'affichage au top 10 du jour
-            if len(tasks) >= 10:
-                break
-        
+        # Regrouper les entrées 'courses' par joueur en une seule ligne
+        # (chaque article coché génère +1 pt → on affiche "🛒 Courses (N articles) : X pts")
+        tasks = []
+        courses_by_player = {}  # {email: {points, time, player_name, avatar, is_current_user}}
+        for t in raw_tasks:
+            if t['category'] == 'courses':
+                key = t['player_email']
+                if key not in courses_by_player:
+                    courses_by_player[key] = {
+                        'player_name': t['player_name'],
+                        'player_email': t['player_email'],
+                        'avatar': t['avatar'],
+                        'is_current_user': t['is_current_user'],
+                        'time': t['time'],
+                        'points': 0,
+                        'count': 0
+                    }
+                courses_by_player[key]['points'] += t['points']
+                courses_by_player[key]['count'] += 1
+            else:
+                tasks.append(t)
+
+        # Insérer une ligne résumée pour les courses de chaque joueur
+        for key, c_data in courses_by_player.items():
+            n = c_data['count']
+            label = f"🛒 Courses ({n} article{'s' if n > 1 else ''})"
+            tasks.append({
+                'player_name': c_data['player_name'],
+                'player_email': c_data['player_email'],
+                'task_name': label,
+                'points': c_data['points'],
+                'time': c_data['time'],
+                'avatar': c_data['avatar'],
+                'is_current_user': c_data['is_current_user'],
+                'category': 'courses'
+            })
+
+        # Trier par heure décroissante et limiter à 15
+        tasks.sort(key=lambda x: x['time'], reverse=True)
+        tasks = tasks[:15]
+
         return {'tasks': tasks}, 200
         
     except Exception as e:
