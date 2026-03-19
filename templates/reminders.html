@@ -152,6 +152,9 @@
         text-decoration: line-through;
         color: rgba(21,48,54,0.5);
     }
+    .reminder-card {
+        cursor: pointer;
+    }
 
     /* Checkbox custom */
     .reminder-check {
@@ -255,24 +258,24 @@
         {% if active_reminders %}
         <div class="section-title">À acheter ({{ active_reminders|length }})</div>
         {% for r in active_reminders %}
-        <div class="reminder-card" id="card-{{ r.id }}">
-            <div class="reminder-check" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">&#10003;</div>
+        <div class="reminder-card" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
+            <div class="reminder-check" data-id="{{ r.id }}">&#10003;</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
             </div>
-            <button class="btn-delete" onclick="deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
+            <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
         {% endfor %}
         {% endif %}
 
         {% if done_reminders %}
         {% for r in done_reminders %}
-        <div class="reminder-card done" id="card-{{ r.id }}">
-            <div class="reminder-check checked" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">✓</div>
+        <div class="reminder-card done" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
+            <div class="reminder-check checked" data-id="{{ r.id }}">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
             </div>
-            <button class="btn-delete" onclick="deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
+            <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
         {% endfor %}
         {% endif %}
@@ -459,6 +462,47 @@
                 showToast('🗑 Article supprimé');
             });
     };
+
+    // ─── Synchro temps réel — écouter les toggles des autres joueurs ─────────
+    if (typeof io !== 'undefined') {
+        var _socket = io();
+        _socket.on('reminder_toggle', function(data) {
+            var card = document.getElementById('card-' + data.id);
+            if (!card) return;
+            var check = card.querySelector('.reminder-check');
+            if (data.is_done) {
+                card.classList.add('done');
+                check.classList.add('checked');
+                check.innerHTML = '✓';
+            } else {
+                card.classList.remove('done');
+                check.classList.remove('checked');
+                check.innerHTML = '&#10003;';
+            }
+        });
+        _socket.on('reminder_deleted', function(data) {
+            var card = document.getElementById('card-' + data.id);
+            if (!card) return;
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(30px)';
+            setTimeout(function(){ card.remove(); }, 300);
+        });
+        _socket.on('reminder_added', function(data) {
+            var emptyEl = document.getElementById('emptyState');
+            if (emptyEl) emptyEl.remove();
+            var list = document.getElementById('remindersList');
+            var card = document.createElement('div');
+            card.className = 'reminder-card';
+            card.id = 'card-' + data.id;
+            card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
+            card.innerHTML =
+                '<div class="reminder-check" data-id="' + data.id + '">&#10003;</div>' +
+                '<div class="reminder-body"><div class="reminder-title">' + escHtml(data.title) + '</div></div>' +
+                '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
+            list.insertBefore(card, list.firstChild);
+        });
+    }
 
     // ─── Utilitaire ───────────────────────────────────────────────────────────
     function escHtml(s) {

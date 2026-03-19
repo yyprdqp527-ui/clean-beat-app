@@ -5394,6 +5394,15 @@ def add_reminder():
     except Exception:
         pass  # Ne pas bloquer si le message échoue
 
+    # Synchroniser l'ajout pour tous les joueurs de la maison
+    try:
+        safe_socketio_emit('reminder_added', {
+            'id': new_id,
+            'title': title
+        }, namespace='/', room=f'house_{house_id}', broadcast=True)
+    except Exception:
+        pass
+
     conn.close()
 
     return jsonify({'success': True, 'id': new_id, 'title': title, 'remind_at': remind_at})
@@ -5495,6 +5504,15 @@ def toggle_reminder(reminder_id):
         except Exception as ws_err:
             _dbg(f"⚠️ WebSocket liste courses: {ws_err}")
 
+    # Diffuser le toggle à tous les autres membres de la maison (synchro liste)
+    try:
+        safe_socketio_emit('reminder_toggle', {
+            'id': reminder_id,
+            'is_done': bool(new_done)
+        }, namespace='/', room=f'house_{house_id}', broadcast=True)
+    except Exception:
+        pass
+
     # Récupérer nom du joueur pour l'animation avatar côté menu
     player_name_resp = ''
     try:
@@ -5533,6 +5551,15 @@ def delete_reminder(reminder_id):
                   (reminder_id, hr[0]))
     conn.commit()
     conn.close()
+
+    # Synchroniser la suppression pour tous les joueurs
+    if hr and hr[0]:
+        try:
+            safe_socketio_emit('reminder_deleted', {
+                'id': reminder_id
+            }, namespace='/', room=f'house_{hr[0]}', broadcast=True)
+        except Exception:
+            pass
 
     return jsonify({'success': True})
 
