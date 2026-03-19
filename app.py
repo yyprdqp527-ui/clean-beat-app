@@ -549,8 +549,8 @@ LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche'}
 
 @app.context_processor
 def inject_bg_theme():
-    bg = BG_THEMES['marron']
-    theme_name = 'marron'
+    bg = BG_THEMES['bleu']
+    theme_name = 'bleu'
     try:
         if 'user' in session:
             conn = get_db_connection()
