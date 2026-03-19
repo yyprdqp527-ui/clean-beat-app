@@ -393,11 +393,12 @@
             .header-inner { justify-content: center; }
             .header-right { margin-left: 10px; gap: 8px; }
             
-            /* 🚀 MOBILE : Barres horizontales sous les avatars au lieu de verticales à côté */
+            /* 🚀 MOBILE : Distribution auto selon nb joueurs et largeur écran */
             .avatar-strip { 
-                gap: 4px !important; /* Réduction drastique de l'écart entre joueurs */
+                gap: 0 !important;
                 flex-wrap: nowrap; 
-                justify-content: center;
+                justify-content: space-evenly;
+                width: 100%;
             }
             
             .avatar-col { 
@@ -1431,7 +1432,7 @@
             }
             
             .avatar-strip {
-                gap: 6px !important;
+                gap: 0 !important;
             }
             
             .avatar-row {
@@ -1585,7 +1586,7 @@
             }
             
             .avatar-strip {
-                gap: 6px !important;
+                gap: 0 !important;
             }
             
             .avatar-col {
@@ -1609,7 +1610,7 @@
             }
             
             .avatar-strip {
-                gap: 4px !important;
+                gap: 0 !important;
             }
             
             .avatar-col {
@@ -1665,7 +1666,7 @@
             }
             
             .avatar-strip {
-                gap: 4px !important;
+                gap: 0 !important;
             }
             
             .vbar {
@@ -1744,7 +1745,7 @@
             }
             
             .avatar-strip {
-                gap: 4px !important;
+                gap: 0 !important;
             }
             
             .vbar {
