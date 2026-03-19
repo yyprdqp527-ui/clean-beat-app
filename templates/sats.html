@@ -1960,7 +1960,7 @@ canvas {
                         {% for task in player.weekly_tasks_details %}
                         <div style="background: rgba(255,255,255,0.5); padding: 10px 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid {{ pcolor }};">
                             <div style="flex: 1;">
-                                <div style="font-size: 13px; font-weight: 700; color: var(--dark);">{{ task.name }}</div>
+                                <div style="font-size: 13px; font-weight: 700; color: var(--dark);">{{ task.name | replace('🎁 Bonus', '❤️ Bonus') }}</div>
                                 <div style="font-size: 11px; color: var(--teal-dark);">{{ task.room }}</div>
                             </div>
                             <div style="background: {{ pcolor }}22; color: {{ pcolor }}; padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 900; border: 1px solid {{ pcolor }}44;">+{{ task.points }} pts</div>

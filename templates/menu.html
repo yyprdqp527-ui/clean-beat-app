@@ -2108,7 +2108,65 @@
             background: rgba(255,90,90,0.22);
         }
 
-        /* Badge de rang */
+        /* Section Rappels profil */
+        .profile-reminders {
+            padding: 0 16px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .profile-reminder-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-radius: 12px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.9);
+            transition: background 0.18s;
+        }
+        .profile-reminder-item:active {
+            background: rgba(255,255,255,0.14);
+        }
+        /* Couleurs specifiques par type */
+        .reminder-courses {
+            background: rgba(110,60,20,0.35);
+            border-color: rgba(160,100,50,0.45);
+        }
+        .reminder-courses:active { background: rgba(110,60,20,0.55); }
+        .reminder-missions {
+            background: rgba(220,100,10,0.30);
+            border-color: rgba(253,174,84,0.45);
+        }
+        .reminder-missions:active { background: rgba(220,100,10,0.50); }
+        .reminder-baby {
+            background: rgba(220,80,140,0.28);
+            border-color: rgba(255,150,200,0.40);
+        }
+        .reminder-baby:active { background: rgba(220,80,140,0.48); }
+        .profile-reminder-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .profile-reminder-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .profile-reminder-badge {
+            background: #FDAE54;
+            color: #1a1a2e;
+            font-size: 11px;
+            font-weight: 900;
+            border-radius: 10px;
+            padding: 2px 8px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+                /* Badge de rang */
         .profile-rank-badge {
             display: inline-flex;
             align-items: center;
@@ -3460,7 +3518,7 @@ function openGlobalMalus() {
 }
 function openGlobalBonus() {
     window._playerPickerMode = 'bonus';
-    document.getElementById('playerPickerTitle').textContent = '\uD83C\uDF81 Bonus pour qui ?';
+    document.getElementById('playerPickerTitle').textContent = '❤️ Bonus pour qui ?';
     document.getElementById('playerPickerOverlay').classList.add('open');
 }
 function closePlayerPicker() {
@@ -4718,8 +4776,9 @@ function sendMalus(reason, points){
                         <div class="profile-section-title">Mes statistiques</div>
                         <div class="profile-stats-grid">
                             <div class="profile-stat-item">
-                                <div class="profile-stat-value">{{ cp.total_points|default(0) if cp else 0 }}</div>
-                                <div class="profile-stat-label">Points totaux</div>
+                                {% set today_tasks = daily_report|selectattr('email', 'equalto', current_user_name)|list|length %}
+                                <div class="profile-stat-value">{{ today_tasks }}</div>
+                                <div class="profile-stat-label">Tâches</div>
                             </div>
                             <div class="profile-stat-item">
                                 <div class="profile-stat-value">{{ player1_points or 0 }}</div>
@@ -4730,12 +4789,38 @@ function sendMalus(reason, points){
                                 <div class="profile-stat-label">Cette semaine</div>
                             </div>
                             <div class="profile-stat-item">
-                                {% set streak_val = cp.streak|default(0) if cp else 0 %}
-                                <div class="profile-stat-value">
-                                    {{ streak_val }}{% if streak_val > 0 %}&thinsp;🔥{% endif %}
-                                </div>
-                                <div class="profile-stat-label">Jours d'affilée</div>
+                                {% set total_rappels = (unread_courses|default(0)) + (unread_task_added|default(0)) + (unread_baby_tracking|default(0)) %}
+                                <div class="profile-stat-value">{{ total_rappels }}</div>
+                                <div class="profile-stat-label">Rappels</div>
                             </div>
+                        </div>
+
+                        <!-- Mes rappels -->
+                        <div class="profile-section-title">Mes rappels</div>
+                        <div class="profile-reminders">
+                            <a href="/courses_messages" class="profile-reminder-item reminder-courses">
+                                <span class="profile-reminder-icon">🛒</span>
+                                <span class="profile-reminder-text">Liste de courses</span>
+                                {% if unread_courses > 0 %}
+                                <span class="profile-reminder-badge">{{ unread_courses }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="/mission_messages" class="profile-reminder-item reminder-missions">
+                                <span class="profile-reminder-icon">⭐</span>
+                                <span class="profile-reminder-text">Missions ajoutées</span>
+                                {% if unread_task_added > 0 %}
+                                <span class="profile-reminder-badge">{{ unread_task_added }}</span>
+                                {% endif %}
+                            </a>
+                            {% if has_baby_tracking %}
+                            <a href="/baby_messages" class="profile-reminder-item reminder-baby">
+                                <span class="profile-reminder-icon">👶</span>
+                                <span class="profile-reminder-text">Tracking bébé</span>
+                                {% if unread_baby_tracking > 0 %}
+                                <span class="profile-reminder-badge">{{ unread_baby_tracking }}</span>
+                                {% endif %}
+                            </a>
+                            {% endif %}
                         </div>
 
                         <!-- Classement dans la maison -->

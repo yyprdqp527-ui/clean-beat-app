@@ -9039,6 +9039,7 @@ def menu():
     unread_baby_tracking = 0
     unread_task_added = 0
     unread_courses = 0
+    has_baby_tracking = False
     house_id = None
     show_onboarding = False
 
@@ -9226,6 +9227,13 @@ def menu():
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
             unread_courses = get_unread_count_by_type(session['user'], house_id, 'courses_added', existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, courses={unread_courses}, children_unread={children_unread}")
+
+            # 🍼 Vérifier si la maison utilise le tracking bébé
+            try:
+                c.execute("SELECT COUNT(*) FROM baby_tracking WHERE house_id=?", (house_id,))
+                has_baby_tracking = (c.fetchone()[0] or 0) > 0
+            except Exception:
+                has_baby_tracking = False
             
             # 🏠 Récupérer les pièces personnalisées AVANT de fermer la connexion
             custom_rooms_db = {}
@@ -9384,6 +9392,7 @@ def menu():
         unread_baby_tracking=unread_baby_tracking,
         unread_task_added=unread_task_added,
         unread_courses=unread_courses,
+        has_baby_tracking=has_baby_tracking,
         custom_rooms=custom_rooms_data,
         show_onboarding=show_onboarding,
     ))
