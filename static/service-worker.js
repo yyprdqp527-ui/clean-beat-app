@@ -118,7 +118,7 @@ self.addEventListener('push', (event) => {
                 title: data.title || 'CleanBeat',
                 body: data.body || data.message || 'Vous avez un nouveau message',
                 icon: data.icon || '/static/images/logo.png',
-                badge: data.badge || '/static/images/logo.png',
+                badge: '/static/images/logo.png',
                 tag: data.tag || 'cleanbeat-notification',
                 requireInteraction: data.requireInteraction || false,
                 data: {
@@ -155,8 +155,9 @@ self.addEventListener('push', (event) => {
             timestamp: Date.now()
         }).then(() => {
             // 🏠 Badge sur l'icône de l'app (écran d'accueil)
-            if ('setAppBadge' in navigator) {
-                return navigator.setAppBadge(1).catch(() => {});
+            // Dans un Service Worker, l'API Badge est sur `self`, pas `navigator`
+            if ('setAppBadge' in self) {
+                return self.setAppBadge(1).catch(() => {});
             }
         })
     );

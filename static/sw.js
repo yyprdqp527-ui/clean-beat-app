@@ -16,20 +16,17 @@ self.addEventListener('push', function(event) {
     };
     
     event.waitUntil(
-        self.registration.showNotification(title, options).then(function() {
-            // 🏠 Mettre à jour le badge icône écran d'accueil
-            // Dans le Service Worker, l'API Badge est sur `self`, pas `navigator`
-            if ('setAppBadge' in self) {
-                return self.setAppBadge(badgeCount).catch(function(){});
-            }
-        }).then(function() {
+        Promise.all([
+            // 🏠 Badge icône AVANT showNotification pour ne pas dépasser le budget iOS
+            ('setAppBadge' in self) ? self.setAppBadge(badgeCount).catch(function(){}) : Promise.resolve(),
+            self.registration.showNotification(title, options),
             // Demander à toutes les fenêtres ouvertes de rafraîchir leurs badges
-            return self.clients.matchAll({ type: 'window' }).then(function(clients) {
+            self.clients.matchAll({ type: 'window' }).then(function(clients) {
                 clients.forEach(function(client) {
                     client.postMessage({ type: 'REFRESH_BADGES' });
                 });
-            });
-        })
+            })
+        ])
     );
 });
 
