@@ -3351,6 +3351,8 @@ body { padding-bottom: 72px !important; }
             if (col) { el.style.background = col; }
         });
     }
+    window.animateBars = animateBars;
+    animateBars();
 })();
 
 var _cwAnimated = false;
@@ -3443,14 +3445,7 @@ function toggleCW(){
     wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
     if(expanding && !_cwAnimated){
         _cwAnimated = true;
-        setTimeout(function(){
-            document.querySelectorAll('.cw-bar-fill').forEach(function(el){
-                el.style.width = (el.getAttribute('data-pct') || '0') + '%';
-            });
-        }, 60);
-        loadCWTasks();
-        loadCWWeekStats();
-    } else if(expanding){
+        setTimeout(window.animateBars, 60);
         loadCWTasks();
         loadCWWeekStats();
     }

@@ -9548,14 +9548,14 @@ def api_send_bonus():
             return jsonify({'success': False, 'error': 'Cible introuvable dans cette maison'}), 400
         target_name = target_row[1] or target_email.split('@')[0]
 
-        task_name = f'🎁 Bonus de {sender_name} : {reason_label}'
+        task_name = f'❤️ Bonus de {sender_name} : {reason_label}'
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'bonus', ?, ?, CURRENT_TIMESTAMP)
         """, (target_email, task_name, points, house_id))
         conn.commit()
 
-        return jsonify({'success': True, 'message': f'🎁 Bonus envoyé à {target_name} ! (+{points} pts)'})
+        return jsonify({'success': True, 'message': f'❤️ Bonus envoyé à {target_name} ! (+{points} pts)'})
     except Exception as e:
         conn.rollback()
         _dbg(f"ERREUR api_send_bonus: {e}")
