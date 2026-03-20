@@ -9432,7 +9432,137 @@ def menu():
 
 
 # ════════════════════════════════════════════════════════════
-# 🎓 ONBOARDING — Marquer comme vu
+# 👤 PAGE PROFIL — Page complète du profil joueur
+# ════════════════════════════════════════════════════════════
+@app.route('/profil')
+def profil():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    current_user_name = session.get('user', '')
+    player1_name = None
+    player1_avatar = None
+    player1_avatar_file = None
+    player1_avatar_url = None
+    house_name = None
+    house_id = None
+    players = []
+    unread_baby_tracking = 0
+    unread_task_added = 0
+    unread_courses = 0
+    has_baby_tracking = False
+    daily_report = []
+    player1_points = 0
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        try:
+            c.execute("SELECT name, avatar, avatar_file, house_id, avatar_url FROM users WHERE email=?", (current_user_name,))
+            row = c.fetchone()
+            if row:
+                player1_name, player1_avatar, player1_avatar_file, house_id, player1_avatar_url = row
+        except Exception:
+            pass
+        if house_id:
+            try:
+                c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))
+                hr = c.fetchone()
+                if hr:
+                    house_name = (hr[1] or hr[0] or '').strip() or None
+            except Exception:
+                pass
+            try:
+                players = get_house_players_points(house_id, existing_conn=conn)
+                for p in players:
+                    p['is_current_user'] = (p.get('email') == current_user_name)
+                    if p['is_current_user']:
+                        player1_points = p.get('daily_points', 0)
+            except Exception:
+                players = []
+            try:
+                unread_baby_tracking = get_unread_count_by_type(current_user_name, house_id, 'baby_tracking', existing_conn=conn)
+                unread_task_added = get_unread_count_by_type(current_user_name, house_id, 'task_added', existing_conn=conn)
+                unread_courses = get_unread_count_by_type(current_user_name, house_id, 'courses_added', existing_conn=conn)
+            except Exception:
+                pass
+            try:
+                c.execute("SELECT COUNT(*) FROM baby_tracking WHERE house_id=?", (house_id,))
+                has_baby_tracking = (c.fetchone()[0] or 0) > 0
+            except Exception:
+                pass
+            try:
+                today = date.today().strftime('%Y-%m-%d')
+                c.execute("SELECT email, COUNT(*) FROM tasks WHERE house_id=? AND date=? AND done=1 GROUP BY email", (house_id, today))
+                daily_report = [{'email': r[0], 'count': r[1]} for r in c.fetchall()]
+            except Exception:
+                daily_report = []
+        conn.close()
+    except Exception:
+        pass
+    cp = next((p for p in players if p.get('email') == current_user_name), None)
+    return render_template(
+        'profil.html',
+        current_user_name=current_user_name,
+        player1_name=player1_name,
+        player1_avatar=player1_avatar,
+        player1_avatar_file=player1_avatar_file,
+        player1_avatar_url=player1_avatar_url,
+        house_name=house_name,
+        players=players,
+        cp=cp,
+        player1_points=player1_points,
+        daily_report=daily_report,
+        unread_baby_tracking=unread_baby_tracking,
+        unread_task_added=unread_task_added,
+        unread_courses=unread_courses,
+        has_baby_tracking=has_baby_tracking,
+    )
+
+
+# ════════════════════════════════════════════════════════════
+# � CLASSEMENT — Page plein écran
+# ════════════════════════════════════════════════════════════
+@app.route('/classement')
+def classement():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    current_user_name = session.get('user', '')
+    players = []
+    house_name = None
+    house_id = None
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT house_id FROM users WHERE email=?", (current_user_name,))
+        row = c.fetchone()
+        if row:
+            house_id = row[0]
+        if house_id:
+            try:
+                c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))
+                hr = c.fetchone()
+                if hr:
+                    house_name = (hr[1] or hr[0] or '').strip() or None
+            except Exception:
+                pass
+            try:
+                players = get_house_players_points(house_id, existing_conn=conn)
+                for p in players:
+                    p['is_current_user'] = (p.get('email') == current_user_name)
+            except Exception:
+                players = []
+        conn.close()
+    except Exception:
+        pass
+    return render_template(
+        'classement.html',
+        current_user_name=current_user_name,
+        players=players,
+        house_name=house_name,
+    )
+
+
+# ════════════════════════════════════════════════════════════
+# �🎓 ONBOARDING — Marquer comme vu
 # ════════════════════════════════════════════════════════════
 @app.route('/api/mark_onboarding_seen', methods=['POST'])
 def api_mark_onboarding_seen():

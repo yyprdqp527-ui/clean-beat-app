@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% set hide_header = true %}
+
+{% block title %}Mon Profil — CleanBeat{% endblock %}
+
+{% block page_styles %}
+<style>
+/* ── Bouton retour ── */
+.back-btn-glass {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+}
+.back-btn-glass:active { transform: scale(0.95); }
+@media (max-width: 520px) {
+    .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
+}
+
+/* ══ Page Profil ══ */
+body { background: {{ bg_gradient }}; min-height: 100vh; }
+
+.profil-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    color: white;
+    padding-bottom: 40px;
+}
+
+
+
+/* Zone hero */
+.profil-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 100px 20px 20px;
+    gap: 10px;
+    position: relative;
+}
+.profil-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -20px; right: -20px; height: 200px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(166,211,220,0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+.profil-avatar-ring {
+    width: 96px; height: 96px;
+    border-radius: 50%; padding: 3px;
+    background: conic-gradient(from 0deg, #A6D3DC, #FDAE54, #f4c68d, #A6D3DC);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 4px rgba(166,211,220,0.15);
+    animation: profilRingRotate 6s linear infinite;
+    flex-shrink: 0;
+}
+@keyframes profilRingRotate { to { transform: rotate(360deg); } }
+.profil-avatar-inner {
+    width: 100%; height: 100%;
+    border-radius: 50%; overflow: hidden;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(166,211,220,0.1));
+    display: flex; align-items: center; justify-content: center;
+}
+.profil-avatar-inner img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.profil-avatar-emoji { font-size: 42px; }
+.profil-name {
+    font-size: 24px; font-weight: 900; color: white;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    letter-spacing: 0.3px; text-align: center; line-height: 1.2;
+}
+.profil-email { font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 600; }
+.profil-house-badge {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85);
+}
+.profil-rank-badge {
+    background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.15));
+    border: 1.5px solid rgba(253,174,84,0.45);
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-size: 13px; font-weight: 800; color: #FDAE54;
+}
+
+/* Section titre */
+.profil-section-title {
+    font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 16px 20px 8px;
+}
+
+/* Grille stats */
+.profil-stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; padding: 0 20px;
+}
+.profil-stat-item {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 16px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    position: relative; overflow: hidden;
+}
+.profil-stat-item::before {
+    content: ''; position: absolute;
+    bottom: 0; left: 0; right: 0; height: 2px;
+}
+.profil-stat-item:nth-child(1)::before { background: linear-gradient(90deg, transparent, rgba(253,174,84,0.7), transparent); }
+.profil-stat-item:nth-child(2)::before { background: linear-gradient(90deg, transparent, rgba(166,211,220,0.7), transparent); }
+.profil-stat-item:nth-child(3)::before { background: linear-gradient(90deg, transparent, rgba(180,140,200,0.7), transparent); }
+.profil-stat-item:nth-child(4)::before { background: linear-gradient(90deg, transparent, rgba(240,180,80,0.7), transparent); }
+.profil-stat-value { font-size: 26px; font-weight: 900; color: white; line-height: 1; }
+.profil-stat-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Rappels */
+.profil-reminders { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+.profil-reminder-item {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 12px 16px;
+    text-decoration: none; color: white;
+    font-size: 14px; font-weight: 600;
+    transition: all 0.2s;
+}
+.profil-reminder-item:active { transform: scale(0.98); }
+.profil-reminder-icon { font-size: 20px; width: 28px; text-align: center; }
+.profil-reminder-text { flex: 1; }
+.profil-reminder-badge {
+    background: #e74c3c; color: white;
+    font-size: 10px; font-weight: 800;
+    min-width: 18px; height: 18px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+}
+
+/* Classement maison */
+.profil-ranking { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+.profil-rank-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 12px; transition: all 0.2s;
+}
+.profil-rank-row.me {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.25);
+}
+.profil-rank-pos { font-size: 18px; font-weight: 900; color: rgba(255,255,255,0.5); width: 24px; text-align: center; }
+.profil-rank-pos.top1 { color: rgba(255,255,255,0.9); }
+.profil-rank-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    overflow: hidden; background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.profil-rank-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.profil-rank-name { flex: 1; font-size: 13px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profil-rank-pts { font-size: 14px; font-weight: 800; color: rgba(253,174,84,0.9); }
+
+/* Boutons d'action */
+.profil-actions { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.profil-action-btn {
+    display: flex; align-items: center; justify-content: center;
+    padding: 15px 20px; border-radius: 16px;
+    font-size: 15px; font-weight: 800; text-decoration: none;
+    letter-spacing: 0.3px; transition: all 0.2s;
+}
+.profil-action-btn:active { transform: scale(0.98); }
+.profil-action-edit {
+    background: linear-gradient(135deg, rgba(166,211,220,0.25), rgba(166,211,220,0.12));
+    border: 1.5px solid rgba(166,211,220,0.4);
+    color: white;
+}
+.profil-action-logout {
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set cp = cp or (players|selectattr('email', 'equalto', current_user_name)|first if players else none) %}
+<a href="{{ url_for('menu') }}" class="back-btn-glass">‹</a>
+
+<div class="profil-page">
+
+    <!-- Zone héro : avatar + nom + maison -->
+    <div class="profil-hero">
+        <div class="profil-avatar-ring">
+            <div class="profil-avatar-inner">
+                {% if player1_avatar_file %}
+                    <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}" alt="{{ player1_name or 'Avatar' }}" onerror="this.onerror=null;this.style.display='none';">
+                {% elif player1_avatar_url %}
+                    <img src="{{ player1_avatar_url }}" alt="{{ player1_name or 'Avatar' }}" onerror="this.onerror=null;this.style.display='none';">
+                {% elif player1_avatar and player1_avatar|length <= 4 %}
+                    <span class="profil-avatar-emoji">{{ player1_avatar }}</span>
+                {% else %}
+                    <img src="https://api.dicebear.com/7.x/adventurer/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="{{ player1_name or 'Avatar' }}">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profil-name">{{ player1_name or 'Joueur' }}</div>
+        {% if current_user_name %}
+        <div class="profil-email">{{ current_user_name }}</div>
+        {% endif %}
+        {% if house_name %}
+        <div class="profil-house-badge">🏡 {{ house_name }}</div>
+        {% endif %}
+
+        {% if cp %}
+        {% set total_pts = cp.total_points|default(0) %}
+        {% if total_pts >= 1000 %}
+        <div class="profil-rank-badge">🏆 Légende</div>
+        {% elif total_pts >= 500 %}
+        <div class="profil-rank-badge">⭐ Expert</div>
+        {% elif total_pts >= 200 %}
+        <div class="profil-rank-badge">✨ Confirmé</div>
+        {% elif total_pts >= 50 %}
+        <div class="profil-rank-badge">🌱 Apprenti</div>
+        {% else %}
+        <div class="profil-rank-badge">🐣 Débutant</div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Mes statistiques -->
+    <div class="profil-section-title">Mes statistiques</div>
+    <div class="profil-stats-grid">
+        <div class="profil-stat-item">
+            {% set today_tasks = daily_report|selectattr('email', 'equalto', current_user_name)|list|length %}
+            <div class="profil-stat-value">{{ today_tasks }}</div>
+            <div class="profil-stat-label">Tâches</div>
+        </div>
+        <div class="profil-stat-item">
+            <div class="profil-stat-value">{{ player1_points or 0 }}</div>
+            <div class="profil-stat-label">Aujourd'hui</div>
+        </div>
+        <div class="profil-stat-item">
+            <div class="profil-stat-value">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
+            <div class="profil-stat-label">Cette semaine</div>
+        </div>
+        <div class="profil-stat-item">
+            {% set total_rappels = (unread_courses|default(0)) + (unread_task_added|default(0)) + (unread_baby_tracking|default(0)) %}
+            <div class="profil-stat-value">{{ total_rappels }}</div>
+            <div class="profil-stat-label">Rappels</div>
+        </div>
+    </div>
+
+    <!-- Mes rappels -->
+    <div class="profil-section-title">Mes rappels</div>
+    <div class="profil-reminders">
+        <a href="{{ url_for('courses_messages') }}" class="profil-reminder-item">
+            <span class="profil-reminder-icon">🛒</span>
+            <span class="profil-reminder-text">Liste de courses</span>
+            {% if unread_courses > 0 %}<span class="profil-reminder-badge">{{ unread_courses }}</span>{% endif %}
+        </a>
+        <a href="{{ url_for('mission_messages') }}" class="profil-reminder-item">
+            <span class="profil-reminder-icon">⭐</span>
+            <span class="profil-reminder-text">Missions ajoutées</span>
+            {% if unread_task_added > 0 %}<span class="profil-reminder-badge">{{ unread_task_added }}</span>{% endif %}
+        </a>
+        {% if has_baby_tracking %}
+        <a href="{{ url_for('baby_messages') }}" class="profil-reminder-item">
+            <span class="profil-reminder-icon">👶</span>
+            <span class="profil-reminder-text">Tracking bébé</span>
+            {% if unread_baby_tracking > 0 %}<span class="profil-reminder-badge">{{ unread_baby_tracking }}</span>{% endif %}
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Classement dans la maison -->
+    {% if players|length > 1 %}
+    <div class="profil-section-title">Classement de la maison</div>
+    <div class="profil-ranking">
+        {% set sorted_players = players|sort(attribute='total_points', reverse=True) %}
+        {% for p in sorted_players %}
+        <div class="profil-rank-row{% if p.email == current_user_name %} me{% endif %}">
+            <div class="profil-rank-pos{% if loop.index == 1 %} top1{% endif %}">
+                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+            </div>
+            <div class="profil-rank-avatar">
+                {% if p.avatar_file %}
+                    <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
+                {% elif p.avatar_url %}
+                    <img src="{{ p.avatar_url }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
+                {% elif p.avatar and p.avatar|length <= 4 %}
+                    <span style="font-size:16px;">{{ p.avatar }}</span>
+                {% else %}
+                    <span style="font-size:16px;">👤</span>
+                {% endif %}
+            </div>
+            <div class="profil-rank-name">{{ p.name }}{% if p.email == current_user_name %} <span style="font-size:10px;opacity:0.6;">(moi)</span>{% endif %}</div>
+            <div class="profil-rank-pts">{{ p.total_points|default(0) }} pts</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Boutons d'action -->
+    <div class="profil-actions">
+        <a href="{{ url_for('edit_player', email=current_user_name) }}" class="profil-action-btn profil-action-edit">
+            ✏️&nbsp; Modifier mon profil
+        </a>
+        <a href="{{ url_for('logout') }}" class="profil-action-btn profil-action-logout">
+            👋&nbsp; Se déconnecter
+        </a>
+    </div>
+
+</div>
+{% endblock %}

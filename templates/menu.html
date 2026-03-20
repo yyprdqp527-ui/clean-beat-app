@@ -2641,7 +2641,7 @@
                                 {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
+                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='/profil'">
                                         {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
                                         <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none;">
                                             {% if session.get('user_avatar_url') %}
@@ -3133,10 +3133,14 @@ body { padding-bottom: 72px !important; }
 }
 .cw-tab:active .cw-tab-icon { transform: scale(0.88); }
 /* Couleur de chaque onglet */
-.cw-tab:nth-child(1) .cw-tab-icon { background: rgba(166,211,220,0.30); box-shadow: 0 2px 6px rgba(89,113,118,0.15); }
+.cw-tab:nth-child(1) .cw-tab-icon { background: rgba(253,174,84,0.25); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
 .cw-tab:nth-child(2) .cw-tab-icon { background: rgba(231,76,60,0.13); box-shadow: 0 2px 6px rgba(231,76,60,0.15); }
-.cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,204,113,0.15); box-shadow: 0 2px 6px rgba(46,204,113,0.15); }
-.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(253,174,84,0.22); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
+.cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,180,120,0.18); box-shadow: 0 2px 6px rgba(46,180,120,0.18); }
+.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(130,100,220,0.15); box-shadow: 0 2px 6px rgba(130,100,220,0.15); }
+.cw-tab:nth-child(5) .cw-tab-icon { background: rgba(166,211,220,0.30); box-shadow: 0 2px 6px rgba(89,113,118,0.15); }
+/* Onglet actif (classement ouvert) */
+.cw-tab.cw-tab--active .cw-tab-icon { box-shadow: 0 0 0 2px rgba(253,174,84,0.55); }
+.cw-tab.cw-tab--active .cw-tab-label { color: #153036; font-weight: 800; }
 .cw-tab-label {
     font-size: 9px; font-weight: 700; color: #597176;
     letter-spacing: 0.4px; text-transform: uppercase; line-height: 1;
@@ -3208,17 +3212,43 @@ body { padding-bottom: 72px !important; }
 {% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='daily_points', reverse=True) %}
 <div class="cw-wrap" id="cwWrap">
-    <!-- Onglets de navigation (toujours visibles) -->
+    <!-- ── Barre de navigation fixe — 5 onglets ── -->
     <div class="cw-tabs">
-        <button class="cw-tab" onclick="toggleCW()" id="cwTabScore">
-            <span class="cw-tab-label" id="compteurLabel">Classement du jour</span>
-            <span class="cw-tab-arrow">∧</span>
-        </button>
+        <!-- 1. Classement (toggle panel) -->
+        <a href="/classement" class="cw-tab" id="cwTabScore">
+            <span class="cw-tab-icon">🏆</span>
+            <span class="cw-tab-label">Classement</span>
+        </a>
+        <!-- 2. Messagerie -->
+        <a href="{{ url_for('comments') }}" class="cw-tab">
+            <span class="cw-tab-icon" style="position:relative;">
+                💬
+                {% if unread_messages_count and unread_messages_count > 0 %}
+                <span class="cw-tab-badge">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
+                {% endif %}
+            </span>
+            <span class="cw-tab-label">Messagerie</span>
+        </a>
+        <!-- 3. Courses -->
+        <a href="{{ url_for('reminders') }}" class="cw-tab">
+            <span class="cw-tab-icon">🛒</span>
+            <span class="cw-tab-label">Courses</span>
+        </a>
+        <!-- 4. Joueurs -->
+        <a href="{{ url_for('manage_players') }}" class="cw-tab">
+            <span class="cw-tab-icon">👥</span>
+            <span class="cw-tab-label">Joueurs</span>
+        </a>
+        <!-- 5. Maison -->
+        <a href="{{ url_for('personnaliser_maison') }}" class="cw-tab">
+            <span class="cw-tab-icon">🏡</span>
+            <span class="cw-tab-label">Maison</span>
+        </a>
     </div>
 
     <!-- Corps expansible -->
     <div class="cw-body" id="cwBody">
-    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div></div>
+    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div><a href="/classement" style="color:rgba(255,255,255,0.7);font-size:18px;font-weight:900;text-decoration:none;padding:0 2px;" title="Voir en plein écran">↗</a></div>
     {% for p in sorted_by_week %}
     {% if loop.index == 1 %}{% set medal = '🥇' %}
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
@@ -3497,10 +3527,12 @@ function loadCWWeekStats() {
 }
 
 function toggleCW(){
+    var btn = document.getElementById('cwTabScore');
     var wraps = document.querySelectorAll('.cw-wrap');
     var mainWrap = wraps[wraps.length - 1];
     mainWrap.classList.toggle('expanded');
     var expanding = mainWrap.classList.contains('expanded');
+    if (btn) btn.classList.toggle('cw-tab--active', expanding);
     wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
     if(expanding && !_cwAnimated){
         _cwAnimated = true;

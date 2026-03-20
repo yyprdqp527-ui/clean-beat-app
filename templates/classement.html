@@ -1,0 +1,408 @@
+{%- extends 'base.html' %}
+{% set hide_header = true %}
+
+{% block title %}Classement — CleanBeat{% endblock %}
+
+{% block page_styles %}
+<style>
+/* ── Bouton retour ── */
+.back-btn-glass {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+}
+.back-btn-glass:active { transform: scale(0.95); }
+@media (max-width: 520px) {
+    .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
+}
+
+/* ══ Page Classement plein écran ══ */
+body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padding-bottom: 40px; }
+
+/* Cadre titre (comme stats-title-card) */
+.classement-title-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(253,174,84,0.12) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin: 12px 16px 0;
+    border: 1.5px solid rgba(253,174,84,0.3);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+    text-align: center;
+}
+.classement-title-card h1 {
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    margin: 0;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.classement-title-card .classement-subtitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+{% if house_name %}
+.classement-house-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px; font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
+}
+{% endif %}
+
+.classement-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    padding-bottom: 60px;
+}
+
+/* Section titre */
+.classement-section-title {
+    font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.4);
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 20px 20px 10px;
+}
+
+/* ══ cw-player adapté fond sombre ══ */
+.classement-players-wrap { padding: 0 14px; }
+
+.cw-player {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    transition: background 0.2s;
+}
+.cw-player:last-of-type { border-bottom: none; }
+.cw-player.cw-me {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.cw-tasks-list {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 6px 10px;
+    backdrop-filter: blur(10px);
+}
+.cw-tasks-list.has-tasks { display: flex; }
+
+.cw-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.3;
+}
+.cw-task-item + .cw-task-item { border-top: 1px solid rgba(255,255,255,0.06); }
+.cw-task-dot { width:6px; height:6px; border-radius:50%; background:linear-gradient(135deg,#A6D3DC,#89b4bb); flex-shrink:0; }
+.cw-task-name { flex: 1; font-weight: 600; color: rgba(255,255,255,0.85); }
+.cw-task-pts { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); }
+.cw-task-time { font-size: 11px; font-weight: 800; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px; }
+.cw-task-malus-btn, .cw-task-bonus-btn { border: none; background: none; cursor: pointer; font-size: 14px; padding: 2px 3px; border-radius: 8px; flex-shrink: 0; }
+
+.cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
+.cw-avatar-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+.cw-avatar-emoji { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.cw-info { flex: 1; min-width: 0; }
+.cw-name { font-size: 14px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cw-bar-wrap { height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 5px; overflow: hidden; }
+.cw-bar-fill { height: 100%; border-radius: 4px; min-width: 5px; background: linear-gradient(90deg,#A6D3DC,#FDAE54); transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); }
+.cw-pts { font-size: 15px; font-weight: 800; color: #FDAE54; }
+.cw-skull { font-size: 14px; }
+
+/* Bouton stats semaine */
+.classement-stats-btn {
+    display: block;
+    margin: 20px 16px 0;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%);
+    color: white;
+    font-size: 15px; font-weight: 800;
+    text-align: center;
+    border-radius: 18px;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    box-shadow: 0 6px 20px rgba(253,174,84,0.4);
+}
+.classement-stats-btn:active { transform: scale(0.98); }
+
+/* ══ Popups malus/bonus ══ */
+.malus-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(21,48,54,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9500;
+    align-items: flex-end;
+    justify-content: center;
+}
+.malus-overlay.open { display: flex; }
+.malus-sheet {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.8);
+    padding: 20px 16px 36px 16px;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
+    animation: cwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes cwSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.malus-sheet-title { font-size: 16px; font-weight: 800; color: #153036; text-align: center; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
+.malus-option { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; background: rgba(21,48,54,0.04); border: 1px solid rgba(21,48,54,0.06); margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.15s; }
+.malus-option:active { background: rgba(231,76,60,0.10); }
+.malus-option-icon { font-size: 24px; }
+.malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036; }
+.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c; }
+.malus-cancel { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 14px; background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700; color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set max_pts = namespace(v=1) %}
+{% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
+{% set sorted_by_week = players|selectattr('email','defined')|list|sort(attribute='daily_points',reverse=True) %}
+
+<a href="{{ url_for('menu') }}" class="back-btn-glass">&#x2039;</a>
+
+<div class="classement-page">
+
+    <!-- Titre dans un cadre -->
+    <div class="classement-title-card">
+        <h1>🏆 Classement</h1>
+        <div class="classement-subtitle">Points du jour</div>
+        {% if house_name %}
+        <div class="classement-house-badge">🏡 {{ house_name }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Section titre -->
+    <div class="classement-section-title">Aujourd'hui</div>
+
+    <!-- Liste joueurs avec tâches -->
+    <div class="classement-players-wrap">
+        {% for p in sorted_by_week %}
+        {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
+        {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v)*100)|int if max_pts.v>0 else 5 %}
+        <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}" data-cw-player-name="{{ p.name|e }}">
+            <div class="cw-rank">{{ medal }}</div>
+            {% if p.avatar_file %}<img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/'+p.avatar_file) }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar_url %}<img class="cw-avatar-img" src="{{ p.avatar_url }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar %}<div class="cw-avatar-emoji">{{ p.avatar }}</div>
+            {% else %}<div class="cw-avatar-emoji">👤</div>{% endif %}
+            <div class="cw-info">
+                <div class="cw-name">{{ p.name|e }}</div>
+                <div class="cw-bar-wrap"><div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else '' }}" style="width:0%;"></div></div>
+            </div>
+            <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
+            {% if p.skull_active|default(false) %}<span class="cw-skull">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0)>0 %}<span class="cw-skull">💀×{{ p.skull_count }}</span>{% endif %}
+            <div class="cw-tasks-list"></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Bouton classement semaine -->
+    <a class="classement-stats-btn" href="/sats">📊 Classement de la semaine</a>
+
+</div>
+
+<!-- Popup malus -->
+<div class="malus-overlay" id="malusOverlay" onclick="if(event.target===this)closeMalus()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">💀 Malus pour <span id="malusTargetName">…</span></div>
+        <div class="malus-task-context" id="malusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(166,211,220,0.15); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="malusTaskName">…</span></div>
+        <div class="malus-option" onclick="sendMalus('arrache',-3)">
+            <div class="malus-option-icon">😈</div>
+            <div class="malus-option-label">Fait à l'arrache</div>
+            <div class="malus-option-pts">−3 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('presque',-5)">
+            <div class="malus-option-icon">🙄</div>
+            <div class="malus-option-label">Presque… mais non</div>
+            <div class="malus-option-pts">−5 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('sabotage',-12)">
+            <div class="malus-option-icon">💣</div>
+            <div class="malus-option-label">Sabotage flagrant !</div>
+            <div class="malus-option-pts">−12 pts</div>
+        </div>
+        <button class="malus-cancel" onclick="closeMalus()">Annuler</button>
+    </div>
+</div>
+
+<!-- Picker joueur -->
+<div class="malus-overlay" id="playerPickerOverlay" onclick="if(event.target===this)closePlayerPicker()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title" id="playerPickerTitle">Pour qui ?</div>
+        {% if players %}{% for p in players %}{% if not p.is_current_user %}
+        <div class="malus-option" onclick="selectPlayer('{{ p.email|e }}','{{ p.name|e }}')">
+            <div class="malus-option-icon">{% if p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
+            <div class="malus-option-label">{{ p.name|e }}</div>
+            <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
+        </div>
+        {% endif %}{% endfor %}{% endif %}
+        <button class="malus-cancel" onclick="closePlayerPicker()">Annuler</button>
+    </div>
+</div>
+
+<!-- Overlay Bonus -->
+<div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">❤️ Bonus pour <span id="bonusTargetName">…</span></div>
+        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
+        <div class="malus-option" onclick="sendBonus('effort',3)">
+            <div class="malus-option-icon">💫</div>
+            <div class="malus-option-label">On sent l'effort</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+3 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('extra',5)">
+            <div class="malus-option-icon">💪</div>
+            <div class="malus-option-label">A fait plus que demandé</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+5 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('wahouh',12)">
+            <div class="malus-option-icon">🤩</div>
+            <div class="malus-option-label">Wahouh, là je suis choqué·e !</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
+        </div>
+        <button class="malus-cancel" onclick="closeBonus()">Annuler</button>
+    </div>
+</div>
+
+<script>
+(function(){
+    function animateBars(){
+        document.querySelectorAll('.cw-bar-fill').forEach(function(el){
+            var pct = el.getAttribute('data-pct') || '0';
+            el.style.width = pct + '%';
+            var col = el.getAttribute('data-color');
+            if(col){ el.style.background = col; }
+        });
+    }
+    setTimeout(animateBars, 60);
+})();
+
+function loadCWTasks(){
+    fetch('/api/daily_tasks')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(!data.tasks) return;
+            var byName = {};
+            data.tasks.forEach(function(t){
+                if(!byName[t.player_name]) byName[t.player_name] = [];
+                byName[t.player_name].push(t);
+            });
+            document.querySelectorAll('.cw-player[data-cw-player-name]').forEach(function(el){
+                var name = el.getAttribute('data-cw-player-name');
+                var list = el.querySelector('.cw-tasks-list');
+                if(!list) return;
+                var tasks = byName[name] || [];
+                if(tasks.length === 0) return;
+                var enc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+                list.innerHTML = tasks.map(function(t){
+                    var actBtns = '';
+                    if(!t.is_current_user){
+                        actBtns = '<button class="cw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus">💀</button>'
+                                + '<button class="cw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus">❤️</button>';
+                    }
+                    return '<div class="cw-task-item">'
+                         + '<div class="cw-task-dot"></div>'
+                         + '<span class="cw-task-name">'+enc(t.task_name)+'</span>'
+                         + '<span class="cw-task-pts">+'+t.points+' pts</span>'
+                         + '<span class="cw-task-time">'+enc(t.time)+'</span>'
+                         + actBtns
+                         + '</div>';
+                }).join('');
+                list.classList.add('has-tasks');
+            });
+        }).catch(function(){});
+}
+
+document.addEventListener('click', function(e){
+    var btn = e.target.closest('.cw-task-malus-btn');
+    if(btn){ openTaskMalus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+    btn = e.target.closest('.cw-task-bonus-btn');
+    if(btn){ openTaskBonus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+});
+
+window._playerPickerMode = 'malus';
+function openGlobalMalus(){ window._playerPickerMode='malus'; document.getElementById('playerPickerTitle').textContent='💀 Malus pour qui ?'; document.getElementById('playerPickerOverlay').classList.add('open'); }
+function openGlobalBonus(){ window._playerPickerMode='bonus'; document.getElementById('playerPickerTitle').textContent='❤️ Bonus pour qui ?'; document.getElementById('playerPickerOverlay').classList.add('open'); }
+function closePlayerPicker(){ document.getElementById('playerPickerOverlay').classList.remove('open'); }
+function selectPlayer(email, name){ closePlayerPicker(); if(window._playerPickerMode==='malus'){ openMalus(email,name); } else { openBonus(email,name); } }
+
+var _bonusEmail = null;
+function openBonus(email, name){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; document.getElementById('bonusOverlay').classList.add('open'); }
+function closeBonus(){ document.getElementById('bonusOverlay').classList.remove('open'); _bonusEmail=null; var ctx=document.getElementById('bonusTaskContext'); if(ctx){ ctx.style.display='none'; } }
+function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
+function sendBonus(reason, points){
+    if(!_bonusEmail) return;
+    var targetEmail = _bonusEmail;
+    fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
+        .then(function(r){return r.json();}).then(function(data){
+            closeBonus();
+            if(data.success){ setTimeout(function(){ window.location.reload(); }, 1800); }
+            else { alert(data.error||'Erreur'); }
+        }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
+}
+
+var _malusEmail = null;
+function openMalus(email, name){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; document.getElementById('malusOverlay').classList.add('open'); }
+function closeMalus(){ document.getElementById('malusOverlay').classList.remove('open'); _malusEmail=null; var ctx=document.getElementById('malusTaskContext'); if(ctx){ ctx.style.display='none'; } }
+function openTaskMalus(email, name, taskName){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; var ctx=document.getElementById('malusTaskContext'); var tn=document.getElementById('malusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('malusOverlay').classList.add('open'); }
+function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
+function sendMalus(reason, points){
+    if(!_malusEmail) return;
+    fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:_malusEmail,reason:reason,points:points})})
+        .then(function(r){return r.json();}).then(function(data){
+            closeMalus();
+            if(data.success){ setTimeout(function(){ window.location.reload(); }, 2000); }
+            else { alert(data.error||'Erreur'); }
+        }).catch(function(){ closeMalus(); alert('Erreur réseau'); });
+}
+
+document.addEventListener('DOMContentLoaded', loadCWTasks);
+</script>
+{% endblock %}

@@ -970,7 +970,7 @@
                                 {% endif %}
                                 <p class="message-text">{{ msg.content }}</p>
                                 <div class="message-timestamp">
-                                    {{ msg.timestamp.strftime('%H:%M') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp[11:16] if msg.timestamp and len(msg.timestamp) >= 16 else msg.timestamp) }}
+                                    {{ msg.timestamp.strftime('%H:%M') if msg.timestamp.__class__.__name__ == 'datetime' else (msg.timestamp[11:16] if msg.timestamp and msg.timestamp|length >= 16 else msg.timestamp) }}
                                 </div>
                                 
                                 {# ✓/✓✓ Indicateur de lecture style WhatsApp sur les messages envoyés #}
