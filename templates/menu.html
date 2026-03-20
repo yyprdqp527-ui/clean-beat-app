@@ -4650,61 +4650,8 @@ function sendMalus(reason, points){
                     <button class="burger-close" id="burgerClose" aria-label="Fermer le menu">&times;</button>
                     <nav class="burger-nav-items">
                         <!-- 👤 MON PROFIL — item en haut du menu -->
-                        <a href="#" class="burger-nav-item burger-nav-item-profile" id="profileNavBtn" onclick="openProfilePanel(event)" role="button">
-                            <span class="burger-nav-icon profile-nav-avatar" style="filter:none;">
-                                {% if player1_avatar_file %}
-                                    <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}"
-                                         alt="{{ player1_name or 'Profil' }}"
-                                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                    <span style="display:none;font-size:22px;">👤</span>
-                                {% elif player1_avatar_url %}
-                                    <img src="{{ player1_avatar_url }}"
-                                         alt="{{ player1_name or 'Profil' }}"
-                                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                    <span style="display:none;font-size:22px;">👤</span>
-                                {% elif player1_avatar and player1_avatar|length <= 4 %}
-                                    {{ player1_avatar }}
-                                {% else %}
-                                    👤
-                                {% endif %}
-                            </span>
-                            <div class="burger-nav-text-block">
-                                <span class="burger-nav-text">Mon Profil</span>
-                                <span class="burger-nav-subtext">{{ player1_name or 'Mon compte' }}</span>
-                            </div>
-                            <span class="burger-nav-arrow">›</span>
-                        </a>
 
-                        <a href="{{ url_for('personnaliser_maison') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🏡</span>
-                            <span class="burger-nav-text">Gérer la maison</span>
-                        </a>
-                        <a href="{{ url_for('manage_players') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">👥</span>
-                            <span class="burger-nav-text">Gérer les joueurs</span>
-                        </a>
-                        <a href="{{ url_for('reminders') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🛒</span>
-                            <span class="burger-nav-text">Liste de courses</span>
-                        </a>
-                        <a href="{{ url_for('comments') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">
-                                💬
-                                {% if unread_messages_count and unread_messages_count > 0 %}
-                                <span class="notification-badge">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
-                                {% endif %}
-                            </span>
-                            <span class="burger-nav-text">Messagerie</span>
-                        </a>
 
-                        <a href="{{ url_for('mes_recompenses') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🎁</span>
-                            <span class="burger-nav-text">Récompenses</span>
-                        </a>
-                        <a href="{{ url_for('rewards') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🧪</span>
-                            <span class="burger-nav-text">Test Grille</span>
-                        </a>
 
                         <!-- Séparateur version bêta EN BAS -->
                         <div class="burger-nav-divider">Version bêta</div>
