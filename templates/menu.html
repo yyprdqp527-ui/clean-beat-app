@@ -2560,11 +2560,11 @@
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <!-- Boutons d'action droite : burger + bébé + ajouter mission (colonne) -->
-                <div class="header-right-actions">
+                <!-- Bouton bêta testeur à gauche -->
+                <div class="header-left-actions">
                     <div class="burger-wrapper">
-                        <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
-                            <span></span><span></span><span></span>
+                        <button class="burger-menu beta-btn" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
+                            <span class="beta-label">Bêta<br>testeur</span>
                         </button>
                         <div class="burger-alerts" id="burger-alerts">
                             <div class="burger-alert-pill baby" id="pill-baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé" {% if not unread_baby_tracking|default(0) %}style="display:none"{% endif %}>
@@ -3063,14 +3063,20 @@ body { padding-bottom: 72px !important; }
 }
 
 /* ══ Boutons d'action droite du header (burger + bébé + mission) ══ */
-.header-right-actions {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+.header-left-actions {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
     z-index: 2001; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.header-right-actions .burger-menu {
-    width: 36px; height: 36px; border-radius: 11px;
+.header-left-actions .beta-btn {
+    width: auto; min-width: 52px; height: auto; padding: 5px 8px;
+    border-radius: 11px;
     background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.25) 100%);
+    border: none; cursor: pointer; font-size: 9px; font-weight: 800;
+    color: #153036; text-align: center; line-height: 1.2;
+    letter-spacing: 0.3px; text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(21,48,54,0.15);
 }
+.header-left-actions .beta-btn:active { opacity: 0.7; }
 .header-action-pill {
     width: 34px; height: 34px;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -3101,8 +3107,8 @@ body { padding-bottom: 72px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 @media (max-width: 360px) {
-    .header-right-actions { gap: 3px; }
-    .header-right-actions .burger-menu { width: 30px; height: 30px; }
+    .header-left-actions { gap: 3px; }
+    .header-left-actions .beta-btn { min-width: 44px; font-size: 8px; padding: 4px 6px; }
     .header-action-pill { width: 28px; height: 28px; font-size: 15px; }
 }
 
