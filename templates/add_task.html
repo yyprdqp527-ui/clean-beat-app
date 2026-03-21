@@ -4,6 +4,11 @@
 {% block title %}Ajouter une tâche - Clean Beat{% endblock %}
 
 {% block page_styles %}
+    /* Fix iOS Safari : empêche le zoom au focus sans toucher au viewport */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+
     /* Bouton retour glassmorphisme */
     .back-btn-glass {
         position: fixed;
@@ -366,28 +371,7 @@ function updateImagePreview() {
     }
 }
 
-// Fix iOS Safari : réinitialise le zoom après fermeture du clavier
-// Technique : toggle maximum-scale sur la balise viewport (seule méthode fiable)
-(function() {
-    var viewport = document.querySelector('meta[name="viewport"]');
-    if (!viewport) return;
-    var originalContent = viewport.getAttribute('content');
 
-    function lockZoom() {
-        viewport.setAttribute('content', originalContent + ', maximum-scale=1');
-    }
-    function unlockZoom() {
-        viewport.setAttribute('content', originalContent);
-    }
-
-    document.querySelectorAll('input, textarea, select').forEach(function(el) {
-        el.addEventListener('focus', lockZoom);
-        el.addEventListener('blur', function() {
-            // Délai pour laisser iOS fermer le clavier avant de déverrouiller
-            setTimeout(unlockZoom, 300);
-        });
-    });
-})();
 </script>
 
 {% endblock %}
