@@ -1788,6 +1788,29 @@
             z-index: 10;
         }
 
+        /* Pastille orange « nouvelle mission » sur les cartes de pièces */
+        .room-mission-dot {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 10px;
+            background: #FF6B2B;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(255,107,43,0.7);
+            animation: pulse-badge 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
         /* Responsive isométrique */
         @media (max-width: 480px) {
             .room-card-title { 
@@ -2563,9 +2586,7 @@
                 <!-- Bouton bêta testeur à gauche -->
                 <div class="header-left-actions">
                     <div class="burger-wrapper">
-                        <button class="beta-btn" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
-                            <span class="beta-label">Bêta testeur</span>
-                        </button>
+                        <div class="beta-dot" id="burgerBtn" onclick="openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Bêta testeur"></div>
                         <div class="burger-alerts" id="burger-alerts">
                             <div class="burger-alert-pill baby" id="pill-baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé" {% if not unread_baby_tracking|default(0) %}style="display:none"{% endif %}>
                                 <span class="pill-icon">👶</span>
@@ -3067,30 +3088,23 @@ body { padding-bottom: 72px !important; }
     position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
     z-index: 2001; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.header-left-actions .beta-btn {
-    width: auto; min-width: 64px; height: auto; padding: 10px 16px;
-    border-radius: 999px;
-    background: linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(210,235,240,0.7) 100%);
-    border: 1.5px solid rgba(255,255,255,0.9);
-    cursor: pointer; font-size: 10px; font-weight: 900;
-    color: #153036; text-align: center; line-height: 1.3; white-space: nowrap;
-    letter-spacing: 0.5px; text-transform: uppercase;
-    box-shadow:
-        0 6px 12px rgba(21,48,54,0.18),
-        0 2px 4px rgba(21,48,54,0.12),
-        inset 0 1px 2px rgba(255,255,255,0.9),
-        inset 0 -2px 4px rgba(21,48,54,0.08);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-    -webkit-tap-highlight-color: transparent;
+.beta-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    cursor: pointer;
+    animation: beta-blink 2s ease-in-out infinite;
+    flex-shrink: 0;
 }
-.header-left-actions .beta-btn:active {
-    transform: translateY(2px) scale(0.97);
-    box-shadow:
-        0 2px 4px rgba(21,48,54,0.15),
-        0 1px 2px rgba(21,48,54,0.1),
-        inset 0 2px 5px rgba(21,48,54,0.12),
-        inset 0 1px 2px rgba(21,48,54,0.08);
+.beta-dot:active {
+    transform: scale(0.85);
 }
+@keyframes beta-blink {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.7), 0 0 8px 3px rgba(255,255,255,0.4); transform: scale(1); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(255,255,255,0), 0 0 4px 1px rgba(255,255,255,0.2); transform: scale(0.9); }
+}
+
 .header-action-pill {
     width: 34px; height: 34px;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -3122,7 +3136,6 @@ body { padding-bottom: 72px !important; }
 }
 @media (max-width: 360px) {
     .header-left-actions { gap: 3px; }
-    .header-left-actions .beta-btn { min-width: 80px; font-size: 10px; padding: 7px 12px; }
     .header-action-pill { width: 28px; height: 28px; font-size: 15px; }
 }
 
@@ -3170,7 +3183,7 @@ body { padding-bottom: 72px !important; }
     background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
     min-width: 14px; height: 14px; border-radius: 99px;
     display: flex; align-items: center; justify-content: center;
-    padding: 0 3px; border: 1px solid white;
+    padding: 0 3px; line-height: 1;
 }
 .cw-tab-arrow {
     font-size: 10px; font-weight: 700; color: #597176;
@@ -3250,8 +3263,13 @@ body { padding-bottom: 72px !important; }
             <span class="cw-tab-label">Messagerie</span>
         </a>
         <!-- 3. Courses -->
-        <a href="{{ url_for('reminders') }}" class="cw-tab">
-            <span class="cw-tab-icon">🛒</span>
+        <a href="{{ url_for('reminders') }}" class="cw-tab" id="cwTabCourses">
+            <span class="cw-tab-icon" style="position:relative;">
+                🛒
+                {% if courses_pending_count|default(0) > 0 %}
+                <span class="cw-tab-badge" id="courses-nav-badge">{{ courses_pending_count if courses_pending_count < 100 else '99+' }}</span>
+                {% endif %}
+            </span>
             <span class="cw-tab-label">Courses</span>
         </a>
         <!-- 4. Joueurs -->
@@ -4644,10 +4662,15 @@ function sendMalus(reason, points){
                                 {% for room in custom_rooms %}
                                 <a href="/categorie/{{ room.category }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
                                     <div class="room-card-title">{{ room.name }}</div>
-                                    <div class="room-card-visual">
+                                    <div class="room-card-visual" data-category="{{ room.category }}">
                                         <picture>
                                             <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
                                         </picture>
+                                        <span class="room-mission-dot"
+                                              title="Mission(s) en attente"
+                                              {% if room.category not in rooms_with_new_missions %}style="display:none"{% endif %}>
+                                            {{ rooms_with_new_missions[room.category] if room.category in rooms_with_new_missions else '' }}
+                                        </span>
                                     </div>
                                 </a>
                                 {% endfor %}
@@ -5888,6 +5911,7 @@ function sendMalus(reason, points){
                             if (data.action === 'system_message') {
                                 console.log('🔔 Message système reçu (', data.message_type, ') → refreshAllBadges');
                                 refreshAllBadges();
+                            refreshMissionDots();
                                 return;
                             }
 
@@ -5901,7 +5925,9 @@ function sendMalus(reason, points){
                             // ❌ Sinon, ignorer (autres actions ou autres utilisateurs)
                             console.log('⏭️ Action ou utilisateur non concerné → Ignoré');
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-                        });
+                        
+                            // Rafraîchir les pastilles de mission si une nouvelle tâche a été ajoutée
+                            if (data.message_type === 'task_added') { refreshMissionDots(); }});
                         
                         // 🔔 Pastille enfant mise à jour quand un adulte marque un message lu
                         socket.on('badge_update', function(data) {
@@ -5972,7 +5998,33 @@ function sendMalus(reason, points){
                     } catch(e) {}
                 }
 
-                function refreshAllBadges() {
+                
+                function refreshMissionDots() {
+                    fetch('/api/rooms_with_missions')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data.rooms) return;
+                            // Cacher toutes les pastilles
+                            document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
+                                dot.style.display = 'none';
+                                dot.textContent = '';
+                            });
+                            // Afficher avec le bon compteur
+                            Object.entries(data.rooms).forEach(function(entry) {
+                                var cat = entry[0], count = entry[1];
+                                var vis = document.querySelector('.room-card-visual[data-category="' + cat + '"]');
+                                if (vis) {
+                                    var dot = vis.querySelector('.room-mission-dot');
+                                    if (dot) {
+                                        dot.textContent = count > 99 ? '99+' : count;
+                                        dot.style.display = '';
+                                    }
+                                }
+                            });
+                        })
+                        .catch(function() {});
+                }
+function refreshAllBadges() {
                     console.log('🔄 Rafraîchissement des badges...');
                     fetch('/api/unread_counts', { cache: 'no-store' })
                         .then(response => response.json())
@@ -6016,9 +6068,10 @@ function sendMalus(reason, points){
                 
                 // 🚀 Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
                 refreshAllBadges();
+                refreshMissionDots();
                 
                 // Rafraîchir aussi au DOMContentLoaded (sécurité)
-                document.addEventListener('DOMContentLoaded', refreshAllBadges);
+                document.addEventListener('DOMContentLoaded', function() { refreshAllBadges(); refreshMissionDots(); });
                 
                 // Rafraîchir au retour via le bouton retour (bfcache ET navigation normale)
                 window.addEventListener('pageshow', function(event) {

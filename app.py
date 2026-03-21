@@ -9427,22 +9427,25 @@ def menu():
             if 'is_current_user' not in player:
                 player['is_current_user'] = (player.get('email') == session.get('user'))
 
-    # 🟠 Pièces avec nouvelles missions non lues pour l'utilisateur courant
-    rooms_with_new_missions = set()
+    # 🟠 Pièces avec missions récemment ajoutées mais pas encore validées (dict {cat: count})
+    rooms_with_new_missions = {}
     if house_id and 'user' in session:
         try:
             _conn_nm = get_db_connection()
             _c_nm = _conn_nm.cursor()
+            # Badge = nb de missions custom dans cette pièce non encore validées
             _c_nm.execute("""
-                SELECT DISTINCT m.related_category FROM messages m
-                WHERE m.house_id = ? AND m.message_type = 'task_added'
-                AND m.related_category IS NOT NULL
+                SELECT ct.category, COUNT(*) as pending_count FROM custom_tasks ct
+                WHERE ct.house_id = ?
                 AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr
-                    WHERE mr.message_id = m.id AND mr.user_email = ?
+                    SELECT 1 FROM completed_tasks ctd
+                    WHERE ctd.house_id = ct.house_id
+                    AND ctd.category = ct.category
+                    AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
                 )
-            """, (house_id, session['user']))
-            rooms_with_new_missions = {row[0] for row in _c_nm.fetchall()}
+                GROUP BY ct.category
+            """, (house_id,))
+            rooms_with_new_missions = {row[0]: row[1] for row in _c_nm.fetchall()}
             _conn_nm.close()
         except Exception as _e_nm:
             _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
@@ -12340,6 +12343,43 @@ def api_unread_counts():
         
     except Exception as e:
         _dbg(f"❌ Erreur API unread_counts: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/api/rooms_with_missions')
+def api_rooms_with_missions():
+    """
+    API pour récupérer les pièces avec missions non validées.
+    Utilisé pour mettre à jour les pastilles oranges en temps réel.
+    """
+    if 'user' not in session:
+        return jsonify({'error': 'Non authentifié'}), 401
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('SELECT house_id FROM users WHERE email = ?', (session['user'],))
+        user_row = c.fetchone()
+        if not user_row or not user_row[0]:
+            conn.close()
+            return jsonify({'rooms': []})
+        house_id = user_row[0]
+        c.execute("""
+            SELECT ct.category, COUNT(*) as pending_count
+            FROM custom_tasks ct
+            WHERE ct.house_id = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM completed_tasks ctd
+                WHERE ctd.house_id = ct.house_id
+                AND ctd.category = ct.category
+                AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
+            )
+            GROUP BY ct.category
+        """, (house_id,))
+        rooms = {row[0]: row[1] for row in c.fetchall()}
+        conn.close()
+        return jsonify({'rooms': rooms})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
