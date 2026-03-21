@@ -10472,10 +10472,14 @@ def categorie(cat):
                         'name': uname or 'Inconnu',
                         'avatar': display_avatar,
                     })
-            conn2.close()
         except Exception as _e:
             _dbg(f"⚠️ baby_activities error: {_e}")
             baby_activities = []
+        finally:
+            try:
+                conn2.close()
+            except Exception:
+                pass
 
     return render_template('tasks.html', category=cat, category_name=category_name, category_icon=category_icon, tasks_with_images=tasks_with_images, tasks_points=tasks_points, custom_tasks=custom_tasks, players=players, hide_header=True, baby_activities=baby_activities)
 
