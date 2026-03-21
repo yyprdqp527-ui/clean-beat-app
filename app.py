@@ -8891,6 +8891,8 @@ def menu():
     house_id = None
     show_onboarding = False
     courses_pending_count = 0
+    rooms_with_new_missions = {}
+    custom_rooms_db = {}
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
     if 'user' in session:
@@ -9100,6 +9102,25 @@ def menu():
                     _dbg(f"⚠️ Erreur récupération custom_rooms: {e}")
                     custom_rooms_db = {}
 
+            # 🟠 Pièces avec missions non validées — AVANT conn.close()
+            rooms_with_new_missions = {}
+            if house_id:
+                try:
+                    c.execute("""
+                        SELECT ct.category, COUNT(*) as pending_count FROM custom_tasks ct
+                        WHERE ct.house_id = ?
+                        AND NOT EXISTS (
+                            SELECT 1 FROM completed_tasks ctd
+                            WHERE ctd.house_id = ct.house_id
+                            AND ctd.category = ct.category
+                            AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
+                        )
+                        GROUP BY ct.category
+                    """, (house_id,))
+                    rooms_with_new_missions = {row[0]: row[1] for row in c.fetchall()}
+                except Exception as _e_nm:
+                    _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
+
         finally:
             conn.close()
 
@@ -9216,26 +9237,6 @@ def menu():
                 player['weekly_points'] = 0
             if 'is_current_user' not in player:
                 player['is_current_user'] = (player.get('email') == session.get('user'))
-
-    # 🟠 Pièces avec missions récemment ajoutées mais pas encore validées (dict {cat: count})
-    rooms_with_new_missions = {}
-    if house_id and 'user' in session:
-        try:
-            # Réutiliser la connexion existante pour éviter un verrou SQLite sur Render
-            c.execute("""
-                SELECT ct.category, COUNT(*) as pending_count FROM custom_tasks ct
-                WHERE ct.house_id = ?
-                AND NOT EXISTS (
-                    SELECT 1 FROM completed_tasks ctd
-                    WHERE ctd.house_id = ct.house_id
-                    AND ctd.category = ct.category
-                    AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
-                )
-                GROUP BY ct.category
-            """, (house_id,))
-            rooms_with_new_missions = {row[0]: row[1] for row in c.fetchall()}
-        except Exception as _e_nm:
-            _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
 
     # ⚙️ DEV: forcer l'affichage de l'onboarding via ?preview_onboarding=1
     if request.args.get('preview_onboarding') == '1':
