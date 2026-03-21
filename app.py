@@ -10453,6 +10453,9 @@ def categorie(cat):
                 """, (row2[0],))
                 for row in c2.fetchall():
                     content, ts, uname, avatar, avatar_file, avatar_url, avatar_style = row
+                    # PostgreSQL retourne les TIMESTAMP comme datetime, SQLite comme str → normaliser
+                    if ts is not None and not isinstance(ts, str):
+                        ts = ts.isoformat()
                     # Préparer l'avatar
                     display_avatar = '👤'
                     if avatar_file and avatar_file.strip():
