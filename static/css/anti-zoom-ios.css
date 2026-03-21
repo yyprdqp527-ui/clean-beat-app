@@ -15,6 +15,15 @@
 /* Fix iOS Safari : empêche le zoom auto au focus (déclenché si font-size < 16px) */
 input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
 textarea,
-select {
+select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"] {
     font-size: max(16px, 1em) !important;
+    /* Double protection contre le zoom */
+    -webkit-text-size-adjust: 100% !important;
 }
