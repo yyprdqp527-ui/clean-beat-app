@@ -4689,7 +4689,7 @@ function sendMalus(reason, points){
                                             {{ rooms_with_new_missions[room.category] if room.category in rooms_with_new_missions else '' }}
                                         </span>
                                         {% if room.category == 'chambre_bebe' and unread_baby_tracking|default(0) > 0 %}
-                                        <span class="room-baby-dot" title="Nouveau suivi bébé">👶</span>
+                                        <span class="room-baby-dot" title="Nouveau suivi bébé">{{ unread_baby_tracking }}</span>
                                         {% endif %}
                                     </div>
                                 </a>
