@@ -93,7 +93,7 @@
         padding: 12px 14px;
         border: 1px solid #E0E0E0;
         border-radius: 10px;
-        font-size: 16px;
+        font-size: 16px !important; /* ≥16px évite l'auto-zoom iOS */
         transition: all 0.2s;
         background: white;
         box-sizing: border-box;
@@ -365,6 +365,17 @@ function updateImagePreview() {
         preview.src = '/static/images/default.png';
     }
 }
+
+// Fix iOS Safari : remet le viewport en place après fermeture du clavier
+document.querySelectorAll('input, textarea, select').forEach(function(el) {
+    el.addEventListener('blur', function() {
+        setTimeout(function() {
+            window.scrollTo({ top: window.scrollY, behavior: 'instant' });
+            document.body.style.height = '100.001%';
+            requestAnimationFrame(function() { document.body.style.height = ''; });
+        }, 100);
+    });
+});
 </script>
 
 {% endblock %}

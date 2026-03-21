@@ -383,16 +383,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; }
     <!-- Mes rappels -->
     <div class="profil-section-title">Mes rappels</div>
     <div class="profil-reminders">
-        <a href="{{ url_for('courses_messages') }}" class="profil-reminder-item">
-            <span class="profil-reminder-icon">🛒</span>
-            <span class="profil-reminder-text">Liste de courses</span>
-            {% if unread_courses > 0 %}<span class="profil-reminder-badge">{{ unread_courses }}</span>{% endif %}
-        </a>
-        <a href="{{ url_for('mission_messages') }}" class="profil-reminder-item">
-            <span class="profil-reminder-icon">⭐</span>
-            <span class="profil-reminder-text">Missions ajoutées</span>
-            {% if unread_task_added > 0 %}<span class="profil-reminder-badge">{{ unread_task_added }}</span>{% endif %}
-        </a>
         {% if has_baby_tracking %}
         <a href="{{ url_for('baby_messages') }}" class="profil-reminder-item">
             <span class="profil-reminder-icon">👶</span>
