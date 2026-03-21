@@ -2592,14 +2592,6 @@
                                 <span class="pill-icon">👶</span>
                                 <span class="pill-count" id="pill-baby-count">{{ unread_baby_tracking|default(0) }}</span>
                             </div>
-                            <div class="burger-alert-pill mission" id="pill-mission" onclick="window.location.href='{{ url_for('mission_messages') }}'" title="Nouvelle mission ajoutée" {% if not unread_task_added|default(0) %}style="display:none"{% endif %}>
-                                <span class="pill-icon">⭐</span>
-                                <span class="pill-count" id="pill-mission-count">{{ unread_task_added|default(0) }}</span>
-                            </div>
-                            <div class="burger-alert-pill courses" id="pill-courses" onclick="window.location.href='{{ url_for('courses_messages') }}'" title="Nouvel article dans la liste de courses" {% if not unread_courses|default(0) %}style="display:none"{% endif %}>
-                                <span class="pill-icon">🛒</span>
-                                <span class="pill-count" id="pill-courses-count">{{ unread_courses|default(0) }}</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -4812,7 +4804,7 @@ function sendMalus(reason, points){
                                 <div class="profile-stat-label">Cette semaine</div>
                             </div>
                             <div class="profile-stat-item">
-                                {% set total_rappels = (unread_courses|default(0)) + (unread_task_added|default(0)) + (unread_baby_tracking|default(0)) %}
+                                {% set total_rappels = (unread_baby_tracking|default(0)) %}
                                 <div class="profile-stat-value">{{ total_rappels }}</div>
                                 <div class="profile-stat-label">Rappels</div>
                             </div>
@@ -4821,20 +4813,6 @@ function sendMalus(reason, points){
                         <!-- Mes rappels -->
                         <div class="profile-section-title">Mes rappels</div>
                         <div class="profile-reminders">
-                            <a href="/courses_messages" class="profile-reminder-item reminder-courses">
-                                <span class="profile-reminder-icon">🛒</span>
-                                <span class="profile-reminder-text">Liste de courses</span>
-                                {% if unread_courses > 0 %}
-                                <span class="profile-reminder-badge">{{ unread_courses }}</span>
-                                {% endif %}
-                            </a>
-                            <a href="/mission_messages" class="profile-reminder-item reminder-missions">
-                                <span class="profile-reminder-icon">⭐</span>
-                                <span class="profile-reminder-text">Missions ajoutées</span>
-                                {% if unread_task_added > 0 %}
-                                <span class="profile-reminder-badge">{{ unread_task_added }}</span>
-                                {% endif %}
-                            </a>
                             {% if has_baby_tracking %}
                             <a href="/baby_messages" class="profile-reminder-item reminder-baby">
                                 <span class="profile-reminder-icon">👶</span>

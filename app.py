@@ -8890,6 +8890,7 @@ def menu():
     has_baby_tracking = False
     house_id = None
     show_onboarding = False
+    courses_pending_count = 0
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
     if 'user' in session:
