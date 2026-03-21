@@ -164,7 +164,9 @@ body { background: {{ bg_gradient }}; min-height: 100vh; }
     background: rgba(255,255,255,0.06);
     border: 1.5px solid rgba(255,255,255,0.1);
     border-radius: 12px; transition: all 0.2s;
+    text-decoration: none; color: white;
 }
+.profil-rank-row:active { transform: scale(0.98); opacity: 0.85; }
 .profil-rank-row.me {
     background: rgba(255,255,255,0.15);
     border-color: rgba(255,255,255,0.25);
@@ -179,6 +181,82 @@ body { background: {{ bg_gradient }}; min-height: 100vh; }
 .profil-rank-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .profil-rank-name { flex: 1; font-size: 13px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profil-rank-pts { font-size: 14px; font-weight: 800; color: rgba(253,174,84,0.9); }
+
+/* Cartes récompenses */
+.profil-reward-card {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(253,174,84,0.25);
+    border-radius: 14px; padding: 12px 16px;
+    margin-bottom: 0;
+}
+.profil-reward-info { flex: 1; }
+.profil-reward-text { font-size: 14px; font-weight: 700; color: white; }
+.profil-reward-date { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.profil-reward-use-btn {
+    background: linear-gradient(135deg, #FDAE54, #f4c68d);
+    color: white; border: none;
+    padding: 8px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+}
+.profil-reward-use-btn:active { transform: scale(0.95); }
+.profil-reward-used { opacity: 0.6; }
+.profil-reward-used-badge {
+    font-size: 10px; font-weight: 800;
+    background: rgba(46,204,113,0.2); color: #2ecc71;
+    border: 1px solid rgba(46,204,113,0.4);
+    padding: 4px 10px; border-radius: 12px;
+    white-space: nowrap;
+}
+.profil-used-rewards-toggle {
+    background: none; border: none;
+    color: rgba(255,255,255,0.45); font-size: 12px; font-weight: 700;
+    cursor: pointer; padding: 8px 0;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Montserrat', sans-serif;
+}
+.profil-used-rewards-content { display: none; }
+
+/* Modal récompenses */
+.profil-reward-modal {
+    display: none; position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(21,48,54,0.8); backdrop-filter: blur(10px);
+    z-index: 3000; align-items: center; justify-content: center;
+}
+.profil-reward-modal.show { display: flex; }
+.profil-reward-modal-content {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+    border-radius: 24px; padding: 30px;
+    max-width: 90%; width: 320px; text-align: center;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 25px 80px rgba(89,113,118,0.4);
+}
+.profil-reward-modal-title { color: #153036; font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+.profil-reward-modal-text {
+    background: linear-gradient(135deg, rgba(253,174,84,0.3), rgba(244,198,141,0.2));
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 14px; padding: 14px;
+    color: #153036; font-size: 15px; font-weight: 700;
+    margin-bottom: 14px;
+}
+.profil-modal-btn {
+    padding: 11px 22px; border-radius: 20px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    border: none; transition: all 0.2s;
+    font-family: 'Montserrat', sans-serif;
+}
+.profil-modal-confirm {
+    background: linear-gradient(135deg, #FDAE54, #f4c68d);
+    color: white; box-shadow: 0 4px 15px rgba(253,174,84,0.4);
+}
+.profil-modal-cancel {
+    background: rgba(166,211,220,0.3); color: #153036;
+    border: 2px solid rgba(166,211,220,0.3) !important;
+}
+.profil-modal-btn:active { transform: scale(0.97); }
 
 /* Boutons d'action */
 .profil-actions { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 10px; }
@@ -204,7 +282,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; }
 
 {% block content %}
 {% set cp = cp or (players|selectattr('email', 'equalto', current_user_name)|first if players else none) %}
-<a href="{{ url_for('menu') }}" class="back-btn-glass">‹</a>
+<a href="{{ url_for('menu') }}" class="back-btn-glass">←</a>
 
 <div class="profil-page">
 
@@ -248,29 +326,60 @@ body { background: {{ bg_gradient }}; min-height: 100vh; }
         {% endif %}
     </div>
 
-    <!-- Mes statistiques -->
-    <div class="profil-section-title">Mes statistiques</div>
+    <!-- Statistiques -->
+    <div class="profil-section-title">{% if is_own_profile %}Mes statistiques{% else %}Statistiques de {{ player1_name }}{% endif %}</div>
     <div class="profil-stats-grid">
         <div class="profil-stat-item">
-            {% set today_tasks = daily_report|selectattr('email', 'equalto', current_user_name)|list|length %}
-            <div class="profil-stat-value">{{ today_tasks }}</div>
-            <div class="profil-stat-label">Tâches</div>
+            <div class="profil-stat-value">{{ cp.daily_tasks|default(0) if cp else 0 }}</div>
+            <div class="profil-stat-label">Tâches aujourd'hui</div>
         </div>
         <div class="profil-stat-item">
-            <div class="profil-stat-value">{{ player1_points or 0 }}</div>
-            <div class="profil-stat-label">Aujourd'hui</div>
+            <div class="profil-stat-value">{{ cp.daily_points|default(0) if cp else 0 }}</div>
+            <div class="profil-stat-label">Points aujourd'hui</div>
+        </div>
+        <div class="profil-stat-item">
+            <div class="profil-stat-value">{{ cp.weekly_tasks|default(0) if cp else 0 }}</div>
+            <div class="profil-stat-label">Tâches semaine</div>
         </div>
         <div class="profil-stat-item">
             <div class="profil-stat-value">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
-            <div class="profil-stat-label">Cette semaine</div>
-        </div>
-        <div class="profil-stat-item">
-            {% set total_rappels = (unread_courses|default(0)) + (unread_task_added|default(0)) + (unread_baby_tracking|default(0)) %}
-            <div class="profil-stat-value">{{ total_rappels }}</div>
-            <div class="profil-stat-label">Rappels</div>
+            <div class="profil-stat-label">Points semaine</div>
         </div>
     </div>
 
+    <!-- Classement dans la maison -->
+    {% if players|length > 1 %}
+    <div class="profil-section-title">Classement de la maison</div>
+    <div class="profil-ranking">
+        {% set sorted_players = players|sort(attribute='total_points', reverse=True) %}
+        {% for p in sorted_players %}
+        {% if p.email == current_user_name %}
+        <a href="{{ url_for('profil') }}" class="profil-rank-row me" style="text-decoration:none;">
+        {% else %}
+        <a href="{{ url_for('profil_joueur', player_email=p.email) }}" class="profil-rank-row" style="text-decoration:none;">
+        {% endif %}
+            <div class="profil-rank-pos{% if loop.index == 1 %} top1{% endif %}">
+                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+            </div>
+            <div class="profil-rank-avatar">
+                {% if p.avatar_file %}
+                    <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
+                {% elif p.avatar_url %}
+                    <img src="{{ p.avatar_url }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
+                {% elif p.avatar and p.avatar|length <= 4 %}
+                    <span style="font-size:16px;">{{ p.avatar }}</span>
+                {% else %}
+                    <span style="font-size:16px;">👤</span>
+                {% endif %}
+            </div>
+            <div class="profil-rank-name">{{ p.name }}{% if p.email == current_user_name %} <span style="font-size:10px;opacity:0.6;">(moi)</span>{% endif %}</div>
+            <div class="profil-rank-pts">{{ p.total_points|default(0) }} pts</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if is_own_profile %}
     <!-- Mes rappels -->
     <div class="profil-section-title">Mes rappels</div>
     <div class="profil-reminders">
@@ -293,43 +402,122 @@ body { background: {{ bg_gradient }}; min-height: 100vh; }
         {% endif %}
     </div>
 
-    <!-- Classement dans la maison -->
-    {% if players|length > 1 %}
-    <div class="profil-section-title">Classement de la maison</div>
-    <div class="profil-ranking">
-        {% set sorted_players = players|sort(attribute='total_points', reverse=True) %}
-        {% for p in sorted_players %}
-        <div class="profil-rank-row{% if p.email == current_user_name %} me{% endif %}">
-            <div class="profil-rank-pos{% if loop.index == 1 %} top1{% endif %}">
-                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+    <!-- Mes récompenses -->
+    <div class="profil-section-title">Mes récompenses</div>
+    {% if my_rewards_available or my_rewards_used %}
+    <div class="profil-reminders">
+        {% if my_rewards_available %}
+            {% for reward in my_rewards_available %}
+            <div class="profil-reward-card">
+                <div class="profil-reward-info">
+                    <div class="profil-reward-text">🎁 {{ reward.text }}</div>
+                    <div class="profil-reward-date">Gagnée le {{ reward.date }}</div>
+                </div>
+                <button class="profil-reward-use-btn"
+                        data-reward-id="{{ reward.id }}"
+                        data-reward-text="{{ reward.text }}"
+                        onclick="profilConfirmUse(this.dataset.rewardId, this.dataset.rewardText)">
+                    Utiliser
+                </button>
             </div>
-            <div class="profil-rank-avatar">
-                {% if p.avatar_file %}
-                    <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
-                {% elif p.avatar_url %}
-                    <img src="{{ p.avatar_url }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
-                {% elif p.avatar and p.avatar|length <= 4 %}
-                    <span style="font-size:16px;">{{ p.avatar }}</span>
-                {% else %}
-                    <span style="font-size:16px;">👤</span>
-                {% endif %}
-            </div>
-            <div class="profil-rank-name">{{ p.name }}{% if p.email == current_user_name %} <span style="font-size:10px;opacity:0.6;">(moi)</span>{% endif %}</div>
-            <div class="profil-rank-pts">{{ p.total_points|default(0) }} pts</div>
+            {% endfor %}
+        {% else %}
+        <div class="profil-reminder-item" style="opacity:0.6;pointer-events:none;">
+            <span class="profil-reminder-icon">🎁</span>
+            <span class="profil-reminder-text">Pas encore de récompense disponible</span>
         </div>
-        {% endfor %}
+        {% endif %}
+        {% if my_rewards_used %}
+        <button class="profil-used-rewards-toggle" onclick="profilToggleUsed(this)">
+            <span>▶</span> Voir les {{ my_rewards_used|length }} récompense(s) utilisée(s)
+        </button>
+        <div class="profil-used-rewards-content">
+            {% for reward in my_rewards_used %}
+            <div class="profil-reward-card profil-reward-used">
+                <div class="profil-reward-info">
+                    <div class="profil-reward-text">{{ reward.text }}</div>
+                    <div class="profil-reward-date">Utilisée le {{ reward.used_date }}</div>
+                </div>
+                <span class="profil-reward-used-badge">Utilisée</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="profil-reminders">
+        <div class="profil-reminder-item" style="opacity:0.6;pointer-events:none;">
+            <span class="profil-reminder-icon">🎁</span>
+            <span class="profil-reminder-text">Pas encore de récompense</span>
+        </div>
     </div>
     {% endif %}
 
+    <!-- Modal confirmation utilisation récompense -->
+    <div id="profilRewardModal" class="profil-reward-modal" onclick="profilCloseModal()">
+        <div class="profil-reward-modal-content" onclick="event.stopPropagation()">
+            <h2 class="profil-reward-modal-title">Utiliser cette récompense ?</h2>
+            <div class="profil-reward-modal-text" id="profilModalRewardText"></div>
+            <p style="color:#597176;font-size:13px;font-weight:600;margin-bottom:20px;line-height:1.5;">
+                Une fois utilisée, elle sera retirée de ta liste.
+            </p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button class="profil-modal-btn profil-modal-cancel" onclick="profilCloseModal()">Annuler</button>
+                <button class="profil-modal-btn profil-modal-confirm" id="profilConfirmBtn">Oui, utiliser</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}{# is_own_profile #}
+
     <!-- Boutons d'action -->
     <div class="profil-actions">
+        {% if is_own_profile %}
         <a href="{{ url_for('edit_player', email=current_user_name) }}" class="profil-action-btn profil-action-edit">
             ✏️&nbsp; Modifier mon profil
         </a>
         <a href="{{ url_for('logout') }}" class="profil-action-btn profil-action-logout">
             👋&nbsp; Se déconnecter
         </a>
+        {% endif %}
     </div>
 
 </div>
+
+<script>
+let profilCurrentRewardId = null;
+function profilConfirmUse(id, text) {
+    profilCurrentRewardId = id;
+    document.getElementById('profilModalRewardText').textContent = text;
+    document.getElementById('profilRewardModal').classList.add('show');
+}
+function profilCloseModal() {
+    document.getElementById('profilRewardModal').classList.remove('show');
+    profilCurrentRewardId = null;
+}
+document.getElementById('profilConfirmBtn').addEventListener('click', function() {
+    if (!profilCurrentRewardId) return;
+    fetch('/use_reward/' + profilCurrentRewardId, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            profilCloseModal();
+            if (window.cbToast) window.cbToast('Récompense utilisée !', 'success', 3000);
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            alert(data.message || 'Erreur');
+        }
+    })
+    .catch(() => alert('Une erreur est survenue'));
+});
+function profilToggleUsed(btn) {
+    const content = btn.nextElementSibling;
+    const arrow = btn.querySelector('span');
+    const isOpen = content.style.display === 'block';
+    content.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+}
+</script>
 {% endblock %}

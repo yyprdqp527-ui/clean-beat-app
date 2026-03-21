@@ -1554,26 +1554,28 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def save_photo_from_base64(base64_data):
-    """Sauvegarde une photo à partir de données base64"""
+    """Compresse une photo base64 et retourne un data URI pour stockage en DB.
+    Ne crée aucun fichier sur disque — compatible avec Render (filesystem éphémère)."""
     try:
-        # Décoder le base64
         header, data = base64_data.split(',', 1)
         image_data = base64.b64decode(data)
-        
-        # Générer un nom de fichier unique
-        filename = str(uuid.uuid4()) + '.jpg'
-        
-        # Assurer que le dossier existe
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        
-        # Sauvegarder
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        with open(file_path, 'wb') as f:
-            f.write(image_data)
-        
-        return filename
+
+        # Compresser avec Pillow si disponible (max 400×400, qualité 75)
+        try:
+            from PIL import Image
+            import io as _io
+            img = Image.open(_io.BytesIO(image_data)).convert('RGB')
+            img.thumbnail((400, 400), Image.LANCZOS)
+            buf = _io.BytesIO()
+            img.save(buf, format='JPEG', quality=75, optimize=True)
+            image_data = buf.getvalue()
+        except ImportError:
+            pass  # Pillow absent : utiliser les données brutes
+
+        compressed_b64 = base64.b64encode(image_data).decode('utf-8')
+        return f"data:image/jpeg;base64,{compressed_b64}"
     except Exception as e:
-        _dbg(f"Erreur sauvegarde photo: {e}")
+        _dbg(f"Erreur traitement photo: {e}")
         return None
 
 def get_avatar_url(avatar_id, style='adventurer'):
@@ -4905,27 +4907,30 @@ def update_player():
                 _dbg(f"   ✅ Avatar file conservé: {avatar_filename}")
         
         elif avatar_type == 'photo':
-            # Gérer l'upload de fichier
+            # Gérer l'upload de fichier → data URI en DB (compatible Render)
             if 'avatar_file' in request.files:
                 file = request.files['avatar_file']
                 if file and file.filename:
-                    # Sauvegarder le fichier
-                    filename = secure_filename(file.filename)
-                    timestamp = int(time.time())
-                    unique_filename = f"{timestamp}_{filename}"
-                    filepath = os.path.join('static', 'avatars', unique_filename)
-                    
-                    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                    file.save(filepath)
-                    
-                    update_parts.append("avatar_file=?")
-                    update_values.append(unique_filename)
+                    raw_data = file.read()
+                    try:
+                        from PIL import Image
+                        import io as _io_p
+                        img = Image.open(_io_p.BytesIO(raw_data)).convert('RGB')
+                        img.thumbnail((400, 400), Image.LANCZOS)
+                        buf = _io_p.BytesIO()
+                        img.save(buf, format='JPEG', quality=75, optimize=True)
+                        raw_data = buf.getvalue()
+                    except ImportError:
+                        pass
+                    data_uri = "data:image/jpeg;base64," + base64.b64encode(raw_data).decode('utf-8')
+                    update_parts.append("avatar_url=?")
+                    update_values.append(data_uri)
                     # Effacer les autres types d'avatar
                     update_parts.append("avatar=?")
                     update_values.append(None)
-                    update_parts.append("avatar_url=?")
+                    update_parts.append("avatar_file=?")
                     update_values.append(None)
-                    _dbg(f"   ✅ Photo uploadée: {unique_filename}")
+                    _dbg(f"   ✅ Photo stockée en DB (data URI, {len(data_uri)} chars)")
         else:
             # Si avatar_type est vide ou inconnu, ne pas toucher à l'avatar
             _dbg(f"   ℹ️ Avatar type vide ou inconnu ('{avatar_type}'), conservation de l'avatar actuel")
@@ -8254,14 +8259,14 @@ def update_profile():
         if 'name' in session:
             session['name'] = name
     
-    # Gérer la photo uploadée (priorité maximale)
+    # Gérer la photo uploadée (priorité maximale) — stockage data URI en DB
     if photo_data and photo_data.startswith('data:image'):
-        photo_filename = save_photo_from_base64(photo_data)
-        if photo_filename:
-            update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
-            update_values.extend([photo_filename, '', '', ''])
-            session['user_photo'] = photo_filename
-            _dbg(f"✅ Photo uploadée: {photo_filename}")
+        photo_data_uri = save_photo_from_base64(photo_data)
+        if photo_data_uri:
+            update_fields.extend(["avatar_url=?", "avatar_file=?", "avatar=?", "avatar_style=?"])
+            update_values.extend([photo_data_uri, '', '', ''])
+            session['user_avatar_url'] = photo_data_uri
+            _dbg(f"✅ Photo stockée en DB (data URI, {len(photo_data_uri)} chars)")
     
     # Gérer l'avatar si pas de photo
     elif avatar:
@@ -8432,11 +8437,11 @@ def create_profile_post():
         flash("Le nom est requis", "danger")
         return render_template('create_profile.html')
     
-    # Gérer la photo uploadée
-    photo_filename = None
+    # Gérer la photo uploadée — stockage data URI en DB (compatible Render)
+    photo_data_uri = None
     if photo_data and photo_data.startswith('data:image'):
-        photo_filename = save_photo_from_base64(photo_data)
-        if not photo_filename:
+        photo_data_uri = save_photo_from_base64(photo_data)
+        if not photo_data_uri:
             flash("Erreur lors de la sauvegarde de la photo", "warning")
     
     # Mettre à jour le profil utilisateur
@@ -8452,11 +8457,11 @@ def create_profile_post():
         update_values.append(bio)
     
     # GESTION AVATAR : 3 cas possibles
-    if photo_filename:
-        # CAS 1: Photo uploadée -> avatar_file seulement
-        update_fields.extend(["avatar_file=?", "avatar=?", "avatar_url=?", "avatar_style=?"])
-        update_values.extend([photo_filename, '', '', ''])
-        _dbg(f"✅ Avatar = Photo uploadée: {photo_filename}")
+    if photo_data_uri:
+        # CAS 1: Photo uploadée → stockée en DB comme data URI dans avatar_url
+        update_fields.extend(["avatar_url=?", "avatar_file=?", "avatar=?", "avatar_style=?"])
+        update_values.extend([photo_data_uri, '', '', ''])
+        _dbg(f"✅ Avatar = Photo stockée en DB (data URI, {len(photo_data_uri)} chars)")
         
     elif avatar:
         # Détecter le type d'avatar
@@ -9436,15 +9441,24 @@ def menu():
 # ════════════════════════════════════════════════════════════
 @app.route('/profil')
 def profil():
+    return profil_joueur(session.get('user', ''))
+
+@app.route('/profil/<path:player_email>')
+def profil_joueur(player_email):
     if 'user' not in session:
         return redirect(url_for('login'))
     current_user_name = session.get('user', '')
+    # Rediriger vers /profil si c'est son propre profil (URL propre)
+    if player_email == current_user_name and request.endpoint == 'profil_joueur':
+        return redirect(url_for('profil'))
+    is_own_profile = (player_email == current_user_name)
     player1_name = None
     player1_avatar = None
     player1_avatar_file = None
     player1_avatar_url = None
     house_name = None
     house_id = None
+    viewer_house_id = None
     players = []
     unread_baby_tracking = 0
     unread_task_added = 0
@@ -9452,16 +9466,31 @@ def profil():
     has_baby_tracking = False
     daily_report = []
     player1_points = 0
+    my_rewards_available = []
+    my_rewards_used = []
     try:
         conn = get_db_connection()
         c = conn.cursor()
+        # Maison du visiteur (pour vérification sécurité)
         try:
-            c.execute("SELECT name, avatar, avatar_file, house_id, avatar_url FROM users WHERE email=?", (current_user_name,))
+            c.execute("SELECT house_id FROM users WHERE email=?", (current_user_name,))
+            vr = c.fetchone()
+            if vr:
+                viewer_house_id = vr[0]
+        except Exception:
+            pass
+        # Données du joueur affiché
+        try:
+            c.execute("SELECT name, avatar, avatar_file, house_id, avatar_url FROM users WHERE email=?", (player_email,))
             row = c.fetchone()
             if row:
                 player1_name, player1_avatar, player1_avatar_file, house_id, player1_avatar_url = row
         except Exception:
             pass
+        # Sécurité : le joueur affiché doit être dans la même maison
+        if house_id and viewer_house_id and house_id != viewer_house_id:
+            conn.close()
+            return redirect(url_for('menu'))
         if house_id:
             try:
                 c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))
@@ -9474,16 +9503,8 @@ def profil():
                 players = get_house_players_points(house_id, existing_conn=conn)
                 for p in players:
                     p['is_current_user'] = (p.get('email') == current_user_name)
-                    if p['is_current_user']:
-                        player1_points = p.get('daily_points', 0)
             except Exception:
                 players = []
-            try:
-                unread_baby_tracking = get_unread_count_by_type(current_user_name, house_id, 'baby_tracking', existing_conn=conn)
-                unread_task_added = get_unread_count_by_type(current_user_name, house_id, 'task_added', existing_conn=conn)
-                unread_courses = get_unread_count_by_type(current_user_name, house_id, 'courses_added', existing_conn=conn)
-            except Exception:
-                pass
             try:
                 c.execute("SELECT COUNT(*) FROM baby_tracking WHERE house_id=?", (house_id,))
                 has_baby_tracking = (c.fetchone()[0] or 0) > 0
@@ -9495,13 +9516,44 @@ def profil():
                 daily_report = [{'email': r[0], 'count': r[1]} for r in c.fetchall()]
             except Exception:
                 daily_report = []
+            if is_own_profile:
+                try:
+                    unread_baby_tracking = get_unread_count_by_type(current_user_name, house_id, 'baby_tracking', existing_conn=conn)
+                    unread_task_added = get_unread_count_by_type(current_user_name, house_id, 'task_added', existing_conn=conn)
+                    unread_courses = get_unread_count_by_type(current_user_name, house_id, 'courses_added', existing_conn=conn)
+                except Exception:
+                    pass
+        # Récompenses : uniquement si c'est son propre profil
+        if is_own_profile:
+            try:
+                c.execute("""
+                    SELECT id, reward_text, won_date
+                    FROM mystery_rewards
+                    WHERE user_email=? AND used=0
+                    ORDER BY id DESC
+                """, (player_email,))
+                my_rewards_available = [{'id': r[0], 'text': r[1], 'date': r[2]} for r in c.fetchall()]
+            except Exception:
+                my_rewards_available = []
+            try:
+                c.execute("""
+                    SELECT id, reward_text, won_date, used_date
+                    FROM mystery_rewards
+                    WHERE user_email=? AND used=1
+                    ORDER BY used_date DESC
+                """, (player_email,))
+                my_rewards_used = [{'id': r[0], 'text': r[1], 'won_date': r[2], 'used_date': r[3]} for r in c.fetchall()]
+            except Exception:
+                my_rewards_used = []
         conn.close()
     except Exception:
         pass
-    cp = next((p for p in players if p.get('email') == current_user_name), None)
+    cp = next((p for p in players if p.get('email') == player_email), None)
     return render_template(
         'profil.html',
         current_user_name=current_user_name,
+        player_email=player_email,
+        is_own_profile=is_own_profile,
         player1_name=player1_name,
         player1_avatar=player1_avatar,
         player1_avatar_file=player1_avatar_file,
@@ -9514,7 +9566,8 @@ def profil():
         unread_baby_tracking=unread_baby_tracking,
         unread_task_added=unread_task_added,
         unread_courses=unread_courses,
-        has_baby_tracking=has_baby_tracking,
+        my_rewards_available=my_rewards_available,
+        my_rewards_used=my_rewards_used,
     )
 
 

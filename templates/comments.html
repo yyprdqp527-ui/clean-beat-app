@@ -1015,6 +1015,23 @@
                 console.log('✅ Scroll positionné en haut (messages récents)');
             }
         });
+
+        // ✅ Présélection du destinataire via ?recipient=EMAIL (depuis le menu)
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const recipientEmail = params.get('recipient');
+            if (recipientEmail) {
+                const radio = document.querySelector('input[name="recipient"][value="' + CSS.escape(recipientEmail) + '"]');
+                if (radio) {
+                    radio.click();
+                    // Faire défiler jusqu'au formulaire d'envoi
+                    const form = radio.closest('form');
+                    if (form) { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                }
+                // Nettoyer l'URL
+                history.replaceState(null, '', window.location.pathname);
+            }
+        })();
         
         // Ajuster la hauteur du textarea automatiquement
         const textarea = document.querySelector('textarea[name="content"]');
