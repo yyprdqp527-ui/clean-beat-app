@@ -10435,7 +10435,49 @@ def categorie(cat):
             tasks_with_images = [(tasks_with_images[i][0], tasks_with_images[i][1], tasks_points[i]) for i in range(len(tasks_with_images))]
         conn.close()
 
-    return render_template('tasks.html', category=cat, category_name=category_name, category_icon=category_icon, tasks_with_images=tasks_with_images, tasks_points=tasks_points, custom_tasks=custom_tasks, players=players, hide_header=True)
+    # Fil d'activité bébé pour chambre_bebe
+    baby_activities = []
+    if normalized_cat == 'chambre_bebe' and 'user' in session:
+        try:
+            conn2 = get_db_connection()
+            c2 = conn2.cursor()
+            c2.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+            row2 = c2.fetchone()
+            if row2 and row2[0]:
+                c2.execute("""
+                    SELECT m.content, m.timestamp, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
+                    FROM messages m
+                    LEFT JOIN users u ON m.sender_email = u.email
+                    WHERE m.house_id = ? AND m.message_type = 'baby_tracking'
+                    ORDER BY m.id DESC LIMIT 30
+                """, (row2[0],))
+                for row in c2.fetchall():
+                    content, ts, uname, avatar, avatar_file, avatar_url, avatar_style = row
+                    # Préparer l'avatar
+                    display_avatar = '👤'
+                    if avatar_file and avatar_file.strip():
+                        display_avatar = f"/static/avatars/{avatar_file}"
+                    elif avatar_url:
+                        if 'dicebear.com/8.x' in avatar_url:
+                            avatar_url = avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+                        display_avatar = avatar_url
+                    elif avatar and len(str(avatar)) <= 4:
+                        display_avatar = avatar
+                    elif avatar:
+                        style = avatar_style if avatar_style else 'adventurer'
+                        display_avatar = f"https://api.dicebear.com/7.x/{style}/svg?seed={avatar}&backgroundColor=transparent"
+                    baby_activities.append({
+                        'content': content,
+                        'timestamp': ts,
+                        'name': uname or 'Inconnu',
+                        'avatar': display_avatar,
+                    })
+            conn2.close()
+        except Exception as _e:
+            _dbg(f"⚠️ baby_activities error: {_e}")
+            baby_activities = []
+
+    return render_template('tasks.html', category=cat, category_name=category_name, category_icon=category_icon, tasks_with_images=tasks_with_images, tasks_points=tasks_points, custom_tasks=custom_tasks, players=players, hide_header=True, baby_activities=baby_activities)
 
 
 # --- Routes minimales pour éviter les erreurs de BuildError dans tasks.html ---

@@ -1811,6 +1811,29 @@
             z-index: 10;
         }
 
+        /* Pastille rose chambre bébé */
+        .room-baby-dot {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            min-width: 26px;
+            height: 26px;
+            padding: 0 7px;
+            border-radius: 13px;
+            background: #F472B6;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(244,114,182,0.7);
+            animation: pulse-badge 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
         /* Responsive isométrique */
         @media (max-width: 480px) {
             .room-card-title { 
@@ -4663,6 +4686,9 @@ function sendMalus(reason, points){
                                               {% if room.category not in rooms_with_new_missions %}style="display:none"{% endif %}>
                                             {{ rooms_with_new_missions[room.category] if room.category in rooms_with_new_missions else '' }}
                                         </span>
+                                        {% if room.category == 'chambre_bebe' and unread_baby_tracking|default(0) > 0 %}
+                                        <span class="room-baby-dot" title="Nouveau suivi bébé">👶</span>
+                                        {% endif %}
                                     </div>
                                 </a>
                                 {% endfor %}
