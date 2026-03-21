@@ -5260,7 +5260,7 @@ function sendMalus(reason, points){
                         }
                     }
                     
-                    // Mettre à jour le badge dans le menu burger (total des messages)
+                    // 🍔 Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
                     console.log('🍔 Badges burger trouvés:', burgerBadges.length);
                     burgerBadges.forEach(badge => {
@@ -5274,154 +5274,20 @@ function sendMalus(reason, points){
                         }
                     });
                     
-                    // 🔔 Mettre à jour aussi le badge sur l'avatar de l'utilisateur connecté
-                    const currentUserEmail = "{{ session.get('user', '') }}";
-                    console.log('👤 currentUserEmail:', currentUserEmail);
-                    const avatarWrapper = document.getElementById('current-player-avatar-wrapper');
-                    console.log('🎯 avatarWrapper trouvé:', avatarWrapper);
-                    
-                    if (!avatarWrapper) {
-                        console.error('❌ avatarWrapper non trouvé ! ID: current-player-avatar-wrapper');
-                        console.log('🔍 Éléments avec classe avatar-square-wrapper:', document.querySelectorAll('.avatar-square-wrapper').length);
-                        return;
-                    }
-                    
-                    let avatarBadge = avatarWrapper.querySelector('.avatar-notification-badge');
-                    console.log('🔴 Badge existant:', avatarBadge);
-                    
-                    if (count > 0) {
-                        if (!avatarBadge) {
-                            console.log('➕ Création d\'un nouveau badge...');
-                            avatarBadge = document.createElement('span');
-                            avatarBadge.className = 'avatar-notification-badge';
-                            avatarBadge.setAttribute('data-recipient', currentUserEmail);
-                            // Appliquer TOUS les styles nécessaires
-                            avatarBadge.style.position = 'absolute';
-                            avatarBadge.style.top = '-4px';
-                            avatarBadge.style.right = '-4px';
-                            avatarBadge.style.background = 'linear-gradient(135deg, #FF4444 0%, #FF6B6B 100%)';
-                            avatarBadge.style.color = 'white';
-                            avatarBadge.style.fontSize = '10px';
-                            avatarBadge.style.fontWeight = '800';
-                            avatarBadge.style.minWidth = '22px';
-                            avatarBadge.style.height = '22px';
-                            avatarBadge.style.borderRadius = '11px';
-                            avatarBadge.style.display = 'flex';
-                            avatarBadge.style.alignItems = 'center';
-                            avatarBadge.style.justifyContent = 'center';
-                            avatarBadge.style.padding = '0 6px';
-                            avatarBadge.style.boxShadow = '0 3px 12px rgba(255, 68, 68, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4)';
-                            avatarBadge.style.border = '1.5px solid white';
-                            avatarBadge.style.zIndex = '100';  // Z-index très élevé
-                            avatarBadge.style.fontFamily = 'Montserrat, sans-serif';
-                            avatarBadge.style.cursor = 'pointer';
-                            avatarBadge.style.transition = 'transform 0.2s ease';
-                            avatarBadge.style.pointerEvents = 'auto';
-                            avatarBadge.style.animation = 'pulse-badge 2s ease-in-out infinite';
-                            
-                            avatarBadge.onclick = (e) => {
-                                e.stopPropagation();
-                                window.location.href = '{{ url_for("comments") }}';
-                            };
-                            
-                            // S'assurer que le wrapper a position: relative
-                            if (window.getComputedStyle(avatarWrapper).position === 'static') {
-                                avatarWrapper.style.position = 'relative';
-                                console.log('✅ Position relative appliquée au wrapper');
-                            }
-                            
-                            avatarWrapper.appendChild(avatarBadge);
-                            console.log('✅ Badge créé et ajouté au DOM');
-                            console.log('🔍 Position du badge:', avatarBadge.getBoundingClientRect());
-                        }
-                        
-                        // Mettre à jour le contenu et forcer l'affichage
-                        avatarBadge.textContent = count < 100 ? count : '99+';
-                        avatarBadge.style.display = 'flex';
-                        avatarBadge.style.visibility = 'visible';
-                        avatarBadge.style.opacity = '1';
-                        avatarBadge.style.pointerEvents = 'auto';
-                        
-                        console.log('✅ Badge avatar affiché:', avatarBadge.textContent);
-                        console.log('🔍 Styles finaux badge:', {
-                            display: avatarBadge.style.display,
-                            visibility: avatarBadge.style.visibility,
-                            opacity: avatarBadge.style.opacity,
-                            zIndex: avatarBadge.style.zIndex,
-                            position: avatarBadge.style.position
-                        });
-                    } else if (avatarBadge) {
-                        avatarBadge.style.display = 'none';
-                        console.log('❌ Badge avatar caché');
-                    }
-                }
-                
-                // ✅ MESSAGERIE : La pastille rouge apparaît uniquement sur l'avatar du DESTINATAIRE (celui qui a des messages non lus)
-                // Pas besoin de badges par expéditeur - chaque joueur voit une pastille sur SON avatar s'il a des messages non lus
-                window.__unreadBySender = window.__unreadBySender || {};
-
-                function applyAvatarUnreadBadges() {
-                    // ❌ Les badges d'avatars sont désormais désactivés
-                    // Les notifications sont affichées uniquement dans le menu de navigation fixe
-                    document.querySelectorAll('.avatar-notification-badge').forEach(badge => {
-                        badge.style.display = 'none';
-                    });
-                }
-
-                function updateUnreadBySender(unreadBySender) {
-                    window.__unreadBySender = unreadBySender || {};
-                    document.querySelectorAll('.avatar-notification-badge').forEach(function(badge) {
-                        const recipientEmail = badge.getAttribute('data-recipient');
-                        
-                        // ✅ Si cet email n'est PAS dans unreadBySender, on l'ignore (ne pas toucher aux badges enfants gérés par updateChildrenBadges)
-                        if (!unreadBySender || !unreadBySender.hasOwnProperty(recipientEmail)) {
-                            return; // Ignorer ce badge (peut être un badge enfant)
-                        }
-                        
-                        const count = unreadBySender[recipientEmail] || 0;
+                    // 💬 Mettre à jour le badge du bouton Messages dans le menu de navigation fixe en bas
+                    const bottomNavBadge = document.getElementById('bottomNavMessagesBadge');
+                    console.log('📍 Bottom nav badge trouvé:', bottomNavBadge);
+                    if (bottomNavBadge) {
                         if (count > 0) {
-                            badge.textContent = count < 100 ? count : '99+';
-                            badge.style.display = '';
+                            bottomNavBadge.textContent = count < 100 ? count : '99+';
+                            bottomNavBadge.style.display = 'flex';
+                            console.log('✅ Bottom nav badge affiché:', bottomNavBadge.textContent);
                         } else {
-                            badge.style.display = 'none';
+                            bottomNavBadge.style.display = 'none';
+                            console.log('❌ Bottom nav badge caché');
                         }
-                    });
-                }
-                
-                // ✅ Mettre à jour les pastilles sur les avatars des enfants (visible par tous les adultes)
-                let childrenBadgesUpdateTimer = null;
-                function updateChildrenBadges(childrenUnread) {
-                    if (!childrenUnread) return;
-                    
-                    // Debounce: annuler la mise à jour précédente si elle n'est pas encore appliquée
-                    if (childrenBadgesUpdateTimer) {
-                        clearTimeout(childrenBadgesUpdateTimer);
                     }
-                    
-                    childrenBadgesUpdateTimer = setTimeout(function() {
-                        console.log('🔄 Mise à jour badges enfants (debounced):', childrenUnread);
-                        Object.keys(childrenUnread).forEach(function(childEmail) {
-                            const count = childrenUnread[childEmail];
-                            const badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + childEmail + '"]');
-                            console.log(`   - ${childEmail}: ${count} messages (${badges.length} badges trouvés)`);
-                            badges.forEach(function(badge) {
-                                if (count > 0) {
-                                    badge.textContent = count < 100 ? count : '99+';
-                                    badge.style.display = '';
-                                } else {
-                                    badge.style.display = 'none';
-                                }
-                            });
-                        });
-                    }, 100);  // Attendre 100ms avant d'appliquer la mise à jour
                 }
-                
-                // ==========================================
-                // �🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
-                // ==========================================
-                (function() {
-                    try {
-                        // WebSocket avec polling en fallback (Render free tier : réveil lent jusquà 60s)
                         const socket = io({
                             transports: ['websocket', 'polling'],
                             upgrade: true,
