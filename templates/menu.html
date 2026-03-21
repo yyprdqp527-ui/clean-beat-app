@@ -344,10 +344,7 @@
             opacity: 0.85;
         }
 
-        .burger-alert-pill.baby {
-            background: #F472B6;
-        }
-
+        
         .burger-alert-pill.mission {
             background: #FB923C;
         }
@@ -2190,11 +2187,6 @@
             border-color: rgba(253,174,84,0.45);
         }
         .reminder-missions:active { background: rgba(220,100,10,0.50); }
-        .reminder-baby {
-            background: rgba(220,80,140,0.28);
-            border-color: rgba(255,150,200,0.40);
-        }
-        .reminder-baby:active { background: rgba(220,80,140,0.48); }
         .profile-reminder-icon {
             font-size: 20px;
             flex-shrink: 0;
@@ -2613,10 +2605,7 @@
                     <div class="burger-wrapper">
                         <div class="beta-dot" id="burgerBtn" onclick="openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Bêta testeur"></div>
                         <div class="burger-alerts" id="burger-alerts">
-                            <div class="burger-alert-pill baby" id="pill-baby" onclick="window.location.href='{{ url_for('baby_messages') }}'" title="Nouveau suivi bébé" {% if not unread_baby_tracking|default(0) %}style="display:none"{% endif %}>
-                                <span class="pill-icon">👶</span>
-                                <span class="pill-count" id="pill-baby-count">{{ unread_baby_tracking|default(0) }}</span>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -3134,10 +3123,6 @@ body { padding-bottom: 84px !important; }
     transition: transform 0.18s ease, box-shadow 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     color: inherit;
-}
-.header-action-pill.pill-baby {
-    background: linear-gradient(135deg, rgba(244,114,182,0.28) 0%, rgba(236,72,153,0.15) 100%);
-    border-color: rgba(236,72,153,0.38);
 }
 .header-action-pill.pill-mission {
     background: linear-gradient(135deg, rgba(253,174,84,0.30) 0%, rgba(244,198,141,0.18) 100%);
@@ -4841,14 +4826,6 @@ function sendMalus(reason, points){
                         <!-- Mes rappels -->
                         <div class="profile-section-title">Mes rappels</div>
                         <div class="profile-reminders">
-                            {% if has_baby_tracking %}
-                            <a href="/baby_messages" class="profile-reminder-item reminder-baby">
-                                <span class="profile-reminder-icon">👶</span>
-                                <span class="profile-reminder-text">Tracking bébé</span>
-                                {% if unread_baby_tracking > 0 %}
-                                <span class="profile-reminder-badge">{{ unread_baby_tracking }}</span>
-                                {% endif %}
-                            </a>
                             {% endif %}
                         </div>
 
@@ -6049,11 +6026,10 @@ function refreshAllBadges() {
                                 updateChildrenBadges(counts.children_unread);
                             }
                             // Pills baby / mission / courses
-                            updatePill('pill-baby', 'pill-baby-count', counts.unread_baby || 0);
                             updatePill('pill-mission', 'pill-mission-count', counts.unread_task_added || 0);
                             updatePill('pill-courses', 'pill-courses-count', counts.unread_courses || 0);
                             // Badge icône PWA
-                            var totalBadge = (counts.unread_received || 0) + (counts.unread_baby || 0) + (counts.unread_task_added || 0) + (counts.unread_courses || 0);
+                            var totalBadge = (counts.unread_received || 0) + (counts.unread_task_added || 0) + (counts.unread_courses || 0);
                             updateAppBadge(totalBadge);
                             console.log('✅ Badges rafraîchis:', counts);
                         })
