@@ -51,6 +51,13 @@
             max-width: 100% !important;
         }
 
+        /* Fix iOS Safari : empêche le zoom auto au focus (déclenché si font-size < 16px) */
+        input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+        textarea,
+        select {
+            font-size: max(16px, 1em) !important;
+        }
+
         /* Images PNG responsives (mobile-friendly) */
         img[src$=".png"] {
             max-width: 100%;
