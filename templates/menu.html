@@ -6004,25 +6004,21 @@ function sendMalus(reason, points){
                         .then(function(r) { return r.json(); })
                         .then(function(data) {
                             if (!data.rooms) return;
-                            // Cacher toutes les pastilles
+                            // Mettre à jour chaque pastille individuellement
                             document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
-                                dot.style.display = 'none';
-                                dot.textContent = '';
-                            });
-                            // Afficher avec le bon compteur
-                            Object.entries(data.rooms).forEach(function(entry) {
-                                var cat = entry[0], count = entry[1];
-                                var vis = document.querySelector('.room-card-visual[data-category="' + cat + '"]');
-                                if (vis) {
-                                    var dot = vis.querySelector('.room-mission-dot');
-                                    if (dot) {
-                                        dot.textContent = count > 99 ? '99+' : count;
-                                        dot.style.display = '';
-                                    }
+                                var vis = dot.closest('.room-card-visual');
+                                if (!vis) return;
+                                var cat = vis.getAttribute('data-category');
+                                if (cat && data.rooms[cat]) {
+                                    dot.textContent = data.rooms[cat] > 99 ? '99+' : data.rooms[cat];
+                                    dot.style.display = '';
+                                } else {
+                                    dot.style.display = 'none';
+                                    dot.textContent = '';
                                 }
                             });
                         })
-                        .catch(function() {});
+                        .catch(function() {}); // en cas d'erreur, l'état serveur est conservé
                 };
 function refreshAllBadges() {
                     console.log('🔄 Rafraîchissement des badges...');
