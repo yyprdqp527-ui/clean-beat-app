@@ -27,3 +27,14 @@ input[type="number"] {
     /* Double protection contre le zoom */
     -webkit-text-size-adjust: 100% !important;
 }
+
+/* Triple protection pour iOS/Safari - empêcher le zoom sur focus */
+@supports (-webkit-touch-callout: none) {
+    input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
+    }
+}

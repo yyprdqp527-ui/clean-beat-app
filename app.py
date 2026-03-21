@@ -8902,22 +8902,36 @@ def menu():
         try:
             # Vérifier si le profil est complet (nom + avatar + registration_step)
             try:
-                c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, has_seen_onboarding FROM users WHERE email=?", (session['user'],))
+                c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, has_seen_onboarding, is_child_account FROM users WHERE email=?", (session['user'],))
                 user_row = c.fetchone()
                 if user_row:
-                    user_name, user_avatar, user_avatar_file, house_id, registration_step, has_seen_onboarding = user_row
+                    user_name, user_avatar, user_avatar_file, house_id, registration_step, has_seen_onboarding, is_child_account = user_row
                 else:
                     user_row = None
+                    is_child_account = 0
             except Exception:
-                # Fallback si colonne has_seen_onboarding absente (ancienne DB)
-                c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
-                _row = c.fetchone()
-                if _row:
-                    user_name, user_avatar, user_avatar_file, house_id, registration_step = _row
-                    has_seen_onboarding = 0
-                    user_row = _row
-                else:
-                    user_row = None
+                # Fallback si colonne has_seen_onboarding/is_child_account absente (ancienne DB)
+                try:
+                    c.execute("SELECT name, avatar, avatar_file, house_id, registration_step, is_child_account FROM users WHERE email=?", (session['user'],))
+                    _row = c.fetchone()
+                    if _row:
+                        user_name, user_avatar, user_avatar_file, house_id, registration_step, is_child_account = _row
+                        has_seen_onboarding = 0
+                        user_row = _row
+                    else:
+                        user_row = None
+                        is_child_account = 0
+                except Exception:
+                    c.execute("SELECT name, avatar, avatar_file, house_id, registration_step FROM users WHERE email=?", (session['user'],))
+                    _row = c.fetchone()
+                    if _row:
+                        user_name, user_avatar, user_avatar_file, house_id, registration_step = _row
+                        has_seen_onboarding = 0
+                        is_child_account = 0
+                        user_row = _row
+                    else:
+                        user_row = None
+                        is_child_account = 0
             
             if not user_row:
                 conn.close()
@@ -9247,6 +9261,7 @@ def menu():
         players=players,
         current_user_name=current_user_name,
         current_user_daily_points=next((p.get('daily_points',0) for p in players if p.get('email')==current_user_name), 0),
+        is_child_account=is_child_account if 'is_child_account' in locals() else 0,  # Statut enfant de l'utilisateur actuel
         menu_page=True,
         house_name=house_name,
         show_house_name_form=show_house_name_form,
