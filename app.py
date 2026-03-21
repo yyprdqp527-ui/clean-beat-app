@@ -9113,7 +9113,7 @@ def menu():
                             SELECT 1 FROM completed_tasks ctd
                             WHERE ctd.house_id = ct.house_id
                             AND ctd.category = ct.category
-                            AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
+                            AND ctd.completed_at >= ct.created_at
                         )
                         GROUP BY ct.category
                     """, (house_id,))
@@ -12148,7 +12148,7 @@ def api_rooms_with_missions():
                 SELECT 1 FROM completed_tasks ctd
                 WHERE ctd.house_id = ct.house_id
                 AND ctd.category = ct.category
-                AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
+                AND ctd.completed_at >= ct.created_at
             )
             GROUP BY ct.category
         """, (house_id,))
