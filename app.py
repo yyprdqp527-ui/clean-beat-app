@@ -10444,13 +10444,45 @@ def categorie(cat):
             c2.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
             row2 = c2.fetchone()
             if row2 and row2[0]:
+                house_id_baby = row2[0]
+                
+                # 🔔 MARQUER TOUS LES MESSAGES BABY_TRACKING COMME LUS quand on consulte la page
+                # Récupérer tous les messages baby_tracking non lus pour cette maison
+                c2.execute("""
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ? 
+                    AND m.message_type = 'baby_tracking'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM message_reads mr 
+                        WHERE mr.message_id = m.id 
+                        AND mr.user_email = ?
+                    )
+                """, (house_id_baby, session['user']))
+                
+                unread_baby_msg_ids = [r[0] for r in c2.fetchall()]
+                
+                # Marquer tous ces messages comme lus
+                for msg_id in unread_baby_msg_ids:
+                    mark_message_as_read(msg_id, session['user'])
+                
+                _dbg(f"✅ Chambre bébé visitée par {session['user']}: {len(unread_baby_msg_ids)} messages baby_tracking marqués comme lus")
+                
+                # 🔌 Émettre un événement WebSocket pour mettre à jour le badge bébé pour l'utilisateur
+                if len(unread_baby_msg_ids) > 0:
+                    safe_socketio_emit('baby_badge_update', {
+                        'user_email': session['user'],
+                        'baby_unread_count': 0  # Badge à 0 car on a tout marqué comme lu
+                    }, namespace='/', room=f'house_{house_id_baby}', broadcast=True)
+                    _dbg(f"✅ WebSocket baby_badge_update émis pour {session['user']} - badge à 0")
+                
+                # Récupérer les activités pour affichage
                 c2.execute("""
                     SELECT m.content, m.timestamp, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
                     FROM messages m
                     LEFT JOIN users u ON m.sender_email = u.email
                     WHERE m.house_id = ? AND m.message_type = 'baby_tracking'
                     ORDER BY m.id DESC LIMIT 30
-                """, (row2[0],))
+                """, (house_id_baby,))
                 for row in c2.fetchall():
                     content, ts, uname, avatar, avatar_file, avatar_url, avatar_style = row
                     # Formater la date en français : "samedi 21 mars"

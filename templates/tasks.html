@@ -756,9 +756,13 @@ window.addEventListener('DOMContentLoaded', function() {
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
         <span style="font-size:22px;">👶</span>
         <span style="font-size:15px; font-weight:800; color:#153036;">Activités récentes</span>
+        <span style="flex:1;"></span>
+        <button id="toggle-history-btn" onclick="toggleFullHistory()" style="background:rgba(244,114,182,0.15); border:1px solid rgba(244,114,182,0.3); border-radius:10px; padding:6px 12px; font-size:11px; font-weight:700; color:#F472B6; cursor:pointer; transition:all 0.3s ease;">
+            <span id="toggle-icon">▼</span> <span id="toggle-text">Voir tout l'historique</span>
+        </button>
     </div>
     <div style="display:flex; flex-direction:column; gap:10px;">
-        {% for act in baby_activities %}
+        {% for act in baby_activities[:5] %}
         <div style="display:flex; align-items:flex-start; gap:10px; background:rgba(244,114,182,0.08); border-radius:14px; padding:10px 14px; border:1px solid rgba(244,114,182,0.18);">
             <!-- Avatar -->
             <div style="flex-shrink:0; width:36px; height:36px; border-radius:50%; overflow:hidden; background:rgba(244,114,182,0.18); display:flex; align-items:center; justify-content:center; font-size:18px;">
@@ -779,10 +783,55 @@ window.addEventListener('DOMContentLoaded', function() {
         </div>
         {% endfor %}
     </div>
-    <div style="text-align:center; margin-top:14px;">
-        <a href="{{ url_for('baby_messages') }}" style="font-size:12px; color:#F472B6; font-weight:700; text-decoration:none;">Voir tout l'historique →</a>
+    
+    <!-- Historique complet (plié par défaut) -->
+    <div id="full-history" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid rgba(244,114,182,0.2);">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for act in baby_activities[5:] %}
+            <div style="display:flex; align-items:flex-start; gap:10px; background:rgba(244,114,182,0.08); border-radius:14px; padding:10px 14px; border:1px solid rgba(244,114,182,0.18);">
+                <!-- Avatar -->
+                <div style="flex-shrink:0; width:36px; height:36px; border-radius:50%; overflow:hidden; background:rgba(244,114,182,0.18); display:flex; align-items:center; justify-content:center; font-size:18px;">
+                    {% if act.avatar and act.avatar.startswith('/') or (act.avatar and act.avatar.startswith('http')) %}
+                        <img src="{{ act.avatar }}" style="width:36px;height:36px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.textContent='👤'">
+                    {% else %}
+                        {{ act.avatar or '👤' }}
+                    {% endif %}
+                </div>
+                <!-- Contenu -->
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:13px; font-weight:700; color:#153036; margin-bottom:2px;">{{ act.name }}</div>
+                    <div style="font-size:13px; color:#444; line-height:1.4;">{{ act.content }}</div>
+                    <div style="font-size:11px; color:#F472B6; font-weight:600; margin-top:4px;">
+                        {{ act.date_fr }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
+
+<script>
+function toggleFullHistory() {
+    const historyDiv = document.getElementById('full-history');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+    const btn = document.getElementById('toggle-history-btn');
+    
+    if (historyDiv.style.display === 'none') {
+        historyDiv.style.display = 'block';
+        toggleIcon.textContent = '▲';
+        toggleText.textContent = 'Masquer l\'historique';
+        btn.style.background = 'rgba(244,114,182,0.25)';
+    } else {
+        historyDiv.style.display = 'none';
+        toggleIcon.textContent = '▼';
+        toggleText.textContent = 'Voir tout l\'historique';
+        btn.style.background = 'rgba(244,114,182,0.15)';
+    }
+}
+</script>
+
 {% endif %}
 <!-- Modal édition des points -->
 <div id="points-modal" class="points-modal" aria-hidden="true">
