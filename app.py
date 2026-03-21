@@ -5395,6 +5395,14 @@ def add_reminder():
     new_id = c.lastrowid
     conn.commit()
 
+    # 🛒 Nombre d'articles en attente après l'ajout (pour badge nav)
+    _courses_pending = 0
+    try:
+        c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
+        _courses_pending = c.fetchone()[0] or 0
+    except Exception:
+        pass
+
     # 🛒 Créer un message automatique pour notifier l'ajout à la liste de courses
     try:
         c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
@@ -5409,7 +5417,8 @@ def add_reminder():
     try:
         safe_socketio_emit('reminder_added', {
             'id': new_id,
-            'title': title
+            'title': title,
+            'pending_count': _courses_pending
         }, namespace='/', room=f'house_{house_id}', broadcast=True)
     except Exception:
         pass
@@ -5515,11 +5524,20 @@ def toggle_reminder(reminder_id):
         except Exception as ws_err:
             _dbg(f"⚠️ WebSocket liste courses: {ws_err}")
 
+    # 🛒 Nombre d'articles non cochés après le toggle (pour badge nav)
+    _courses_after = 0
+    try:
+        c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (user_house,))
+        _courses_after = c.fetchone()[0] or 0
+    except Exception:
+        pass
+
     # Diffuser le toggle à tous les autres membres de la maison (synchro liste)
     try:
         safe_socketio_emit('reminder_toggle', {
             'id': reminder_id,
-            'is_done': bool(new_done)
+            'is_done': bool(new_done),
+            'pending_count': _courses_after
         }, namespace='/', room=f'house_{house_id}', broadcast=True)
     except Exception:
         pass
@@ -9267,6 +9285,14 @@ def menu():
             unread_courses = get_unread_count_by_type(session['user'], house_id, 'courses_added', existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, courses={unread_courses}, children_unread={children_unread}")
 
+            # 🛒 Articles non cochés dans la liste de courses (badge onglet navigation)
+            courses_pending_count = 0
+            try:
+                c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
+                courses_pending_count = c.fetchone()[0] or 0
+            except Exception:
+                pass
+
             # 🍼 Vérifier si la maison utilise le tracking bébé
             try:
                 c.execute("SELECT COUNT(*) FROM baby_tracking WHERE house_id=?", (house_id,))
@@ -9451,6 +9477,7 @@ def menu():
         unread_baby_tracking=unread_baby_tracking,
         unread_task_added=unread_task_added,
         unread_courses=unread_courses,
+        courses_pending_count=courses_pending_count,
         has_baby_tracking=has_baby_tracking,
         custom_rooms=custom_rooms_data,
         show_onboarding=show_onboarding,
@@ -12287,6 +12314,14 @@ def api_unread_counts():
         unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
         unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
         unread_courses = get_unread_count_by_type(session['user'], house_id, 'courses_added')
+
+        # 🛒 Articles non cochés dans la liste de courses
+        courses_pending_count = 0
+        try:
+            c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
+            courses_pending_count = c.fetchone()[0] or 0
+        except Exception:
+            pass
         
         conn.close()
         
@@ -12297,7 +12332,8 @@ def api_unread_counts():
             'children_unread': children_unread,
             'unread_baby': unread_baby,
             'unread_task_added': unread_task_added,
-            'unread_courses': unread_courses
+            'unread_courses': unread_courses,
+            'courses_pending_count': courses_pending_count
         })
         resp.headers['Cache-Control'] = 'no-store'
         return resp, 200
