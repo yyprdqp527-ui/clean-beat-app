@@ -5240,10 +5240,10 @@ def add_child():
         # Créer un email unique pour l'enfant (interne, pas utilisé pour connexion)
         child_email = f"child_{house_id}_{int(time.time())}@cleanbeat.internal"
         
-        # Insérer l'enfant dans la base avec le style d'avatar
+        # Insérer l'enfant dans la base avec le style d'avatar ET le flag is_child_account
         c.execute("""
-            INSERT INTO users (email, name, avatar, avatar_file, avatar_url, avatar_style, house_id, password)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+            INSERT INTO users (email, name, avatar, avatar_file, avatar_url, avatar_style, house_id, password, is_child_account)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 1)
         """, (child_email, child_name, avatar, avatar_file, avatar_url, child_avatar_style or None, house_id))
         
         conn.commit()
