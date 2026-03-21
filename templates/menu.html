@@ -5999,7 +5999,7 @@ function sendMalus(reason, points){
                 }
 
                 
-                function refreshMissionDots() {
+                window.refreshMissionDots = function() {
                     fetch('/api/rooms_with_missions')
                         .then(function(r) { return r.json(); })
                         .then(function(data) {
@@ -6023,7 +6023,7 @@ function sendMalus(reason, points){
                             });
                         })
                         .catch(function() {});
-                }
+                };
 function refreshAllBadges() {
                     console.log('🔄 Rafraîchissement des badges...');
                     fetch('/api/unread_counts', { cache: 'no-store' })
