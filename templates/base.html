@@ -46,6 +46,13 @@
             width: 100% !important;
         }
         
+        /* Fix iOS Safari : empêche le zoom auto au focus (déclenché si font-size < 16px) */
+        input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+        textarea,
+        select {
+            font-size: max(16px, 1em) !important;
+        }
+
         /* Empêcher tout élément de dépasser */
         img, video, iframe, table, form, div, section, article, aside, header, footer, nav, main {
             max-width: 100% !important;
