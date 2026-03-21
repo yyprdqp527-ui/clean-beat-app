@@ -5361,8 +5361,11 @@ function sendMalus(reason, points){
                 window.__unreadBySender = window.__unreadBySender || {};
 
                 function applyAvatarUnreadBadges() {
-                    // Cette fonction n'est plus nécessaire car updateUnreadBadge gère déjà la pastille sur l'avatar de l'utilisateur actuel
-                    // On la garde vide pour compatibilité avec les appels existants
+                    // ❌ Les badges d'avatars sont désormais désactivés
+                    // Les notifications sont affichées uniquement dans le menu de navigation fixe
+                    document.querySelectorAll('.avatar-notification-badge').forEach(badge => {
+                        badge.style.display = 'none';
+                    });
                 }
 
                 function updateUnreadBySender(unreadBySender) {
@@ -5928,7 +5931,7 @@ function sendMalus(reason, points){
                         socket.on('all_messages_read', function(data) {
                             console.log('✅ WebSocket: Messages marqués comme lus', data);
                             if (data.reader_email === userEmail) {
-                                updateUnreadBadge(0);
+                                refreshAllBadges();
                             }
                         });
 
