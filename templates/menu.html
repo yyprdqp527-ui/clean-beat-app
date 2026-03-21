@@ -5756,8 +5756,13 @@ function sendMalus(reason, points){
                             
                             // ❌ RÈGLE #1 : Si JE suis l'expéditeur → RIEN faire (pas de badge, pas de son)
                             if (data.sender_email === userEmail) {
-                                console.log('⏭️ JE SUIS L\'EXPÉDITEUR → AUCUNE action (pas de son, pas de badge)');
-                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+                                console.log('⏭️ JE SUIS L\'EXPÉDITEUR → pas de son, pas de badge perso');
+                                // EXCEPTION : message pour enfant → mettre à jour sa pastille quand même
+                                if (data.recipient_is_child === true && data.children_unread) {
+                                    console.log('👶 Expéditeur → mise à jour pastille enfant quand même');
+                                    updateChildrenBadges(data.children_unread);
+                                }
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;
                             }
                             
