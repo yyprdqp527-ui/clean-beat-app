@@ -4,18 +4,13 @@
     <meta charset="utf-8">
     <title>Connexion - Clean Beat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        /* Fix iOS Safari : empêche le zoom auto au focus (déclenché si font-size < 16px) */
-        input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
-        textarea,
-        select {
-            font-size: max(16px, 1em) !important;
         }
 
         body {

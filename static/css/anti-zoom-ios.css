@@ -1,0 +1,19 @@
+/* ==============================================
+   FIX ANTI-ZOOM iOS Safari
+   ============================================== 
+   
+   iOS Safari zoome automatiquement sur les champs
+   de formulaire si leur font-size < 16px.
+   
+   Cette règle force TOUS les inputs, textareas et selects
+   à avoir un font-size >= 16px pour éviter le zoom.
+   
+   ⚠️ NE PAS SUPPRIMER CE FICHIER !
+   ============================================== */
+
+/* Fix iOS Safari : empêche le zoom auto au focus (déclenché si font-size < 16px) */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    font-size: max(16px, 1em) !important;
+}
