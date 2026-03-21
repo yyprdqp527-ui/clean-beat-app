@@ -2804,6 +2804,12 @@ CREATE TABLE IF NOT EXISTS users (
         c.execute("ALTER TABLE messages ADD COLUMN recipient_email TEXT")
     except Exception:
         pass  # La colonne existe déjà
+
+    # Catégorie liée pour les messages task_added (pastille sur pièce du menu)
+    try:
+        c.execute("ALTER TABLE messages ADD COLUMN related_category TEXT")
+    except Exception:
+        pass  # La colonne existe déjà
     
     # 🔔 Table pour les subscriptions push notifications
     c.execute("""
@@ -3198,7 +3204,7 @@ def propagate_player_name_change(cursor, email, old_name, new_name, house_id):
     return updated_count
 
 
-def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None):
+def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None, related_category=None):
     """
     Crée un message système automatique pour la maison.
     Types: 'system', 'task_completed', 'task_added', 'congratulation', 'reminder', 'sermon', 'baby_tracking', 'courses_added'
@@ -3226,9 +3232,9 @@ def create_system_message(house_id, content, message_type='system', related_task
             actual_sender = sender_name
         
         c.execute("""
-            INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, related_task_id)
-            VALUES (?, ?, 'house', ?, ?, ?)
-        """, (house_id, actual_sender, content, message_type, related_task_id))
+            INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, related_task_id, related_category)
+            VALUES (?, ?, 'house', ?, ?, ?, ?)
+        """, (house_id, actual_sender, content, message_type, related_task_id, related_category))
         message_id = c.lastrowid
         conn.commit()
         conn.close()
@@ -9395,6 +9401,26 @@ def menu():
             if 'is_current_user' not in player:
                 player['is_current_user'] = (player.get('email') == session.get('user'))
 
+    # 🟠 Pièces avec nouvelles missions non lues pour l'utilisateur courant
+    rooms_with_new_missions = set()
+    if house_id and 'user' in session:
+        try:
+            _conn_nm = get_db_connection()
+            _c_nm = _conn_nm.cursor()
+            _c_nm.execute("""
+                SELECT DISTINCT m.related_category FROM messages m
+                WHERE m.house_id = ? AND m.message_type = 'task_added'
+                AND m.related_category IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+            """, (house_id, session['user']))
+            rooms_with_new_missions = {row[0] for row in _c_nm.fetchall()}
+            _conn_nm.close()
+        except Exception as _e_nm:
+            _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
+
     # ⚙️ DEV: forcer l'affichage de l'onboarding via ?preview_onboarding=1
     if request.args.get('preview_onboarding') == '1':
         show_onboarding = True
@@ -9428,6 +9454,7 @@ def menu():
         has_baby_tracking=has_baby_tracking,
         custom_rooms=custom_rooms_data,
         show_onboarding=show_onboarding,
+        rooms_with_new_missions=rooms_with_new_missions,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
@@ -10726,7 +10753,7 @@ def add_task_page(cat, task_id=None):
                 creator_name = creator_row[0] if creator_row and creator_row[0] else session['user'].split('@')[0]
                 
                 message_content = f"🆕 {creator_name} a ajouté une nouvelle tâche : '{task_name}' dans {category_name} ({points} pts)"
-                create_system_message(house_id, message_content, 'task_added', sender_email=session['user'])
+                create_system_message(house_id, message_content, 'task_added', sender_email=session['user'], related_category=normalized_cat)
             except Exception as _e_msg:
                 print(f'⚠️ Erreur création message task_added: {_e_msg}', flush=True)
             
@@ -11668,6 +11695,31 @@ def api_validate_task():
         c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", 
                  (player_email, user_house_id, category, task_name, task_points))
         c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
+
+        # 🟠 Éteindre la pastille de la pièce : marquer les task_added de cette catégorie comme lus
+        # Pour les enfants sans téléphone : marquer aussi pour le parent connecté (session['user'])
+        try:
+            normalized_cat_done = normalize_category(category) if category else None
+            if normalized_cat_done:
+                # Marquer comme lu pour le joueur ET pour l'utilisateur connecté (parent)
+                _emails_to_mark = {player_email, session['user']}
+                for _email_mark in _emails_to_mark:
+                    c.execute("""
+                        SELECT m.id FROM messages m
+                        WHERE m.house_id = ? AND m.message_type = 'task_added'
+                        AND m.related_category = ?
+                        AND NOT EXISTS (
+                            SELECT 1 FROM message_reads mr
+                            WHERE mr.message_id = m.id AND mr.user_email = ?
+                        )
+                    """, (user_house_id, normalized_cat_done, _email_mark))
+                    for _msg_row in c.fetchall():
+                        c.execute("""
+                            INSERT INTO message_reads (message_id, user_email)
+                            VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
+                        """, (_msg_row[0], _email_mark))
+        except Exception as _e_badge:
+            _dbg(f"⚠️ Erreur extinction pastille pièce: {_e_badge}")
         
         # Augmenter la santé de la maison
         try:
