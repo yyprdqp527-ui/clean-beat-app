@@ -755,7 +755,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <div style="max-width:900px; margin:20px auto 20px; background:linear-gradient(135deg,rgba(255,255,255,0.95) 0%,rgba(244,114,182,0.12) 100%); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-radius:24px; padding:24px 24px 20px; box-shadow:0 8px 32px rgba(244,114,182,0.18),inset 0 1px 0 rgba(255,255,255,0.7); border:2px solid rgba(244,114,182,0.35);">
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
         <span style="font-size:22px;">👶</span>
-        <span style="font-size:15px; font-weight:800; color:#153036;">Activités récentes — Chambre Bébé</span>
+        <span style="font-size:15px; font-weight:800; color:#153036;">Activités récentes</span>
     </div>
     <div style="display:flex; flex-direction:column; gap:10px;">
         {% for act in baby_activities %}
@@ -773,9 +773,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 <div style="font-size:13px; font-weight:700; color:#153036; margin-bottom:2px;">{{ act.name }}</div>
                 <div style="font-size:13px; color:#444; line-height:1.4;">{{ act.content }}</div>
                 <div style="font-size:11px; color:#F472B6; font-weight:600; margin-top:4px;">
-                    {% if act.timestamp %}
-                        {{ act.timestamp[:16]|replace('T',' ') }}
-                    {% endif %}
+                    {{ act.date_fr }}
                 </div>
             </div>
         </div>

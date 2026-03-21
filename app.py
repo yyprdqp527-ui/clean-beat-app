@@ -10453,9 +10453,20 @@ def categorie(cat):
                 """, (row2[0],))
                 for row in c2.fetchall():
                     content, ts, uname, avatar, avatar_file, avatar_url, avatar_style = row
-                    # PostgreSQL retourne les TIMESTAMP comme datetime, SQLite comme str → normaliser
-                    if ts is not None and not isinstance(ts, str):
-                        ts = ts.isoformat()
+                    # Formater la date en français : "samedi 21 mars"
+                    date_fr = ''
+                    if ts is not None:
+                        try:
+                            from datetime import datetime as _dt2
+                            _JOURS_FR = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
+                            _MOIS_FR = ['','janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre']
+                            if isinstance(ts, str):
+                                _d = _dt2.fromisoformat(ts.replace('T', ' ')[:19])
+                            else:
+                                _d = ts
+                            date_fr = f"{_JOURS_FR[_d.weekday()]} {_d.day} {_MOIS_FR[_d.month]}"
+                        except Exception:
+                            date_fr = str(ts)[:10]
                     # Préparer l'avatar
                     display_avatar = '👤'
                     if avatar_file and avatar_file.strip():
@@ -10471,7 +10482,7 @@ def categorie(cat):
                         display_avatar = f"https://api.dicebear.com/7.x/{style}/svg?seed={avatar}&backgroundColor=transparent"
                     baby_activities.append({
                         'content': content,
-                        'timestamp': ts,
+                        'date_fr': date_fr,
                         'name': uname or 'Inconnu',
                         'avatar': display_avatar,
                     })
