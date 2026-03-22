@@ -101,14 +101,17 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     flex-wrap: wrap;
     gap: 8px;
     padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px;
     transition: background 0.2s;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    margin-bottom: 10px;
 }
-.cw-player:last-of-type { border-bottom: none; }
+.cw-player:last-of-type { margin-bottom: 0; }
 .cw-player.cw-me {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(253,174,84,0.3);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.15);
 }
 
 .cw-tasks-list {

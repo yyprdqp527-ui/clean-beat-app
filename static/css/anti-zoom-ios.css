@@ -9,10 +9,28 @@
    à avoir un font-size >= 16px pour éviter le zoom.
    
    ⚠️ NE PAS SUPPRIMER CE FICHIER !
-   Déployé le 21 mars 2026 - Version 2
+   Déployé le 21 mars 2026 - Version 3
    ============================================== */
 
-/* Fix iOS Safari : empêche le zoom auto au focus (déclenché si font-size < 16px) */
+/* FIX 1: Empêcher Safari iOS de zoomer out automatiquement */
+html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Forcer la taille minimale du viewport */
+    min-width: 320px;
+}
+
+body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Empêcher le contenu de déborder et forcer un zoom out */
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* FIX 2: iOS Safari - empêche le zoom auto au focus (déclenché si font-size < 16px) */
 input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
 textarea,
 select,
@@ -28,7 +46,7 @@ input[type="number"] {
     -webkit-text-size-adjust: 100% !important;
 }
 
-/* Triple protection pour iOS/Safari - empêcher le zoom sur focus */
+/* FIX 3: Triple protection pour iOS/Safari - empêcher le zoom sur focus */
 @supports (-webkit-touch-callout: none) {
     input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
     textarea,

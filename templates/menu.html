@@ -107,25 +107,29 @@
         img[src$=".png"]{ max-width:100%; height:auto; display:block; }
         .header-menu { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:nowrap; background: rgba(255,255,255,0.24); backdrop-filter: saturate(180%) blur(30px); -webkit-backdrop-filter: saturate(180%) blur(30px); padding:14px 20px; border-radius: 0 0 24px 24px; box-shadow: 0 12px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35); color:#153036; position:fixed; top:0; left:0; right:0; z-index:2000; box-sizing:border-box; border: 1px solid rgba(255,255,255,0.55); }
         
-        /* Bouton burger */
+        /* 🔴🔴🔴 BOUTON BURGER DEBUG ORANGE 80px 🔴🔴🔴 */
         .burger-menu {
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 14px;
-            width: 56px;
-            height: 56px;
-            display: flex;
+            width: 80px !important;
+            height: 80px !important;
+            background: orange !important;
+            border: 8px solid red !important;
+            border-radius: 50% !important;
+            display: flex !important;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-            padding: 0;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 8px !important;
+            cursor: pointer !important;
+            position: fixed !important;
+            top: 15px !important;
+            left: 15px !important;
+            z-index: 999999 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 1) !important;
+            padding: 0 !important;
+            pointer-events: auto !important;
+            transition: none !important;
         }
         
         .burger-menu span {
@@ -2399,6 +2403,63 @@
     </style>
 </head>
 <body>
+
+<script>
+//  MENU BURGER - Définition globale immédiate
+window.openBurgerMenu = function() {
+    console.log('openBurgerMenu appelee');
+    var overlay = document.getElementById('burgerOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    } else {
+        console.error('burgerOverlay not found!');
+    }
+};
+
+window.closeBurgerMenu = function() {
+    console.log('closeBurgerMenu appelee');
+    var overlay = document.getElementById('burgerOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+};
+
+// Attendre que le DOM soit chargé pour ajouter les event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Fonctions burger definies');
+    
+    // Bouton close (croix)
+    var closeBtn = document.getElementById('burgerClose');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', window.closeBurgerMenu);
+        console.log('Event listener ajoute au bouton close');
+    }
+    
+    // Clic sur l'overlay (ferme si on clique en dehors)
+    var overlay = document.getElementById('burgerOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                window.closeBurgerMenu();
+            }
+        });
+        console.log('Event listener ajoute a overlay');
+    }
+    
+    // Touche Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var overlay = document.getElementById('burgerOverlay');
+            if (overlay && overlay.classList.contains('active')) {
+                window.closeBurgerMenu();
+            }
+        }
+    });
+});
+</script>
+
     <script>
         // Badge de debug retiré
     </script>
@@ -2603,7 +2664,7 @@
                 <!-- Bouton bêta testeur à gauche -->
                 <div class="header-left-actions">
                     <div class="burger-wrapper">
-                        <div class="beta-dot" id="burgerBtn" onclick="openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Bêta testeur"></div>
+                        <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
                         <div class="burger-alerts" id="burger-alerts">
                             
                         </div>
@@ -3095,13 +3156,39 @@ body { padding-bottom: 84px !important; }
     z-index: 2001; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
 .beta-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: #fff;
-    border: 1.5px solid rgba(255,255,255,0.4);
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.25) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
     cursor: pointer;
-    animation: beta-blink 2s ease-in-out infinite;
     flex-shrink: 0;
+    z-index: 2001;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    animation: none;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.beta-dot::before {
+    content: '☰';
+    font-size: 22px;
+    color: #153036;
+    font-weight: bold;
+    pointer-events: none;
+    line-height: 1;
+}
+.beta-dot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(89,113,118,0.3), inset 0 1px 0 rgba(255,255,255,0.7);
+    border-color: rgba(253,174,84,0.6);
+}
+.beta-dot:active {
+    transform: translateY(0) scale(0.95);
 }
 .beta-dot:active {
     transform: scale(0.85);
@@ -3726,7 +3813,7 @@ function sendMalus(reason, points){
 <!-- FIN WIDGET COMPETITION -->
 
                 <script>
-                // 🔊 SYSTÈME DE SONS AU CLIC
+                //  SYSTÈME DE SONS AU CLIC
                 (function() {
                     // Créer le contexte audio une seule fois
                     let audioContext = null;
@@ -3866,7 +3953,7 @@ function sendMalus(reason, points){
                 // Script minimal pour initialiser la barre de santé, la date/heure et le bouton son
                 document.addEventListener('DOMContentLoaded', function(){
                     
-                    // 🎯 NOUVEAU : Charger la dernière tâche récente (VERSION COMPACTE)
+                    //  NOUVEAU : Charger la dernière tâche récente (VERSION COMPACTE)
                     function loadRecentTasks() {
                         fetch('/api/daily_tasks')
                             .then(response => response.json())
@@ -3894,7 +3981,7 @@ function sendMalus(reason, points){
                     // Charger les tâches au démarrage
                     loadRecentTasks();
                     
-                    // 🔥 NOTIFICATION EN TEMPS RÉEL
+                    //  NOTIFICATION EN TEMPS RÉEL
                     let lastTaskCount = 0;
                     
                     function checkForNewTasks() {
@@ -4243,7 +4330,7 @@ function sendMalus(reason, points){
                                     targetWrapper = document.querySelector('.avatar-square-wrapper[title="' + whon + '"]');
                                 }
                                 if (!targetWrapper) {
-                                    console.log('🎯 Aucun wrapper pour', who, '-> fallback joueur courant');
+                                    console.log('Aucun wrapper pour', who, '-> fallback joueur courant');
                                     targetWrapper = document.getElementById('current-player-avatar-wrapper');
                                 }
                                 var winnerAvatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
@@ -4343,7 +4430,7 @@ function sendMalus(reason, points){
 
                     // Son de progression (points gagnés)
                     function playProgressSound(points = 50) {
-                        console.log('🔊 Son progression..., points:', points);
+                        console.log('Son progression..., points:', points);
                         const freq = 400 + (points * 3); // Plus aigu avec plus de points
                         try {
                             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -4464,7 +4551,7 @@ function sendMalus(reason, points){
                             const whon = urlParams.get('whon');
                             
                             setTimeout(() => {
-                                console.log('🎉 Tâche validée, animation de célébration...');
+                                console.log('Tâche validée, animation de célébration...');
                                 
                                 // Trouver l'avatar du bénéficiaire si précisé, sinon joueur courant
                                 let avatarWrapper = null;
@@ -4475,7 +4562,7 @@ function sendMalus(reason, points){
                                     avatarWrapper = document.querySelector('.avatar-square-wrapper[title="' + whon + '"]');
                                 }
                                 if (!avatarWrapper) {
-                                    console.log('🎯 Aucun wrapper pour', who, '-> fallback joueur courant');
+                                    console.log('Aucun wrapper pour', who, '-> fallback joueur courant');
                                     avatarWrapper = document.getElementById('current-player-avatar-wrapper');
                                 }
                                 const avatarSquare = avatarWrapper ? avatarWrapper.querySelector('#current-player-avatar, .avatar-square') : null;
@@ -4881,12 +4968,14 @@ function sendMalus(reason, points){
             </div>
 
             <script>
-                // 🍔 GESTION DU MENU BURGER
+                //  GESTION DU MENU BURGER
                 // Fonction globale pour ouvrir depuis la barre du bas
                 window.openBurgerMenu = function() {
+                    console.log('openBurgerMenu appelee');
                     document.getElementById('burgerOverlay').classList.add('active');
                     document.body.style.overflow = 'hidden';
                 };
+                console.log('openBurgerMenu définie:', typeof window.openBurgerMenu);
                 window.closeBurgerMenu = function() {
                     document.getElementById('burgerOverlay').classList.remove('active');
                     if(typeof closeProfilePanel === 'function') closeProfilePanel();
@@ -4934,7 +5023,7 @@ function sendMalus(reason, points){
                     if (panel) panel.classList.remove('active');
                 }
                 
-                // 💡 GESTION DES LUMIÈRES PERSISTANTES
+                //  GESTION DES LUMIÈRES PERSISTANTES
                 (function() {
                     const roomGroups = document.querySelectorAll('.room-group');
                     const roomButtons = document.querySelectorAll('.room-button');
@@ -5023,7 +5112,7 @@ function sendMalus(reason, points){
                     });
                 })();
                 
-                // 🔔 GESTION DES NOTIFICATIONS PUSH
+                //  GESTION DES NOTIFICATIONS PUSH
                 (function() {
                     const notifToggle = document.getElementById('notificationToggle');
                     const notifIcon = document.getElementById('notifIcon');
@@ -5246,12 +5335,12 @@ function sendMalus(reason, points){
                 })();
                 
                 // ==========================================
-                // 🔔 GESTION DES BADGES DE MESSAGES NON LUS
+                //  GESTION DES BADGES DE MESSAGES NON LUS
                 // ==========================================
                 function updateUnreadBadge(count) {
-                    console.log('🔔 updateUnreadBadge appelé avec count:', count);
+                    console.log('updateUnreadBadge appelé avec count:', count);
                     
-                    // 🏠 Badge icône écran d'accueil (PWA Badging API — iOS 16.4+, Android Chrome)
+                    //  Badge icône écran d'accueil (PWA Badging API — iOS 16.4+, Android Chrome)
                     if ('setAppBadge' in navigator) {
                         if (count > 0) {
                             navigator.setAppBadge(count).catch(function(){});
@@ -5260,14 +5349,14 @@ function sendMalus(reason, points){
                         }
                     }
                     
-                    // 🍔 Mettre à jour le badge dans le menu burger (total des messages)
+                    //  Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
-                    console.log('🍔 Badges burger trouvés:', burgerBadges.length);
+                    console.log('Badges burger trouvés:', burgerBadges.length);
                     burgerBadges.forEach(badge => {
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = 'flex';
-                            console.log('✅ Badge burger affiché:', badge.textContent);
+                            console.log('Badge burger affiché:', badge.textContent);
                         } else {
                             badge.style.display = 'none';
                             console.log('❌ Badge burger caché');
@@ -5281,7 +5370,7 @@ function sendMalus(reason, points){
                         if (count > 0) {
                             bottomNavBadge.textContent = count < 100 ? count : '99+';
                             bottomNavBadge.style.display = 'flex';
-                            console.log('✅ Bottom nav badge affiché:', bottomNavBadge.textContent);
+                            console.log('Bottom nav badge affiché:', bottomNavBadge.textContent);
                         } else {
                             bottomNavBadge.style.display = 'none';
                             console.log('❌ Bottom nav badge caché');
@@ -5299,7 +5388,7 @@ function sendMalus(reason, points){
                         });
                         const userEmail = "{{ session.get('user', '') }}";
                         
-                        // 🔔 Son de notification pour les nouveaux messages
+                        //  Son de notification pour les nouveaux messages
                         const messageNotifSound = new Audio('/static/audio/livechat-129007.mp3');
                         messageNotifSound.preload = 'auto';
                         messageNotifSound.volume = 0.8;  // Volume augmenté pour être plus audible
@@ -5317,7 +5406,7 @@ function sendMalus(reason, points){
                                     messageNotifSound.currentTime = 0;
                                     messageNotifSound.volume = savedVolume;  // Restaurer le volume
                                     audioUnlocked = true;
-                                    console.log('✅ Audio débloqué pour les notifications');
+                                    console.log('Audio débloqué pour les notifications');
                                 }).catch((err) => {
                                     messageNotifSound.volume = savedVolume;  // Restaurer même en cas d'erreur
                                     console.log('⚠️ Échec déblocage audio:', err.message);
@@ -5330,17 +5419,17 @@ function sendMalus(reason, points){
                         });
                         
                         function playMessageSound() {
-                            console.log('🔔 playMessageSound() appelée');
-                            console.log('🔔 audioUnlocked:', audioUnlocked);
+                            console.log('playMessageSound() appelée');
+                            console.log('audioUnlocked:', audioUnlocked);
                             try {
                                 messageNotifSound.currentTime = 0;
                                 const playPromise = messageNotifSound.play();
                                 if (playPromise !== undefined) {
                                     playPromise.then(() => {
-                                        console.log('✅ Son de notification joué avec succès');
+                                        console.log('Son de notification joué avec succès');
                                     }).catch(function(e) {
                                         console.log('🔇 Son notification bloqué (interaction utilisateur requise):', e.message);
-                                        console.log('💡 Essayez de cliquer sur la page pour débloquer l\'audio');
+                                        console.log('Essayez de cliquer sur la page pour débloquer l\'audio');
                                     });
                                 }
                             } catch(e) {
@@ -5385,20 +5474,20 @@ function sendMalus(reason, points){
                         // Écouter les mises à jour de points en temps réel avec données complètes
                         socket.on('players_points_update', function(data) {
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                            console.log('📊 WebSocket: Mise à jour des points reçue (menu.html)');
+                            console.log('WebSocket: Mise à jour des points reçue (menu.html)');
                             console.log('   🕐 Timestamp:', new Date().toLocaleTimeString());
-                            console.log('   📧 userEmail (MOI):', userEmail);
-                            console.log('   🎯 Joueur modifié:', data.updated_player);
+                            console.log('   userEmail (MOI):', userEmail);
+                            console.log('   Joueur modifié:', data.updated_player);
                             console.log('   👥 Nombre de joueurs:', data.players ? data.players.length : 0);
-                            console.log('   📊 Données complètes:', data);
+                            console.log('   Données complètes:', data);
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
-                            // ✅ Utiliser directement les données WebSocket (pas d'appel API !)
+                            //  Utiliser directement les données WebSocket (pas d'appel API !)
                             if (data.players && Array.isArray(data.players)) {
                                 data.players.forEach(function(player) {
                                     console.log(`   🔄 Mise à jour ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
                                     
-                                    // ✅ 1. Mettre à jour les CARTES PODIUM (.player-stat-card)
+                                    //  1. Mettre à jour les CARTES PODIUM (.player-stat-card)
                                     const playerCards = document.querySelectorAll('.player-name-link');
                                     playerCards.forEach(function(card) {
                                         const cardName = card.textContent.trim();
@@ -5410,7 +5499,7 @@ function sendMalus(reason, points){
                                                     const oldPoints = parseInt(pointsElement.textContent) || 0;
                                                     const newPoints = player.daily_points || 0;
                                                     
-                                                    console.log(`      ✅ Carte podium ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                    console.log(`      Carte podium ${player.name}: ${oldPoints} → ${newPoints}`);
                                                     
                                                     pointsElement.textContent = newPoints;
                                                     
@@ -5432,7 +5521,7 @@ function sendMalus(reason, points){
                                         }
                                     });
                                     
-                                    // ✅ 2. Mettre à jour les AVATARS HEADER (game-header)
+                                    //  2. Mettre à jour les AVATARS HEADER (game-header)
                                     const avatarWrappers = document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + player.email + '"]');
                                     avatarWrappers.forEach(function(wrapper) {
                                         // Texte des points
@@ -5444,7 +5533,7 @@ function sendMalus(reason, points){
                                                 const oldPoints = parseInt(pointsEl.textContent) || 0;
                                                 const newPoints = player.daily_points || 0;
                                                 
-                                                console.log(`      ✅ Avatar header ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                console.log(`      Avatar header ${player.name}: ${oldPoints} → ${newPoints}`);
                                                 
                                                 pointsEl.textContent = newPoints + ' pts';
                                                 
@@ -5509,11 +5598,11 @@ function sendMalus(reason, points){
                                     });
                                 });
                                 
-                                console.log('✅ Mise à jour des points terminée');
+                                console.log('Mise à jour des points terminée');
                                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                             }
                             
-                            // ✅ 3. Rafraîchir le dashboard si visible
+                            //  3. Rafraîchir le dashboard si visible
                             const dashboardElement = document.getElementById('dashboardFloating');
                             if (dashboardElement && !dashboardElement.classList.contains('minimized')) {
                                 if (typeof loadDailyRanking === 'function') {
@@ -5524,7 +5613,7 @@ function sendMalus(reason, points){
                         
                         // Écouter les mises à jour d'avatar
                         socket.on('player_avatar_update', function(data) {
-                            console.log('👤 WebSocket: Mise à jour avatar reçue', data);
+                            console.log('WebSocket: Mise à jour avatar reçue', data);
                             
                             // Trouver et mettre à jour l'avatar dans l'interface
                             const avatarElements = document.querySelectorAll(`[data-player-email="${data.email}"]`);
@@ -5601,7 +5690,7 @@ function sendMalus(reason, points){
                             if (data.action === 'child_added') {
                                 console.log(`👶 Enfant ajouté: ${data.new_player}`);
                             } else if (data.action === 'player_joined') {
-                                console.log(`🎉 Joueur a rejoint: ${data.new_player}`);
+                                console.log(`Joueur a rejoint: ${data.new_player}`);
                             } else if (data.action === 'player_registered') {
                                 console.log(`✨ Nouveau joueur inscrit: ${data.new_player}`);
                             }
@@ -5617,10 +5706,10 @@ function sendMalus(reason, points){
                         socket.on('new_message_notification', function(data) {
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             console.log('💬 WebSocket: Nouveau message reçu');
-                            console.log('📧 sender_email:', data.sender_email);
-                            console.log('📧 recipient_email:', data.recipient_email);  console.log('👤 userEmail (MOI):', userEmail);
+                            console.log('sender_email:', data.sender_email);
+                            console.log('recipient_email:', data.recipient_email);  console.log('userEmail (MOI):', userEmail);
                             console.log('👶 recipient_is_child:', data.recipient_is_child);
-                            console.log('📊 recipient_unread_count:', data.recipient_unread_count);
+                            console.log('recipient_unread_count:', data.recipient_unread_count);
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
                             // ❌ RÈGLE #1 : Si JE suis l'expéditeur → RIEN faire (pas de badge, pas de son)
@@ -5635,21 +5724,21 @@ function sendMalus(reason, points){
                                 return;
                             }
                             
-                            // ✅ RÈGLE #2 : Si JE suis le destinataire direct → son + badge
+                            //  RÈGLE #2 : Si JE suis le destinataire direct → son + badge
                             if (data.recipient_email === userEmail) {
-                                console.log('✅ JE SUIS LE DESTINATAIRE ! → Badge + Son');
-                                console.log('📊 Mon compteur de messages non lus:', data.recipient_unread_count);
+                                console.log('JE SUIS LE DESTINATAIRE ! → Badge + Son');
+                                console.log('Mon compteur de messages non lus:', data.recipient_unread_count);
                                 
-                                // 🔔 SON EN PREMIER
-                                console.log('🔔 Lecture du son de réception...');
+                                //  SON EN PREMIER
+                                console.log('Lecture du son de réception...');
                                 playMessageSound();
                                 
                                 // Badge
-                                console.log('🔴 Mise à jour de mon badge...');
+                                console.log('Mise à jour de mon badge...');
                                 updateUnreadBadge(data.recipient_unread_count);
                                 updateAppBadge(data.recipient_unread_count);
                                 
-                                // ✅ Mettre à jour les pastilles sur tous les avatars enfants
+                                //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
                                     console.log('👶 Mise à jour badges enfants:', data.children_unread);
                                     updateChildrenBadges(data.children_unread);
@@ -5659,18 +5748,18 @@ function sendMalus(reason, points){
                                 return;  // Important : sortir ici
                             }
                             
-                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) voient la pastille
+                            //  RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) voient la pastille
                             if (data.recipient_is_child === true) {
                                 console.log('👶 Message pour ENFANT détecté !');
                                 console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Je dois voir la pastille + entendre le son');
                                 
-                                // 🔔 SON
-                                console.log('🔔 Lecture du son de réception (message enfant)...');
+                                //  SON
+                                console.log('Lecture du son de réception (message enfant)...');
                                 playMessageSound();
                                 
-                                // ✅ Mettre à jour les pastilles sur tous les avatars enfants
+                                //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
-                                    console.log('📊 Mise à jour badges enfants:', data.children_unread);
+                                    console.log('Mise à jour badges enfants:', data.children_unread);
                                     updateChildrenBadges(data.children_unread);
                                 }
                                 
@@ -5690,7 +5779,7 @@ function sendMalus(reason, points){
                             
                             // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail && data.unread_by_sender) {
-                                console.log('✅ Mise à jour MY badges avatars');
+                                console.log('Mise à jour MY badges avatars');
                                 updateUnreadBySender(data.unread_by_sender);
                             } else {
                                 console.log('⏭️ Badges avatars pas pour moi');
@@ -5704,7 +5793,7 @@ function sendMalus(reason, points){
                             
                             // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail) {
-                                console.log('✅ Mise à jour MON compteur:', data.count);
+                                console.log('Mise à jour MON compteur:', data.count);
                                 updateUnreadBadge(data.count);
                                 
                                 if (data.unread_by_sender) {
@@ -5741,13 +5830,13 @@ function sendMalus(reason, points){
                                 return;
                             }
                             
-                            // ✅ Si quelqu'un a marqué un message comme lu ET que c'est MOI
+                            //  Si quelqu'un a marqué un message comme lu ET que c'est MOI
                             if (data.action === 'message_read' && data.reader_email === userEmail) {
-                                console.log('✅ J\'AI MARQUÉ UN MESSAGE COMME LU → Recharger MES badges via API');
+                                console.log('J\'AI MARQUÉ UN MESSAGE COMME LU → Recharger MES badges via API');
                                 fetch('/api/unread_counts', { cache: 'no-store' })
                                     .then(response => response.json())
                                     .then(counts => {
-                                        console.log('📊 Compteurs API reçus:', counts);
+                                        console.log('Compteurs API reçus:', counts);
                                         if (counts.unread_received !== undefined) {
                                             updateUnreadBadge(counts.unread_received);
                                         }
@@ -5763,17 +5852,17 @@ function sendMalus(reason, points){
                                 return;
                             }
                             
-                            // ✅ Si c'est un message système (baby/mission/courses) → rafraîchir les pills
+                            //  Si c'est un message système (baby/mission/courses) → rafraîchir les pills
                             if (data.action === 'system_message') {
-                                console.log('🔔 Message système reçu (', data.message_type, ') → refreshAllBadges');
+                                console.log('Message système reçu (', data.message_type, ') → refreshAllBadges');
                                 refreshAllBadges();
                             refreshMissionDots();
                                 return;
                             }
 
-                            // ✅ Si c'est un message système (baby/mission/courses) → rafraîchir les pills
+                            //  Si c'est un message système (baby/mission/courses) → rafraîchir les pills
                             if (data.action === 'system_message') {
-                                console.log('🔔 Message système reçu (', data.message_type, ') → refreshAllBadges');
+                                console.log('Message système reçu (', data.message_type, ') → refreshAllBadges');
                                 refreshAllBadges();
                                 return;
                             }
@@ -5785,7 +5874,7 @@ function sendMalus(reason, points){
                             // Rafraîchir les pastilles de mission si une nouvelle tâche a été ajoutée
                             if (data.message_type === 'task_added') { refreshMissionDots(); }});
                         
-                        // 🔔 Pastille enfant mise à jour quand un adulte marque un message lu
+                        //  Pastille enfant mise à jour quand un adulte marque un message lu
                         socket.on('badge_update', function(data) {
                             if (!data.child_email) return;
                             const childrenUnread = {};
@@ -5793,15 +5882,15 @@ function sendMalus(reason, points){
                             updateChildrenBadges(childrenUnread);
                         });
 
-                        // 🔔 Écouter quand un utilisateur a marqué tous ses messages comme lus
+                        //  Écouter quand un utilisateur a marqué tous ses messages comme lus
                         socket.on('all_messages_read', function(data) {
-                            console.log('✅ WebSocket: Messages marqués comme lus', data);
+                            console.log('WebSocket: Messages marqués comme lus', data);
                             if (data.reader_email === userEmail) {
                                 refreshAllBadges();
                             }
                         });
 
-                        // 🔔 Pastille sur avatar enfant quand message envoyé À lui
+                        //  Pastille sur avatar enfant quand message envoyé À lui
                         socket.on('unread_sent_to_update', function(data) {
                             console.log('👶 WebSocket: unread_sent_to_update reçu', data);
                             if (!data.unread_sent_to) return;
@@ -5820,11 +5909,8 @@ function sendMalus(reason, points){
                             });
                         });
                         
-                        console.log('✅ WebSocket: Système de synchronisation initialisé');
+                        console.log('WebSocket: Système de synchronisation initialisé');
                     } catch (error) {
-                        console.error('❌ WebSocket: Erreur d\'initialisation', error);
-                    }
-                })();
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
                 // (cache navigateur, bfcache, retour arrière, Service Worker, etc.)
@@ -5881,9 +5967,9 @@ function refreshAllBadges() {
                     fetch('/api/unread_counts', { cache: 'no-store' })
                         .then(response => response.json())
                         .then(counts => {
-                            console.log('📊 Compteurs reçus de l\'API:', counts);
+                            console.log('Compteurs reçus de l\'API:', counts);
                             if (counts.unread_received !== undefined) {
-                                console.log('🔔 Mise à jour badge avec count:', counts.unread_received);
+                                console.log('Mise à jour badge avec count:', counts.unread_received);
                                 updateUnreadBadge(counts.unread_received);
                             }
                             // Fusionner unread_by_sender + unread_sent_to pour les pastilles avatars
@@ -5894,7 +5980,7 @@ function refreshAllBadges() {
                                 });
                             }
                             updateUnreadBySender(merged);
-                            // ✅ Mettre à jour aussi les badges des enfants
+                            //  Mettre à jour aussi les badges des enfants
                             if (counts.children_unread) {
                                 updateChildrenBadges(counts.children_unread);
                             }
@@ -5904,7 +5990,7 @@ function refreshAllBadges() {
                             // Badge icône PWA
                             var totalBadge = (counts.unread_received || 0) + (counts.unread_task_added || 0) + (counts.unread_courses || 0);
                             updateAppBadge(totalBadge);
-                            console.log('✅ Badges rafraîchis:', counts);
+                            console.log('Badges rafraîchis:', counts);
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
                 }
@@ -5915,9 +6001,9 @@ function refreshAllBadges() {
                     updateUnreadBadge(count);
                 };
                 
-                console.log('💡 Pour tester le badge manuellement, tapez dans la console: testMessageBadge(5)');
+                console.log('Pour tester le badge manuellement, tapez dans la console: testMessageBadge(5)');
                 
-                // 🚀 Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
+                //  Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
                 refreshAllBadges();
                 refreshMissionDots();
                 
@@ -5943,7 +6029,7 @@ function refreshAllBadges() {
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.addEventListener('message', function(event) {
                         if (event.data && event.data.type === 'REFRESH_BADGES') {
-                            console.log('🔔 SW: Rafraîchissement des badges demandé');
+                            console.log('SW: Rafraîchissement des badges demandé');
                             refreshAllBadges();
                         }
                     });
@@ -5992,7 +6078,7 @@ function refreshAllBadges() {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
-                                // 🔊 Son de clic immédiat
+                                //  Son de clic immédiat
                                 if (window.DustSounds && window.DustSounds.click) {
                                     window.DustSounds.click();
                                 }
@@ -6039,7 +6125,7 @@ function refreshAllBadges() {
                                     }
                                 }, 50);
                                 
-                                // ⚡ Timing optimisé pour rapidité et fluidité :
+                                //  Timing optimisé pour rapidité et fluidité :
                                 // Phase 1: Apparition élégante (0.7s)
                                 // Phase 2: Pause courte (0.4s)
                                 // Phase 3: Dissolution (0.4s) + navigation IMMÉDIATE
@@ -6052,7 +6138,7 @@ function refreshAllBadges() {
                                     
                                     // Navigation IMMÉDIATE au début de la dissolution
                                     // La page charge pendant que l'image disparaît = transition fluide sans écran vide
-                                    console.log('🚀 Navigation vers:', targetUrl);
+                                    console.log('Navigation vers:', targetUrl);
                                     window.location.href = targetUrl;
                                 }, 1100);
                             });
@@ -6139,7 +6225,7 @@ function refreshAllBadges() {
                 loadActiveMalus();
                 // Rafraîchir toutes les 60 secondes
                 setInterval(loadActiveMalus, 60000);
-                console.log('✅ Système malus initialisé');
+                console.log('Système malus initialisé');
             })();
 
             // ═══════════════════════════════════════════════════════════
