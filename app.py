@@ -401,7 +401,16 @@ if os.environ.get('RENDER'):
 app.config['TEMPLATES_AUTO_RELOAD'] = not bool(os.environ.get('RENDER'))
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
 
-# 🗜️ Compression gzip pour réduire la taille des réponses (~70% plus léger)
+# 🔥 DÉSACTIVER COMPLÈTEMENT LE CACHE JINJA2 (debug)
+app.jinja_env.auto_reload = True
+app.jinja_env.cache = {}
+
+# � FORCER RECHARGEMENT TEMPLATE AVANT CHAQUE REQUÊTE
+@app.before_request
+def clear_template_cache():
+    app.jinja_env.cache.clear()
+
+# �🗜️ Compression gzip pour réduire la taille des réponses (~70% plus léger)
 app.config['COMPRESS_LEVEL'] = 6          # Niveau de compression (1-9, 6 = bon équilibre vitesse/taille)
 app.config['COMPRESS_MIN_SIZE'] = 500     # Ne pas compresser les petites réponses
 app.config['COMPRESS_MIMETYPES'] = [
@@ -5337,16 +5346,25 @@ def reminders():
 
     # Liste partagée par toute la maison (visible par tous les joueurs)
     c.execute("""
-        SELECT id, title, remind_at, is_done, created_at
-        FROM player_reminders
-        WHERE house_id=?
-        ORDER BY is_done ASC, CASE WHEN remind_at IS NULL THEN 1 ELSE 0 END, remind_at ASC, created_at ASC
+        SELECT pr.id, pr.title, pr.remind_at, pr.is_done, pr.created_at, pr.user_email, u.name
+        FROM player_reminders pr
+        LEFT JOIN users u ON pr.user_email = u.email
+        WHERE pr.house_id=?
+        ORDER BY pr.is_done ASC, CASE WHEN pr.remind_at IS NULL THEN 1 ELSE 0 END, pr.remind_at ASC, pr.created_at ASC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
 
     reminders_list = [
-        {'id': r[0], 'title': r[1], 'remind_at': r[2], 'is_done': bool(r[3]), 'created_at': r[4]}
+        {
+            'id': r[0], 
+            'title': r[1], 
+            'remind_at': r[2], 
+            'is_done': bool(r[3]), 
+            'created_at': r[4],
+            'user_email': r[5],
+            'creator_name': r[6] if r[6] else (r[5].split('@')[0] if r[5] else 'Inconnu')
+        }
         for r in reminders_rows
     ]
 
@@ -5403,6 +5421,7 @@ def add_reminder():
         pass
 
     # 🛒 Créer un message automatique pour notifier l'ajout à la liste de courses
+    creator_name = ''
     try:
         c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
         creator_row = c.fetchone()
@@ -5410,7 +5429,8 @@ def add_reminder():
         message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
         create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
     except Exception:
-        pass  # Ne pas bloquer si le message échoue
+        if not creator_name:
+            creator_name = session['user'].split('@')[0]
 
     # Synchroniser l'ajout pour tous les joueurs de la maison
     try:
@@ -5424,7 +5444,13 @@ def add_reminder():
 
     conn.close()
 
-    return jsonify({'success': True, 'id': new_id, 'title': title, 'remind_at': remind_at})
+    return jsonify({
+        'success': True, 
+        'id': new_id, 
+        'title': title, 
+        'remind_at': remind_at,
+        'creator_name': creator_name
+    })
 
 
 @app.route('/reminders/toggle/<int:reminder_id>', methods=['POST'])

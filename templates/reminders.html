@@ -179,6 +179,17 @@
         font-size: 15px; font-weight: 700; color: #153036;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .reminder-creator {
+        font-size: 11px; 
+        font-weight: 600; 
+        color: #FDAE54;
+        margin-top: 4px;
+        display: inline-block;
+        background: rgba(253,174,84,0.12);
+        padding: 2px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(253,174,84,0.25);
+    }
     .reminder-time {
         font-size: 12px; font-weight: 600; color: #597176;
         margin-top: 3px;
@@ -262,6 +273,7 @@
             <div class="reminder-check" data-id="{{ r.id }}">&#10003;</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
+                <div class="reminder-creator">👤 {{ r.creator_name }}</div>
             </div>
             <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
@@ -274,6 +286,7 @@
             <div class="reminder-check checked" data-id="{{ r.id }}">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
+                <div class="reminder-creator">👤 {{ r.creator_name }}</div>
             </div>
             <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
@@ -377,6 +390,7 @@
                     '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">&#10003;</div>' +
                     '<div class="reminder-body">' +
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
+                        '<div class="reminder-creator">👤 ' + escHtml(data.creator_name || 'Inconnu') + '</div>' +
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
                 list.insertBefore(card, list.firstChild);
