@@ -182,13 +182,35 @@
     .reminder-creator {
         font-size: 11px; 
         font-weight: 600; 
-        color: #FDAE54;
-        margin-top: 4px;
-        display: inline-block;
+        color: #597176;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .reminder-creator-avatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1.5px solid rgba(253,174,84,0.3);
+        flex-shrink: 0;
+    }
+    .reminder-creator-emoji {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
         background: rgba(253,174,84,0.12);
-        padding: 2px 8px;
-        border-radius: 8px;
-        border: 1px solid rgba(253,174,84,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        flex-shrink: 0;
+        border: 1.5px solid rgba(253,174,84,0.25);
+    }
+    .reminder-creator-name {
+        color: #FDAE54;
+        font-weight: 700;
     }
     .reminder-time {
         font-size: 12px; font-weight: 600; color: #597176;
@@ -273,7 +295,18 @@
             <div class="reminder-check" data-id="{{ r.id }}">&#10003;</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
-                <div class="reminder-creator">👤 {{ r.creator_name }}</div>
+                <div class="reminder-creator">
+                    {% if r.creator_avatar_file %}
+                        <img class="reminder-creator-avatar" src="{{ url_for('static', filename='avatars/' + r.creator_avatar_file) }}" alt="{{ r.creator_name }}">
+                    {% elif r.creator_avatar_url %}
+                        <img class="reminder-creator-avatar" src="{{ r.creator_avatar_url }}" alt="{{ r.creator_name }}">
+                    {% elif r.creator_avatar %}
+                        <div class="reminder-creator-emoji">{{ r.creator_avatar }}</div>
+                    {% else %}
+                        <div class="reminder-creator-emoji">👤</div>
+                    {% endif %}
+                    <span class="reminder-creator-name">{{ r.creator_name }}</span>
+                </div>
             </div>
             <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
@@ -286,7 +319,18 @@
             <div class="reminder-check checked" data-id="{{ r.id }}">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
-                <div class="reminder-creator">👤 {{ r.creator_name }}</div>
+                <div class="reminder-creator">
+                    {% if r.creator_avatar_file %}
+                        <img class="reminder-creator-avatar" src="{{ url_for('static', filename='avatars/' + r.creator_avatar_file) }}" alt="{{ r.creator_name }}">
+                    {% elif r.creator_avatar_url %}
+                        <img class="reminder-creator-avatar" src="{{ r.creator_avatar_url }}" alt="{{ r.creator_name }}">
+                    {% elif r.creator_avatar %}
+                        <div class="reminder-creator-emoji">{{ r.creator_avatar }}</div>
+                    {% else %}
+                        <div class="reminder-creator-emoji">👤</div>
+                    {% endif %}
+                    <span class="reminder-creator-name">{{ r.creator_name }}</span>
+                </div>
             </div>
             <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
@@ -386,11 +430,24 @@
                 const card = document.createElement('div');
                 card.className = 'reminder-card';
                 card.id = 'card-' + data.id;
+                
+                // Construire l'avatar HTML
+                var avatarHtml = '';
+                if (data.creator_avatar_file) {
+                    avatarHtml = '<img class="reminder-creator-avatar" src="/static/avatars/' + escHtml(data.creator_avatar_file) + '" alt="' + escHtml(data.creator_name || 'Inconnu') + '">';
+                } else if (data.creator_avatar_url) {
+                    avatarHtml = '<img class="reminder-creator-avatar" src="' + escHtml(data.creator_avatar_url) + '" alt="' + escHtml(data.creator_name || 'Inconnu') + '">';
+                } else if (data.creator_avatar) {
+                    avatarHtml = '<div class="reminder-creator-emoji">' + escHtml(data.creator_avatar) + '</div>';
+                } else {
+                    avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
+                }
+                
                 card.innerHTML =
                     '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">&#10003;</div>' +
                     '<div class="reminder-body">' +
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
-                        '<div class="reminder-creator">👤 ' + escHtml(data.creator_name || 'Inconnu') + '</div>' +
+                        '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
                 list.insertBefore(card, list.firstChild);

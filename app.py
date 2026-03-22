@@ -5346,7 +5346,8 @@ def reminders():
 
     # Liste partagée par toute la maison (visible par tous les joueurs)
     c.execute("""
-        SELECT pr.id, pr.title, pr.remind_at, pr.is_done, pr.created_at, pr.user_email, u.name
+        SELECT pr.id, pr.title, pr.remind_at, pr.is_done, pr.created_at, pr.user_email, 
+               u.name, u.avatar, u.avatar_file, u.avatar_url
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
@@ -5363,7 +5364,10 @@ def reminders():
             'is_done': bool(r[3]), 
             'created_at': r[4],
             'user_email': r[5],
-            'creator_name': r[6] if r[6] else (r[5].split('@')[0] if r[5] else 'Inconnu')
+            'creator_name': r[6] if r[6] else (r[5].split('@')[0] if r[5] else 'Inconnu'),
+            'creator_avatar': r[7],
+            'creator_avatar_file': r[8],
+            'creator_avatar_url': r[9]
         }
         for r in reminders_rows
     ]
@@ -5422,10 +5426,19 @@ def add_reminder():
 
     # 🛒 Créer un message automatique pour notifier l'ajout à la liste de courses
     creator_name = ''
+    creator_avatar = ''
+    creator_avatar_file = ''
+    creator_avatar_url = ''
     try:
-        c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
+        c.execute("SELECT name, avatar, avatar_file, avatar_url FROM users WHERE email=?", (session['user'],))
         creator_row = c.fetchone()
-        creator_name = creator_row[0] if creator_row and creator_row[0] else session['user'].split('@')[0]
+        if creator_row:
+            creator_name = creator_row[0] if creator_row[0] else session['user'].split('@')[0]
+            creator_avatar = creator_row[1]
+            creator_avatar_file = creator_row[2]
+            creator_avatar_url = creator_row[3]
+        else:
+            creator_name = session['user'].split('@')[0]
         message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
         create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
     except Exception:
@@ -5449,7 +5462,10 @@ def add_reminder():
         'id': new_id, 
         'title': title, 
         'remind_at': remind_at,
-        'creator_name': creator_name
+        'creator_name': creator_name,
+        'creator_avatar': creator_avatar,
+        'creator_avatar_file': creator_avatar_file,
+        'creator_avatar_url': creator_avatar_url
     })
 
 
