@@ -40,9 +40,10 @@
             --header-spacing-bottom: 4px;
         }
 
-        /* ── Base harmonisée avec modern-style.css ── */
+        /* ── Base harmonisée avec système de thèmes personnalisés ── */
         body {
-            background: #f5f7fa !important; /* Fond clair uniforme */
+            background: {{ bg_gradient }};
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
         }
 
         /* ── Header moderne harmonisé ── */

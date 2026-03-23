@@ -34,45 +34,53 @@
 }
 
 /* ══ Page Gameplay plein écran ══ */
-body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom: 40px; }
+body { 
+    background: {{ bg_gradient }}; 
+    min-height: 100vh; 
+    padding-top: 20px; 
+    padding-bottom: 40px;
+    color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
+}
 
-/* Cadre titre - Style propre comme les stats */
+/* Cadre titre - Style glassmorphisme harmonisé avec classement */
 .gameplay-title-card {
-    background: white;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(253,174,84,0.12) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: 20px;
-    padding: 24px 22px 20px;
-    margin: 12px 14px 0;
-    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
+    padding: 18px 20px;
+    margin: 12px 16px 0;
+    border: 1.5px solid rgba(253,174,84,0.3);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
     text-align: center;
 }
 .gameplay-title-card h1 {
-    font-size: 24px;
-    font-weight: 800;
-    color: #597176;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
     margin: 0;
     letter-spacing: 0.3px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 .gameplay-title-card .gameplay-subtitle {
     font-size: 11px;
-    font-weight: 600;
-    color: #597176;
-    opacity: 0.7;
+    font-weight: 700;
+    color: rgba(255,255,255,0.55);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-top: 6px;
+    margin-top: 4px;
 }
 {% if house_name %}
 .gameplay-house-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #A6D3DC, #C4E4E9);
-    border: none;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
     border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 12px;
+    padding: 4px 14px;
+    font-size: 12px; 
     font-weight: 700;
-    color: white;
-    margin-top: 10px;
-    box-shadow: 0 2px 8px rgba(166,211,220,0.3);
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
 }
 {% endif %}
 
@@ -84,15 +92,14 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     padding-bottom: 60px;
 }
 
-/* Section titre */
+/* Section titre - Style adapté au fond */
 .gameplay-section-title {
     font-size: 11px;
     font-weight: 800;
-    color: #597176;
-    opacity: 0.7;
+    color: rgba(255,255,255,0.4);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    padding: 22px 18px 10px;
+    letter-spacing: 1px;
+    padding: 20px 20px 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -105,30 +112,23 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    background: white;
-    border: none;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
-    box-shadow: 0 3px 12px rgba(89,113,118,0.1);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     flex-wrap: wrap;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
 }
 .gw-player:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(89,113,118,0.15);
+    background: rgba(255,255,255,0.12);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
 }
-.gw-player.gw-me {
-    background: linear-gradient(135deg, #FDAE54, #FFB974);
-    box-shadow: 0 4px 16px rgba(253,174,84,0.25);
-}
-.gw-player.gw-me .gw-name,
-.gw-player.gw-me .gw-avatar-label {
-    color: white;
-}
-.gw-player.gw-me .gw-rank {
-    color: rgba(255,255,255,0.9);
-}
+/* Suppression des styles .gw-me car le joueur principal n'apparaît plus */
 
 /* Colonne avatar : rang + image + prénom en dessous */
 .gw-avatar-col {
@@ -139,11 +139,11 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     flex-shrink: 0;
     width: 54px;
 }
-.gw-rank { font-size: 13px; line-height: 1; color: #597176; opacity: 0.7; font-weight: 600; }
+.gw-rank { font-size: 13px; line-height: 1; color: rgba(255,255,255,0.6); font-weight: 600; }
 .gw-avatar-label {
     font-size: 10px;
     font-weight: 700;
-    color: #597176;
+    color: rgba(255,255,255,0.7);
     text-align: center;
     max-width: 58px;
     overflow: hidden;
@@ -154,9 +154,9 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
 .gw-avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 3px solid #A6D3DC; flex-shrink: 0; box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
 .gw-avatar-emoji { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #A6D3DC, #C4E4E9); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
 .gw-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-.gw-name { font-size: 14px; font-weight: 700; color: #153036; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gw-name { font-size: 14px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gw-pts-row { display: flex; align-items: center; gap: 6px; }
-.gw-bar-wrap { height: 6px; background: #e8f4f8; border-radius: 4px; margin-top: 6px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(89,113,118,0.1); }
+.gw-bar-wrap { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 6px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); }
 .gw-bar-fill { height: 100%; border-radius: 4px; min-width: 5px; background: linear-gradient(90deg,#A6D3DC,#FDAE54); transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); }
 .gw-pts { font-size: 15px; font-weight: 800; color: #FDAE54; white-space: nowrap; }
 .gw-skull { font-size: 14px; }
@@ -164,51 +164,81 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
 
 /* Tâches du joueur : 2 lignes pour mobile */
 .gw-tasks-list {
+    width: 100%;
     display: none;
     flex-direction: column;
-    gap: 7px;
-    width: 100%;
-    margin-top: 10px;
-    padding-top: 12px;
-    border-top: 1px solid #e8f4f8;
+    gap: 0;
+    margin-top: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 6px 10px;
+    backdrop-filter: blur(10px);
 }
 .gw-tasks-list.has-tasks { display: flex; }
 .gw-task-item {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
-    padding: 10px 12px;
-    background: #f8fbfc;
-    border: 1px solid #e8f4f8;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(89,113,118,0.05);
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.3;
 }
+.gw-task-item + .gw-task-item { border-top: 1px solid rgba(255,255,255,0.06); }
 .gw-task-row1 { display: flex; align-items: center; gap: 8px; }
-.gw-task-row2 { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.gw-task-row2 { 
+    display: flex; 
+    align-items: center; 
+    justify-content: flex-end; 
+    gap: 8px; 
+    margin-top: 4px;
+}
 .gw-task-dot { width: 7px; height: 7px; border-radius: 50%; background: linear-gradient(135deg,#A6D3DC,#89b4bb); flex-shrink: 0; }
-.gw-task-name { flex: 1; font-weight: 600; color: #153036; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gw-task-name { flex: 1; font-weight: 600; color: rgba(255,255,255,0.9); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gw-task-pts { font-size: 11px; font-weight: 700; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 2px 7px; border-radius: 8px; flex-shrink: 0; }
-.gw-task-time { font-size: 11px; font-weight: 600; color: #597176; opacity: 0.6; }
-.gw-task-suspicion-btn { border: none; background: #f0f4f8; cursor: pointer; font-size: 17px; padding: 6px 9px; border-radius: 10px; flex-shrink: 0; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
-.gw-task-malus-btn   { border: none; background: rgba(231,76,60,0.1);    cursor: pointer; font-size: 17px; padding: 6px 9px; border-radius: 10px; flex-shrink: 0; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
-.gw-task-bonus-btn   { border: none; background: rgba(46,204,113,0.1);   cursor: pointer; font-size: 17px; padding: 6px 9px; border-radius: 10px; flex-shrink: 0; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
-.gw-task-suspicion-btn:active { background: #d9e2ec; transform: scale(0.93); }
-.gw-task-malus-btn:active   { background: rgba(231,76,60,0.25); transform: scale(0.93); }
-.gw-task-bonus-btn:active   { background: rgba(46,204,113,0.25); transform: scale(0.93); }
+.gw-task-time { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); }
+/* Boutons action tâches - Style glassmorphisme harmonisé */
+.gw-task-suspicion-btn, .gw-task-malus-btn, .gw-task-bonus-btn {
+    border: none; 
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer; 
+    font-size: 16px; 
+    padding: 8px 10px; 
+    border-radius: 12px; 
+    flex-shrink: 0; 
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.gw-task-suspicion-btn:hover { background: rgba(255,255,255,0.15); }
+.gw-task-malus-btn:hover { background: rgba(231,76,60,0.2); }
+.gw-task-bonus-btn:hover { background: rgba(46,204,113,0.2); }
+.gw-task-suspicion-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.93); }
+.gw-task-malus-btn:active { background: rgba(231,76,60,0.3); transform: scale(0.93); }
+.gw-task-bonus-btn:active { background: rgba(46,204,113,0.3); transform: scale(0.93); }
 
-/* Cadre photo de preuve */
+/* Cadre photo de preuve - Style glassmorphisme */
 .proof-photo-frame {
     margin-top: 12px;
     padding: 16px;
-    background: #f8fbfc;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 14px;
     min-height: 130px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    border: 2px dashed #d0e3ea;
-    box-shadow: inset 0 2px 6px rgba(89,113,118,0.05);
+    border: 2px dashed rgba(255,255,255,0.2);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
     gap: 10px;
 }
 .proof-photo-frame img {
@@ -220,13 +250,16 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
-/* Carte suspicion */
+/* Carte suspicion - Style glassmorphisme */
 .suspicion-card {
-    background: white;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
-    box-shadow: 0 3px 12px rgba(89,113,118,0.1);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
 .gameplay-actions {
@@ -241,10 +274,12 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    background: white;
-    border: 2px solid #e8f4f8;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 16px;
-    color: #153036;
+    color: white;
     font-size: 15px;
     font-weight: 700;
     text-align: left;
@@ -521,12 +556,12 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
         Sanctionne les tâches mal effectuées par les autres joueurs.
     </div>
 
-    <!-- Liste joueurs avec tâches -->
+    <!-- Liste joueurs avec tâches (sans le joueur principal) -->
     <div class="gameplay-players-wrap">
-        {% for p in sorted_by_week %}
+        {% for p in sorted_by_week %}{% if not p.is_current_user %}
         {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
         {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v)*100)|int if max_pts.v>0 else 5 %}
-        <div class="gw-player {% if p.is_current_user %}gw-me{% endif %}" data-gw-player-name="{{ p.name|e }}">
+        <div class="gw-player" data-gw-player-name="{{ p.name|e }}">
             <div class="gw-avatar-col">
                 <div class="gw-rank">{{ medal }}</div>
                 {% if p.avatar_file %}<img class="gw-avatar-img" src="{{ url_for('static', filename='avatars/'+p.avatar_file) }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="gw-avatar-emoji" style="display:none;">👤</div>
@@ -545,7 +580,7 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
             </div>
             <div class="gw-tasks-list"></div>
         </div>
-        {% endfor %}
+        {% endif %}{% endfor %}
     </div>
 
     <!-- ====== SECTION SUSPICIONS ====== -->
