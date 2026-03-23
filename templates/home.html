@@ -2,125 +2,187 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Ménage à Deux - Accueil</title>
+    <title>CleanBeat - Accueil</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- CSS moderne harmonisé -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ── Variables couleurs modernes ── */
+        :root {
+            --primary: #A6D3DC;
+            --secondary: #C4E4E9;
+            --accent: #FDAE54;
+            --dark: #597176;
+            --dark-text: #153036;
+            --light: #F4F9FA;
+            --white: #ffffff;
+            --border-light: #e8f4f8;
+            --shadow-medium: rgba(89,113,118,0.12);
+            --shadow-strong: rgba(89,113,118,0.2);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: {{ bg_gradient }};
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            position: relative;
-            overflow: hidden;
+            color: var(--dark-text);
         }
 
-        .container {
+        .home-container {
             text-align: center;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
-            z-index: 2;
+        }
+
+        .home-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow: 0 8px 32px var(--shadow-medium);
+            border: 1px solid var(--border-light);
+            animation: fadeInUp 0.6s ease-out;
         }
 
         .logo-container {
-            margin-bottom: 40px;
-            animation: fadeInDown 1s ease-out;
+            margin-bottom: 32px;
+            animation: fadeInDown 0.8s ease-out 0.2s both;
         }
 
         .logo-image {
-            width: 250px;
-            height: 250px;
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border: 4px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+            border: 4px solid var(--primary);
             transition: transform 0.3s ease;
+            object-fit: cover;
         }
 
         .logo-image:hover {
             transform: scale(1.05);
+            box-shadow: 0 12px 32px var(--shadow-strong);
         }
 
-        h1 {
-            color: white;
-            font-size: 48px;
-            margin-bottom: 15px;
-            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            font-weight: 700;
-            animation: fadeInUp 1s ease-out 0.2s both;
+        .home-title {
+            color: var(--dark);
+            font-size: 42px;
+            margin-bottom: 16px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
         }
 
-        .subtitle {
-            color: rgba(255, 255, 255, 0.95);
+        .home-subtitle {
+            color: var(--dark);
+            opacity: 0.8;
             font-size: 18px;
-            margin-bottom: 50px;
-            line-height: 1.5;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            animation: fadeInUp 1s ease-out 0.4s both;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            font-weight: 500;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
         }
 
         .buttons-container {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             align-items: center;
-            animation: fadeInUp 1s ease-out 0.6s both;
+            animation: fadeInUp 0.8s ease-out 0.8s both;
         }
 
-        .btn {
-            padding: 18px 50px;
+        .home-btn {
+            padding: 16px 40px;
             border: none;
-            border-radius: 25px;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 18px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.2s ease;
             text-decoration: none;
-            display: inline-block;
-            min-width: 220px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 200px;
+            font-family: inherit;
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+
+        .home-btn-primary {
+            background: linear-gradient(135deg, var(--accent), #F4C68D);
+            color: var(--white);
+            border: 2px solid var(--accent);
+        }
+
+        .home-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(253, 174, 84, 0.4);
+        }
+
+        .home-btn-secondary {
+            background: var(--white);
+            color: var(--dark-text);
+            border: 2px solid var(--border-light);
+        }
+
+        .home-btn-secondary:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px var(--shadow-strong);
+        }
+
+        .home-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ── Décorations de fond modernes ── */
+        .bg-decoration {
+            position: fixed;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            opacity: 0.1;
+            animation: float 8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        .bg-decoration:nth-child(1) {
+            width: 120px;
+            height: 120px;
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .bg-decoration:nth-child(2) {
+            width: 180px;
+            height: 180px;
+            top: 70%;
+            right: 5%;
+            animation-delay: 3s;
+        }
+
+        .bg-decoration:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            top: 85%;
+            left: 15%;
+            animation-delay: 6s;
+        }
+
+        .home-container {
             position: relative;
-            overflow: hidden;
+            z-index: 1;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
-            color: white;
-            box-shadow: 0 6px 20px rgba(253, 174, 84, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(253, 174, 84, 0.6);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.6);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        /* Animations */
+        /* ── Animations ── */
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -143,131 +205,74 @@
             }
         }
 
-        /* Effets de fond animés */
-        .bg-decoration {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .bg-decoration:nth-child(1) {
-            width: 80px;
-            height: 80px;
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .bg-decoration:nth-child(2) {
-            width: 120px;
-            height: 120px;
-            top: 60%;
-            right: 10%;
-            animation-delay: 2s;
-        }
-
-        .bg-decoration:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            top: 80%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-
         @keyframes float {
             0%, 100% {
-                transform: translateY(0);
+                transform: translateY(0) rotate(0deg);
             }
-            50% {
-                transform: translateY(-20px);
+            33% {
+                transform: translateY(-20px) rotate(120deg);
+            }
+            66% {
+                transform: translateY(-10px) rotate(240deg);
             }
         }
 
-        /* Responsive - Petits téléphones */
-        @media (max-width: 480px) {
-            .container {
-                max-width: 100%;
-                padding: 15px;
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .home-card {
+                padding: 32px 24px;
+                margin: 16px;
             }
-
+            
             .logo-image {
-                width: 180px;
-                height: 180px;
+                width: 150px;
+                height: 150px;
             }
 
-            h1 {
+            .home-title {
                 font-size: 32px;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
             }
 
-            .subtitle {
-                font-size: 15px;
-                margin-bottom: 35px;
+            .home-subtitle {
+                font-size: 16px;
+                margin-bottom: 32px;
             }
 
-            .btn {
-                padding: 15px 40px;
+            .home-btn {
+                padding: 14px 32px;
                 font-size: 15px;
                 min-width: 180px;
             }
-
-            .buttons-container {
-                gap: 15px;
-            }
         }
         
-        /* Téléphones moyens et grands */
-        @media (min-width: 481px) and (max-width: 768px) {
-            .container {
-                max-width: 400px;
+        @media (max-width: 480px) {
+            .home-card {
+                padding: 24px 20px;
+                border-radius: 20px;
             }
-
+            
             .logo-image {
-                width: 220px;
-                height: 220px;
+                width: 120px;
+                height: 120px;
             }
 
-            h1 {
-                font-size: 40px;
+            .home-title {
+                font-size: 28px;
             }
 
-            .btn {
-                min-width: 200px;
+            .home-subtitle {
+                font-size: 14px;
             }
 
             .buttons-container {
-                gap: 18px;
-            }
-        }
-        
-        /* iPad et tablettes */
-        @media (min-width: 768px) and (max-width: 1024px) {
-            .container {
-                max-width: 550px;
+                gap: 12px;
             }
 
-            .logo-image {
-                width: 280px;
-                height: 280px;
-            }
-
-            h1 {
-                font-size: 52px;
-            }
-
-            .subtitle {
-                font-size: 20px;
-            }
-
-            .btn {
-                min-width: 240px;
-                font-size: 19px;
-                padding: 20px 55px;
-            }
-
-            .buttons-container {
-                gap: 25px;
+            .home-btn {
+                padding: 12px 24px;
+                font-size: 14px;
+                min-width: 160px;
             }
         }
 
@@ -275,7 +280,7 @@
             .buttons-container {
                 flex-direction: row;
                 justify-content: center;
-                gap: 30px;
+                gap: 24px;
             }
         }
     </style>
@@ -287,27 +292,29 @@
 <div class="bg-decoration"></div>
 <div class="bg-decoration"></div>
 
-<div class="container">
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='images/Ménage à Deux.png') }}" 
-             alt="Ménage à Deux" 
-             class="logo-image">
-    </div>
-    
-    <h1>Ménage à Deux</h1>
-    
-    <p class="subtitle">
-        Transformez les tâches ménagères en jeu amusant !<br>
-        Gérez votre maison en équipe et gagnez des récompenses.
-    </p>
-    
-    <div class="buttons-container">
-        <a href="{{ url_for('signup') }}" class="btn btn-primary">
-            S'inscrire
-        </a>
-        <a href="{{ url_for('menu') }}" class="btn btn-secondary">
-            Se connecter
-        </a>
+<div class="home-container">
+    <div class="home-card">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/Ménage à Deux.png') }}" 
+                 alt="CleanBeat" 
+                 class="logo-image">
+        </div>
+        
+        <h1 class="home-title">CleanBeat</h1>
+        
+        <p class="home-subtitle">
+            Transformez les tâches ménagères en jeu amusant !<br>
+            Gérez votre maison en équipe et gagnez des points.
+        </p>
+        
+        <div class="buttons-container">
+            <a href="{{ url_for('signup') }}" class="home-btn home-btn-primary">
+                📝 S'inscrire
+            </a>
+            <a href="{{ url_for('menu') }}" class="home-btn home-btn-secondary">
+                🏠 Se connecter
+            </a>
+        </div>
     </div>
 </div>
 
