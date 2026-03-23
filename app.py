@@ -10492,8 +10492,10 @@ def api_emit_suspicion():
 
     suspected_email = str(data.get('suspected_email', '')).strip()
     task_name = str(data.get('task_name', '')).strip()
-    task_points = int(data.get('task_points', 0))
-    completed_task_id = data.get('completed_task_id')
+    _tp = data.get('task_points', 0)
+    task_points = int(_tp) if _tp not in (None, '', 'null') else 0
+    _ctid = data.get('completed_task_id')
+    completed_task_id = int(_ctid) if _ctid not in (None, '', 'null') else None
     suspecting_email = session['user']
 
     if not suspected_email or suspected_email == suspecting_email:

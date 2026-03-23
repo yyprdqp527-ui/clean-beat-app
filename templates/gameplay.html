@@ -543,7 +543,7 @@ function loadGWTasks(){
                 list.innerHTML = tasks.map(function(t){
                     var actBtns = '';
                     if(!t.is_current_user){
-                        actBtns = '<button class="gw-task-suspicion-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" data-points="'+t.points+'" data-taskid="'+(t.task_id||'')+'" title="Émettre une suspicion">🔍</button>'
+                        actBtns = '<button class="gw-task-suspicion-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" data-points="'+t.points+'" data-taskid="'+(t.task_id||'0')+'" title="Émettre une suspicion">🔍</button>'
                                 + '<button class="gw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus">💀</button>'
                                 + '<button class="gw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus">❤️</button>';
                     }
@@ -571,7 +571,7 @@ document.addEventListener('click', function(e){
         var name = btn.dataset.name;
         var task = btn.dataset.task;
         var points = parseInt(btn.dataset.points) || 0;
-        var taskId = btn.dataset.taskid;
+        var taskId = parseInt(btn.dataset.taskid) || null;
         emitSuspicionFromTask(email, name, task, points, taskId);
         return;
     }
