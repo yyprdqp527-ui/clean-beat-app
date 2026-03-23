@@ -141,7 +141,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 .cw-task-name { flex: 1; font-weight: 600; color: rgba(255,255,255,0.85); }
 .cw-task-pts { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); }
 .cw-task-time { font-size: 11px; font-weight: 800; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px; }
-.cw-task-malus-btn, .cw-task-bonus-btn { border: none; background: none; cursor: pointer; font-size: 14px; padding: 2px 3px; border-radius: 8px; flex-shrink: 0; }
 
 .cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
 .cw-avatar-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }
@@ -168,38 +167,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     box-shadow: 0 6px 20px rgba(253,174,84,0.4);
 }
 .classement-stats-btn:active { transform: scale(0.98); }
-
-/* ══ Popups malus/bonus ══ */
-.malus-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(21,48,54,0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 9500;
-    align-items: flex-end;
-    justify-content: center;
-}
-.malus-overlay.open { display: flex; }
-.malus-sheet {
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: saturate(180%) blur(30px);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    border-radius: 24px 24px 0 0;
-    border-top: 1px solid rgba(255,255,255,0.8);
-    padding: 20px 16px 36px 16px;
-    width: 100%; max-width: 480px;
-    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
-    animation: cwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-@keyframes cwSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.malus-sheet-title { font-size: 16px; font-weight: 800; color: #153036; text-align: center; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
-.malus-option { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; background: rgba(21,48,54,0.04); border: 1px solid rgba(21,48,54,0.06); margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.15s; }
-.malus-option:active { background: rgba(231,76,60,0.10); }
-.malus-option-icon { font-size: 24px; }
-.malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036; }
-.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c; }
-.malus-cancel { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 14px; background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700; color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif; }
 </style>
 {% endblock %}
 
@@ -251,69 +218,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 
 </div>
 
-<!-- Popup malus -->
-<div class="malus-overlay" id="malusOverlay" onclick="if(event.target===this)closeMalus()">
-    <div class="malus-sheet">
-        <div class="malus-sheet-title">💀 Malus pour <span id="malusTargetName">…</span></div>
-        <div class="malus-task-context" id="malusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(166,211,220,0.15); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="malusTaskName">…</span></div>
-        <div class="malus-option" onclick="sendMalus('arrache',-3)">
-            <div class="malus-option-icon">😈</div>
-            <div class="malus-option-label">Fait à l'arrache</div>
-            <div class="malus-option-pts">−3 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendMalus('presque',-5)">
-            <div class="malus-option-icon">🙄</div>
-            <div class="malus-option-label">Presque… mais non</div>
-            <div class="malus-option-pts">−5 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendMalus('sabotage',-12)">
-            <div class="malus-option-icon">💣</div>
-            <div class="malus-option-label">Sabotage flagrant !</div>
-            <div class="malus-option-pts">−12 pts</div>
-        </div>
-        <button class="malus-cancel" onclick="closeMalus()">Annuler</button>
-    </div>
-</div>
-
-<!-- Picker joueur -->
-<div class="malus-overlay" id="playerPickerOverlay" onclick="if(event.target===this)closePlayerPicker()">
-    <div class="malus-sheet">
-        <div class="malus-sheet-title" id="playerPickerTitle">Pour qui ?</div>
-        {% if players %}{% for p in players %}{% if not p.is_current_user %}
-        <div class="malus-option" onclick="selectPlayer('{{ p.email|e }}','{{ p.name|e }}')">
-            <div class="malus-option-icon">{% if p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
-            <div class="malus-option-label">{{ p.name|e }}</div>
-            <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
-        </div>
-        {% endif %}{% endfor %}{% endif %}
-        <button class="malus-cancel" onclick="closePlayerPicker()">Annuler</button>
-    </div>
-</div>
-
-<!-- Overlay Bonus -->
-<div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
-    <div class="malus-sheet">
-        <div class="malus-sheet-title">❤️ Bonus pour <span id="bonusTargetName">…</span></div>
-        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
-        <div class="malus-option" onclick="sendBonus('effort',3)">
-            <div class="malus-option-icon">💫</div>
-            <div class="malus-option-label">On sent l'effort</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+3 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendBonus('extra',5)">
-            <div class="malus-option-icon">💪</div>
-            <div class="malus-option-label">A fait plus que demandé</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+5 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendBonus('wahouh',12)">
-            <div class="malus-option-icon">🤩</div>
-            <div class="malus-option-label">Wahouh, là je suis choqué·e !</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
-        </div>
-        <button class="malus-cancel" onclick="closeBonus()">Annuler</button>
-    </div>
-</div>
-
 <script>
 (function(){
     function animateBars(){
@@ -345,65 +249,16 @@ function loadCWTasks(){
                 if(tasks.length === 0) return;
                 var enc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
                 list.innerHTML = tasks.map(function(t){
-                    var actBtns = '';
-                    if(!t.is_current_user){
-                        actBtns = '<button class="cw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus">💀</button>'
-                                + '<button class="cw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus">❤️</button>';
-                    }
                     return '<div class="cw-task-item">'
                          + '<div class="cw-task-dot"></div>'
                          + '<span class="cw-task-name">'+enc(t.task_name)+'</span>'
                          + '<span class="cw-task-pts">+'+t.points+' pts</span>'
                          + '<span class="cw-task-time">'+enc(t.time)+'</span>'
-                         + actBtns
                          + '</div>';
                 }).join('');
                 list.classList.add('has-tasks');
             });
         }).catch(function(){});
-}
-
-document.addEventListener('click', function(e){
-    var btn = e.target.closest('.cw-task-malus-btn');
-    if(btn){ openTaskMalus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
-    btn = e.target.closest('.cw-task-bonus-btn');
-    if(btn){ openTaskBonus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
-});
-
-window._playerPickerMode = 'malus';
-function openGlobalMalus(){ window._playerPickerMode='malus'; document.getElementById('playerPickerTitle').textContent='💀 Malus pour qui ?'; document.getElementById('playerPickerOverlay').classList.add('open'); }
-function openGlobalBonus(){ window._playerPickerMode='bonus'; document.getElementById('playerPickerTitle').textContent='❤️ Bonus pour qui ?'; document.getElementById('playerPickerOverlay').classList.add('open'); }
-function closePlayerPicker(){ document.getElementById('playerPickerOverlay').classList.remove('open'); }
-function selectPlayer(email, name){ closePlayerPicker(); if(window._playerPickerMode==='malus'){ openMalus(email,name); } else { openBonus(email,name); } }
-
-var _bonusEmail = null;
-function openBonus(email, name){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; document.getElementById('bonusOverlay').classList.add('open'); }
-function closeBonus(){ document.getElementById('bonusOverlay').classList.remove('open'); _bonusEmail=null; var ctx=document.getElementById('bonusTaskContext'); if(ctx){ ctx.style.display='none'; } }
-function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
-function sendBonus(reason, points){
-    if(!_bonusEmail) return;
-    var targetEmail = _bonusEmail;
-    fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
-        .then(function(r){return r.json();}).then(function(data){
-            closeBonus();
-            if(data.success){ setTimeout(function(){ window.location.reload(); }, 1800); }
-            else { alert(data.error||'Erreur'); }
-        }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
-}
-
-var _malusEmail = null;
-function openMalus(email, name){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; document.getElementById('malusOverlay').classList.add('open'); }
-function closeMalus(){ document.getElementById('malusOverlay').classList.remove('open'); _malusEmail=null; var ctx=document.getElementById('malusTaskContext'); if(ctx){ ctx.style.display='none'; } }
-function openTaskMalus(email, name, taskName){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; var ctx=document.getElementById('malusTaskContext'); var tn=document.getElementById('malusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('malusOverlay').classList.add('open'); }
-function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
-function sendMalus(reason, points){
-    if(!_malusEmail) return;
-    fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:_malusEmail,reason:reason,points:points})})
-        .then(function(r){return r.json();}).then(function(data){
-            closeMalus();
-            if(data.success){ setTimeout(function(){ window.location.reload(); }, 2000); }
-            else { alert(data.error||'Erreur'); }
-        }).catch(function(){ closeMalus(); alert('Erreur réseau'); });
 }
 
 document.addEventListener('DOMContentLoaded', loadCWTasks);

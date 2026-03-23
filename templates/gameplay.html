@@ -1,0 +1,1243 @@
+{%- extends 'base.html' %}
+{% set hide_header = true %}
+
+{% block title %}Gameplay — CleanBeat{% endblock %}
+
+{% block page_styles %}
+<style>
+/* ── Bouton retour ── */
+.back-btn-glass {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+}
+.back-btn-glass:active { transform: scale(0.95); }
+@media (max-width: 520px) {
+    .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
+}
+
+/* ══ Page Gameplay plein écran ══ */
+body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padding-bottom: 40px; }
+
+/* Cadre titre */
+.gameplay-title-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(253,174,84,0.12) 100%);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border-radius: 22px;
+    padding: 20px 22px 16px;
+    margin: 12px 14px 0;
+    border: 1.5px solid rgba(255,255,255,0.22);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 2px 0 rgba(255,255,255,0.18);
+    text-align: center;
+}
+.gameplay-title-card h1 {
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    margin: 0;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.gameplay-title-card .gameplay-subtitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+{% if house_name %}
+.gameplay-house-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px; font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
+}
+{% endif %}
+
+.gameplay-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    padding-bottom: 60px;
+}
+
+/* Section titre */
+.gameplay-section-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 22px 18px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ══ gw-player adapté fond sombre ══ */
+.gameplay-players-wrap { padding: 0 14px; }
+
+.gw-player {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(166,211,220,0.09) 100%);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    border: 1.5px solid rgba(255,255,255,0.14);
+    border-radius: 18px;
+    padding: 14px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.1);
+    flex-wrap: wrap;
+}
+.gw-player.gw-me {
+    background: linear-gradient(135deg, rgba(253,174,84,0.16) 0%, rgba(166,211,220,0.12) 100%);
+    border-color: rgba(253,174,84,0.3);
+    box-shadow: 0 6px 24px rgba(253,174,84,0.15), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+/* Colonne avatar : rang + image + prénom en dessous */
+.gw-avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    width: 54px;
+}
+.gw-rank { font-size: 13px; line-height: 1; color: rgba(255,255,255,0.6); }
+.gw-avatar-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    text-align: center;
+    max-width: 58px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gw-avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2.5px solid rgba(255,255,255,0.35); flex-shrink: 0; }
+.gw-avatar-emoji { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.gw-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.gw-name { font-size: 14px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gw-pts-row { display: flex; align-items: center; gap: 6px; }
+.gw-bar-wrap { height: 5px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+.gw-bar-fill { height: 100%; border-radius: 4px; min-width: 5px; background: linear-gradient(90deg,#A6D3DC,#FDAE54); transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); }
+.gw-pts { font-size: 15px; font-weight: 800; color: #FDAE54; white-space: nowrap; }
+.gw-skull { font-size: 14px; }
+.gw-suspicion { font-size: 14px; margin-left: 4px; }
+
+/* Tâches du joueur : 2 lignes pour mobile */
+.gw-tasks-list {
+    display: none;
+    flex-direction: column;
+    gap: 7px;
+    width: 100%;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.gw-tasks-list.has-tasks { display: flex; }
+.gw-task-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+}
+.gw-task-row1 { display: flex; align-items: center; gap: 8px; }
+.gw-task-row2 { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.gw-task-dot { width: 7px; height: 7px; border-radius: 50%; background: linear-gradient(135deg,#A6D3DC,#89b4bb); flex-shrink: 0; }
+.gw-task-name { flex: 1; font-weight: 600; color: rgba(255,255,255,0.9); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gw-task-pts { font-size: 11px; font-weight: 700; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 2px 7px; border-radius: 8px; flex-shrink: 0; }
+.gw-task-time { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); }
+.gw-task-suspicion-btn { border: none; background: rgba(255,255,255,0.08); cursor: pointer; font-size: 17px; padding: 6px 9px; border-radius: 10px; flex-shrink: 0; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+.gw-task-malus-btn   { border: none; background: rgba(231,76,60,0.15);    cursor: pointer; font-size: 17px; padding: 6px 9px; border-radius: 10px; flex-shrink: 0; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+.gw-task-bonus-btn   { border: none; background: rgba(46,204,113,0.15);   cursor: pointer; font-size: 17px; padding: 6px 9px; border-radius: 10px; flex-shrink: 0; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+.gw-task-suspicion-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.93); }
+.gw-task-malus-btn:active   { background: rgba(231,76,60,0.38); transform: scale(0.93); }
+.gw-task-bonus-btn:active   { background: rgba(46,204,113,0.38); transform: scale(0.93); }
+
+/* Cadre photo de preuve */
+.proof-photo-frame {
+    margin-top: 12px;
+    padding: 16px;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 14px;
+    min-height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 1.5px dashed rgba(255,255,255,0.18);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+    gap: 10px;
+}
+.proof-photo-frame img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* Carte suspicion */
+.suspicion-card {
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-radius: 18px;
+    padding: 14px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.gameplay-actions {
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gameplay-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(166,211,220,0.1) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 18px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: left;
+    letter-spacing: 0.3px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.gameplay-action-btn:active { transform: scale(0.98); }
+.gameplay-action-btn .btn-icon { font-size: 24px; flex-shrink: 0; }
+.gameplay-action-btn .btn-label { flex: 1; }
+.gameplay-action-btn .btn-arrow { font-size: 18px; color: rgba(255,255,255,0.4); }
+
+/* ══ Popups malus/bonus ══ */
+.malus-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(21,48,54,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9500;
+    align-items: flex-end;
+    justify-content: center;
+}
+.malus-overlay.open { display: flex; }
+.malus-sheet {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.8);
+    padding: 20px 16px 36px 16px;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
+    animation: gwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes gwSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.malus-sheet-title { font-size: 16px; font-weight: 800; color: #153036; text-align: center; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
+.malus-option { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; background: rgba(21,48,54,0.04); border: 1px solid rgba(21,48,54,0.06); margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.15s; }
+.malus-option:active { background: rgba(231,76,60,0.10); }
+.malus-option-icon { font-size: 24px; }
+.malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036; }
+.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c; }
+.malus-cancel { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 14px; background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700; color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+
+/* Animation des points qui s'envolent */
+.points-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    pointer-events: none;
+    z-index: 10000;
+    animation: pointsFloat 2s ease-out forwards;
+}
+
+@keyframes pointsFloat {
+    0% { transform: translateX(-50%) translateY(0) scale(0.5); opacity: 0; }
+    20% { transform: translateX(-50%) translateY(-20px) scale(1.2); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-100px) scale(1); opacity: 0; }
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+{% set max_pts = namespace(v=1) %}
+{% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
+{% set sorted_by_week = players|selectattr('email','defined')|list|sort(attribute='daily_points',reverse=True) %}
+
+<a href="{{ url_for('menu') }}" class="back-btn-glass">&#x2039;</a>
+
+<div class="gameplay-page">
+
+    <!-- Titre dans un cadre -->
+    <div class="gameplay-title-card">
+        <h1>🎮 Gameplay</h1>
+        <div class="gameplay-subtitle">Fonctionnalités de jeu</div>
+        {% if house_name %}
+        <div class="gameplay-house-badge">🏡 {{ house_name }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Section Malus & Bonus -->
+    <div class="gameplay-section-title">💀 Malus & Bonus ❤️</div>
+
+    <!-- Description -->
+    <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 13px; line-height: 1.5;">
+        Sanctionne les tâches mal effectuées par les autres joueurs.
+    </div>
+
+    <!-- Liste joueurs avec tâches -->
+    <div class="gameplay-players-wrap">
+        {% for p in sorted_by_week %}
+        {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
+        {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v)*100)|int if max_pts.v>0 else 5 %}
+        <div class="gw-player {% if p.is_current_user %}gw-me{% endif %}" data-gw-player-name="{{ p.name|e }}">
+            <div class="gw-avatar-col">
+                <div class="gw-rank">{{ medal }}</div>
+                {% if p.avatar_file %}<img class="gw-avatar-img" src="{{ url_for('static', filename='avatars/'+p.avatar_file) }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="gw-avatar-emoji" style="display:none;">👤</div>
+                {% elif p.avatar_url %}<img class="gw-avatar-img" src="{{ p.avatar_url }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="gw-avatar-emoji" style="display:none;">👤</div>
+                {% elif p.avatar %}<div class="gw-avatar-emoji">{{ p.avatar }}</div>
+                {% else %}<div class="gw-avatar-emoji">👤</div>{% endif %}
+                <div class="gw-avatar-label">{{ p.name|e }}</div>
+            </div>
+            <div class="gw-info">
+                <div class="gw-pts-row">
+                    <div class="gw-name">{{ p.name|e }}</div>
+                    <div class="gw-pts">{{ p.daily_points|default(0) }} pts</div>
+                    {% if p.skull_active|default(false) %}<span class="gw-skull">💀</span>{% elif p.skull_pending|default(false) %}<span class="gw-skull" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0)>0 %}<span class="gw-skull">💀×{{ p.skull_count }}</span>{% endif %}
+                </div>
+                <div class="gw-bar-wrap"><div class="gw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else '' }}" style="width:0%;"></div></div>
+            </div>
+            <div class="gw-tasks-list"></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ====== SECTION SUSPICIONS ====== -->
+    <div class="gameplay-section-title" style="margin-top: 30px;">⚠️ Suspicions</div>
+    
+    <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 12px; line-height: 1.5;">
+        Clique sur la loupe 🔍 à côté d'une tâche pour émettre une suspicion. Tous les joueurs voient les suspicions et les preuves.
+    </div>
+    
+    <!-- Liste des suspicions -->
+    <div id="suspicionsList" style="padding: 0 14px; margin-bottom: 20px;">
+        <!-- Rempli dynamiquement par JavaScript -->
+    </div>
+
+    <!-- Section futures fonctionnalités -->
+    <div class="gameplay-section-title" style="margin-top: 20px;">Autres fonctionnalités (à venir)</div>
+    <div style="padding: 0 20px 20px; color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic;">
+        D'autres fonctionnalités de jeu seront ajoutées ici prochainement...
+    </div>
+
+</div>
+
+<!-- Popup malus -->
+<div class="malus-overlay" id="malusOverlay" onclick="if(event.target===this)closeMalus()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">💀 Malus pour <span id="malusTargetName">…</span></div>
+        <div class="malus-task-context" id="malusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(166,211,220,0.15); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="malusTaskName">…</span></div>
+        <div class="malus-option" onclick="sendMalus('arrache',-3)">
+            <div class="malus-option-icon">😈</div>
+            <div class="malus-option-label">Fait à l'arrache</div>
+            <div class="malus-option-pts">−3 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('presque',-5)">
+            <div class="malus-option-icon">🙄</div>
+            <div class="malus-option-label">Presque… mais non</div>
+            <div class="malus-option-pts">−5 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendMalus('sabotage',-12)">
+            <div class="malus-option-icon">💣</div>
+            <div class="malus-option-label">Sabotage flagrant !</div>
+            <div class="malus-option-pts">−12 pts</div>
+        </div>
+        <button class="malus-cancel" onclick="closeMalus()">Annuler</button>
+    </div>
+</div>
+
+<!-- Picker joueur -->
+<div class="malus-overlay" id="playerPickerOverlay" onclick="if(event.target===this)closePlayerPicker()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title" id="playerPickerTitle">Pour qui ?</div>
+        {% if players %}{% for p in players %}{% if not p.is_current_user %}
+        <div class="malus-option" onclick="selectPlayer('{{ p.email|e }}','{{ p.name|e }}')">
+            <div class="malus-option-icon">{% if p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
+            <div class="malus-option-label">{{ p.name|e }}</div>
+            <div class="gw-pts">{{ p.daily_points|default(0) }} pts</div>
+        </div>
+        {% endif %}{% endfor %}{% endif %}
+        <button class="malus-cancel" onclick="closePlayerPicker()">Annuler</button>
+    </div>
+</div>
+
+<!-- Overlay Bonus -->
+<div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">❤️ Bonus pour <span id="bonusTargetName">…</span></div>
+        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
+        <div class="malus-option" onclick="sendBonus('effort',3)">
+            <div class="malus-option-icon">💫</div>
+            <div class="malus-option-label">On sent l'effort</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+3 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('extra',5)">
+            <div class="malus-option-icon">💪</div>
+            <div class="malus-option-label">A fait plus que demandé</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+5 pts</div>
+        </div>
+        <div class="malus-option" onclick="sendBonus('wahouh',12)">
+            <div class="malus-option-icon">🤩</div>
+            <div class="malus-option-label">Wahouh, là je suis choqué·e !</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
+        </div>
+        <button class="malus-cancel" onclick="closeBonus()">Annuler</button>
+    </div>
+</div>
+
+<!-- ====== POPUPS SUSPICIONS ====== -->
+
+<!-- Popup : Picker de tâches à contester -->
+<div class="malus-overlay" id="suspicionPickerOverlay" onclick="if(event.target===this)closeSuspicionPicker()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">🔍 Quelle tâche contester ?</div>
+        <div style="font-size: 12px; color: #597176; text-align: center; margin-bottom: 12px;">
+            Tâches des 7 derniers jours
+        </div>
+        <div id="suspicionTasksList" style="max-height: 400px; overflow-y: auto;">
+            <!-- Rempli dynamiquement -->
+        </div>
+        <button class="malus-cancel" onclick="closeSuspicionPicker()">Annuler</button>
+    </div>
+</div>
+
+<!-- Popup : Upload de preuve photo -->
+<div class="malus-overlay" id="uploadProofOverlay" onclick="if(event.target===this)closeUploadProof()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">📸 Envoyer une preuve</div>
+        <div style="font-size: 13px; color: #597176; text-align: center; margin: 10px 0;">
+            <strong id="uploadProofTaskName">Tâche</strong>
+        </div>
+        <div style="font-size: 12px; color: #e74c3c; text-align: center; margin: 10px 0; font-weight: 600;">
+            Si ta preuve est rejetée, tu perdras 20 points !
+        </div>
+        <input type="file" id="proofPhotoInput" accept="image/*" capture="environment" 
+               style="display: block; margin: 20px auto; padding: 10px; border: 2px dashed rgba(21,48,54,0.2); border-radius: 12px; width: 90%;">
+        <button onclick="submitProof()" class="gameplay-action-btn" style="margin: 10px 0; width: 100%;">
+            <div class="btn-icon">📤</div>
+            <div class="btn-label">Envoyer la preuve</div>
+        </button>
+        <button class="malus-cancel" onclick="closeUploadProof()">Annuler</button>
+    </div>
+</div>
+
+<!-- Popup : Validation de preuve -->
+<div class="malus-overlay" id="validateProofOverlay" onclick="if(event.target===this)closeValidateProof()">
+    <div class="malus-sheet">
+        <div class="malus-sheet-title">⚖️ Valider la preuve</div>
+        <div style="font-size: 13px; color: #597176; text-align: center; margin: 10px 0;">
+            <strong id="validateProofTaskName">Tâche</strong><br>
+            par <strong id="validateProofPlayerName">Joueur</strong>
+        </div>
+        <div style="text-align: center; margin: 20px 0;">
+            <img id="validateProofImage" src="" alt="Preuve photo" 
+                 style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        </div>
+        <div style="font-size: 12px; color: #597176; text-align: center; margin: 10px 0;">
+            <strong>La preuve est-elle convaincante ?</strong>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button onclick="rejectProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(231,76,60,0.1); border-color: #e74c3c;">
+                <div class="malus-option-icon">❌</div>
+                <div class="malus-option-label" style="font-weight: 800;">Rejeter<br><small style="font-size: 11px; color: #e74c3c;">Il perd 20 pts</small></div>
+            </button>
+            <button onclick="validateProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(46,204,113,0.1); border-color: #2ecc71;">
+                <div class="malus-option-icon">✅</div>
+                <div class="malus-option-label" style="font-weight: 800;">Valider<br><small style="font-size: 11px; color: #2ecc71;">Je perds 10 pts</small></div>
+            </button>
+        </div>
+        <button class="malus-cancel" onclick="closeValidateProof()" style="margin-top: 15px;">Annuler</button>
+    </div>
+</div>
+
+<script>
+(function(){
+    function animateBars(){
+        document.querySelectorAll('.gw-bar-fill').forEach(function(el){
+            var pct = el.getAttribute('data-pct') || '0';
+            el.style.width = pct + '%';
+            var col = el.getAttribute('data-color');
+            if(col){ el.style.background = col; }
+        });
+    }
+    setTimeout(animateBars, 60);
+})();
+
+function loadGWTasks(){
+    fetch('/api/daily_tasks')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(!data.tasks) return;
+            var byName = {};
+            data.tasks.forEach(function(t){
+                if(!byName[t.player_name]) byName[t.player_name] = [];
+                byName[t.player_name].push(t);
+            });
+            document.querySelectorAll('.gw-player[data-gw-player-name]').forEach(function(el){
+                var name = el.getAttribute('data-gw-player-name');
+                var list = el.querySelector('.gw-tasks-list');
+                if(!list) return;
+                var tasks = byName[name] || [];
+                if(tasks.length === 0) return;
+                var enc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+                list.innerHTML = tasks.map(function(t){
+                    var actBtns = '';
+                    if(!t.is_current_user){
+                        actBtns = '<button class="gw-task-suspicion-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" data-points="'+t.points+'" data-taskid="'+(t.task_id||'')+'" title="Émettre une suspicion">🔍</button>'
+                                + '<button class="gw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus">💀</button>'
+                                + '<button class="gw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus">❤️</button>';
+                    }
+                    return '<div class="gw-task-item">'
+                         + '<div class="gw-task-row1">'
+                         + '<div class="gw-task-dot"></div>'
+                         + '<span class="gw-task-name">'+enc(t.task_name)+'</span>'
+                         + '<span class="gw-task-pts">+'+t.points+' pts</span>'
+                         + '</div>'
+                         + '<div class="gw-task-row2">'
+                         + '<span class="gw-task-time">'+enc(t.time)+'</span>'
+                         + actBtns
+                         + '</div>'
+                         + '</div>';
+                }).join('');
+                list.classList.add('has-tasks');
+            });
+        }).catch(function(){});
+}
+
+document.addEventListener('click', function(e){
+    var btn = e.target.closest('.gw-task-suspicion-btn');
+    if(btn){ 
+        var email = btn.dataset.email;
+        var name = btn.dataset.name;
+        var task = btn.dataset.task;
+        var points = parseInt(btn.dataset.points) || 0;
+        var taskId = btn.dataset.taskid;
+        emitSuspicionFromTask(email, name, task, points, taskId);
+        return;
+    }
+    btn = e.target.closest('.gw-task-malus-btn');
+    if(btn){ openTaskMalus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+    btn = e.target.closest('.gw-task-bonus-btn');
+    if(btn){ openTaskBonus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+});
+
+window._playerPickerMode = 'malus';
+function openGlobalMalus(){ window._playerPickerMode='malus'; document.getElementById('playerPickerTitle').textContent='💀 Malus pour qui ?'; document.getElementById('playerPickerOverlay').classList.add('open'); }
+function openGlobalBonus(){ window._playerPickerMode='bonus'; document.getElementById('playerPickerTitle').textContent='❤️ Bonus pour qui ?'; document.getElementById('playerPickerOverlay').classList.add('open'); }
+function closePlayerPicker(){ document.getElementById('playerPickerOverlay').classList.remove('open'); }
+function selectPlayer(email, name){ closePlayerPicker(); if(window._playerPickerMode==='malus'){ openMalus(email,name); } else { openBonus(email,name); } }
+
+var _bonusEmail = null;
+function openBonus(email, name){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; document.getElementById('bonusOverlay').classList.add('open'); }
+function closeBonus(){ document.getElementById('bonusOverlay').classList.remove('open'); _bonusEmail=null; var ctx=document.getElementById('bonusTaskContext'); if(ctx){ ctx.style.display='none'; } }
+function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
+function sendBonus(reason, points){
+    if(!_bonusEmail) return;
+    var targetEmail = _bonusEmail;
+    fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
+        .then(function(r){return r.json();}).then(function(data){
+            closeBonus();
+            if(data.success){ setTimeout(function(){ window.location.reload(); }, 1800); }
+            else { alert(data.error||'Erreur'); }
+        }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
+}
+
+var _malusEmail = null;
+function openMalus(email, name){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; document.getElementById('malusOverlay').classList.add('open'); }
+function closeMalus(){ document.getElementById('malusOverlay').classList.remove('open'); _malusEmail=null; var ctx=document.getElementById('malusTaskContext'); if(ctx){ ctx.style.display='none'; } }
+function openTaskMalus(email, name, taskName){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; var ctx=document.getElementById('malusTaskContext'); var tn=document.getElementById('malusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('malusOverlay').classList.add('open'); }
+function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
+function sendMalus(reason, points){
+    if(!_malusEmail) return;
+    fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:_malusEmail,reason:reason,points:points})})
+        .then(function(r){return r.json();}).then(function(data){
+            closeMalus();
+            if(data.success){ setTimeout(function(){ window.location.reload(); }, 2000); }
+            else { alert(data.error||'Erreur'); }
+        }).catch(function(){ closeMalus(); alert('Erreur réseau'); });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadGWTasks();
+    loadMySuspicions(); // Charger les suspicions au chargement
+});
+
+// ====== SUSPICIONS - VARIABLES GLOBALES ======
+let currentSuspicionId = null;
+let currentSuspicionToValidate = null;
+let availableTasks = [];
+
+// ====== CHARGER LES SUSPICIONS DE LA MAISON (PUBLIC) ======
+function loadMySuspicions() {
+    console.log('🔍 Chargement des suspicions...');
+    fetch('/api/house_suspicions')
+        .then(r => r.json())
+        .then(data => {
+            console.log('🔍 Réponse API suspicions:', data);
+            if (!data.success && !data.suspicions) {
+                console.error('❌ Erreur API suspicions');
+                document.getElementById('suspicionsList').innerHTML = '<div style="text-align: center; color: rgba(255,0,0,0.7); font-size: 12px; padding: 20px 0;">Erreur de chargement</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // Afficher TOUTES les suspicions de la maison (public)
+            if (data.suspicions && data.suspicions.length > 0) {
+                data.suspicions.forEach(s => {
+                    let statusIcon = '';
+                    let statusText = '';
+                    let bgColor = 'rgba(255,255,255,0.08)';
+                    let borderColor = 'rgba(255,255,255,0.15)';
+                    let photoZone = '';
+                    let buttonsZone = '';
+                    
+                    // Adapter le fond selon qui est concerné
+                    if (s.is_suspected && s.status === 'pending') {
+                        bgColor = 'rgba(231,76,60,0.12)';
+                        borderColor = 'rgba(231,76,60,0.3)';
+                    }
+                    
+                    // CADRE PHOTO - TOUJOURS AFFICHÉ
+                    if (s.status === 'pending') {
+                        statusIcon = '⚠️';
+                        statusText = `<strong>${s.suspecting_name}</strong> soupçonne <strong>${s.suspected_name}</strong>`;
+                        
+                        // Cadre photo vide avec bouton upload
+                        photoZone = `
+                        <div id="photoFrame_${s.id}" class="proof-photo-frame">
+                            <div id="photoIcon_${s.id}" style="font-size: 40px; opacity: 0.3; margin-bottom: 10px;">📷</div>
+                            <div id="photoPreview_${s.id}" style="display: none; width: 100%; max-width: 300px;"></div>`;
+                        
+                        // Si je suis le soupçonné OU si je suis le parent de l'enfant soupçonné, bouton upload
+                        if (s.is_suspected || s.can_upload_for_child) {
+                            let titleText = '';
+                            let subtitleText = '';
+                            if (s.can_upload_for_child) {
+                                titleText = `👨‍👩‍👧‍👦 Votre enfant <strong>${s.suspected_name}</strong> est soupçonné(e)`;
+                                subtitleText = `Prenez une photo pour prouver que la tâche est bien faite`;
+                            } else {
+                                titleText = `👤 Vous êtes soupçonné(e) !`;
+                                subtitleText = `Uploadez une photo pour prouver que la tâche est bien faite`;
+                            }
+                            
+                            photoZone += `
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 800; text-align: center; margin-bottom: 10px;">${titleText}</div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 15px;">${subtitleText}</div>
+                            <input type="file" id="proofInput_${s.id}" accept="image/*" capture="environment" 
+                                   style="display: none;" onchange="uploadProofInline(${s.id})">
+                            <label for="proofInput_${s.id}" 
+                                   onmousedown="this.style.transform='scale(0.95)'" 
+                                   onmouseup="this.style.transform='scale(1)'" 
+                                   ontouchstart="this.style.transform='scale(0.95)'" 
+                                   ontouchend="this.style.transform='scale(1)'"
+                                   style="display: inline-block; padding: 14px 24px; background: linear-gradient(135deg, rgba(231,76,60,1) 0%, rgba(192,57,43,1) 100%); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(231,76,60,0.4); transition: transform 0.2s;">
+                                📸 Cliquez ici pour prendre une photo
+                            </label>
+                            <div id="proofStatus_${s.id}" style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 700; text-align: center;"></div>`;
+                        } else if (s.is_suspecting) {
+                            photoZone += `
+                            <div style="font-size: 12px; color: rgba(253,174,84,1); font-weight: 700; text-align: center; margin-bottom: 5px;">🔍 Vous avez émis cette suspicion</div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">En attente de la photo de preuve de ${s.suspected_name}</div>`;
+                        } else {
+                            photoZone += `
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">En attente de la photo de preuve</div>`;
+                        }
+                        photoZone += `</div>`;
+                        
+                        // Boutons toujours visibles et actifs selon le rôle
+                        if (s.is_suspecting) {
+                            buttonsZone = `
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                <button onclick="alert('⏳ En attente de la photo de preuve de ${s.suspected_name}')" 
+                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.4); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ✅ Accepter la preuve
+                                </button>
+                                <button onclick="alert('⏳ En attente de la photo de preuve de ${s.suspected_name}')" 
+                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.4); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ❌ Refuser
+                                </button>
+                            </div>
+                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px;">Ces boutons seront actifs après l'upload de la photo</div>`;
+                        } else {
+                            buttonsZone = `
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider ou refuser cette preuve')" 
+                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.2); color: rgba(255,255,255,0.6); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ✅ Accepter
+                                </button>
+                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider ou refuser cette preuve')" 
+                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.2); color: rgba(255,255,255,0.6); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ❌ Refuser
+                                </button>
+                            </div>
+                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px;">Validation par ${s.suspecting_name}</div>`;
+                        }
+                        
+                    } else if (s.status === 'awaiting_validation') {
+                        statusIcon = '📸';
+                        statusText = `<strong>${s.suspecting_name}</strong> soupçonne <strong>${s.suspected_name}</strong> - Preuve envoyée`;
+                        
+                        // CADRE PHOTO - Avec image (vérifier que photo_path existe)
+                        if (s.photo_path) {
+                            const timestamp = new Date().getTime();
+                            photoZone = `
+                            <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                                <img src="/${s.photo_path}?t=${timestamp}" style="width: 100%; max-height: 250px; object-fit: contain; border-radius: 10px; cursor: pointer;" onclick="window.open('/${s.photo_path}', '_blank')">
+                            </div>`;
+                        } else {
+                            photoZone = `
+                            <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; min-height: 150px; display: flex; align-items: center; justify-content: center;">
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.5);">⏳ Photo en cours d'upload...</div>
+                            </div>`;
+                        }
+                        
+                        // BOUTONS - Actifs pour le soupçonneux
+                        if (s.is_suspecting) {
+                            buttonsZone = `
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                <button onclick="validateProofInline(${s.id}, ${s.task_points}, '${s.suspected_name}')" 
+                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.9); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ✅ Accepter la preuve
+                                </button>
+                                <button onclick="rejectProofInline(${s.id}, '${s.suspected_name}')" 
+                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.9); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ❌ Refuser
+                                </button>
+                            </div>
+                            <div style="font-size: 10px; color: rgba(253,174,84,1); font-weight: 700; text-align: center; margin-top: 4px;">🔍 C'est à vous de valider cette preuve</div>`;
+                        } else {
+                            buttonsZone = `
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider cette preuve')" 
+                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.3); color: rgba(255,255,255,0.7); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ✅ Accepter
+                                </button>
+                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider cette preuve')" 
+                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.3); color: rgba(255,255,255,0.7); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                    ❌ Refuser
+                                </button>
+                            </div>
+                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px;">En attente de validation par ${s.suspecting_name}</div>`;
+                        }
+                        
+                    } else if (s.status === 'validated') {
+                        statusIcon = '✅';
+                        statusText = `<strong>${s.suspected_name}</strong> a prouvé sa bonne foi (+${s.task_points} pts)`;
+                        bgColor = 'rgba(46,204,113,0.12)';
+                        borderColor = 'rgba(46,204,113,0.3)';
+                        
+                        // Pas de photo affichée pour les suspicions validées
+                        photoZone = '';
+                        
+                        buttonsZone = `
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(46,204,113,0.15); border-radius: 10px; color: rgba(46,204,113,1); font-size: 12px; font-weight: 700;">
+                            ✅ Preuve acceptée - Suspicion levée
+                        </div>`;
+                        
+                    } else if (s.status === 'rejected') {
+                        statusIcon = '❌';
+                        statusText = `<strong>${s.suspected_name}</strong> n'a pas convaincu (-20 pts)`;
+                        bgColor = 'rgba(231,76,60,0.12)';
+                        borderColor = 'rgba(231,76,60,0.3)';
+                        
+                        // Pas de photo affichée pour les suspicions refusées
+                        photoZone = '';
+                        
+                        buttonsZone = `
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.15); border-radius: 10px; color: rgba(231,76,60,1); font-size: 12px; font-weight: 700;">
+                            ❌ Preuve refusée - Sanction appliquée
+                        </div>`;
+                    }
+                    
+                    html += `
+                    <div class="suspicion-card" style="background: ${bgColor}; backdrop-filter: blur(10px); border: 1px solid ${borderColor}; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                            <span style="font-size: 20px;">${statusIcon}</span>
+                            <div style="flex: 1;">
+                                <div style="font-size: 13px; color: white;">${statusText}</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px;">📋 ${s.task_name}</div>
+                            </div>
+                            <div style="font-size: 12px; font-weight: 700; color: rgba(253,174,84,1);">${s.task_points} pts</div>
+                        </div>
+                        ${photoZone}
+                        ${buttonsZone}
+                    </div>`;
+                });
+            }
+            
+            // Aucune suspicion
+            if (html === '') {
+                html = '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; padding: 20px 0;">Aucune suspicion en cours</div>';
+            }
+            
+            document.getElementById('suspicionsList').innerHTML = html;
+        })
+        .catch(err => {
+            console.error('Erreur chargement suspicions:', err);
+            document.getElementById('suspicionsList').innerHTML = '<div style="text-align: center; color: rgba(255,0,0,0.7); font-size: 12px; padding: 20px 0;">Erreur de chargement</div>';
+        });
+}
+
+// ====== OUVRIR LE PICKER DE TÂCHES ======
+function openSuspicionPicker() {
+    fetch('/api/proof/tasks')
+        .then(r => r.json())
+        .then(tasks => {
+            availableTasks = tasks;
+            let html = '';
+            
+            if (tasks.length === 0) {
+                html = '<div style="text-align: center; color: #597176; font-size: 13px; padding: 20px;">Aucune tâche récente à contester</div>';
+            } else {
+                tasks.forEach(t => {
+                    html += `
+                    <div class="malus-option" onclick="emitSuspicion('${t.email}', '${t.name}', '${t.task.replace(/'/g, "\\'")}', ${t.points}, ${t.id})">
+                        <div style="flex: 1;">
+                            <div style="font-size: 14px; font-weight: 700; color: #153036;">${t.name}</div>
+                            <div style="font-size: 12px; color: #597176; margin-top: 2px;">${t.task}</div>
+                            <div style="font-size: 10px; color: #999; margin-top: 2px;">${new Date(t.at).toLocaleDateString('fr-FR')}</div>
+                        </div>
+                        <div class="malus-option-pts" style="color: #FDAE54;">${t.points} pts</div>
+                    </div>`;
+                });
+            }
+            
+            document.getElementById('suspicionTasksList').innerHTML = html;
+            document.getElementById('suspicionPickerOverlay').classList.add('open');
+        })
+        .catch(err => {
+            console.error('Erreur chargement tâches:', err);
+            alert('Erreur lors du chargement des tâches');
+        });
+}
+
+// ====== ANIMATION DES POINTS ======
+function showPointsAnimation(points) {
+    const pointsDiv = document.createElement('div');
+    pointsDiv.className = 'points-animation';
+    pointsDiv.textContent = (points > 0 ? '+' : '') + points + ' points!';
+    if (points > 0) {
+        pointsDiv.style.color = '#2ecc71';
+    } else {
+        pointsDiv.style.color = '#e74c3c';
+    }
+    document.body.appendChild(pointsDiv);
+    
+    // Jouer un son
+    try {
+        const audio = new Audio('/static/sounds/points.mp3');
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+    } catch(e) {}
+    
+    setTimeout(() => {
+        document.body.removeChild(pointsDiv);
+    }, 2000);
+}
+
+// ====== UPLOAD PREUVE INLINE ======
+function uploadProofInline(suspicionId) {
+    const fileInput = document.getElementById(`proofInput_${suspicionId}`);
+    const statusDiv = document.getElementById(`proofStatus_${suspicionId}`);
+    const photoIcon = document.getElementById(`photoIcon_${suspicionId}`);
+    const photoPreview = document.getElementById(`photoPreview_${suspicionId}`);
+    
+    if (!fileInput.files || !fileInput.files[0]) {
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    // 1. AFFICHER L'APERÇU IMMÉDIATEMENT
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        // Masquer l'icône 📷 et afficher l'image
+        if (photoIcon) photoIcon.style.display = 'none';
+        if (photoPreview) {
+            photoPreview.innerHTML = `<img src="${e.target.result}" style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px;">`;
+            photoPreview.style.display = 'block';
+        }
+    };
+    reader.readAsDataURL(file);
+    
+    // 2. UPLOADER VERS LE SERVEUR
+    statusDiv.textContent = '📤 Envoi en cours...';
+    statusDiv.style.color = 'rgba(253,174,84,1)';
+    
+    const formData = new FormData();
+    formData.append('suspicion_id', suspicionId);
+    formData.append('photo', file);
+    
+    fetch('/api/upload_proof', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.textContent = '✅ Preuve envoyée ! Rechargement...';
+            statusDiv.style.color = 'rgba(46,204,113,1)';
+            // Recharger la page complète après 2 secondes pour voir la photo et les boutons
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            statusDiv.textContent = '❌ Erreur: ' + (data.error || 'Erreur inconnue');
+            statusDiv.style.color = 'rgba(231,76,60,1)';
+            // Réafficher l'icône 📷 en cas d'erreur
+            if (photoIcon) photoIcon.style.display = 'block';
+            if (photoPreview) photoPreview.style.display = 'none';
+        }
+    })
+    .catch(err => {
+        console.error('Erreur upload:', err);
+        statusDiv.textContent = '❌ Erreur lors de l\'envoi';
+        statusDiv.style.color = 'rgba(231,76,60,1)';
+        // Réafficher l'icône 📷 en cas d'erreur
+        if (photoIcon) photoIcon.style.display = 'block';
+        if (photoPreview) photoPreview.style.display = 'none';
+    });
+}
+
+// ====== VALIDER PREUVE INLINE ======
+function validateProofInline(suspicionId, taskPoints, playerName) {
+    if (!confirm(`😊 Désolé de t'avoir soupçonné, ${playerName} !\n\n✅ ${playerName} récupère +${taskPoints} points\n❌ Vous perdez 10 points pour vous être trompé`)) {
+        return;
+    }
+    
+    fetch('/api/validate_proof', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            suspicion_id: suspicionId,
+            is_valid: true
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Animation 1: Vous perdez des points
+            showPointsAnimation(-10);
+            
+            // Animation 2: L'autre joueur gagne des points (décalée)
+            setTimeout(() => {
+                const gainDiv = document.createElement('div');
+                gainDiv.className = 'points-animation';
+                gainDiv.textContent = `${playerName} +${taskPoints} pts!`;
+                gainDiv.style.color = '#2ecc71';
+                gainDiv.style.top = '40%';
+                document.body.appendChild(gainDiv);
+                
+                setTimeout(() => {
+                    try { document.body.removeChild(gainDiv); } catch(e) {}
+                }, 2000);
+            }, 300);
+            
+            setTimeout(() => {
+                loadMySuspicions();
+                location.reload();
+            }, 2500);
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur validation:', err);
+        alert('Erreur lors de la validation');
+    });
+}
+
+// ====== REJETER PREUVE INLINE ======
+function rejectProofInline(suspicionId, playerName) {
+    if (!confirm(`💪 La prochaine fois ${playerName} !\n\nCette preuve n'est pas convaincante.\n${playerName} perd 20 points.`)) {
+        return;
+    }
+    
+    fetch('/api/validate_proof', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            suspicion_id: suspicionId,
+            is_valid: false
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Animation de points (pas de changement pour le suspecteur, mais on peut afficher un message de succès)
+            const successDiv = document.createElement('div');
+            successDiv.className = 'points-animation';
+            successDiv.textContent = '� Recommence !';
+            successDiv.style.color = '#FDAE54';
+            document.body.appendChild(successDiv);
+            
+            // Son
+            try {
+                const audio = new Audio('/static/sounds/malus.mp3');
+                audio.volume = 0.4;
+                audio.play().catch(() => {});
+            } catch(e) {}
+            
+            setTimeout(() => {
+                document.body.removeChild(successDiv);
+                loadMySuspicions();
+                location.reload();
+            }, 2000);
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur rejet:', err);
+        alert('Erreur lors du rejet');
+    });
+}
+
+function closeSuspicionPicker() {
+    document.getElementById('suspicionPickerOverlay').classList.remove('open');
+}
+
+// ====== ÉMETTRE UNE SUSPICION DIRECTEMENT DEPUIS UNE TÂCHE ======
+function emitSuspicionFromTask(email, name, taskName, points, taskId) {
+    if (!confirm(`🔍 Émettre une suspicion sur ${name} ?\n\nTâche: ${taskName}\nRisque: 10 pts si la preuve est acceptée`)) {
+        return;
+    }
+    
+    fetch('/api/emit_suspicion', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            suspected_email: email,
+            task_name: taskName,
+            task_points: points,
+            completed_task_id: taskId
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('🔍 ' + data.message);
+            loadMySuspicions();
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur émission suspicion:', err);
+        alert('Erreur lors de l\'émission de la suspicion');
+    });
+}
+
+// ====== ÉMETTRE UNE SUSPICION ======
+function emitSuspicion(email, name, taskName, points, taskId) {
+    if (!confirm(`🔍 Émettre une suspicion sur ${name} ?\n\nTâche: ${taskName}\nRisque: 10 pts si tu as tort`)) {
+        return;
+    }
+    
+    fetch('/api/emit_suspicion', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            suspected_email: email,
+            task_name: taskName,
+            task_points: points,
+            completed_task_id: taskId
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeSuspicionPicker();
+            loadMySuspicions();
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur émission suspicion:', err);
+        alert('Erreur lors de l\'émission de la suspicion');
+    });
+}
+
+// ====== UPLOAD PREUVE ======
+function openUploadProofModal(suspicionId, taskName) {
+    currentSuspicionId = suspicionId;
+    document.getElementById('uploadProofTaskName').textContent = taskName;
+    document.getElementById('uploadProofOverlay').classList.add('open');
+}
+
+function closeUploadProof() {
+    document.getElementById('uploadProofOverlay').classList.remove('open');
+    currentSuspicionId = null;
+    document.getElementById('proofPhotoInput').value = '';
+}
+
+function submitProof() {
+    if (!currentSuspicionId) return;
+    
+    const fileInput = document.getElementById('proofPhotoInput');
+    if (!fileInput.files || !fileInput.files[0]) {
+        alert('Veuillez sélectionner une photo');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('suspicion_id', currentSuspicionId);
+    formData.append('photo', fileInput.files[0]);
+    
+    fetch('/api/upload_proof', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeUploadProof();
+            loadMySuspicions();
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur upload preuve:', err);
+        alert('Erreur lors de l\'envoi de la preuve');
+    });
+}
+
+// ====== VALIDATION PREUVE ======
+function openValidateProofModal(suspicionId, playerName, taskName, photoPath) {
+    currentSuspicionToValidate = suspicionId;
+    document.getElementById('validateProofPlayerName').textContent = playerName;
+    document.getElementById('validateProofTaskName').textContent = taskName;
+    document.getElementById('validateProofImage').src = '/' + photoPath;
+    document.getElementById('validateProofOverlay').classList.add('open');
+}
+
+function closeValidateProof() {
+    document.getElementById('validateProofOverlay').classList.remove('open');
+    currentSuspicionToValidate = null;
+}
+
+function validateProof() {
+    if (!currentSuspicionToValidate) return;
+    
+    if (!confirm('✅ Accepter cette preuve ?\nVous perdrez 10 points.')) return;
+    
+    fetch('/api/validate_proof', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            suspicion_id: currentSuspicionToValidate,
+            is_valid: true
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeValidateProof();
+            loadMySuspicions();
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur validation:', err);
+        alert('Erreur lors de la validation');
+    });
+}
+
+function rejectProof() {
+    if (!currentSuspicionToValidate) return;
+    
+    if (!confirm('❌ Rejeter cette preuve ?\nLe joueur perdra 20 points.')) return;
+    
+    fetch('/api/validate_proof', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            suspicion_id: currentSuspicionToValidate,
+            is_valid: false
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeValidateProof();
+            loadMySuspicions();
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur rejet:', err);
+        alert('Erreur lors du rejet');
+    });
+}
+
+</script>
+{% endblock %}

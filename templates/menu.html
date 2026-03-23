@@ -379,6 +379,50 @@
             order: 2;
             flex-shrink: 0;
         }
+                /* Bouton Gameplay avec animation pulse */
+        @keyframes pulse-gameplay {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .gameplay-btn-wrapper {
+          position: fixed;
+          right: 14px;
+          top: 14px;
+          z-index: 9999;
+          pointer-events: auto;
+        }
+        
+        .gameplay-btn {
+          width: 50px;
+          height: 50px;
+          background: rgba(255, 255, 255, 0.24);
+          backdrop-filter: saturate(180%) blur(30px);
+          -webkit-backdrop-filter: saturate(180%) blur(30px);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          cursor: pointer;
+          text-decoration: none;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.55);
+          transition: transform 0.2s ease;
+          animation: pulse-gameplay 2s ease-in-out infinite;
+        }
+        
+        .gameplay-btn:hover {
+          animation: none;
+          transform: scale(1.05);
+        }
+        
+        .gameplay-btn:active {
+          transform: scale(0.95);
+        }
+
+
+        
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
               et centrer le groupe d'avatars (les avatars doivent être côte-à-côte au centre) */
@@ -2662,7 +2706,12 @@ document.addEventListener('DOMContentLoaded', function() {
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
                 <!-- Bouton bêta testeur à gauche -->
-                <div class="header-left-actions">
+                
+                <!-- Bouton Gameplay (position fixed à droite) -->
+                <div class="gameplay-btn-wrapper">
+                    <a href="{{ url_for('gameplay') }}" class="gameplay-btn" title="Gameplay">🎮</a>
+                </div>
+\                <div class="header-left-actions">
                     <div class="burger-wrapper">
                         <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
                         <div class="burger-alerts" id="burger-alerts">
@@ -6297,8 +6346,92 @@ function refreshAllBadges() {
 
 
             </script>
+            <script>
+            // ═══════════════════════════════════════════════════════════
+            // 🔍 SYSTÈME DE SUSPICIONS — Afficher loupe sur avatars
+            // ═══════════════════════════════════════════════════════════
 
-            
+            (function() {
+                // Tracking local des suspicions émises (pour affichage immédiat)
+                window._localSuspicionMap = window._localSuspicionMap || {}; // email → timestamp
+
+                function loadActiveSuspicions() {
+                    console.log('🔍 loadActiveSuspicions - Début du chargement...');
+                    fetch('/api/active_suspicions')
+                    .then(r => r.json())
+                    .then(data => {
+                        // Supprimer tous les anciens badges loupe
+                        document.querySelectorAll('.loupe-badge').forEach(el => el.remove());
+
+                        // Fusionner suspicions API + suspicions locales
+                        const now = Date.now();
+                        const ONE_HOUR = 60 * 60 * 1000;
+                        const apiSuspicions = data.suspicions || [];
+                        const allSuspicions = [...apiSuspicions];
+                        
+                        // Ajouter les suspicions locales non expirées qui ne sont pas déjà dans l'API
+                        if (window._localSuspicionMap) {
+                            Object.keys(window._localSuspicionMap).forEach(function(email) {
+                                const timestamp = window._localSuspicionMap[email];
+                                // Vérifier si non expiré (< 1h)
+                                if (now - timestamp <= ONE_HOUR) {
+                                    // Vérifier si pas déjà dans les suspicions API
+                                    if (!apiSuspicions.find(s => s.email === email)) {
+                                        allSuspicions.push({ email: email, name: null });
+                                    }
+                                } else {
+                                    // Supprimer les suspicions locales expirées
+                                    delete window._localSuspicionMap[email];
+                                }
+                            });
+                        }
+                        
+                        console.log('🔍 loadActiveSuspicions - Suspicions actives:', allSuspicions);
+                        if (allSuspicions.length === 0) return;
+                        
+                        // Afficher la loupe sur chaque joueur ayant une suspicion active
+                        allSuspicions.forEach(s => {
+                            const loupeTitle = 'Suspicion active' + (s.name ? ' : ' + s.name : '');
+                            console.log('🔍 Ajout loupe pour:', s.email);
+                            
+                            // Header : cibler TOUS les wrappers avatar (3 sections dans le DOM)
+                            document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + s.email + '"]').forEach(function(avatarWrapper) {
+                                avatarWrapper.style.position = 'relative';
+                                const loupe = document.createElement('span');
+                                loupe.className = 'loupe-badge';
+                                loupe.textContent = '🔍';
+                                loupe.title = loupeTitle;
+                                loupe.style.cssText = 'position:absolute;top:-3px;right:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(255,165,0,0.5));animation:loupeBounce 0.9s ease infinite alternate;';
+                                avatarWrapper.appendChild(loupe);
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Erreur loadActiveSuspicions:', err);
+                    });
+                }
+                
+                // Exposer la fonction sur window pour accès global
+                window.loadActiveSuspicions = loadActiveSuspicions;
+                
+                // Anim CSS loupe bounce
+                if (!document.getElementById('loupeBounceAnim')) {
+                    const style = document.createElement('style');
+                    style.id = 'loupeBounceAnim';
+                    style.textContent = '@keyframes loupeBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-5px) scale(1.15); } }';
+                    document.head.appendChild(style);
+                }
+                
+                // Charger les suspicions au démarrage
+                loadActiveSuspicions();
+                // Rafraîchir toutes les 60 secondes
+                setInterval(loadActiveSuspicions, 60000);
+                console.log('✅ Système suspicion loupe initialisé');
+            })();
+
+            </script>
+
+
 
 <!-- ═══ BANNIÈRE INSTALLATION PWA ═══ -->
 <div id="pwa-install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,rgba(255,255,255,0.88) 0%,rgba(166,211,220,0.55) 50%,rgba(253,174,84,0.35) 100%); color:#153036; padding:14px 16px 20px; box-shadow:0 -8px 32px rgba(21,48,54,0.18),0 0 0 1px rgba(255,255,255,0.5),inset 0 1px 0 rgba(255,255,255,0.65); border-radius:20px 20px 0 0; border:1px solid rgba(255,255,255,0.35); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">

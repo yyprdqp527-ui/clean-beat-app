@@ -726,6 +726,15 @@ def sats():
             pending_row = c.fetchone()
             skull_pending = bool(pending_row and pending_row[0] > 0)
             
+            # Vérifier si le joueur a une suspicion active (loupe 🔍)
+            c.execute("""SELECT COUNT(*) FROM suspicions
+                         WHERE suspected_player_email=? AND house_id=? 
+                         AND status IN ('pending', 'awaiting_validation')""",
+                      (email, house_id))
+            suspicion_row = c.fetchone()
+            suspicion_active = bool(suspicion_row and suspicion_row[0] > 0)
+            suspicion_count = int(suspicion_row[0]) if suspicion_row else 0
+            
             # Résoudre l'avatar : détection du type + reconstruction URL DiceBear
             resolved_avatar_file = None
             resolved_avatar_url = None
@@ -878,6 +887,8 @@ def sats():
                 'skull_count': int(skull_count) if skull_count else 0,
                 'skull_active': skull_active,    # Crâne actif (tricherie prouvée, 24h)
                 'skull_pending': skull_pending,  # Crâne suspicion (accusation en cours)
+                'suspicion_active': suspicion_active,  # Loupe active (suspicion en attente)
+                'suspicion_count': suspicion_count,    # Nombre de suspicions actives
             })
         
         # Trier par points de la semaine (pour le classement général et le leader)
@@ -3019,6 +3030,26 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
+    # Table des suspicions (système de gameplay avec preuves photo)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS suspicions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        house_id INTEGER NOT NULL,
+        suspecting_player_email TEXT NOT NULL,
+        suspected_player_email TEXT NOT NULL,
+        task_name TEXT NOT NULL,
+        task_points INTEGER DEFAULT 0,
+        completed_task_id INTEGER,
+        status TEXT DEFAULT 'pending',
+        photo_path TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP,
+        FOREIGN KEY(house_id) REFERENCES houses(id),
+        FOREIGN KEY(suspecting_player_email) REFERENCES users(email),
+        FOREIGN KEY(suspected_player_email) REFERENCES users(email)
+    )
+    """)
+
     # Table logs de connexion (suivi bêta-testeurs)
     c.execute("""
     CREATE TABLE IF NOT EXISTS login_logs (
@@ -4182,6 +4213,23 @@ def get_house_players_points(house_id, existing_conn=None):
     except Exception:
         pass
 
+    # 🚀 BATCH: suspicion_active pour tous les joueurs en 1 requête
+    # Compter UNIQUEMENT les joueurs SOUPÇONNÉS (qui doivent prouver leur tâche)
+    # La loupe 🔍 n'apparaît QUE sur l'avatar du joueur soupçonné
+    _suspicion_count_map = {}  # {email: count}
+    try:
+        # UNIQUEMENT joueur soupçonné (doit uploader photo)
+        c.execute("""
+            SELECT suspected_player_email, COUNT(*)
+            FROM suspicions
+            WHERE house_id=? AND status IN ('pending', 'awaiting_validation')
+            GROUP BY suspected_player_email
+        """, (house_id,))
+        for row_susp in c.fetchall():
+            _suspicion_count_map[row_susp[0]] = int(row_susp[1])
+    except Exception:
+        pass
+
     # 🚀 BATCH: calculer daily_points pour TOUS les joueurs en 1 seule requête
     _daily_map = {}  # {email: (points, tasks)}
     try:
@@ -4217,6 +4265,10 @@ def get_house_players_points(house_id, existing_conn=None):
             except Exception:
                 pass
         skull_pending = email in _skull_pending_map
+        
+        # Suspicion active (loupe 🔍)
+        suspicion_count = _suspicion_count_map.get(email, 0)
+        suspicion_active = suspicion_count > 0
         
         _dbg(f"\n🔍 Traitement joueur: {name} ({email}) - NOUVEAU CODE ACTIF!")
         _dbg(f"   avatar_emoji={avatar_emoji}, avatar_style={avatar_style}, avatar_url={avatar_url}, is_child={is_child_account}")
@@ -4378,6 +4430,8 @@ def get_house_players_points(house_id, existing_conn=None):
             'skull_count': int(skull_count_raw) if skull_count_raw else 0,
             'skull_active': skull_active,
             'skull_pending': skull_pending,
+            'suspicion_active': suspicion_active,
+            'suspicion_count': suspicion_count,
         })
 
     if _own_conn:
@@ -9509,6 +9563,55 @@ def classement():
 
 
 # ════════════════════════════════════════════════════════════
+# 🎮 GAMEPLAY — Page de fonctionnalités de jeu (malus/bonus)
+# ════════════════════════════════════════════════════════════
+@app.route('/gameplay')
+def gameplay():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    current_user_name = session.get('user', '')
+    players = []
+    house_name = None
+    house_id = None
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT house_id FROM users WHERE email=?", (current_user_name,))
+        row = c.fetchone()
+        if row:
+            house_id = row[0]
+        if house_id:
+            try:
+                c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))
+                hr = c.fetchone()
+                if hr:
+                    house_name = (hr[1] or hr[0] or '').strip() or None
+            except Exception:
+                pass
+            try:
+                players = get_house_players_points(house_id, existing_conn=conn)
+                for p in players:
+                    p['is_current_user'] = (p.get('email') == current_user_name)
+                    # DEBUG: Afficher les suspicions
+                    if p.get('suspicion_active'):
+                        _dbg(f"🔍 GAMEPLAY: {p['name']} suspicion_active={p['suspicion_active']}, count={p.get('suspicion_count', 0)}")
+            except Exception as ex:
+                _dbg(f"❌ Erreur get_house_players_points: {ex}")
+                import traceback
+                traceback.print_exc()
+                players = []
+        conn.close()
+    except Exception:
+        pass
+    return render_template(
+        'gameplay.html',
+        current_user_name=current_user_name,
+        players=players,
+        house_name=house_name,
+    )
+
+
+# ════════════════════════════════════════════════════════════
 # �🎓 ONBOARDING — Marquer comme vu
 # ════════════════════════════════════════════════════════════
 @app.route('/api/mark_onboarding_seen', methods=['POST'])
@@ -9871,6 +9974,136 @@ def api_active_bonus():
     except Exception as e:
         _dbg(f"ERREUR api_active_bonus: {e}")
         return jsonify({'bonus': [], 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/house_suspicions', methods=['GET'])
+def api_house_suspicions():
+    """
+    Renvoie TOUTES les suspicions de la maison (publique, visible par tous).
+    Similaire à api_active_malus mais pour les suspicions.
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'suspicions': []}), 200
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify({'suspicions': []}), 200
+
+        house_id = row[0]
+
+        # Toutes les suspicions actives ou récentes de la maison
+        c.execute("""
+            SELECT s.id, 
+                   s.suspecting_player_email, u1.name as suspecting_name,
+                   s.suspected_player_email, u2.name as suspected_name,
+                   s.task_name, s.task_points, s.status, s.photo_path, 
+                   s.created_at, s.resolved_at,
+                   u2.is_child_account, u2.created_by
+            FROM suspicions s
+            INNER JOIN users u1 ON s.suspecting_player_email = u1.email
+            INNER JOIN users u2 ON s.suspected_player_email = u2.email
+            WHERE s.house_id = ?
+            ORDER BY 
+                CASE s.status 
+                    WHEN 'pending' THEN 1
+                    WHEN 'awaiting_validation' THEN 2
+                    WHEN 'validated' THEN 3
+                    WHEN 'rejected' THEN 4
+                END,
+                s.created_at DESC
+            LIMIT 50
+        """, (house_id,))
+
+        rows = c.fetchall()
+        suspicions = []
+        for row in rows:
+            # Vérifier si l'utilisateur actuel peut uploader pour un enfant
+            is_child = (row[11] == 1)  # is_child_account
+            child_parent = row[12]  # created_by
+            can_upload_for_child = (is_child and child_parent == session['user'])
+            
+            suspicions.append({
+                'id': row[0],
+                'suspecting_email': row[1],
+                'suspecting_name': row[2],
+                'suspected_email': row[3],
+                'suspected_name': row[4],
+                'task_name': row[5],
+                'task_points': row[6],
+                'status': row[7],
+                'photo_path': row[8],
+                'created_at': str(row[9]),
+                'resolved_at': str(row[10]) if row[10] else None,
+                # Indiquer qui est l'utilisateur actuel
+                'is_suspecting': (row[1] == session['user']),
+                'is_suspected': (row[3] == session['user']),
+                'can_upload_for_child': can_upload_for_child  # Le parent peut uploader pour l'enfant
+            })
+
+        return jsonify({'success': True, 'suspicions': suspicions})
+    except Exception as e:
+        _dbg(f"ERREUR api_house_suspicions: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/active_suspicions', methods=['GET'])
+def api_active_suspicions():
+    """
+    Renvoie la liste des joueurs qui ont une suspicion active (pending ou awaiting_validation).
+    Utilisé pour afficher la loupe 🔍 sur les avatars.
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'suspicions': []}), 200
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify({'suspicions': []}), 200
+
+        house_id = row[0]
+
+        # Suspicions actives (pending = en attente de preuve, awaiting_validation = preuve envoyée)
+        c.execute("""
+            SELECT s.suspected_player_email, u.name, s.status
+            FROM suspicions s
+            INNER JOIN users u ON s.suspected_player_email = u.email
+            WHERE s.house_id = ?
+              AND s.status IN ('pending', 'awaiting_validation')
+            ORDER BY s.created_at DESC
+        """, (house_id,))
+
+        rows = c.fetchall()
+
+        # Dédupliquer par email (garder la suspicion la plus récente)
+        seen = {}
+        for email, name, status in rows:
+            if email not in seen:
+                seen[email] = {
+                    'email': email,
+                    'name': name or email.split('@')[0],
+                    'status': status,
+                    'icon': '🔍' if status == 'pending' else '📸'
+                }
+
+        return jsonify({'suspicions': list(seen.values())})
+    except Exception as e:
+        _dbg(f"ERREUR api_active_suspicions: {e}")
+        return jsonify({'suspicions': [], 'error': str(e)}), 500
     finally:
         conn.close()
 
@@ -10240,6 +10473,371 @@ def avatar_proxy():
         return _redirect(dicebear_url)
 
 # ════════════════════════════════════════════════════════════
+# 🕵️ SYSTÈME DE SUSPICION — Gameplay avec preuves photo
+# ════════════════════════════════════════════════════════════
+
+@app.route('/api/emit_suspicion', methods=['POST'])
+def api_emit_suspicion():
+    """
+    Émettre une suspicion sur une tâche complétée par un autre joueur.
+    Coût potentiel : 10 points si la suspicion est infondée
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    suspected_email = str(data.get('suspected_email', '')).strip()
+    task_name = str(data.get('task_name', '')).strip()
+    task_points = int(data.get('task_points', 0))
+    completed_task_id = data.get('completed_task_id')
+    suspecting_email = session['user']
+
+    if not suspected_email or suspected_email == suspecting_email:
+        return jsonify({'success': False, 'error': 'Cible invalide'}), 400
+
+    if not task_name:
+        return jsonify({'success': False, 'error': 'Tâche non spécifiée'}), 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        # Vérifier que les deux joueurs sont dans la même maison
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (suspecting_email,))
+        suspecting_row = c.fetchone()
+        if not suspecting_row:
+            return jsonify({'success': False, 'error': 'Utilisateur introuvable'}), 400
+        house_id = suspecting_row[0]
+        suspecting_name = suspecting_row[1] or suspecting_email.split('@')[0]
+
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (suspected_email,))
+        suspected_row = c.fetchone()
+        if not suspected_row or suspected_row[0] != house_id:
+            return jsonify({'success': False, 'error': 'Joueur introuvable dans cette maison'}), 400
+        suspected_name = suspected_row[1] or suspected_email.split('@')[0]
+
+        # Vérifier qu'il n'y a pas déjà une suspicion en attente pour cette tâche
+        c.execute("""
+            SELECT id FROM suspicions
+            WHERE suspected_player_email=? AND task_name=? AND status='pending'
+        """, (suspected_email, task_name))
+        existing_suspicion = c.fetchone()
+        if existing_suspicion:
+            return jsonify({'success': False, 'error': 'Une suspicion est déjà en attente pour cette tâche'}), 400
+
+        # Créer la suspicion
+        c.execute("""
+            INSERT INTO suspicions (
+                house_id, suspecting_player_email, suspected_player_email,
+                task_name, task_points, completed_task_id, status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+        """, (house_id, suspecting_email, suspected_email, task_name, task_points, completed_task_id))
+        
+        suspicion_id = c.lastrowid
+        conn.commit()
+
+        # TODO: Créer une notification pour le joueur soupçonné
+        
+        return jsonify({
+            'success': True,
+            'suspicion_id': suspicion_id,
+            'message': f'🔍 Suspicion émise sur {suspected_name}. En attente de preuve...'
+        })
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_emit_suspicion: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/upload_proof', methods=['POST'])
+def api_upload_proof():
+    """
+    Le joueur soupçonné upload une photo de preuve
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    suspicion_id = request.form.get('suspicion_id')
+    if not suspicion_id:
+        return jsonify({'success': False, 'error': 'suspicion_id manquant'}), 400
+
+    # Vérifier qu'un fichier a été envoyé
+    if 'photo' not in request.files:
+        return jsonify({'success': False, 'error': 'Aucune photo fournie'}), 400
+
+    photo_file = request.files['photo']
+    if photo_file.filename == '':
+        return jsonify({'success': False, 'error': 'Fichier vide'}), 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        # Vérifier que la suspicion existe et concerne le bon joueur (ou son parent si c'est un enfant)
+        c.execute("""
+            SELECT s.suspected_player_email, s.status, u.is_child_account, u.created_by
+            FROM suspicions s
+            INNER JOIN users u ON s.suspected_player_email = u.email
+            WHERE s.id=?
+        """, (suspicion_id,))
+        suspicion = c.fetchone()
+        
+        if not suspicion:
+            return jsonify({'success': False, 'error': 'Suspicion introuvable'}), 404
+        
+        suspected_email = suspicion[0]
+        is_child = (suspicion[2] == 1)
+        child_parent = suspicion[3]
+        
+        # Autoriser si je suis le soupçonné OU si je suis le parent de l'enfant soupçonné
+        is_authorized = (suspected_email == session['user']) or (is_child and child_parent == session['user'])
+        
+        if not is_authorized:
+            return jsonify({'success': False, 'error': 'Cette suspicion ne vous concerne pas'}), 403
+        
+        if suspicion[1] != 'pending':
+            return jsonify({'success': False, 'error': 'Cette suspicion a déjà été traitée'}), 400
+
+        # Sauvegarder la photo
+        filename = secure_filename(photo_file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"proof_{suspicion_id}_{timestamp}_{filename}"
+        
+        # Créer le dossier uploads/proofs s'il n'existe pas
+        proofs_dir = os.path.join(app.root_path, 'uploads', 'proofs')
+        os.makedirs(proofs_dir, exist_ok=True)
+        
+        photo_path = os.path.join(proofs_dir, unique_filename)
+        photo_file.save(photo_path)
+        
+        # Enregistrer le chemin relatif dans la BD
+        relative_path = f'uploads/proofs/{unique_filename}'
+        
+        c.execute("""
+            UPDATE suspicions
+            SET photo_path=?, status='awaiting_validation'
+            WHERE id=?
+        """, (relative_path, suspicion_id))
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': '📸 Preuve envoyée ! En attente de validation...',
+            'photo_path': relative_path
+        })
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_upload_proof: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/validate_proof', methods=['POST'])
+def api_validate_proof():
+    """
+    Le soupçonneux valide ou rejette la preuve photo
+    
+    Règles :
+    - Preuve VALIDÉE (photo convaincante) :
+      * Soupçonneux perd 10 points (il avait tort)
+      * Soupçonné gagne les points de sa tâche
+    
+    - Preuve REJETÉE (photo non convaincante) :
+      * Soupçonneux ne perd rien (il avait raison)
+      * Soupçonné perd 20 points (pénalité pour tricherie)
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    suspicion_id = data.get('suspicion_id')
+    is_valid = data.get('is_valid')  # True = valide, False = rejetée
+
+    if suspicion_id is None or is_valid is None:
+        return jsonify({'success': False, 'error': 'Paramètres manquants'}), 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        # Récupérer la suspicion
+        c.execute("""
+            SELECT suspecting_player_email, suspected_player_email, 
+                   task_name, task_points, status, house_id
+            FROM suspicions
+            WHERE id=?
+        """, (suspicion_id,))
+        suspicion = c.fetchone()
+        
+        if not suspicion:
+            return jsonify({'success': False, 'error': 'Suspicion introuvable'}), 404
+        
+        suspecting_email, suspected_email, task_name, task_points, status, house_id = suspicion
+        
+        if suspecting_email != session['user']:
+            return jsonify({'success': False, 'error': 'Seul le soupçonneux peut valider la preuve'}), 403
+        
+        if status != 'awaiting_validation':
+            return jsonify({'success': False, 'error': 'Cette suspicion n\'attend pas de validation'}), 400
+
+        # Récupérer les noms des joueurs
+        c.execute("SELECT name FROM users WHERE email=?", (suspecting_email,))
+        suspecting_name = (c.fetchone()[0] or suspecting_email.split('@')[0])
+        
+        c.execute("SELECT name FROM users WHERE email=?", (suspected_email,))
+        suspected_name = (c.fetchone()[0] or suspected_email.split('@')[0])
+
+        if is_valid:
+            # PREUVE VALIDÉE - La photo est convaincante
+            # Le soupçonneux avait tort → perd 10 points
+            c.execute("""
+                INSERT INTO completed_tasks (
+                    user_email, task_name, category, points, house_id, completed_at
+                ) VALUES (?, ?, 'suspicion_penalty', -10, ?, CURRENT_TIMESTAMP)
+            """, (suspecting_email, f'🔍 Suspicion infondée sur {suspected_name}', house_id))
+            
+            # Le soupçonné gagne les points de sa tâche
+            c.execute("""
+                INSERT INTO completed_tasks (
+                    user_email, task_name, category, points, house_id, completed_at
+                ) VALUES (?, ?, 'suspicion_reward', ?, ?, CURRENT_TIMESTAMP)
+            """, (suspected_email, f'✅ Preuve validée : {task_name}', task_points, house_id))
+            
+            # Marquer la suspicion comme validée
+            c.execute("""
+                UPDATE suspicions
+                SET status='validated', resolved_at=CURRENT_TIMESTAMP
+                WHERE id=?
+            """, (suspicion_id,))
+            
+            message = f'✅ Preuve acceptée ! {suspected_name} gagne {task_points} pts. Vous perdez 10 pts.'
+            
+        else:
+            # PREUVE REJETÉE - La photo n'est pas convaincante
+            # Le soupçonneux avait raison → ne perd rien
+            # Le soupçonné perd 20 points (pénalité lourde)
+            c.execute("""
+                INSERT INTO completed_tasks (
+                    user_email, task_name, category, points, house_id, completed_at
+                ) VALUES (?, ?, 'suspicion_penalty', -20, ?, CURRENT_TIMESTAMP)
+            """, (suspected_email, f'❌ Preuve rejetée : {task_name}', house_id))
+            
+            # Marquer la suspicion comme rejetée
+            c.execute("""
+                UPDATE suspicions
+                SET status='rejected', resolved_at=CURRENT_TIMESTAMP
+                WHERE id=?
+            """, (suspicion_id,))
+            
+            message = f'❌ Preuve rejetée ! {suspected_name} perd 20 pts. Vous aviez raison !'
+
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': message
+        })
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_validate_proof: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/my_suspicions', methods=['GET'])
+def api_my_suspicions():
+    """
+    Récupère les suspicions impliquant l'utilisateur connecté
+    (comme soupçonneux ou comme soupçonné)
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        email = session['user']
+        
+        # Suspicions où je suis le soupçonneux
+        c.execute("""
+            SELECT s.id, s.suspected_player_email, u.name, s.task_name, 
+                   s.task_points, s.status, s.photo_path, s.created_at
+            FROM suspicions s
+            JOIN users u ON u.email = s.suspected_player_email
+            WHERE s.suspecting_player_email=?
+            ORDER BY s.created_at DESC
+            LIMIT 20
+        """, (email,))
+        my_suspicions = []
+        for row in c.fetchall():
+            my_suspicions.append({
+                'id': row[0],
+                'suspected_email': row[1],
+                'suspected_name': row[2],
+                'task_name': row[3],
+                'task_points': row[4],
+                'status': row[5],
+                'photo_path': row[6],
+                'created_at': str(row[7]),
+                'role': 'suspecting'
+            })
+        
+        # Suspicions où je suis soupçonné
+        c.execute("""
+            SELECT s.id, s.suspecting_player_email, u.name, s.task_name, 
+                   s.task_points, s.status, s.photo_path, s.created_at
+            FROM suspicions s
+            JOIN users u ON u.email = s.suspecting_player_email
+            WHERE s.suspected_player_email=?
+            ORDER BY s.created_at DESC
+            LIMIT 20
+        """, (email,))
+        against_me = []
+        for row in c.fetchall():
+            against_me.append({
+                'id': row[0],
+                'suspecting_email': row[1],
+                'suspecting_name': row[2],
+                'task_name': row[3],
+                'task_points': row[4],
+                'status': row[5],
+                'photo_path': row[6],
+                'created_at': str(row[7]),
+                'role': 'suspected'
+            })
+        
+        return jsonify({
+            'success': True,
+            'my_suspicions': my_suspicions,
+            'against_me': against_me
+        })
+    except Exception as e:
+        _dbg(f"ERREUR api_my_suspicions: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+# ════════════════════════════════════════════════════════════
 # 🏡 Personnalisation de la maison (pièces)
 # ════════════════════════════════════════════════════════════
 @app.route('/set_bg_theme', methods=['POST'])
@@ -10394,6 +10992,14 @@ def manifest():
     response.headers['Content-Type'] = 'application/manifest+json'
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response
+
+# Servir les fichiers uploadés (avatars, preuves, etc.)
+@app.route('/uploads/<path:filename>')
+def serve_uploads(filename):
+    """Servir les fichiers du dossier uploads/"""
+    import os
+    uploads_dir = os.path.join(app.root_path, 'uploads')
+    return send_from_directory(uploads_dir, filename)
 
 # Page de nettoyage ULTIME (désinstalle les Service Workers)
 @app.route('/force_reload')
