@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 Debug Badges Inspector</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .section { background: #252526; padding: 15px; margin: 15px 0; border-left: 4px solid #007acc; }
+        code { background: #1e1e1e; padding: 2px 6px; border-radius: 3px; }
+        .yes { color: #4ec9b0; }
+        .no { color: #f48771; }
+        h2 { color: #4ec9b0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Inspector - Badges System</h1>
+    
+    <div class="section">
+        <h2>1. Inspectez l'HTML de l'avatar avec un badge</h2>
+        <p>Dans Chrome DevTools (F12), cherchez un avatar avec un badge :</p>
+        <ol>
+            <li>Cliquez droit sur l'avatar → "Inspecter"</li>
+            <li>Cherchez les balises <code>&lt;span&gt;</code> avec des emoji (💀, ❤️, 🔍)</li>
+            <li>Notez la <strong>classe CSS</strong> du span :</li>
+        </ol>
+        <p><strong>Options possibles :</strong></p>
+        <ul>
+            <li class="yes">✅ <code>class="avatar-emoji-badge"</code> → Nouveau système (correct)</li>
+            <li class="no">❌ <code>class="heart-badge"</code> → Ancien système (ne devrait plus exister)</li>
+            <li class="no">❌ <code>class="skull-badge"</code> → Ancien système (ne devrait plus exister)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>2. Vérifiez le DEBUG comment dans le code HTML</h2>
+        <p>Cherchez dans le code source (Ctrl+U ou Cmd+Option+U) :</p>
+        <code>&lt;!-- DEBUG p2: email=... suspicion_active=... --&gt;</code>
+        <p>Ce commentaire montre si <code>suspicion_active=True</code> ou <code>False</code></p>
+    </div>
+
+    <div class="section">
+        <h2>3. Testez avec Emma (house_id 150)</h2>
+        <p>Emma a <strong>4 suspicions actives</strong> dans la base de données :</p>
+        <ul>
+            <li>house_id: 150</li>
+            <li>suspected_player_email: Emma</li>
+            <li>status: 'pending' ou 'awaiting_validation'</li>
+        </ul>
+        <p>→ Elle DOIT avoir une loupe 🔍 sur son avatar</p>
+    </div>
+
+    <div class="section">
+        <h2>4. Cache navigateur ?</h2>
+        <p>Videz le cache et rechargez :</p>
+        <ul>
+            <li><strong>Chrome/Safari</strong> : Cmd+Shift+R (macOS)</li>
+            <li><strong>Firefox</strong> : Cmd+Shift+Delete</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>📋 Résumé système actuel</h2>
+        <table>
+            <tr><th>Badge</th><th>Emoji</th><th>Condition</th><th>Classe CSS</th><th>Position</th></tr>
+            <tr><td>Malus</td><td>💀</td><td>skull_active=True</td><td>avatar-emoji-badge</td><td>right: -6px</td></tr>
+            <tr><td>Suspicion</td><td>🔍</td><td>suspicion_active=True</td><td>avatar-emoji-badge</td><td>left: -6px</td></tr>
+        </table>
+        <p><strong>Même système, même classe CSS, même calcul serveur !</strong></p>
+    </div>
+</body>
+</html>

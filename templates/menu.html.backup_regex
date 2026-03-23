@@ -3,10 +3,16 @@
 {% set player_colors = ['rgba(120, 180, 230, 0.6)', 'rgba(180, 140, 200, 0.6)', 'rgba(240, 140, 140, 0.6)', 'rgba(250, 180, 100, 0.6)', 'rgba(130, 200, 150, 0.6)', 'rgba(240, 150, 170, 0.6)', 'rgba(120, 210, 200, 0.6)', 'rgba(255, 170, 170, 0.6)', 'rgba(140, 220, 210, 0.6)', 'rgba(255, 200, 120, 0.6)'] %}
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CleanBeat">
+    <meta name="theme-color" content="#597176">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-512.png') }}">
     <script src="/static/push-manager.js"></script>
     <title>Menu</title>
     <!-- Google Fonts Montserrat - chargement non-bloquant -->
@@ -80,7 +86,7 @@
         body { 
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
             /* 🎨 TEST : Dégradé brun chaud → noir profond (élégant et moderne) */
-            background: linear-gradient(135deg, var(--brown-warm) 0%, var(--brown-dark) 100%) !important; 
+            background: {{ bg_gradient }}; 
             background-attachment: fixed !important;
             background-repeat: no-repeat !important;
             background-size: cover !important;
@@ -101,25 +107,29 @@
         img[src$=".png"]{ max-width:100%; height:auto; display:block; }
         .header-menu { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:nowrap; background: rgba(255,255,255,0.24); backdrop-filter: saturate(180%) blur(30px); -webkit-backdrop-filter: saturate(180%) blur(30px); padding:14px 20px; border-radius: 0 0 24px 24px; box-shadow: 0 12px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35); color:#153036; position:fixed; top:0; left:0; right:0; z-index:2000; box-sizing:border-box; border: 1px solid rgba(255,255,255,0.55); }
         
-        /* Bouton burger */
+        /* 🔴🔴🔴 BOUTON BURGER DEBUG ORANGE 80px 🔴🔴🔴 */
         .burger-menu {
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 14px;
-            width: 56px;
-            height: 56px;
-            display: flex;
+            width: 80px !important;
+            height: 80px !important;
+            background: orange !important;
+            border: 8px solid red !important;
+            border-radius: 50% !important;
+            display: flex !important;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-            padding: 0;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 8px !important;
+            cursor: pointer !important;
+            position: fixed !important;
+            top: 15px !important;
+            left: 15px !important;
+            z-index: 999999 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 1) !important;
+            padding: 0 !important;
+            pointer-events: auto !important;
+            transition: none !important;
         }
         
         .burger-menu span {
@@ -166,7 +176,7 @@
             left: 0;
             width: 280px;
             height: 100%;
-            background: linear-gradient(180deg, rgba(166,211,220,0.98) 0%, rgba(89,113,118,0.95) 100%);
+            background: {{ bg_gradient }};
             backdrop-filter: blur(20px);
             box-shadow: 4px 0 30px rgba(0,0,0,0.3);
             transform: translateX(-100%);
@@ -286,7 +296,7 @@
             min-width: 22px;
             height: 22px;
             border-radius: 11px;
-            display: flex;
+            display: none !important; /* 🚫 Badges avatars DÉSACTIVÉS - notifications dans le menu fixe uniquement */
             align-items: center;
             justify-content: center;
             padding: 0 6px;
@@ -321,13 +331,13 @@
         .burger-alert-pill {
             display: flex;
             align-items: center;
-            gap: 6px;
-            border-radius: 20px;
-            padding: 8px 14px 8px 10px;
-            font-size: 16px !important;
-            font-weight: 900;
+            gap: 3px;
+            border-radius: 10px;
+            padding: 2px 6px 2px 4px;
+            font-size: 9px;
+            font-weight: 700;
             color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
             white-space: nowrap;
             border: 1px solid rgba(255,255,255,0.4);
             cursor: pointer;
@@ -338,25 +348,24 @@
             opacity: 0.85;
         }
 
-        .burger-alert-pill.baby {
-            background: #3B82F6 !important; /* BLEU TEST */
-            border: 3px solid #fff !important;
+        
+        .burger-alert-pill.mission {
+            background: #FB923C;
         }
 
-        .burger-alert-pill.mission {
-            background: #10B981 !important; /* VERT TEST */
-            border: 3px solid #fff !important;
+        .burger-alert-pill.courses {
+            background: #92400E;
         }
 
         .burger-alert-pill .pill-icon {
-            font-size: 20px !important;
+            font-size: 10px;
             line-height: 1;
         }
 
         .burger-alert-pill .pill-count {
-            font-size: 18px !important;
-            font-weight: 900 !important;
-            min-width: 24px;
+            font-size: 9px;
+            font-weight: 800;
+            min-width: 12px;
             text-align: center;
         }
 
@@ -369,6 +378,90 @@
             z-index: 2001;
             order: 2;
             flex-shrink: 0;
+        }
+        /* Bouton Gameplay à droite du header */
+        .gameplay-btn-wrapper {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            z-index: 999999 !important;
+            position: fixed !important;
+            right: 14px !important;
+            top: 14px !important;
+            flex-shrink: 0;
+            pointer-events: auto !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: rgba(255,0,255,0.3) !important;
+            padding: 10px !important;
+        }
+        .gameplay-btn {
+            width: 70px !important;
+            height: 70px !important;
+            background: cyan !important;
+            border: 5px solid blue !important;
+            border-radius: 50%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+            pointer-events: auto !important;
+            z-index: 99999 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .gameplay-label {
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            color: black !important;
+            background: yellow !important;
+            padding: 2px 4px !important;
+        }
+
+
+        /* Bouton Gameplay à droite du header */
+        .gameplay-btn-wrapper {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            z-index: 999999 !important;
+            position: fixed !important;
+            right: 14px !important;
+            top: 14px !important;
+            flex-shrink: 0;
+            pointer-events: auto !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: rgba(255,0,255,0.3) !important;
+            padding: 10px !important;
+        }
+        .gameplay-btn {
+            width: 70px !important;
+            height: 70px !important;
+            background: cyan !important;
+            border: 5px solid blue !important;
+            border-radius: 50%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+            pointer-events: auto !important;
+            z-index: 99999 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .gameplay-label {
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            color: black !important;
+            background: yellow !important;
+            padding: 2px 4px !important;
         }
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
@@ -385,11 +478,12 @@
             .header-inner { justify-content: center; }
             .header-right { margin-left: 10px; gap: 8px; }
             
-            /* 🚀 MOBILE : Barres horizontales sous les avatars au lieu de verticales à côté */
+            /* 🚀 MOBILE : Distribution auto selon nb joueurs et largeur écran */
             .avatar-strip { 
-                gap: 4px !important; /* Réduction drastique de l'écart entre joueurs */
+                gap: 0 !important;
                 flex-wrap: nowrap; 
-                justify-content: center;
+                justify-content: space-evenly;
+                width: 100%;
             }
             
             .avatar-col { 
@@ -900,7 +994,7 @@
         .rooms-isometric {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px 12px;
+            gap: 24px 18px;
             width: 100%;
             padding: 12px 8px;
             box-sizing: border-box;
@@ -914,6 +1008,8 @@
             -webkit-tap-highlight-color: transparent;
             overflow: visible !important;
             position: relative;
+            transform: scale(0.85);
+            transform-origin: top center;
             transition: transform 0.22s ease, filter 0.22s ease;
             animation: tileAppear 0.38s cubic-bezier(0.22, 0.61, 0.36, 1);
             display: flex !important;
@@ -951,23 +1047,22 @@
         
         /* Titre EN DESSOUS du cadre */
         .room-card-title {
-            margin-top: 16px;
-            padding: 4px 8px;
-            font-size: clamp(10px, 2.5vw, 13px);
-            font-weight: 600;
-            color: #1a1410;
-            /* 🎨 Fond orange élégant pour bien ressortir */
-            background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);
+            margin-top: 0px !important;
+            margin-bottom: 6px !important;
+            width: 100% !important;
+            padding: 5px 8px !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            color: #1a1410 !important;
+            background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%) !important;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border-radius: 8px;
-            text-align: center;
+            border-radius: 8px !important;
+            text-align: center !important;
             white-space: normal;
             word-break: break-word;
             overflow-wrap: break-word;
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
+            box-sizing: border-box !important;
             line-height: 1.2;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -979,7 +1074,7 @@
         
         /* Hover / Active */
         .room-card:hover { 
-            transform: scale(1.04);
+            transform: scale(0.9);
             filter: drop-shadow(0 8px 16px rgba(21,48,54,0.25));
             z-index: 99 !important; 
         }
@@ -1019,9 +1114,12 @@
                 padding: 10px 6px;
             }
             .room-card-title {
-                font-size: 10px;
-                padding: 3px 5px;
-                margin-top: 10px;
+                font-size: 13px !important;
+                padding: 4px 6px !important;
+                margin-top: 0px !important;
+                margin-bottom: 5px !important;
+                font-weight: 800 !important;
+                width: 100% !important;
             }
         }
         
@@ -1280,7 +1378,7 @@
         }
         
         .intro-message-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 800;
             background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
             -webkit-background-clip: text;
@@ -1419,7 +1517,7 @@
             }
             
             .avatar-strip {
-                gap: 100px !important;
+                gap: 0 !important;
             }
             
             .avatar-row {
@@ -1573,7 +1671,7 @@
             }
             
             .avatar-strip {
-                gap: 6px !important;
+                gap: 0 !important;
             }
             
             .avatar-col {
@@ -1597,7 +1695,7 @@
             }
             
             .avatar-strip {
-                gap: 4px !important;
+                gap: 0 !important;
             }
             
             .avatar-col {
@@ -1653,7 +1751,7 @@
             }
             
             .avatar-strip {
-                gap: 80px !important;
+                gap: 0 !important;
             }
             
             .vbar {
@@ -1732,7 +1830,7 @@
             }
             
             .avatar-strip {
-                gap: 50px !important;
+                gap: 0 !important;
             }
             
             .vbar {
@@ -1775,13 +1873,64 @@
             z-index: 10;
         }
 
+        /* Pastille orange « nouvelle mission » sur les cartes de pièces */
+        .room-mission-dot {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 26px;
+            height: 26px;
+            padding: 0 7px;
+            border-radius: 13px;
+            background: #FF6B2B;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(255,107,43,0.7);
+            animation: pulse-badge 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Pastille rose chambre bébé */
+        .room-baby-dot {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            min-width: 26px;
+            height: 26px;
+            padding: 0 7px;
+            border-radius: 13px;
+            background: #F472B6;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(244,114,182,0.7);
+            animation: pulse-badge 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        
+
         /* Responsive isométrique */
         @media (max-width: 480px) {
             .room-card-title { 
-                font-size: 9px !important; 
-                padding: 2px 4px !important;
-                margin-top: 8px !important;
-                line-height: 1.15 !important;
+                font-size: 13px !important;
+                padding: 4px 6px !important;
+                margin-top: 0px !important;
+                margin-bottom: 5px !important;
+                line-height: 1.2 !important;
+                font-weight: 800 !important;
+                width: 100% !important;
             }
         }
         @media (max-width: 360px) {
@@ -1791,9 +1940,12 @@
                 padding: 8px 4px !important;
             }
             .room-card-title {
-                font-size: 9px !important;
+                font-size: 12px !important;
                 padding: 3px 5px !important;
-                margin-top: 8px !important;
+                margin-top: 0px !important;
+                margin-bottom: 4px !important;
+                font-weight: 800 !important;
+                width: 100% !important;
             }
             .room-card-visual {
                 border-radius: 12px !important;
@@ -2090,7 +2242,60 @@
             background: rgba(255,90,90,0.22);
         }
 
-        /* Badge de rang */
+        /* Section Rappels profil */
+        .profile-reminders {
+            padding: 0 16px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .profile-reminder-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-radius: 12px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.9);
+            transition: background 0.18s;
+        }
+        .profile-reminder-item:active {
+            background: rgba(255,255,255,0.14);
+        }
+        /* Couleurs specifiques par type */
+        .reminder-courses {
+            background: rgba(110,60,20,0.35);
+            border-color: rgba(160,100,50,0.45);
+        }
+        .reminder-courses:active { background: rgba(110,60,20,0.55); }
+        .reminder-missions {
+            background: rgba(220,100,10,0.30);
+            border-color: rgba(253,174,84,0.45);
+        }
+        .reminder-missions:active { background: rgba(220,100,10,0.50); }
+        .profile-reminder-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .profile-reminder-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .profile-reminder-badge {
+            background: #FDAE54;
+            color: #1a1a2e;
+            font-size: 11px;
+            font-weight: 900;
+            border-radius: 10px;
+            padding: 2px 8px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+                /* Badge de rang */
         .profile-rank-badge {
             display: inline-flex;
             align-items: center;
@@ -2110,7 +2315,7 @@
         .room-zoom-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(26, 20, 16, 0.96);
+            background: {{ bg_gradient }};
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             z-index: 9998;
@@ -2150,7 +2355,7 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            color: #ffffff;
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
             font-size: 20px;
             font-weight: 700;
             text-align: center;
@@ -2187,9 +2392,9 @@
             animation: dissolveSmooth 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
 
-        /* 🎨 OVERLAY BLANC pendant dissolution pour masquer page menu */
+        /* Dissolution - fond harmonisé avec le thème */
         .room-zoom-overlay.dissolving {
-            background: rgba(255, 255, 255, 1) !important;
+            background: {{ bg_gradient }} !important;
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
             transition: background 0.3s cubic-bezier(0.4, 0, 1, 1);
@@ -2271,9 +2476,74 @@
             }
         }
 
+
+        {% if bg_theme_light %}
+        .avatar-name { color: #153036 !important; text-shadow: none !important; }
+        .avatar-points { color: #153036 !important; text-shadow: none !important; }
+        .house-name { color: #153036 !important; text-shadow: none !important; }
+        .room-button { color: #153036 !important; text-shadow: none !important; background: rgba(255,255,255,0.55) !important; border-color: rgba(21,48,54,0.25) !important; }
+        .burger-nav-divider { color: rgba(21,48,54,0.5) !important; }
+        {% endif %}
     </style>
 </head>
 <body>
+
+<script>
+//  MENU BURGER - Définition globale immédiate
+window.openBurgerMenu = function() {
+    console.log('openBurgerMenu appelee');
+    var overlay = document.getElementById('burgerOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    } else {
+        console.error('burgerOverlay not found!');
+    }
+};
+
+window.closeBurgerMenu = function() {
+    console.log('closeBurgerMenu appelee');
+    var overlay = document.getElementById('burgerOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+};
+
+// Attendre que le DOM soit chargé pour ajouter les event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Fonctions burger definies');
+    
+    // Bouton close (croix)
+    var closeBtn = document.getElementById('burgerClose');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', window.closeBurgerMenu);
+        console.log('Event listener ajoute au bouton close');
+    }
+    
+    // Clic sur l'overlay (ferme si on clique en dehors)
+    var overlay = document.getElementById('burgerOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                window.closeBurgerMenu();
+            }
+        });
+        console.log('Event listener ajoute a overlay');
+    }
+    
+    // Touche Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var overlay = document.getElementById('burgerOverlay');
+            if (overlay && overlay.classList.contains('active')) {
+                window.closeBurgerMenu();
+            }
+        }
+    });
+});
+</script>
+
     <script>
         // Badge de debug retiré
     </script>
@@ -2475,17 +2745,19 @@
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <!-- Boutons d'action droite : burger + bébé + ajouter mission (colonne) -->
-                <div class="header-right-actions">
-                    <button class="burger-menu" id="burgerBtn" onclick="openBurgerMenu()" aria-label="Menu">
-                        <span></span><span></span><span></span>
-                    </button>
-                    <a class="header-action-pill pill-baby" href="{{ url_for('baby_messages') }}" title="Bébé" aria-label="Suivi bébé">
-                        👶{% if unread_baby_tracking|default(99) > 0 %}<span class="header-pill-badge">{{ unread_baby_tracking }}</span>{% endif %}
-                    </a>
-                    <a class="header-action-pill pill-mission" href="{{ url_for('add_task_page', cat='Bonus') }}" title="Ajouter une mission" aria-label="Ajouter mission">
-                        ⭐
-                    </a>
+                <!-- Bouton bêta testeur à gauche -->
+                
+                <!-- Bouton Gameplay (position fixed à droite) -->
+                <div class="gameplay-btn-wrapper">
+                    <a href="{{ url_for('gameplay') }}" class="gameplay-btn" title="Gameplay">🎮</a>
+                </div>
+\                <div class="header-left-actions">
+                    <div class="burger-wrapper">
+                        <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
+                        <div class="burger-alerts" id="burger-alerts">
+                            
+                        </div>
+                    </div>
                 </div>
 
                 <div class="header-inner">
@@ -2542,14 +2814,11 @@
                                 {% set pct1 = points1|int %}
                                 {% if pct1 > 100 %}{% set pct1 = 100 %}{% endif %}
                                 {% set fill1 = 2 if pct1 > 0 and pct1 < 2 else pct1 %}
-                                {% set sorted_players = players|sort(attribute='email')|list %}
-                                {% set player1_idx = sorted_players|map(attribute='email')|list|index(current_user_name) %}
-                                {% set border1 = player_colors[player1_idx % player_colors|length] %}
                                 {% set current_player = players|selectattr('email', 'equalto', current_user_name)|first %}
                                 {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
+                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='/profil'">
                                         {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
                                         <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none;">
                                             {% if session.get('user_avatar_url') %}
@@ -2598,15 +2867,13 @@
                             {% set pct_p2 = points_p2|int %}
                             {% if pct_p2 > 100 %}{% set pct_p2 = 100 %}{% endif %}
                             {% set fill_p2 = 2 if pct_p2 > 0 and pct_p2 < 2 else pct_p2 %}
-                            {% set p2_idx = sorted_players|map(attribute='email')|list|index(p2.email) %}
-                            {% set border_p2 = player_colors[p2_idx % player_colors|length] %}
                             {% set color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else 'linear-gradient(180deg, rgba(180, 140, 200, 0.75) 0%, rgba(160, 120, 180, 0.65) 100%)')) %}
                             {% set color_p2_h = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color_h if p2.color_h else 'linear-gradient(90deg, rgba(180, 140, 200, 0.75) 0%, rgba(160, 120, 180, 0.65) 100%)')) %}
                             <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:6px;">
                                 <div class="avatar-name" style="font-weight:700;">{{ p2.name }}</div>
                                 <div class="avatar-row" style="gap:8px; align-items:center;">
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                        <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
+                                        <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p2.email }}'">
                                             {% set border_color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else '#A6D3DC')) %}
                                             <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: none;">
                                                 {% if p2.avatar_file %}
@@ -2636,7 +2903,7 @@
                                                 {# C'est un AUTRE ADULTE → pas de pastille #}
                                                 {% set p2_unread = 0 %}
                                             {% endif %}
-                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
+                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='/profil/{{ p2.email }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                             <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
                                                 <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: {{ color_p2 }};"></div>
                                             </div>
@@ -2655,15 +2922,13 @@
                                 {% set pct = points|int %}
                                 {% if pct > 100 %}{% set pct = 100 %}{% endif %}
                                 {% set fill = 2 if pct > 0 and pct < 2 else pct %}
-                                {% set p_idx = sorted_players|map(attribute='email')|list|index(p.email) %}
-                                {% set border_p = player_colors[p_idx % player_colors|length] %}
                                 {% set color = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color_h = (p.player_color_hex if p and p.player_color_hex else (p.color_h if p.color_h else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div class="avatar-col" style="--avatar-size: {{ avatar_size }}px; gap:4px;">
                                     <div class="avatar-name" style="font-weight:700;">{{ p.name }}</div>
                                     <div class="avatar-row" style="gap:6px; flex-shrink:0; align-items:center;">
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                            <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='{{ url_for('comments') }}'">
+                                            <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p.email }}'">
                                                 {% set border_color_p = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else '#A6D3DC')) %}
                                                 <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: none;">
                                                     {% if p.avatar_file %}
@@ -2693,7 +2958,7 @@
                                                     {# C'est un AUTRE ADULTE → pas de pastille #}
                                                     {% set p_unread = 0 %}
                                                 {% endif %}
-                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
+                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='/profil/{{ p.email }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                                 <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">
                                                     <div class="vbar-fill" style="height: {{ fill }}%; background: {{ color }};"></div>
                                                 </div>
@@ -2770,41 +3035,6 @@
     box-shadow: 0 -10px 40px rgba(21,48,54,0.18), inset 0 1px 0 rgba(255,255,255,0.85);
     overflow: hidden;
 }
-.cw-handle {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 6px 14px 8px 14px;
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
-    user-select: none;
-}
-.cw-handle-pill {
-    width: 36px; height: 4px;
-    background: rgba(21,48,54,0.15);
-    border-radius: 99px; margin-bottom: 7px;
-}
-.cw-handle-row {
-    display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden;
-}
-.cw-handle-player {
-    display: flex; align-items: center; gap: 3px;
-    font-size: 12px; font-weight: 700; color: #153036;
-    white-space: nowrap; flex-shrink: 0;
-}
-.cw-handle-medal { font-size: 14px; }
-.cw-handle-pts { color: #FDAE54; font-size: 11px; font-weight: 800; }
-.cw-handle-sep { color: rgba(21,48,54,0.2); font-size: 14px; flex-shrink: 0; }
-.cw-handle-countdown {
-    font-size: 11px; font-weight: 700; color: #FDAE54;
-    background: rgba(253,174,84,0.12);
-    padding: 2px 8px; border-radius: 20px;
-    border: 1px solid rgba(253,174,84,0.28);
-    white-space: nowrap; flex-shrink: 0; margin-left: auto;
-}
-.cw-handle-arrow {
-    font-size: 10px; color: rgba(21,48,54,0.35);
-    flex-shrink: 0; margin-left: 6px;
-    transition: transform 0.3s ease; display: inline-block;
-}
-.cw-wrap.expanded .cw-handle-arrow { transform: rotate(180deg); }
 .cw-body {
     max-height: 0; overflow: hidden;
     transition: max-height 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -2823,11 +3053,61 @@
 .cw-player {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     padding: 7px 0;
     border-bottom: 1px solid rgba(21,48,54,0.07);
 }
 .cw-player:last-of-type { border-bottom: none; }
+.cw-tasks-list {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 8px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 12px;
+    padding: 6px 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.cw-tasks-list.has-tasks { display: flex; }
+.cw-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 12px;
+    color: #597176;
+    line-height: 1.3;
+}
+.cw-task-item + .cw-task-item {
+    border-top: 1px solid rgba(166,211,220,0.15);
+}
+.cw-task-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #A6D3DC 0%, #89b4bb 100%);
+    box-shadow: 0 2px 4px rgba(166,211,220,0.4);
+    flex-shrink: 0;
+}
+.cw-task-name { flex: 1; font-weight: 600; color: #153036; }
+.cw-task-pts { font-size: 11px; font-weight: 600; color: #597176; white-space: nowrap; margin-right: 2px; }
+.cw-task-time {
+    font-size: 11px; font-weight: 800; color: #FDAE54;
+    background: rgba(253,174,84,0.15);
+    padding: 3px 8px; border-radius: 8px;
+    white-space: nowrap;
+}
+.cw-task-malus-btn, .cw-task-bonus-btn {
+    border: none; background: none; cursor: pointer;
+    font-size: 14px; padding: 2px 3px; border-radius: 8px;
+    flex-shrink: 0; line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s, background 0.15s;
+}
+.cw-task-malus-btn:active { transform: scale(0.82); background: rgba(231,76,60,0.15); }
+.cw-task-bonus-btn:active { transform: scale(0.82); background: rgba(46,204,113,0.15); }
 .cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
 .cw-avatar-img {
     width: 32px; height: 32px; border-radius: 50%;
@@ -2928,7 +3208,7 @@
     font-family: 'Montserrat', sans-serif;
 }
 /* Espace pour la barre fixe en bas */
-body { padding-bottom: 72px !important; }
+body { padding-bottom: 84px !important; }
 
 /* ══ Bouton Preuve dans le header ══ */
 .proof-header-btn {
@@ -2960,14 +3240,53 @@ body { padding-bottom: 72px !important; }
 }
 
 /* ══ Boutons d'action droite du header (burger + bébé + mission) ══ */
-.header-right-actions {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+.header-left-actions {
+    position: absolute; left: 10px; margin-right: 8px; top: 50%; transform: translateY(-50%);
     z-index: 2001; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.header-right-actions .burger-menu {
-    width: 36px; height: 36px; border-radius: 11px;
+.beta-dot {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
     background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.25) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+    flex-shrink: 0;
+    z-index: 2001;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    animation: none;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+.beta-dot::before {
+    content: '☰';
+    font-size: 22px;
+    color: #153036;
+    font-weight: bold;
+    pointer-events: none;
+    line-height: 1;
+}
+.beta-dot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(89,113,118,0.3), inset 0 1px 0 rgba(255,255,255,0.7);
+    border-color: rgba(253,174,84,0.6);
+}
+.beta-dot:active {
+    transform: translateY(0) scale(0.95);
+}
+.beta-dot:active {
+    transform: scale(0.85);
+}
+@keyframes beta-blink {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.7), 0 0 8px 3px rgba(255,255,255,0.4); transform: scale(1); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(255,255,255,0), 0 0 4px 1px rgba(255,255,255,0.2); transform: scale(0.9); }
+}
+
 .header-action-pill {
     width: 34px; height: 34px;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -2980,10 +3299,6 @@ body { padding-bottom: 72px !important; }
     transition: transform 0.18s ease, box-shadow 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     color: inherit;
-}
-.header-action-pill.pill-baby {
-    background: linear-gradient(135deg, rgba(244,114,182,0.28) 0%, rgba(236,72,153,0.15) 100%);
-    border-color: rgba(236,72,153,0.38);
 }
 .header-action-pill.pill-mission {
     background: linear-gradient(135deg, rgba(253,174,84,0.30) 0%, rgba(244,198,141,0.18) 100%);
@@ -2998,8 +3313,7 @@ body { padding-bottom: 72px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 @media (max-width: 360px) {
-    .header-right-actions { gap: 3px; }
-    .header-right-actions .burger-menu { width: 30px; height: 30px; }
+    .header-left-actions { gap: 3px; }
     .header-action-pill { width: 28px; height: 28px; font-size: 15px; }
 }
 
@@ -3012,7 +3326,7 @@ body { padding-bottom: 72px !important; }
 .cw-tab {
     flex: 1; display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 4px;
-    padding: 8px 4px 10px 4px;
+    padding: 10px 4px 12px 4px;
     background: none; border: none; cursor: pointer;
     position: relative; -webkit-tap-highlight-color: transparent;
     font-family: 'Montserrat', sans-serif;
@@ -3023,19 +3337,23 @@ body { padding-bottom: 72px !important; }
 .cw-tab + .cw-tab { border-left: 1px solid rgba(21,48,54,0.06); }
 /* Icônes : petits carrés arrondis colorés */
 .cw-tab-icon {
-    font-size: 17px; line-height: 1;
-    width: 30px; height: 30px; border-radius: 9px;
+    font-size: 20px; line-height: 1;
+    width: 34px; height: 34px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     transition: transform 0.15s ease;
 }
 .cw-tab:active .cw-tab-icon { transform: scale(0.88); }
 /* Couleur de chaque onglet */
-.cw-tab:nth-child(1) .cw-tab-icon { background: rgba(166,211,220,0.30); box-shadow: 0 2px 6px rgba(89,113,118,0.15); }
+.cw-tab:nth-child(1) .cw-tab-icon { background: rgba(253,174,84,0.25); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
 .cw-tab:nth-child(2) .cw-tab-icon { background: rgba(231,76,60,0.13); box-shadow: 0 2px 6px rgba(231,76,60,0.15); }
-.cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,204,113,0.15); box-shadow: 0 2px 6px rgba(46,204,113,0.15); }
-.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(253,174,84,0.22); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
+.cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,180,120,0.18); box-shadow: 0 2px 6px rgba(46,180,120,0.18); }
+.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(130,100,220,0.15); box-shadow: 0 2px 6px rgba(130,100,220,0.15); }
+.cw-tab:nth-child(5) .cw-tab-icon { background: rgba(166,211,220,0.30); box-shadow: 0 2px 6px rgba(89,113,118,0.15); }
+/* Onglet actif (classement ouvert) */
+.cw-tab.cw-tab--active .cw-tab-icon { box-shadow: 0 0 0 2px rgba(253,174,84,0.55); }
+.cw-tab.cw-tab--active .cw-tab-label { color: #153036; font-weight: 800; }
 .cw-tab-label {
-    font-size: 9px; font-weight: 700; color: #597176;
+    font-size: 10px; font-weight: 700; color: #597176;
     letter-spacing: 0.4px; text-transform: uppercase; line-height: 1;
 }
 .cw-tab-badge {
@@ -3043,13 +3361,39 @@ body { padding-bottom: 72px !important; }
     background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
     min-width: 14px; height: 14px; border-radius: 99px;
     display: flex; align-items: center; justify-content: center;
-    padding: 0 3px; border: 1px solid white;
+    padding: 0 3px; line-height: 1;
 }
 .cw-tab-arrow {
-    font-size: 9px; color: rgba(21,48,54,0.3);
-    transition: transform 0.3s; display: inline-block; margin-top: 1px;
+    font-size: 10px; font-weight: 700; color: #597176;
+    transition: transform 0.3s ease; display: inline-block;
+    line-height: 1; user-select: none;
 }
 .cw-wrap.expanded .cw-tab-arrow { transform: rotate(180deg); }
+.cw-infobar {
+    display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px;
+    padding: 4px 14px 5px 14px;
+    border-top: 1px solid rgba(21,48,54,0.08);
+    background: rgba(21,48,54,0.04);
+}
+.cw-infobar-date {
+    font-size: 11px; font-weight: 700; color: #153036;
+    white-space: nowrap;
+}
+.cw-infobar-sep { color: rgba(21,48,54,0.35); font-size: 11px; font-weight: 400; }
+@keyframes cwGiftPulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(253,174,84,0.35); }
+    50% { opacity: 0.85; transform: scale(1.04); box-shadow: 0 0 0 4px rgba(253,174,84,0); }
+}
+.cw-infobar-countdown {
+    font-size: 11px; font-weight: 800; color: #153036;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 2px 10px; border-radius: 20px;
+    border: 1px solid rgba(253,174,84,0.45);
+    box-shadow: 0 1px 6px rgba(253,174,84,0.15);
+    white-space: nowrap;
+    animation: cwGiftPulse 2s ease-in-out infinite;
+}
 
 /* ══ Skull badge sur les avatars ══ */
 .skull-overlay {
@@ -3061,170 +3405,6 @@ body { padding-bottom: 72px !important; }
 /* Dans le widget classement */
 .cw-skull { font-size: 11px; color: #e74c3c; font-weight: 800; flex-shrink: 0; }
 
-/* ══ Overlay Contester (bottom sheet) ══ */
-.proof-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(21,48,54,0.45);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    z-index: 9600; align-items: flex-end; justify-content: center;
-}
-.proof-overlay.open { display: flex; }
-.proof-sheet {
-    background: rgba(255,255,255,0.97);
-    backdrop-filter: saturate(180%) blur(30px);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,0.8);
-    padding: 16px 16px 80px 16px;
-    width: 100%; max-width: 480px; max-height: 82vh; overflow-y: auto;
-    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
-    animation: cwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-.proof-sheet-title {
-    font-size: 16px; font-weight: 800; color: #153036;
-    text-align: center; margin-bottom: 3px;
-    font-family: 'Montserrat', sans-serif;
-}
-.proof-sheet-sub {
-    font-size: 11px; color: #597176; text-align: center;
-    margin-bottom: 14px; font-weight: 600; line-height: 1.5;
-}
-.proof-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-.proof-tab-btn {
-    flex: 1; padding: 8px 4px; border-radius: 10px; border: none;
-    font-size: 11px; font-weight: 700; cursor: pointer;
-    font-family: 'Montserrat', sans-serif; transition: background 0.15s;
-    background: rgba(21,48,54,0.06); color: #597176;
-}
-.proof-tab-btn.active { background: linear-gradient(135deg, #153036, #2d636e); color: white; box-shadow: 0 4px 12px rgba(21,48,54,0.2); }
-/* Cartes tâche — style manage_players */
-.proof-task-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-    border-radius: 20px;
-    padding: 16px;
-    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
-    border: 1.5px solid rgba(255,255,255,0.7);
-    margin-bottom: 10px;
-    display: flex; flex-direction: column; gap: 10px;
-}
-/* Section preuves à valider */
-.proof-verdict-section {
-    background: linear-gradient(135deg, rgba(253,174,84,0.10), rgba(255,255,255,0.9));
-    border-radius: 16px;
-    border: 1.5px solid rgba(253,174,84,0.3);
-    padding: 12px 14px;
-    margin-bottom: 12px;
-}
-.proof-verdict-section-title {
-    font-size: 11px; font-weight: 800; color: #c8720a;
-    margin-bottom: 8px; font-family: 'Montserrat', sans-serif;
-    text-transform: uppercase; letter-spacing: 0.5px;
-}
-.proof-task-header {
-    display: flex; align-items: center; gap: 10px;
-}
-.proof-task-info { flex: 1; min-width: 0; }
-.proof-task-name {
-    font-size: 13px; font-weight: 800; color: #153036;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-family: 'Montserrat', sans-serif;
-}
-.proof-task-meta { font-size: 11px; color: #597176; margin-top: 2px; font-weight: 600; }
-.proof-task-pts {
-    background: linear-gradient(135deg, #FDAE54, #ff9f43);
-    color: #fff; font-size: 12px; font-weight: 800;
-    padding: 4px 9px; border-radius: 20px; flex-shrink: 0;
-    font-family: 'Montserrat', sans-serif;
-}
-.proof-ask-btn {
-    align-self: stretch;
-    background: linear-gradient(135deg, rgba(231,76,60,0.12), rgba(192,57,43,0.08));
-    border: 1.5px solid rgba(231,76,60,0.3);
-    border-radius: 12px; padding: 9px 14px; font-size: 12px; font-weight: 800;
-    color: #c0392b; cursor: pointer; font-family: 'Montserrat', sans-serif;
-    -webkit-tap-highlight-color: transparent; transition: background 0.15s;
-    text-align: center;
-}
-.proof-ask-btn:active { background: rgba(231,76,60,0.22); }
-.proof-ask-btn:disabled { opacity: 0.38; cursor: default; }
-/* Panneau de confirmation inline */
-.proof-confirm-panel {
-    background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(253,174,84,0.08));
-    border-radius: 20px;
-    border: 1.5px solid rgba(253,174,84,0.4);
-    padding: 16px;
-    box-shadow: 0 8px 30px rgba(21,48,54,0.12);
-}
-.proof-confirm-title {
-    font-size: 14px; font-weight: 800; color: #153036;
-    margin-bottom: 6px; font-family: 'Montserrat', sans-serif;
-}
-.proof-confirm-task {
-    font-size: 13px; font-weight: 700; color: #FDAE54;
-    margin-bottom: 12px; font-family: 'Montserrat', sans-serif;
-    word-break: break-word;
-}
-.proof-confirm-warning {
-    background: rgba(231,76,60,0.07); border-radius: 12px;
-    border: 1px solid rgba(231,76,60,0.18);
-    padding: 10px 12px; margin-bottom: 14px;
-    font-size: 11px; color: #8a1a1a; font-weight: 600;
-    line-height: 1.6; font-family: 'Montserrat', sans-serif;
-}
-.proof-confirm-btns { display: flex; gap: 8px; }
-.proof-confirm-yes {
-    flex: 1; padding: 11px; border-radius: 13px; border: none;
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white; font-size: 13px; font-weight: 800; cursor: pointer;
-    font-family: 'Montserrat', sans-serif;
-}
-.proof-confirm-no {
-    flex: 1; padding: 11px; border-radius: 13px; border: none;
-    background: rgba(21,48,54,0.07); color: #597176;
-    font-size: 13px; font-weight: 700; cursor: pointer;
-    font-family: 'Montserrat', sans-serif;
-}
-/* Photo preuve */
-.proof-photo-wrap { text-align: center; margin: 10px 0; }
-.proof-photo-img { max-width: 100%; border-radius: 14px; max-height: 220px; object-fit: cover; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-.proof-verdict-btns { display: flex; gap: 8px; margin-top: 8px; }
-.proof-verdict-btn {
-    flex: 1; padding: 11px; border-radius: 13px; border: none;
-    font-size: 12px; font-weight: 800; cursor: pointer;
-    font-family: 'Montserrat', sans-serif; line-height: 1.3;
-}
-.proof-verdict-ok { background: rgba(46,204,113,0.12); color: #1a7a44; border: 1.5px solid rgba(46,204,113,0.3); }
-.proof-verdict-fake { background: rgba(231,76,60,0.10); color: #c0392b; border: 1.5px solid rgba(231,76,60,0.3); }
-.proof-contest-badge {
-    font-size: 11px; font-weight: 700; color: #8a1a1a;
-    background: rgba(231,76,60,0.08); border-radius: 10px;
-    padding: 6px 10px; border: 1px solid rgba(231,76,60,0.18);
-    font-family: 'Montserrat', sans-serif;
-}
-.proof-mine-badge {
-    font-size: 11px; font-weight: 600; color: #1a7a44;
-    background: rgba(46,204,113,0.08); border-radius: 10px;
-    padding: 4px 10px; border: 1px solid rgba(46,204,113,0.15);
-    font-family: 'Montserrat', sans-serif;
-}
-.proof-empty { text-align: center; color: #597176; font-size: 13px; padding: 24px 0; font-weight: 600; }
-.proof-cancel {
-    width: 100%; padding: 13px; border: none; border-radius: 14px;
-    background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700;
-    color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif;
-    margin-top: 10px;
-}
-/* Bouton photo (caméra uniquement) */
-.proof-photo-btn {
-    width: 100%; padding: 13px 8px; border-radius: 14px; border: none;
-    font-size: 13px; font-weight: 800; cursor: pointer;
-    font-family: 'Montserrat', sans-serif; text-align: center;
-    -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
-    background: linear-gradient(135deg, #153036, #2d636e);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(21,48,54,0.2);
-}
-.proof-photo-btn:active { opacity: 0.8; }
-/* Skull suspicion (accusation en attente) */
 .skull-overlay-pending {
     position: absolute; bottom: -4px; right: -4px;
     font-size: 18px; line-height: 1;
@@ -3236,8 +3416,6 @@ body { padding-bottom: 72px !important; }
     0%,100% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.18); opacity: 0.75; }
 }
-/* upload photo hidden inputs */
-#proofPhotoInputCam { display: none; }
 </style>
 
 {% if players %}
@@ -3245,23 +3423,55 @@ body { padding-bottom: 72px !important; }
 {% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='daily_points', reverse=True) %}
 <div class="cw-wrap" id="cwWrap">
-    <!-- Onglets de navigation (toujours visibles) -->
+    <!-- ── Barre de navigation fixe — 5 onglets ── -->
     <div class="cw-tabs">
-        <button class="cw-tab" onclick="toggleCW()" id="cwTabScore">
-            <span class="cw-tab-icon" id="compteurIcon">🏆</span>
-            <span class="cw-tab-label" id="compteurLabel">Classement quotidien</span>
-        </button>
+        <!-- 1. Classement (toggle panel) -->
+        <a href="/classement" class="cw-tab" id="cwTabScore">
+            <span class="cw-tab-icon">🏆</span>
+            <span class="cw-tab-label">Classement</span>
+        </a>
+        <!-- 2. Messagerie -->
+        <a href="{{ url_for('comments') }}" class="cw-tab">
+            <span class="cw-tab-icon" style="position:relative;">
+                💬
+                {% if unread_messages_count and unread_messages_count > 0 %}
+                <span class="cw-tab-badge">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
+                {% endif %}
+            </span>
+            <span class="cw-tab-label">Messagerie</span>
+        </a>
+        <!-- 3. Courses -->
+        <a href="{{ url_for('reminders') }}" class="cw-tab" id="cwTabCourses">
+            <span class="cw-tab-icon" style="position:relative;">
+                🛒
+                {% if courses_pending_count|default(0) > 0 %}
+                <span class="cw-tab-badge" id="courses-nav-badge">{{ courses_pending_count if courses_pending_count < 100 else '99+' }}</span>
+                {% endif %}
+            </span>
+            <span class="cw-tab-label">Courses</span>
+        </a>
+        <!-- 4. Joueurs -->
+        <a href="{{ url_for('manage_players') }}" class="cw-tab">
+            <span class="cw-tab-icon">👥</span>
+            <span class="cw-tab-label">Joueurs</span>
+        </a>
+        <!-- 5. Maison -->
+        <a href="{{ url_for('personnaliser_maison') }}" class="cw-tab">
+            <span class="cw-tab-icon">🏡</span>
+            <span class="cw-tab-label">Maison</span>
+        </a>
     </div>
+
     <!-- Corps expansible -->
     <div class="cw-body" id="cwBody">
-    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div><div class="cw-countdown" id="cwCountdown">…</div></div>
+    <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div><a href="/classement" style="color:rgba(255,255,255,0.7);font-size:18px;font-weight:900;text-decoration:none;padding:0 2px;" title="Voir en plein écran">↗</a></div>
     {% for p in sorted_by_week %}
     {% if loop.index == 1 %}{% set medal = '🥇' %}
     {% elif loop.index == 2 %}{% set medal = '🥈' %}
     {% elif loop.index == 3 %}{% set medal = '🥉' %}
     {% else %}{% set medal = loop.index|string + '.' %}{% endif %}
     {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v) * 100)|int if max_pts.v > 0 else 5 %}
-    <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}">
+    <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}" data-cw-player-name="{{ p.name|e }}">
         <div class="cw-rank">{{ medal }}</div>
         {% if p.avatar_file %}
             <img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="{{ p.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -3277,16 +3487,30 @@ body { padding-bottom: 72px !important; }
         <div class="cw-info">
             <div class="cw-name">{{ p.name }}</div>
             <div class="cw-bar-wrap">
-                <div class="cw-bar-fill" data-pct="{{ bar_pct }}" style="width:0%;"></div>
+                <div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else "" }}" style="width:0%;"></div>
             </div>
         </div>
         <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
         {% if p.skull_active|default(false) %}<span class="cw-skull" title="Tricheur — 💀 actif 24h">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" title="Sous accusation — doit fournir une preuve" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0) > 0 %}<span class="cw-skull" title="Tricheur prouvé {{ p.skull_count }} fois">💀×{{ p.skull_count }}</span>{% endif %}
-        {% if not p.is_current_user %}
-        <button class="cw-malus-btn" data-email="{{ p.email|e }}" data-name="{{ p.name|e }}" onclick="openMalus(this.dataset.email,this.dataset.name)" title="Envoyer un malus">💀</button>
-        {% endif %}
+        <div class="cw-tasks-list"></div>
     </div>
     {% endfor %}
+
+    <!-- Bouton stats -->
+    <div style="padding: 6px 0 4px 0; border-top: 1px solid rgba(166,211,220,0.25); margin-top: 6px;">
+        <style>
+        @keyframes cwStatsPulse {
+            0%   { transform: scale(1);    box-shadow: 0 4px 14px rgba(253,174,84,0.35); }
+            50%  { transform: scale(1.03); box-shadow: 0 6px 22px rgba(253,174,84,0.6); }
+            100% { transform: scale(1);    box-shadow: 0 4px 14px rgba(253,174,84,0.35); }
+        }
+        #cwStatsBtn {
+            animation: cwStatsPulse 2.4s ease-in-out infinite;
+        }
+        #cwStatsBtn:active { transform: scale(0.96) !important; }
+        </style>
+        <a id="cwStatsBtn" href="/sats" style="display: block; margin-top: 8px; padding: 12px 0; background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%); color: #fff; font-size: 14px; font-weight: 800; text-align: center; border-radius: 14px; text-decoration: none; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(253,174,84,0.35);">🏆 Classement de la semaine</a>
+    </div>
     </div><!-- fin cw-body -->
 </div>
 {% endif %}
@@ -3295,30 +3519,21 @@ body { padding-bottom: 72px !important; }
 <div class="malus-overlay" id="malusOverlay" onclick="if(event.target===this)closeMalus()">
     <div class="malus-sheet">
         <div class="malus-sheet-title">💀 Malus pour <span id="malusTargetName">…</span></div>
-        <div class="malus-option" onclick="sendMalus('lazy',-10)">
-            <div class="malus-option-icon">😴</div>
-            <div class="malus-option-label">Fainéant·e — rien fait depuis 24h</div>
-            <div class="malus-option-pts">−10 pts</div>
+        <div class="malus-task-context" id="malusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(166,211,220,0.15); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="malusTaskName">…</span></div>
+        <div class="malus-option" onclick="sendMalus('arrache',-3)">
+            <div class="malus-option-icon">😈</div>
+            <div class="malus-option-label">Fait à l'arrache</div>
+            <div class="malus-option-pts">−3 pts</div>
         </div>
-        <div class="malus-option" onclick="sendMalus('messy',-5)">
-            <div class="malus-option-icon">🗑️</div>
-            <div class="malus-option-label">A laissé traîner ses affaires</div>
+        <div class="malus-option" onclick="sendMalus('presque',-5)">
+            <div class="malus-option-icon">🙄</div>
+            <div class="malus-option-label">Presque… mais non</div>
             <div class="malus-option-pts">−5 pts</div>
         </div>
-        <div class="malus-option" onclick="sendMalus('dishes',-8)">
-            <div class="malus-option-icon">🍽️</div>
-            <div class="malus-option-label">N'a pas rangé la vaisselle</div>
-            <div class="malus-option-pts">−8 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendMalus('forgot',-6)">
-            <div class="malus-option-icon">🤷</div>
-            <div class="malus-option-label">A oublié une tâche promise</div>
-            <div class="malus-option-pts">−6 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendMalus('sabotage',-15)">
-            <div class="malus-option-icon">😈</div>
+        <div class="malus-option" onclick="sendMalus('sabotage',-12)">
+            <div class="malus-option-icon">💣</div>
             <div class="malus-option-label">Sabotage flagrant !</div>
-            <div class="malus-option-pts">−15 pts</div>
+            <div class="malus-option-pts">−12 pts</div>
         </div>
         <button class="malus-cancel" onclick="closeMalus()">Annuler</button>
     </div>
@@ -3342,31 +3557,22 @@ body { padding-bottom: 72px !important; }
 <!-- Overlay Bonus -->
 <div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
     <div class="malus-sheet">
-        <div class="malus-sheet-title">🎁 Bonus pour <span id="bonusTargetName">…</span></div>
-        <div class="malus-option" onclick="sendBonus('bravo',10)">
-            <div class="malus-option-icon">🌟</div>
-            <div class="malus-option-label">Super travail aujourd'hui !</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+10 pts</div>
+        <div class="malus-sheet-title">❤️ Bonus pour <span id="bonusTargetName">…</span></div>
+        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
+        <div class="malus-option" onclick="sendBonus('effort',3)">
+            <div class="malus-option-icon">💫</div>
+            <div class="malus-option-label">On sent l'effort</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+3 pts</div>
         </div>
-        <div class="malus-option" onclick="sendBonus('help',8)">
-            <div class="malus-option-icon">🤝</div>
-            <div class="malus-option-label">M'a aidé sans qu'on lui demande</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+8 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendBonus('extra',12)">
+        <div class="malus-option" onclick="sendBonus('extra',5)">
             <div class="malus-option-icon">💪</div>
-            <div class="malus-option-label">A fait plus que demandé !</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
-        </div>
-        <div class="malus-option" onclick="sendBonus('nice',5)">
-            <div class="malus-option-icon">😊</div>
-            <div class="malus-option-label">Bonne ambiance dans la maison</div>
+            <div class="malus-option-label">A fait plus que demandé</div>
             <div class="malus-option-pts" style="color:#2ecc71;">+5 pts</div>
         </div>
-        <div class="malus-option" onclick="sendBonus('streak',15)">
-            <div class="malus-option-icon">🔥</div>
-            <div class="malus-option-label">Streak incroyable — sans relâche !</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+15 pts</div>
+        <div class="malus-option" onclick="sendBonus('wahouh',12)">
+            <div class="malus-option-icon">🤩</div>
+            <div class="malus-option-label">Wahouh, là je suis choqué·e !</div>
+            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
         </div>
         <button class="malus-cancel" onclick="closeBonus()">Annuler</button>
     </div>
@@ -3374,26 +3580,39 @@ body { padding-bottom: 72px !important; }
 
 <script>
 (function(){
-    function updateCWCountdown(){
+    function updateCWInfoBar(){
         var now = new Date();
+        // Date/heure courante
+        var dateEl = document.getElementById('cwInfoDate');
+        if(dateEl){
+            var dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+            var d2 = now.getDate();
+            var m2 = now.toLocaleString('fr-FR',{month:'short'});
+            var h2 = String(now.getHours()).padStart(2,'0');
+            var min2 = String(now.getMinutes()).padStart(2,'0');
+            dateEl.textContent = dayNames[now.getDay()]+' '+d2+' '+m2+' • '+h2+':'+min2;
+        }
+        // Compte à rebours dimanche 22h
         var d = now.getDay();
-        var daysToFri = (5 - d + 7) % 7;
-        if(daysToFri === 0 && now.getHours() >= 22) daysToFri = 7;
-        var friday = new Date(now);
-        friday.setDate(now.getDate() + daysToFri);
-        friday.setHours(22,0,0,0);
-        var diff = friday - now;
+        var daysToSun = (7 - d) % 7;
+        if(daysToSun === 0 && now.getHours() >= 22) daysToSun = 7;
+        var sunday = new Date(now);
+        sunday.setDate(now.getDate() + daysToSun);
+        sunday.setHours(22,0,0,0);
+        var diff = sunday - now;
         var days = Math.floor(diff/86400000);
         var hours = Math.floor((diff%86400000)/3600000);
-        var el = document.getElementById('cwCountdown');
+        var mins = Math.floor((diff%3600000)/60000);
+        var el = document.getElementById('cwSundayCountdown');
         if(!el) return;
-        if(days > 1) el.textContent = '\uD83C\uDF81 Vendredi dans '+days+'j';
-        else if(days === 1) el.textContent = '\uD83C\uDF81 Demain !';
-        else if(hours > 0) el.textContent = '\uD83C\uDF81 Ce soir dans '+hours+'h !';
-        else el.textContent = '\uD83C\uDF81 Ce soir !';
+        if(days > 1) el.textContent = '🎁 Cadeaux dans '+days+'j '+hours+'h';
+        else if(days === 1) el.textContent = '🎁 Cadeaux demain dans '+hours+'h';
+        else if(hours > 0) el.textContent = '🎁 Cadeaux dans '+hours+'h '+mins+'min !';
+        else if(mins > 0) el.textContent = '🎁 Cadeaux dans '+mins+' min !';
+        else el.textContent = '\uD83C\uDF81 Ouvrir les cadeaux !';
     }
-    updateCWCountdown();
-    setInterval(updateCWCountdown, 60000);
+    updateCWInfoBar();
+    setInterval(updateCWInfoBar, 60000);
 
     // Desactive: le bouton reste toujours 'Malus' avec le skull
     /*
@@ -3433,21 +3652,109 @@ body { padding-bottom: 72px !important; }
         document.querySelectorAll('.cw-bar-fill').forEach(function(el){
             var pct = el.getAttribute('data-pct') || '0';
             el.style.width = pct + '%';
+            var col = el.getAttribute('data-color');
+            if (col) { el.style.background = col; }
         });
     }
+    window.animateBars = animateBars;
+    animateBars();
 })();
 
 var _cwAnimated = false;
-function toggleCW(){
-    var wrap = document.getElementById('cwWrap');
-    wrap.classList.toggle('expanded');
-    if(wrap.classList.contains('expanded') && !_cwAnimated){
-        _cwAnimated = true;
-        setTimeout(function(){
-            document.querySelectorAll('.cw-bar-fill').forEach(function(el){
-                el.style.width = (el.getAttribute('data-pct') || '0') + '%';
+function loadCWTasks(){
+    fetch('/api/daily_tasks')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if (!data.tasks) return;
+            var byName = {};
+            data.tasks.forEach(function(t){
+                if (!byName[t.player_name]) byName[t.player_name] = [];
+                byName[t.player_name].push(t);
             });
-        }, 60);
+            document.querySelectorAll('.cw-player[data-cw-player-name]').forEach(function(el){
+                var name = el.getAttribute('data-cw-player-name');
+                var list = el.querySelector('.cw-tasks-list');
+                if (!list) return;
+                var tasks = byName[name] || [];
+                if (tasks.length === 0) return;
+                list.innerHTML = tasks.map(function(t){
+                    var enc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+                    var actBtns = '';
+                    if (!t.is_current_user) {
+                        actBtns = '<button class="cw-task-malus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un malus sur cette tâche">💀</button>'
+                                + '<button class="cw-task-bonus-btn" data-email="'+enc(t.player_email)+'" data-name="'+enc(t.player_name)+'" data-task="'+enc(t.task_name)+'" title="Envoyer un bonus sur cette tâche">❤️</button>';
+                    }
+                    return '<div class="cw-task-item">'
+                         + '<div class="cw-task-dot"></div>'
+                         + '<span class="cw-task-name">' + enc(t.task_name) + '</span>'
+                         + '<span class="cw-task-pts">+' + t.points + ' pts</span>'
+                         + '<span class="cw-task-time">' + enc(t.time) + '</span>'
+                         + actBtns
+                         + '</div>';
+                }).join('');
+                list.classList.add('has-tasks');
+            });
+        })
+        .catch(function(){});
+}
+
+
+// ─── Délégation d'events pour boutons tâche ───
+document.addEventListener('click', function(e){
+    var btn = e.target.closest('.cw-task-malus-btn');
+    if (btn) { openTaskMalus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+    btn = e.target.closest('.cw-task-bonus-btn');
+    if (btn) { openTaskBonus(btn.dataset.email, btn.dataset.name, btn.dataset.task); return; }
+});
+function loadCWWeekStats() {
+    fetch('/api/weekly_stats')
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var container = document.getElementById('cwWeekPlayers');
+            if (!container) return;
+            if (!data.players || data.players.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:8px; color:#8a9fa3; font-size:12px;">Aucun joueur</div>';
+                return;
+            }
+            var medals = ['🥇', '🥈', '🥉'];
+            container.innerHTML = data.players.map(function(p, i) {
+                var medal = medals[i] !== undefined ? medals[i] : (i + 1) + '.';
+                var avatarHtml;
+                if (p.avatar_file) {
+                    avatarHtml = '<img src="/static/avatars/' + p.avatar_file + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
+                } else if (p.avatar_url) {
+                    avatarHtml = '<img src="' + p.avatar_url + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.remove()">';
+                } else {
+                    avatarHtml = '<span style="font-size:18px;flex-shrink:0;">👤</span>';
+                }
+                var colorBand = p.player_color_hex ? 'border-left: 3px solid ' + p.player_color_hex + ';' : '';
+                var tasks = p.weekly_tasks;
+                var tasksLabel = tasks + ' tâche' + (tasks > 1 ? 's' : '');
+                return '<a href="/sats" style="display:flex; align-items:center; gap:7px; padding: 6px 8px; background: rgba(255,255,255,0.88); border-radius:10px; ' + colorBand + ' text-decoration:none;">'
+                    + '<span style="font-size:13px; min-width:20px; text-align:center;">' + medal + '</span>'
+                    + avatarHtml
+                    + '<span style="flex:1; font-size:12px; font-weight:700; color:#153036; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + p.name + '</span>'
+                    + '<span style="font-size:10px; color:#8a9fa3; white-space:nowrap;">' + tasksLabel + '</span>'
+                    + '<span style="font-size:13px; font-weight:900; color:#FDAE54; white-space:nowrap; margin-left:4px;">' + p.weekly_points + ' pts</span>'
+                    + '</a>';
+            }).join('');
+        })
+        .catch(function(){});
+}
+
+function toggleCW(){
+    var btn = document.getElementById('cwTabScore');
+    var wraps = document.querySelectorAll('.cw-wrap');
+    var mainWrap = wraps[wraps.length - 1];
+    mainWrap.classList.toggle('expanded');
+    var expanding = mainWrap.classList.contains('expanded');
+    if (btn) btn.classList.toggle('cw-tab--active', expanding);
+    wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
+    if(expanding && !_cwAnimated){
+        _cwAnimated = true;
+        setTimeout(window.animateBars, 60);
+        loadCWTasks();
+        loadCWWeekStats();
     }
 }
 
@@ -3460,7 +3767,7 @@ function openGlobalMalus() {
 }
 function openGlobalBonus() {
     window._playerPickerMode = 'bonus';
-    document.getElementById('playerPickerTitle').textContent = '\uD83C\uDF81 Bonus pour qui ?';
+    document.getElementById('playerPickerTitle').textContent = '❤️ Bonus pour qui ?';
     document.getElementById('playerPickerOverlay').classList.add('open');
 }
 function closePlayerPicker() {
@@ -3483,206 +3790,59 @@ function openBonus(email, name) {
 function closeBonus() {
     document.getElementById('bonusOverlay').classList.remove('open');
     _bonusEmail = null;
+    var ctx = document.getElementById('bonusTaskContext');
+    if (ctx) { ctx.style.display = 'none'; }
 }
-function sendBonus(reason, points) {
-    if (!_bonusEmail) return;
-    fetch('/api/send_bonus', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({target_email: _bonusEmail, reason: reason, points: points})
-    }).then(function(r){ return r.json(); }).then(function(data) {
+function sendBonus(reason, points){
+    if(!_bonusEmail) return;
+    var targetEmail = _bonusEmail;
+    fetch('/api/send_bonus',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({target_email:targetEmail, reason:reason, points:points})
+    }).then(function(r){return r.json();}).then(function(data){
         closeBonus();
-        if (data.success) {
-            showToast(data.message || 'Bonus envoy\u00e9 ! \uD83C\uDF81', '#2ecc71');
-            setTimeout(function(){ window.location.reload(); }, 2200);
+        if(data.success){
+            // Tracking local : afficher le coeur immédiatement
+            if(!window._localBonusMap) window._localBonusMap = {};
+            window._localBonusMap[targetEmail] = Date.now();
+            if(typeof window.loadActiveBonuses === 'function') window.loadActiveBonuses();
+            setTimeout(function(){ window.location.reload(); }, 1800);
         } else {
-            showToast(data.error || 'Erreur', '#e74c3c');
+            alert(data.error || 'Erreur');
         }
-    }).catch(function(){ showToast('Erreur r\u00e9seau', '#e74c3c'); });
-}
-
-// ══════════════════════════════════════════════
-// �️ SYSTÈME CONTESTER
-// ══════════════════════════════════════════════
-// Si l'utilisateur est lui-même accusé, ouvrir sur l'onglet À prouver
-var _proofSubmitId = null;
-var _contestPending = null; // {taskId, email, taskName, taskPoints}
-
-function openProofSheet(){
-    document.getElementById('proofOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-    loadProofAll();
-}
-function closeProofSheet(){
-    document.getElementById('proofOverlay').classList.remove('open');
-    document.body.style.overflow = '';
-    _contestPending = null;
-}
-function loadProofAll(){
-    var content = document.getElementById('proofContent');
-    content.innerHTML = '<div class="proof-empty">Chargement…</div>';
-    fetch('/api/proof/all').then(function(r){return r.json();}).then(function(tasks){
-        if(!tasks.length){
-            content.innerHTML = '<div class="proof-empty">Aucune tâche aujourd\'hui</div>';
-            return;
-        }
-        content.innerHTML = tasks.map(function(t){
-            var html = '<div class="proof-task-card">'
-                + '<div class="proof-task-header">'
-                +   '<div class="proof-task-info">'
-                +     '<div class="proof-task-name">' + escHtml(t.task) + '</div>'
-                +     '<div class="proof-task-meta">Par ' + escHtml(t.name) + ' · ' + fmtAgo(t.at) + '</div>'
-                +   '</div>'
-                +   '<div class="proof-task-pts">+' + t.points + ' pts</div>'
-                + '</div>';
-            if(t.can_contest){
-                html += '<button class="proof-ask-btn" onclick="showContestConfirm(' + t.id + ',\'' + escJs(t.email) + '\',\'' + escJs(t.task) + '\',' + t.points + ')">Contester</button>';
-            } else if(t.am_target && t.proof_status === 'pending'){
-                html += '<div class="proof-contest-badge">Contesté par ' + escHtml(t.requester_name) + '</div>'
-                    + '<button class="proof-photo-btn" data-proof-id="' + t.proof_id + '">Prendre une photo comme preuve</button>';
-            } else if(t.am_requester && t.proof_status === 'submitted' && t.photo_data){
-                html += '<div class="proof-contest-badge">Preuve reçue de ' + escHtml(t.name) + ' — ton verdict :</div>'
-                    + '<div class="proof-photo-wrap"><img class="proof-photo-img" src="' + escHtml(t.photo_data) + '" alt="Preuve"></div>'
-                    + '<div class="proof-verdict-btns">'
-                    + '<button class="proof-verdict-btn proof-verdict-ok" onclick="doValidateProof(' + t.proof_id + ',\'validated\')">✅ Preuve valide</button>'
-                    + '<button class="proof-verdict-btn proof-verdict-fake" onclick="doValidateProof(' + t.proof_id + ',\'refuted\')">☠️ Fausse preuve</button>'
-                    + '</div>';
-            } else if(t.am_requester && t.proof_status === 'pending'){
-                html += '<div class="proof-contest-badge">⏳ En attente de la photo de ' + escHtml(t.name) + '</div>';
-            } else if(t.am_target && t.proof_status === 'submitted'){
-                html += '<div class="proof-mine-badge">Photo envoyée — en attente du verdict</div>';
-            } else if(t.is_mine){
-                html += '<div class="proof-mine-badge">Ta tâche</div>';
-            }
-            return html + '</div>';
-        }).join('');
-        content.querySelectorAll('[data-proof-id]').forEach(function(btn){
-            btn.addEventListener('click', function(){
-                _proofSubmitId = parseInt(this.getAttribute('data-proof-id'));
-                document.getElementById('proofPhotoInputCam').click();
-            });
-        });
-    }).catch(function(){ content.innerHTML = '<div class="proof-empty">Erreur réseau</div>'; });
-}
-
-function showContestConfirm(taskId, email, taskName, taskPoints){
-    _contestPending = {taskId: taskId, email: email, taskName: taskName, taskPoints: taskPoints};
-    var content = document.getElementById('proofContent');
-    content.innerHTML = '<div class="proof-confirm-panel">'
-        + '<div class="proof-confirm-title">⚠️ Confirmer la contestation</div>'
-        + '<div class="proof-confirm-task">"' + escHtml(taskName) + '"</div>'
-        + '<div class="proof-confirm-warning">'
-        +   '📸 Si la preuve est <strong>valide</strong> (la tâche a bien été faite) → tu perdras <strong>−10 pts</strong>.<br>'
-        +   '💀 Si la preuve est <strong>fausse</strong> (tricherie) → l\'accusé(e) perdra <strong>−10 pts</strong> et aura un 💀 sur son avatar pendant <strong>24h</strong>.'
-        + '</div>'
-        + '<div class="proof-confirm-btns">'
-        +   '<button class="proof-confirm-no" onclick="loadProofAll()">Annuler</button>'
-        +   '<button class="proof-confirm-yes" onclick="confirmContest()">🕵️ Oui, contester !</button>'
-        + '</div>'
-        + '</div>';
-}
-
-function confirmContest(){
-    if(!_contestPending) return;
-    var p = _contestPending;
-    _contestPending = null;
-    fetch('/api/proof/request', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({task_id: p.taskId, target_email: p.email, task_name: p.taskName, task_points: p.taskPoints})
-    }).then(function(r){return r.json();}).then(function(d){
-        if(d.success){ showToast(d.message||'Contestation lancée !','#153036'); loadProofAll(); }
-        else { showToast(d.error||'Erreur','#e74c3c'); loadProofAll(); }
-    }).catch(function(){ showToast('Erreur réseau','#e74c3c'); loadProofAll(); });
-}
-
-function doRequestProof(taskId, email, taskName, taskPoints){
-    showContestConfirm(taskId, email, taskName, taskPoints);
-}
-function doSubmitProof(proofId){
-    _proofSubmitId = proofId;
-    var content = document.getElementById('proofContent');
-    // Afficher choix caméra / galerie
-    content.insertAdjacentHTML('beforeend',
-        '<div id="proofPhotoChoice" class="proof-photo-btns" style="margin-top:10px;">'
-        + '<button class="proof-photo-btn proof-photo-btn-cam" onclick="_pickPhoto(true)">📷 Prendre une photo</button>'
-        + '<button class="proof-photo-btn proof-photo-btn-gal" onclick="_pickPhoto(false)">🖼️ Choisir dans la galerie</button>'
-        + '</div>'
-    );
-}
-function _pickPhoto(useCamera){
-    var choice = document.getElementById('proofPhotoChoice');
-    if(choice) choice.remove();
-    if(useCamera){
-        document.getElementById('proofPhotoInputCam').click();
-    } else {
-        document.getElementById('proofPhotoInputGal').click();
-    }
-}
-function _handleProofFile(file){
-    if(!file || !_proofSubmitId) return;
-    if(file.size > 5000000){ showToast('Photo trop grande (max 5 Mo)','#e74c3c'); return; }
-    var reader = new FileReader();
-    reader.onload = function(e){
-        fetch('/api/proof/submit',{
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({proof_id: _proofSubmitId, photo_data: e.target.result})
-        }).then(function(r){return r.json();}).then(function(d){
-            if(d.success){ showToast(d.message||'Preuve envoyée !','#153036'); loadProofAll(); }
-            else { showToast(d.error||'Erreur','#e74c3c'); }
-        }).catch(function(){ showToast('Erreur réseau','#e74c3c'); });
-        _proofSubmitId = null;
-    };
-    reader.readAsDataURL(file);
-}
-document.getElementById('proofPhotoInputCam').addEventListener('change', function(){
-    _handleProofFile(this.files[0]); this.value = '';
-});
-
-function doValidateProof(proofId, verdict){
-    fetch('/api/proof/validate',{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({proof_id: proofId, verdict: verdict})
-    }).then(function(r){return r.json();}).then(function(d){
-        if(d.success){
-            showToast(d.message||'Verdict enregistré','#153036');
-            setTimeout(function(){ window.location.reload(); }, 2200);
-            closeProofSheet();
-        } else { showToast(d.error||'Erreur','#e74c3c'); }
-    }).catch(function(){ showToast('Erreur réseau','#e74c3c'); });
-}
-function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-function statusLabel(s){
-    return s==='pending'?'⏳ En attente de preuve photo': s==='submitted'?'📸 Photo reçue — Ton verdict ?':s==='validated'?'✅ Contestation rejetée':s==='refuted'?'💀 Tricherie confirmée':'?';
-}
-function fmtAgo(dt){
-    var diff = (Date.now() - new Date(dt).getTime()) / 60000;
-    if(diff < 60) return Math.round(diff)+'m';
-    if(diff < 1440) return Math.round(diff/60)+'h';
-    return Math.round(diff/1440)+'j';
+    }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
 }
 function showToast(msg, bg){
-    // Glassmorphisme : fond semi-transparent + blur + bordure
-    var isError = bg && (bg === '#e74c3c' || bg.indexOf('e74c3c') !== -1);
-    var isSuccess = bg && (bg === '#2ecc71' || bg.indexOf('2ecc71') !== -1);
+    var isError = bg && bg.indexOf('e74c3c') !== -1;
+    var isSuccess = bg && bg.indexOf('2ecc71') !== -1;
+    var gradient = isError
+        ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,107,107,0.3) 50%, rgba(231,76,60,0.2) 100%)'
+        : isSuccess
+        ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.3) 50%, rgba(253,174,84,0.4) 100%)'
+        : 'linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(166,211,220,0.6) 50%, rgba(244,198,141,0.4) 100%)';
+    var shadow = isError
+        ? '0 8px 32px rgba(231,76,60,0.25), 0 0 0 1px rgba(255,107,107,0.4), inset 0 1px 0 rgba(255,255,255,0.6)'
+        : isSuccess
+        ? '0 8px 32px rgba(255,215,0,0.3), 0 0 0 1px rgba(255,215,0,0.4), inset 0 1px 0 rgba(255,255,255,0.6)'
+        : '0 8px 32px rgba(21,48,54,0.25), 0 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 rgba(255,255,255,0.6)';
     var t = document.createElement('div');
-    var accentColor = isError ? 'rgba(231,76,60,0.85)' : isSuccess ? 'rgba(46,204,113,0.85)' : 'rgba(21,48,54,0.9)';
-    var borderColor = isError ? 'rgba(231,76,60,0.4)' : isSuccess ? 'rgba(46,204,113,0.4)' : 'rgba(166,211,220,0.5)';
-    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-10px);'
-        + 'background:' + accentColor + ';'
-        + 'backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);'
-        + 'border:1.5px solid ' + borderColor + ';'
-        + 'color:#fff;padding:13px 22px;border-radius:18px;font-weight:700;'
+    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-18px);opacity:0;'
+        + 'background:' + gradient + ';'
+        + 'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);'
+        + 'border:1px solid rgba(255,255,255,0.3);'
+        + 'color:#153036;padding:13px 22px;border-radius:20px;font-weight:700;'
         + 'z-index:99999;font-size:13px;font-family:Montserrat,sans-serif;'
-        + 'box-shadow:0 8px 32px rgba(21,48,54,0.22);text-align:center;max-width:320px;'
-        + 'transition:opacity 0.3s,transform 0.3s;opacity:0;';
+        + 'box-shadow:' + shadow + ';'
+        + 'text-align:center;max-width:320px;'
+        + 'transition:opacity 0.35s,transform 0.35s cubic-bezier(0.34,1.56,0.64,1);';
     t.textContent = msg;
     document.body.appendChild(t);
     requestAnimationFrame(function(){ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
     setTimeout(function(){
-        t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-10px)';
-        setTimeout(function(){ t.remove(); }, 300);
-    }, 2600);
+        t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-18px)';
+        setTimeout(function(){ t.remove(); }, 350);
+    }, 2800);
 }
 
 var _malusEmail = null;
@@ -3694,6 +3854,24 @@ function openMalus(email, name){
 function closeMalus(){
     document.getElementById('malusOverlay').classList.remove('open');
     _malusEmail = null;
+    var ctx = document.getElementById('malusTaskContext');
+    if (ctx) { ctx.style.display = 'none'; }
+}
+function openTaskMalus(email, name, taskName){
+    _malusEmail = email;
+    document.getElementById('malusTargetName').textContent = name;
+    var ctx = document.getElementById('malusTaskContext');
+    var tn = document.getElementById('malusTaskName');
+    if (ctx && tn) { tn.textContent = taskName; ctx.style.display = 'block'; }
+    document.getElementById('malusOverlay').classList.add('open');
+}
+function openTaskBonus(email, name, taskName){
+    _bonusEmail = email;
+    document.getElementById('bonusTargetName').textContent = name;
+    var ctx = document.getElementById('bonusTaskContext');
+    var tn = document.getElementById('bonusTaskName');
+    if (ctx && tn) { tn.textContent = taskName; ctx.style.display = 'block'; }
+    document.getElementById('bonusOverlay').classList.add('open');
 }
 function sendMalus(reason, points){
     if(!_malusEmail) return;
@@ -3723,22 +3901,8 @@ function sendMalus(reason, points){
 </script>
 <!-- FIN WIDGET COMPETITION -->
 
-<!-- ══ OVERLAY CONTESTER ══ -->
-<input type="file" id="proofPhotoInputCam" accept="image/*" capture="environment">
-<div class="proof-overlay" id="proofOverlay" onclick="if(event.target===this)closeProofSheet()">
-    <div class="proof-sheet">
-        <div class="proof-sheet-title">🕵️ Contester une tâche</div>
-                <div class="proof-sheet-sub">Tâches du jour · Contestez, prouvez, validez</div>
-        <div id="proofContent">
-            <div class="proof-empty">Chargement…</div>
-        </div>
-        <button class="proof-cancel" onclick="closeProofSheet()">Fermer</button>
-    </div>
-</div>
-<!-- FIN OVERLAY CONTESTER -->
-
                 <script>
-                // 🔊 SYSTÈME DE SONS AU CLIC
+                //  SYSTÈME DE SONS AU CLIC
                 (function() {
                     // Créer le contexte audio une seule fois
                     let audioContext = null;
@@ -3878,7 +4042,7 @@ function sendMalus(reason, points){
                 // Script minimal pour initialiser la barre de santé, la date/heure et le bouton son
                 document.addEventListener('DOMContentLoaded', function(){
                     
-                    // 🎯 NOUVEAU : Charger la dernière tâche récente (VERSION COMPACTE)
+                    //  NOUVEAU : Charger la dernière tâche récente (VERSION COMPACTE)
                     function loadRecentTasks() {
                         fetch('/api/daily_tasks')
                             .then(response => response.json())
@@ -3906,7 +4070,7 @@ function sendMalus(reason, points){
                     // Charger les tâches au démarrage
                     loadRecentTasks();
                     
-                    // 🔥 NOTIFICATION EN TEMPS RÉEL
+                    //  NOTIFICATION EN TEMPS RÉEL
                     let lastTaskCount = 0;
                     
                     function checkForNewTasks() {
@@ -3930,76 +4094,48 @@ function sendMalus(reason, points){
                     }
                     
                     function showNewTaskNotification(task) {
-                        // Créer la notification
-                        const notification = document.createElement('div');
-                        notification.style.cssText = `
-                            position: fixed;
-                            top: 100px;
-                            right: 20px;
-                            z-index: 10000;
-                            background: linear-gradient(135deg, rgba(253,174,84,0.98) 0%, rgba(244,198,141,0.95) 100%);
-                            backdrop-filter: blur(20px);
-                            border-radius: 20px;
-                            padding: 16px 20px;
-                            box-shadow: 0 12px 40px rgba(253,174,84,0.5), 0 0 0 3px rgba(255,255,255,0.3);
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                            min-width: 280px;
-                            max-width: 320px;
-                            transform: translateX(400px);
-                            opacity: 0;
-                            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-                            border: 2px solid rgba(255,255,255,0.4);
-                        `;
-                        
-                        notification.innerHTML = `
-                            <div style="font-size: 36px; line-height: 1;">🎉</div>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 800; font-size: 14px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                                    ${task.player_name} vient de valider :
-                                </div>
-                                <div style="font-size: 13px; color: rgba(255,255,255,0.95); font-weight: 600; margin-top: 2px;">
-                                    ${task.task_name} (+${task.points} pts)
-                                </div>
-                            </div>
-                        `;
-                        
-                        document.body.appendChild(notification);
-                        
-                        // Animation d'entrée
-                        setTimeout(() => {
-                            notification.style.transform = 'translateX(0)';
-                            notification.style.opacity = '1';
-                        }, 100);
-                        
-                        // Son de notification
+                        // Toast live glassmorphisme harmonisé
+                        var n = document.createElement('div');
+                        n.style.cssText =
+                            'position:fixed;top:100px;right:20px;z-index:10000;' +
+                            'background:linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(255,215,0,.3) 50%,rgba(253,174,84,.4) 100%);' +
+                            'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);' +
+                            'border:1px solid rgba(255,255,255,.3);border-radius:28px;' +
+                            'padding:14px 20px;' +
+                            'box-shadow:0 8px 32px rgba(21,48,54,.25),0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.6);' +
+                            'display:flex;align-items:center;gap:12px;' +
+                            'min-width:280px;max-width:320px;' +
+                            'transform:translateX(400px);opacity:0;' +
+                            'transition:all .5s cubic-bezier(.34,1.56,.64,1);' +
+                            'font-family:Montserrat,sans-serif;';
+                        n.innerHTML =
+                            '<div style="font-size:30px;line-height:1;">🎉</div>' +
+                            '<div style="flex:1;">' +
+                                '<div style="font-weight:800;font-size:13px;color:#153036;">' +
+                                    task.player_name + ' vient de valider :' +
+                                '</div>' +
+                                '<div style="font-size:12px;color:#597176;font-weight:600;margin-top:2px;">' +
+                                    task.task_name + ' (+' + task.points + ' pts)' +
+                                '</div>' +
+                            '</div>';
+                        document.body.appendChild(n);
+                        setTimeout(function() { n.style.transform = 'translateX(0)'; n.style.opacity = '1'; }, 100);
+                        // Son
                         try {
-                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                            const oscillator = audioContext.createOscillator();
-                            const gainNode = audioContext.createGain();
-                            
-                            oscillator.connect(gainNode);
-                            gainNode.connect(audioContext.destination);
-                            
-                            oscillator.type = 'sine';
-                            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                            oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
-                            
-                            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
-                            
-                            oscillator.start();
-                            oscillator.stop(audioContext.currentTime + 0.3);
-                        } catch (e) {
-                            console.log('Audio notification désactivé');
-                        }
-                        
-                        // Animation de sortie après 4 secondes
-                        setTimeout(() => {
-                            notification.style.transform = 'translateX(400px)';
-                            notification.style.opacity = '0';
-                            setTimeout(() => notification.remove(), 500);
+                            var ac = new (window.AudioContext || window.webkitAudioContext)();
+                            var osc = ac.createOscillator(); var g = ac.createGain();
+                            osc.connect(g); g.connect(ac.destination);
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(800, ac.currentTime);
+                            osc.frequency.exponentialRampToValueAtTime(1200, ac.currentTime + 0.1);
+                            g.gain.setValueAtTime(0.15, ac.currentTime);
+                            g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+                            osc.start(); osc.stop(ac.currentTime + 0.3);
+                        } catch(e) {}
+                        // Sortie après 4s
+                        setTimeout(function() {
+                            n.style.transform = 'translateX(400px)'; n.style.opacity = '0';
+                            setTimeout(function() { if (n.parentNode) n.parentNode.removeChild(n); }, 500);
                         }, 4000);
                     }
                     
@@ -4283,7 +4419,7 @@ function sendMalus(reason, points){
                                     targetWrapper = document.querySelector('.avatar-square-wrapper[title="' + whon + '"]');
                                 }
                                 if (!targetWrapper) {
-                                    console.log('🎯 Aucun wrapper pour', who, '-> fallback joueur courant');
+                                    console.log('Aucun wrapper pour', who, '-> fallback joueur courant');
                                     targetWrapper = document.getElementById('current-player-avatar-wrapper');
                                 }
                                 var winnerAvatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
@@ -4383,7 +4519,7 @@ function sendMalus(reason, points){
 
                     // Son de progression (points gagnés)
                     function playProgressSound(points = 50) {
-                        console.log('🔊 Son progression..., points:', points);
+                        console.log('Son progression..., points:', points);
                         const freq = 400 + (points * 3); // Plus aigu avec plus de points
                         try {
                             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -4504,7 +4640,7 @@ function sendMalus(reason, points){
                             const whon = urlParams.get('whon');
                             
                             setTimeout(() => {
-                                console.log('🎉 Tâche validée, animation de célébration...');
+                                console.log('Tâche validée, animation de célébration...');
                                 
                                 // Trouver l'avatar du bénéficiaire si précisé, sinon joueur courant
                                 let avatarWrapper = null;
@@ -4515,7 +4651,7 @@ function sendMalus(reason, points){
                                     avatarWrapper = document.querySelector('.avatar-square-wrapper[title="' + whon + '"]');
                                 }
                                 if (!avatarWrapper) {
-                                    console.log('🎯 Aucun wrapper pour', who, '-> fallback joueur courant');
+                                    console.log('Aucun wrapper pour', who, '-> fallback joueur courant');
                                     avatarWrapper = document.getElementById('current-player-avatar-wrapper');
                                 }
                                 const avatarSquare = avatarWrapper ? avatarWrapper.querySelector('#current-player-avatar, .avatar-square') : null;
@@ -4696,18 +4832,27 @@ function sendMalus(reason, points){
                             <!-- Informations de la maison : nom + barre de progression -->
                             <div class="house-info" style="margin-bottom:4px;">
                                 <div class="house-name">{{ house_name if house_name else 'Ma Maison' }}</div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.5px;margin-top:2px;">✨ Version bêta</div>
                             </div>
 
                             <div class="rooms-isometric">
 
                                 {% for room in custom_rooms %}
                                 <a href="/categorie/{{ room.category }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
-                                    <div class="room-card-visual">
+                                    <div class="room-card-title">{{ room.name }}</div>
+                                    <div class="room-card-visual" data-category="{{ room.category }}">
                                         <picture>
                                             <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
                                         </picture>
+                                        <span class="room-mission-dot"
+                                              title="Mission(s) en attente"
+                                              {% if room.category not in rooms_with_new_missions %}style="display:none"{% endif %}>
+                                            {{ rooms_with_new_missions[room.category] if room.category in rooms_with_new_missions else '' }}
+                                        </span>
+                                        {% if room.category == 'chambre_bebe' and unread_baby_tracking|default(0) > 0 %}
+                                        <span class="room-baby-dot" title="Nouveau suivi bébé">{{ unread_baby_tracking }}</span>
+                                        {% endif %}
                                     </div>
-                                    <div class="room-card-title">{{ room.name }}</div>
                                 </a>
                                 {% endfor %}
 
@@ -4729,67 +4874,23 @@ function sendMalus(reason, points){
                     <button class="burger-close" id="burgerClose" aria-label="Fermer le menu">&times;</button>
                     <nav class="burger-nav-items">
                         <!-- 👤 MON PROFIL — item en haut du menu -->
-                        <a href="#" class="burger-nav-item burger-nav-item-profile" id="profileNavBtn" onclick="openProfilePanel(event)" role="button">
-                            <span class="burger-nav-icon profile-nav-avatar" style="filter:none;">
-                                {% if player1_avatar_file %}
-                                    <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}"
-                                         alt="{{ player1_name or 'Profil' }}"
-                                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                    <span style="display:none;font-size:22px;">👤</span>
-                                {% elif player1_avatar_url %}
-                                    <img src="{{ player1_avatar_url }}"
-                                         alt="{{ player1_name or 'Profil' }}"
-                                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                    <span style="display:none;font-size:22px;">👤</span>
-                                {% elif player1_avatar and player1_avatar|length <= 4 %}
-                                    {{ player1_avatar }}
-                                {% else %}
-                                    👤
-                                {% endif %}
-                            </span>
-                            <div class="burger-nav-text-block">
-                                <span class="burger-nav-text">Mon Profil</span>
-                                <span class="burger-nav-subtext">{{ player1_name or 'Mon compte' }}</span>
-                            </div>
-                            <span class="burger-nav-arrow">›</span>
-                        </a>
 
-                        <a href="{{ url_for('personnaliser_maison') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🏡</span>
-                            <span class="burger-nav-text">Gérer la maison</span>
-                        </a>
-                        <a href="{{ url_for('manage_players') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">👥</span>
-                            <span class="burger-nav-text">Gérer les joueurs</span>
-                        </a>
-                        <a href="{{ url_for('reminders') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">📋</span>
-                            <span class="burger-nav-text">Mes rappels</span>
-                        </a>
-                        <a href="{{ url_for('comments') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">
-                                💬
-                                {% if unread_messages_count and unread_messages_count > 0 %}
-                                <span class="notification-badge">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
-                                {% endif %}
-                            </span>
-                            <span class="burger-nav-text">Messagerie</span>
-                        </a>
-                        <a href="{{ url_for('sats') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">📊</span>
-                            <span class="burger-nav-text">Stats</span>
-                        </a>
-                        <a href="{{ url_for('mes_recompenses') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🎁</span>
-                            <span class="burger-nav-text">Récompenses</span>
-                        </a>
-                        <a href="{{ url_for('rewards') }}" class="burger-nav-item">
-                            <span class="burger-nav-icon">🧪</span>
-                            <span class="burger-nav-text">Test Grille</span>
-                        </a>
+
 
                         <!-- Séparateur version bêta EN BAS -->
                         <div class="burger-nav-divider">Version bêta</div>
+
+                        <!-- 🧡 REMERCIEMENT BÊTA TESTEURS -->
+                        <div style="margin: 4px 0 8px; padding: 14px 16px; background: linear-gradient(135deg, rgba(253,174,84,0.18), rgba(244,198,141,0.12)); border-radius: 16px; border: 1.5px solid rgba(253,174,84,0.35);">
+                            <div style="font-size: 13px; font-weight: 800; color: #153036; margin-bottom: 4px;">🧡 Merci d'être bêta testeur !</div>
+                            <div style="font-size: 12px; color: rgba(21,48,54,0.7); line-height: 1.5;">Tu fais partie des premiers à tester CleanBeat. Certaines fonctionnalités sont encore en cours de polissage — ton avis compte énormément !</div>
+                        </div>
+
+                        <!-- 📱 GUIDE AJOUT ÉCRAN ACCUEIL -->
+                        <span class="burger-nav-item" onclick="document.getElementById('install-guide-modal').style.display='flex'" style="cursor:pointer; background: linear-gradient(135deg, rgba(166,211,220,0.2), rgba(166,211,220,0.1)); border-color: rgba(166,211,220,0.45);">
+                            <span class="burger-nav-icon">📱</span>
+                            <span class="burger-nav-text" style="color:#153036;">Installer l'appli</span>
+                        </span>
 
                         <!-- 💌 FEEDBACK TESTEURS -->
                         <a href="{{ url_for('feedback') }}" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
@@ -4879,8 +4980,9 @@ function sendMalus(reason, points){
                         <div class="profile-section-title">Mes statistiques</div>
                         <div class="profile-stats-grid">
                             <div class="profile-stat-item">
-                                <div class="profile-stat-value">{{ cp.total_points|default(0) if cp else 0 }}</div>
-                                <div class="profile-stat-label">Points totaux</div>
+                                {% set today_tasks = daily_report|selectattr('email', 'equalto', current_user_name)|list|length %}
+                                <div class="profile-stat-value">{{ today_tasks }}</div>
+                                <div class="profile-stat-label">Tâches</div>
                             </div>
                             <div class="profile-stat-item">
                                 <div class="profile-stat-value">{{ player1_points or 0 }}</div>
@@ -4891,12 +4993,15 @@ function sendMalus(reason, points){
                                 <div class="profile-stat-label">Cette semaine</div>
                             </div>
                             <div class="profile-stat-item">
-                                {% set streak_val = cp.streak|default(0) if cp else 0 %}
-                                <div class="profile-stat-value">
-                                    {{ streak_val }}{% if streak_val > 0 %}&thinsp;🔥{% endif %}
-                                </div>
-                                <div class="profile-stat-label">Jours d'affilée</div>
+                                {% set total_rappels = (unread_baby_tracking|default(0)) %}
+                                <div class="profile-stat-value">{{ total_rappels }}</div>
+                                <div class="profile-stat-label">Rappels</div>
                             </div>
+                        </div>
+
+                        <!-- Mes rappels -->
+                        <div class="profile-section-title">Mes rappels</div>
+                        <div class="profile-reminders">
                         </div>
 
                         <!-- Classement dans la maison -->
@@ -4952,12 +5057,14 @@ function sendMalus(reason, points){
             </div>
 
             <script>
-                // 🍔 GESTION DU MENU BURGER
+                //  GESTION DU MENU BURGER
                 // Fonction globale pour ouvrir depuis la barre du bas
                 window.openBurgerMenu = function() {
+                    console.log('openBurgerMenu appelee');
                     document.getElementById('burgerOverlay').classList.add('active');
                     document.body.style.overflow = 'hidden';
                 };
+                console.log('openBurgerMenu définie:', typeof window.openBurgerMenu);
                 window.closeBurgerMenu = function() {
                     document.getElementById('burgerOverlay').classList.remove('active');
                     if(typeof closeProfilePanel === 'function') closeProfilePanel();
@@ -5005,7 +5112,7 @@ function sendMalus(reason, points){
                     if (panel) panel.classList.remove('active');
                 }
                 
-                // 💡 GESTION DES LUMIÈRES PERSISTANTES
+                //  GESTION DES LUMIÈRES PERSISTANTES
                 (function() {
                     const roomGroups = document.querySelectorAll('.room-group');
                     const roomButtons = document.querySelectorAll('.room-button');
@@ -5094,7 +5201,7 @@ function sendMalus(reason, points){
                     });
                 })();
                 
-                // 🔔 GESTION DES NOTIFICATIONS PUSH
+                //  GESTION DES NOTIFICATIONS PUSH
                 (function() {
                     const notifToggle = document.getElementById('notificationToggle');
                     const notifIcon = document.getElementById('notifIcon');
@@ -5317,12 +5424,12 @@ function sendMalus(reason, points){
                 })();
                 
                 // ==========================================
-                // 🔔 GESTION DES BADGES DE MESSAGES NON LUS
+                //  GESTION DES BADGES DE MESSAGES NON LUS
                 // ==========================================
                 function updateUnreadBadge(count) {
-                    console.log('🔔 updateUnreadBadge appelé avec count:', count);
+                    console.log('updateUnreadBadge appelé avec count:', count);
                     
-                    // 🏠 Badge icône écran d'accueil (PWA Badging API — iOS 16.4+, Android Chrome)
+                    //  Badge icône écran d'accueil (PWA Badging API — iOS 16.4+, Android Chrome)
                     if ('setAppBadge' in navigator) {
                         if (count > 0) {
                             navigator.setAppBadge(count).catch(function(){});
@@ -5331,165 +5438,34 @@ function sendMalus(reason, points){
                         }
                     }
                     
-                    // Mettre à jour le badge dans le menu burger (total des messages)
+                    //  Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
-                    console.log('🍔 Badges burger trouvés:', burgerBadges.length);
+                    console.log('Badges burger trouvés:', burgerBadges.length);
                     burgerBadges.forEach(badge => {
                         if (count > 0) {
                             badge.textContent = count < 100 ? count : '99+';
                             badge.style.display = 'flex';
-                            console.log('✅ Badge burger affiché:', badge.textContent);
+                            console.log('Badge burger affiché:', badge.textContent);
                         } else {
                             badge.style.display = 'none';
                             console.log('❌ Badge burger caché');
                         }
                     });
                     
-                    // 🔔 Mettre à jour aussi le badge sur l'avatar de l'utilisateur connecté
-                    const currentUserEmail = "{{ session.get('user', '') }}";
-                    console.log('👤 currentUserEmail:', currentUserEmail);
-                    const avatarWrapper = document.getElementById('current-player-avatar-wrapper');
-                    console.log('🎯 avatarWrapper trouvé:', avatarWrapper);
-                    
-                    if (!avatarWrapper) {
-                        console.error('❌ avatarWrapper non trouvé ! ID: current-player-avatar-wrapper');
-                        console.log('🔍 Éléments avec classe avatar-square-wrapper:', document.querySelectorAll('.avatar-square-wrapper').length);
-                        return;
-                    }
-                    
-                    let avatarBadge = avatarWrapper.querySelector('.avatar-notification-badge');
-                    console.log('🔴 Badge existant:', avatarBadge);
-                    
-                    if (count > 0) {
-                        if (!avatarBadge) {
-                            console.log('➕ Création d\'un nouveau badge...');
-                            avatarBadge = document.createElement('span');
-                            avatarBadge.className = 'avatar-notification-badge';
-                            avatarBadge.setAttribute('data-recipient', currentUserEmail);
-                            // Appliquer TOUS les styles nécessaires
-                            avatarBadge.style.position = 'absolute';
-                            avatarBadge.style.top = '-4px';
-                            avatarBadge.style.right = '-4px';
-                            avatarBadge.style.background = 'linear-gradient(135deg, #FF4444 0%, #FF6B6B 100%)';
-                            avatarBadge.style.color = 'white';
-                            avatarBadge.style.fontSize = '10px';
-                            avatarBadge.style.fontWeight = '800';
-                            avatarBadge.style.minWidth = '22px';
-                            avatarBadge.style.height = '22px';
-                            avatarBadge.style.borderRadius = '11px';
-                            avatarBadge.style.display = 'flex';
-                            avatarBadge.style.alignItems = 'center';
-                            avatarBadge.style.justifyContent = 'center';
-                            avatarBadge.style.padding = '0 6px';
-                            avatarBadge.style.boxShadow = '0 3px 12px rgba(255, 68, 68, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4)';
-                            avatarBadge.style.border = '1.5px solid white';
-                            avatarBadge.style.zIndex = '100';  // Z-index très élevé
-                            avatarBadge.style.fontFamily = 'Montserrat, sans-serif';
-                            avatarBadge.style.cursor = 'pointer';
-                            avatarBadge.style.transition = 'transform 0.2s ease';
-                            avatarBadge.style.pointerEvents = 'auto';
-                            avatarBadge.style.animation = 'pulse-badge 2s ease-in-out infinite';
-                            
-                            avatarBadge.onclick = (e) => {
-                                e.stopPropagation();
-                                window.location.href = '{{ url_for("comments") }}';
-                            };
-                            
-                            // S'assurer que le wrapper a position: relative
-                            if (window.getComputedStyle(avatarWrapper).position === 'static') {
-                                avatarWrapper.style.position = 'relative';
-                                console.log('✅ Position relative appliquée au wrapper');
-                            }
-                            
-                            avatarWrapper.appendChild(avatarBadge);
-                            console.log('✅ Badge créé et ajouté au DOM');
-                            console.log('🔍 Position du badge:', avatarBadge.getBoundingClientRect());
-                        }
-                        
-                        // Mettre à jour le contenu et forcer l'affichage
-                        avatarBadge.textContent = count < 100 ? count : '99+';
-                        avatarBadge.style.display = 'flex';
-                        avatarBadge.style.visibility = 'visible';
-                        avatarBadge.style.opacity = '1';
-                        avatarBadge.style.pointerEvents = 'auto';
-                        
-                        console.log('✅ Badge avatar affiché:', avatarBadge.textContent);
-                        console.log('🔍 Styles finaux badge:', {
-                            display: avatarBadge.style.display,
-                            visibility: avatarBadge.style.visibility,
-                            opacity: avatarBadge.style.opacity,
-                            zIndex: avatarBadge.style.zIndex,
-                            position: avatarBadge.style.position
-                        });
-                    } else if (avatarBadge) {
-                        avatarBadge.style.display = 'none';
-                        console.log('❌ Badge avatar caché');
-                    }
-                }
-                
-                // ✅ MESSAGERIE : La pastille rouge apparaît uniquement sur l'avatar du DESTINATAIRE (celui qui a des messages non lus)
-                // Pas besoin de badges par expéditeur - chaque joueur voit une pastille sur SON avatar s'il a des messages non lus
-                window.__unreadBySender = window.__unreadBySender || {};
-
-                function applyAvatarUnreadBadges() {
-                    // Cette fonction n'est plus nécessaire car updateUnreadBadge gère déjà la pastille sur l'avatar de l'utilisateur actuel
-                    // On la garde vide pour compatibilité avec les appels existants
-                }
-
-                function updateUnreadBySender(unreadBySender) {
-                    window.__unreadBySender = unreadBySender || {};
-                    document.querySelectorAll('.avatar-notification-badge').forEach(function(badge) {
-                        const recipientEmail = badge.getAttribute('data-recipient');
-                        
-                        // ✅ Si cet email n'est PAS dans unreadBySender, on l'ignore (ne pas toucher aux badges enfants gérés par updateChildrenBadges)
-                        if (!unreadBySender || !unreadBySender.hasOwnProperty(recipientEmail)) {
-                            return; // Ignorer ce badge (peut être un badge enfant)
-                        }
-                        
-                        const count = unreadBySender[recipientEmail] || 0;
+                    // 💬 Mettre à jour le badge du bouton Messages dans le menu de navigation fixe en bas
+                    const bottomNavBadge = document.getElementById('bottomNavMessagesBadge');
+                    console.log('📍 Bottom nav badge trouvé:', bottomNavBadge);
+                    if (bottomNavBadge) {
                         if (count > 0) {
-                            badge.textContent = count < 100 ? count : '99+';
-                            badge.style.display = '';
+                            bottomNavBadge.textContent = count < 100 ? count : '99+';
+                            bottomNavBadge.style.display = 'flex';
+                            console.log('Bottom nav badge affiché:', bottomNavBadge.textContent);
                         } else {
-                            badge.style.display = 'none';
+                            bottomNavBadge.style.display = 'none';
+                            console.log('❌ Bottom nav badge caché');
                         }
-                    });
-                }
-                
-                // ✅ Mettre à jour les pastilles sur les avatars des enfants (visible par tous les adultes)
-                let childrenBadgesUpdateTimer = null;
-                function updateChildrenBadges(childrenUnread) {
-                    if (!childrenUnread) return;
-                    
-                    // Debounce: annuler la mise à jour précédente si elle n'est pas encore appliquée
-                    if (childrenBadgesUpdateTimer) {
-                        clearTimeout(childrenBadgesUpdateTimer);
                     }
-                    
-                    childrenBadgesUpdateTimer = setTimeout(function() {
-                        console.log('🔄 Mise à jour badges enfants (debounced):', childrenUnread);
-                        Object.keys(childrenUnread).forEach(function(childEmail) {
-                            const count = childrenUnread[childEmail];
-                            const badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + childEmail + '"]');
-                            console.log(`   - ${childEmail}: ${count} messages (${badges.length} badges trouvés)`);
-                            badges.forEach(function(badge) {
-                                if (count > 0) {
-                                    badge.textContent = count < 100 ? count : '99+';
-                                    badge.style.display = '';
-                                } else {
-                                    badge.style.display = 'none';
-                                }
-                            });
-                        });
-                    }, 100);  // Attendre 100ms avant d'appliquer la mise à jour
                 }
-                
-                // ==========================================
-                // �🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
-                // ==========================================
-                (function() {
-                    try {
-                        // WebSocket avec polling en fallback (Render free tier : réveil lent jusquà 60s)
                         const socket = io({
                             transports: ['websocket', 'polling'],
                             upgrade: true,
@@ -5501,7 +5477,7 @@ function sendMalus(reason, points){
                         });
                         const userEmail = "{{ session.get('user', '') }}";
                         
-                        // 🔔 Son de notification pour les nouveaux messages
+                        //  Son de notification pour les nouveaux messages
                         const messageNotifSound = new Audio('/static/audio/livechat-129007.mp3');
                         messageNotifSound.preload = 'auto';
                         messageNotifSound.volume = 0.8;  // Volume augmenté pour être plus audible
@@ -5519,7 +5495,7 @@ function sendMalus(reason, points){
                                     messageNotifSound.currentTime = 0;
                                     messageNotifSound.volume = savedVolume;  // Restaurer le volume
                                     audioUnlocked = true;
-                                    console.log('✅ Audio débloqué pour les notifications');
+                                    console.log('Audio débloqué pour les notifications');
                                 }).catch((err) => {
                                     messageNotifSound.volume = savedVolume;  // Restaurer même en cas d'erreur
                                     console.log('⚠️ Échec déblocage audio:', err.message);
@@ -5532,17 +5508,17 @@ function sendMalus(reason, points){
                         });
                         
                         function playMessageSound() {
-                            console.log('🔔 playMessageSound() appelée');
-                            console.log('🔔 audioUnlocked:', audioUnlocked);
+                            console.log('playMessageSound() appelée');
+                            console.log('audioUnlocked:', audioUnlocked);
                             try {
                                 messageNotifSound.currentTime = 0;
                                 const playPromise = messageNotifSound.play();
                                 if (playPromise !== undefined) {
                                     playPromise.then(() => {
-                                        console.log('✅ Son de notification joué avec succès');
+                                        console.log('Son de notification joué avec succès');
                                     }).catch(function(e) {
                                         console.log('🔇 Son notification bloqué (interaction utilisateur requise):', e.message);
-                                        console.log('💡 Essayez de cliquer sur la page pour débloquer l\'audio');
+                                        console.log('Essayez de cliquer sur la page pour débloquer l\'audio');
                                     });
                                 }
                             } catch(e) {
@@ -5587,20 +5563,20 @@ function sendMalus(reason, points){
                         // Écouter les mises à jour de points en temps réel avec données complètes
                         socket.on('players_points_update', function(data) {
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                            console.log('📊 WebSocket: Mise à jour des points reçue (menu.html)');
+                            console.log('WebSocket: Mise à jour des points reçue (menu.html)');
                             console.log('   🕐 Timestamp:', new Date().toLocaleTimeString());
-                            console.log('   📧 userEmail (MOI):', userEmail);
-                            console.log('   🎯 Joueur modifié:', data.updated_player);
+                            console.log('   userEmail (MOI):', userEmail);
+                            console.log('   Joueur modifié:', data.updated_player);
                             console.log('   👥 Nombre de joueurs:', data.players ? data.players.length : 0);
-                            console.log('   📊 Données complètes:', data);
+                            console.log('   Données complètes:', data);
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
-                            // ✅ Utiliser directement les données WebSocket (pas d'appel API !)
+                            //  Utiliser directement les données WebSocket (pas d'appel API !)
                             if (data.players && Array.isArray(data.players)) {
                                 data.players.forEach(function(player) {
                                     console.log(`   🔄 Mise à jour ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
                                     
-                                    // ✅ 1. Mettre à jour les CARTES PODIUM (.player-stat-card)
+                                    //  1. Mettre à jour les CARTES PODIUM (.player-stat-card)
                                     const playerCards = document.querySelectorAll('.player-name-link');
                                     playerCards.forEach(function(card) {
                                         const cardName = card.textContent.trim();
@@ -5612,7 +5588,7 @@ function sendMalus(reason, points){
                                                     const oldPoints = parseInt(pointsElement.textContent) || 0;
                                                     const newPoints = player.daily_points || 0;
                                                     
-                                                    console.log(`      ✅ Carte podium ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                    console.log(`      Carte podium ${player.name}: ${oldPoints} → ${newPoints}`);
                                                     
                                                     pointsElement.textContent = newPoints;
                                                     
@@ -5634,7 +5610,7 @@ function sendMalus(reason, points){
                                         }
                                     });
                                     
-                                    // ✅ 2. Mettre à jour les AVATARS HEADER (game-header)
+                                    //  2. Mettre à jour les AVATARS HEADER (game-header)
                                     const avatarWrappers = document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + player.email + '"]');
                                     avatarWrappers.forEach(function(wrapper) {
                                         // Texte des points
@@ -5646,7 +5622,7 @@ function sendMalus(reason, points){
                                                 const oldPoints = parseInt(pointsEl.textContent) || 0;
                                                 const newPoints = player.daily_points || 0;
                                                 
-                                                console.log(`      ✅ Avatar header ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                console.log(`      Avatar header ${player.name}: ${oldPoints} → ${newPoints}`);
                                                 
                                                 pointsEl.textContent = newPoints + ' pts';
                                                 
@@ -5711,11 +5687,11 @@ function sendMalus(reason, points){
                                     });
                                 });
                                 
-                                console.log('✅ Mise à jour des points terminée');
+                                console.log('Mise à jour des points terminée');
                                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                             }
                             
-                            // ✅ 3. Rafraîchir le dashboard si visible
+                            //  3. Rafraîchir le dashboard si visible
                             const dashboardElement = document.getElementById('dashboardFloating');
                             if (dashboardElement && !dashboardElement.classList.contains('minimized')) {
                                 if (typeof loadDailyRanking === 'function') {
@@ -5726,7 +5702,7 @@ function sendMalus(reason, points){
                         
                         // Écouter les mises à jour d'avatar
                         socket.on('player_avatar_update', function(data) {
-                            console.log('👤 WebSocket: Mise à jour avatar reçue', data);
+                            console.log('WebSocket: Mise à jour avatar reçue', data);
                             
                             // Trouver et mettre à jour l'avatar dans l'interface
                             const avatarElements = document.querySelectorAll(`[data-player-email="${data.email}"]`);
@@ -5803,7 +5779,7 @@ function sendMalus(reason, points){
                             if (data.action === 'child_added') {
                                 console.log(`👶 Enfant ajouté: ${data.new_player}`);
                             } else if (data.action === 'player_joined') {
-                                console.log(`🎉 Joueur a rejoint: ${data.new_player}`);
+                                console.log(`Joueur a rejoint: ${data.new_player}`);
                             } else if (data.action === 'player_registered') {
                                 console.log(`✨ Nouveau joueur inscrit: ${data.new_player}`);
                             }
@@ -5819,33 +5795,39 @@ function sendMalus(reason, points){
                         socket.on('new_message_notification', function(data) {
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             console.log('💬 WebSocket: Nouveau message reçu');
-                            console.log('📧 sender_email:', data.sender_email);
-                            console.log('📧 recipient_email:', data.recipient_email);  console.log('👤 userEmail (MOI):', userEmail);
+                            console.log('sender_email:', data.sender_email);
+                            console.log('recipient_email:', data.recipient_email);  console.log('userEmail (MOI):', userEmail);
                             console.log('👶 recipient_is_child:', data.recipient_is_child);
-                            console.log('📊 recipient_unread_count:', data.recipient_unread_count);
+                            console.log('recipient_unread_count:', data.recipient_unread_count);
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                             
                             // ❌ RÈGLE #1 : Si JE suis l'expéditeur → RIEN faire (pas de badge, pas de son)
                             if (data.sender_email === userEmail) {
-                                console.log('⏭️ JE SUIS L\'EXPÉDITEUR → AUCUNE action (pas de son, pas de badge)');
-                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+                                console.log('⏭️ JE SUIS L\'EXPÉDITEUR → pas de son, pas de badge perso');
+                                // EXCEPTION : message pour enfant → mettre à jour sa pastille quand même
+                                if (data.recipient_is_child === true && data.children_unread) {
+                                    console.log('👶 Expéditeur → mise à jour pastille enfant quand même');
+                                    updateChildrenBadges(data.children_unread);
+                                }
+                                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;
                             }
                             
-                            // ✅ RÈGLE #2 : Si JE suis le destinataire direct → son + badge
+                            //  RÈGLE #2 : Si JE suis le destinataire direct → son + badge
                             if (data.recipient_email === userEmail) {
-                                console.log('✅ JE SUIS LE DESTINATAIRE ! → Badge + Son');
-                                console.log('📊 Mon compteur de messages non lus:', data.recipient_unread_count);
+                                console.log('JE SUIS LE DESTINATAIRE ! → Badge + Son');
+                                console.log('Mon compteur de messages non lus:', data.recipient_unread_count);
                                 
-                                // 🔔 SON EN PREMIER
-                                console.log('🔔 Lecture du son de réception...');
+                                //  SON EN PREMIER
+                                console.log('Lecture du son de réception...');
                                 playMessageSound();
                                 
                                 // Badge
-                                console.log('🔴 Mise à jour de mon badge...');
+                                console.log('Mise à jour de mon badge...');
                                 updateUnreadBadge(data.recipient_unread_count);
+                                updateAppBadge(data.recipient_unread_count);
                                 
-                                // ✅ Mettre à jour les pastilles sur tous les avatars enfants
+                                //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
                                     console.log('👶 Mise à jour badges enfants:', data.children_unread);
                                     updateChildrenBadges(data.children_unread);
@@ -5855,18 +5837,18 @@ function sendMalus(reason, points){
                                 return;  // Important : sortir ici
                             }
                             
-                            // ✅ RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) voient la pastille
+                            //  RÈGLE #3 : Si le destinataire est un ENFANT → TOUS les adultes (sauf expéditeur) voient la pastille
                             if (data.recipient_is_child === true) {
                                 console.log('👶 Message pour ENFANT détecté !');
                                 console.log('👨‍👩‍👧 Je suis un PARENT/ADULTE → Je dois voir la pastille + entendre le son');
                                 
-                                // 🔔 SON
-                                console.log('🔔 Lecture du son de réception (message enfant)...');
+                                //  SON
+                                console.log('Lecture du son de réception (message enfant)...');
                                 playMessageSound();
                                 
-                                // ✅ Mettre à jour les pastilles sur tous les avatars enfants
+                                //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
-                                    console.log('📊 Mise à jour badges enfants:', data.children_unread);
+                                    console.log('Mise à jour badges enfants:', data.children_unread);
                                     updateChildrenBadges(data.children_unread);
                                 }
                                 
@@ -5886,7 +5868,7 @@ function sendMalus(reason, points){
                             
                             // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail && data.unread_by_sender) {
-                                console.log('✅ Mise à jour MY badges avatars');
+                                console.log('Mise à jour MY badges avatars');
                                 updateUnreadBySender(data.unread_by_sender);
                             } else {
                                 console.log('⏭️ Badges avatars pas pour moi');
@@ -5900,7 +5882,7 @@ function sendMalus(reason, points){
                             
                             // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail) {
-                                console.log('✅ Mise à jour MON compteur:', data.count);
+                                console.log('Mise à jour MON compteur:', data.count);
                                 updateUnreadBadge(data.count);
                                 
                                 if (data.unread_by_sender) {
@@ -5937,13 +5919,13 @@ function sendMalus(reason, points){
                                 return;
                             }
                             
-                            // ✅ Si quelqu'un a marqué un message comme lu ET que c'est MOI
+                            //  Si quelqu'un a marqué un message comme lu ET que c'est MOI
                             if (data.action === 'message_read' && data.reader_email === userEmail) {
-                                console.log('✅ J\'AI MARQUÉ UN MESSAGE COMME LU → Recharger MES badges via API');
+                                console.log('J\'AI MARQUÉ UN MESSAGE COMME LU → Recharger MES badges via API');
                                 fetch('/api/unread_counts', { cache: 'no-store' })
                                     .then(response => response.json())
                                     .then(counts => {
-                                        console.log('📊 Compteurs API reçus:', counts);
+                                        console.log('Compteurs API reçus:', counts);
                                         if (counts.unread_received !== undefined) {
                                             updateUnreadBadge(counts.unread_received);
                                         }
@@ -5959,12 +5941,29 @@ function sendMalus(reason, points){
                                 return;
                             }
                             
+                            //  Si c'est un message système (baby/mission/courses) → rafraîchir les pills
+                            if (data.action === 'system_message') {
+                                console.log('Message système reçu (', data.message_type, ') → refreshAllBadges');
+                                refreshAllBadges();
+                            refreshMissionDots();
+                                return;
+                            }
+
+                            //  Si c'est un message système (baby/mission/courses) → rafraîchir les pills
+                            if (data.action === 'system_message') {
+                                console.log('Message système reçu (', data.message_type, ') → refreshAllBadges');
+                                refreshAllBadges();
+                                return;
+                            }
+
                             // ❌ Sinon, ignorer (autres actions ou autres utilisateurs)
                             console.log('⏭️ Action ou utilisateur non concerné → Ignoré');
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-                        });
                         
-                        // 🔔 Pastille enfant mise à jour quand un adulte marque un message lu
+                            // Rafraîchir les pastilles de mission si une nouvelle tâche a été ajoutée
+                            if (data.message_type === 'task_added') { refreshMissionDots(); }});
+                        
+                        //  Pastille enfant mise à jour quand un adulte marque un message lu
                         socket.on('badge_update', function(data) {
                             if (!data.child_email) return;
                             const childrenUnread = {};
@@ -5972,15 +5971,15 @@ function sendMalus(reason, points){
                             updateChildrenBadges(childrenUnread);
                         });
 
-                        // 🔔 Écouter quand un utilisateur a marqué tous ses messages comme lus
+                        //  Écouter quand un utilisateur a marqué tous ses messages comme lus
                         socket.on('all_messages_read', function(data) {
-                            console.log('✅ WebSocket: Messages marqués comme lus', data);
+                            console.log('WebSocket: Messages marqués comme lus', data);
                             if (data.reader_email === userEmail) {
-                                updateUnreadBadge(0);
+                                refreshAllBadges();
                             }
                         });
 
-                        // 🔔 Pastille sur avatar enfant quand message envoyé À lui
+                        //  Pastille sur avatar enfant quand message envoyé À lui
                         socket.on('unread_sent_to_update', function(data) {
                             console.log('👶 WebSocket: unread_sent_to_update reçu', data);
                             if (!data.unread_sent_to) return;
@@ -5999,22 +5998,67 @@ function sendMalus(reason, points){
                             });
                         });
                         
-                        console.log('✅ WebSocket: Système de synchronisation initialisé');
+                        console.log('WebSocket: Système de synchronisation initialisé');
                     } catch (error) {
-                        console.error('❌ WebSocket: Erreur d\'initialisation', error);
-                    }
-                })();
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
                 // (cache navigateur, bfcache, retour arrière, Service Worker, etc.)
-                function refreshAllBadges() {
+                // Met à jour une pill baby/mission/courses par son id
+                function updatePill(pillId, countId, count) {
+                    var pill = document.getElementById(pillId);
+                    var countEl = document.getElementById(countId);
+                    if (!pill || !countEl) return;
+                    if (count > 0) {
+                        countEl.textContent = count < 100 ? count : '99+';
+                        pill.style.display = '';
+                    } else {
+                        pill.style.display = 'none';
+                    }
+                }
+
+                // Badge PWA sur l'icône de l'app (iOS 16.4+ / Android Chrome installé)
+                function updateAppBadge(count) {
+                    try {
+                        if ('setAppBadge' in navigator) {
+                            if (count > 0) {
+                                navigator.setAppBadge(count).catch(function(){});
+                            } else {
+                                navigator.clearAppBadge().catch(function(){});
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                
+                window.refreshMissionDots = function() {
+                    fetch('/api/rooms_with_missions')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data.rooms) return;
+                            // Mettre à jour chaque pastille individuellement
+                            document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
+                                var vis = dot.closest('.room-card-visual');
+                                if (!vis) return;
+                                var cat = vis.getAttribute('data-category');
+                                if (cat && data.rooms[cat]) {
+                                    dot.textContent = data.rooms[cat] > 99 ? '99+' : data.rooms[cat];
+                                    dot.style.display = '';
+                                } else {
+                                    dot.style.display = 'none';
+                                    dot.textContent = '';
+                                }
+                            });
+                        })
+                        .catch(function() {}); // en cas d'erreur, l'état serveur est conservé
+                };
+function refreshAllBadges() {
                     console.log('🔄 Rafraîchissement des badges...');
                     fetch('/api/unread_counts', { cache: 'no-store' })
                         .then(response => response.json())
                         .then(counts => {
-                            console.log('📊 Compteurs reçus de l\'API:', counts);
+                            console.log('Compteurs reçus de l\'API:', counts);
                             if (counts.unread_received !== undefined) {
-                                console.log('🔔 Mise à jour badge avec count:', counts.unread_received);
+                                console.log('Mise à jour badge avec count:', counts.unread_received);
                                 updateUnreadBadge(counts.unread_received);
                             }
                             // Fusionner unread_by_sender + unread_sent_to pour les pastilles avatars
@@ -6025,11 +6069,17 @@ function sendMalus(reason, points){
                                 });
                             }
                             updateUnreadBySender(merged);
-                            // ✅ Mettre à jour aussi les badges des enfants
+                            //  Mettre à jour aussi les badges des enfants
                             if (counts.children_unread) {
                                 updateChildrenBadges(counts.children_unread);
                             }
-                            console.log('✅ Badges rafraîchis:', counts);
+                            // Pills baby / mission / courses
+                            updatePill('pill-mission', 'pill-mission-count', counts.unread_task_added || 0);
+                            updatePill('pill-courses', 'pill-courses-count', counts.unread_courses || 0);
+                            // Badge icône PWA
+                            var totalBadge = (counts.unread_received || 0) + (counts.unread_task_added || 0) + (counts.unread_courses || 0);
+                            updateAppBadge(totalBadge);
+                            console.log('Badges rafraîchis:', counts);
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
                 }
@@ -6040,13 +6090,14 @@ function sendMalus(reason, points){
                     updateUnreadBadge(count);
                 };
                 
-                console.log('💡 Pour tester le badge manuellement, tapez dans la console: testMessageBadge(5)');
+                console.log('Pour tester le badge manuellement, tapez dans la console: testMessageBadge(5)');
                 
-                // 🚀 Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
+                //  Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
                 refreshAllBadges();
+                refreshMissionDots();
                 
                 // Rafraîchir aussi au DOMContentLoaded (sécurité)
-                document.addEventListener('DOMContentLoaded', refreshAllBadges);
+                document.addEventListener('DOMContentLoaded', function() { refreshAllBadges(); refreshMissionDots(); });
                 
                 // Rafraîchir au retour via le bouton retour (bfcache ET navigation normale)
                 window.addEventListener('pageshow', function(event) {
@@ -6063,28 +6114,18 @@ function sendMalus(reason, points){
                         if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                     }
                 });
+                // Écouter les messages du Service Worker (ex: REFRESH_BADGES après push)
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.addEventListener('message', function(event) {
+                        if (event.data && event.data.type === 'REFRESH_BADGES') {
+                            console.log('SW: Rafraîchissement des badges demandé');
+                            refreshAllBadges();
+                        }
+                    });
+                }
             </script>
 
-            <!-- Badge version Beta -->
-            <div id="beta-badge" style="
-                position: fixed;
-                bottom: 14px;
-                right: 14px;
-                background: rgba(0,0,0,0.18);
-                color: rgba(255,255,255,0.65);
-                font-size: 10px;
-                font-weight: 600;
-                letter-spacing: 1.5px;
-                text-transform: uppercase;
-                padding: 4px 9px;
-                border-radius: 20px;
-                backdrop-filter: blur(6px);
-                -webkit-backdrop-filter: blur(6px);
-                border: 1px solid rgba(255,255,255,0.18);
-                pointer-events: none;
-                z-index: 9999;
-                user-select: none;
-            ">β bêta</div>
+       
 
             <!-- ✨ SCRIPT ANIMATION ZOOM PIÈCES - VERSION REFAITE ✨ -->
             <script>
@@ -6126,7 +6167,7 @@ function sendMalus(reason, points){
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
-                                // 🔊 Son de clic immédiat
+                                //  Son de clic immédiat
                                 if (window.DustSounds && window.DustSounds.click) {
                                     window.DustSounds.click();
                                 }
@@ -6173,7 +6214,7 @@ function sendMalus(reason, points){
                                     }
                                 }, 50);
                                 
-                                // ⚡ Timing optimisé pour rapidité et fluidité :
+                                //  Timing optimisé pour rapidité et fluidité :
                                 // Phase 1: Apparition élégante (0.7s)
                                 // Phase 2: Pause courte (0.4s)
                                 // Phase 3: Dissolution (0.4s) + navigation IMMÉDIATE
@@ -6186,7 +6227,7 @@ function sendMalus(reason, points){
                                     
                                     // Navigation IMMÉDIATE au début de la dissolution
                                     // La page charge pendant que l'image disparaît = transition fluide sans écran vide
-                                    console.log('🚀 Navigation vers:', targetUrl);
+                                    console.log('Navigation vers:', targetUrl);
                                     window.location.href = targetUrl;
                                 }, 1100);
                             });
@@ -6241,22 +6282,16 @@ function sendMalus(reason, points){
                             const skullTitle = 'Malus reçu' + (m.task_name ? ' pour : ' + m.task_name : '');
                             console.log('💀 Ajout skull pour:', m.email);
                             
-                            // Header : chercher le wrapper avatar avec data-player-email
-                            const avatarWrapper = document.querySelector('.avatar-square-wrapper[data-player-email="' + m.email + '"]');
-                            console.log('  → Wrapper trouvé:', avatarWrapper);
-                            
-                            if (avatarWrapper) {
+                            // Header : cibler TOUS les wrappers avatar (3 sections dans le DOM)
+                            document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + m.email + '"]').forEach(function(avatarWrapper) {
                                 avatarWrapper.style.position = 'relative';
                                 const skull = document.createElement('span');
                                 skull.className = 'skull-badge';
                                 skull.textContent = '💀';
                                 skull.title = skullTitle;
-                                skull.style.cssText = 'position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullBounce 0.8s ease infinite alternate;';
+                                skull.style.cssText = 'position:absolute;top:-3px;left:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullBounce 0.8s ease infinite alternate;';
                                 avatarWrapper.appendChild(skull);
-                                console.log('  ✅ Skull ajouté au header pour', m.email);
-                            } else {
-                                console.log('  ❌ Wrapper introuvable dans header pour', m.email);
-                            }
+                            });
                         });
                     })
                     .catch(err => {
@@ -6271,7 +6306,7 @@ function sendMalus(reason, points){
                 if (!document.getElementById('skullBounceAnim')) {
                     const style = document.createElement('style');
                     style.id = 'skullBounceAnim';
-                    style.textContent = '@keyframes skullBounce { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-4px); } }';
+                    style.textContent = '@keyframes skullBounce { from { transform: translateY(0); } to { transform: translateY(-4px); } }';
                     document.head.appendChild(style);
                 }
                 
@@ -6279,10 +6314,354 @@ function sendMalus(reason, points){
                 loadActiveMalus();
                 // Rafraîchir toutes les 60 secondes
                 setInterval(loadActiveMalus, 60000);
-                console.log('✅ Système malus initialisé');
+                console.log('Système malus initialisé');
             })();
+
+            // ═══════════════════════════════════════════════════════════
+            // ❤️ SYSTÈME DE BONUS — Afficher coeur sur avatars (1 heure)
+            // ═══════════════════════════════════════════════════════════
+
+            (function() {
+                window._localBonusMap = window._localBonusMap || {};
+
+                function loadActiveBonuses() {
+                    fetch('/api/active_bonus')
+                    .then(r => r.json())
+                    .then(data => {
+                        // Supprimer les anciens badges coeur
+                        document.querySelectorAll('.heart-badge').forEach(el => el.remove());
+
+                        const now = Date.now();
+                        const ONE_HOUR = 60 * 60 * 1000;
+                        const apiBonus = data.bonus || [];
+                        const allBonus = [...apiBonus];
+
+                        // Ajouter les bonus locaux non expirés
+                        if (window._localBonusMap) {
+                            Object.keys(window._localBonusMap).forEach(function(email) {
+                                const timestamp = window._localBonusMap[email];
+                                if (now - timestamp <= ONE_HOUR) {
+                                    if (!apiBonus.find(b => b.email === email)) {
+                                        allBonus.push({ email: email, task_name: null });
+                                    }
+                                } else {
+                                    delete window._localBonusMap[email];
+                                }
+                            });
+                        }
+
+                        if (allBonus.length === 0) return;
+
+                        allBonus.forEach(b => {
+                            document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + b.email + '"]').forEach(function(avatarWrapper) {
+                                avatarWrapper.style.position = 'relative';
+                                const heart = document.createElement('span');
+                                heart.className = 'heart-badge';
+                                heart.textContent = '\u2764\uFE0F';
+                                heart.title = 'Bonus reçu' + (b.task_name ? ' pour : ' + b.task_name : '');
+                                heart.style.cssText = 'position:absolute;top:-3px;left:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(46,204,113,0.5));animation:heartBounce 0.9s ease infinite alternate;';
+                                avatarWrapper.appendChild(heart);
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Erreur loadActiveBonuses:', err);
+                    });
+                }
+
+                window.loadActiveBonuses = loadActiveBonuses;
+
+                // Anim CSS heart bounce
+                if (!document.getElementById('heartBounceAnim')) {
+                    const style = document.createElement('style');
+                    style.id = 'heartBounceAnim';
+                    style.textContent = '@keyframes heartBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-5px) scale(1.15); } }';
+                    document.head.appendChild(style);
+                }
+
+                loadActiveBonuses();
+                setInterval(loadActiveBonuses, 60000);
+                console.log('\u2705 Syst\u00e8me bonus coeur initialis\u00e9');
+            })();
+
 
             </script>
 
-            </body>
-            </html>
+            
+
+<!-- ═══ BANNIÈRE INSTALLATION PWA ═══ -->
+<div id="pwa-install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,rgba(255,255,255,0.88) 0%,rgba(166,211,220,0.55) 50%,rgba(253,174,84,0.35) 100%); color:#153036; padding:14px 16px 20px; box-shadow:0 -8px 32px rgba(21,48,54,0.18),0 0 0 1px rgba(255,255,255,0.5),inset 0 1px 0 rgba(255,255,255,0.65); border-radius:20px 20px 0 0; border:1px solid rgba(255,255,255,0.35); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="display:flex; align-items:flex-start; gap:12px; max-width:500px; margin:0 auto;">
+        <img src="/static/icon-192.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
+        <div style="flex:1;">
+            <div style="font-size:15px;font-weight:800;margin-bottom:4px;color:#153036;">📲 Installe CleanBeat sur ton écran d'accueil</div>
+            <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Pour recevoir les notifications : ouvre dans <strong>Safari</strong>, puis <strong>⬆️ Partager</strong> → <strong>"Sur l'écran d'accueil"</strong>.</div>
+            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Installe l'app sur ton écran d'accueil pour recevoir les notifications 🔔</div>
+        </div>
+        <button onclick="dismissPwaBanner()" style="background:rgba(21,48,54,0.07);border:none;color:#153036;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;border-radius:50%;">✕</button>
+    </div>
+    <div id="pwa-android-btn-wrap" style="display:none;max-width:500px;margin:12px auto 0;">
+        <button id="pwa-install-btn" style="width:100%;padding:12px;background:#FDAE54;color:#153036;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;">➕ Ajouter à l'écran d'accueil</button>
+    </div>
+</div>
+<script>
+(function(){
+    if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)return;
+    var d=localStorage.getItem('pwa_dismissed');
+    if(d&&(Date.now()-parseInt(d))<7*24*3600*1000)return;
+    var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    var banner=document.getElementById('pwa-install-banner');
+    var deferred=null;
+    window.addEventListener('beforeinstallprompt',function(e){
+        e.preventDefault();deferred=e;
+        document.getElementById('pwa-android-msg').style.display='block';
+        document.getElementById('pwa-android-btn-wrap').style.display='block';
+        banner.style.display='block';
+    });
+    document.getElementById('pwa-install-btn').addEventListener('click',function(){
+        if(deferred){deferred.prompt();deferred.userChoice.then(function(){banner.style.display='none';deferred=null;});}
+    });
+    if(isIOS){document.getElementById('pwa-ios-msg').style.display='block';banner.style.display='block';}
+    window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';localStorage.setItem('pwa_dismissed',Date.now());};
+})();
+</script>
+{% if show_onboarding %}
+<!-- ═══ MODALE ONBOARDING PREMIÈRE CONNEXION ═══ -->
+<style>
+.ob-overlay {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(21,48,54,0.72);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    padding: 16px;
+}
+.ob-card {
+    background: rgba(255,255,255,0.28);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 28px;
+    box-shadow: 0 16px 48px rgba(21,48,54,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
+    padding: 32px 28px 24px;
+    max-width: 400px; width: 100%;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.ob-emoji { font-size: 42px; margin-bottom: 12px; display: block; }
+.ob-title { font-size: 22px; font-weight: 900; color: #153036; margin-bottom: 8px; }
+.ob-text { font-size: 14px; line-height: 1.6; color: #597176; margin-bottom: 20px; }
+.ob-text strong { color: #153036; }
+.ob-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(166,211,220,0.35); border: 1px solid rgba(166,211,220,0.5);
+    border-radius: 20px; padding: 5px 13px; font-size: 13px; font-weight: 700;
+    color: #153036; margin: 3px;
+}
+.ob-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.ob-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(89,113,118,0.3); transition: all 0.3s; }
+.ob-dot.active { background: #597176; width: 20px; border-radius: 4px; }
+.ob-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 16px;
+    font-size: 16px; font-weight: 800; cursor: pointer;
+    background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+    color: #fff; box-shadow: 0 4px 16px rgba(89,113,118,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.ob-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(89,113,118,0.25); }
+.ob-btn-last {
+    background: linear-gradient(135deg, #FDAE54 0%, #f59c35 100%);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.4);
+    font-size: 17px;
+}
+.ob-slide { display: none; }
+.ob-slide.active { display: block; }
+</style>
+
+<div class="ob-overlay" id="ob-overlay">
+  <div class="ob-card">
+    <!-- Slide 1 : Bienvenue -->
+    <div class="ob-slide active" id="ob-slide-1">
+      <span class="ob-emoji">🏠✨</span>
+      <div class="ob-title">Bienvenue sur Klean !</div>
+      <div class="ob-text">
+        <strong>Le jeu qui rend le ménage fun et équitable !</strong><br><br>
+        Principe simple :<br>
+        faire les tâches <strong>en vrai</strong> = gagner des <strong>points</strong> 🏆
+      </div>
+    </div>
+    <!-- Slide 2 : Pièces & tâches -->
+    <div class="ob-slide" id="ob-slide-2">
+      <span class="ob-emoji">🛋️🍳🛁</span>
+      <div class="ob-title">Choisis une pièce</div>
+      <div class="ob-text">
+        Clique sur une pièce → fais la tâche → valide → <strong>tu marques des points !</strong><br><br>
+        <span class="ob-tag">🧹 +10 pts</span>
+        <span class="ob-tag">🍽️ +5 pts</span>
+        <br><br>
+        ✏️ Tu peux <strong>modifier la valeur des points</strong><br>
+        ➕ Tu peux aussi <strong>ajouter tes propres tâches perso</strong>
+      </div>
+    </div>
+    <!-- Slide 3 : Liste de courses -->
+    <div class="ob-slide" id="ob-slide-3">
+      <span class="ob-emoji">🛒</span>
+      <div class="ob-title">Liste de courses partagée</div>
+      <div class="ob-text">
+        Cocher un article dans la liste de courses, ça rapporte des points aussi !<br><br>
+        <strong>Plus t'en fais, plus tu marques !</strong> 💪
+      </div>
+    </div>
+    <!-- Slide 4 : Malus -->
+    <div class="ob-slide" id="ob-slide-4">
+      <span class="ob-emoji">💀⚡</span>
+      <div class="ob-title">Envoie des malus !</div>
+      <div class="ob-text">
+        Tu peux envoyer un 💀 malus à l'autre joueur pour lui faire perdre des points.<br><br>
+        👇 <strong>Depuis le classement en bas de l'écran</strong>
+      </div>
+    </div>
+    <!-- Slide 5 : Gagnant -->
+    <div class="ob-slide" id="ob-slide-5">
+      <span class="ob-emoji">👑🎉</span>
+      <div class="ob-title">Le dimanche, un gagnant est couronné !</div>
+      <div class="ob-text">
+        🎁 <strong>Les perdants lui offrent un cadeau pour féliciter le gagnant !</strong><br><br>
+        Petit-déj au lit, soirée film au choix, massage…<br>
+        à toi de décider 👑
+      </div>
+    </div>
+
+    <div class="ob-dots">
+      <div class="ob-dot active" id="ob-d-1"></div>
+      <div class="ob-dot" id="ob-d-2"></div>
+      <div class="ob-dot" id="ob-d-3"></div>
+      <div class="ob-dot" id="ob-d-4"></div>
+      <div class="ob-dot" id="ob-d-5"></div>
+    </div>
+
+    <button class="ob-btn" id="ob-next-btn" onclick="obNext()">Suivant →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var current = 1;
+  var total = 5;
+  function obNext() {
+    if (current < total) {
+      document.getElementById('ob-slide-' + current).classList.remove('active');
+      document.getElementById('ob-d-' + current).classList.remove('active');
+      current++;
+      document.getElementById('ob-slide-' + current).classList.add('active');
+      document.getElementById('ob-d-' + current).classList.add('active');
+      if (current === total) {
+        var btn = document.getElementById('ob-next-btn');
+        btn.textContent = "C'est parti ! 🚀";
+        btn.classList.add('ob-btn-last');
+      }
+    } else {
+      obClose();
+    }
+  }
+  function obClose() {
+    document.getElementById('ob-overlay').style.display = 'none';
+    fetch('/api/mark_onboarding_seen', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+      credentials: 'same-origin'
+    });
+  }
+  window.obNext = obNext;
+})();
+</script>
+{% endif %}
+
+
+<!-- 📱 MODALE GUIDE INSTALLATION -->
+<div id="install-guide-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px;">
+    <div style="background:white; border-radius:28px; width:100%; max-width:400px; max-height:88vh; overflow-y:auto; padding:28px 24px 24px; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <button onclick="document.getElementById('install-guide-modal').style.display='none'" style="position:absolute; top:16px; right:18px; background:rgba(21,48,54,0.08); border:none; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer; color:#153036; display:flex; align-items:center; justify-content:center;">×</button>
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="font-size:40px; margin-bottom:8px;">📱</div>
+            <div style="font-size:20px; font-weight:900; color:#153036;">Installer CleanBeat</div>
+            <div style="font-size:13px; color:#597176; margin-top:4px;">Ajouter l'appli sur ton écran d'accueil</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(253,174,84,0.15),rgba(244,198,141,0.1)); border-radius:16px; padding:14px 16px; margin-bottom:20px; border:1.5px solid rgba(253,174,84,0.3);">
+            <div style="font-size:13px; font-weight:800; color:#153036; margin-bottom:4px;">🧡 Tu es bêta testeur — merci !</div>
+            <div style="font-size:12px; color:rgba(21,48,54,0.72); line-height:1.55;">CleanBeat est encore en version bêta. Certaines notifications et fonctionnalités s'améliorent de semaine en semaine. Ton expérience et retours sont précieux pour nous aider à grandir ! 💪</div>
+        </div>
+        <div style="margin-bottom:18px;">
+            <div style="font-size:14px; font-weight:800; color:#153036; margin-bottom:10px;">🍏 Sur iPhone (Safari)</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">1️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Ouvre l'appli dans <strong>Safari</strong> (pas Chrome ni Firefox)</div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">2️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Appuie sur l'icône <strong>Partager</strong> en bas de l'écran <span style="font-size:16px;">⬆️</span></div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">3️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Fais défiler et appuie sur <strong>« Sur l'écran d'accueil »</strong></div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">4️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Appuie sur <strong>« Ajouter »</strong> en haut à droite</div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:linear-gradient(135deg,rgba(166,211,220,0.2),rgba(166,211,220,0.1)); border-radius:12px; border:1px solid rgba(166,211,220,0.4);"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">5️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">À la première ouverture, appuie sur <strong>« Activer les notifications »</strong> quand la bannière apparaît</div></div>
+            </div>
+        </div>
+        <div style="margin-bottom:20px;">
+            <div style="font-size:14px; font-weight:800; color:#153036; margin-bottom:10px;">🤖 Sur Android (Chrome)</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">1️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Ouvre l'appli dans <strong>Chrome</strong></div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">2️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Appuie sur le menu <strong>⋮</strong> (3 points) en haut à droite</div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">3️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Sélectionne <strong>« Ajouter à l'écran d'accueil »</strong></div></div>
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(21,48,54,0.04); border-radius:12px;"><span style="font-size:20px; flex-shrink:0; margin-top:1px;">4️⃣</span><div style="font-size:13px; color:#153036; line-height:1.5;">Confirme en appuyant sur <strong>« Ajouter »</strong></div></div>
+            </div>
+        </div>
+        <button onclick="document.getElementById('install-guide-modal').style.display='none'" style="width:100%; padding:14px; background:linear-gradient(135deg,#FDAE54,#F4C68D); border:none; border-radius:16px; font-size:15px; font-weight:800; color:#153036; cursor:pointer; box-shadow:0 4px 15px rgba(253,174,84,0.35);">C'est compris ! 🚀</button>
+    </div>
+</div>
+
+<!-- 🔔 Bannière activation notifications push -->
+<div id="push-notif-banner" style="display:none; position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 32px); max-width:420px;">
+    <div style="background:linear-gradient(135deg,rgba(253,174,84,0.97),rgba(244,198,141,0.97)); backdrop-filter:blur(20px); border-radius:20px; padding:16px 20px; box-shadow:0 8px 32px rgba(0,0,0,0.18); border:2px solid rgba(255,255,255,0.5); display:flex; align-items:center; gap:14px;">
+        <span style="font-size:28px; flex-shrink:0;">🔔</span>
+        <div style="flex:1; min-width:0;">
+            <div style="font-weight:800; font-size:14px; color:#153036;">Activer les notifications</div>
+            <div style="font-size:12px; color:rgba(21,48,54,0.75); margin-top:2px;">Reçois les alertes même quand l'appli est fermée</div>
+        </div>
+        <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; flex-shrink:0; white-space:nowrap;">Activer</button>
+        <button id="push-notif-banner-close" style="background:none; border:none; color:rgba(21,48,54,0.5); font-size:20px; cursor:pointer; flex-shrink:0; padding:0 0 0 4px; line-height:1;">×</button>
+    </div>
+</div>
+<script>
+(function() {
+    function showPushBanner() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        if (Notification.permission !== 'default') return;
+        var banner = document.getElementById('push-notif-banner');
+        if (!banner) return;
+        setTimeout(function() { banner.style.display = 'block'; }, 3000);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        showPushBanner();
+        var btn = document.getElementById('push-notif-banner-btn');
+        var closeBtn = document.getElementById('push-notif-banner-close');
+        var banner = document.getElementById('push-notif-banner');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                if (banner) banner.style.display = 'none';
+            });
+        }
+        if (btn) {
+            btn.addEventListener('click', async function() {
+                if (banner) banner.style.display = 'none';
+                if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
+                    const ok = await window.cleanBeatPush.requestPermission();
+                    if (ok) {
+                        setTimeout(function() {
+                            alert('\u2705 Notifications activées\u00a0! Tu recevras les alertes même quand l\'appli est fermée.');
+                        }, 500);
+                    }
+                } else {
+                    const perm = await Notification.requestPermission();
+                    if (perm === 'granted') alert('\u2705 Notifications activées\u00a0!');
+                }
+            });
+        }
+    });
+})();
+</script>
+</body>
+</html>

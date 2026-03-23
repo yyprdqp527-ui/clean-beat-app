@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Suspicions Debug</title>
+    <style>
+        body { background: #153036; color: white; font-family: Arial; padding: 20px; }
+        .player { background: rgba(255,255,255,0.1); padding: 15px; margin: 10px 0; border-radius: 10px; }
+        .skull { font-size: 20px; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Suspicions</h1>
+    <h2>Players data:</h2>
+    
+    {% for p in players %}
+    <div class="player">
+        <strong>{{ p.name }}</strong> 
+        ({{ p.email }})
+        <br>
+        Points: {{ p.daily_points|default(0) }}
+        <br>
+        skull_active: {{ p.skull_active|default(false) }}
+        <br>
+        skull_pending: {{ p.skull_pending|default(false) }}
+        <br>
+        skull_count: {{ p.skull_count|default(0) }}
+        <br>
+        <strong style="color: #FDAE54;">suspicion_active: {{ p.suspicion_active|default('UNDEFINED') }}</strong>
+        <br>
+        <strong style="color: #FDAE54;">suspicion_count: {{ p.suspicion_count|default('UNDEFINED') }}</strong>
+        <br>
+        {% if p.suspicion_active|default(false) %}
+            <span class="skull">🔍 LOUPE AFFICHÉE{% if p.suspicion_count|default(0)>1 %} ×{{ p.suspicion_count }}{% endif %}</span>
+        {% else %}
+            <span style="color: red;">❌ Pas de loupe (suspicion_active = false ou undefined)</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Suspicions API</title>
+</head>
+<body>
+    <h1>Test API Suspicions</h1>
+    <button onclick="testAPI()">Tester /api/my_suspicions</button>
+    <pre id="result"></pre>
+
+    <script>
+    function testAPI() {
+        fetch('/api/my_suspicions')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                console.log('🔍 Suspicions:', data);
+            })
+            .catch(err => {
+                document.getElementById('result').textContent = 'Erreur: ' + err;
+                console.error('Erreur:', err);
+            });
+    }
+    
+    // Test automatique au chargement
+    testAPI();
+    </script>
+</body>
+</html>
