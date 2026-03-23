@@ -561,10 +561,12 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     </div>
 
     <!-- ====== SECTION ROUE DE LA CHANCE ====== -->
-    <div class="gameplay-section-title" style="margin-top: 30px;">🎡 Roue de la Chance</div>
+    <div class="gameplay-section-title" style="margin-top: 30px;">� Roue des Trucs Chiants</div>
     
     <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 12px; line-height: 1.5; text-align: center;">
-        Tente ta chance ! Tourne la roue pour obtenir une tâche impopulaire et gagner plein de points ! 🎰
+        <div style="font-weight: 700; color: rgba(255,255,255,0.9); font-size: 13px; margin-bottom: 6px;">🔥 Alors {% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.name|e }}{% endif %}{% endfor %}, tu es à la traîne ?!</div>
+        Rattrape le retard en faisant tourner la roue des trucs que personne n'a envie de faire ! 💪<br>
+        <span style="color: #FDAE54; font-weight: 600;">Plus c'est horrible, plus tu gagnes de points !</span> 😈
     </div>
     
     <div class="wheel-container">
@@ -574,11 +576,11 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
     </div>
     
     <button id="spinBtn" class="spin-btn" onclick="spinWheel()">
-        🎡 Tourner la roue !
+        � FAIRE TOURNER LA ROUE !
     </button>
     
     <div style="padding: 0 20px 20px; color: rgba(255,255,255,0.5); font-size: 11px; text-align: center; font-style: italic;">
-        Plus la tâche est difficile, plus tu gagnes de points !
+        ⚡ Allez champion, montre-leur de quoi tu es capable ! ⚡
     </div>
 
 </div>
@@ -591,7 +593,7 @@ body { background: #f5f7fa; min-height: 100vh; padding-top: 20px; padding-bottom
         <div class="wheel-result-task" id="wheelResultTask">Nettoyer le four</div>
         <div class="wheel-result-points" id="wheelResultPoints">+50 points</div>
         <div style="font-size: 13px; color: #597176; margin: 12px 0;">
-            Cette tâche a été ajoutée à ta liste de missions !
+            🎯 Parfait ! C'est parti pour rattraper le retard !
         </div>
         <button class="wheel-result-btn" onclick="closeWheelResult()">
             ✅ C'est parti !
@@ -1566,7 +1568,7 @@ function spinWheel() {
         showWheelResult(selectedTask);
         isSpinning = false;
         spinBtn.disabled = false;
-        spinBtn.textContent = '🎡 Tourner la roue !';
+        spinBtn.textContent = '� FAIRE TOURNER LA ROUE !';
     }, 4000);
 }
 
