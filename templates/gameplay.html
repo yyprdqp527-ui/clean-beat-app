@@ -306,6 +306,182 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     100% { transform: translateX(-50%) translateY(-100px) scale(1); opacity: 0; }
 }
 
+/* ══ ROUE DE LA CHANCE ══ */
+.wheel-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 30px auto;
+}
+
+.wheel-canvas {
+    width: 100%;
+    height: 100%;
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 40px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    z-index: 10;
+}
+
+.wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #FDAE54, #FF8C42);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4);
+    border: 4px solid white;
+    z-index: 5;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.wheel-center:active {
+    transform: translate(-50%, -50%) scale(0.95);
+}
+
+.spin-btn {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #FF6B6B, #FF8C42);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+    transition: all 0.2s;
+}
+
+.spin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255,107,107,0.5);
+}
+
+.spin-btn:active {
+    transform: translateY(0);
+}
+
+.spin-btn:disabled {
+    background: linear-gradient(135deg, #999, #777);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.wheel-result-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(21,48,54,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.wheel-result-overlay.open {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.wheel-result-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(253,174,84,0.98));
+    border-radius: 24px;
+    padding: 32px 24px;
+    max-width: 90%;
+    width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    text-align: center;
+    animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.25, 1.35);
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.wheel-result-icon {
+    font-size: 72px;
+    margin-bottom: 16px;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.wheel-result-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: #153036;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.wheel-result-task {
+    font-size: 18px;
+    font-weight: 700;
+    color: #597176;
+    margin: 16px 0;
+    padding: 12px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 12px;
+}
+
+.wheel-result-points {
+    font-size: 32px;
+    font-weight: 900;
+    color: #FF6B6B;
+    margin: 12px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wheel-result-btn {
+    width: 100%;
+    padding: 16px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(46,204,113,0.4);
+    transition: transform 0.2s;
+}
+
+.wheel-result-btn:active {
+    transform: scale(0.98);
+}
+
 </style>
 {% endblock %}
 
@@ -374,12 +550,43 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
         <!-- Rempli dynamiquement par JavaScript -->
     </div>
 
-    <!-- Section futures fonctionnalités -->
-    <div class="gameplay-section-title" style="margin-top: 20px;">Autres fonctionnalités (à venir)</div>
-    <div style="padding: 0 20px 20px; color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic;">
-        D'autres fonctionnalités de jeu seront ajoutées ici prochainement...
+    <!-- ====== SECTION ROUE DE LA CHANCE ====== -->
+    <div class="gameplay-section-title" style="margin-top: 30px;">🎡 Roue de la Chance</div>
+    
+    <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 12px; line-height: 1.5; text-align: center;">
+        Tente ta chance ! Tourne la roue pour obtenir une tâche impopulaire et gagner plein de points ! 🎰
+    </div>
+    
+    <div class="wheel-container">
+        <div class="wheel-pointer">🔻</div>
+        <canvas id="wheelCanvas" width="300" height="300" class="wheel-canvas"></canvas>
+        <div class="wheel-center" onclick="spinWheel()">🎯</div>
+    </div>
+    
+    <button id="spinBtn" class="spin-btn" onclick="spinWheel()">
+        🎡 Tourner la roue !
+    </button>
+    
+    <div style="padding: 0 20px 20px; color: rgba(255,255,255,0.5); font-size: 11px; text-align: center; font-style: italic;">
+        Plus la tâche est difficile, plus tu gagnes de points !
     </div>
 
+</div>
+
+<!-- Popup résultat roue -->
+<div class="wheel-result-overlay" id="wheelResultOverlay" onclick="if(event.target===this)closeWheelResult()">
+    <div class="wheel-result-card">
+        <div class="wheel-result-icon">🎉</div>
+        <div class="wheel-result-title">Félicitations !</div>
+        <div class="wheel-result-task" id="wheelResultTask">Nettoyer le four</div>
+        <div class="wheel-result-points" id="wheelResultPoints">+50 points</div>
+        <div style="font-size: 13px; color: #597176; margin: 12px 0;">
+            Cette tâche a été ajoutée à ta liste de missions !
+        </div>
+        <button class="wheel-result-btn" onclick="closeWheelResult()">
+            ✅ C'est parti !
+        </button>
+    </div>
 </div>
 
 <!-- Popup malus -->
@@ -1237,6 +1444,153 @@ function rejectProof() {
         console.error('Erreur rejet:', err);
         alert('Erreur lors du rejet');
     });
+}
+
+// ══════════════════════════════════════════
+// ════════ ROUE DE LA CHANCE ════════
+// ══════════════════════════════════════════
+
+const wheelTasks = [
+    { task: "🚽 Nettoyer les toilettes à fond", points: 55, color: "#FF6B6B" },
+    { task: "🔥 Nettoyer le four", points: 60, color: "#FF8C42" },
+    { task: "🪟 Laver toutes les vitres", points: 50, color: "#FFD93D" },
+    { task: "🧹 Aspirer sous tous les meubles", points: 45, color: "#6BCF7F" },
+    { task: "🗑️ Vider et nettoyer toutes les poubelles", points: 40, color: "#4ECDC4" },
+    { task: "💊 Trier le placard à médicaments", points: 35, color: "#A8E6CF" },
+    { task: "📦 Ranger le garage/cave", points: 70, color: "#95A4FF" },
+    { task: "🧴 Récurer la salle de bain", points: 55, color: "#C7B3FF" },
+    { task: "🍳 Dégraisser la cuisine entière", points: 65, color: "#FFA8E2" },
+    { task: "👕 Trier et plier tout le linge", points: 40, color: "#FFB3BA" }
+];
+
+let isSpinning = false;
+let currentRotation = 0;
+
+// Dessiner la roue au chargement
+window.addEventListener('load', function() {
+    drawWheel();
+});
+
+function drawWheel() {
+    const canvas = document.getElementById('wheelCanvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 140;
+    const sliceAngle = (2 * Math.PI) / wheelTasks.length;
+    
+    // Effacer le canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Dessiner chaque segment
+    wheelTasks.forEach((item, index) => {
+        const startAngle = index * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+        
+        // Segment coloré
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = item.color;
+        ctx.fill();
+        
+        // Bordure blanche
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Texte (points uniquement pour économiser l'espace)
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px Montserrat';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText('+' + item.points, radius * 0.7, 5);
+        ctx.restore();
+    });
+    
+    // Cercle extérieur décoratif
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+}
+
+function spinWheel() {
+    if (isSpinning) return;
+    
+    isSpinning = true;
+    const spinBtn = document.getElementById('spinBtn');
+    spinBtn.disabled = true;
+    spinBtn.textContent = '⏳ En cours...';
+    
+    const canvas = document.getElementById('wheelCanvas');
+    
+    // Nombre de tours complets + angle aléatoire
+    const spins = 5 + Math.random() * 3; // 5-8 tours
+    const extraDegrees = Math.random() * 360;
+    const totalRotation = (spins * 360) + extraDegrees;
+    
+    // Animation CSS
+    canvas.style.transform = `rotate(${currentRotation + totalRotation}deg)`;
+    
+    // Calculer quelle tâche a été sélectionnée
+    const finalAngle = (currentRotation + totalRotation) % 360;
+    const sliceAngle = 360 / wheelTasks.length;
+    // La flèche pointe vers le haut, donc on inverse
+    const selectedIndex = Math.floor((360 - finalAngle + sliceAngle / 2) / sliceAngle) % wheelTasks.length;
+    const selectedTask = wheelTasks[selectedIndex];
+    
+    // Mise à jour de la rotation actuelle
+    currentRotation = (currentRotation + totalRotation) % 360;
+    
+    // Afficher le résultat après l'animation (4 secondes)
+    setTimeout(() => {
+        showWheelResult(selectedTask);
+        isSpinning = false;
+        spinBtn.disabled = false;
+        spinBtn.textContent = '🎡 Tourner la roue !';
+    }, 4000);
+}
+
+function showWheelResult(task) {
+    document.getElementById('wheelResultTask').textContent = task.task;
+    document.getElementById('wheelResultPoints').textContent = '+' + task.points + ' points';
+    document.getElementById('wheelResultOverlay').classList.add('open');
+    
+    // Ajouter la tâche au backend
+    fetch('/api/spin_wheel', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            task_name: task.task,
+            points: task.points
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Erreur ajout tâche:', data.error);
+        }
+    })
+    .catch(err => {
+        console.error('Erreur API spin_wheel:', err);
+    });
+}
+
+function closeWheelResult() {
+    document.getElementById('wheelResultOverlay').classList.remove('open');
+    // Recharger la page pour afficher la nouvelle tâche
+    setTimeout(() => {
+        window.location.reload();
+    }, 300);
 }
 
 </script>

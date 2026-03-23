@@ -9782,6 +9782,67 @@ def api_send_bonus():
 
 
 # ════════════════════════════════════════════════════════════
+# 🎡 API ROUE DE LA CHANCE — Tâches impopulaires bonus
+# ════════════════════════════════════════════════════════════
+@app.route('/api/spin_wheel', methods=['POST'])
+def api_spin_wheel():
+    """
+    Ajoute une tâche obtenue via la roue de la chance.
+    La tâche est ajoutée comme custom_task pour le joueur courant.
+    """
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    task_name = str(data.get('task_name', '')).strip()
+    points = int(data.get('points', 50))
+    user_email = session['user']
+
+    if not task_name:
+        return jsonify({'success': False, 'error': 'Nom de tâche manquant'}), 400
+
+    # Sécurité : limiter les points entre 30 et 100
+    if points < 30:
+        points = 30
+    if points > 100:
+        points = 100
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (user_email,))
+        user_row = c.fetchone()
+        if not user_row:
+            return jsonify({'success': False, 'error': 'Utilisateur introuvable'}), 400
+        house_id = user_row[0]
+        user_name = user_row[1] or user_email.split('@')[0]
+
+        # Ajouter la tâche comme custom_task dans la catégorie 'wheel' (pour la tracer)
+        c.execute("""
+            INSERT INTO custom_tasks (house_id, user_email, category, task_name, points, created_at)
+            VALUES (?, ?, 'wheel', ?, ?, CURRENT_TIMESTAMP)
+        """, (house_id, user_email, task_name, points))
+        conn.commit()
+
+        _dbg(f"🎡 Roue de la chance : {user_name} a obtenu '{task_name}' (+{points} pts)")
+
+        return jsonify({
+            'success': True,
+            'message': f'🎉 Tâche ajoutée : {task_name} (+{points} pts)'
+        })
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_spin_wheel: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+# ════════════════════════════════════════════════════════════
 # 🔍 SYSTÈME DE PREUVES — Vigilance sociale
 # ════════════════════════════════════════════════════════════
 
