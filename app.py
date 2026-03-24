@@ -3623,20 +3623,22 @@ def send_push_notification(subscription, notification_data):
             VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
             VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
         
-        VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY.strip()
-        VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY.strip()
+        # Normaliser : remplacer les \n littéraux (backslash-n) par de vraies newlines
+        # (cas fréquent quand la clé PEM est stockée en env var dans Render)
+        VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY.replace('\\n', '\n').replace('\r\n', '\n').strip()
+        VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY.replace('\\n', '\n').replace('\r\n', '\n').strip()
         
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
             print("⚠️ VAPID keys non configurées - notifications push désactivées", flush=True)
             return False
         
-        key_preview = VAPID_PRIVATE_KEY[:30].replace('\n', '\\n')
-        print(f"🔑 VAPID private key: len={len(VAPID_PRIVATE_KEY)}, début='{key_preview}'", flush=True)
+        # Diagnostic précis du format de la clé
+        key_lines = VAPID_PRIVATE_KEY.split('\n')
+        key_preview = key_lines[0][:50]
+        print(f"🔑 VAPID key: {len(VAPID_PRIVATE_KEY)} chars, {len(key_lines)} lignes, ligne1='{key_preview}'", flush=True)
         
         # Créer l'objet Vapid selon le format de la clé
         if VAPID_PRIVATE_KEY.startswith('-----'):
-            # Format PEM : utiliser cryptography lib directement (Vapid.from_pem() est buggé
-            # dans pywebpush v2 car il passe le contenu PEM à b64urldecode au lieu de load_der)
             print("🔑 Format PEM → load_pem_private_key + Vapid.from_raw()", flush=True)
             pem_bytes = VAPID_PRIVATE_KEY.encode('utf-8')
             priv_key_obj = load_pem_private_key(pem_bytes, password=None)
@@ -3645,8 +3647,7 @@ def send_push_notification(subscription, notification_data):
             vapid_obj = Vapid.from_raw(b64url_raw)
             print(f"🔑 Conversion PEM→raw OK ({len(raw_bytes)} bytes)", flush=True)
         else:
-            # Format base64url (raw 32 bytes ou DER en base64url)
-            print("🔑 Format base64url → Vapid.from_string()", flush=True)
+            print(f"🔑 Format non-PEM → Vapid.from_string(), longueur={len(VAPID_PRIVATE_KEY)}", flush=True)
             vapid_obj = Vapid.from_string(VAPID_PRIVATE_KEY)
         
         # Email VAPID
