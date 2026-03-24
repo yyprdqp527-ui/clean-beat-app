@@ -40,6 +40,47 @@
             --header-spacing-bottom: 4px;
         }
 
+        /* ══════════════════════════════════════════════════════════════════
+           🚨 RÈGLE CSS ULTRA-PUISSANTE D'ADAPTATION AUTOMATIQUE  
+           ══════════════════════════════════════════════════════════════════ */
+        
+        /* Variables CSS adaptatives pour toute l'application */
+        :root {
+            --adaptive-text: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
+            --adaptive-muted: {% if bg_theme_light %}rgba(21,48,54,0.7){% else %}rgba(255,255,255,0.7){% endif %};
+            --adaptive-light: {% if bg_theme_light %}rgba(21,48,54,0.5){% else %}rgba(255,255,255,0.5){% endif %};
+        }
+        
+        /* FORCE ADAPTATION SUR TOUS LES ÉLÉMENTS SANS EXCEPTION */
+        * {
+            color: var(--adaptive-text) !important;
+        }
+        
+        /* Adaptation automatique du fond pour TOUTE l'application */
+        body, .auto-adapt-text {
+            background: {{ bg_gradient }} !important;
+            color: var(--adaptive-text) !important;
+        }
+        
+        /* Classes utilitaires pour adaptation forcée */
+        .text-adaptive { color: var(--adaptive-text) !important; }
+        .text-adaptive-muted { color: var(--adaptive-muted) !important; }
+        .text-adaptive-light { color: var(--adaptive-light) !important; }
+        
+        /* EXCEPTIONS: Éléments qui doivent garder leurs couleurs spécifiques */
+        .keep-color,
+        [style*="background"],
+        .gw-pts,
+        .daily-chip,
+        .avatar-points,
+        .room-card-badge,
+        .btn-primary,
+        .btn-success,
+        .btn-warning,
+        .btn-danger {
+            color: initial !important;
+        }
+
         /* ── Base harmonisée avec système de thèmes personnalisés ── */
         body {
             background: {{ bg_gradient }};
