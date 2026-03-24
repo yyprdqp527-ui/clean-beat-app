@@ -704,19 +704,26 @@ def sats():
         # === RÉCUPÉRER LES JOUEURS DE LA MAISON ===
         c.execute("""
             SELECT email, name, avatar, avatar_url, avatar_file, points, avatar_style, player_color,
-                   COALESCE(skull_count, 0), skull_expires_at
+                   COALESCE(skull_count, 0), skull_expires_at, bonus_expires_at
             FROM users WHERE house_id=?
         """, (house_id,))
         users_rows = c.fetchall()
         
         players = []
         for u in users_rows:
-            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw, skull_count, skull_expires_at_raw = u
-            # Vérifier si le crâne est actif (tricherie prouvée dans les 24h)
+            email, name, avatar_emoji, avatar_url, avatar_file, total_points, avatar_style, player_color_raw, skull_count, skull_expires_at_raw, bonus_expires_at_raw = u
+            # Vérifier si le crâne est actif (malus ou tricherie prouvée)
             skull_active = False
             if skull_expires_at_raw:
                 try:
                     skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > datetime.utcnow()
+                except Exception:
+                    pass
+            # Vérifier si le bonus est actif
+            bonus_active = False
+            if bonus_expires_at_raw:
+                try:
+                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > datetime.utcnow()
                 except Exception:
                     pass
             # Vérifier si le joueur est accusé (preuve en attente)
@@ -885,8 +892,9 @@ def sats():
                 'is_current_user': (email == session['user']),
                 'color': p_color,  # Couleur identitaire du joueur
                 'skull_count': int(skull_count) if skull_count else 0,
-                'skull_active': skull_active,    # Crâne actif (tricherie prouvée, 24h)
+                'skull_active': skull_active,    # Crâne actif (malus ou tricherie prouvée)
                 'skull_pending': skull_pending,  # Crâne suspicion (accusation en cours)
+                'bonus_active': bonus_active,    # Cœur actif (bonus reçu il y a moins d'1h)
                 'suspicion_active': suspicion_active,  # Loupe active (suspicion en attente)
                 'suspicion_count': suspicion_count,    # Nombre de suspicions actives
             })
@@ -2660,6 +2668,11 @@ CREATE TABLE IF NOT EXISTS users (
         pass
 
     try:
+        c.execute("ALTER TABLE users ADD COLUMN bonus_expires_at TEXT")
+    except Exception:
+        pass
+
+    try:
         c.execute("ALTER TABLE users ADD COLUMN has_seen_onboarding INTEGER DEFAULT 0")
     except Exception:
         pass
@@ -4193,7 +4206,7 @@ def get_house_players_points(house_id, existing_conn=None):
     # Récupérer tous les champs nécessaires pour les avatars
     c.execute("""
         SELECT email, points, avatar, avatar_file, avatar_url, name, player_color, avatar_style, is_child_account,
-               COALESCE(skull_count, 0), skull_expires_at
+               COALESCE(skull_count, 0), skull_expires_at, bonus_expires_at
         FROM users WHERE house_id=?
     """, (house_id,))
     rows = c.fetchall()
@@ -4256,12 +4269,21 @@ def get_house_players_points(house_id, existing_conn=None):
         is_child_account = r[8] if len(r) > 8 else 0  # Statut enfant (0 = adulte, 1 = enfant)
         skull_count_raw = r[9] if len(r) > 9 else 0
         skull_expires_at_raw = r[10] if len(r) > 10 else None
-        # Crâne actif (tricherie prouvée dans les 24h)
+        bonus_expires_at_raw = r[11] if len(r) > 11 else None
+        # Crâne actif (malus ou tricherie prouvée)
         skull_active = False
         if skull_expires_at_raw:
             try:
                 from datetime import datetime as _dt2
                 skull_active = _dt2.fromisoformat(str(skull_expires_at_raw)) > _dt2.utcnow()
+            except Exception:
+                pass
+        # Bonus actif (❤️)
+        bonus_active = False
+        if bonus_expires_at_raw:
+            try:
+                from datetime import datetime as _dt3
+                bonus_active = _dt3.fromisoformat(str(bonus_expires_at_raw)) > _dt3.utcnow()
             except Exception:
                 pass
         skull_pending = email in _skull_pending_map
@@ -4430,6 +4452,7 @@ def get_house_players_points(house_id, existing_conn=None):
             'skull_count': int(skull_count_raw) if skull_count_raw else 0,
             'skull_active': skull_active,
             'skull_pending': skull_pending,
+            'bonus_active': bonus_active,
             'suspicion_active': suspicion_active,
             'suspicion_count': suspicion_count,
         })
@@ -9701,6 +9724,10 @@ def api_send_malus():
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
         """, (target_email, task_name, points, house_id))
+        # Badge 💀 sur l'avatar de la cible pendant 1 heure
+        from datetime import datetime as _dt_malus, timedelta as _td_malus
+        skull_until = (_dt_malus.utcnow() + _td_malus(hours=1)).isoformat()
+        c.execute("UPDATE users SET skull_expires_at=? WHERE email=?", (skull_until, target_email))
         conn.commit()
 
         return jsonify({
@@ -9765,11 +9792,31 @@ def api_send_bonus():
             return jsonify({'success': False, 'error': 'Cible introuvable dans cette maison'}), 400
         target_name = target_row[1] or target_email.split('@')[0]
 
+        # Max 1 sanction (toutes catégories) par heure vers la même cible
+        c.execute("""
+            SELECT COUNT(*) FROM completed_tasks
+            WHERE user_email=? AND category IN ('malus','bonus')
+            AND task_name LIKE ? AND completed_at >= datetime('now', '-1 hour')
+        """, (target_email, f'%{sender_name}%'))
+        recent_ct = c.fetchone()[0]
+        c.execute("""
+            SELECT COUNT(*) FROM suspicions
+            WHERE suspecting_player_email=? AND suspected_player_email=?
+            AND created_at >= datetime('now', '-1 hour')
+        """, (sender_email, target_email))
+        recent_susp = c.fetchone()[0]
+        if recent_ct + recent_susp >= 1:
+            return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
+
         task_name = f'❤️ Bonus de {sender_name} : {reason_label}'
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'bonus', ?, ?, CURRENT_TIMESTAMP)
         """, (target_email, task_name, points, house_id))
+        # Badge ❤️ sur l'avatar de la cible pendant 1 heure
+        from datetime import datetime as _dt_bonus, timedelta as _td_bonus
+        bonus_until = (_dt_bonus.utcnow() + _td_bonus(hours=1)).isoformat()
+        c.execute("UPDATE users SET bonus_expires_at=? WHERE email=?", (bonus_until, target_email))
         conn.commit()
 
         return jsonify({'success': True, 'message': f'❤️ Bonus envoyé à {target_name} ! (+{points} pts)'})
@@ -9842,6 +9889,61 @@ def api_spin_wheel():
         conn.close()
 
 
+@app.route('/api/complete_wheel_task', methods=['POST'])
+def api_complete_wheel_task():
+    """Valide une corvée obtenue via la roue et ajoute les points au joueur."""
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+    task_name = str(data.get('task_name', '')).strip()
+    points = int(data.get('points', 40))
+    user_email = session['user']
+
+    if not task_name:
+        return jsonify({'success': False, 'error': 'Tâche manquante'}), 400
+    if points < 30:
+        points = 30
+    if points > 100:
+        points = 100
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (user_email,))
+        row = c.fetchone()
+        if not row:
+            return jsonify({'success': False, 'error': 'Utilisateur introuvable'}), 400
+        house_id = row[0]
+
+        c.execute("""
+            INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+            VALUES (?, ?, 'wheel', ?, ?, CURRENT_TIMESTAMP)
+        """, (user_email, task_name, points, house_id))
+        conn.commit()
+
+        from datetime import date as _d
+        today = _d.today().isoformat()
+        c.execute("""
+            SELECT COALESCE(SUM(points), 0) FROM completed_tasks
+            WHERE user_email=? AND house_id=? AND DATE(completed_at)=?
+        """, (user_email, house_id, today))
+        new_total = int(c.fetchone()[0] or 0)
+
+        _dbg(f"✅ Roue validée : {user_email} -> '{task_name}' +{points} pts (total jour: {new_total})")
+        return jsonify({'success': True, 'new_total': new_total})
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_complete_wheel_task: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
 # ════════════════════════════════════════════════════════════
 # 🔍 SYSTÈME DE PREUVES — Vigilance sociale
 # ════════════════════════════════════════════════════════════
@@ -9895,6 +9997,22 @@ def api_give_malus():
         count_today = c.fetchone()[0]
         if count_today >= 3:
             return jsonify({'success': False, 'error': f'Tu as déjà envoyé 3 malus à {target_name} aujourd\'hui !'}), 200
+
+        # Max 1 sanction (toutes catégories) par heure vers la même cible
+        c.execute("""
+            SELECT COUNT(*) FROM completed_tasks
+            WHERE user_email=? AND category IN ('malus','bonus')
+            AND task_name LIKE ? AND completed_at >= datetime('now', '-1 hour')
+        """, (target_email, f'%{sender_name}%'))
+        recent_ct = c.fetchone()[0]
+        c.execute("""
+            SELECT COUNT(*) FROM suspicions
+            WHERE suspecting_player_email=? AND suspected_player_email=?
+            AND created_at >= datetime('now', '-1 hour')
+        """, (sender_email, target_email))
+        recent_susp = c.fetchone()[0]
+        if recent_ct + recent_susp >= 1:
+            return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
         # Points du malus (négatif)
         points = -10
@@ -10590,6 +10708,22 @@ def api_emit_suspicion():
         existing_suspicion = c.fetchone()
         if existing_suspicion:
             return jsonify({'success': False, 'error': 'Une suspicion est déjà en attente pour cette tâche'}), 400
+
+        # Max 1 sanction (toutes catégories) par heure vers le même joueur
+        c.execute("""
+            SELECT COUNT(*) FROM completed_tasks
+            WHERE user_email=? AND category IN ('malus','bonus')
+            AND task_name LIKE ? AND completed_at >= datetime('now', '-1 hour')
+        """, (suspected_email, f'%{suspecting_name}%'))
+        recent_ct = c.fetchone()[0]
+        c.execute("""
+            SELECT COUNT(*) FROM suspicions
+            WHERE suspecting_player_email=? AND suspected_player_email=?
+            AND created_at >= datetime('now', '-1 hour')
+        """, (suspecting_email, suspected_email))
+        recent_susp = c.fetchone()[0]
+        if recent_ct + recent_susp >= 1:
+            return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {suspected_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
         # Créer la suspicion
         c.execute("""

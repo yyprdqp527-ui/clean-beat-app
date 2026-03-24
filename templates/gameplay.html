@@ -167,24 +167,25 @@ body {
     width: 100%;
     display: none;
     flex-direction: column;
-    gap: 0;
-    margin-top: 8px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 6px 10px;
-    backdrop-filter: blur(10px);
+    gap: 6px;
+    margin-top: 10px;
+    padding: 0;
+    background: none;
 }
 .gw-tasks-list.has-tasks { display: flex; }
 .gw-task-item {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 5px 0;
+    flex-direction: column;
+    gap: 0;
+    padding: 9px 12px 8px;
     font-size: 12px;
     color: rgba(255,255,255,0.5);
     line-height: 1.3;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
 }
-.gw-task-item + .gw-task-item { border-top: 1px solid rgba(255,255,255,0.06); }
+.gw-task-item + .gw-task-item { border-top: none; }
 .gw-task-row1 { display: flex; align-items: center; gap: 8px; }
 .gw-task-row2 { 
     display: flex; 
@@ -298,6 +299,71 @@ body {
 .gameplay-action-btn .btn-label { flex: 1; color: #153036; }
 .gameplay-action-btn .btn-arrow { font-size: 18px; color: #A6D3DC; }
 
+/* ══ Containers de fonctionnalité ══ */
+.feature-container {
+    margin: 16px 14px 0;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255,255,255,0.14);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+}
+.feature-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 18px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.09);
+}
+.feature-header-icon {
+    font-size: 30px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+    line-height: 1;
+}
+.feature-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--adaptive-text) !important;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    text-shadow: {% if bg_theme_light %}none{% else %}0 2px 10px rgba(0,0,0,0.3){% endif %};
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+.feature-subtitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--adaptive-muted) !important;
+    line-height: 1.5;
+    margin: 0;
+}
+.feature-body {
+    padding: 14px 0 8px;
+}
+/* Accent couleur par section – bord + header */
+.feature-container.malus-feature {
+    border-color: rgba(231,76,60,0.28);
+}
+.feature-container.malus-feature .feature-header {
+    background: linear-gradient(135deg, rgba(231,76,60,0.14) 0%, rgba(46,204,113,0.08) 100%);
+}
+.feature-container.suspicion-feature {
+    border-color: rgba(253,174,84,0.3);
+}
+.feature-container.suspicion-feature .feature-header {
+    background: linear-gradient(135deg, rgba(253,174,84,0.14) 0%, rgba(255,255,255,0.04) 100%);
+}
+.feature-container.wheel-feature {
+    border-color: rgba(166,211,220,0.3);
+    margin-bottom: 16px;
+}
+.feature-container.wheel-feature .feature-header {
+    background: linear-gradient(135deg, rgba(166,211,220,0.14) 0%, rgba(253,174,84,0.08) 100%);
+}
+
 /* ══ Popups malus/bonus ══ */
 .malus-overlay {
     display: none;
@@ -322,13 +388,13 @@ body {
     animation: gwSheetUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 @keyframes gwSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.malus-sheet-title { font-size: 16px; font-weight: 800; color: #153036; text-align: center; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
+.malus-sheet-title { font-size: 16px; font-weight: 800; color: #153036 !important; text-align: center; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
 .malus-option { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; background: rgba(21,48,54,0.04); border: 1px solid rgba(21,48,54,0.06); margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.15s; }
 .malus-option:active { background: rgba(231,76,60,0.10); }
 .malus-option-icon { font-size: 24px; }
-.malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036; }
-.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c; }
-.malus-cancel { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 14px; background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700; color: #597176; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+.malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036 !important; }
+.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c !important; }
+.malus-cancel { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 14px; background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700; color: #597176 !important; cursor: pointer; font-family: 'Montserrat', sans-serif; }
 
 /* Animation des points qui s'envolent */
 .points-animation {
@@ -407,7 +473,7 @@ body {
     background: linear-gradient(135deg, #FF6B6B, #FF8C42);
     border: none;
     border-radius: 50px;
-    color: white;
+    color: white !important;
     font-size: 18px;
     font-weight: 800;
     text-transform: uppercase;
@@ -484,7 +550,7 @@ body {
 .wheel-result-title {
     font-size: 20px;
     font-weight: 900;
-    color: #153036;
+    color: #153036 !important;
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -493,7 +559,7 @@ body {
 .wheel-result-task {
     font-size: 18px;
     font-weight: 700;
-    color: #597176;
+    color: #597176 !important;
     margin: 16px 0;
     padding: 12px;
     background: rgba(255,255,255,0.6);
@@ -503,7 +569,7 @@ body {
 .wheel-result-points {
     font-size: 32px;
     font-weight: 900;
-    color: #FF6B6B;
+    color: #FF6B6B !important;
     margin: 12px 0;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -515,7 +581,7 @@ body {
     border: none;
     border-radius: 14px;
     background: linear-gradient(135deg, #2ecc71, #27ae60);
-    color: white;
+    color: white !important;
     font-size: 16px;
     font-weight: 800;
     cursor: pointer;
@@ -525,6 +591,106 @@ body {
 
 .wheel-result-btn:active {
     transform: scale(0.98);
+}
+
+/* ══ Responsive : tous écrans ══ */
+.feature-header-text { min-width: 0; flex: 1; }
+
+@media (max-width: 480px) {
+    .gameplay-title-card { margin: 10px 10px 0; padding: 14px 16px; }
+    .gameplay-title-card h1 { font-size: 19px; }
+    .feature-container { margin: 12px 10px 0; border-radius: 18px; }
+    .feature-header { padding: 14px 14px 12px; gap: 10px; }
+    .feature-header-icon { font-size: 24px; }
+    .feature-title { font-size: 14px; letter-spacing: 0.3px; }
+    .feature-subtitle { font-size: 11px; }
+    .gw-player { padding: 12px 10px; }
+    .wheel-container { width: 260px; height: 260px; }
+    .spin-btn { width: calc(100% - 32px); font-size: 15px; padding: 14px 18px; }
+}
+@media (max-width: 360px) {
+    .feature-container { margin: 10px 8px 0; border-radius: 16px; }
+    .feature-header-icon { font-size: 20px; }
+    .feature-title { font-size: 13px; }
+    .feature-subtitle { font-size: 10px; }
+    .wheel-container { width: 240px; height: 240px; }
+    .spin-btn { font-size: 14px; padding: 12px 16px; }
+}
+
+/* ══ Liste tâches obtenues via la roue ══ */
+.wheel-task-list {
+    padding: 0 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.wheel-task-card {
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.09);
+    border: 1.5px solid rgba(166,211,220,0.3);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: taskAppear 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes taskAppear {
+    from { transform: translateY(20px) scale(0.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+.wheel-task-card .wtc-row1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.wheel-task-card .wtc-emoji { font-size: 28px; flex-shrink: 0; }
+.wheel-task-card .wtc-info { flex: 1; min-width: 0; }
+.wheel-task-card .wtc-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--adaptive-text) !important;
+    line-height: 1.3;
+    margin-bottom: 3px;
+}
+.wheel-task-card .wtc-pts {
+    font-size: 13px;
+    font-weight: 900;
+    color: #FDAE54 !important;
+}
+.wheel-validate-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white !important;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(46,204,113,0.4);
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.3px;
+}
+.wheel-validate-btn:active { transform: scale(0.97); }
+.wheel-validate-btn.done {
+    background: rgba(255,255,255,0.12);
+    color: var(--adaptive-muted) !important;
+    box-shadow: none;
+    cursor: default;
+    transform: none !important;
+}
+.wheel-pts-counter {
+    text-align: center;
+    padding: 10px 14px 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--adaptive-muted) !important;
+}
+.wheel-pts-counter strong {
+    color: #FDAE54 !important;
+    font-size: 20px;
+    font-weight: 900;
 }
 
 </style>
@@ -548,13 +714,16 @@ body {
         {% endif %}
     </div>
 
-    <!-- Section Malus & Bonus -->
-    <div class="gameplay-section-title">💀 Malus & Bonus ❤️</div>
-
-    <!-- Description -->
-    <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 13px; line-height: 1.5;">
-        Sanctionne les tâches mal effectuées par les autres joueurs.
-    </div>
+    <!-- ====== CONTAINER 1 : MALUS & BONUS ====== -->
+    <div class="feature-container malus-feature">
+        <div class="feature-header">
+            <div class="feature-header-icon">💀❤️</div>
+            <div class="feature-header-text">
+                <div class="feature-title">Malus &amp; Bonus</div>
+                <div class="feature-subtitle">Sanctionne les tâches faites à l'arrache ou encourage les efforts avec un petit cœur.</div>
+            </div>
+        </div>
+        <div class="feature-body">
 
     <!-- Liste joueurs avec tâches (sans le joueur principal) -->
     <div class="gameplay-players-wrap">
@@ -583,27 +752,20 @@ body {
         {% endif %}{% endfor %}
     </div>
 
-    <!-- ====== SECTION SUSPICIONS ====== -->
-    <div class="gameplay-section-title" style="margin-top: 30px;">⚠️ Suspicions</div>
-    
-    <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 12px; line-height: 1.5;">
-        Clique sur la loupe 🔍 à côté d'une tâche pour émettre une suspicion. Tous les joueurs voient les suspicions et les preuves.
-    </div>
-    
-    <!-- Liste des suspicions -->
-    <div id="suspicionsList" style="padding: 0 14px; margin-bottom: 20px;">
-        <!-- Rempli dynamiquement par JavaScript -->
-    </div>
+        </div><!-- /feature-body malus -->
+    </div><!-- /feature-container malus -->
 
-    <!-- ====== SECTION ROUE DE LA CHANCE ====== -->
-    <div class="gameplay-section-title" style="margin-top: 30px;">� Roue des Trucs Chiants</div>
-    
-    <div style="padding: 0 20px 10px; color: rgba(255,255,255,0.7); font-size: 12px; line-height: 1.5; text-align: center;">
-        <div style="font-weight: 700; color: rgba(255,255,255,0.9); font-size: 13px; margin-bottom: 6px;">🔥 Alors {% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.name|e }}{% endif %}{% endfor %}, tu es à la traîne ?!</div>
-        Rattrape le retard en faisant tourner la roue des trucs que personne n'a envie de faire ! 💪<br>
-        <span style="color: #FDAE54; font-weight: 600;">Plus c'est horrible, plus tu gagnes de points !</span> 😈
-    </div>
-    
+    <!-- ====== CONTAINER 2 : ROUE DE LA CHANCE ====== -->
+    <div class="feature-container wheel-feature">
+        <div class="feature-header">
+            <div class="feature-header-icon">🎡</div>
+            <div class="feature-header-text">
+                <div class="feature-title">Roue des Trucs Chiants</div>
+                <div class="feature-subtitle">🔥 Alors {% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.name|e }}{% endif %}{% endfor %}, tu es à la traîne ? Rattrape le retard ! <span style="color: #FDAE54;">Plus c'est horrible, plus tu gagnes de points !</span> 😈</div>
+            </div>
+        </div>
+        <div class="feature-body">
+
     <div class="wheel-container">
         <div class="wheel-pointer">🔻</div>
         <canvas id="wheelCanvas" width="300" height="300" class="wheel-canvas"></canvas>
@@ -611,12 +773,42 @@ body {
     </div>
     
     <button id="spinBtn" class="spin-btn" onclick="spinWheel()">
-        � FAIRE TOURNER LA ROUE !
+        🎯 FAIRE TOURNER LA ROUE !
     </button>
-    
+
+    <!-- Compteur de points du joueur -->
+    <div class="wheel-pts-counter">
+        Mes points aujourd'hui : <strong id="myWheelPts">{% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.daily_points|default(0) }}{% endif %}{% endfor %}</strong> pts
+    </div>
+
+    <!-- Liste des corvées obtenues — remplie par JS -->
+    <div id="wheelTaskList" class="wheel-task-list"></div>
+
     <div style="padding: 0 20px 20px; color: rgba(255,255,255,0.5); font-size: 11px; text-align: center; font-style: italic;">
         ⚡ Allez champion, montre-leur de quoi tu es capable ! ⚡
     </div>
+
+        </div><!-- /feature-body wheel -->
+    </div><!-- /feature-container wheel -->
+
+    <!-- ====== CONTAINER 3 : ENTOURLOUPE ====== -->
+    <div class="feature-container suspicion-feature">
+        <div class="feature-header">
+            <div class="feature-header-icon">⚠️</div>
+            <div class="feature-header-text">
+                <div class="feature-title">Entourloupe</div>
+                <div class="feature-subtitle">Clique sur la loupe 🔍 à côté d'une tâche pour repérer les petits entourloupes. Personne n'a envie de faire des corvées et c'est naturel d'essayer d'y échapper… mais ici on joue collectif, chacun met la main à la pâte !</div>
+            </div>
+        </div>
+        <div class="feature-body">
+
+    <!-- Liste des suspicions -->
+    <div id="suspicionsList" style="padding: 0 14px; margin-bottom: 20px;">
+        <!-- Rempli dynamiquement par JavaScript -->
+    </div>
+
+        </div><!-- /feature-body suspicion -->
+    </div><!-- /feature-container suspicion -->
 
 </div>
 
@@ -1572,72 +1764,108 @@ function drawWheel() {
 
 function spinWheel() {
     if (isSpinning) return;
-    
     isSpinning = true;
     const spinBtn = document.getElementById('spinBtn');
     spinBtn.disabled = true;
-    spinBtn.textContent = '⏳ En cours...';
-    
+    spinBtn.textContent = '\u23f3 En cours...';
     const canvas = document.getElementById('wheelCanvas');
-    
-    // Nombre de tours complets + angle aléatoire
-    const spins = 5 + Math.random() * 3; // 5-8 tours
+    const spins = 5 + Math.random() * 3;
     const extraDegrees = Math.random() * 360;
     const totalRotation = (spins * 360) + extraDegrees;
-    
-    // Animation CSS
     canvas.style.transform = `rotate(${currentRotation + totalRotation}deg)`;
-    
-    // Calculer quelle tâche a été sélectionnée
     const finalAngle = (currentRotation + totalRotation) % 360;
     const sliceAngle = 360 / wheelTasks.length;
-    // La flèche pointe vers le haut, donc on inverse
     const selectedIndex = Math.floor((360 - finalAngle + sliceAngle / 2) / sliceAngle) % wheelTasks.length;
     const selectedTask = wheelTasks[selectedIndex];
-    
-    // Mise à jour de la rotation actuelle
     currentRotation = (currentRotation + totalRotation) % 360;
-    
-    // Afficher le résultat après l'animation (4 secondes)
     setTimeout(() => {
-        showWheelResult(selectedTask);
+        addWheelTaskCard(selectedTask);
         isSpinning = false;
         spinBtn.disabled = false;
-        spinBtn.textContent = '� FAIRE TOURNER LA ROUE !';
+        spinBtn.textContent = '🎯 FAIRE TOURNER LA ROUE !';
     }, 4000);
 }
 
-function showWheelResult(task) {
-    document.getElementById('wheelResultTask').textContent = task.task;
-    document.getElementById('wheelResultPoints').textContent = '+' + task.points + ' points';
-    document.getElementById('wheelResultOverlay').classList.add('open');
-    
-    // Ajouter la tâche au backend
-    fetch('/api/spin_wheel', {
+function addWheelTaskCard(task) {
+    const list = document.getElementById('wheelTaskList');
+    if (!list) return;
+    const emojiMatch = task.task.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base})\s*/u);
+    const emoji = emojiMatch ? emojiMatch[0].trim() : '🎯';
+    const taskNameClean = emojiMatch ? task.task.slice(emojiMatch[0].length) : task.task;
+    const card = document.createElement('div');
+    card.className = 'wheel-task-card';
+    const safeTask = task.task.replace(/'/g, '&#39;');
+    card.innerHTML = `
+        <div class="wtc-row1">
+            <div class="wtc-emoji">${emoji}</div>
+            <div class="wtc-info">
+                <div class="wtc-name">${taskNameClean}</div>
+                <div class="wtc-pts">+${task.points} pts si tu la fais !</div>
+            </div>
+        </div>
+        <button class="wheel-validate-btn" onclick="validateWheelTask(this, '${safeTask}', ${task.points})">
+            \u2705 J'ai fait la corv\xe9e !
+        </button>
+    `;
+    list.insertBefore(card, list.firstChild);
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+function validateWheelTask(btn, taskName, points) {
+    if (btn.classList.contains('done') || btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '\u23f3 Validation\u2026';
+    fetch('/api/complete_wheel_task', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            task_name: task.task,
-            points: task.points
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_name: taskName, points: points })
     })
     .then(r => r.json())
     .then(data => {
-        if (!data.success) {
-            console.error('Erreur ajout tâche:', data.error);
+        if (data.success) {
+            btn.classList.add('done');
+            btn.textContent = '🏆 Corvée validée !';
+            floatPoints('+' + points + ' pts', btn);
+            const counter = document.getElementById('myWheelPts');
+            if (counter && data.new_total !== undefined) {
+                counter.textContent = data.new_total;
+                counter.style.animation = 'none';
+                void counter.offsetHeight;
+                counter.style.animation = 'bounce 0.5s ease';
+            }
+            const card = btn.closest('.wheel-task-card');
+            if (card) {
+                const pts = card.querySelector('.wtc-pts');
+                if (pts) pts.textContent = '+' + points + ' pts gagnés 🎉';
+            }
+        } else {
+            btn.disabled = false;
+            btn.textContent = '\u2705 J\'ai fait la corv\xe9e !';
+            alert(data.error || 'Erreur lors de la validation');
         }
     })
-    .catch(err => {
-        console.error('Erreur API spin_wheel:', err);
+    .catch(() => {
+        btn.disabled = false;
+        btn.textContent = '\u2705 J\'ai fait la corv\xe9e !';
+        alert('Erreur r\xe9seau, r\xe9essaie !');
     });
+}
+
+function floatPoints(text, anchorEl) {
+    const rect = anchorEl.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'points-animation';
+    el.textContent = text;
+    el.style.top = (rect.top + window.scrollY) + 'px';
+    el.style.left = (rect.left + rect.width / 2) + 'px';
+    el.style.transform = 'translateX(-50%)';
+    el.style.color = '#FDAE54';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2100);
 }
 
 function closeWheelResult() {
     document.getElementById('wheelResultOverlay').classList.remove('open');
-    // Recharger la page pour afficher la nouvelle tâche
-    setTimeout(() => {
-        window.location.reload();
-    }, 300);
 }
 
 </script>

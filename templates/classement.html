@@ -118,12 +118,10 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     width: 100%;
     display: none;
     flex-direction: column;
-    gap: 0;
-    margin-top: 8px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 6px 10px;
-    backdrop-filter: blur(10px);
+    gap: 6px;
+    margin-top: 10px;
+    padding: 0;
+    background: none;
 }
 .cw-tasks-list.has-tasks { display: flex; }
 
@@ -131,16 +129,19 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 5px 0;
+    padding: 8px 12px;
     font-size: 12px;
-    color: rgba(255,255,255,0.5);
+    color: var(--adaptive-muted);
     line-height: 1.3;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
 }
-.cw-task-item + .cw-task-item { border-top: 1px solid rgba(255,255,255,0.06); }
+.cw-task-item + .cw-task-item { border-top: none; }
 .cw-task-dot { width:6px; height:6px; border-radius:50%; background:linear-gradient(135deg,#A6D3DC,#89b4bb); flex-shrink:0; }
-.cw-task-name { flex: 1; font-weight: 600; color: rgba(255,255,255,0.85); }
-.cw-task-pts { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); }
-.cw-task-time { font-size: 11px; font-weight: 800; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px; }
+.cw-task-name { flex: 1; font-weight: 600; color: var(--adaptive-text); }
+.cw-task-pts { font-size: 11px; font-weight: 600; color: var(--adaptive-muted); }
+.cw-task-time { font-size: 11px; font-weight: 800; color: #FDAE54 !important; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px; }
 
 .cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
 .cw-avatar-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }
@@ -149,7 +150,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 .cw-name { font-size: 14px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cw-bar-wrap { height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 5px; overflow: hidden; }
 .cw-bar-fill { height: 100%; border-radius: 4px; min-width: 5px; background: linear-gradient(90deg,#A6D3DC,#FDAE54); transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); }
-.cw-pts { font-size: 15px; font-weight: 800; color: #FDAE54; }
+.cw-pts { font-size: 15px; font-weight: 800; color: #FDAE54 !important; }
 .cw-skull { font-size: 14px; }
 
 /* Bouton stats semaine */
