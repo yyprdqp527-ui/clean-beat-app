@@ -3606,6 +3606,9 @@ def send_push_notification(subscription, notification_data):
     """
     try:
         from pywebpush import webpush, WebPushException, Vapid
+        from cryptography.hazmat.primitives.serialization import (
+            load_pem_private_key, Encoding, PrivateFormat, NoEncryption
+        )
         import json
         import base64
         
@@ -3627,29 +3630,31 @@ def send_push_notification(subscription, notification_data):
             print("⚠️ VAPID keys non configurées - notifications push désactivées", flush=True)
             return False
         
-        # Log format de la clé pour diagnostic
-        key_preview = VAPID_PRIVATE_KEY[:20].replace('\n', '\\n')
+        key_preview = VAPID_PRIVATE_KEY[:30].replace('\n', '\\n')
         print(f"🔑 VAPID private key: len={len(VAPID_PRIVATE_KEY)}, début='{key_preview}'", flush=True)
         
-        # Créer l'objet Vapid selon le format de la clé stockée
-        # Vapid.from_string() attend soit raw base64url (32 bytes décodés) soit DER base64url
-        # Si la clé est au format PEM (-----BEGIN...), il faut utiliser from_pem() directement
+        # Créer l'objet Vapid selon le format de la clé
         if VAPID_PRIVATE_KEY.startswith('-----'):
-            print("🔑 Format PEM détecté → Vapid.from_pem()", flush=True)
-            vapid_obj = Vapid.from_pem(VAPID_PRIVATE_KEY.encode('utf-8'))
+            # Format PEM : utiliser cryptography lib directement (Vapid.from_pem() est buggé
+            # dans pywebpush v2 car il passe le contenu PEM à b64urldecode au lieu de load_der)
+            print("🔑 Format PEM → load_pem_private_key + Vapid.from_raw()", flush=True)
+            pem_bytes = VAPID_PRIVATE_KEY.encode('utf-8')
+            priv_key_obj = load_pem_private_key(pem_bytes, password=None)
+            raw_bytes = priv_key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+            b64url_raw = base64.urlsafe_b64encode(raw_bytes).rstrip(b'=')
+            vapid_obj = Vapid.from_raw(b64url_raw)
+            print(f"🔑 Conversion PEM→raw OK ({len(raw_bytes)} bytes)", flush=True)
         else:
-            print("🔑 Format base64url/DER détecté → Vapid.from_string()", flush=True)
+            # Format base64url (raw 32 bytes ou DER en base64url)
+            print("🔑 Format base64url → Vapid.from_string()", flush=True)
             vapid_obj = Vapid.from_string(VAPID_PRIVATE_KEY)
         
         # Email VAPID
         vapid_email = os.environ.get('VAPID_EMAIL', 'mailto:contact@cleanbeat.app')
-        VAPID_CLAIMS = {
-            "sub": vapid_email
-        }
+        VAPID_CLAIMS = {"sub": vapid_email}
         
         payload = json.dumps(notification_data)
         
-        # Passer l'objet Vapid directement (évite toute ambiguïté de format)
         webpush(
             subscription_info=subscription,
             data=payload,
