@@ -3731,7 +3731,14 @@ def send_push_notification(subscription, notification_data):
             return False
 
         # Convertir en raw 32 bytes → Vapid.from_raw()
-        raw_key = priv_key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+        # PrivateFormat.Raw n'est valide que pour OKP (X25519/Ed25519), pas pour EC.
+        # Pour les clés EC (P-256 = SECP256R1), on extrait la valeur entière private_value.
+        from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
+        if isinstance(priv_key_obj, EllipticCurvePrivateKey):
+            private_value_int = priv_key_obj.private_numbers().private_value
+            raw_key = private_value_int.to_bytes(32, 'big')
+        else:
+            raw_key = priv_key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
         b64url_raw = base64.urlsafe_b64encode(raw_key).rstrip(b'=')
         vapid_obj = Vapid.from_raw(b64url_raw)
         print(f"🔑 ✅ Vapid chargé ({len(raw_key)} bytes raw)", flush=True)
