@@ -3640,11 +3640,44 @@ def send_push_notification(subscription, notification_data):
             print("⚠️ VAPID keys non configurées", flush=True)
             return False
 
-        # ── Diagnostic exact du format reçu ─────────────────────────────────
-        key_repr = repr(VAPID_PRIVATE_KEY[:60])
-        print(f"🔑 VAPID key brute: {len(VAPID_PRIVATE_KEY)} chars, aperçu={key_repr}", flush=True)
+        # ── Normaliser la clé : détecter et décoder toutes les couches d'encodage ──
+        # Cas confirmé sur Render : VAPID_PRIVATE_KEY contient le PEM encodé en base64 standard
+        # (LS0tLS1C... = base64("-----BEGIN..."))
+        def _decode_vapid_key(raw_str):
+            """Renvoie la clé sous forme de string normalisée (PEM ou base64url)."""
+            s = raw_str.replace('\\n', '\n').strip()
+            # Déjà PEM ?
+            if s.startswith('-----'):
+                return s
+            # Essayer base64 standard (la clé PEM pourrait être base64-encodée dans l'env var)
+            for b64decode in [base64.b64decode, base64.urlsafe_b64decode]:
+                try:
+                    padding = 4 - len(s) % 4
+                    candidate = s + ('=' * padding if padding != 4 else '')
+                    decoded = b64decode(candidate)
+                    try:
+                        decoded_str = decoded.decode('utf-8').strip()
+                        decoded_str = decoded_str.replace('\\n', '\n')
+                        if decoded_str.startswith('-----'):
+                            return decoded_str  # PEM encodé en base64 !
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+            return s  # retourner tel quel (base64url raw)
 
-        # ── Charger la clé en essayant tous les formats possibles ────────────
+        VAPID_PRIVATE_KEY = _decode_vapid_key(VAPID_PRIVATE_KEY)
+        VAPID_PUBLIC_KEY  = VAPID_PUBLIC_KEY.replace('\\n', '\n').strip()
+
+        if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+            print("⚠️ VAPID keys non configurées", flush=True)
+            return False
+
+        # ── Diagnostic exact du format après normalisation ────────────────────
+        key_repr = repr(VAPID_PRIVATE_KEY[:60])
+        print(f"🔑 VAPID key normalisée: {len(VAPID_PRIVATE_KEY)} chars, aperçu={key_repr}", flush=True)
+
+        # ── Charger la clé ────────────────────────────────────────────────────
         vapid_obj = None
         priv_key_obj = None
 
