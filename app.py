@@ -3607,66 +3607,118 @@ def send_push_notification(subscription, notification_data):
     try:
         from pywebpush import webpush, WebPushException, Vapid
         from cryptography.hazmat.primitives.serialization import (
-            load_pem_private_key, Encoding, PrivateFormat, NoEncryption
+            load_pem_private_key, load_der_private_key, Encoding, PrivateFormat, NoEncryption
         )
+        from cryptography.hazmat.backends import default_backend
         import json
         import base64
-        
-        # Récupérer la clé privée VAPID (supporte VAPID_PRIVATE_KEY_B64 ou VAPID_PRIVATE_KEY)
+
+        # ── Lire les clés depuis les variables d'environnement ──────────────
         vapid_private_b64 = os.environ.get('VAPID_PRIVATE_KEY_B64', '')
-        vapid_public_b64 = os.environ.get('VAPID_PUBLIC_KEY_B64', '')
-        
+        vapid_public_b64  = os.environ.get('VAPID_PUBLIC_KEY_B64', '')
+
         if vapid_private_b64 and vapid_public_b64:
-            VAPID_PRIVATE_KEY = base64.b64decode(vapid_private_b64).decode('utf-8')
-            VAPID_PUBLIC_KEY = base64.b64decode(vapid_public_b64).decode('utf-8')
+            raw_priv = base64.b64decode(vapid_private_b64)
+            raw_pub  = base64.b64decode(vapid_public_b64)
+            # Le décodage peut donner des bytes bruts (32 octets) OU du texte PEM/DER
+            try:
+                VAPID_PRIVATE_KEY = raw_priv.decode('utf-8')
+                VAPID_PUBLIC_KEY  = raw_pub.decode('utf-8')
+            except Exception:
+                # Bytes non-UTF8 → clé brute en base64url
+                VAPID_PRIVATE_KEY = base64.urlsafe_b64encode(raw_priv).rstrip(b'=').decode('ascii')
+                VAPID_PUBLIC_KEY  = base64.urlsafe_b64encode(raw_pub).rstrip(b'=').decode('ascii')
         else:
             VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
-            VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
-        
-        # Normaliser : remplacer les \n littéraux (backslash-n) par de vraies newlines
-        # (cas fréquent quand la clé PEM est stockée en env var dans Render)
-        VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY.replace('\\n', '\n').replace('\r\n', '\n').strip()
-        VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY.replace('\\n', '\n').replace('\r\n', '\n').strip()
-        
+            VAPID_PUBLIC_KEY  = os.environ.get('VAPID_PUBLIC_KEY', '')
+
+        # Remplacer les \n littéraux (backslash-n) par de vraies newlines
+        VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY.replace('\\n', '\n').strip()
+        VAPID_PUBLIC_KEY  = VAPID_PUBLIC_KEY.replace('\\n', '\n').strip()
+
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-            print("⚠️ VAPID keys non configurées - notifications push désactivées", flush=True)
+            print("⚠️ VAPID keys non configurées", flush=True)
             return False
-        
-        # Diagnostic précis du format de la clé
-        key_lines = VAPID_PRIVATE_KEY.split('\n')
-        key_preview = key_lines[0][:50]
-        print(f"🔑 VAPID key: {len(VAPID_PRIVATE_KEY)} chars, {len(key_lines)} lignes, ligne1='{key_preview}'", flush=True)
-        
-        # Créer l'objet Vapid selon le format de la clé
+
+        # ── Diagnostic exact du format reçu ─────────────────────────────────
+        key_repr = repr(VAPID_PRIVATE_KEY[:60])
+        print(f"🔑 VAPID key brute: {len(VAPID_PRIVATE_KEY)} chars, aperçu={key_repr}", flush=True)
+
+        # ── Charger la clé en essayant tous les formats possibles ────────────
+        vapid_obj = None
+        priv_key_obj = None
+
+        # Tentative 1 : format PEM (-----BEGIN...)
         if VAPID_PRIVATE_KEY.startswith('-----'):
-            print("🔑 Format PEM → load_pem_private_key + Vapid.from_raw()", flush=True)
-            pem_bytes = VAPID_PRIVATE_KEY.encode('utf-8')
-            priv_key_obj = load_pem_private_key(pem_bytes, password=None)
-            raw_bytes = priv_key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
-            b64url_raw = base64.urlsafe_b64encode(raw_bytes).rstrip(b'=')
-            vapid_obj = Vapid.from_raw(b64url_raw)
-            print(f"🔑 Conversion PEM→raw OK ({len(raw_bytes)} bytes)", flush=True)
-        else:
-            print(f"🔑 Format non-PEM → Vapid.from_string(), longueur={len(VAPID_PRIVATE_KEY)}", flush=True)
-            vapid_obj = Vapid.from_string(VAPID_PRIVATE_KEY)
-        
-        # Email VAPID
+            try:
+                priv_key_obj = load_pem_private_key(VAPID_PRIVATE_KEY.encode('utf-8'), password=None)
+                print("🔑 ✅ Format PEM chargé", flush=True)
+            except Exception as e:
+                print(f"🔑 ❌ PEM échoué: {e}", flush=True)
+
+        # Tentative 2 : DER en base64url (format standard py_vapid)
+        if priv_key_obj is None:
+            try:
+                # Ajouter padding si nécessaire
+                k = VAPID_PRIVATE_KEY
+                padding = 4 - len(k) % 4
+                if padding != 4:
+                    k += '=' * padding
+                der_bytes = base64.urlsafe_b64decode(k)
+                if len(der_bytes) == 32:
+                    raise ValueError("raw key, pas DER")
+                priv_key_obj = load_der_private_key(der_bytes, password=None, backend=default_backend())
+                print(f"🔑 ✅ Format DER base64url chargé ({len(der_bytes)} bytes)", flush=True)
+            except Exception as e:
+                print(f"🔑 ❌ DER échoué: {e}", flush=True)
+
+        # Tentative 3 : raw 32 bytes en base64url
+        if priv_key_obj is None:
+            try:
+                k = VAPID_PRIVATE_KEY
+                padding = 4 - len(k) % 4
+                if padding != 4:
+                    k += '=' * padding
+                raw_bytes = base64.urlsafe_b64decode(k)
+                if len(raw_bytes) == 32:
+                    from cryptography.hazmat.primitives.asymmetric.ec import derive_private_key, SECP256R1
+                    import binascii
+                    priv_key_obj = derive_private_key(
+                        int(binascii.hexlify(raw_bytes), 16),
+                        SECP256R1(), default_backend()
+                    )
+                    print(f"🔑 ✅ Format raw 32 bytes chargé", flush=True)
+                else:
+                    print(f"🔑 ❌ base64url décodé = {len(raw_bytes)} bytes (pas 32)", flush=True)
+            except Exception as e:
+                print(f"🔑 ❌ raw échoué: {e}", flush=True)
+
+        if priv_key_obj is None:
+            print("🔑 ❌ Impossible de charger la clé dans aucun format connu", flush=True)
+            return False
+
+        # Convertir en raw 32 bytes → Vapid.from_raw()
+        raw_key = priv_key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+        b64url_raw = base64.urlsafe_b64encode(raw_key).rstrip(b'=')
+        vapid_obj = Vapid.from_raw(b64url_raw)
+        print(f"🔑 ✅ Vapid chargé ({len(raw_key)} bytes raw)", flush=True)
+
+        # ── Envoi ────────────────────────────────────────────────────────────
         vapid_email = os.environ.get('VAPID_EMAIL', 'mailto:contact@cleanbeat.app')
         VAPID_CLAIMS = {"sub": vapid_email}
-        
         payload = json.dumps(notification_data)
-        
+
         webpush(
             subscription_info=subscription,
             data=payload,
             vapid_private_key=vapid_obj,
             vapid_claims=VAPID_CLAIMS
         )
-        
+
         endpoint_short = subscription.get('endpoint', '')[:60]
         print(f"✅ Push envoyé → {endpoint_short}", flush=True)
         return True
-        
+
     except WebPushException as e:
         status_code = None
         try:
@@ -3675,14 +3727,11 @@ def send_push_notification(subscription, notification_data):
         except Exception:
             pass
         print(f"❌ WebPush erreur (status={status_code}): {e}", flush=True)
-        
-        # Si l'abonnement est expiré/invalide (404 ou 410), le désactiver
         if status_code in (404, 410):
             deactivate_push_subscription(subscription.get('endpoint'))
-        
         return False
     except ImportError:
-        print("⚠️ pywebpush non installé - exécutez: pip install pywebpush", flush=True)
+        print("⚠️ pywebpush non installé", flush=True)
         return False
     except Exception as e:
         import traceback
