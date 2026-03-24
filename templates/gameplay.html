@@ -417,6 +417,43 @@ body {
     100% { transform: translateX(-50%) translateY(-100px) scale(1); opacity: 0; }
 }
 
+/* ══ ROUE - Animation validation corvée ══ */
+@keyframes wheelPtsFloat {
+    0%   { transform: translateX(-50%) translateY(0)      scale(0.4); opacity: 0; }
+    15%  { transform: translateX(-50%) translateY(-18px)  scale(1.6); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-160px) scale(1);   opacity: 0; }
+}
+.wheel-pts-fly {
+    position: fixed;
+    font-size: 40px;
+    font-weight: 900;
+    color: #FDAE54 !important; /* remplacé dynamiquement par JS avec la couleur du joueur */
+    text-shadow: 0 0 28px rgba(253,174,84,0.95), 0 2px 14px rgba(0,0,0,0.5) !important;
+    pointer-events: none;
+    z-index: 10001;
+    white-space: nowrap;
+    animation: wheelPtsFloat 1.9s cubic-bezier(0.22,0.61,0.36,1) forwards;
+}
+@keyframes burstParticle {
+    0%   { transform: translate(0,0)                   scale(1.2); opacity: 1; }
+    100% { transform: translate(var(--dx),var(--dy))   scale(0);   opacity: 0; }
+}
+.wheel-burst-particle {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10001;
+    animation: burstParticle 0.8s ease-out forwards;
+}
+@keyframes counterPop {
+    0%   { transform: scale(1); }
+    25%  { transform: scale(1.8); filter: brightness(2.2) drop-shadow(0 0 10px #FDAE54); }
+    65%  { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
 /* ══ ROUE DE LA CHANCE ══ */
 .wheel-container {
     position: relative;
@@ -957,6 +994,9 @@ body {
 </div>
 
 <script>
+// Couleur attribuée au joueur courant
+const CURRENT_PLAYER_COLOR = '{% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.player_color_hex|default('#FDAE54') }}{% endif %}{% endfor %}' || '#FDAE54';
+
 (function(){
     function animateBars(){
         document.querySelectorAll('.gw-bar-fill').forEach(function(el){
@@ -1825,13 +1865,14 @@ function validateWheelTask(btn, taskName, points) {
         if (data.success) {
             btn.classList.add('done');
             btn.textContent = '🏆 Corvée validée !';
+            playRewardSound();
             floatPoints('+' + points + ' pts', btn);
             const counter = document.getElementById('myWheelPts');
             if (counter && data.new_total !== undefined) {
                 counter.textContent = data.new_total;
                 counter.style.animation = 'none';
                 void counter.offsetHeight;
-                counter.style.animation = 'bounce 0.5s ease';
+                counter.style.animation = 'counterPop 0.7s ease-out forwards';
             }
             const card = btn.closest('.wheel-task-card');
             if (card) {
@@ -1851,17 +1892,62 @@ function validateWheelTask(btn, taskName, points) {
     });
 }
 
+// Son de récompense via Web Audio API (arpège montant)
+function playRewardSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [523, 659, 784, 1047].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            const t = ctx.currentTime + i * 0.12;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.28, t + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+            osc.start(t);
+            osc.stop(t + 0.38);
+        });
+    } catch(e) {}
+}
+
 function floatPoints(text, anchorEl) {
     const rect = anchorEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const playerColor = CURRENT_PLAYER_COLOR || '#FDAE54';
+
+    // Texte principal "+X pts" qui s'envole
     const el = document.createElement('div');
-    el.className = 'points-animation';
+    el.className = 'wheel-pts-fly';
     el.textContent = text;
-    el.style.top = (rect.top + window.scrollY) + 'px';
-    el.style.left = (rect.left + rect.width / 2) + 'px';
-    el.style.transform = 'translateX(-50%)';
-    el.style.color = '#FDAE54';
+    el.style.left = cx + 'px';
+    el.style.top  = cy + 'px';
+    el.style.setProperty('color', playerColor, 'important');
+    el.style.setProperty('text-shadow', `0 0 28px ${playerColor}CC, 0 2px 14px rgba(0,0,0,0.5)`, 'important');
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 2100);
+
+    // Explosion de particules dans la couleur du joueur
+    for (let i = 0; i < 12; i++) {
+        const p = document.createElement('div');
+        p.className = 'wheel-burst-particle';
+        const angle = (i / 12) * Math.PI * 2;
+        const dist  = 45 + Math.random() * 55;
+        p.style.setProperty('--dx', (Math.cos(angle) * dist).toFixed(1) + 'px');
+        p.style.setProperty('--dy', (Math.sin(angle) * dist).toFixed(1) + 'px');
+        p.style.left = (cx - 5) + 'px';
+        p.style.top  = (cy - 5) + 'px';
+        // Alternance : couleur joueur + blanc + version plus claire
+        p.style.background = i % 3 === 0 ? '#ffffff' : playerColor;
+        p.style.opacity = i % 3 === 0 ? '0.85' : '1';
+        p.style.animationDelay = (Math.random() * 0.08).toFixed(2) + 's';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 950);
+    }
 }
 
 function closeWheelResult() {
