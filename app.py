@@ -3345,11 +3345,11 @@ def create_system_message(house_id, content, message_type='system', related_task
                 notify_house_members(house_id, notification_data, exclude_email=exclude)
                 
             except Exception as e:
-                _dbg(f"⚠️ Erreur envoi notification push: {e}")
+                print(f"⚠️ Erreur envoi notification push: {e}", flush=True)
         
         return True
     except Exception as e:
-        _dbg(f"Erreur création message système: {e}")
+        print(f"Erreur création message système: {e}", flush=True)
         return False
 
 def get_unread_message_count(user_email, house_id, existing_conn=None):
@@ -3633,7 +3633,7 @@ def send_push_notification(subscription, notification_data):
         }
         
         if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-            _dbg("⚠️ VAPID keys non configurées - notifications push désactivées")
+            print("⚠️ VAPID keys non configurées - notifications push désactivées", flush=True)
             return False
         
         payload = json.dumps(notification_data)
@@ -3645,21 +3645,31 @@ def send_push_notification(subscription, notification_data):
             vapid_claims=VAPID_CLAIMS
         )
         
+        endpoint_short = subscription.get('endpoint', '')[:60]
+        print(f"✅ Push envoyé → {endpoint_short}", flush=True)
         return True
         
     except WebPushException as e:
-        _dbg(f"❌ WebPush erreur: {e}")
+        status_code = None
+        try:
+            if hasattr(e, 'response') and e.response is not None:
+                status_code = getattr(e.response, 'status_code', None)
+        except Exception:
+            pass
+        print(f"❌ WebPush erreur (status={status_code}): {e}", flush=True)
         
-        # Si l'abonnement est invalide (410 Gone), le désactiver
-        if e.response and e.response.status_code == 410:
+        # Si l'abonnement est expiré/invalide (404 ou 410), le désactiver
+        if status_code in (404, 410):
             deactivate_push_subscription(subscription.get('endpoint'))
         
         return False
     except ImportError:
-        _dbg("⚠️ pywebpush non installé - exécutez: pip install pywebpush")
+        print("⚠️ pywebpush non installé - exécutez: pip install pywebpush", flush=True)
         return False
     except Exception as e:
-        _dbg(f"❌ Erreur envoi push: {e}")
+        import traceback
+        print(f"❌ Erreur envoi push inattendue: {e}", flush=True)
+        traceback.print_exc()
         return False
 
 
@@ -3697,6 +3707,7 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
     exclude_email: email de l'expéditeur à exclure
     """
     subscriptions = get_house_push_subscriptions(house_id, exclude_email)
+    print(f"🔔 notify_house_members: house_id={house_id}, {len(subscriptions)} subscription(s) trouvée(s), exclude={exclude_email}", flush=True)
     
     success_count = 0
     for sub in subscriptions:
@@ -3717,6 +3728,7 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
         if send_push_notification(sub, personalized_data):
             success_count += 1
     
+    print(f"🔔 notify_house_members: {success_count}/{len(subscriptions)} push envoyé(s)", flush=True)
     return success_count
 
 
@@ -5058,7 +5070,18 @@ def update_player():
             if SOCKETIO_AVAILABLE and socketio:
                 try:
                     house_id = user_house[0]
-                    socketio.emit('avatar_updated', {'email': email}, namespace='/', to=f'house_{house_id}')
+                    # Récupérer les données fraîches après commit pour diffuser l'avatar réel
+                    c.execute("SELECT name, avatar, avatar_url, avatar_file FROM users WHERE email=?", (email,))
+                    fresh = c.fetchone()
+                    if fresh:
+                        player_data = {
+                            'email': email,
+                            'name': fresh[0],
+                            'avatar': fresh[1],
+                            'avatar_url': fresh[2],
+                            'avatar_file': fresh[3]
+                        }
+                        socketio.emit('player_avatar_update', player_data, namespace='/', to=f'house_{house_id}')
                     # Si le nom a changé, notifier aussi pour rafraîchir les affichages
                     if name and old_name and name != old_name:
                         socketio.emit('player_name_updated', {
@@ -9006,6 +9029,7 @@ def menu():
     unread_by_sender = {}  # Deprecated
     unread_sent_to = {}    # Deprecated
     unread_baby_tracking = 0
+    unread_task_added = 0
     has_baby_tracking = False
     house_id = None
     show_onboarding = False
@@ -9208,7 +9232,8 @@ def menu():
             
             # ✅ Messages baby_tracking et task_added : compteur pour badges burger
             unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
-            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, children_unread={children_unread}")
+            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
+            _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
             # 🛒 Articles non cochés dans la liste de courses (badge onglet navigation)
             courses_pending_count = 0
@@ -9400,6 +9425,7 @@ def menu():
         unread_by_sender=unread_by_sender,  # Deprecated - à supprimer
         unread_sent_to=unread_sent_to,      # Deprecated - à supprimer
         unread_baby_tracking=unread_baby_tracking,
+        unread_task_added=unread_task_added,
         courses_pending_count=courses_pending_count,
         has_baby_tracking=has_baby_tracking,
         custom_rooms=custom_rooms_data,
@@ -11113,6 +11139,14 @@ def personnaliser_maison():
                         is_hidden   = excluded.is_hidden
                 """, (house_id, key, custom_name, is_hidden))
             conn.commit()
+            # 🔌 WEBSOCKET: Notifier les autres joueurs du changement de pièces/nom maison
+            if SOCKETIO_AVAILABLE and socketio:
+                try:
+                    safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                                      namespace='/', room=f'house_{house_id}', broadcast=True)
+                    _dbg(f"🔌 WebSocket: house_rooms_updated émis pour house_{house_id}")
+                except Exception as ws_err:
+                    _dbg(f"⚠️ Erreur WebSocket edit_house: {ws_err}")
         except Exception as e:
             conn.rollback()
             _dbg(f"⚠️ edit_house POST error: {e}")
@@ -11518,7 +11552,17 @@ def add_task_page(cat, task_id=None):
                 create_system_message(house_id, message_content, 'task_added', sender_email=session['user'], related_category=normalized_cat)
             except Exception as _e_msg:
                 print(f'⚠️ Erreur création message task_added: {_e_msg}', flush=True)
-            
+
+            # 🔌 WebSocket : notifier tous les joueurs de la maison en temps réel
+            try:
+                safe_socketio_emit('task_added_notification', {
+                    'category': normalized_cat,
+                    'task_name': task_name,
+                    'creator': session['user']
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+            except Exception as _ws_err:
+                _dbg(f'⚠️ Erreur WebSocket task_added: {_ws_err}')
+
             conn.close()
         
         return redirect(url_for('categorie', cat=cat))
@@ -13047,6 +13091,7 @@ def api_unread_counts():
         unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
         children_unread = get_children_unread_counts(house_id)
         unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
+        unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
 
         # 🛒 Articles non cochés dans la liste de courses
         courses_pending_count = 0
@@ -13064,6 +13109,7 @@ def api_unread_counts():
             'unread_sent_to': unread_sent_to,
             'children_unread': children_unread,
             'unread_baby': unread_baby,
+            'unread_task_added': unread_task_added,
             'courses_pending_count': courses_pending_count
         })
         resp.headers['Cache-Control'] = 'no-store'
