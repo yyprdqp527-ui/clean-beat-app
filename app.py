@@ -3605,39 +3605,41 @@ def send_push_notification(subscription, notification_data):
     }
     """
     try:
-        from pywebpush import webpush, WebPushException
+        from pywebpush import webpush, WebPushException, Vapid
         import json
         import base64
         
-        # VAPID keys - Supporte format normal ou base64
-        # Pour base64: VAPID_PUBLIC_KEY_B64 et VAPID_PRIVATE_KEY_B64
-        # Pour normal: VAPID_PUBLIC_KEY et VAPID_PRIVATE_KEY
-        
-        # Essayer d'abord le format base64
+        # Récupérer la clé privée VAPID (supporte VAPID_PRIVATE_KEY_B64 ou VAPID_PRIVATE_KEY)
         vapid_private_b64 = os.environ.get('VAPID_PRIVATE_KEY_B64', '')
         vapid_public_b64 = os.environ.get('VAPID_PUBLIC_KEY_B64', '')
         
         if vapid_private_b64 and vapid_public_b64:
-            # Décoder depuis base64
             VAPID_PRIVATE_KEY = base64.b64decode(vapid_private_b64).decode('utf-8')
             VAPID_PUBLIC_KEY = base64.b64decode(vapid_public_b64).decode('utf-8')
         else:
-            # Utiliser le format normal
             VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
             VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
         
-        # Normaliser la clé privée : si elle est au format PEM, la convertir en raw base64url
-        # (pywebpush v2 attend la clé EC brute encodée en base64url, pas le PEM)
         VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY.strip()
+        VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY.strip()
+        
+        if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+            print("⚠️ VAPID keys non configurées - notifications push désactivées", flush=True)
+            return False
+        
+        # Log format de la clé pour diagnostic
+        key_preview = VAPID_PRIVATE_KEY[:20].replace('\n', '\\n')
+        print(f"🔑 VAPID private key: len={len(VAPID_PRIVATE_KEY)}, début='{key_preview}'", flush=True)
+        
+        # Créer l'objet Vapid selon le format de la clé stockée
+        # Vapid.from_string() attend soit raw base64url (32 bytes décodés) soit DER base64url
+        # Si la clé est au format PEM (-----BEGIN...), il faut utiliser from_pem() directement
         if VAPID_PRIVATE_KEY.startswith('-----'):
-            from cryptography.hazmat.primitives.serialization import (
-                load_pem_private_key, Encoding, PrivateFormat, NoEncryption
-            )
-            print("🔑 VAPID: clé au format PEM détectée, conversion en raw base64url...", flush=True)
-            _priv = load_pem_private_key(VAPID_PRIVATE_KEY.encode('utf-8'), password=None)
-            _raw = _priv.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
-            VAPID_PRIVATE_KEY = base64.urlsafe_b64encode(_raw).rstrip(b'=').decode('ascii')
-            print("🔑 VAPID: conversion OK", flush=True)
+            print("🔑 Format PEM détecté → Vapid.from_pem()", flush=True)
+            vapid_obj = Vapid.from_pem(VAPID_PRIVATE_KEY.encode('utf-8'))
+        else:
+            print("🔑 Format base64url/DER détecté → Vapid.from_string()", flush=True)
+            vapid_obj = Vapid.from_string(VAPID_PRIVATE_KEY)
         
         # Email VAPID
         vapid_email = os.environ.get('VAPID_EMAIL', 'mailto:contact@cleanbeat.app')
@@ -3645,16 +3647,13 @@ def send_push_notification(subscription, notification_data):
             "sub": vapid_email
         }
         
-        if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-            print("⚠️ VAPID keys non configurées - notifications push désactivées", flush=True)
-            return False
-        
         payload = json.dumps(notification_data)
         
+        # Passer l'objet Vapid directement (évite toute ambiguïté de format)
         webpush(
             subscription_info=subscription,
             data=payload,
-            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_private_key=vapid_obj,
             vapid_claims=VAPID_CLAIMS
         )
         
