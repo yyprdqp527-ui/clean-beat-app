@@ -3626,6 +3626,19 @@ def send_push_notification(subscription, notification_data):
             VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
             VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
         
+        # Normaliser la clé privée : si elle est au format PEM, la convertir en raw base64url
+        # (pywebpush v2 attend la clé EC brute encodée en base64url, pas le PEM)
+        VAPID_PRIVATE_KEY = VAPID_PRIVATE_KEY.strip()
+        if VAPID_PRIVATE_KEY.startswith('-----'):
+            from cryptography.hazmat.primitives.serialization import (
+                load_pem_private_key, Encoding, PrivateFormat, NoEncryption
+            )
+            print("🔑 VAPID: clé au format PEM détectée, conversion en raw base64url...", flush=True)
+            _priv = load_pem_private_key(VAPID_PRIVATE_KEY.encode('utf-8'), password=None)
+            _raw = _priv.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+            VAPID_PRIVATE_KEY = base64.urlsafe_b64encode(_raw).rstrip(b'=').decode('ascii')
+            print("🔑 VAPID: conversion OK", flush=True)
+        
         # Email VAPID
         vapid_email = os.environ.get('VAPID_EMAIL', 'mailto:contact@cleanbeat.app')
         VAPID_CLAIMS = {
