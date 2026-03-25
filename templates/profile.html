@@ -93,15 +93,15 @@ body {
 }
 
 .header-title h1 {
-    color: #153036;
+    color: white;
     font-size: 26px;
     font-weight: 800;
     margin: 0;
-    text-shadow: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .header-title p {
-    color: #597176;
+    color: rgba(255,255,255,0.85);
     font-size: 14px;
     margin: 4px 0 0 0;
 }
@@ -132,10 +132,15 @@ body {
 
 /* Carte Avatar principale */
 .avatar-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 2px solid rgba(255,255,255,0.5);
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.5) 0%, 
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.3) 100%
+    );
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 2px solid rgba(255,255,255,0.6);
     border-radius: 28px;
     padding: 30px 25px;
     margin-bottom: 20px;
@@ -143,8 +148,8 @@ body {
     position: relative;
     overflow: hidden;
     box-shadow: 
-        0 12px 40px rgba(89,113,118,0.2),
-        inset 0 1px 0 rgba(255,255,255,0.6);
+        0 12px 40px rgba(21, 48, 54, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.6);
 }
 
 /* Reflet brillant */
@@ -348,8 +353,15 @@ body {
 .save-btn {
     width: 100%;
     padding: 18px 24px;
-    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
-    border: none;
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.5) 0%, 
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.3) 100%
+    );
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 2px solid rgba(255,255,255,0.7);
     border-radius: 20px;
     color: white;
     font-size: 17px;
@@ -360,19 +372,30 @@ body {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 8px 25px rgba(253,174,84,0.4);
-    text-shadow: none;
+    box-shadow: 
+        0 10px 40px rgba(21, 48, 54, 0.3),
+        0 0 30px rgba(255, 255, 255, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
     position: relative;
     overflow: hidden;
     margin-top: 10px;
 }
 
-.save-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(253,174,84,0.6);
-}
-.save-btn:active {
-    transform: scale(0.98);
+.save-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.5) 0%,
+        transparent 100%
+    );
+    border-radius: 20px 20px 50% 50%;
+    pointer-events: none;
 }
 
 .save-btn:active {

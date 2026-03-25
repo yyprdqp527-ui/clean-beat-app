@@ -201,14 +201,22 @@ body {
     font-size: 24px;
 }
 
-/* Bouton d'invitation - style gold harmonisé */
+/* Bouton d'invitation glassmorphisme premium - effet verre brillant */
 .share-invite-btn {
     width: 100%;
     padding: 22px 28px;
-    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
-    border: none;
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.5) 0%, 
+        rgba(255, 255, 255, 0.2) 40%,
+        rgba(255, 255, 255, 0.1) 60%,
+        rgba(255, 255, 255, 0.3) 100%
+    );
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 1.5px solid rgba(255,255,255,0.7);
     border-radius: 24px;
-    color: #153036;
+    color: white;
     font-size: 19px;
     font-weight: 800;
     cursor: pointer;
@@ -217,26 +225,63 @@ body {
     align-items: center;
     justify-content: center;
     gap: 14px;
-    box-shadow: 0 8px 30px rgba(253,174,84,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+    box-shadow: 
+        /* Ombre externe principale */
+        0 10px 40px rgba(21, 48, 54, 0.3),
+        /* Lueur externe douce */
+        0 0 30px rgba(255, 255, 255, 0.15),
+        /* Reflet interne haut - effet verre */
+        inset 0 2px 4px rgba(255, 255, 255, 0.8),
+        /* Bord lumineux interne */
+        inset 0 0 20px rgba(255, 255, 255, 0.2),
+        /* Ombre interne bas pour profondeur */
+        inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     position: relative;
     overflow: hidden;
 }
 
-/* Reflet au survol */
+/* Reflet brillant en haut du bouton - effet verre */
 .share-invite-btn::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transform: skewX(-20deg);
-    animation: gold-shine 4s ease-in-out infinite;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.6) 0%,
+        rgba(255, 255, 255, 0.3) 30%,
+        rgba(255, 255, 255, 0.1) 60%,
+        transparent 100%
+    );
+    border-radius: 24px 24px 50% 50%;
     pointer-events: none;
 }
 
-@keyframes gold-shine {
+/* Effet de brillance qui se déplace */
+.share-invite-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.4) 45%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0.4) 55%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    animation: glass-shine 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes glass-shine {
     0%, 100% { left: -100%; opacity: 0; }
     10% { opacity: 1; }
     50% { left: 150%; opacity: 1; }
@@ -245,7 +290,18 @@ body {
 
 .share-invite-btn:active {
     transform: scale(0.97);
-    box-shadow: 0 4px 15px rgba(253,174,84,0.5);
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.6) 0%, 
+        rgba(255, 255, 255, 0.3) 40%,
+        rgba(255, 255, 255, 0.2) 60%,
+        rgba(255, 255, 255, 0.4) 100%
+    );
+    box-shadow: 
+        0 5px 20px rgba(21, 48, 54, 0.35),
+        0 0 20px rgba(255, 255, 255, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
 }
 
 .share-invite-icon {
@@ -417,17 +473,16 @@ body {
 }
 
 .house-type-grid-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border-radius: 20px;
     padding: 20px;
-    border: 2px solid rgba(255,255,255,0.5);
+    border: 3px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 8px 25px rgba(89,113,118,0.15);
 }
 
 .house-type-grid-card::before {
