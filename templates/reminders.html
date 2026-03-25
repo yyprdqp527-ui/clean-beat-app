@@ -505,10 +505,15 @@
                         scheduleRedirect();
                     }
                     // Si plus aucun article non fait → effacer le badge icône
-                    var remaining = document.querySelectorAll('.reminder-card:not(.done)').length;
-                    if (remaining === 0 && 'clearAppBadge' in navigator) {
-                        navigator.clearAppBadge().catch(function(){});
-                    }
+                    // Mettre à jour le badge icône app après chaque action
+                    (function(){ fetch('/api/unread_counts', {cache: 'no-store'})
+                        .then(function(r){ return r.json(); })
+                        .then(function(c){
+                            var total = (c.unread_received||0) + (c.unread_baby||0)
+                                      + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                            if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
+                            else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+                        }).catch(function(){}); })();
                 } else {
                     card.classList.remove('done');
                     check.classList.remove('checked');

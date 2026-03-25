@@ -6409,6 +6409,49 @@ def baby_messages():
                          current_user_name=current_user_name,
                          menu_page=True)
 
+@app.route('/api/mark_type_read', methods=['POST'])
+def api_mark_type_read():
+    """
+    Marque tous les messages d'un type donné comme lus pour l'utilisateur actuel.
+    Utilisé pour décrémenter les pastilles (task_added, baby_tracking, courses_added).
+    """
+    if 'user' not in session:
+        return jsonify({'success': False}), 401
+    data = request.get_json() or {}
+    msg_type = data.get('type', '')
+    if msg_type not in ('task_added', 'baby_tracking', 'courses_added'):
+        return jsonify({'success': False, 'error': 'Type invalide'}), 400
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            conn.close()
+            return jsonify({'success': False}), 400
+        house_id = row[0]
+        c.execute("""
+            SELECT m.id FROM messages m
+            WHERE m.house_id = ? AND m.message_type = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+            )
+        """, (house_id, msg_type, session['user']))
+        rows = c.fetchall()
+        for r in rows:
+            c.execute("""
+                INSERT INTO message_reads (message_id, user_email)
+                VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
+            """, (r[0], session['user']))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'marked': len(rows)})
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/mark_all_messages_read', methods=['POST'])
 def mark_all_messages_read():
     """

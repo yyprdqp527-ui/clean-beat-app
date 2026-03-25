@@ -344,6 +344,19 @@
     </div>
     
     <script>
+    // 🏠 Mise à jour badge icône app dès ouverture de la page bébé
+    (function refreshNativeBadge() {
+        if (!('setAppBadge' in navigator || 'clearAppBadge' in navigator)) return;
+        fetch('/api/unread_counts', {cache: 'no-store'})
+            .then(function(r){ return r.json(); })
+            .then(function(c){
+                var total = (c.unread_received||0) + (c.unread_baby||0)
+                          + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                if (total > 0) navigator.setAppBadge(total).catch(function(){});
+                else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+            }).catch(function(){});
+    })();
+
         function markAsRead(messageId, btn) {
             if (!btn) return;
             
