@@ -470,9 +470,7 @@
     
     /* Messages des autres */
     .message-item:not(.message-me) .message-bubble {
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background: #ffffff;
         border: 2px solid;
         border-color: color-mix(in srgb, var(--message-color) 40%, rgba(255,255,255,0.8));
         border-top-left-radius: 4px;
@@ -482,9 +480,7 @@
     
     /* Mes messages */
     .message-item.message-me .message-bubble {
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background: #ffffff;
         border: 2px solid;
         border-color: color-mix(in srgb, var(--message-color, var(--gold)) 40%, rgba(255,255,255,0.8));
         color: #153036;
@@ -562,19 +558,17 @@
     }
     
     .message-item.message-system .message-bubble {
-        background: var(--message-bg-color, rgba(166,211,220,0.15));
-        border: 3px solid;
-        border-color: color-mix(in srgb, var(--message-color, rgba(166,211,220,1)) 60%, transparent);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        color: white;
+        background: #ffffff;
+        border: 2px solid;
+        border-color: color-mix(in srgb, var(--message-color, rgba(166,211,220,1)) 40%, #e8f4f8);
+        color: #153036;
         text-align: center;
         font-size: 14px;
         border-radius: 18px;
         max-width: 90%;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1),
-                    inset 0 1px 0 rgba(255,255,255,0.5);
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 16px rgba(89,113,118,0.12),
+                    inset 0 1px 0 rgba(255,255,255,0.8);
+        text-shadow: none;
     }
     
     /* 👶 Messages de suivi bébé - Style spécial rose pastel */

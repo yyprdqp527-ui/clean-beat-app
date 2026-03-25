@@ -55,7 +55,7 @@
         padding: 24px 18px 40px 18px;
         background: #fff;
         border-radius: 24px;
-        box-shadow: 0 8px 32px rgba(102,126,234,0.10);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.10);
     }
     /* Barre verticale pour avatars (remplissage bottom->top) */
     .vbar { width:8px; height:56px; border-radius:999px; background: rgba(0,0,0,0.06); overflow:hidden; position: relative; display:inline-block; vertical-align:middle; margin-left:8px; }
@@ -64,9 +64,12 @@
         text-align: center;
         margin-bottom: 30px;
         padding: 20px;
-        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 2px solid rgba(253,174,84,0.3);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
     }
     .gifts-grid {
         display: grid;
@@ -79,15 +82,15 @@
         border-radius: 18px;
         padding: 22px 14px 18px 14px;
         text-align: center;
-        box-shadow: 0 4px 18px rgba(102,126,234,0.08);
+        box-shadow: 0 4px 18px rgba(89,113,118,0.08);
         transition: transform 0.3s, box-shadow 0.3s;
         position: relative;
         overflow: hidden;
-        border: 1.5px solid #e3e8f7;
+        border: 1.5px solid #e8f4f8;
     }
     .gift-card:hover {
         transform: translateY(-6px) scale(1.02);
-        box-shadow: 0 12px 32px rgba(102,126,234,0.18);
+        box-shadow: 0 12px 32px rgba(89,113,118,0.18);
     }
     .gift-card.revealed {
         background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
@@ -122,8 +125,8 @@
         display: inline-block;
     }
     .gift-status.available {
-        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-        color: white;
+        background: linear-gradient(135deg, #A6D3DC 0%, #89b4bb 100%);
+        color: #153036;
     }
     .gift-status.revealed {
         background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
@@ -134,8 +137,8 @@
         color: #999;
     }
     .reveal-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+        color: #153036;
         padding: 12px 25px;
         border: none;
         border-radius: 25px;
@@ -144,13 +147,13 @@
         text-decoration: none;
         display: inline-block;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102,126,234,0.10);
+        box-shadow: 0 4px 15px rgba(253,174,84,0.3);
     }
     .reveal-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102,126,234,0.18);
+        box-shadow: 0 6px 20px rgba(253,174,84,0.5);
         text-decoration: none;
-        color: white;
+        color: #153036;
     }
     .reveal-btn:disabled {
         background: #ccc;
@@ -159,10 +162,12 @@
         box-shadow: none;
     }
     .unlock-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+        color: #153036;
         padding: 20px;
         border-radius: 15px;
+        border: 2px solid rgba(253,174,84,0.3);
+        box-shadow: 0 4px 15px rgba(89,113,118,0.12);
         margin: 20px 0;
         text-align: center;
     }

@@ -42,30 +42,28 @@ body {
     color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
 }
 
-/* Cadre titre - Style glassmorphisme harmonisé avec classement */
+/* Cadre titre - Style identique card-modern de la page stats */
 .gameplay-title-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(253,174,84,0.12) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: #ffffff;
     border-radius: 20px;
     padding: 18px 20px;
     margin: 12px 16px 0;
-    border: 1.5px solid rgba(253,174,84,0.3);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+    border: 1px solid #e8f4f8;
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
     text-align: center;
 }
 .gameplay-title-card h1 {
     font-size: 22px;
     font-weight: 900;
-    color: white;
+    color: #153036;
     margin: 0;
     letter-spacing: 0.3px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    text-shadow: none;
 }
 .gameplay-title-card .gameplay-subtitle {
     font-size: 11px;
     font-weight: 700;
-    color: rgba(255,255,255,0.55);
+    color: #597176;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: 4px;
@@ -73,13 +71,13 @@ body {
 {% if house_name %}
 .gameplay-house-badge {
     display: inline-block;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(253,174,84,0.12);
+    border: 1px solid rgba(253,174,84,0.35);
     border-radius: 20px;
     padding: 4px 14px;
     font-size: 12px; 
     font-weight: 700;
-    color: rgba(255,255,255,0.8);
+    color: #597176;
     margin-top: 8px;
 }
 {% endif %}
@@ -96,7 +94,7 @@ body {
 .gameplay-section-title {
     font-size: 11px;
     font-weight: 800;
-    color: rgba(255,255,255,0.4);
+    color: #597176;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 20px 20px 10px;
