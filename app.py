@@ -5537,18 +5537,17 @@ def reminders():
 
     house_id, player_name = row[0], row[1]
 
-    # Marquer comme lus les messages courses_added UNIQUEMENT si on vient de la pastille
-    if request.args.get('from_badge') == '1':
-        try:
-            c.execute("""
-                SELECT m.id FROM messages m
-                WHERE m.house_id = ? AND m.message_type = 'courses_added'
-                AND NOT EXISTS (SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?)
-            """, (house_id, session['user']))
-            for msg_row in c.fetchall():
-                mark_message_as_read(msg_row[0], session['user'])
-        except Exception as e:
-            _dbg(f"⚠️ Erreur marquage courses_added: {e}")
+    # Marquer comme lus les messages courses_added à chaque visite
+    try:
+        c.execute("""
+            SELECT m.id FROM messages m
+            WHERE m.house_id = ? AND m.message_type = 'courses_added'
+            AND NOT EXISTS (SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?)
+        """, (house_id, session['user']))
+        for msg_row in c.fetchall():
+            mark_message_as_read(msg_row[0], session['user'])
+    except Exception as e:
+        _dbg(f"⚠️ Erreur marquage courses_added: {e}")
 
     # Liste partagée par toute la maison (visible par tous les joueurs)
     c.execute("""
@@ -13198,6 +13197,7 @@ def api_unread_counts():
         children_unread = get_children_unread_counts(house_id)
         unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
         unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
+        unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added')
 
         # 🛒 Articles non cochés dans la liste de courses
         courses_pending_count = 0
@@ -13216,6 +13216,7 @@ def api_unread_counts():
             'children_unread': children_unread,
             'unread_baby': unread_baby,
             'unread_task_added': unread_task_added,
+            'unread_courses_added': unread_courses_added,
             'courses_pending_count': courses_pending_count
         })
         resp.headers['Cache-Control'] = 'no-store'

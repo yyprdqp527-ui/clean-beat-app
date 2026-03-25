@@ -504,6 +504,11 @@
                         _lastWhoN = data.player_name  || '';
                         scheduleRedirect();
                     }
+                    // Si plus aucun article non fait → effacer le badge icône
+                    var remaining = document.querySelectorAll('.reminder-card:not(.done)').length;
+                    if (remaining === 0 && 'clearAppBadge' in navigator) {
+                        navigator.clearAppBadge().catch(function(){});
+                    }
                 } else {
                     card.classList.remove('done');
                     check.classList.remove('checked');
