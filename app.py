@@ -11434,6 +11434,26 @@ def categorie(cat):
             tasks_with_images = [(tasks_with_images[i][0], tasks_with_images[i][1], tasks_points[i]) for i in range(len(tasks_with_images))]
         conn.close()
 
+        # 🔔 Marquer comme lus les messages task_added de cette catégorie à la visite
+        if house_id:
+            try:
+                conn3 = get_db_connection()
+                c3 = conn3.cursor()
+                c3.execute("""
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ? AND m.message_type = 'task_added'
+                    AND (m.related_category = ? OR m.related_category IS NULL)
+                    AND NOT EXISTS (
+                        SELECT 1 FROM message_reads mr
+                        WHERE mr.message_id = m.id AND mr.user_email = ?
+                    )
+                """, (house_id, normalized_cat, session['user']))
+                for row3 in c3.fetchall():
+                    mark_message_as_read(row3[0], session['user'])
+                conn3.close()
+            except Exception:
+                pass
+
     # Fil d'activité bébé pour chambre_bebe
     baby_activities = []
     if normalized_cat == 'chambre_bebe' and 'user' in session:
@@ -11928,7 +11948,26 @@ def custom_task_page(task_id):
                 player_name = player_email.split('@')[0]
 
             conn.commit()
-            
+
+            # Marquer les task_added de cette catégorie comme lus pour l'utilisateur qui valide
+            try:
+                conn_tr = get_db_connection()
+                c_tr = conn_tr.cursor()
+                c_tr.execute("""
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ? AND m.message_type = 'task_added'
+                    AND (m.related_category = ? OR m.related_category IS NULL)
+                    AND NOT EXISTS (
+                        SELECT 1 FROM message_reads mr
+                        WHERE mr.message_id = m.id AND mr.user_email = ?
+                    )
+                """, (user_house_id, category, session['user']))
+                for _r in c_tr.fetchall():
+                    mark_message_as_read(_r[0], session['user'])
+                conn_tr.close()
+            except Exception:
+                pass
+
             # � WEBSOCKET: Notifier APRÈS commit pour garantir cohérence des données
             if SOCKETIO_AVAILABLE and socketio:
                 try:
@@ -12283,7 +12322,26 @@ def task_enhanced(cat, task_id):
                 player_name = player_email.split('@')[0]
 
             conn.commit()
-            
+
+            # Marquer les task_added de cette catégorie comme lus pour l'utilisateur qui valide
+            try:
+                conn_tr2 = get_db_connection()
+                c_tr2 = conn_tr2.cursor()
+                c_tr2.execute("""
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ? AND m.message_type = 'task_added'
+                    AND (m.related_category = ? OR m.related_category IS NULL)
+                    AND NOT EXISTS (
+                        SELECT 1 FROM message_reads mr
+                        WHERE mr.message_id = m.id AND mr.user_email = ?
+                    )
+                """, (house_id, normalized_cat, session['user']))
+                for _r2 in c_tr2.fetchall():
+                    mark_message_as_read(_r2[0], session['user'])
+                conn_tr2.close()
+            except Exception:
+                pass
+
             # � WEBSOCKET: Notifier APRÈS commit pour garantir cohérence des données
             if SOCKETIO_AVAILABLE and socketio:
                 try:
