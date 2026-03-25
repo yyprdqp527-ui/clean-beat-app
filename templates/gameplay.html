@@ -1156,8 +1156,8 @@ function loadMySuspicions() {
                             }
                             
                             photoZone += `
-                            <div style="font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 800; text-align: center; margin-bottom: 10px;">${titleText}</div>
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 15px;">${subtitleText}</div>
+                            <div style="font-size: 14px; color: #e74c3c; font-weight: 800; text-align: center; margin-bottom: 10px;">${titleText}</div>
+                            <div style="font-size: 12px; color: #597176; text-align: center; margin-bottom: 15px;">${subtitleText}</div>
                             <input type="file" id="proofInput_${s.id}" accept="image/*" capture="environment" 
                                    style="display: none;" onchange="uploadProofInline(${s.id})">
                             <label for="proofInput_${s.id}" 
@@ -1165,134 +1165,110 @@ function loadMySuspicions() {
                                    onmouseup="this.style.transform='scale(1)'" 
                                    ontouchstart="this.style.transform='scale(0.95)'" 
                                    ontouchend="this.style.transform='scale(1)'"
-                                   style="display: inline-block; padding: 14px 24px; background: linear-gradient(135deg, rgba(231,76,60,1) 0%, rgba(192,57,43,1) 100%); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(231,76,60,0.4); transition: transform 0.2s;">
+                                   style="display: inline-block; padding: 14px 24px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(231,76,60,0.4); transition: transform 0.2s;">
                                 📸 Cliquez ici pour prendre une photo
                             </label>
-                            <div id="proofStatus_${s.id}" style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 700; text-align: center;"></div>`;
+                            <div id="proofStatus_${s.id}" style="margin-top: 10px; font-size: 12px; color: #597176; font-weight: 700; text-align: center;"></div>`;
                         } else if (s.is_suspecting) {
                             photoZone += `
-                            <div style="font-size: 12px; color: rgba(253,174,84,1); font-weight: 700; text-align: center; margin-bottom: 5px;">🔍 Vous avez émis cette suspicion</div>
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">En attente de la photo de preuve de ${s.suspected_name}</div>`;
+                            <div style="font-size: 12px; color: #FDAE54; font-weight: 700; text-align: center; margin-bottom: 5px;">🔍 Vous avez émis cette suspicion</div>
+                            <div style="font-size: 11px; color: #597176; text-align: center;">En attente de la photo de preuve de ${s.suspected_name}</div>`;
                         } else {
                             photoZone += `
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">En attente de la photo de preuve</div>`;
+                            <div style="font-size: 11px; color: #597176; text-align: center;">En attente de la photo de preuve</div>`;
                         }
                         photoZone += `</div>`;
                         
-                        // Boutons toujours visibles et actifs selon le rôle
+                        // Boutons UNIQUEMENT pour le suspecteur (grisés en attente de photo)
                         if (s.is_suspecting) {
                             buttonsZone = `
                             <div style="display: flex; gap: 8px; margin-top: 10px;">
-                                <button onclick="alert('⏳ En attente de la photo de preuve de ${s.suspected_name}')" 
-                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.4); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                <button disabled
+                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.2); color: #aaa; border: 1px solid rgba(46,204,113,0.3); border-radius: 10px; font-weight: 700; font-size: 13px; cursor: not-allowed;">
                                     ✅ Accepter la preuve
                                 </button>
-                                <button onclick="alert('⏳ En attente de la photo de preuve de ${s.suspected_name}')" 
-                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.4); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                <button disabled
+                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.2); color: #aaa; border: 1px solid rgba(231,76,60,0.3); border-radius: 10px; font-weight: 700; font-size: 13px; cursor: not-allowed;">
                                     ❌ Refuser
                                 </button>
                             </div>
-                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px;">Ces boutons seront actifs après l'upload de la photo</div>`;
-                        } else {
-                            buttonsZone = `
-                            <div style="display: flex; gap: 8px; margin-top: 10px;">
-                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider ou refuser cette preuve')" 
-                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.2); color: rgba(255,255,255,0.6); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                    ✅ Accepter
-                                </button>
-                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider ou refuser cette preuve')" 
-                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.2); color: rgba(255,255,255,0.6); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                    ❌ Refuser
-                                </button>
-                            </div>
-                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px;">Validation par ${s.suspecting_name}</div>`;
+                            <div style="font-size: 10px; color: #597176; text-align: center; margin-top: 4px;">En attente de la photo de ${s.suspected_name}...</div>`;
                         }
+                        // Pas de boutons pour les autres joueurs
                         
                     } else if (s.status === 'awaiting_validation') {
                         statusIcon = '📸';
                         statusText = `<strong>${s.suspecting_name}</strong> soupçonne <strong>${s.suspected_name}</strong> - Preuve envoyée`;
                         
-                        // CADRE PHOTO - Avec image (vérifier que photo_path existe)
+                        // CADRE PHOTO - Avec image
                         if (s.photo_path) {
                             const timestamp = new Date().getTime();
                             photoZone = `
-                            <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                            <div style="margin-top: 12px; padding: 10px; background: #f8fbfc; border: 1px solid #e8f4f8; border-radius: 10px;">
                                 <img src="/${s.photo_path}?t=${timestamp}" style="width: 100%; max-height: 250px; object-fit: contain; border-radius: 10px; cursor: pointer;" onclick="window.open('/${s.photo_path}', '_blank')">
                             </div>`;
                         } else {
                             photoZone = `
-                            <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; min-height: 150px; display: flex; align-items: center; justify-content: center;">
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.5);">⏳ Photo en cours d'upload...</div>
+                            <div style="margin-top: 12px; padding: 10px; background: #f8fbfc; border: 1px solid #e8f4f8; border-radius: 10px; min-height: 150px; display: flex; align-items: center; justify-content: center;">
+                                <div style="font-size: 12px; color: #597176;">⏳ Photo en cours d'upload...</div>
                             </div>`;
                         }
                         
-                        // BOUTONS - Actifs pour le soupçonneux
+                        // BOUTONS - UNIQUEMENT pour le suspecteur
                         if (s.is_suspecting) {
                             buttonsZone = `
                             <div style="display: flex; gap: 8px; margin-top: 10px;">
                                 <button onclick="validateProofInline(${s.id}, ${s.task_points}, '${s.suspected_name}')" 
-                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.9); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                        style="flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(46,204,113,0.3);">
                                     ✅ Accepter la preuve
                                 </button>
                                 <button onclick="rejectProofInline(${s.id}, '${s.suspected_name}')" 
-                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.9); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                        style="flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(231,76,60,0.3);">
                                     ❌ Refuser
                                 </button>
                             </div>
-                            <div style="font-size: 10px; color: rgba(253,174,84,1); font-weight: 700; text-align: center; margin-top: 4px;">🔍 C'est à vous de valider cette preuve</div>`;
-                        } else {
+                            <div style="font-size: 10px; color: #FDAE54; font-weight: 700; text-align: center; margin-top: 4px;">🔍 C'est à vous de valider cette preuve</div>`;
+                        } else if (s.is_suspected) {
+                            // Le soupçonné voit juste que sa preuve est en attente de validation
                             buttonsZone = `
-                            <div style="display: flex; gap: 8px; margin-top: 10px;">
-                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider cette preuve')" 
-                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.3); color: rgba(255,255,255,0.7); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                    ✅ Accepter
-                                </button>
-                                <button onclick="alert('👀 Seul ${s.suspecting_name} peut valider cette preuve')" 
-                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.3); color: rgba(255,255,255,0.7); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                    ❌ Refuser
-                                </button>
-                            </div>
-                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px;">En attente de validation par ${s.suspecting_name}</div>`;
+                            <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(253,174,84,0.1); border: 1px solid rgba(253,174,84,0.3); border-radius: 10px; color: #597176; font-size: 12px; font-weight: 700;">
+                                ⏳ Votre preuve est en cours d'examen par ${s.suspecting_name}
+                            </div>`;
                         }
+                        // Pas de boutons pour les autres joueurs
                         
                     } else if (s.status === 'validated') {
                         statusIcon = '✅';
                         statusText = `<strong>${s.suspected_name}</strong> a prouvé sa bonne foi (+${s.task_points} pts)`;
-                        bgColor = 'rgba(46,204,113,0.12)';
+                        bgColor = 'rgba(46,204,113,0.08)';
                         borderColor = 'rgba(46,204,113,0.3)';
-                        
-                        // Pas de photo affichée pour les suspicions validées
                         photoZone = '';
-                        
                         buttonsZone = `
-                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(46,204,113,0.15); border-radius: 10px; color: rgba(46,204,113,1); font-size: 12px; font-weight: 700;">
-                            ✅ Preuve acceptée - Suspicion levée
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(46,204,113,0.1); border-radius: 10px; color: #27ae60; font-size: 12px; font-weight: 700;">
+                            ✅ Preuve acceptée — Suspicion levée
                         </div>`;
                         
                     } else if (s.status === 'rejected') {
                         statusIcon = '❌';
                         statusText = `<strong>${s.suspected_name}</strong> n'a pas convaincu (-20 pts)`;
-                        bgColor = 'rgba(231,76,60,0.12)';
+                        bgColor = 'rgba(231,76,60,0.08)';
                         borderColor = 'rgba(231,76,60,0.3)';
-                        
-                        // Pas de photo affichée pour les suspicions refusées
                         photoZone = '';
-                        
                         buttonsZone = `
-                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.15); border-radius: 10px; color: rgba(231,76,60,1); font-size: 12px; font-weight: 700;">
-                            ❌ Preuve refusée - Sanction appliquée
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.1); border-radius: 10px; color: #c0392b; font-size: 12px; font-weight: 700;">
+                            ❌ Preuve refusée — Sanction appliquée
                         </div>`;
                     }
                     
                     html += `
-                    <div class="suspicion-card" style="background: ${bgColor}; backdrop-filter: blur(10px); border: 1px solid ${borderColor}; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;">
+                    <div class="suspicion-card" style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
                             <span style="font-size: 20px;">${statusIcon}</span>
                             <div style="flex: 1;">
-                                <div style="font-size: 13px; color: white;">${statusText}</div>
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px;">📋 ${s.task_name}</div>
+                                <div style="font-size: 13px; color: #153036;">${statusText}</div>
+                                <div style="font-size: 11px; color: #597176; margin-top: 2px;">📋 ${s.task_name}</div>
                             </div>
-                            <div style="font-size: 12px; font-weight: 700; color: rgba(253,174,84,1);">${s.task_points} pts</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #FDAE54;">${s.task_points} pts</div>
                         </div>
                         ${photoZone}
                         ${buttonsZone}
