@@ -61,7 +61,7 @@ self.addEventListener('push', function(event) {
 
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    const url = event.notification.data.url || '/';
+    const url = event.notification.data.url || '/menu';
     
     // 🏠 Effacer le badge icône au clic sur la notification
     if ('clearAppBadge' in self) {

@@ -3319,10 +3319,9 @@ def create_system_message(house_id, content, message_type='system', related_task
                 
                 # URL de destination selon le type
                 notification_urls = {
-                    'baby_tracking': '/baby_messages',
-
+                    'baby_tracking': '/menu',
                 }
-                notif_url = notification_urls.get(message_type, '/comments')
+                notif_url = notification_urls.get(message_type, '/menu')
                 
                 # Titre personnalisé pour les messages de la maison
                 if message_type in ['sermon', 'congratulation', 'reminder']:
@@ -5955,7 +5954,7 @@ def _comments_inner():
                             'title': f'💬 Message de {current_user_name}',
                             'body': content[:100] + ('...' if len(content) > 100 else ''),
                             'icon': '/static/images/logo.png',
-                            'url': '/comments',
+                            'url': '/menu',
                             'badge': recipient_unread_count
                         }
                         for sub in subscriptions:
