@@ -112,10 +112,8 @@ body {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.7);
+    background: #ffffff;
+    border: 1px solid #e8f4f8;
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
@@ -125,8 +123,8 @@ body {
 }
 .gw-player:hover {
     transform: translateY(-2px);
-    background: rgba(255,255,255,0.97);
-    box-shadow: 0 8px 28px rgba(89,113,118,0.18);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.18);
 }
 /* Suppression des styles .gw-me car le joueur principal n'apparaît plus */
 
@@ -181,8 +179,8 @@ body {
     font-size: 12px;
     color: #597176;
     line-height: 1.3;
-    background: rgba(255,255,255,0.85);
-    border: 1px solid rgba(21,48,54,0.08);
+    background: #f8fbfc;
+    border: 1px solid #e8f4f8;
     border-radius: 12px;
 }
 .gw-task-item + .gw-task-item { border-top: none; }
@@ -201,9 +199,7 @@ body {
 /* Boutons action tâches - Style glassmorphisme harmonisé */
 .gw-task-suspicion-btn, .gw-task-malus-btn, .gw-task-bonus-btn {
     border: none; 
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(21,48,54,0.06);
     cursor: pointer; 
     font-size: 16px; 
     padding: 8px 10px; 
@@ -216,7 +212,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(21,48,54,0.1);
 }
 .gw-task-suspicion-btn:hover { background: rgba(255,255,255,0.15); }
 .gw-task-malus-btn:hover { background: rgba(231,76,60,0.2); }
@@ -229,9 +225,7 @@ body {
 .proof-photo-frame {
     margin-top: 12px;
     padding: 16px;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #ffffff;
     border-radius: 14px;
     min-height: 130px;
     display: flex;
@@ -253,10 +247,8 @@ body {
 
 /* Carte suspicion - Style glassmorphisme */
 .suspicion-card {
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.7);
+    background: #ffffff;
+    border: 1px solid #e8f4f8;
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
@@ -275,10 +267,8 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.7);
+    background: #ffffff;
+    border: 1px solid #e8f4f8;
     border-radius: 16px;
     color: #153036;
     font-size: 15px;
@@ -302,20 +292,18 @@ body {
 /* ══ Containers de fonctionnalité ══ */
 .feature-container {
     margin: 16px 14px 0;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1.5px solid rgba(255,255,255,0.7);
-    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid #e8f4f8;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(89,113,118,0.14);
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
 }
 .feature-header {
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 18px 18px 16px;
-    border-bottom: 1px solid rgba(21,48,54,0.08);
+    border-bottom: 1px solid #e8f4f8;
 }
 .feature-header-icon {
     font-size: 30px;
@@ -326,17 +314,17 @@ body {
 .feature-title {
     font-size: 16px;
     font-weight: 900;
-    color: var(--adaptive-text) !important;
+    color: #153036 !important;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    text-shadow: {% if bg_theme_light %}none{% else %}0 2px 10px rgba(0,0,0,0.3){% endif %};
+    text-shadow: none;
     margin: 0 0 4px 0;
     line-height: 1.2;
 }
 .feature-subtitle {
     font-size: 12px;
     font-weight: 500;
-    color: var(--adaptive-muted) !important;
+    color: #597176 !important;
     line-height: 1.5;
     margin: 0;
 }
@@ -663,10 +651,10 @@ body {
 }
 .wheel-task-card {
     padding: 14px 16px;
-    background: rgba(255,255,255,0.09);
-    border: 1.5px solid rgba(166,211,220,0.3);
+    background: #ffffff;
+    border: 1px solid #e8f4f8;
     border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
     animation: taskAppear 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 @keyframes taskAppear {
@@ -684,7 +672,7 @@ body {
 .wheel-task-card .wtc-name {
     font-size: 13px;
     font-weight: 700;
-    color: var(--adaptive-text) !important;
+    color: #153036 !important;
     line-height: 1.3;
     margin-bottom: 3px;
 }
@@ -711,8 +699,8 @@ body {
 }
 .wheel-validate-btn:active { transform: scale(0.97); }
 .wheel-validate-btn.done {
-    background: rgba(255,255,255,0.12);
-    color: var(--adaptive-muted) !important;
+    background: rgba(21,48,54,0.07);
+    color: #597176 !important;
     box-shadow: none;
     cursor: default;
     transform: none !important;
@@ -722,7 +710,7 @@ body {
     padding: 10px 14px 4px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--adaptive-muted) !important;
+    color: #597176 !important;
 }
 .wheel-pts-counter strong {
     color: #FDAE54 !important;
