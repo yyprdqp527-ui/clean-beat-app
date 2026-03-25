@@ -95,9 +95,12 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
-// 🔔 NOTIFICATIONS PUSH - Réception
-self.addEventListener('push', (event) => {
-    console.log('📬 Service Worker: Notification push reçue');
+// ⚠️ Les notifications push sont gérées UNIQUEMENT par /sw.js pour éviter les doublons.
+// Ce service worker gère uniquement le cache et le mode offline.
+
+// (push handler supprimé)
+self.addEventListener('push_DISABLED', (event) => {
+    console.log('📬 Service Worker: Notification push reçue (désactivé - voir sw.js)');
     
     let notificationData = {
         title: 'CleanBeat',
@@ -163,65 +166,13 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// 🔔 NOTIFICATIONS - Clic sur la notification
-self.addEventListener('notificationclick', (event) => {
-    console.log('👆 Service Worker: Clic sur notification');
-    
-    event.notification.close();
-    
-    const urlToOpen = event.notification.data?.url || '/comments';
-    
-    // Si l'action est "close", ne rien faire
-    if (event.action === 'close') {
-        return;
-    }
-    
-    event.waitUntil(
-        clients.matchAll({
-            type: 'window',
-            includeUncontrolled: true
-        }).then((clientList) => {
-            // Chercher si une fenêtre CleanBeat est déjà ouverte
-            for (const client of clientList) {
-                if (client.url.includes(urlToOpen) && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            
-            // Sinon, ouvrir une nouvelle fenêtre
-            if (clients.openWindow) {
-                return clients.openWindow(urlToOpen);
-            }
-        })
-    );
-});
+// ⚠️ notificationclick, notificationclose et message supprimés ici.
+// Ils sont gérés uniquement par /sw.js pour éviter les doublons.
 
-// 🔔 NOTIFICATIONS - Fermeture de la notification
-self.addEventListener('notificationclose', (event) => {
-    console.log('❌ Service Worker: Notification fermée');
-    
-    // Optionnel: envoyer une analytics pour tracking
-    // fetch('/api/notification-closed', {
-    //     method: 'POST',
-    //     body: JSON.stringify({
-    //         tag: event.notification.tag,
-    //         timestamp: Date.now()
-    //     })
-    // });
-});
-
-// 📨 Messages depuis le client
+// 📨 Messages depuis le client (SKIP_WAITING uniquement, pas de badges)
 self.addEventListener('message', (event) => {
-    console.log('💬 Service Worker: Message reçu', event.data);
-    
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
-    }
-    
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({
-            version: CACHE_NAME
-        });
     }
 });
 
