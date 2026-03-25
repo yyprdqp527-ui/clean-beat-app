@@ -3431,7 +3431,7 @@ def get_unread_messages_by_sender(user_email, house_id, existing_conn=None):
     """
     return {}
 
-def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None):
+def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=None, include_own=False):
     """
     Retourne le nombre de messages non lus d'un type donné (baby_tracking, task_added, courses_added, etc).
     Exclut les messages envoyés par l'utilisateur lui-même (on ne se notifie pas soi-même).
@@ -3441,15 +3441,25 @@ def get_unread_count_by_type(user_email, house_id, message_type, existing_conn=N
         _own = existing_conn is None
         conn = existing_conn if existing_conn else get_db_connection()
         c = conn.cursor()
-        c.execute("""
-            SELECT COUNT(*) FROM messages m
-            WHERE m.house_id = ?
-            AND m.message_type = ?
-            AND (m.sender_email IS NULL OR m.sender_email != ?)
-            AND NOT EXISTS (
-                SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
-            )
-        """, (house_id, message_type, user_email, user_email))
+        if include_own:
+            c.execute("""
+                SELECT COUNT(*) FROM messages m
+                WHERE m.house_id = ?
+                AND m.message_type = ?
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+            """, (house_id, message_type, user_email))
+        else:
+            c.execute("""
+                SELECT COUNT(*) FROM messages m
+                WHERE m.house_id = ?
+                AND m.message_type = ?
+                AND (m.sender_email IS NULL OR m.sender_email != ?)
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+            """, (house_id, message_type, user_email, user_email))
         count = c.fetchone()[0]
         if _own:
             conn.close()
@@ -9337,7 +9347,7 @@ def menu():
             unread_sent_to = {}    # Non utilisé dans nouvelle logique
             
             # ✅ Messages baby_tracking et task_added : compteur pour badges burger
-            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn)
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=True)
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
@@ -9625,7 +9635,7 @@ def profil_joueur(player_email):
                 daily_report = []
             if is_own_profile:
                 try:
-                    unread_baby_tracking = get_unread_count_by_type(current_user_name, house_id, 'baby_tracking', existing_conn=conn)
+                    unread_baby_tracking = get_unread_count_by_type(current_user_name, house_id, 'baby_tracking', existing_conn=conn, include_own=True)
                 except Exception:
                     pass
         # Récompenses : uniquement si c'est son propre profil
@@ -13254,7 +13264,7 @@ def api_unread_counts():
         unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
         unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
         children_unread = get_children_unread_counts(house_id)
-        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking')
+        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', include_own=True)
         unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
         unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added')
 

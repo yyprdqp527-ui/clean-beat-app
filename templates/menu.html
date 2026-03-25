@@ -4805,7 +4805,7 @@ function sendMalus(reason, points){
                                               {% if room.category not in rooms_with_new_missions %}style="display:none"{% endif %}>
                                             {{ rooms_with_new_missions[room.category] if room.category in rooms_with_new_missions else '' }}
                                         </span>
-                                        <span class="room-baby-dot" id="room-baby-dot" title="Nouveau suivi bébé" {% if not unread_baby_tracking or unread_baby_tracking <= 0 %}style="display:none;"{% endif %}>{{ unread_baby_tracking|default(0) }}</span>
+                                        {% if room.category == 'chambre_bebe' %}<span class="room-baby-dot" id="room-baby-dot" title="Nouveau suivi bébé" {% if not unread_baby_tracking or unread_baby_tracking <= 0 %}style="display:none;"{% endif %}>{{ unread_baby_tracking|default(0) }}</span>{% endif %}
                                     </div>
                                 </a>
                                 {% endfor %}
