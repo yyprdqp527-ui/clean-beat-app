@@ -6260,7 +6260,13 @@ def _comments_inner():
             msg['color'] = color_map.get(msg['sender_email'], '#4A90E2')
             msg['bg_color'] = 'rgba(255, 255, 255, 0.15)'  # Fond blanc transparent
     
-    # Compter les messages non lus
+    # ✅ Auto-marquer comme lus tous les messages REÇUS (private) dès l'ouverture de la page
+    for msg in messages_data:
+        if not msg['is_me'] and not msg['is_read_by_me'] and msg.get('message_type') == 'private':
+            mark_message_as_read(msg['id'], session['user'])
+            msg['is_read_by_me'] = True
+
+    # Compter les messages non lus (devrait être 0 après auto-marquage)
     unread_count = get_unread_message_count(session['user'], house_id)
 
     conn.close()
