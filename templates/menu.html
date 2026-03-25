@@ -3394,9 +3394,7 @@ body { padding-bottom: 84px !important; }
         <a href="{{ url_for('comments') }}" class="cw-tab">
             <span class="cw-tab-icon" style="position:relative;">
                 💬
-                {% if unread_messages_count and unread_messages_count > 0 %}
-                <span class="cw-tab-badge">{{ unread_messages_count if unread_messages_count < 100 else '99+' }}</span>
-                {% endif %}
+                <span class="cw-tab-badge" id="messages-nav-badge" {% if not unread_messages_count or unread_messages_count <= 0 %}style="display:none;"{% endif %}>{{ unread_messages_count if unread_messages_count and unread_messages_count < 100 else '99+' }}</span>
             </span>
             <span class="cw-tab-label">Messagerie</span>
         </a>
@@ -3404,9 +3402,7 @@ body { padding-bottom: 84px !important; }
         <a href="{{ url_for('reminders') }}" class="cw-tab" id="cwTabCourses">
             <span class="cw-tab-icon" style="position:relative;">
                 🛒
-                {% if courses_pending_count|default(0) > 0 %}
-                <span class="cw-tab-badge" id="courses-nav-badge">{{ courses_pending_count if courses_pending_count < 100 else '99+' }}</span>
-                {% endif %}
+                <span class="cw-tab-badge" id="courses-nav-badge" {% if not courses_pending_count or courses_pending_count <= 0 %}style="display:none;"{% endif %}>{{ courses_pending_count|default(0) if courses_pending_count|default(0) < 100 else '99+' }}</span>
             </span>
             <span class="cw-tab-label">Courses</span>
         </a>
@@ -4809,9 +4805,7 @@ function sendMalus(reason, points){
                                               {% if room.category not in rooms_with_new_missions %}style="display:none"{% endif %}>
                                             {{ rooms_with_new_missions[room.category] if room.category in rooms_with_new_missions else '' }}
                                         </span>
-                                        {% if room.category == 'chambre_bebe' and unread_baby_tracking|default(0) > 0 %}
-                                        <span class="room-baby-dot" title="Nouveau suivi bébé">{{ unread_baby_tracking }}</span>
-                                        {% endif %}
+                                        <span class="room-baby-dot" id="room-baby-dot" title="Nouveau suivi bébé" {% if not unread_baby_tracking or unread_baby_tracking <= 0 %}style="display:none;"{% endif %}>{{ unread_baby_tracking|default(0) }}</span>
                                     </div>
                                 </a>
                                 {% endfor %}
@@ -5419,11 +5413,15 @@ function sendMalus(reason, points){
                         if (count > 0) {
                             bottomNavBadge.textContent = count < 100 ? count : '99+';
                             bottomNavBadge.style.display = 'flex';
-                            console.log('Bottom nav badge affiché:', bottomNavBadge.textContent);
                         } else {
                             bottomNavBadge.style.display = 'none';
-                            console.log('❌ Bottom nav badge caché');
                         }
+                    }
+                    // Onglet Messagerie dans la nav du bas
+                    var _msgB = document.getElementById('messages-nav-badge');
+                    if (_msgB) {
+                        if (count > 0) { _msgB.textContent = count < 100 ? count : '99+'; _msgB.style.display = ''; }
+                        else { _msgB.style.display = 'none'; }
                     }
                 }
                         const socket = io({
@@ -6033,11 +6031,25 @@ function refreshAllBadges() {
                             if (counts.children_unread) {
                                 updateChildrenBadges(counts.children_unread);
                             }
-                            // Pills baby / mission / courses
-                            updatePill('pill-mission', 'pill-mission-count', counts.unread_task_added || 0);
-                            updatePill('pill-courses', 'pill-courses-count', counts.unread_courses || 0);
-                            // Badge icône PWA
-                            var totalBadge = (counts.unread_received || 0) + (counts.unread_task_added || 0) + (counts.unread_courses || 0);
+                            // Badge courses nav (🛒 articles à acheter)
+                            var _cNavBadge = document.getElementById('courses-nav-badge');
+                            if (_cNavBadge) {
+                                var _cp = counts.courses_pending_count || 0;
+                                if (_cp > 0) { _cNavBadge.textContent = _cp < 100 ? _cp : '99+'; _cNavBadge.style.display = ''; }
+                                else { _cNavBadge.style.display = 'none'; }
+                            }
+                            // Badge bébé sur la room card
+                            var _babyDot = document.getElementById('room-baby-dot');
+                            if (_babyDot) {
+                                var _br = counts.unread_baby || 0;
+                                if (_br > 0) { _babyDot.textContent = _br; _babyDot.style.display = ''; }
+                                else { _babyDot.style.display = 'none'; }
+                            }
+                            // Total badge icône PWA — tous les types non lus
+                            var totalBadge = (counts.unread_received || 0)
+                                           + (counts.unread_task_added || 0)
+                                           + (counts.unread_courses_added || 0)
+                                           + (counts.unread_baby || 0);
                             updateAppBadge(totalBadge);
                             console.log('Badges rafraîchis:', counts);
                         })
