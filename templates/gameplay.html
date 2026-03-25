@@ -112,21 +112,21 @@ body {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.92);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.7);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
     flex-wrap: wrap;
     transition: all 0.3s ease;
 }
 .gw-player:hover {
     transform: translateY(-2px);
-    background: rgba(255,255,255,0.12);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.97);
+    box-shadow: 0 8px 28px rgba(89,113,118,0.18);
 }
 /* Suppression des styles .gw-me car le joueur principal n'apparaît plus */
 
@@ -139,11 +139,11 @@ body {
     flex-shrink: 0;
     width: 54px;
 }
-.gw-rank { font-size: 13px; line-height: 1; color: rgba(255,255,255,0.6); font-weight: 600; }
+.gw-rank { font-size: 13px; line-height: 1; color: #597176; font-weight: 600; }
 .gw-avatar-label {
     font-size: 10px;
     font-weight: 700;
-    color: rgba(255,255,255,0.7);
+    color: #597176;
     text-align: center;
     max-width: 58px;
     overflow: hidden;
@@ -154,9 +154,9 @@ body {
 .gw-avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 3px solid #A6D3DC; flex-shrink: 0; box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
 .gw-avatar-emoji { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #A6D3DC, #C4E4E9); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
 .gw-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-.gw-name { font-size: 14px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gw-name { font-size: 14px; font-weight: 700; color: #153036; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gw-pts-row { display: flex; align-items: center; gap: 6px; }
-.gw-bar-wrap { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 6px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); }
+.gw-bar-wrap { height: 6px; background: rgba(21,48,54,0.1); border-radius: 4px; margin-top: 6px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.08); }
 .gw-bar-fill { height: 100%; border-radius: 4px; min-width: 5px; background: linear-gradient(90deg,#A6D3DC,#FDAE54); transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); }
 .gw-pts { font-size: 15px; font-weight: 800; color: #FDAE54; white-space: nowrap; }
 .gw-skull { font-size: 14px; }
@@ -179,10 +179,10 @@ body {
     gap: 0;
     padding: 9px 12px 8px;
     font-size: 12px;
-    color: rgba(255,255,255,0.5);
+    color: #597176;
     line-height: 1.3;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(21,48,54,0.08);
     border-radius: 12px;
 }
 .gw-task-item + .gw-task-item { border-top: none; }
@@ -195,9 +195,9 @@ body {
     margin-top: 4px;
 }
 .gw-task-dot { width: 7px; height: 7px; border-radius: 50%; background: linear-gradient(135deg,#A6D3DC,#89b4bb); flex-shrink: 0; }
-.gw-task-name { flex: 1; font-weight: 600; color: rgba(255,255,255,0.9); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gw-task-name { flex: 1; font-weight: 600; color: #153036; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gw-task-pts { font-size: 11px; font-weight: 700; color: #FDAE54; background: rgba(253,174,84,0.15); padding: 2px 7px; border-radius: 8px; flex-shrink: 0; }
-.gw-task-time { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); }
+.gw-task-time { font-size: 11px; font-weight: 600; color: #597176; }
 /* Boutons action tâches - Style glassmorphisme harmonisé */
 .gw-task-suspicion-btn, .gw-task-malus-btn, .gw-task-bonus-btn {
     border: none; 
@@ -229,7 +229,7 @@ body {
 .proof-photo-frame {
     margin-top: 12px;
     padding: 16px;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 14px;
@@ -238,8 +238,8 @@ body {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    border: 2px dashed rgba(255,255,255,0.2);
-    box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+    border: 2px dashed rgba(21,48,54,0.15);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
     gap: 10px;
 }
 .proof-photo-frame img {
@@ -253,14 +253,14 @@ body {
 
 /* Carte suspicion - Style glassmorphisme */
 .suspicion-card {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.92);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.7);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
 }
 
 .gameplay-actions {
@@ -275,17 +275,17 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.92);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.7);
     border-radius: 16px;
-    color: white;
+    color: #153036;
     font-size: 15px;
     font-weight: 700;
     text-align: left;
     letter-spacing: 0.3px;
-    box-shadow: 0 3px 12px rgba(89,113,118,0.08);
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -302,20 +302,20 @@ body {
 /* ══ Containers de fonctionnalité ══ */
 .feature-container {
     margin: 16px 14px 0;
-    background: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1.5px solid rgba(255,255,255,0.14);
+    border: 1.5px solid rgba(255,255,255,0.7);
     border-radius: 22px;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+    box-shadow: 0 4px 20px rgba(89,113,118,0.14);
 }
 .feature-header {
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 18px 18px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.09);
+    border-bottom: 1px solid rgba(21,48,54,0.08);
 }
 .feature-header-icon {
     font-size: 30px;

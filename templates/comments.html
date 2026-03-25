@@ -470,28 +470,28 @@
     
     /* Messages des autres */
     .message-item:not(.message-me) .message-bubble {
-        background: var(--message-bg-color, rgba(255,255,255,0.15));
+        background: rgba(255,255,255,0.92);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 3px solid;
-        border-color: color-mix(in srgb, var(--message-color) 60%, transparent);
+        border: 2px solid;
+        border-color: color-mix(in srgb, var(--message-color) 40%, rgba(255,255,255,0.8));
         border-top-left-radius: 4px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1),
-                    inset 0 1px 0 rgba(255,255,255,0.5);
+        box-shadow: 0 4px 16px rgba(89,113,118,0.12),
+                    inset 0 1px 0 rgba(255,255,255,0.8);
     }
     
     /* Mes messages */
     .message-item.message-me .message-bubble {
-        background: var(--message-bg-color, rgba(255,255,255,0.15));
+        background: rgba(255,255,255,0.92);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 3px solid;
-        border-color: color-mix(in srgb, var(--message-color, var(--gold)) 60%, transparent);
-        color: white;
+        border: 2px solid;
+        border-color: color-mix(in srgb, var(--message-color, var(--gold)) 40%, rgba(255,255,255,0.8));
+        color: #153036;
         border-top-right-radius: 4px;
         margin-left: auto;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1),
-                    inset 0 1px 0 rgba(255,255,255,0.5);
+        box-shadow: 0 4px 16px rgba(89,113,118,0.12),
+                    inset 0 1px 0 rgba(255,255,255,0.8);
     }
     
     /* Messages système */
@@ -621,14 +621,14 @@
     }
     
     .message-item:not(.message-me) .message-sender-name {
-        color: white;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        color: #153036;
+        text-shadow: none;
     }
     
     .message-item.message-me .message-sender-name {
-        color: white;
+        color: #153036;
         text-align: right;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        text-shadow: none;
     }
     
     .message-text {
@@ -638,13 +638,13 @@
     }
     
     .message-item:not(.message-me) .message-text {
-        color: white;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        color: #153036;
+        text-shadow: none;
     }
     
     .message-item.message-me .message-text {
-        color: white;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        color: #153036;
+        text-shadow: none;
     }
     
     .message-timestamp {
@@ -654,11 +654,11 @@
     }
     
     .message-item:not(.message-me) .message-timestamp {
-        color: rgba(255,255,255,0.85);
+        color: rgba(21,48,54,0.5);
     }
     
     .message-item.message-me .message-timestamp {
-        color: rgba(255,255,255,0.85);
+        color: rgba(21,48,54,0.5);
         text-align: right;
     }
     
