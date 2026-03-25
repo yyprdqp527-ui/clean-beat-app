@@ -1307,6 +1307,28 @@ window.cbToast = function(message, type, duration) {
 <!-- 🔔 Script Push Notifications - chargé à la fin pour éviter les erreurs de timing -->
 <script src="{{ url_for('static', filename='push-notifications.js') }}"></script>
 
+
+<!-- Badge icone accueil : recalcule a chaque chargement de page -->
+<script>
+(function() {
+    if (!('setAppBadge' in navigator)) return;
+    fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(counts) {
+            if (!counts) return;
+            var total = (counts.unread_received || 0)
+                      + (counts.unread_task_added || 0)
+                      + (counts.unread_courses_added || 0)
+                      + (counts.unread_baby || 0);
+            if (total > 0) {
+                navigator.setAppBadge(total).catch(function(){});
+            } else {
+                navigator.clearAppBadge().catch(function(){});
+            }
+        })
+        .catch(function() {});
+})();
+</script>
 </body>
 </html>
 
