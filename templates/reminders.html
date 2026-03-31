@@ -450,7 +450,17 @@
                         '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
-                list.insertBefore(card, list.firstChild);
+
+                // Insérer avant le premier article coché (done), ou en fin de liste
+                var firstDone = list.querySelector('.reminder-card.done');
+                if (firstDone) {
+                    list.insertBefore(card, firstDone);
+                } else {
+                    list.appendChild(card);
+                }
+
+                // Mettre à jour le compteur section-title
+                _updateSectionTitle();
 
                 document.getElementById('title').value = '';
             })
@@ -570,6 +580,9 @@
             setTimeout(function(){ card.remove(); }, 300);
         });
         _socket.on('reminder_added', function(data) {
+            // Ignorer si la carte existe déjà (ajouté localement par le fetch)
+            if (document.getElementById('card-' + data.id)) return;
+
             var emptyEl = document.getElementById('emptyState');
             if (emptyEl) emptyEl.remove();
             var list = document.getElementById('remindersList');
@@ -577,13 +590,64 @@
             card.className = 'reminder-card';
             card.id = 'card-' + data.id;
             card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
+
+            // Construire l'avatar HTML comme pour l'ajout local
+            var avatarHtml = '';
+            if (data.creator_avatar_file) {
+                avatarHtml = '<img class="reminder-creator-avatar" src="/static/avatars/' + escHtml(data.creator_avatar_file) + '" alt="' + escHtml(data.creator_name || 'Inconnu') + '">';
+            } else if (data.creator_avatar_url) {
+                avatarHtml = '<img class="reminder-creator-avatar" src="' + escHtml(data.creator_avatar_url) + '" alt="' + escHtml(data.creator_name || 'Inconnu') + '">';
+            } else if (data.creator_avatar) {
+                avatarHtml = '<div class="reminder-creator-emoji">' + escHtml(data.creator_avatar) + '</div>';
+            } else {
+                avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
+            }
+
             card.innerHTML =
                 '<div class="reminder-check" data-id="' + data.id + '">&#10003;</div>' +
-                '<div class="reminder-body"><div class="reminder-title">' + escHtml(data.title) + '</div></div>' +
+                '<div class="reminder-body">' +
+                    '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
+                    '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
+                '</div>' +
                 '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
-            list.insertBefore(card, list.firstChild);
+
+            // Insérer avant le premier article coché (done), ou en fin de liste
+            var firstDone = list.querySelector('.reminder-card.done');
+            if (firstDone) {
+                list.insertBefore(card, firstDone);
+            } else {
+                list.appendChild(card);
+            }
+
+            // Mettre à jour le compteur section-title
+            _updateSectionTitle();
         });
     }
+
+    // ─── Mise à jour du titre de section "À acheter (N)" ──────────────────────
+    function _updateSectionTitle() {
+        var list = document.getElementById('remindersList');
+        var activeCount = list.querySelectorAll('.reminder-card:not(.done)').length;
+        var sectionTitle = list.querySelector('.section-title');
+        if (activeCount > 0) {
+            if (!sectionTitle) {
+                sectionTitle = document.createElement('div');
+                sectionTitle.className = 'section-title';
+                list.insertBefore(sectionTitle, list.firstChild);
+            }
+            sectionTitle.textContent = 'À acheter (' + activeCount + ')';
+        }
+    }
+
+    // ─── Refresh automatique toutes les 30s (rattrapage si WS déconnecté) ───
+    setInterval(function() {
+        // Ne pas recharger si l'utilisateur est en train de saisir
+        var titleInput = document.getElementById('title');
+        if (titleInput && titleInput.value.trim()) return;
+        // Ne pas recharger si une redirection de points est en cours
+        if (_redirectTimer) return;
+        location.reload();
+    }, 30000);
 
     // ─── Utilitaire ───────────────────────────────────────────────────────────
     function escHtml(s) {

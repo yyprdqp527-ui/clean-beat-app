@@ -5666,7 +5666,11 @@ def add_reminder():
         safe_socketio_emit('reminder_added', {
             'id': new_id,
             'title': title,
-            'pending_count': _courses_pending
+            'pending_count': _courses_pending,
+            'creator_name': creator_name,
+            'creator_avatar': creator_avatar,
+            'creator_avatar_file': creator_avatar_file,
+            'creator_avatar_url': creator_avatar_url
         }, namespace='/', room=f'house_{house_id}', broadcast=True)
     except Exception:
         pass
