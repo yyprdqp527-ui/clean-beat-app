@@ -5823,6 +5823,7 @@ function sendMalus(reason, points){
                                     updateChildrenBadges(data.children_unread);
                                 }
                                 
+                                _forceRepaint();
                                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                 return;  // Important : sortir ici
                             }
@@ -5842,6 +5843,7 @@ function sendMalus(reason, points){
                                     updateChildrenBadges(data.children_unread);
                                 }
                                 
+                                _forceRepaint();
                                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');    
                                 return;
                             }
@@ -5922,6 +5924,7 @@ function sendMalus(reason, points){
                                         if (counts.unread_by_sender) {
                                             updateUnreadBySender(counts.unread_by_sender);
                                         }
+                                        _forceRepaint();
                                         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                                     })
                                     .catch(error => {
@@ -5950,6 +5953,7 @@ function sendMalus(reason, points){
                             const childrenUnread = {};
                             childrenUnread[data.child_email] = data.new_count || 0;
                             updateChildrenBadges(childrenUnread);
+                            _forceRepaint();
                         });
 
                         //  Écouter quand un utilisateur a marqué tous ses messages comme lus
@@ -5977,6 +5981,7 @@ function sendMalus(reason, points){
                                     }
                                 });
                             });
+                            _forceRepaint();
                         });
 
                         // Badge courses barre nav bas : article ajouté
@@ -5987,6 +5992,7 @@ function sendMalus(reason, points){
                                 if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; }
                                 else { b.style.display = 'none'; }
                             }
+                            _forceRepaint();
                         });
 
                         // Badge courses barre nav bas : article coché/décoché
@@ -5997,6 +6003,7 @@ function sendMalus(reason, points){
                                 if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; }
                                 else { b.style.display = 'none'; }
                             }
+                            _forceRepaint();
                         });
 
                         // 👶 Suivi bébé — rafraîchir la pastille quand un tracking est ajouté
@@ -6046,6 +6053,17 @@ function sendMalus(reason, points){
                 }
 
                 
+                // Force iOS Safari / WebKit à redessiner les compositing layers
+                // (sans ça, les changements display:none→flex ne sont pas rendus avant un touch)
+                function _forceRepaint() {
+                    requestAnimationFrame(function() {
+                        document.body.style.webkitTransform = 'scale(1)';
+                        requestAnimationFrame(function() {
+                            document.body.style.webkitTransform = '';
+                        });
+                    });
+                }
+
                 window.refreshMissionDots = function() {
                     fetch('/api/rooms_with_missions', { credentials: 'same-origin' })
                         .then(function(r) {
@@ -6067,6 +6085,7 @@ function sendMalus(reason, points){
                                     dot.textContent = '';
                                 }
                             });
+                            _forceRepaint();
                         })
                         .catch(function() {}); // en cas d'erreur, l'état serveur est conservé
                 };
@@ -6123,6 +6142,7 @@ function refreshAllBadges() {
                                            + (counts.unread_baby || 0);
                             updateAppBadge(totalBadge);
                             console.log('Badges rafraîchis:', counts);
+                            _forceRepaint();
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
                 }
