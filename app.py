@@ -10382,6 +10382,32 @@ def api_house_suspicions():
 
         house_id = row[0]
 
+        # ── Expiration automatique : suspicions pending depuis > 24h → refus par défaut ──
+        try:
+            c.execute("""
+                SELECT s.id, s.suspected_player_email, s.task_name, s.task_points, s.house_id
+                FROM suspicions s
+                WHERE s.house_id = ? AND s.status = 'pending'
+                AND s.created_at <= datetime('now', '-24 hours')
+            """, (house_id,))
+            expired_rows = c.fetchall()
+            for exp in expired_rows:
+                exp_id, exp_suspected, exp_task, exp_pts, exp_house = exp
+                # Le soupçonné perd 20 points (pas de preuve = culpabilité)
+                c.execute("""
+                    INSERT INTO completed_tasks (
+                        user_email, task_name, category, points, house_id, completed_at
+                    ) VALUES (?, ?, 'suspicion_penalty', -20, ?, CURRENT_TIMESTAMP)
+                """, (exp_suspected, f'⏰ Pas de preuve à temps : {exp_task}', exp_house))
+                c.execute("""
+                    UPDATE suspicions SET status='expired', resolved_at=CURRENT_TIMESTAMP
+                    WHERE id=?
+                """, (exp_id,))
+            if expired_rows:
+                conn.commit()
+        except Exception as e:
+            _dbg(f"⚠️ Erreur expiration suspicions: {e}")
+
         # Toutes les suspicions actives ou récentes de la maison
         c.execute("""
             SELECT s.id, 
@@ -10400,6 +10426,7 @@ def api_house_suspicions():
                     WHEN 'awaiting_validation' THEN 2
                     WHEN 'validated' THEN 3
                     WHEN 'rejected' THEN 4
+                    WHEN 'expired' THEN 5
                 END,
                 s.created_at DESC
             LIMIT 50
@@ -10941,7 +10968,12 @@ def api_emit_suspicion():
         suspicion_id = c.lastrowid
         conn.commit()
 
-        # TODO: Créer une notification pour le joueur soupçonné
+        # Notifier le joueur soupçonné via message système
+        try:
+            msg = f"🔍 {suspecting_name} te soupçonne d'entourloupe sur « {task_name} » ! Envoie une photo preuve dans les 24h sinon tu perds 20 pts."
+            create_system_message(house_id, msg, 'suspicion_alert', sender_email=suspecting_email)
+        except Exception:
+            pass
         
         return jsonify({
             'success': True,
@@ -11089,8 +11121,15 @@ def api_validate_proof():
         
         suspecting_email, suspected_email, task_name, task_points, status, house_id = suspicion
         
-        if suspecting_email != session['user']:
-            return jsonify({'success': False, 'error': 'Seul le soupçonneux peut valider la preuve'}), 403
+        # Tout joueur de la maison SAUF le soupçonné peut valider/rejeter
+        voter_email = session['user']
+        if voter_email == suspected_email:
+            return jsonify({'success': False, 'error': 'Le soupçonné ne peut pas valider sa propre preuve'}), 403
+        # Vérifier que le votant est dans la même maison
+        c.execute("SELECT house_id FROM users WHERE email=?", (voter_email,))
+        voter_row = c.fetchone()
+        if not voter_row or voter_row[0] != house_id:
+            return jsonify({'success': False, 'error': 'Vous n\'êtes pas dans cette maison'}), 403
         
         if status != 'awaiting_validation':
             return jsonify({'success': False, 'error': 'Cette suspicion n\'attend pas de validation'}), 400

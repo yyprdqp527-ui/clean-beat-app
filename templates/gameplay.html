@@ -1223,8 +1223,17 @@ function loadMySuspicions() {
                             </div>`;
                         }
                         
-                        // BOUTONS - UNIQUEMENT pour le suspecteur
-                        if (s.is_suspecting) {
+                        // BOUTONS - Tout joueur de la maison SAUF le soupçonné peut voter
+                        if (s.is_suspected) {
+                            // Le soupçonné voit juste que sa preuve est en attente de validation
+                            buttonsZone = `
+                            <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(253,174,84,0.1); border: 1px solid rgba(253,174,84,0.3); border-radius: 10px; color: #597176; font-size: 12px; font-weight: 700;">
+                                ⏳ Votre preuve est en cours d'examen
+                            </div>`;
+                        } else {
+                            let voterLabel = s.is_suspecting
+                                ? '🔍 C\'est à vous de valider cette preuve'
+                                : '⚖️ Vous pouvez aussi donner votre avis';
                             buttonsZone = `
                             <div style="display: flex; gap: 8px; margin-top: 10px;">
                                 <button onclick="validateProofInline(${s.id}, ${s.task_points}, '${s.suspected_name}')" 
@@ -1236,15 +1245,8 @@ function loadMySuspicions() {
                                     ❌ Refuser
                                 </button>
                             </div>
-                            <div style="font-size: 10px; color: #FDAE54; font-weight: 700; text-align: center; margin-top: 4px;">🔍 C'est à vous de valider cette preuve</div>`;
-                        } else if (s.is_suspected) {
-                            // Le soupçonné voit juste que sa preuve est en attente de validation
-                            buttonsZone = `
-                            <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(253,174,84,0.1); border: 1px solid rgba(253,174,84,0.3); border-radius: 10px; color: #597176; font-size: 12px; font-weight: 700;">
-                                ⏳ Votre preuve est en cours d'examen par ${s.suspecting_name}
-                            </div>`;
+                            <div style="font-size: 10px; color: #FDAE54; font-weight: 700; text-align: center; margin-top: 4px;">${voterLabel}</div>`;
                         }
-                        // Pas de boutons pour les autres joueurs
                         
                     } else if (s.status === 'validated') {
                         statusIcon = '✅';
@@ -1266,6 +1268,16 @@ function loadMySuspicions() {
                         buttonsZone = `
                         <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.1); border-radius: 10px; color: #c0392b; font-size: 12px; font-weight: 700;">
                             ❌ Preuve refusée — Sanction appliquée
+                        </div>`;
+                    } else if (s.status === 'expired') {
+                        statusIcon = '⏰';
+                        statusText = `<strong>${s.suspected_name}</strong> n'a pas envoyé de preuve à temps (-20 pts)`;
+                        bgColor = 'rgba(231,76,60,0.08)';
+                        borderColor = 'rgba(231,76,60,0.3)';
+                        photoZone = '';
+                        buttonsZone = `
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.1); border-radius: 10px; color: #c0392b; font-size: 12px; font-weight: 700;">
+                            ⏰ Délai expiré — Refus par défaut
                         </div>`;
                     }
                     
@@ -1355,6 +1367,32 @@ function showPointsAnimation(points) {
     }, 2000);
 }
 
+// ====== COMPRESSION IMAGE CÔTÉ CLIENT ======
+function compressImage(file, maxSize, quality) {
+    return new Promise(function(resolve) {
+        // Si ce n'est pas une image, renvoyer tel quel
+        if (!file.type.startsWith('image/')) { resolve(file); return; }
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function() {
+            URL.revokeObjectURL(url);
+            var w = img.width, h = img.height;
+            if (w > maxSize || h > maxSize) {
+                if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+                else { w = Math.round(w * maxSize / h); h = maxSize; }
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            canvas.toBlob(function(blob) {
+                resolve(blob || file);
+            }, 'image/jpeg', quality);
+        };
+        img.onerror = function() { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+    });
+}
+
 // ====== UPLOAD PREUVE INLINE ======
 function uploadProofInline(suspicionId) {
     const fileInput = document.getElementById(`proofInput_${suspicionId}`);
@@ -1380,31 +1418,31 @@ function uploadProofInline(suspicionId) {
     };
     reader.readAsDataURL(file);
     
-    // 2. UPLOADER VERS LE SERVEUR
-    statusDiv.textContent = '📤 Envoi en cours...';
+    // 2. COMPRESSER L'IMAGE CÔTÉ CLIENT (max 1200px, JPEG 80%)
+    statusDiv.textContent = '🔄 Compression en cours...';
     statusDiv.style.color = 'rgba(253,174,84,1)';
     
-    const formData = new FormData();
-    formData.append('suspicion_id', suspicionId);
-    formData.append('photo', file);
-    
-    fetch('/api/upload_proof', {
-        method: 'POST',
-        body: formData
+    compressImage(file, 1200, 0.8).then(function(compressedBlob) {
+        statusDiv.textContent = '📤 Envoi en cours...';
+        
+        const formData = new FormData();
+        formData.append('suspicion_id', suspicionId);
+        formData.append('photo', compressedBlob, file.name || 'proof.jpg');
+        
+        return fetch('/api/upload_proof', {
+            method: 'POST',
+            body: formData
+        });
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
             statusDiv.textContent = '✅ Preuve envoyée ! Rechargement...';
             statusDiv.style.color = 'rgba(46,204,113,1)';
-            // Recharger la page complète après 2 secondes pour voir la photo et les boutons
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
+            setTimeout(() => { loadMySuspicions(); }, 1500);
         } else {
             statusDiv.textContent = '❌ Erreur: ' + (data.error || 'Erreur inconnue');
             statusDiv.style.color = 'rgba(231,76,60,1)';
-            // Réafficher l'icône 📷 en cas d'erreur
             if (photoIcon) photoIcon.style.display = 'block';
             if (photoPreview) photoPreview.style.display = 'none';
         }
@@ -1413,7 +1451,6 @@ function uploadProofInline(suspicionId) {
         console.error('Erreur upload:', err);
         statusDiv.textContent = '❌ Erreur lors de l\'envoi';
         statusDiv.style.color = 'rgba(231,76,60,1)';
-        // Réafficher l'icône 📷 en cas d'erreur
         if (photoIcon) photoIcon.style.display = 'block';
         if (photoPreview) photoPreview.style.display = 'none';
     });
