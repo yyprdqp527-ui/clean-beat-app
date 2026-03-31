@@ -4317,14 +4317,27 @@ function sendMalus(reason, points){
                     // Rafraîchir via API toutes les 5 secondes (filet de sécurité si WebSocket déconnecté)
                     const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 5000);
                     
-                    // Rafraîchir les badges toutes les 5 secondes aussi
-                    const badgeUpdateInterval = setInterval(function() {
-                        if (typeof refreshAllBadges === 'function') refreshAllBadges();
-                    }, 5000);
+                
                     
                     // Première mise à jour après 500ms
                     setTimeout(updatePlayersPointsMenu, 500);
                     setTimeout(function() { if (typeof refreshAllBadges === 'function') refreshAllBadges(); }, 500);
+                    // Première mise à jour après 500ms
+                    setTimeout(updatePlayersPointsMenu, 500);
+                    setTimeout(function() { if (typeof refreshAllBadges === 'function') refreshAllBadges(); }, 500);
+
+                    // Mise à jour des badges au retour sur l'app (PWA)
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') {
+                            if (typeof refreshAllBadges === 'function') refreshAllBadges();
+                        }
+                    });
+
+                    window.addEventListener('pageshow', (event) => {
+                        if (event.persisted) {
+                            if (typeof refreshAllBadges === 'function') refreshAllBadges();
+                        }
+                    });
                     
                     // Applique la largeur à la/aux barre(s) de santé
                     document.querySelectorAll('.health-fill').forEach(function(fill){
@@ -5424,6 +5437,25 @@ function sendMalus(reason, points){
                         else { _msgB.style.display = 'none'; }
                     }
                 }
+                // Fonctions utilitaires badges (pastilles avatars)
+                function updateUnreadBySender(senderMap) {
+                    if (!senderMap || typeof senderMap !== 'object') return;
+                    Object.keys(senderMap).forEach(function(email) {
+                        var els = document.querySelectorAll('[data-sender-email="' + email + '"] .sender-badge, .msg-badge-' + email.replace('@','').replace('.',''));
+                        var cnt = senderMap[email] || 0;
+                        els.forEach(function(el) { if (cnt > 0) { el.textContent = cnt; el.style.display = 'flex'; } else { el.style.display = 'none'; } });
+                    });
+                }
+                function updateChildrenBadges(childMap) {
+                    if (!childMap || typeof childMap !== 'object') return;
+                    Object.keys(childMap).forEach(function(email) {
+                        var cnt = childMap[email] || 0;
+                        var badges = document.querySelectorAll('.avatar-notification-badge[data-recipient="' + email + '"]');
+                        badges.forEach(function(b) { if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; } else { b.style.display = 'none'; } });
+                    });
+                }
+                // Protection: si socket.io n'est pas chargé, les badges restent fonctionnels
+                try {
                         const socket = io({
                             transports: ['websocket', 'polling'],
                             upgrade: true,
@@ -5486,7 +5518,7 @@ function sendMalus(reason, points){
                         
                         if (!userEmail) {
                             console.log('⚠️ WebSocket: Aucun utilisateur connecté');
-                            return;
+                            throw new Error('NO_USER');
                         }
                         
                         socket.on('connect', function() {
@@ -5903,23 +5935,14 @@ function sendMalus(reason, points){
                             if (data.action === 'system_message') {
                                 console.log('Message système reçu (', data.message_type, ') → refreshAllBadges');
                                 refreshAllBadges();
-                            refreshMissionDots();
-                                return;
-                            }
-
-                            //  Si c'est un message système (baby/mission/courses) → rafraîchir les pills
-                            if (data.action === 'system_message') {
-                                console.log('Message système reçu (', data.message_type, ') → refreshAllBadges');
-                                refreshAllBadges();
+                                refreshMissionDots();
                                 return;
                             }
 
                             // ❌ Sinon, ignorer (autres actions ou autres utilisateurs)
                             console.log('⏭️ Action ou utilisateur non concerné → Ignoré');
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-                        
-                            // Rafraîchir les pastilles de mission si une nouvelle tâche a été ajoutée
-                            if (data.message_type === 'task_added') { refreshMissionDots(); }});
+                        });
                         
                         //  Pastille enfant mise à jour quand un adulte marque un message lu
                         socket.on('badge_update', function(data) {
@@ -5955,9 +5978,44 @@ function sendMalus(reason, points){
                                 });
                             });
                         });
+
+                        // Badge courses barre nav bas : article ajouté
+                        socket.on('reminder_added', function(data) {
+                            var cnt = data.pending_count || 0;
+                            var b = document.getElementById('courses-nav-badge');
+                            if (b) {
+                                if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; }
+                                else { b.style.display = 'none'; }
+                            }
+                        });
+
+                        // Badge courses barre nav bas : article coché/décoché
+                        socket.on('reminder_toggle', function(data) {
+                            var cnt = data.pending_count || 0;
+                            var b = document.getElementById('courses-nav-badge');
+                            if (b) {
+                                if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; }
+                                else { b.style.display = 'none'; }
+                            }
+                        });
+
+                        // 👶 Suivi bébé — rafraîchir la pastille quand un tracking est ajouté
+                        socket.on('baby_badge_update', function(data) {
+                            console.log('👶 WebSocket: baby_badge_update reçu', data);
+                            refreshAllBadges();
+                        });
+
+                        // 🆕 Nouvelle mission ajoutée — rafraîchir les pastilles oranges
+                        socket.on('task_added_notification', function(data) {
+                            console.log('🆕 WebSocket: task_added_notification reçu', data);
+                            refreshMissionDots();
+                            refreshAllBadges();
+                        });
                         
                         console.log('WebSocket: Système de synchronisation initialisé');
-                    } catch (error) {
+                } catch(socketError) {
+                    console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
+                }
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
                 // (cache navigateur, bfcache, retour arrière, Service Worker, etc.)
@@ -6075,6 +6133,7 @@ function refreshAllBadges() {
                 window.addEventListener('pageshow', function(event) {
                     console.log('🔄 pageshow event, persisted=' + event.persisted);
                     refreshAllBadges();
+                    refreshMissionDots();
                     if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                 });
                 
@@ -6083,6 +6142,7 @@ function refreshAllBadges() {
                     if (document.visibilityState === 'visible') {
                         console.log('🔄 Page redevenue visible');
                         refreshAllBadges();
+                        refreshMissionDots();
                         if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                     }
                 });
@@ -6095,6 +6155,14 @@ function refreshAllBadges() {
                         }
                     });
                 }
+
+                // 🔄 Polling de secours — rattrape les événements WebSocket manqués (Safari, onglet en veille, etc.)
+                var _badgePollInterval = setInterval(function() {
+                    if (document.visibilityState === 'visible') {
+                        refreshAllBadges();
+                        refreshMissionDots();
+                    }
+                }, 30000);
             </script>
 
        

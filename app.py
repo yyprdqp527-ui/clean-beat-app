@@ -9435,12 +9435,16 @@ def menu():
                         AND NOT EXISTS (
                             SELECT 1 FROM completed_tasks ctd
                             WHERE ctd.house_id = ct.house_id
-                            AND ctd.category = ct.category
+                            AND LOWER(REPLACE(ctd.category, ' ', '_')) = LOWER(REPLACE(ct.category, ' ', '_'))
                             AND ctd.completed_at >= ct.created_at
                         )
                         GROUP BY ct.category
                     """, (house_id,))
-                    rooms_with_new_missions = {row[0]: row[1] for row in c.fetchall()}
+                    _raw_missions = {row[0]: row[1] for row in c.fetchall()}
+                    # Normaliser les clés pour correspondre aux data-category du template
+                    for _cat, _cnt in _raw_missions.items():
+                        _ncat = normalize_category(_cat)
+                        rooms_with_new_missions[_ncat] = rooms_with_new_missions.get(_ncat, 0) + _cnt
                 except Exception as _e_nm:
                     _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
 
@@ -13370,12 +13374,16 @@ def api_rooms_with_missions():
             AND NOT EXISTS (
                 SELECT 1 FROM completed_tasks ctd
                 WHERE ctd.house_id = ct.house_id
-                AND ctd.category = ct.category
+                AND LOWER(REPLACE(ctd.category, ' ', '_')) = LOWER(REPLACE(ct.category, ' ', '_'))
                 AND ctd.completed_at >= ct.created_at
             )
             GROUP BY ct.category
         """, (house_id,))
-        rooms = {row[0]: row[1] for row in c.fetchall()}
+        # Normaliser les clés pour correspondre aux data-category du template
+        rooms = {}
+        for row in c.fetchall():
+            ncat = normalize_category(row[0])
+            rooms[ncat] = rooms.get(ncat, 0) + row[1]
         conn.close()
         return jsonify({'rooms': rooms})
     except Exception as e:
