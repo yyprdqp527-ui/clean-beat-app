@@ -5960,16 +5960,24 @@ def _comments_inner():
                 try:
                     subscriptions = get_user_push_subscriptions(recipient_email)
                     if subscriptions:
+                        # Calculer le badge total pour l'icône PWA (tous types confondus)
+                        _total_badge = recipient_unread_count
+                        try:
+                            _total_badge += get_unread_count_by_type(recipient_email, house_id, 'baby_tracking')
+                            _total_badge += get_unread_count_by_type(recipient_email, house_id, 'task_added')
+                            _total_badge += get_unread_count_by_type(recipient_email, house_id, 'courses_added')
+                        except Exception:
+                            pass
                         notification_data = {
                             'title': f'💬 Message de {current_user_name}',
                             'body': content[:100] + ('...' if len(content) > 100 else ''),
                             'icon': '/static/images/logo.png',
                             'url': '/menu',
-                            'badge': recipient_unread_count
+                            'badge': max(1, _total_badge)
                         }
                         for sub in subscriptions:
                             send_push_notification(sub, notification_data)
-                        _dbg(f"🔔 Notification push envoyée à {recipient_email}")
+                        _dbg(f"🔔 Notification push envoyée à {recipient_email} (badge={_total_badge})")
                 except Exception as e:
                     _dbg(f"⚠️ Erreur envoi notification push: {e}")
                 

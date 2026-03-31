@@ -63,15 +63,21 @@ self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     const url = event.notification.data.url || '/menu';
     
-    // 🏠 Effacer le badge icône au clic sur la notification
-    if ('clearAppBadge' in self) {
-        self.clearAppBadge().catch(function(){});
-    }
-    
     event.waitUntil(
         clients.matchAll({ type: 'window' }).then(function(clientList) {
+            // Demander à toutes les fenêtres de recalculer le badge (via /api/unread_counts)
+            clientList.forEach(function(client) {
+                client.postMessage({ type: 'REFRESH_BADGES' });
+            });
             for (const client of clientList) {
-                if (client.url === url && 'focus' in client) {
+                if (client.url.includes('/menu') && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            // Si aucune fenêtre menu ouverte, chercher n'importe quelle fenêtre
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    client.navigate(url);
                     return client.focus();
                 }
             }

@@ -5396,15 +5396,6 @@ function sendMalus(reason, points){
                 function updateUnreadBadge(count) {
                     console.log('updateUnreadBadge appelé avec count:', count);
                     
-                    //  Badge icône écran d'accueil (PWA Badging API — iOS 16.4+, Android Chrome)
-                    if ('setAppBadge' in navigator) {
-                        if (count > 0) {
-                            navigator.setAppBadge(count).catch(function(){});
-                        } else {
-                            navigator.clearAppBadge().catch(function(){});
-                        }
-                    }
-                    
                     //  Mettre à jour le badge dans le menu burger (total des messages)
                     const burgerBadges = document.querySelectorAll('.burger-nav-icon .notification-badge');
                     console.log('Badges burger trouvés:', burgerBadges.length);
@@ -5812,10 +5803,10 @@ function sendMalus(reason, points){
                                 console.log('Lecture du son de réception...');
                                 playMessageSound();
                                 
-                                // Badge
+                                // Badge messages + badge PWA global
                                 console.log('Mise à jour de mon badge...');
                                 updateUnreadBadge(data.recipient_unread_count);
-                                updateAppBadge(data.recipient_unread_count);
+                                refreshAllBadges(); // recalcule le total PWA (messages+baby+missions+courses)
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
