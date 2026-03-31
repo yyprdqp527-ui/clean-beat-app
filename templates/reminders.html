@@ -288,11 +288,11 @@
     <!-- LISTE -->
     <div id="remindersList">
 
-        {% if active_reminders %}
-        <div class="section-title">À acheter ({{ active_reminders|length }})</div>
-        {% for r in active_reminders %}
-        <div class="reminder-card" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
-            <div class="reminder-check" data-id="{{ r.id }}">&#10003;</div>
+        {% if reminders %}
+        <div class="section-title">À acheter ({{ active_count }})</div>
+        {% for r in reminders %}
+        <div class="reminder-card{{ ' done' if r.is_done else '' }}" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
+            <div class="reminder-check{{ ' checked' if r.is_done else '' }}" data-id="{{ r.id }}">{{ '✓' if r.is_done else '&#10003;' }}</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
                 <div class="reminder-creator">
@@ -311,33 +311,7 @@
             <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
         </div>
         {% endfor %}
-        {% endif %}
-
-        {% if done_reminders %}
-        {% for r in done_reminders %}
-        <div class="reminder-card done" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
-            <div class="reminder-check checked" data-id="{{ r.id }}">✓</div>
-            <div class="reminder-body">
-                <div class="reminder-title">{{ r.title }}</div>
-                <div class="reminder-creator">
-                    {% if r.creator_avatar_file %}
-                        <img class="reminder-creator-avatar" src="{{ url_for('static', filename='avatars/' + r.creator_avatar_file) }}" alt="{{ r.creator_name }}">
-                    {% elif r.creator_avatar_url %}
-                        <img class="reminder-creator-avatar" src="{{ r.creator_avatar_url }}" alt="{{ r.creator_name }}">
-                    {% elif r.creator_avatar %}
-                        <div class="reminder-creator-emoji">{{ r.creator_avatar }}</div>
-                    {% else %}
-                        <div class="reminder-creator-emoji">👤</div>
-                    {% endif %}
-                    <span class="reminder-creator-name">{{ r.creator_name }}</span>
-                </div>
-            </div>
-            <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        {% if not reminders %}
+        {% else %}
         <div class="empty-state" id="emptyState">
             <span class="empty-icon">🛒</span>
             La liste est vide !<br>Ajoute ton premier article.
@@ -509,8 +483,6 @@
                         _pendingPts += data.points_earned;
                         _showPtsToast();
                     }
-                    // Déplacer la carte dans la zone cochée (en bas)
-                    _moveCardToSection(card, true);
                     // Si plus aucun article non fait → effacer le badge icône
                     // Mettre à jour le badge icône app après chaque action
                     (function(){ fetch('/api/unread_counts', {cache: 'no-store'})
@@ -525,9 +497,8 @@
                     card.classList.remove('done');
                     check.classList.remove('checked');
                     check.innerHTML = '&#10003;';
-                    // Remonter la carte dans la zone active
-                    _moveCardToSection(card, false);
                 }
+                _updateSectionTitle();
             });
     };
 
@@ -569,7 +540,7 @@
                 check.classList.remove('checked');
                 check.innerHTML = '&#10003;';
             }
-            _moveCardToSection(card, data.is_done);
+            _updateSectionTitle();
         });
         _socket.on('reminder_deleted', function(data) {
             var card = document.getElementById('card-' + data.id);
@@ -637,24 +608,6 @@
             }
             sectionTitle.textContent = 'À acheter (' + activeCount + ')';
         }
-    }
-
-    // ─── Déplacer une carte entre zone active et zone cochée ─────────────────
-    function _moveCardToSection(card, toDone) {
-        var list = document.getElementById('remindersList');
-        if (toDone) {
-            // Mettre la carte après toutes les cartes actives (en bas)
-            list.appendChild(card);
-        } else {
-            // Remonter la carte avant la première carte cochée
-            var firstDone = list.querySelector('.reminder-card.done');
-            if (firstDone) {
-                list.insertBefore(card, firstDone);
-            } else {
-                list.appendChild(card);
-            }
-        }
-        _updateSectionTitle();
     }
 
     // ─── Utilitaire ───────────────────────────────────────────────────────────

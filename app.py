@@ -5567,7 +5567,7 @@ def reminders():
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
-        ORDER BY pr.is_done ASC, CASE WHEN pr.remind_at IS NULL THEN 1 ELSE 0 END, pr.remind_at ASC, pr.created_at ASC
+        ORDER BY pr.created_at ASC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
@@ -5588,13 +5588,11 @@ def reminders():
         for r in reminders_rows
     ]
 
-    active_reminders = [r for r in reminders_list if not r['is_done']]
-    done_reminders   = [r for r in reminders_list if r['is_done']]
+    active_count = sum(1 for r in reminders_list if not r['is_done'])
 
     return render_template('reminders.html',
                            reminders=reminders_list,
-                           active_reminders=active_reminders,
-                           done_reminders=done_reminders,
+                           active_count=active_count,
                            hide_header=True)
 
 
