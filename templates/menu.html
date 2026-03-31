@@ -6047,10 +6047,13 @@ function sendMalus(reason, points){
 
                 
                 window.refreshMissionDots = function() {
-                    fetch('/api/rooms_with_missions')
-                        .then(function(r) { return r.json(); })
+                    fetch('/api/rooms_with_missions', { credentials: 'same-origin' })
+                        .then(function(r) {
+                            if (!r.ok) return null;
+                            return r.json();
+                        })
                         .then(function(data) {
-                            if (!data.rooms) return;
+                            if (!data || !data.rooms) return;
                             // Mettre à jour chaque pastille individuellement
                             document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
                                 var vis = dot.closest('.room-card-visual');
@@ -6069,9 +6072,19 @@ function sendMalus(reason, points){
                 };
 function refreshAllBadges() {
                     console.log('🔄 Rafraîchissement des badges...');
-                    fetch('/api/unread_counts', { cache: 'no-store' })
-                        .then(response => response.json())
+                    fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+                        .then(response => {
+                            if (!response.ok) {
+                                console.warn('⚠️ API unread_counts HTTP', response.status, '— badges Jinja conservés');
+                                return null;
+                            }
+                            return response.json();
+                        })
                         .then(counts => {
+                            if (!counts || counts.error) {
+                                console.warn('⚠️ API unread_counts erreur:', counts);
+                                return;
+                            }
                             console.log('Compteurs reçus de l\'API:', counts);
                             if (counts.unread_received !== undefined) {
                                 console.log('Mise à jour badge avec count:', counts.unread_received);
