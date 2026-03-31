@@ -10384,16 +10384,17 @@ def api_house_suspicions():
 
         # ── Expiration automatique : suspicions pending depuis > 24h → refus par défaut ──
         try:
+            from datetime import timedelta
+            cutoff_24h = (datetime.utcnow() - timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
             c.execute("""
                 SELECT s.id, s.suspected_player_email, s.task_name, s.task_points, s.house_id
                 FROM suspicions s
                 WHERE s.house_id = ? AND s.status = 'pending'
-                AND s.created_at <= datetime('now', '-24 hours')
-            """, (house_id,))
+                AND s.created_at <= ?
+            """, (house_id, cutoff_24h))
             expired_rows = c.fetchall()
             for exp in expired_rows:
                 exp_id, exp_suspected, exp_task, exp_pts, exp_house = exp
-                # Le soupçonné perd 20 points (pas de preuve = culpabilité)
                 c.execute("""
                     INSERT INTO completed_tasks (
                         user_email, task_name, category, points, house_id, completed_at
@@ -10435,10 +10436,12 @@ def api_house_suspicions():
         rows = c.fetchall()
         suspicions = []
         for row in rows:
-            # Vérifier si l'utilisateur actuel peut uploader pour un enfant
-            is_child = (row[11] == 1)  # is_child_account
-            child_parent = row[12]  # created_by
+            is_child = (row[11] == 1)
+            child_parent = row[12]
             can_upload_for_child = (is_child and child_parent == session['user'])
+            
+            # photo_url au lieu de photo_path (ne pas exposer le base64 brut)
+            has_photo = bool(row[8]) and not str(row[8]).startswith('uploads/')
             
             suspicions.append({
                 'id': row[0],
@@ -10449,13 +10452,12 @@ def api_house_suspicions():
                 'task_name': row[5],
                 'task_points': row[6],
                 'status': row[7],
-                'photo_path': row[8],
+                'photo_url': f'/api/proof_photo/{row[0]}' if has_photo else None,
                 'created_at': str(row[9]),
                 'resolved_at': str(row[10]) if row[10] else None,
-                # Indiquer qui est l'utilisateur actuel
                 'is_suspecting': (row[1] == session['user']),
                 'is_suspected': (row[3] == session['user']),
-                'can_upload_for_child': can_upload_for_child  # Le parent peut uploader pour l'enfant
+                'can_upload_for_child': can_upload_for_child
             })
 
         return jsonify({'success': True, 'suspicions': suspicions})
@@ -11039,32 +11041,26 @@ def api_upload_proof():
         if suspicion[1] != 'pending':
             return jsonify({'success': False, 'error': 'Cette suspicion a déjà été traitée'}), 400
 
-        # Sauvegarder la photo
-        filename = secure_filename(photo_file.filename)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_filename = f"proof_{suspicion_id}_{timestamp}_{filename}"
-        
-        # Créer le dossier uploads/proofs s'il n'existe pas
-        proofs_dir = os.path.join(app.root_path, 'uploads', 'proofs')
-        os.makedirs(proofs_dir, exist_ok=True)
-        
-        photo_path = os.path.join(proofs_dir, unique_filename)
-        photo_file.save(photo_path)
-        
-        # Enregistrer le chemin relatif dans la BD
-        relative_path = f'uploads/proofs/{unique_filename}'
+        # Stocker la photo en base64 dans la BD (Render = filesystem éphémère)
+        import base64
+        photo_bytes = photo_file.read()
+        if len(photo_bytes) == 0:
+            return jsonify({'success': False, 'error': 'Fichier vide'}), 400
+        # Limiter à 5 Mo (la compression client-side réduit déjà à ~200 Ko)
+        if len(photo_bytes) > 5 * 1024 * 1024:
+            return jsonify({'success': False, 'error': 'Photo trop volumineuse (max 5 Mo)'}), 400
+        photo_b64 = base64.b64encode(photo_bytes).decode('ascii')
         
         c.execute("""
             UPDATE suspicions
             SET photo_path=?, status='awaiting_validation'
             WHERE id=?
-        """, (relative_path, suspicion_id))
+        """, (photo_b64, suspicion_id))
         conn.commit()
 
         return jsonify({
             'success': True,
-            'message': '📸 Preuve envoyée ! En attente de validation...',
-            'photo_path': relative_path
+            'message': '📸 Preuve envoyée ! En attente de validation...'
         })
     except Exception as e:
         conn.rollback()
@@ -11072,6 +11068,39 @@ def api_upload_proof():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/proof_photo/<int:suspicion_id>')
+def api_proof_photo(suspicion_id):
+    """Sert la photo de preuve stockée en base64 dans la BD."""
+    if 'user' not in session:
+        return 'Non connecté', 401
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT photo_path, house_id FROM suspicions WHERE id=?", (suspicion_id,))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return 'Photo introuvable', 404
+        photo_data, s_house = row
+        # Vérifier que le joueur est dans la même maison
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        u = c.fetchone()
+        if not u or u[0] != s_house:
+            return 'Accès refusé', 403
+        # Si c'est un ancien chemin fichier (legacy), retourner 404
+        if photo_data.startswith('uploads/'):
+            return 'Photo non disponible (ancien format)', 404
+        import base64
+        photo_bytes = base64.b64decode(photo_data)
+        from flask import Response
+        return Response(photo_bytes, mimetype='image/jpeg',
+                        headers={'Cache-Control': 'private, max-age=3600'})
+    except Exception as e:
+        _dbg(f"ERREUR api_proof_photo: {e}")
+        return 'Erreur serveur', 500
     finally:
         conn.close()
 
@@ -11228,6 +11257,7 @@ def api_my_suspicions():
         """, (email,))
         my_suspicions = []
         for row in c.fetchall():
+            has_photo = bool(row[6]) and not str(row[6]).startswith('uploads/')
             my_suspicions.append({
                 'id': row[0],
                 'suspected_email': row[1],
@@ -11235,7 +11265,7 @@ def api_my_suspicions():
                 'task_name': row[3],
                 'task_points': row[4],
                 'status': row[5],
-                'photo_path': row[6],
+                'photo_url': f'/api/proof_photo/{row[0]}' if has_photo else None,
                 'created_at': str(row[7]),
                 'role': 'suspecting'
             })
@@ -11252,6 +11282,7 @@ def api_my_suspicions():
         """, (email,))
         against_me = []
         for row in c.fetchall():
+            has_photo = bool(row[6]) and not str(row[6]).startswith('uploads/')
             against_me.append({
                 'id': row[0],
                 'suspecting_email': row[1],
@@ -11259,7 +11290,7 @@ def api_my_suspicions():
                 'task_name': row[3],
                 'task_points': row[4],
                 'status': row[5],
-                'photo_path': row[6],
+                'photo_url': f'/api/proof_photo/{row[0]}' if has_photo else None,
                 'created_at': str(row[7]),
                 'role': 'suspected'
             })
