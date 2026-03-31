@@ -12822,6 +12822,12 @@ def api_validate_task():
                     message_id = c.lastrowid
                     _dbg(f"✅ Message baby_tracking créé avec ID: {message_id}")
                     
+                    # ✅ Marquer comme lu pour l'auteur (pas de pastille pour soi-même)
+                    c.execute("""
+                        INSERT INTO message_reads (message_id, user_email)
+                        VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
+                    """, (message_id, player_email))
+                    
                     # 🔌 Marquer pour synchroniser la messagerie plus tard (après le commit)
                     baby_tracking_created = True
                     
@@ -12900,15 +12906,28 @@ def api_validate_task():
                 _dbg(f"✅ WebSocket: Notification envoyée pour {player_email} (+{task_points} pts)")
                 _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
                 
+                # � Émettre task_validated pour que TOUS les écrans rafraîchissent les pastilles mission
+                safe_socketio_emit('task_validated', {
+                    'category': normalize_category(category) if category else '',
+                    'task_name': task_name,
+                    'player_email': player_email
+                }, namespace='/', room=room_name, broadcast=True)
+                _dbg(f"🟠 WebSocket: task_validated émis pour catégorie={category}")
+                
                 # 🔌 Synchroniser la messagerie si un message baby_tracking a été créé
                 if baby_tracking_created:
+                    safe_socketio_emit('baby_badge_update', {
+                        'user_email': player_email,
+                        'baby_unread_count': -1
+                    }, namespace='/', room=room_name, broadcast=True)
                     safe_socketio_emit('messages_list_update', {
                         'house_id': user_house_id,
-                        'action': 'baby_tracking',
+                        'action': 'system_message',
+                        'message_type': 'baby_tracking',
                         'sender_email': player_email,
                         'sender_name': player_name
                     }, namespace='/', room=room_name, broadcast=True)
-                    _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{user_house_id}")
+                    _dbg(f"🔌 WebSocket: baby_badge_update + messages_list_update émis pour house_{user_house_id}")
                     
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
@@ -13737,14 +13756,19 @@ def save_baby_tracking():
         
         # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
         if SOCKETIO_AVAILABLE and socketio:
+            safe_socketio_emit('baby_badge_update', {
+                'user_email': session['user'],
+                'baby_unread_count': -1
+            }, namespace='/', room=f'house_{house_id}', broadcast=True)
             safe_socketio_emit('messages_list_update', {
                 'house_id': house_id,
-                'action': 'baby_tracking',
+                'action': 'system_message',
+                'message_type': 'baby_tracking',
                 'sender_email': session['user'],
                 'sender_name': user_name,
                 'task_type': task_type
             }, room=f'house_{house_id}', namespace='/', broadcast=True)
-            _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
+            _dbg(f"🔌 WebSocket: baby_badge_update + messages_list_update émis pour house_{house_id}")
     except Exception as e:
         _dbg(f"❌ Erreur création message baby_tracking: {e}")
         import traceback

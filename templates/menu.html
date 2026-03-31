@@ -6018,6 +6018,13 @@ function sendMalus(reason, points){
                             refreshMissionDots();
                             refreshAllBadges();
                         });
+
+                        // ✅ Mission validée — rafraîchir les pastilles oranges (disparition sur TOUS les écrans)
+                        socket.on('task_validated', function(data) {
+                            console.log('✅ WebSocket: task_validated reçu', data);
+                            refreshMissionDots();
+                            refreshAllBadges();
+                        });
                         
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
@@ -6056,11 +6063,10 @@ function sendMalus(reason, points){
                 // Force iOS Safari / WebKit à redessiner les compositing layers
                 // (sans ça, les changements display:none→flex ne sont pas rendus avant un touch)
                 function _forceRepaint() {
+                    // Technique sans layout shift : lire offsetHeight force le reflow
+                    // puis requestAnimationFrame garantit le repaint
                     requestAnimationFrame(function() {
-                        document.body.style.webkitTransform = 'scale(1)';
-                        requestAnimationFrame(function() {
-                            document.body.style.webkitTransform = '';
-                        });
+                        void document.body.offsetHeight;
                     });
                 }
 
