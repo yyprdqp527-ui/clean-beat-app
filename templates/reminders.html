@@ -467,21 +467,18 @@
             .catch(function(){ showToast('❌ Erreur réseau'); });
     });
 
-    // ─── Accumulation des points avant redirection ────────────────────────────
+    // ─── Accumulation des points (toast au lieu de redirection) ─────────────────
     var _pendingPts = 0;
-    var _redirectTimer = null;
-    var _lastWho = '', _lastWhoN = '';
+    var _ptsTimer = null;
 
-    function scheduleRedirect() {
-        if (_redirectTimer) clearTimeout(_redirectTimer);
-        _redirectTimer = setTimeout(function() {
+    function _showPtsToast() {
+        if (_ptsTimer) clearTimeout(_ptsTimer);
+        _ptsTimer = setTimeout(function() {
             if (_pendingPts > 0) {
-                window.location.href = '/menu?success=1&pts=' + _pendingPts
-                    + '&ts=' + Date.now()
-                    + '&who=' + encodeURIComponent(_lastWho)
-                    + '&whon=' + encodeURIComponent(_lastWhoN);
+                showToast('🎉 +' + _pendingPts + ' point' + (_pendingPts > 1 ? 's' : '') + ' !');
+                _pendingPts = 0;
             }
-        }, 2500);
+        }, 1500);
     }
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
@@ -507,13 +504,13 @@
                     if (data.points_earned > 0 && checkEl) {
                         showPlusOne(checkEl);
                     }
-                    // Accumuler les points et décaler la redirection
+                    // Accumuler les points (affichage toast)
                     if (data.points_earned > 0) {
                         _pendingPts += data.points_earned;
-                        _lastWho  = data.player_email || '';
-                        _lastWhoN = data.player_name  || '';
-                        scheduleRedirect();
+                        _showPtsToast();
                     }
+                    // Déplacer la carte dans la zone cochée (en bas)
+                    _moveCardToSection(card, true);
                     // Si plus aucun article non fait → effacer le badge icône
                     // Mettre à jour le badge icône app après chaque action
                     (function(){ fetch('/api/unread_counts', {cache: 'no-store'})
@@ -528,6 +525,8 @@
                     card.classList.remove('done');
                     check.classList.remove('checked');
                     check.innerHTML = '&#10003;';
+                    // Remonter la carte dans la zone active
+                    _moveCardToSection(card, false);
                 }
             });
     };
@@ -570,6 +569,7 @@
                 check.classList.remove('checked');
                 check.innerHTML = '&#10003;';
             }
+            _moveCardToSection(card, data.is_done);
         });
         _socket.on('reminder_deleted', function(data) {
             var card = document.getElementById('card-' + data.id);
@@ -639,15 +639,23 @@
         }
     }
 
-    // ─── Refresh automatique toutes les 30s (rattrapage si WS déconnecté) ───
-    setInterval(function() {
-        // Ne pas recharger si l'utilisateur est en train de saisir
-        var titleInput = document.getElementById('title');
-        if (titleInput && titleInput.value.trim()) return;
-        // Ne pas recharger si une redirection de points est en cours
-        if (_redirectTimer) return;
-        location.reload();
-    }, 30000);
+    // ─── Déplacer une carte entre zone active et zone cochée ─────────────────
+    function _moveCardToSection(card, toDone) {
+        var list = document.getElementById('remindersList');
+        if (toDone) {
+            // Mettre la carte après toutes les cartes actives (en bas)
+            list.appendChild(card);
+        } else {
+            // Remonter la carte avant la première carte cochée
+            var firstDone = list.querySelector('.reminder-card.done');
+            if (firstDone) {
+                list.insertBefore(card, firstDone);
+            } else {
+                list.appendChild(card);
+            }
+        }
+        _updateSectionTitle();
+    }
 
     // ─── Utilitaire ───────────────────────────────────────────────────────────
     function escHtml(s) {
