@@ -28,6 +28,11 @@
     box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
     transition: all 0.3s ease;
 }
+.back-btn-glass:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
 .back-btn-glass:active { transform: scale(0.95); }
 @media (max-width: 520px) {
     .back-btn-glass { top: 20px; left: 20px; width: 50px; height: 50px; font-size: 24px; }
@@ -880,7 +885,7 @@ body {
 {% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email','defined')|list|sort(attribute='daily_points',reverse=True) %}
 
-<a href="{{ url_for('menu') }}" class="back-btn-glass">&#x2039;</a>
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
 
 <div class="gameplay-page">
 

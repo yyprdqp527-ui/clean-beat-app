@@ -14,7 +14,7 @@ import sqlite3
 import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import secrets
 import os
 import random
@@ -24,6 +24,21 @@ import uuid
 import json
 import requests
 import time
+
+# ─── TIMEZONE EUROPE/PARIS ──────────────────────────────────────────────────
+try:
+    from zoneinfo import ZoneInfo
+    PARIS_TZ = ZoneInfo('Europe/Paris')
+except ImportError:
+    try:
+        import pytz
+        PARIS_TZ = pytz.timezone('Europe/Paris')
+    except ImportError:
+        PARIS_TZ = None
+
+def now_paris():
+    """Retourne datetime.now() en heure de Paris."""
+    return datetime.now(PARIS_TZ) if PARIS_TZ else datetime.now()
 
 # ─── COUCHE DE COMPATIBILITÉ DB (SQLite local / PostgreSQL Render) ──────────
 # Détecte automatiquement l'env Render via DATABASE_URL
@@ -722,14 +737,14 @@ def sats():
             skull_active = False
             if skull_expires_at_raw:
                 try:
-                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > datetime.utcnow()
+                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > now_paris()
                 except Exception:
                     pass
             # Vérifier si le bonus est actif
             bonus_active = False
             if bonus_expires_at_raw:
                 try:
-                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > datetime.utcnow()
+                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > now_paris()
                 except Exception:
                     pass
             # Vérifier si le joueur a une suspicion active (loupe 🔍)
@@ -3997,7 +4012,7 @@ def check_house_activity_and_send_message(house_id):
         c = conn.cursor()
         
         # Vérifier l'activité récente (dernières 72h)
-        three_days_ago = (datetime.now() - timedelta(days=3)).isoformat()
+        three_days_ago = (now_paris() - timedelta(days=3)).isoformat()
         
         c.execute("""
             SELECT COUNT(*) FROM tasks 
@@ -4071,7 +4086,7 @@ def create_reminder(house_id, reminder_type, scheduled_for=None):
         from datetime import datetime, timedelta
         
         if scheduled_for is None:
-            scheduled_for = datetime.now() + timedelta(hours=1)
+            scheduled_for = now_paris() + timedelta(hours=1)
         elif isinstance(scheduled_for, str):
             scheduled_for = datetime.fromisoformat(scheduled_for)
         
@@ -4111,7 +4126,7 @@ def get_pending_reminders():
     conn = get_db_connection()
     c = conn.cursor()
     
-    now = datetime.now().isoformat()
+    now = now_paris().isoformat()
     c.execute("""
         SELECT id, house_id, reminder_type, message, scheduled_for
         FROM reminders
@@ -4168,7 +4183,7 @@ def send_reminder(reminder_id):
             UPDATE reminders 
             SET is_sent = 1, sent_at = ?
             WHERE id = ?
-        """, (datetime.now().isoformat(), reminder_id))
+        """, (now_paris().isoformat(), reminder_id))
         
         conn.commit()
         conn.close()
@@ -4261,7 +4276,7 @@ def update_user_reminder_settings(user_email, enabled=None, frequency=None, quie
             
             if updates:
                 updates.append("last_updated = ?")
-                params.append(datetime.now().isoformat())
+                params.append(now_paris().isoformat())
                 params.append(user_email)
                 
                 query = f"UPDATE user_reminder_settings SET {', '.join(updates)} WHERE user_email = ?"
@@ -4769,31 +4784,17 @@ def onboarding_invite():
 
 @app.route('/name_house', methods=['GET', 'POST'])
 def name_house():
-    """ÉTAPE 4 : Nommer le foyer"""
+    """ÉTAPE SUPPRIMÉE : le nom du foyer est déjà demandé dans choose_house_type.
+    Redirige directement vers create_profile."""
     if 'user' not in session:
-        flash("Veuillez d'abord vous inscrire", "warning")
         return redirect(url_for('signup_email'))
     
     if request.method == 'POST':
         house_name = request.form.get('house_name', '').strip()
-        
-        _dbg(f"🏠 NAME_HOUSE POST: house_name={house_name}, user={session.get('user')}")
-        
-        if not house_name:
-            flash("Veuillez donner un nom à votre foyer", "danger")
-            return render_template('name_house.html')
-        
-        # Sauvegarder dans la session
-        session['house_name'] = house_name
-        session['registration_step'] = 'house_named'
-        
-        _dbg(f"✅ NAME_HOUSE: Redirection vers create_profile")
-        
-        # Rediriger vers l'étape 5 : création du profil (avatar + pseudo)
-        return redirect(url_for('create_profile'))
+        if house_name:
+            session['house_name'] = house_name
     
-    _dbg(f"📄 NAME_HOUSE GET: Affichage du formulaire pour {session.get('user')}")
-    return render_template('name_house.html')
+    return redirect(url_for('create_profile'))
 
 
 # Route '/start' (quick signup) removed as requested. Use '/signup_email' instead.
@@ -6290,7 +6291,7 @@ def baby_messages():
 
     # 🗑️ NETTOYAGE AUTOMATIQUE : Supprimer les messages de plus d'un mois
     from datetime import datetime, timedelta
-    one_month_ago = (datetime.now() - timedelta(days=30)).isoformat()
+    one_month_ago = (now_paris() - timedelta(days=30)).isoformat()
     
     c.execute("""
         DELETE FROM messages 
@@ -6945,14 +6946,14 @@ def rewards():
     # Vérifier si c'est dimanche après 6h du matin
     # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - remettre les lignes suivantes pour la prod
     from datetime import datetime, timedelta
-    now = datetime.now()
+    now = now_paris()
     # is_sunday = now.weekday() == 6  # 6 = dimanche
     # is_after_6am = now.hour >= 6
     # can_open = is_sunday and is_after_6am
     can_open = True  # TEMP: Toujours accessible pour les tests
     
     # Déterminer le gagnant de la semaine (celui avec le plus de points cette semaine)
-    today = datetime.now()
+    today = now_paris()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     c.execute("""
@@ -7281,7 +7282,7 @@ def open_reward_box():
     # Vérifier si c'est dimanche après 6h du matin
     # TEMPORAIREMENT DÉSACTIVÉ POUR TEST
     from datetime import datetime, timedelta
-    now = datetime.now()
+    now = now_paris()
     # is_sunday = now.weekday() == 6
     # is_after_6am = now.hour >= 6
     # if not (is_sunday and is_after_6am):
@@ -7291,7 +7292,7 @@ def open_reward_box():
     # TEMP: Pas de vérification pour les tests
     
     # Calculer le début de la semaine
-    today = datetime.now()
+    today = now_paris()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     # Vérifier que l'utilisateur est le gagnant de la semaine
@@ -7836,7 +7837,7 @@ def gifts():
     
     # Vérifier si c'est dimanche après 6h du matin
     from datetime import datetime
-    now = datetime.now()
+    now = now_paris()
     is_sunday = now.weekday() == 6  # 6 = dimanche
     is_morning_unlock = now.hour >= 6
     can_open_gifts = is_sunday and is_morning_unlock
@@ -7882,7 +7883,7 @@ def reveal_gift(gift_id):
     
     # Vérifier si c'est dimanche après 6h du matin
     from datetime import datetime
-    now = datetime.now()
+    now = now_paris()
     is_sunday = now.weekday() == 6
     is_morning_unlock = now.hour >= 6
     can_open_gifts = is_sunday and is_morning_unlock
@@ -7906,7 +7907,7 @@ def reveal_gift(gift_id):
         return redirect(url_for('gifts'))
     
     # Révéler le cadeau
-    current_date = datetime.now().isoformat()
+    current_date = now_paris().isoformat()
     c.execute("INSERT INTO revealed_gifts (house_id, gift_id, revealed_by, revealed_date) VALUES (?, ?, ?, ?)", 
               (house_id, gift_id, session['user'], current_date))
     conn.commit()
@@ -8220,7 +8221,7 @@ def forgot_password():
             c.execute("DELETE FROM password_reset_tokens WHERE email=? AND used=0", (email,))
             # Générer un token sécurisé valable 1 heure
             token = secrets.token_urlsafe(32)
-            expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
+            expires_at = (now_paris() + timedelta(hours=1)).isoformat()
             c.execute("INSERT INTO password_reset_tokens (token, email, expires_at, used) VALUES (?, ?, ?, 0)",
                       (token, email, expires_at))
             conn.commit()
@@ -8252,7 +8253,7 @@ def reset_password(token):
         flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
         return redirect(url_for('forgot_password'))
 
-    if datetime.now() > datetime.fromisoformat(expires_at):
+    if now_paris() > datetime.fromisoformat(expires_at):
         conn.close()
         flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
         return redirect(url_for('forgot_password'))
@@ -9150,7 +9151,7 @@ def fullhouse():
 @app.route('/menu')
 def menu():
     from datetime import datetime
-    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {datetime.now()} 🚨🚨🚨")
+    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {now_paris()} 🚨🚨🚨")
     players = []
     current_user_name = session.get('user', '')
     house_name = None
@@ -10198,7 +10199,7 @@ def api_give_malus():
 
         # 💀 SKULL : Ajouter un skull pendant 1h
         from datetime import timedelta
-        skull_expires = (datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        skull_expires = (now_paris() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
         c.execute("""
             UPDATE users 
             SET skull_count = COALESCE(skull_count, 0) + 1,
@@ -10243,7 +10244,7 @@ def api_active_malus():
 
         # Seuil = il y a 60 minutes
         from datetime import timedelta
-        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         # Joueurs ayant reçu un malus dans la dernière heure
         # Cast explicite pour compatibilité PostgreSQL
@@ -10298,7 +10299,7 @@ def api_active_bonus():
         house_id = row[0]
 
         from datetime import timedelta
-        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         c.execute("""
             SELECT ct.user_email, u.name, ct.task_name
@@ -10352,7 +10353,7 @@ def api_house_suspicions():
         # ── Expiration automatique : suspicions pending depuis > 24h → refus par défaut ──
         try:
             from datetime import timedelta
-            cutoff_24h = (datetime.utcnow() - timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
+            cutoff_24h = (now_paris() - timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
             c.execute("""
                 SELECT s.id, s.suspected_player_email, s.task_name, s.task_points, s.house_id
                 FROM suspicions s
@@ -10503,7 +10504,7 @@ def api_proof_tasks():
             return jsonify([])
         house_id = row[0]
         from datetime import timedelta
-        cutoff_7d = (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+        cutoff_7d = (now_paris() - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
         # Tâches des AUTRES joueurs (7 derniers jours), hors malus et suspicions
         c.execute("""
             SELECT ct.id, ct.user_email, ct.task_name, ct.points, ct.completed_at,
@@ -12604,7 +12605,7 @@ def api_validate_task():
                     c.execute("""
                         INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
                         VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-                    """, (user_house_id, player_email, message_text, datetime.now().isoformat()))
+                    """, (user_house_id, player_email, message_text, now_paris().isoformat()))
                     message_id = c.lastrowid
                     _dbg(f"✅ Message baby_tracking créé avec ID: {message_id}")
                     
@@ -12811,19 +12812,8 @@ def api_daily_tasks():
         house_id = row[0]
         
         # Filtrer sur "aujourd'hui" en heure de Paris (Render tourne en UTC)
-        from datetime import date, datetime, timezone
-        try:
-            from zoneinfo import ZoneInfo
-            paris_tz = ZoneInfo('Europe/Paris')
-        except ImportError:
-            try:
-                import pytz
-                paris_tz = pytz.timezone('Europe/Paris')
-            except ImportError:
-                paris_tz = None
-
-        now_paris = datetime.now(paris_tz) if paris_tz else datetime.now()
-        today_local = now_paris.date()
+        _now_paris = now_paris()
+        today_local = _now_paris.date()
 
         c.execute("""
             SELECT 
@@ -12872,8 +12862,8 @@ def api_daily_tasks():
                     dt = completed_at
                     if not getattr(dt, 'tzinfo', None):
                         dt = dt.replace(tzinfo=timezone.utc)
-                    if paris_tz:
-                        dt = dt.astimezone(paris_tz)
+                    if PARIS_TZ:
+                        dt = dt.astimezone(PARIS_TZ)
                     completed_date = dt.date()
                     time_str = dt.strftime('%H:%M')
                 else:
@@ -12881,8 +12871,8 @@ def api_daily_tasks():
                     dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
                     if not dt.tzinfo:
                         dt = dt.replace(tzinfo=timezone.utc)
-                    if paris_tz:
-                        dt = dt.astimezone(paris_tz)
+                    if PARIS_TZ:
+                        dt = dt.astimezone(PARIS_TZ)
                     completed_date = dt.date()
                     time_str = dt.strftime('%H:%M')
             except Exception:
@@ -12897,8 +12887,8 @@ def api_daily_tasks():
                     if dt:
                         # timestamp sans tz = UTC stocké sur Render → convertir
                         dt = dt.replace(tzinfo=timezone.utc)
-                        if paris_tz:
-                            dt = dt.astimezone(paris_tz)
+                        if PARIS_TZ:
+                            dt = dt.astimezone(PARIS_TZ)
                         completed_date = dt.date()
                         time_str = dt.strftime('%H:%M')
                 except Exception:
@@ -13527,7 +13517,7 @@ def save_baby_tracking():
         c.execute("""
             INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
             VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-        """, (house_id, session['user'], message_text, datetime.now().isoformat()))
+        """, (house_id, session['user'], message_text, now_paris().isoformat()))
         
         message_id = c.lastrowid
         conn.commit()
