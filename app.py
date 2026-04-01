@@ -14,7 +14,7 @@ import sqlite3
 import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 import secrets
 import os
 import random
@@ -24,21 +24,6 @@ import uuid
 import json
 import requests
 import time
-
-# ─── TIMEZONE EUROPE/PARIS ──────────────────────────────────────────────────
-try:
-    from zoneinfo import ZoneInfo
-    PARIS_TZ = ZoneInfo('Europe/Paris')
-except ImportError:
-    try:
-        import pytz
-        PARIS_TZ = pytz.timezone('Europe/Paris')
-    except ImportError:
-        PARIS_TZ = None
-
-def now_paris():
-    """Retourne datetime.now() en heure de Paris."""
-    return datetime.now(PARIS_TZ) if PARIS_TZ else datetime.now()
 
 # ─── COUCHE DE COMPATIBILITÉ DB (SQLite local / PostgreSQL Render) ──────────
 # Détecte automatiquement l'env Render via DATABASE_URL
@@ -398,12 +383,6 @@ def jinja2_index(lst, item):
         return -1
 app.jinja_env.filters['index'] = jinja2_index
 
-@app.errorhandler(404)
-def handle_404(e):
-    url = request.url
-    print(f"⚠️ 404 NOT FOUND: {url} (from {request.remote_addr}, UA={request.headers.get('User-Agent','')})", flush=True)
-    return f'Not Found: {request.path}', 404
-
 @app.errorhandler(500)
 def handle_500(e):
     import traceback
@@ -737,16 +716,23 @@ def sats():
             skull_active = False
             if skull_expires_at_raw:
                 try:
-                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > now_paris()
+                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > datetime.utcnow()
                 except Exception:
                     pass
             # Vérifier si le bonus est actif
             bonus_active = False
             if bonus_expires_at_raw:
                 try:
-                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > now_paris()
+                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > datetime.utcnow()
                 except Exception:
                     pass
+            # Vérifier si le joueur est accusé (preuve en attente)
+            c.execute("""SELECT COUNT(*) FROM proof_requests
+                         WHERE target_email=? AND house_id=? AND status='pending'""",
+                      (email, house_id))
+            pending_row = c.fetchone()
+            skull_pending = bool(pending_row and pending_row[0] > 0)
+            
             # Vérifier si le joueur a une suspicion active (loupe 🔍)
             c.execute("""SELECT COUNT(*) FROM suspicions
                          WHERE suspected_player_email=? AND house_id=? 
@@ -907,7 +893,7 @@ def sats():
                 'color': p_color,  # Couleur identitaire du joueur
                 'skull_count': int(skull_count) if skull_count else 0,
                 'skull_active': skull_active,    # Crâne actif (malus ou tricherie prouvée)
-                'skull_pending': suspicion_active,  # Redirigé vers suspicions (ancien système proof_requests supprimé)
+                'skull_pending': skull_pending,  # Crâne suspicion (accusation en cours)
                 'bonus_active': bonus_active,    # Cœur actif (bonus reçu il y a moins d'1h)
                 'suspicion_active': suspicion_active,  # Loupe active (suspicion en attente)
                 'suspicion_count': suspicion_count,    # Nombre de suspicions actives
@@ -3041,6 +3027,22 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
+    # Table demandes de preuve (système de vigilance sociale)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS proof_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        house_id INTEGER NOT NULL,
+        requester_email TEXT NOT NULL,
+        target_email TEXT NOT NULL,
+        task_name TEXT NOT NULL,
+        task_points INTEGER DEFAULT 0,
+        completed_task_id INTEGER,
+        status TEXT DEFAULT 'pending',
+        photo_data TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     # Table des suspicions (système de gameplay avec preuves photo)
     c.execute("""
     CREATE TABLE IF NOT EXISTS suspicions (
@@ -4012,7 +4014,7 @@ def check_house_activity_and_send_message(house_id):
         c = conn.cursor()
         
         # Vérifier l'activité récente (dernières 72h)
-        three_days_ago = (now_paris() - timedelta(days=3)).isoformat()
+        three_days_ago = (datetime.now() - timedelta(days=3)).isoformat()
         
         c.execute("""
             SELECT COUNT(*) FROM tasks 
@@ -4086,7 +4088,7 @@ def create_reminder(house_id, reminder_type, scheduled_for=None):
         from datetime import datetime, timedelta
         
         if scheduled_for is None:
-            scheduled_for = now_paris() + timedelta(hours=1)
+            scheduled_for = datetime.now() + timedelta(hours=1)
         elif isinstance(scheduled_for, str):
             scheduled_for = datetime.fromisoformat(scheduled_for)
         
@@ -4126,7 +4128,7 @@ def get_pending_reminders():
     conn = get_db_connection()
     c = conn.cursor()
     
-    now = now_paris().isoformat()
+    now = datetime.now().isoformat()
     c.execute("""
         SELECT id, house_id, reminder_type, message, scheduled_for
         FROM reminders
@@ -4183,7 +4185,7 @@ def send_reminder(reminder_id):
             UPDATE reminders 
             SET is_sent = 1, sent_at = ?
             WHERE id = ?
-        """, (now_paris().isoformat(), reminder_id))
+        """, (datetime.now().isoformat(), reminder_id))
         
         conn.commit()
         conn.close()
@@ -4276,7 +4278,7 @@ def update_user_reminder_settings(user_email, enabled=None, frequency=None, quie
             
             if updates:
                 updates.append("last_updated = ?")
-                params.append(now_paris().isoformat())
+                params.append(datetime.now().isoformat())
                 params.append(user_email)
                 
                 query = f"UPDATE user_reminder_settings SET {', '.join(updates)} WHERE user_email = ?"
@@ -4339,6 +4341,20 @@ def get_house_players_points(house_id, existing_conn=None):
     rows = c.fetchall()
     players = []
 
+    # 🚀 BATCH: skull_pending pour tous les joueurs en 1 requête
+    _skull_pending_map = set()  # emails accusés (proof_request pending)
+    _skull_active_map = {}  # {email: bool}
+    try:
+        from datetime import datetime as _dt
+        c.execute("""
+            SELECT DISTINCT target_email FROM proof_requests
+            WHERE house_id=? AND status='pending'
+        """, (house_id,))
+        for row_sp in c.fetchall():
+            _skull_pending_map.add(row_sp[0])
+    except Exception:
+        pass
+
     # 🚀 BATCH: suspicion_active pour tous les joueurs en 1 requête
     # Compter UNIQUEMENT les joueurs SOUPÇONNÉS (qui doivent prouver leur tâche)
     # La loupe 🔍 n'apparaît QUE sur l'avatar du joueur soupçonné
@@ -4399,6 +4415,8 @@ def get_house_players_points(house_id, existing_conn=None):
                 bonus_active = _dt3.fromisoformat(str(bonus_expires_at_raw)) > _dt3.utcnow()
             except Exception:
                 pass
+        skull_pending = email in _skull_pending_map
+        
         # Suspicion active (loupe 🔍)
         suspicion_count = _suspicion_count_map.get(email, 0)
         suspicion_active = suspicion_count > 0
@@ -4562,7 +4580,7 @@ def get_house_players_points(house_id, existing_conn=None):
             'is_child_account': is_child_account,  # 0 = adulte, 1 = enfant (pour badges messagerie)
             'skull_count': int(skull_count_raw) if skull_count_raw else 0,
             'skull_active': skull_active,
-            'skull_pending': suspicion_active,  # Redirigé vers suspicions (ancien système proof_requests supprimé)
+            'skull_pending': skull_pending,
             'bonus_active': bonus_active,
             'suspicion_active': suspicion_active,
             'suspicion_count': suspicion_count,
@@ -4784,17 +4802,31 @@ def onboarding_invite():
 
 @app.route('/name_house', methods=['GET', 'POST'])
 def name_house():
-    """ÉTAPE SUPPRIMÉE : le nom du foyer est déjà demandé dans choose_house_type.
-    Redirige directement vers create_profile."""
+    """ÉTAPE 4 : Nommer le foyer"""
     if 'user' not in session:
+        flash("Veuillez d'abord vous inscrire", "warning")
         return redirect(url_for('signup_email'))
     
     if request.method == 'POST':
         house_name = request.form.get('house_name', '').strip()
-        if house_name:
-            session['house_name'] = house_name
+        
+        _dbg(f"🏠 NAME_HOUSE POST: house_name={house_name}, user={session.get('user')}")
+        
+        if not house_name:
+            flash("Veuillez donner un nom à votre foyer", "danger")
+            return render_template('name_house.html')
+        
+        # Sauvegarder dans la session
+        session['house_name'] = house_name
+        session['registration_step'] = 'house_named'
+        
+        _dbg(f"✅ NAME_HOUSE: Redirection vers create_profile")
+        
+        # Rediriger vers l'étape 5 : création du profil (avatar + pseudo)
+        return redirect(url_for('create_profile'))
     
-    return redirect(url_for('create_profile'))
+    _dbg(f"📄 NAME_HOUSE GET: Affichage du formulaire pour {session.get('user')}")
+    return render_template('name_house.html')
 
 
 # Route '/start' (quick signup) removed as requested. Use '/signup_email' instead.
@@ -5535,7 +5567,7 @@ def reminders():
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
-        ORDER BY pr.created_at DESC
+        ORDER BY pr.is_done ASC, CASE WHEN pr.remind_at IS NULL THEN 1 ELSE 0 END, pr.remind_at ASC, pr.created_at ASC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
@@ -5556,11 +5588,13 @@ def reminders():
         for r in reminders_rows
     ]
 
-    active_count = sum(1 for r in reminders_list if not r['is_done'])
+    active_reminders = [r for r in reminders_list if not r['is_done']]
+    done_reminders   = [r for r in reminders_list if r['is_done']]
 
     return render_template('reminders.html',
                            reminders=reminders_list,
-                           active_count=active_count,
+                           active_reminders=active_reminders,
+                           done_reminders=done_reminders,
                            hide_header=True)
 
 
@@ -5632,11 +5666,7 @@ def add_reminder():
         safe_socketio_emit('reminder_added', {
             'id': new_id,
             'title': title,
-            'pending_count': _courses_pending,
-            'creator_name': creator_name,
-            'creator_avatar': creator_avatar,
-            'creator_avatar_file': creator_avatar_file,
-            'creator_avatar_url': creator_avatar_url
+            'pending_count': _courses_pending
         }, namespace='/', room=f'house_{house_id}', broadcast=True)
     except Exception:
         pass
@@ -5930,24 +5960,16 @@ def _comments_inner():
                 try:
                     subscriptions = get_user_push_subscriptions(recipient_email)
                     if subscriptions:
-                        # Calculer le badge total pour l'icône PWA (tous types confondus)
-                        _total_badge = recipient_unread_count
-                        try:
-                            _total_badge += get_unread_count_by_type(recipient_email, house_id, 'baby_tracking')
-                            _total_badge += get_unread_count_by_type(recipient_email, house_id, 'task_added')
-                            _total_badge += get_unread_count_by_type(recipient_email, house_id, 'courses_added')
-                        except Exception:
-                            pass
                         notification_data = {
                             'title': f'💬 Message de {current_user_name}',
                             'body': content[:100] + ('...' if len(content) > 100 else ''),
                             'icon': '/static/images/logo.png',
                             'url': '/menu',
-                            'badge': max(1, _total_badge)
+                            'badge': recipient_unread_count
                         }
                         for sub in subscriptions:
                             send_push_notification(sub, notification_data)
-                        _dbg(f"🔔 Notification push envoyée à {recipient_email} (badge={_total_badge})")
+                        _dbg(f"🔔 Notification push envoyée à {recipient_email}")
                 except Exception as e:
                     _dbg(f"⚠️ Erreur envoi notification push: {e}")
                 
@@ -6291,7 +6313,7 @@ def baby_messages():
 
     # 🗑️ NETTOYAGE AUTOMATIQUE : Supprimer les messages de plus d'un mois
     from datetime import datetime, timedelta
-    one_month_ago = (now_paris() - timedelta(days=30)).isoformat()
+    one_month_ago = (datetime.now() - timedelta(days=30)).isoformat()
     
     c.execute("""
         DELETE FROM messages 
@@ -6946,14 +6968,14 @@ def rewards():
     # Vérifier si c'est dimanche après 6h du matin
     # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - remettre les lignes suivantes pour la prod
     from datetime import datetime, timedelta
-    now = now_paris()
+    now = datetime.now()
     # is_sunday = now.weekday() == 6  # 6 = dimanche
     # is_after_6am = now.hour >= 6
     # can_open = is_sunday and is_after_6am
     can_open = True  # TEMP: Toujours accessible pour les tests
     
     # Déterminer le gagnant de la semaine (celui avec le plus de points cette semaine)
-    today = now_paris()
+    today = datetime.now()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     c.execute("""
@@ -7282,7 +7304,7 @@ def open_reward_box():
     # Vérifier si c'est dimanche après 6h du matin
     # TEMPORAIREMENT DÉSACTIVÉ POUR TEST
     from datetime import datetime, timedelta
-    now = now_paris()
+    now = datetime.now()
     # is_sunday = now.weekday() == 6
     # is_after_6am = now.hour >= 6
     # if not (is_sunday and is_after_6am):
@@ -7292,7 +7314,7 @@ def open_reward_box():
     # TEMP: Pas de vérification pour les tests
     
     # Calculer le début de la semaine
-    today = now_paris()
+    today = datetime.now()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     # Vérifier que l'utilisateur est le gagnant de la semaine
@@ -7837,7 +7859,7 @@ def gifts():
     
     # Vérifier si c'est dimanche après 6h du matin
     from datetime import datetime
-    now = now_paris()
+    now = datetime.now()
     is_sunday = now.weekday() == 6  # 6 = dimanche
     is_morning_unlock = now.hour >= 6
     can_open_gifts = is_sunday and is_morning_unlock
@@ -7883,7 +7905,7 @@ def reveal_gift(gift_id):
     
     # Vérifier si c'est dimanche après 6h du matin
     from datetime import datetime
-    now = now_paris()
+    now = datetime.now()
     is_sunday = now.weekday() == 6
     is_morning_unlock = now.hour >= 6
     can_open_gifts = is_sunday and is_morning_unlock
@@ -7907,7 +7929,7 @@ def reveal_gift(gift_id):
         return redirect(url_for('gifts'))
     
     # Révéler le cadeau
-    current_date = now_paris().isoformat()
+    current_date = datetime.now().isoformat()
     c.execute("INSERT INTO revealed_gifts (house_id, gift_id, revealed_by, revealed_date) VALUES (?, ?, ?, ?)", 
               (house_id, gift_id, session['user'], current_date))
     conn.commit()
@@ -8221,7 +8243,7 @@ def forgot_password():
             c.execute("DELETE FROM password_reset_tokens WHERE email=? AND used=0", (email,))
             # Générer un token sécurisé valable 1 heure
             token = secrets.token_urlsafe(32)
-            expires_at = (now_paris() + timedelta(hours=1)).isoformat()
+            expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
             c.execute("INSERT INTO password_reset_tokens (token, email, expires_at, used) VALUES (?, ?, ?, 0)",
                       (token, email, expires_at))
             conn.commit()
@@ -8253,7 +8275,7 @@ def reset_password(token):
         flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
         return redirect(url_for('forgot_password'))
 
-    if now_paris() > datetime.fromisoformat(expires_at):
+    if datetime.now() > datetime.fromisoformat(expires_at):
         conn.close()
         flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
         return redirect(url_for('forgot_password'))
@@ -9151,7 +9173,7 @@ def fullhouse():
 @app.route('/menu')
 def menu():
     from datetime import datetime
-    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {now_paris()} 🚨🚨🚨")
+    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {datetime.now()} 🚨🚨🚨")
     players = []
     current_user_name = session.get('user', '')
     house_name = None
@@ -9413,16 +9435,12 @@ def menu():
                         AND NOT EXISTS (
                             SELECT 1 FROM completed_tasks ctd
                             WHERE ctd.house_id = ct.house_id
-                            AND LOWER(REPLACE(ctd.category, ' ', '_')) = LOWER(REPLACE(ct.category, ' ', '_'))
+                            AND ctd.category = ct.category
                             AND ctd.completed_at >= ct.created_at
                         )
                         GROUP BY ct.category
                     """, (house_id,))
-                    _raw_missions = {row[0]: row[1] for row in c.fetchall()}
-                    # Normaliser les clés pour correspondre aux data-category du template
-                    for _cat, _cnt in _raw_missions.items():
-                        _ncat = normalize_category(_cat)
-                        rooms_with_new_missions[_ncat] = rooms_with_new_missions.get(_ncat, 0) + _cnt
+                    rooms_with_new_missions = {row[0]: row[1] for row in c.fetchall()}
                 except Exception as _e_nm:
                     _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
 
@@ -9743,8 +9761,29 @@ def classement():
                 pass
             try:
                 players = get_house_players_points(house_id, existing_conn=conn)
+                from datetime import date, timedelta
+                today = date.today()
+                monday = (today - timedelta(days=today.weekday())).isoformat()
+                thirty_days_ago = (today - timedelta(days=30)).isoformat()
+                today_iso = today.isoformat()
                 for p in players:
                     p['is_current_user'] = (p.get('email') == current_user_name)
+                    email = p.get('email', '')
+                    # Daily
+                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND DATE(COALESCE(completed_at,date_done))=?", (email, house_id, today_iso))
+                    rd = c.fetchone()
+                    p['daily_points'] = int(rd[0]) if rd and rd[0] else 0
+                    p['daily_tasks'] = int(rd[1]) if rd and rd[1] else 0
+                    # Weekly
+                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND DATE(COALESCE(completed_at,date_done))>=?", (email, house_id, monday))
+                    rw = c.fetchone()
+                    p['weekly_points'] = int(rw[0]) if rw and rw[0] else 0
+                    p['weekly_tasks'] = int(rw[1]) if rw and rw[1] else 0
+                    # Monthly (30 derniers jours)
+                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND DATE(COALESCE(completed_at,date_done))>=?", (email, house_id, thirty_days_ago))
+                    rm = c.fetchone()
+                    p['monthly_points'] = int(rm[0]) if rm and rm[0] else 0
+                    p['monthly_tasks'] = int(rm[1]) if rm and rm[1] else 0
             except Exception:
                 players = []
         conn.close()
@@ -10199,7 +10238,7 @@ def api_give_malus():
 
         # 💀 SKULL : Ajouter un skull pendant 1h
         from datetime import timedelta
-        skull_expires = (now_paris() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        skull_expires = (datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
         c.execute("""
             UPDATE users 
             SET skull_count = COALESCE(skull_count, 0) + 1,
@@ -10244,7 +10283,7 @@ def api_active_malus():
 
         # Seuil = il y a 60 minutes
         from datetime import timedelta
-        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         # Joueurs ayant reçu un malus dans la dernière heure
         # Cast explicite pour compatibilité PostgreSQL
@@ -10299,7 +10338,7 @@ def api_active_bonus():
         house_id = row[0]
 
         from datetime import timedelta
-        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         c.execute("""
             SELECT ct.user_email, u.name, ct.task_name
@@ -10350,33 +10389,6 @@ def api_house_suspicions():
 
         house_id = row[0]
 
-        # ── Expiration automatique : suspicions pending depuis > 24h → refus par défaut ──
-        try:
-            from datetime import timedelta
-            cutoff_24h = (now_paris() - timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
-            c.execute("""
-                SELECT s.id, s.suspected_player_email, s.task_name, s.task_points, s.house_id
-                FROM suspicions s
-                WHERE s.house_id = ? AND s.status = 'pending'
-                AND s.created_at <= ?
-            """, (house_id, cutoff_24h))
-            expired_rows = c.fetchall()
-            for exp in expired_rows:
-                exp_id, exp_suspected, exp_task, exp_pts, exp_house = exp
-                c.execute("""
-                    INSERT INTO completed_tasks (
-                        user_email, task_name, category, points, house_id, completed_at
-                    ) VALUES (?, ?, 'suspicion_penalty', -20, ?, CURRENT_TIMESTAMP)
-                """, (exp_suspected, f'⏰ Pas de preuve à temps : {exp_task}', exp_house))
-                c.execute("""
-                    UPDATE suspicions SET status='expired', resolved_at=CURRENT_TIMESTAMP
-                    WHERE id=?
-                """, (exp_id,))
-            if expired_rows:
-                conn.commit()
-        except Exception as e:
-            _dbg(f"⚠️ Erreur expiration suspicions: {e}")
-
         # Toutes les suspicions actives ou récentes de la maison
         c.execute("""
             SELECT s.id, 
@@ -10395,7 +10407,6 @@ def api_house_suspicions():
                     WHEN 'awaiting_validation' THEN 2
                     WHEN 'validated' THEN 3
                     WHEN 'rejected' THEN 4
-                    WHEN 'expired' THEN 5
                 END,
                 s.created_at DESC
             LIMIT 50
@@ -10404,12 +10415,10 @@ def api_house_suspicions():
         rows = c.fetchall()
         suspicions = []
         for row in rows:
-            is_child = (row[11] == 1)
-            child_parent = row[12]
+            # Vérifier si l'utilisateur actuel peut uploader pour un enfant
+            is_child = (row[11] == 1)  # is_child_account
+            child_parent = row[12]  # created_by
             can_upload_for_child = (is_child and child_parent == session['user'])
-            
-            # photo_url au lieu de photo_path (ne pas exposer le base64 brut)
-            has_photo = bool(row[8]) and not str(row[8]).startswith('uploads/')
             
             suspicions.append({
                 'id': row[0],
@@ -10420,12 +10429,13 @@ def api_house_suspicions():
                 'task_name': row[5],
                 'task_points': row[6],
                 'status': row[7],
-                'photo_url': f'/api/proof_photo/{row[0]}' if has_photo else None,
+                'photo_path': row[8],
                 'created_at': str(row[9]),
                 'resolved_at': str(row[10]) if row[10] else None,
+                # Indiquer qui est l'utilisateur actuel
                 'is_suspecting': (row[1] == session['user']),
                 'is_suspected': (row[3] == session['user']),
-                'can_upload_for_child': can_upload_for_child
+                'can_upload_for_child': can_upload_for_child  # Le parent peut uploader pour l'enfant
             })
 
         return jsonify({'success': True, 'suspicions': suspicions})
@@ -10491,7 +10501,7 @@ def api_active_suspicions():
 
 @app.route('/api/proof/tasks')
 def api_proof_tasks():
-    """Tâches récentes des colocataires (dernières 7 jours) qu'on peut contester via entourloupe."""
+    """Tâches récentes des colocataires (dernières 24h) qu'on peut contester."""
     from flask import jsonify
     if 'user' not in session:
         return jsonify([])
@@ -10503,25 +10513,21 @@ def api_proof_tasks():
         if not row or not row[0]:
             return jsonify([])
         house_id = row[0]
-        from datetime import timedelta
-        cutoff_7d = (now_paris() - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
-        # Tâches des AUTRES joueurs (7 derniers jours), hors malus et suspicions
+        # Tâches des AUTRES joueurs (7 derniers jours), hors malus et preuves
         c.execute("""
             SELECT ct.id, ct.user_email, ct.task_name, ct.points, ct.completed_at,
                    u.name,
-                   (SELECT COUNT(*) FROM suspicions s
-                    WHERE s.house_id = ct.house_id
-                    AND s.suspected_player_email = ct.user_email
-                    AND s.task_name = ct.task_name
-                    AND s.suspecting_player_email = ?) as already_suspected
+                   (SELECT COUNT(*) FROM proof_requests pr
+                    WHERE pr.completed_task_id = ct.id
+                    AND pr.requester_email = ?) as already_requested
             FROM completed_tasks ct
             JOIN users u ON u.email = ct.user_email
             WHERE ct.house_id=? AND ct.user_email != ?
-            AND ct.category NOT IN ('malus','proof_penalty','proof_bonus','suspicion_penalty')
-            AND ct.completed_at >= ?
+            AND ct.category NOT IN ('malus','proof_penalty','proof_bonus')
+            AND ct.completed_at >= DATETIME('now', '-7 days')
             ORDER BY ct.completed_at DESC
             LIMIT 50
-        """, (session['user'], house_id, session['user'], cutoff_7d))
+        """, (session['user'], house_id, session['user']))
         rows = c.fetchall()
         tasks = []
         for r in rows:
@@ -10534,6 +10540,271 @@ def api_proof_tasks():
     except Exception as e:
         _dbg(f"ERREUR api_proof_tasks: {e}")
         return jsonify([])
+    finally:
+        conn.close()
+
+
+
+@app.route('/api/proof/all')
+def api_proof_all():
+    """Vue unifiée : toutes les tâches du jour avec statut contestation pour TOUS les joueurs."""
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify([])
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify([])
+        house_id = row[0]
+        me = session['user']
+        # Toutes les tâches des 24 dernières heures de la maison
+        c.execute("""
+            SELECT ct.id, ct.user_email, ct.task_name, ct.points, ct.completed_at,
+                   u.name,
+                   pr.id, pr.status, pr.requester_email, pr.photo_data,
+                   (SELECT name FROM users WHERE email = pr.requester_email)
+            FROM completed_tasks ct
+            JOIN users u ON u.email = ct.user_email
+            LEFT JOIN proof_requests pr
+                ON pr.completed_task_id = ct.id
+                AND pr.status NOT IN ('validated','refuted')
+            WHERE ct.house_id = ?
+            AND ct.category NOT IN ('malus','proof_penalty','proof_bonus')
+            AND ct.completed_at >= DATETIME('now', '-1 day')
+            ORDER BY ct.completed_at DESC
+            LIMIT 60
+        """, (house_id,))
+        tasks = []
+        for r in c.fetchall():
+            task_email = r[1]
+            proof_id = r[6]
+            proof_status = r[7]
+            requester_email = r[8]
+            photo_data = r[9]
+            req_name = r[10]
+            is_mine = (task_email == me)
+            am_requester = (requester_email == me)
+            am_target = (task_email == me and proof_id is not None)
+            can_contest = (not is_mine and proof_id is None)
+            tasks.append({
+                'id': r[0], 'email': task_email, 'task': r[2],
+                'points': r[3], 'at': str(r[4]), 'name': r[5],
+                'is_mine': is_mine, 'can_contest': can_contest,
+                'proof_id': proof_id, 'proof_status': proof_status,
+                'photo_data': photo_data,
+                'am_requester': am_requester, 'am_target': am_target,
+                'requester_name': req_name or ''
+            })
+        return jsonify(tasks)
+    except Exception as e:
+        _dbg(f"ERREUR api_proof_all: {e}")
+        return jsonify([])
+    finally:
+        conn.close()
+
+@app.route('/api/proof/request', methods=['POST'])
+def api_proof_request():
+    """Demander une preuve photo : coûte 3 pts au demandeur."""
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    data = request.get_json() or {}
+    completed_task_id = int(data.get('task_id', 0))
+    target_email = str(data.get('target_email', '')).strip()
+    task_name = str(data.get('task_name', '')).strip()
+    task_points = int(data.get('task_points', 0))
+    requester_email = session['user']
+    if not target_email or not task_name or not completed_task_id:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+    if target_email == requester_email:
+        return jsonify({'success': False, 'error': 'Tu ne peux pas te demander une preuve à toi-même'}), 400
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id, name FROM users WHERE email=?", (requester_email,))
+        req_row = c.fetchone()
+        if not req_row:
+            return jsonify({'success': False, 'error': 'Utilisateur introuvable'}), 400
+        house_id, req_name = req_row[0], req_row[1] or requester_email.split('@')[0]
+        # Vérifier que la cible est dans la même maison
+        c.execute("SELECT house_id FROM users WHERE email=?", (target_email,))
+        tgt_row = c.fetchone()
+        if not tgt_row or tgt_row[0] != house_id:
+            return jsonify({'success': False, 'error': 'Cible introuvable'}), 400
+        # Vérifier pas déjà demandé
+        c.execute("SELECT id FROM proof_requests WHERE completed_task_id=? AND requester_email=?",
+                  (completed_task_id, requester_email))
+        if c.fetchone():
+            return jsonify({'success': False, 'error': 'Tu as déjà contesté cette tâche'}), 400
+        # Récupérer le nom de la cible pour le message
+        c.execute("SELECT name FROM users WHERE email=?", (target_email,))
+        tgt_name_row = c.fetchone()
+        target_name_display = tgt_name_row[0] if tgt_name_row and tgt_name_row[0] else target_email.split('@')[0]
+        # Créer la demande (sans déduction immédiate — points débités à la validation)
+        c.execute("""
+            INSERT INTO proof_requests (house_id, requester_email, target_email, task_name, task_points, completed_task_id, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending')
+        """, (house_id, requester_email, target_email, task_name, task_points, completed_task_id))
+        conn.commit()
+        return jsonify({'success': True, 'message': f'🕵️ Contestation lancée ! {target_name_display} doit maintenant envoyer une preuve photo.'})
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_proof_request: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/proof/submit', methods=['POST'])
+def api_proof_submit():
+    """Soumettre une photo comme preuve. Le demandeur pourra ensuite valider ou réfuter."""
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    data = request.get_json() or {}
+    proof_id = int(data.get('proof_id', 0))
+    photo_data = str(data.get('photo_data', '')).strip()  # base64 data-URL
+    if not proof_id or not photo_data:
+        return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+    # Limite taille ~2 Mo en base64
+    if len(photo_data) > 2_800_000:
+        return jsonify({'success': False, 'error': 'Photo trop grande (max 2 Mo)'}), 400
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT id, target_email, status FROM proof_requests WHERE id=? AND target_email=?",
+                  (proof_id, session['user']))
+        row = c.fetchone()
+        if not row:
+            return jsonify({'success': False, 'error': 'Demande introuvable'}), 404
+        if row[2] != 'pending':
+            return jsonify({'success': False, 'error': 'Cette demande a déjà une preuve'}), 400
+        c.execute("UPDATE proof_requests SET status='submitted', photo_data=? WHERE id=?",
+                  (photo_data, proof_id))
+        conn.commit()
+        return jsonify({'success': True, 'message': '📸 Preuve envoyée ! Le jury va statuer.'})
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_proof_submit: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/proof/validate', methods=['POST'])
+def api_proof_validate():
+    """
+    Valider (preuve ok) ou réfuter (tricherie) une preuve soumise.
+    verdict = 'validated' : accusateur perd 10 pts, accusé gagne task_points en bonus
+    verdict = 'refuted'   : accusateur gagne 10 pts, accusé perd 10 pts + skull 24h
+    """
+    from flask import jsonify
+    from datetime import datetime, timedelta
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Non connecté'}), 401
+    data = request.get_json() or {}
+    proof_id = int(data.get('proof_id', 0))
+    verdict = str(data.get('verdict', '')).strip()
+    if not proof_id or verdict not in ('validated', 'refuted'):
+        return jsonify({'success': False, 'error': 'Paramètres invalides'}), 400
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("""SELECT id, house_id, requester_email, target_email, task_name, task_points, status
+                     FROM proof_requests WHERE id=? AND requester_email=?""",
+                  (proof_id, session['user']))
+        row = c.fetchone()
+        if not row:
+            return jsonify({'success': False, 'error': 'Demande introuvable'}), 404
+        _, house_id, requester_email, target_email, task_name, task_points, status = row
+        if status != 'submitted':
+            return jsonify({'success': False, 'error': 'Aucune preuve à valider pour l\'instant'}), 400
+
+        c.execute("SELECT name FROM users WHERE email=?", (target_email,))
+        tgt = c.fetchone()
+        target_name = tgt[0] if tgt else target_email.split('@')[0]
+
+        if verdict == 'validated':
+            # Tâche était vraie → accusateur perd 10 pts
+            c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+                         VALUES (?, ?, 'proof_penalty', -10, ?, CURRENT_TIMESTAMP)""",
+                      (requester_email, f'🔍 Fausse accusation envers {target_name}', house_id))
+            # Accusé gagne bonus équivalent valeur tâche
+            bonus = max(task_points, 5)
+            c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+                         VALUES (?, ?, 'proof_bonus', ?, ?, CURRENT_TIMESTAMP)""",
+                      (target_email, f'✅ Preuve validée : {task_name}', bonus, house_id))
+            c.execute("UPDATE proof_requests SET status='validated' WHERE id=?", (proof_id,))
+            conn.commit()
+            return jsonify({'success': True, 'message': f'✅ Preuve validée ! {target_name} gagne {bonus} pts bonus. Tu perds 10 pts pour fausse accusation.'})
+        else:
+            # Tricherie confirmée → accusateur gagne 10 pts, accusé perd 10 pts + skull 24h
+            c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+                         VALUES (?, ?, 'proof_bonus', 10, ?, CURRENT_TIMESTAMP)""",
+                      (requester_email, f'🕵️ Tricherie prouvée : {target_name}', house_id))
+            c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
+                         VALUES (?, ?, 'proof_penalty', -10, ?, CURRENT_TIMESTAMP)""",
+                      (target_email, f'💀 Tricherie prouvée sur : {task_name}', house_id))
+            skull_expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            c.execute("""UPDATE users SET skull_count = COALESCE(skull_count, 0) + 1,
+                                          skull_expires_at = ?
+                         WHERE email=?""", (skull_expires, target_email))
+            c.execute("UPDATE proof_requests SET status='refuted' WHERE id=?", (proof_id,))
+            conn.commit()
+            return jsonify({'success': True, 'message': f'💀 Tricherie prouvée ! {target_name} perd 10 pts et hérite d\'une 💀 24h. Tu gagnes 10 pts !'})
+    except Exception as e:
+        conn.rollback()
+        _dbg(f"ERREUR api_proof_validate: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/proof/pending')
+def api_proof_pending():
+    """Preuves soumises en attente de jugement (pour le demandeur) + demandes envoyées à moi."""
+    from flask import jsonify
+    if 'user' not in session:
+        return jsonify([])
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify([])
+        house_id = row[0]
+        # Cas 1 : je suis le demandeur ET la preuve a été soumise (à juger)
+        c.execute("""
+            SELECT pr.id, pr.target_email, pr.task_name, pr.task_points,
+                   pr.status, pr.photo_data, u.name, pr.created_at
+            FROM proof_requests pr
+            JOIN users u ON u.email = pr.target_email
+            WHERE pr.house_id=? AND pr.requester_email=? AND pr.status IN ('pending','submitted')
+            ORDER BY pr.created_at DESC
+        """, (house_id, session['user']))
+        sent = [{'id': r[0], 'target_email': r[1], 'task': r[2], 'points': r[3],
+                 'status': r[4], 'photo': r[5], 'target_name': r[6], 'created_at': str(r[7]),
+                 'role': 'requester'} for r in c.fetchall()]
+        # Cas 2 : je suis la cible ET une preuve est demandée (à soumettre)
+        c.execute("""
+            SELECT pr.id, pr.requester_email, pr.task_name, pr.task_points,
+                   pr.status, u.name, pr.created_at
+            FROM proof_requests pr
+            JOIN users u ON u.email = pr.requester_email
+            WHERE pr.house_id=? AND pr.target_email=? AND pr.status='pending'
+            ORDER BY pr.created_at DESC
+        """, (house_id, session['user']))
+        received = [{'id': r[0], 'requester_email': r[1], 'task': r[2], 'points': r[3],
+                     'status': r[4], 'requester_name': r[5], 'created_at': str(r[6]),
+                     'role': 'target'} for r in c.fetchall()]
+        return jsonify({'sent': sent, 'received': received})
+    except Exception as e:
+        _dbg(f"ERREUR api_proof_pending: {e}")
+        return jsonify({'sent': [], 'received': []})
     finally:
         conn.close()
 
@@ -10677,12 +10948,7 @@ def api_emit_suspicion():
         suspicion_id = c.lastrowid
         conn.commit()
 
-        # Notifier le joueur soupçonné via message système
-        try:
-            msg = f"🔍 {suspecting_name} te soupçonne d'entourloupe sur « {task_name} » ! Envoie une photo preuve dans les 24h sinon tu perds 20 pts."
-            create_system_message(house_id, msg, 'suspicion_alert', sender_email=suspecting_email)
-        except Exception:
-            pass
+        # TODO: Créer une notification pour le joueur soupçonné
         
         return jsonify({
             'success': True,
@@ -10748,26 +11014,32 @@ def api_upload_proof():
         if suspicion[1] != 'pending':
             return jsonify({'success': False, 'error': 'Cette suspicion a déjà été traitée'}), 400
 
-        # Stocker la photo en base64 dans la BD (Render = filesystem éphémère)
-        import base64
-        photo_bytes = photo_file.read()
-        if len(photo_bytes) == 0:
-            return jsonify({'success': False, 'error': 'Fichier vide'}), 400
-        # Limiter à 5 Mo (la compression client-side réduit déjà à ~200 Ko)
-        if len(photo_bytes) > 5 * 1024 * 1024:
-            return jsonify({'success': False, 'error': 'Photo trop volumineuse (max 5 Mo)'}), 400
-        photo_b64 = base64.b64encode(photo_bytes).decode('ascii')
+        # Sauvegarder la photo
+        filename = secure_filename(photo_file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"proof_{suspicion_id}_{timestamp}_{filename}"
+        
+        # Créer le dossier uploads/proofs s'il n'existe pas
+        proofs_dir = os.path.join(app.root_path, 'uploads', 'proofs')
+        os.makedirs(proofs_dir, exist_ok=True)
+        
+        photo_path = os.path.join(proofs_dir, unique_filename)
+        photo_file.save(photo_path)
+        
+        # Enregistrer le chemin relatif dans la BD
+        relative_path = f'uploads/proofs/{unique_filename}'
         
         c.execute("""
             UPDATE suspicions
             SET photo_path=?, status='awaiting_validation'
             WHERE id=?
-        """, (photo_b64, suspicion_id))
+        """, (relative_path, suspicion_id))
         conn.commit()
 
         return jsonify({
             'success': True,
-            'message': '📸 Preuve envoyée ! En attente de validation...'
+            'message': '📸 Preuve envoyée ! En attente de validation...',
+            'photo_path': relative_path
         })
     except Exception as e:
         conn.rollback()
@@ -10775,39 +11047,6 @@ def api_upload_proof():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
-    finally:
-        conn.close()
-
-
-@app.route('/api/proof_photo/<int:suspicion_id>')
-def api_proof_photo(suspicion_id):
-    """Sert la photo de preuve stockée en base64 dans la BD."""
-    if 'user' not in session:
-        return 'Non connecté', 401
-    conn = get_db_connection()
-    c = conn.cursor()
-    try:
-        c.execute("SELECT photo_path, house_id FROM suspicions WHERE id=?", (suspicion_id,))
-        row = c.fetchone()
-        if not row or not row[0]:
-            return 'Photo introuvable', 404
-        photo_data, s_house = row
-        # Vérifier que le joueur est dans la même maison
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        u = c.fetchone()
-        if not u or u[0] != s_house:
-            return 'Accès refusé', 403
-        # Si c'est un ancien chemin fichier (legacy), retourner 404
-        if photo_data.startswith('uploads/'):
-            return 'Photo non disponible (ancien format)', 404
-        import base64
-        photo_bytes = base64.b64decode(photo_data)
-        from flask import Response
-        return Response(photo_bytes, mimetype='image/jpeg',
-                        headers={'Cache-Control': 'private, max-age=3600'})
-    except Exception as e:
-        _dbg(f"ERREUR api_proof_photo: {e}")
-        return 'Erreur serveur', 500
     finally:
         conn.close()
 
@@ -10857,15 +11096,8 @@ def api_validate_proof():
         
         suspecting_email, suspected_email, task_name, task_points, status, house_id = suspicion
         
-        # Tout joueur de la maison SAUF le soupçonné peut valider/rejeter
-        voter_email = session['user']
-        if voter_email == suspected_email:
-            return jsonify({'success': False, 'error': 'Le soupçonné ne peut pas valider sa propre preuve'}), 403
-        # Vérifier que le votant est dans la même maison
-        c.execute("SELECT house_id FROM users WHERE email=?", (voter_email,))
-        voter_row = c.fetchone()
-        if not voter_row or voter_row[0] != house_id:
-            return jsonify({'success': False, 'error': 'Vous n\'êtes pas dans cette maison'}), 403
+        if suspecting_email != session['user']:
+            return jsonify({'success': False, 'error': 'Seul le soupçonneux peut valider la preuve'}), 403
         
         if status != 'awaiting_validation':
             return jsonify({'success': False, 'error': 'Cette suspicion n\'attend pas de validation'}), 400
@@ -10964,7 +11196,6 @@ def api_my_suspicions():
         """, (email,))
         my_suspicions = []
         for row in c.fetchall():
-            has_photo = bool(row[6]) and not str(row[6]).startswith('uploads/')
             my_suspicions.append({
                 'id': row[0],
                 'suspected_email': row[1],
@@ -10972,7 +11203,7 @@ def api_my_suspicions():
                 'task_name': row[3],
                 'task_points': row[4],
                 'status': row[5],
-                'photo_url': f'/api/proof_photo/{row[0]}' if has_photo else None,
+                'photo_path': row[6],
                 'created_at': str(row[7]),
                 'role': 'suspecting'
             })
@@ -10989,7 +11220,6 @@ def api_my_suspicions():
         """, (email,))
         against_me = []
         for row in c.fetchall():
-            has_photo = bool(row[6]) and not str(row[6]).startswith('uploads/')
             against_me.append({
                 'id': row[0],
                 'suspecting_email': row[1],
@@ -10997,7 +11227,7 @@ def api_my_suspicions():
                 'task_name': row[3],
                 'task_points': row[4],
                 'status': row[5],
-                'photo_url': f'/api/proof_photo/{row[0]}' if has_photo else None,
+                'photo_path': row[6],
                 'created_at': str(row[7]),
                 'role': 'suspected'
             })
@@ -12605,15 +12835,9 @@ def api_validate_task():
                     c.execute("""
                         INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
                         VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-                    """, (user_house_id, player_email, message_text, now_paris().isoformat()))
+                    """, (user_house_id, player_email, message_text, datetime.now().isoformat()))
                     message_id = c.lastrowid
                     _dbg(f"✅ Message baby_tracking créé avec ID: {message_id}")
-                    
-                    # ✅ Marquer comme lu pour l'auteur (pas de pastille pour soi-même)
-                    c.execute("""
-                        INSERT INTO message_reads (message_id, user_email)
-                        VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
-                    """, (message_id, player_email))
                     
                     # 🔌 Marquer pour synchroniser la messagerie plus tard (après le commit)
                     baby_tracking_created = True
@@ -12693,28 +12917,15 @@ def api_validate_task():
                 _dbg(f"✅ WebSocket: Notification envoyée pour {player_email} (+{task_points} pts)")
                 _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
                 
-                # � Émettre task_validated pour que TOUS les écrans rafraîchissent les pastilles mission
-                safe_socketio_emit('task_validated', {
-                    'category': normalize_category(category) if category else '',
-                    'task_name': task_name,
-                    'player_email': player_email
-                }, namespace='/', room=room_name, broadcast=True)
-                _dbg(f"🟠 WebSocket: task_validated émis pour catégorie={category}")
-                
                 # 🔌 Synchroniser la messagerie si un message baby_tracking a été créé
                 if baby_tracking_created:
-                    safe_socketio_emit('baby_badge_update', {
-                        'user_email': player_email,
-                        'baby_unread_count': -1
-                    }, namespace='/', room=room_name, broadcast=True)
                     safe_socketio_emit('messages_list_update', {
                         'house_id': user_house_id,
-                        'action': 'system_message',
-                        'message_type': 'baby_tracking',
+                        'action': 'baby_tracking',
                         'sender_email': player_email,
                         'sender_name': player_name
                     }, namespace='/', room=room_name, broadcast=True)
-                    _dbg(f"🔌 WebSocket: baby_badge_update + messages_list_update émis pour house_{user_house_id}")
+                    _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{user_house_id}")
                     
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket: {ws_err}")
@@ -12803,157 +13014,118 @@ def api_daily_tasks():
     c = conn.cursor()
     
     try:
-        # Récupérer house_id de l'utilisateur courant
         c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
         row = c.fetchone()
         if not row or not row[0]:
             return {'tasks': []}, 200
         
         house_id = row[0]
-        
-        # Filtrer sur "aujourd'hui" en heure de Paris (Render tourne en UTC)
-        _now_paris = now_paris()
-        today_local = _now_paris.date()
+        from datetime import date
+        today = date.today().isoformat()
 
         c.execute("""
-            SELECT 
-                ct.user_email, 
-                ct.task_name, 
-                ct.points, 
-                ct.completed_at,
-                ct.category,
-                u.name,
-                u.avatar_url,
-                u.avatar_file,
-                u.avatar,
-                u.avatar_style
+            SELECT u.name, ct.task_name, ct.points, ct.category,
+                   COALESCE(ct.completed_at, ct.date_done) as done_at
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
-            WHERE ct.house_id = ?
-              AND u.house_id = ?
+            WHERE ct.house_id = ? AND u.house_id = ?
+              AND DATE(COALESCE(ct.completed_at, ct.date_done)) = ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
-            ORDER BY ct.completed_at DESC
-            LIMIT 300
-        """, (house_id, house_id))
+            ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
+        """, (house_id, house_id, today))
         
         rows = c.fetchall()
-        raw_tasks = []
-
-        for row in rows:
-            email, task_name, points, completed_at, category, name, avatar_url, avatar_file, avatar_seed, avatar_style = row
-            
-            # Résoudre l'avatar
-            final_avatar = None
-            valid_file = validate_avatar_file(avatar_file)
-            if valid_file:
-                final_avatar = url_for('static', filename=f'avatars/{valid_file}', _external=True)
-            elif avatar_url and avatar_url.startswith('http'):
-                final_avatar = avatar_url
-            else:
-                seed = avatar_seed or (name or email.split('@')[0])
-                style = avatar_style or 'adventurer'
-                final_avatar = f'https://api.dicebear.com/7.x/{style}/svg?seed={seed}'
-            
-            # Convertir completed_at en heure de Paris
-            completed_date = None
-            time_str = '??:??'
+        tasks = []
+        for name, task_name, points, category, done_at in rows:
+            time_str = ''
             try:
-                if hasattr(completed_at, 'strftime'):
-                    dt = completed_at
-                    if not getattr(dt, 'tzinfo', None):
-                        dt = dt.replace(tzinfo=timezone.utc)
-                    if PARIS_TZ:
-                        dt = dt.astimezone(PARIS_TZ)
-                    completed_date = dt.date()
-                    time_str = dt.strftime('%H:%M')
-                else:
-                    s = str(completed_at or '')
-                    dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
-                    if not dt.tzinfo:
-                        dt = dt.replace(tzinfo=timezone.utc)
-                    if PARIS_TZ:
-                        dt = dt.astimezone(PARIS_TZ)
-                    completed_date = dt.date()
-                    time_str = dt.strftime('%H:%M')
+                if done_at and ' ' in str(done_at):
+                    time_str = str(done_at).split(' ')[1][:5]
             except Exception:
-                try:
-                    s = str(completed_at or '')
-                    if ' ' in s:
-                        dt = datetime.strptime(s[:19], '%Y-%m-%d %H:%M:%S')
-                    elif 'T' in s:
-                        dt = datetime.fromisoformat(s[:19])
-                    else:
-                        dt = None
-                    if dt:
-                        # timestamp sans tz = UTC stocké sur Render → convertir
-                        dt = dt.replace(tzinfo=timezone.utc)
-                        if PARIS_TZ:
-                            dt = dt.astimezone(PARIS_TZ)
-                        completed_date = dt.date()
-                        time_str = dt.strftime('%H:%M')
-                except Exception:
-                    pass
-
-            # Ne garder que les tâches du jour (heure de Paris)
-            if completed_date != today_local:
-                continue
-            
-            raw_tasks.append({
-                'player_name': name if name else email.split('@')[0],
-                'player_email': email,
+                pass
+            tasks.append({
+                'player_name': name or '?',
                 'task_name': task_name,
                 'points': points or 0,
-                'time': time_str,
-                'avatar': final_avatar,
-                'is_current_user': (email == session['user']),
-                'category': category or ''
+                'time': time_str
             })
-
-        # Regrouper les entrées 'courses' par joueur en une seule ligne
-        # (chaque article coché génère +1 pt → on affiche "🛒 Courses (N articles) : X pts")
-        tasks = []
-        courses_by_player = {}  # {email: {points, time, player_name, avatar, is_current_user}}
-        for t in raw_tasks:
-            if t['category'] == 'courses':
-                key = t['player_email']
-                if key not in courses_by_player:
-                    courses_by_player[key] = {
-                        'player_name': t['player_name'],
-                        'player_email': t['player_email'],
-                        'avatar': t['avatar'],
-                        'is_current_user': t['is_current_user'],
-                        'time': t['time'],
-                        'points': 0,
-                        'count': 0
-                    }
-                courses_by_player[key]['points'] += t['points']
-                courses_by_player[key]['count'] += 1
-            else:
-                tasks.append(t)
-
-        # Insérer une ligne résumée pour les courses de chaque joueur
-        for key, c_data in courses_by_player.items():
-            n = c_data['count']
-            label = f"🛒 Courses ({n} article{'s' if n > 1 else ''})"
-            tasks.append({
-                'player_name': c_data['player_name'],
-                'player_email': c_data['player_email'],
-                'task_name': label,
-                'points': c_data['points'],
-                'time': c_data['time'],
-                'avatar': c_data['avatar'],
-                'is_current_user': c_data['is_current_user'],
-                'category': 'courses'
-            })
-
-        # Trier par heure décroissante et limiter à 15
-        tasks.sort(key=lambda x: x['time'], reverse=True)
-        tasks = tasks[:15]
-
         return {'tasks': tasks}, 200
         
     except Exception as e:
         _dbg(f"Erreur API daily_tasks: {e}")
+        return {'tasks': [], 'error': str(e)}, 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/weekly_tasks')
+def api_weekly_tasks():
+    """Retourne les tâches validées cette semaine par joueur (même format que daily_tasks)"""
+    if 'user' not in session:
+        return {'tasks': []}, 200
+    from datetime import date, timedelta
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return {'tasks': []}, 200
+        house_id = row[0]
+        monday = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+        c.execute("""
+            SELECT u.name, ct.task_name, ct.points, ct.category
+            FROM completed_tasks ct
+            INNER JOIN users u ON ct.user_email = u.email
+            WHERE ct.house_id = ? AND u.house_id = ?
+              AND DATE(COALESCE(ct.completed_at, ct.date_done)) >= ?
+              AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
+            ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
+        """, (house_id, house_id, monday))
+        rows = c.fetchall()
+        tasks = []
+        for name, task_name, points, category in rows:
+            tasks.append({'player_name': name or '?', 'task_name': task_name, 'points': points or 0})
+        return {'tasks': tasks}, 200
+    except Exception as e:
+        _dbg(f"Erreur API weekly_tasks: {e}")
+        return {'tasks': [], 'error': str(e)}, 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/monthly_tasks')
+def api_monthly_tasks():
+    """Retourne les tâches validées ce mois par joueur (même format que daily_tasks)"""
+    if 'user' not in session:
+        return {'tasks': []}, 200
+    from datetime import date, timedelta
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return {'tasks': []}, 200
+        house_id = row[0]
+        # 30 derniers jours pour que le mois ait toujours >= semaine
+        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+        c.execute("""
+            SELECT u.name, ct.task_name, ct.points, ct.category
+            FROM completed_tasks ct
+            INNER JOIN users u ON ct.user_email = u.email
+            WHERE ct.house_id = ? AND u.house_id = ?
+              AND DATE(COALESCE(ct.completed_at, ct.date_done)) >= ?
+              AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
+            ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
+        """, (house_id, house_id, thirty_days_ago))
+        rows = c.fetchall()
+        tasks = []
+        for name, task_name, points, category in rows:
+            tasks.append({'player_name': name or '?', 'task_name': task_name, 'points': points or 0})
+        return {'tasks': tasks}, 200
+    except Exception as e:
+        _dbg(f"Erreur API monthly_tasks: {e}")
         return {'tasks': [], 'error': str(e)}, 500
     finally:
         conn.close()
@@ -13169,16 +13341,12 @@ def api_rooms_with_missions():
             AND NOT EXISTS (
                 SELECT 1 FROM completed_tasks ctd
                 WHERE ctd.house_id = ct.house_id
-                AND LOWER(REPLACE(ctd.category, ' ', '_')) = LOWER(REPLACE(ct.category, ' ', '_'))
+                AND ctd.category = ct.category
                 AND ctd.completed_at >= ct.created_at
             )
             GROUP BY ct.category
         """, (house_id,))
-        # Normaliser les clés pour correspondre aux data-category du template
-        rooms = {}
-        for row in c.fetchall():
-            ncat = normalize_category(row[0])
-            rooms[ncat] = rooms.get(ncat, 0) + row[1]
+        rooms = {row[0]: row[1] for row in c.fetchall()}
         conn.close()
         return jsonify({'rooms': rooms})
     except Exception as e:
@@ -13517,7 +13685,7 @@ def save_baby_tracking():
         c.execute("""
             INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
             VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-        """, (house_id, session['user'], message_text, now_paris().isoformat()))
+        """, (house_id, session['user'], message_text, datetime.now().isoformat()))
         
         message_id = c.lastrowid
         conn.commit()
@@ -13532,19 +13700,14 @@ def save_baby_tracking():
         
         # 🔌 Synchroniser la liste des messages pour tous les utilisateurs de la maison
         if SOCKETIO_AVAILABLE and socketio:
-            safe_socketio_emit('baby_badge_update', {
-                'user_email': session['user'],
-                'baby_unread_count': -1
-            }, namespace='/', room=f'house_{house_id}', broadcast=True)
             safe_socketio_emit('messages_list_update', {
                 'house_id': house_id,
-                'action': 'system_message',
-                'message_type': 'baby_tracking',
+                'action': 'baby_tracking',
                 'sender_email': session['user'],
                 'sender_name': user_name,
                 'task_type': task_type
             }, room=f'house_{house_id}', namespace='/', broadcast=True)
-            _dbg(f"🔌 WebSocket: baby_badge_update + messages_list_update émis pour house_{house_id}")
+            _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
     except Exception as e:
         _dbg(f"❌ Erreur création message baby_tracking: {e}")
         import traceback
