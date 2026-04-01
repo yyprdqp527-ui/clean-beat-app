@@ -314,46 +314,92 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     </div>
 
     <!-- Podium dynamique (jour / semaine / mois) -->
-    {% macro render_podium(sorted_players, pts_attr, tasks_attr, podium_id) %}
-    {% set max_p = sorted_players|map(attribute=pts_attr)|max if sorted_players else 1 %}
-    {% if max_p == 0 %}{% set max_p = 1 %}{% endif %}
-    <div class="ranking-wrapper">
-        {% if sorted_players|length > 3 %}
-        <div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('{{podium_id}}').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>
-        {% endif %}
-        <div class="players-row" id="{{podium_id}}">
-        {% for player in sorted_players %}
-        {% set bh = ((player[pts_attr] / max_p * 150) + 30)|round|int if max_p > 0 else 30 %}
-        <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
-            <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
-            <div class="player-avatar">
-                {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
-                {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}">
-                {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
-                {% else %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">👤</span>{% endif %}
-            </div>
-            <div class="player-name-podium">{{ player.name }}</div>
-            <div class="player-points">{{ player[pts_attr] }} pts</div>
-            <div class="player-tasks-podium">{{ player[tasks_attr] }} tâche{% if player[tasks_attr] != 1 %}s{% endif %}</div>
-        </div>
-        {% endfor %}
-        </div>
-        {% if sorted_players|length > 3 %}
-        <div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('{{podium_id}}').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>
-        {% endif %}
-    </div>
-    {% endmacro %}
-
     <div class="ranking-card">
+
+        <!-- Podium JOUR -->
         <div class="podium-view active" id="podium-today">
-            {{ render_podium(players|sort(attribute='daily_points', reverse=True), 'daily_points', 'daily_tasks', 'podiumDay') }}
+        {% set day_sorted = players|sort(attribute='daily_points', reverse=True) %}
+        {% set max_dp = day_sorted|map(attribute='daily_points')|max if day_sorted else 1 %}
+        {% if max_dp == 0 %}{% set max_dp = 1 %}{% endif %}
+        <div class="ranking-wrapper">
+            {% if day_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('podiumDay').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>{% endif %}
+            <div class="players-row" id="podiumDay">
+            {% for player in day_sorted %}
+            {% set bh = ((player.daily_points / max_dp * 150) + 30)|round|int if max_dp > 0 else 30 %}
+            <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
+                <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+                <div class="player-avatar">
+                    {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
+                    {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}">
+                    {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
+                    {% else %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">👤</span>{% endif %}
+                </div>
+                <div class="player-name-podium">{{ player.name }}</div>
+                <div class="player-points">{{ player.daily_points }} pts</div>
+                <div class="player-tasks-podium">{{ player.daily_tasks }} tâche{% if player.daily_tasks != 1 %}s{% endif %}</div>
+            </div>
+            {% endfor %}
+            </div>
+            {% if day_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('podiumDay').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>{% endif %}
         </div>
+        </div>
+
+        <!-- Podium SEMAINE -->
         <div class="podium-view" id="podium-week">
-            {{ render_podium(players|sort(attribute='weekly_points', reverse=True), 'weekly_points', 'weekly_tasks', 'podiumWeek') }}
+        {% set week_sorted = players|sort(attribute='weekly_points', reverse=True) %}
+        {% set max_wkp = week_sorted|map(attribute='weekly_points')|max if week_sorted else 1 %}
+        {% if max_wkp == 0 %}{% set max_wkp = 1 %}{% endif %}
+        <div class="ranking-wrapper">
+            {% if week_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('podiumWeek').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>{% endif %}
+            <div class="players-row" id="podiumWeek">
+            {% for player in week_sorted %}
+            {% set bh = ((player.weekly_points / max_wkp * 150) + 30)|round|int if max_wkp > 0 else 30 %}
+            <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
+                <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+                <div class="player-avatar">
+                    {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
+                    {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}">
+                    {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
+                    {% else %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">👤</span>{% endif %}
+                </div>
+                <div class="player-name-podium">{{ player.name }}</div>
+                <div class="player-points">{{ player.weekly_points }} pts</div>
+                <div class="player-tasks-podium">{{ player.weekly_tasks }} tâche{% if player.weekly_tasks != 1 %}s{% endif %}</div>
+            </div>
+            {% endfor %}
+            </div>
+            {% if week_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('podiumWeek').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>{% endif %}
         </div>
+        </div>
+
+        <!-- Podium MOIS -->
         <div class="podium-view" id="podium-month">
-            {{ render_podium(players|sort(attribute='monthly_points', reverse=True), 'monthly_points', 'monthly_tasks', 'podiumMonth') }}
+        {% set month_sorted = players|sort(attribute='monthly_points', reverse=True) %}
+        {% set max_mop = month_sorted|map(attribute='monthly_points')|max if month_sorted else 1 %}
+        {% if max_mop == 0 %}{% set max_mop = 1 %}{% endif %}
+        <div class="ranking-wrapper">
+            {% if month_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('podiumMonth').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>{% endif %}
+            <div class="players-row" id="podiumMonth">
+            {% for player in month_sorted %}
+            {% set bh = ((player.monthly_points / max_mop * 150) + 30)|round|int if max_mop > 0 else 30 %}
+            <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
+                <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+                <div class="player-avatar">
+                    {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
+                    {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}">
+                    {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
+                    {% else %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">👤</span>{% endif %}
+                </div>
+                <div class="player-name-podium">{{ player.name }}</div>
+                <div class="player-points">{{ player.monthly_points }} pts</div>
+                <div class="player-tasks-podium">{{ player.monthly_tasks }} tâche{% if player.monthly_tasks != 1 %}s{% endif %}</div>
+            </div>
+            {% endfor %}
+            </div>
+            {% if month_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('podiumMonth').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>{% endif %}
         </div>
+        </div>
+
     </div>
 
     <!-- Titre + Boutons -->

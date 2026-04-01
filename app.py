@@ -9768,22 +9768,37 @@ def classement():
                 today_iso = today.isoformat()
                 for p in players:
                     p['is_current_user'] = (p.get('email') == current_user_name)
+                    p.setdefault('daily_points', 0)
+                    p.setdefault('daily_tasks', 0)
+                    p.setdefault('weekly_points', 0)
+                    p.setdefault('weekly_tasks', 0)
+                    p.setdefault('monthly_points', 0)
+                    p.setdefault('monthly_tasks', 0)
                     email = p.get('email', '')
-                    # Daily
-                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND DATE(COALESCE(completed_at,date_done))=?", (email, house_id, today_iso))
-                    rd = c.fetchone()
-                    p['daily_points'] = int(rd[0]) if rd and rd[0] else 0
-                    p['daily_tasks'] = int(rd[1]) if rd and rd[1] else 0
-                    # Weekly
-                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND DATE(COALESCE(completed_at,date_done))>=?", (email, house_id, monday))
-                    rw = c.fetchone()
-                    p['weekly_points'] = int(rw[0]) if rw and rw[0] else 0
-                    p['weekly_tasks'] = int(rw[1]) if rw and rw[1] else 0
-                    # Monthly (30 derniers jours)
-                    c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND DATE(COALESCE(completed_at,date_done))>=?", (email, house_id, thirty_days_ago))
-                    rm = c.fetchone()
-                    p['monthly_points'] = int(rm[0]) if rm and rm[0] else 0
-                    p['monthly_tasks'] = int(rm[1]) if rm and rm[1] else 0
+                    try:
+                        # Daily
+                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(COALESCE(completed_at,date_done) AS TEXT) LIKE ?", (email, house_id, today_iso + '%'))
+                        rd = c.fetchone()
+                        p['daily_points'] = int(rd[0]) if rd and rd[0] else 0
+                        p['daily_tasks'] = int(rd[1]) if rd and rd[1] else 0
+                    except Exception:
+                        pass
+                    try:
+                        # Weekly
+                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(COALESCE(completed_at,date_done) AS TEXT) >= ?", (email, house_id, monday))
+                        rw = c.fetchone()
+                        p['weekly_points'] = int(rw[0]) if rw and rw[0] else 0
+                        p['weekly_tasks'] = int(rw[1]) if rw and rw[1] else 0
+                    except Exception:
+                        pass
+                    try:
+                        # Monthly (30 derniers jours)
+                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(COALESCE(completed_at,date_done) AS TEXT) >= ?", (email, house_id, thirty_days_ago))
+                        rm = c.fetchone()
+                        p['monthly_points'] = int(rm[0]) if rm and rm[0] else 0
+                        p['monthly_tasks'] = int(rm[1]) if rm and rm[1] else 0
+                    except Exception:
+                        pass
             except Exception:
                 players = []
         conn.close()
