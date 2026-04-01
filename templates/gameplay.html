@@ -217,11 +217,11 @@ body {
     border: 1px solid rgba(21,48,54,0.1);
 }
 .gw-task-suspicion-btn:hover { background: rgba(255,255,255,0.15); }
-.gw-task-malus-btn:hover { background: rgba(231,76,60,0.2); }
-.gw-task-bonus-btn:hover { background: rgba(46,204,113,0.2); }
+.gw-task-malus-btn:hover { background: rgba(212,133,106,0.2); }
+.gw-task-bonus-btn:hover { background: rgba(122,186,197,0.2); }
 .gw-task-suspicion-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.93); }
-.gw-task-malus-btn:active { background: rgba(231,76,60,0.3); transform: scale(0.93); }
-.gw-task-bonus-btn:active { background: rgba(46,204,113,0.3); transform: scale(0.93); }
+.gw-task-malus-btn:active { background: rgba(212,133,106,0.3); transform: scale(0.93); }
+.gw-task-bonus-btn:active { background: rgba(122,186,197,0.3); transform: scale(0.93); }
 
 /* Cadre photo de preuve - Style glassmorphisme */
 .proof-photo-frame {
@@ -315,20 +315,41 @@ body {
     border-bottom: 1px solid #e8f4f8;
 }
 .feature-header-icon {
-    font-size: 30px;
+    font-size: 34px;
     flex-shrink: 0;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
     line-height: 1;
 }
 .feature-title {
-    font-size: 16px;
+    display: inline-block;
+    font-size: 17px;
     font-weight: 900;
     color: #153036 !important;
-    letter-spacing: 0.6px;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
     text-shadow: none;
-    margin: 0 0 4px 0;
-    line-height: 1.2;
+    margin: 0 0 6px 0;
+    line-height: 1;
+    padding: 7px 16px;
+    border-radius: 10px;
+    background: rgba(21,48,54,0.06);
+    border: 1px solid rgba(21,48,54,0.08);
+}
+/* Accent couleur du titre par section */
+.malus-feature .feature-title {
+    background: rgba(212,133,106,0.16);
+    border-color: rgba(212,133,106,0.30);
+    color: #A95D42 !important;
+}
+.wheel-feature .feature-title {
+    background: rgba(166,211,220,0.18);
+    border-color: rgba(166,211,220,0.35);
+    color: #3D7A84 !important;
+}
+.suspicion-feature .feature-title {
+    background: rgba(253,174,84,0.16);
+    border-color: rgba(253,174,84,0.30);
+    color: #B07528 !important;
 }
 .feature-subtitle {
     font-size: 12px;
@@ -342,10 +363,10 @@ body {
 }
 /* Accent couleur par section – bord + header */
 .feature-container.malus-feature {
-    border-color: rgba(231,76,60,0.28);
+    border-color: rgba(212,133,106,0.28);
 }
 .feature-container.malus-feature .feature-header {
-    background: linear-gradient(135deg, rgba(231,76,60,0.14) 0%, rgba(46,204,113,0.08) 100%);
+    background: linear-gradient(135deg, rgba(212,133,106,0.14) 0%, rgba(122,186,197,0.08) 100%);
 }
 .feature-container.suspicion-feature {
     border-color: rgba(253,174,84,0.3);
@@ -387,10 +408,10 @@ body {
 @keyframes gwSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .malus-sheet-title { font-size: 16px; font-weight: 800; color: #153036 !important; text-align: center; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
 .malus-option { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; background: rgba(21,48,54,0.04); border: 1px solid rgba(21,48,54,0.06); margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.15s; }
-.malus-option:active { background: rgba(231,76,60,0.10); }
+.malus-option:active { background: rgba(212,133,106,0.10); }
 .malus-option-icon { font-size: 24px; }
 .malus-option-label { flex: 1; font-size: 14px; font-weight: 600; color: #153036 !important; }
-.malus-option-pts { font-size: 13px; font-weight: 800; color: #e74c3c !important; }
+.malus-option-pts { font-size: 13px; font-weight: 800; color: #D4856A !important; }
 .malus-cancel { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 14px; background: rgba(21,48,54,0.07); font-size: 14px; font-weight: 700; color: #597176 !important; cursor: pointer; font-family: 'Montserrat', sans-serif; }
 
 /* Animation des points qui s'envolent */
@@ -504,7 +525,7 @@ body {
     width: 200px;
     margin: 20px auto;
     padding: 16px 24px;
-    background: linear-gradient(135deg, #FF6B6B, #FF8C42);
+    background: linear-gradient(135deg, #FDAE54, #FF8C42);
     border: none;
     border-radius: 50px;
     color: white !important;
@@ -513,13 +534,13 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+    box-shadow: 0 6px 20px rgba(253,174,84,0.4);
     transition: all 0.2s;
 }
 
 .spin-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(255,107,107,0.5);
+    box-shadow: 0 8px 24px rgba(253,174,84,0.5);
 }
 
 .spin-btn:active {
@@ -603,7 +624,7 @@ body {
 .wheel-result-points {
     font-size: 32px;
     font-weight: 900;
-    color: #FF6B6B !important;
+    color: #FDAE54 !important;
     margin: 12px 0;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -614,12 +635,12 @@ body {
     margin-top: 20px;
     border: none;
     border-radius: 14px;
-    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    background: linear-gradient(135deg, #7ABAC5, #5DA3AE);
     color: white !important;
     font-size: 16px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(46,204,113,0.4);
+    box-shadow: 0 4px 12px rgba(122,186,197,0.4);
     transition: transform 0.2s;
 }
 
@@ -636,7 +657,7 @@ body {
     .feature-container { margin: 12px 10px 0; border-radius: 18px; }
     .feature-header { padding: 14px 14px 12px; gap: 10px; }
     .feature-header-icon { font-size: 24px; }
-    .feature-title { font-size: 14px; letter-spacing: 0.3px; }
+    .feature-title { font-size: 13px; letter-spacing: 0.5px; padding: 5px 12px; }
     .feature-subtitle { font-size: 11px; }
     .gw-player { padding: 12px 10px; }
     .wheel-container { width: 260px; height: 260px; }
@@ -645,7 +666,7 @@ body {
 @media (max-width: 360px) {
     .feature-container { margin: 10px 8px 0; border-radius: 16px; }
     .feature-header-icon { font-size: 20px; }
-    .feature-title { font-size: 13px; }
+    .feature-title { font-size: 12px; padding: 5px 10px; }
     .feature-subtitle { font-size: 10px; }
     .wheel-container { width: 240px; height: 240px; }
     .spin-btn { font-size: 14px; padding: 12px 16px; }
@@ -695,12 +716,12 @@ body {
     padding: 13px;
     border: none;
     border-radius: 12px;
-    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    background: linear-gradient(135deg, #7ABAC5, #5DA3AE);
     color: white !important;
     font-size: 14px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(46,204,113,0.4);
+    box-shadow: 0 4px 12px rgba(122,186,197,0.4);
     transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
     font-family: 'Montserrat', sans-serif;
@@ -727,6 +748,130 @@ body {
     font-weight: 900;
 }
 
+/* ══ Grille de boutons mini-jeux ══ */
+.minigame-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 20px 16px 8px;
+}
+.minigame-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.55);
+    border-radius: 22px;
+    padding: 14px 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 0 8px 28px rgba(89,113,118,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    -webkit-tap-highlight-color: transparent;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+.minigame-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%);
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.minigame-btn:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 14px 40px rgba(89,113,118,0.22), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.minigame-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 4px 16px rgba(89,113,118,0.12);
+}
+.minigame-btn .mg-icon {
+    font-size: 38px;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.25));
+    line-height: 1;
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.minigame-btn:hover .mg-icon {
+    transform: scale(1.15) rotate(-3deg);
+}
+.minigame-btn .mg-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #153036;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+    line-height: 1.25;
+}
+/* Accent couleur par bouton */
+.minigame-btn.mg-malus {
+    border-color: rgba(212,133,106,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(212,133,106,0.12) 100%);
+}
+.minigame-btn.mg-malus .mg-label { color: #8B4F38; }
+.minigame-btn.mg-wheel {
+    border-color: rgba(166,211,220,0.35);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+}
+.minigame-btn.mg-wheel .mg-label { color: #2E6E78; }
+.minigame-btn.mg-suspicion {
+    border-color: rgba(253,174,84,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(253,174,84,0.12) 100%);
+}
+.minigame-btn.mg-suspicion .mg-label { color: #96621C; }
+
+@media (max-width: 480px) {
+    .minigame-grid { gap: 10px; padding: 16px 12px 6px; }
+    .minigame-btn { border-radius: 18px; padding: 12px 6px; }
+    .minigame-btn .mg-icon { font-size: 32px; }
+    .minigame-btn .mg-label { font-size: 12px; }
+}
+@media (max-width: 360px) {
+    .minigame-grid { gap: 8px; padding: 14px 10px 4px; }
+    .minigame-btn { border-radius: 16px; }
+    .minigame-btn .mg-icon { font-size: 28px; }
+    .minigame-btn .mg-label { font-size: 11px; }
+}
+
+/* Sections cachées par défaut, animation d'apparition */
+.feature-container { display: none; }
+.feature-container.visible {
+    display: block;
+    animation: sectionSlideIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes sectionSlideIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Bouton retour vers la grille */
+.section-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    margin: 0 18px 6px;
+    background: rgba(21,48,54,0.05);
+    border: 1px solid rgba(21,48,54,0.08);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #597176;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.section-back-btn:active { transform: scale(0.96); background: rgba(21,48,54,0.1); }
+.minigame-grid.hidden { display: none; }
+
 </style>
 {% endblock %}
 
@@ -748,8 +893,25 @@ body {
         {% endif %}
     </div>
 
+    <!-- Grille de boutons mini-jeux -->
+    <div class="minigame-grid" id="minigameGrid">
+        <div class="minigame-btn mg-malus" onclick="openSection('malus')">
+            <div class="mg-icon">💀❤️</div>
+            <div class="mg-label">Malus &amp; Bonus</div>
+        </div>
+        <div class="minigame-btn mg-wheel" onclick="openSection('wheel')">
+            <div class="mg-icon">🎡</div>
+            <div class="mg-label">Roue des Trucs Chiants</div>
+        </div>
+        <div class="minigame-btn mg-suspicion" onclick="openSection('suspicion')">
+            <div class="mg-icon">🕵️</div>
+            <div class="mg-label">Entourloupe</div>
+        </div>
+    </div>
+
     <!-- ====== CONTAINER 1 : MALUS & BONUS ====== -->
-    <div class="feature-container malus-feature">
+    <div class="feature-container malus-feature" id="section-malus">
+        <div class="section-back-btn" onclick="closeSection()">‹ Retour</div>
         <div class="feature-header">
             <div class="feature-header-icon">💀❤️</div>
             <div class="feature-header-text">
@@ -790,7 +952,8 @@ body {
     </div><!-- /feature-container malus -->
 
     <!-- ====== CONTAINER 2 : ROUE DE LA CHANCE ====== -->
-    <div class="feature-container wheel-feature">
+    <div class="feature-container wheel-feature" id="section-wheel">
+        <div class="section-back-btn" onclick="closeSection()">‹ Retour</div>
         <div class="feature-header">
             <div class="feature-header-icon">🎡</div>
             <div class="feature-header-text">
@@ -818,7 +981,7 @@ body {
     <!-- Liste des corvées obtenues — remplie par JS -->
     <div id="wheelTaskList" class="wheel-task-list"></div>
 
-    <div style="padding: 0 20px 20px; color: rgba(255,255,255,0.5); font-size: 11px; text-align: center; font-style: italic;">
+    <div style="padding: 0 20px 20px; color: #597176; font-size: 11px; text-align: center; font-style: italic;">
         ⚡ Allez champion, montre-leur de quoi tu es capable ! ⚡
     </div>
 
@@ -826,9 +989,10 @@ body {
     </div><!-- /feature-container wheel -->
 
     <!-- ====== CONTAINER 3 : ENTOURLOUPE ====== -->
-    <div class="feature-container suspicion-feature">
+    <div class="feature-container suspicion-feature" id="section-suspicion">
+        <div class="section-back-btn" onclick="closeSection()">‹ Retour</div>
         <div class="feature-header">
-            <div class="feature-header-icon">⚠️</div>
+            <div class="feature-header-icon">🕵️</div>
             <div class="feature-header-text">
                 <div class="feature-title">Entourloupe</div>
                 <div class="feature-subtitle">Clique sur la loupe 🔍 à côté d'une tâche pour repérer les petits entourloupes. Personne n'a envie de faire des corvées et c'est naturel d'essayer d'y échapper… mais ici on joue collectif, chacun met la main à la pâte !</div>
@@ -845,6 +1009,23 @@ body {
     </div><!-- /feature-container suspicion -->
 
 </div>
+
+<!-- JS navigation grille / sections -->
+<script>
+function openSection(name) {
+    document.getElementById('minigameGrid').classList.add('hidden');
+    var sec = document.getElementById('section-' + name);
+    if (sec) { sec.classList.add('visible'); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function closeSection() {
+    document.querySelectorAll('.feature-container.visible').forEach(function(el) {
+        el.classList.remove('visible');
+    });
+    document.getElementById('minigameGrid').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
 
 <!-- Popup résultat roue -->
 <div class="wheel-result-overlay" id="wheelResultOverlay" onclick="if(event.target===this)closeWheelResult()">
@@ -905,21 +1086,21 @@ body {
 <div class="malus-overlay" id="bonusOverlay" onclick="if(event.target===this)closeBonus()">
     <div class="malus-sheet">
         <div class="malus-sheet-title">❤️ Bonus pour <span id="bonusTargetName">…</span></div>
-        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(46,204,113,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
+        <div class="malus-task-context" id="bonusTaskContext" style="display:none; font-size:12px; color:#597176; font-weight:600; background:rgba(122,186,197,0.1); padding:6px 12px; border-radius:10px; margin-bottom:4px; text-align:center;">📋 <span id="bonusTaskName">…</span></div>
         <div class="malus-option" onclick="sendBonus('effort',3)">
             <div class="malus-option-icon">💫</div>
             <div class="malus-option-label">On sent l'effort</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+3 pts</div>
+            <div class="malus-option-pts" style="color:#7ABAC5;">+3 pts</div>
         </div>
         <div class="malus-option" onclick="sendBonus('extra',5)">
             <div class="malus-option-icon">💪</div>
             <div class="malus-option-label">A fait plus que demandé</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+5 pts</div>
+            <div class="malus-option-pts" style="color:#7ABAC5;">+5 pts</div>
         </div>
         <div class="malus-option" onclick="sendBonus('wahouh',12)">
             <div class="malus-option-icon">🤩</div>
             <div class="malus-option-label">Wahouh, là je suis choqué·e !</div>
-            <div class="malus-option-pts" style="color:#2ecc71;">+12 pts</div>
+            <div class="malus-option-pts" style="color:#7ABAC5;">+12 pts</div>
         </div>
         <button class="malus-cancel" onclick="closeBonus()">Annuler</button>
     </div>
@@ -948,7 +1129,7 @@ body {
         <div style="font-size: 13px; color: #597176; text-align: center; margin: 10px 0;">
             <strong id="uploadProofTaskName">Tâche</strong>
         </div>
-        <div style="font-size: 12px; color: #e74c3c; text-align: center; margin: 10px 0; font-weight: 600;">
+        <div style="font-size: 12px; color: #D4856A; text-align: center; margin: 10px 0; font-weight: 600;">
             Si ta preuve est rejetée, tu perdras 20 points !
         </div>
         <input type="file" id="proofPhotoInput" accept="image/*" capture="environment" 
@@ -977,13 +1158,13 @@ body {
             <strong>La preuve est-elle convaincante ?</strong>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button onclick="rejectProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(231,76,60,0.1); border-color: #e74c3c;">
+            <button onclick="rejectProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(212,133,106,0.1); border-color: #D4856A;">
                 <div class="malus-option-icon">❌</div>
-                <div class="malus-option-label" style="font-weight: 800;">Rejeter<br><small style="font-size: 11px; color: #e74c3c;">Il perd 20 pts</small></div>
+                <div class="malus-option-label" style="font-weight: 800;">Rejeter<br><small style="font-size: 11px; color: #D4856A;">Il perd 20 pts</small></div>
             </button>
-            <button onclick="validateProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(46,204,113,0.1); border-color: #2ecc71;">
+            <button onclick="validateProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(122,186,197,0.1); border-color: #7ABAC5;">
                 <div class="malus-option-icon">✅</div>
-                <div class="malus-option-label" style="font-weight: 800;">Valider<br><small style="font-size: 11px; color: #2ecc71;">Je perds 10 pts</small></div>
+                <div class="malus-option-label" style="font-weight: 800;">Valider<br><small style="font-size: 11px; color: #7ABAC5;">Je perds 10 pts</small></div>
             </button>
         </div>
         <button class="malus-cancel" onclick="closeValidateProof()" style="margin-top: 15px;">Annuler</button>
@@ -1119,7 +1300,7 @@ function loadMySuspicions() {
             console.log('🔍 Réponse API suspicions:', data);
             if (!data.success && !data.suspicions) {
                 console.error('❌ Erreur API suspicions');
-                document.getElementById('suspicionsList').innerHTML = '<div style="text-align: center; color: rgba(255,0,0,0.7); font-size: 12px; padding: 20px 0;">Erreur de chargement</div>';
+                document.getElementById('suspicionsList').innerHTML = '<div style="text-align: center; color: #D4856A; font-size: 12px; padding: 20px 0;">Erreur de chargement</div>';
                 return;
             }
             
@@ -1137,8 +1318,8 @@ function loadMySuspicions() {
                     
                     // Adapter le fond selon qui est concerné
                     if (s.is_suspected && s.status === 'pending') {
-                        bgColor = 'rgba(231,76,60,0.12)';
-                        borderColor = 'rgba(231,76,60,0.3)';
+                        bgColor = 'rgba(212,133,106,0.12)';
+                        borderColor = 'rgba(212,133,106,0.3)';
                     }
                     
                     // CADRE PHOTO - TOUJOURS AFFICHÉ
@@ -1165,7 +1346,7 @@ function loadMySuspicions() {
                             }
                             
                             photoZone += `
-                            <div style="font-size: 14px; color: #e74c3c; font-weight: 800; text-align: center; margin-bottom: 10px;">${titleText}</div>
+                            <div style="font-size: 14px; color: #D4856A; font-weight: 800; text-align: center; margin-bottom: 10px;">${titleText}</div>
                             <div style="font-size: 12px; color: #597176; text-align: center; margin-bottom: 15px;">${subtitleText}</div>
                             <input type="file" id="proofInput_${s.id}" accept="image/*" capture="environment" 
                                    style="display: none;" onchange="uploadProofInline(${s.id})">
@@ -1174,7 +1355,7 @@ function loadMySuspicions() {
                                    onmouseup="this.style.transform='scale(1)'" 
                                    ontouchstart="this.style.transform='scale(0.95)'" 
                                    ontouchend="this.style.transform='scale(1)'"
-                                   style="display: inline-block; padding: 14px 24px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(231,76,60,0.4); transition: transform 0.2s;">
+                                   style="display: inline-block; padding: 14px 24px; background: linear-gradient(135deg, #D4856A 0%, #B86B50 100%); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(212,133,106,0.4); transition: transform 0.2s;">
                                 📸 Cliquez ici pour prendre une photo
                             </label>
                             <div id="proofStatus_${s.id}" style="margin-top: 10px; font-size: 12px; color: #597176; font-weight: 700; text-align: center;"></div>`;
@@ -1193,11 +1374,11 @@ function loadMySuspicions() {
                             buttonsZone = `
                             <div style="display: flex; gap: 8px; margin-top: 10px;">
                                 <button disabled
-                                        style="flex: 1; padding: 12px; background: rgba(46,204,113,0.2); color: #aaa; border: 1px solid rgba(46,204,113,0.3); border-radius: 10px; font-weight: 700; font-size: 13px; cursor: not-allowed;">
+                                        style="flex: 1; padding: 12px; background: rgba(166,211,220,0.25); color: #aaa; border: 1px solid rgba(166,211,220,0.4); border-radius: 10px; font-weight: 700; font-size: 13px; cursor: not-allowed;">
                                     ✅ Accepter la preuve
                                 </button>
                                 <button disabled
-                                        style="flex: 1; padding: 12px; background: rgba(231,76,60,0.2); color: #aaa; border: 1px solid rgba(231,76,60,0.3); border-radius: 10px; font-weight: 700; font-size: 13px; cursor: not-allowed;">
+                                        style="flex: 1; padding: 12px; background: rgba(212,133,106,0.2); color: #aaa; border: 1px solid rgba(212,133,106,0.3); border-radius: 10px; font-weight: 700; font-size: 13px; cursor: not-allowed;">
                                     ❌ Refuser
                                 </button>
                             </div>
@@ -1236,11 +1417,11 @@ function loadMySuspicions() {
                             buttonsZone = `
                             <div style="display: flex; gap: 8px; margin-top: 10px;">
                                 <button onclick="validateProofInline(${s.id}, ${s.task_points}, '${s.suspected_name}')" 
-                                        style="flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(46,204,113,0.3);">
+                                        style="flex: 1; padding: 12px; background: #7ABAC5; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(166,211,220,0.4);">
                                     ✅ Accepter la preuve
                                 </button>
                                 <button onclick="rejectProofInline(${s.id}, '${s.suspected_name}')" 
-                                        style="flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(231,76,60,0.3);">
+                                        style="flex: 1; padding: 12px; background: #D4856A; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(212,133,106,0.3);">
                                     ❌ Refuser
                                 </button>
                             </div>
@@ -1250,32 +1431,32 @@ function loadMySuspicions() {
                     } else if (s.status === 'validated') {
                         statusIcon = '✅';
                         statusText = `<strong>${s.suspected_name}</strong> a prouvé sa bonne foi (+${s.task_points} pts)`;
-                        bgColor = 'rgba(46,204,113,0.08)';
-                        borderColor = 'rgba(46,204,113,0.3)';
+                        bgColor = 'rgba(166,211,220,0.15)';
+                        borderColor = 'rgba(166,211,220,0.4)';
                         photoZone = '';
                         buttonsZone = `
-                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(46,204,113,0.1); border-radius: 10px; color: #27ae60; font-size: 12px; font-weight: 700;">
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(166,211,220,0.2); border-radius: 10px; color: #597176; font-size: 12px; font-weight: 700;">
                             ✅ Preuve acceptée — Suspicion levée
                         </div>`;
                         
                     } else if (s.status === 'rejected') {
                         statusIcon = '❌';
                         statusText = `<strong>${s.suspected_name}</strong> n'a pas convaincu (-20 pts)`;
-                        bgColor = 'rgba(231,76,60,0.08)';
-                        borderColor = 'rgba(231,76,60,0.3)';
+                        bgColor = 'rgba(212,133,106,0.1)';
+                        borderColor = 'rgba(212,133,106,0.3)';
                         photoZone = '';
                         buttonsZone = `
-                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.1); border-radius: 10px; color: #c0392b; font-size: 12px; font-weight: 700;">
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(212,133,106,0.12); border-radius: 10px; color: #B86B50; font-size: 12px; font-weight: 700;">
                             ❌ Preuve refusée — Sanction appliquée
                         </div>`;
                     } else if (s.status === 'expired') {
                         statusIcon = '⏰';
                         statusText = `<strong>${s.suspected_name}</strong> n'a pas envoyé de preuve à temps (-20 pts)`;
-                        bgColor = 'rgba(231,76,60,0.08)';
-                        borderColor = 'rgba(231,76,60,0.3)';
+                        bgColor = 'rgba(212,133,106,0.1)';
+                        borderColor = 'rgba(212,133,106,0.3)';
                         photoZone = '';
                         buttonsZone = `
-                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(231,76,60,0.1); border-radius: 10px; color: #c0392b; font-size: 12px; font-weight: 700;">
+                        <div style="text-align: center; margin-top: 10px; padding: 10px; background: rgba(212,133,106,0.12); border-radius: 10px; color: #B86B50; font-size: 12px; font-weight: 700;">
                             ⏰ Délai expiré — Refus par défaut
                         </div>`;
                     }
@@ -1298,14 +1479,14 @@ function loadMySuspicions() {
             
             // Aucune suspicion
             if (html === '') {
-                html = '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; padding: 20px 0;">Aucune suspicion en cours</div>';
+                html = '<div style="text-align: center; color: #597176; font-size: 12px; padding: 20px 0;">Aucune suspicion en cours</div>';
             }
             
             document.getElementById('suspicionsList').innerHTML = html;
         })
         .catch(err => {
             console.error('Erreur chargement suspicions:', err);
-            document.getElementById('suspicionsList').innerHTML = '<div style="text-align: center; color: rgba(255,0,0,0.7); font-size: 12px; padding: 20px 0;">Erreur de chargement</div>';
+            document.getElementById('suspicionsList').innerHTML = '<div style="text-align: center; color: #D4856A; font-size: 12px; padding: 20px 0;">Erreur de chargement</div>';
         });
 }
 
@@ -1348,9 +1529,9 @@ function showPointsAnimation(points) {
     pointsDiv.className = 'points-animation';
     pointsDiv.textContent = (points > 0 ? '+' : '') + points + ' points!';
     if (points > 0) {
-        pointsDiv.style.color = '#2ecc71';
+        pointsDiv.style.color = '#7ABAC5';
     } else {
-        pointsDiv.style.color = '#e74c3c';
+        pointsDiv.style.color = '#D4856A';
     }
     document.body.appendChild(pointsDiv);
     
@@ -1437,11 +1618,11 @@ function uploadProofInline(suspicionId) {
     .then(data => {
         if (data.success) {
             statusDiv.textContent = '✅ Preuve envoyée ! Rechargement...';
-            statusDiv.style.color = 'rgba(46,204,113,1)';
+            statusDiv.style.color = 'rgba(122,186,197,1)';
             setTimeout(() => { loadMySuspicions(); }, 1500);
         } else {
             statusDiv.textContent = '❌ Erreur: ' + (data.error || 'Erreur inconnue');
-            statusDiv.style.color = 'rgba(231,76,60,1)';
+            statusDiv.style.color = 'rgba(212,133,106,1)';
             if (photoIcon) photoIcon.style.display = 'block';
             if (photoPreview) photoPreview.style.display = 'none';
         }
@@ -1449,7 +1630,7 @@ function uploadProofInline(suspicionId) {
     .catch(err => {
         console.error('Erreur upload:', err);
         statusDiv.textContent = '❌ Erreur lors de l\'envoi';
-        statusDiv.style.color = 'rgba(231,76,60,1)';
+        statusDiv.style.color = 'rgba(212,133,106,1)';
         if (photoIcon) photoIcon.style.display = 'block';
         if (photoPreview) photoPreview.style.display = 'none';
     });
@@ -1480,7 +1661,7 @@ function validateProofInline(suspicionId, taskPoints, playerName) {
                 const gainDiv = document.createElement('div');
                 gainDiv.className = 'points-animation';
                 gainDiv.textContent = `${playerName} +${taskPoints} pts!`;
-                gainDiv.style.color = '#2ecc71';
+                gainDiv.style.color = '#7ABAC5';
                 gainDiv.style.top = '40%';
                 document.body.appendChild(gainDiv);
                 
@@ -1739,10 +1920,10 @@ function rejectProof() {
 // ══════════════════════════════════════════
 
 const wheelTasks = [
-    { task: "🚽 Nettoyer les toilettes à fond", points: 55, color: "#FF6B6B" },
+    { task: "🚽 Nettoyer les toilettes à fond", points: 55, color: "#FDAE54" },
     { task: "🔥 Nettoyer le four", points: 60, color: "#FF8C42" },
     { task: "🪟 Laver toutes les vitres", points: 50, color: "#FFD93D" },
-    { task: "🧹 Aspirer sous tous les meubles", points: 45, color: "#6BCF7F" },
+    { task: "🧹 Aspirer sous tous les meubles", points: 45, color: "#A6D3DC" },
     { task: "🗑️ Vider et nettoyer toutes les poubelles", points: 40, color: "#4ECDC4" },
     { task: "💊 Trier le placard à médicaments", points: 35, color: "#A8E6CF" },
     { task: "📦 Ranger le garage/cave", points: 70, color: "#95A4FF" },
