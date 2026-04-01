@@ -13044,10 +13044,10 @@ def api_daily_tasks():
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
-              AND DATE(COALESCE(ct.completed_at, ct.date_done)) = ?
+              AND CAST(COALESCE(ct.completed_at, ct.date_done) AS TEXT) LIKE ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
-        """, (house_id, house_id, today))
+        """, (house_id, house_id, today + '%'))
         
         rows = c.fetchall()
         tasks = []
@@ -13093,7 +13093,7 @@ def api_weekly_tasks():
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
-              AND DATE(COALESCE(ct.completed_at, ct.date_done)) >= ?
+              AND CAST(COALESCE(ct.completed_at, ct.date_done) AS TEXT) >= ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
         """, (house_id, house_id, monday))
@@ -13130,7 +13130,7 @@ def api_monthly_tasks():
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
-              AND DATE(COALESCE(ct.completed_at, ct.date_done)) >= ?
+              AND CAST(COALESCE(ct.completed_at, ct.date_done) AS TEXT) >= ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
         """, (house_id, house_id, thirty_days_ago))

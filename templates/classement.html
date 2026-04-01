@@ -241,41 +241,124 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 .player-tasks-podium { font-size: 10px; color: #597176; margin-bottom: 22px; }
 @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-4px);} }
 
-/* ══ Boutons filtre ══ */
-.classement-btn-group {
-    padding: 0 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 10px;
+/* ══ Grille de boutons filtre (style gameplay) ══ */
+.classement-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 12px 16px 8px;
+    margin-bottom: 6px;
 }
 .filter-btn {
-    padding: 12px 16px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.5);
-    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(166,211,220,0.15));
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    font-size: 13px; font-weight: 700; color: #597176;
-    cursor: pointer; transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(89,113,118,0.1);
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.55);
+    border-radius: 22px;
+    padding: 14px 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 0 8px 28px rgba(89,113,118,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
 }
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%);
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.filter-btn:active { transform: translateY(0) scale(0.97); box-shadow: 0 4px 16px rgba(89,113,118,0.12); }
+.filter-btn .fb-icon {
+    font-size: 38px;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.25));
+    line-height: 1;
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.filter-btn:hover .fb-icon { transform: scale(1.15) rotate(-3deg); }
+.filter-btn .fb-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #153036;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+    line-height: 1.25;
+}
+/* Couleurs par bouton */
+.filter-btn.cl-jour {
+    border-color: rgba(166,211,220,0.35);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+}
+.filter-btn.cl-jour .fb-label { color: #2E6E78; }
+.filter-btn.cl-semaine {
+    border-color: rgba(253,174,84,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(253,174,84,0.12) 100%);
+}
+.filter-btn.cl-semaine .fb-label { color: #96621C; }
+.filter-btn.cl-mois {
+    border-color: rgba(212,133,106,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(212,133,106,0.12) 100%);
+}
+.filter-btn.cl-mois .fb-label { color: #8B4F38; }
+/* Bouton actif */
 .filter-btn.active {
-    background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%);
-    color: white; border-color: rgba(253,174,84,0.6);
+    background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%) !important;
+    border-color: rgba(253,174,84,0.6) !important;
     box-shadow: 0 6px 20px rgba(253,174,84,0.35);
 }
-.filter-btn:active { transform: scale(0.96); }
+.filter-btn.active .fb-label { color: white !important; }
+.filter-btn.active::before { opacity: 0.3; }
+/* Bouton Stats (sous la grille) */
+.filter-btn-stats-wrap {
+    padding: 0 16px 6px;
+}
 .filter-btn-stats {
-    background: linear-gradient(135deg, rgba(253,174,84,0.2) 0%, rgba(240,144,48,0.12) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 16px;
     border: 2px solid rgba(253,174,84,0.4);
-    color: #FDAE54;
+    background: linear-gradient(135deg, rgba(253,174,84,0.15) 0%, rgba(240,144,48,0.08) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     font-size: 14px;
-    box-shadow: 0 6px 20px rgba(253,174,84,0.15), inset 0 1px 0 rgba(255,255,255,0.3);
+    font-weight: 800;
+    color: #FDAE54;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(253,174,84,0.12);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 .filter-btn-stats:active { transform: scale(0.96); }
-.classement-period-row {
-    display: flex; gap: 8px;
+/* Responsive */
+@media (max-width: 480px) {
+    .classement-btn-grid { gap: 10px; padding: 10px 12px 6px; }
+    .filter-btn { border-radius: 18px; padding: 12px 6px; }
+    .filter-btn .fb-icon { font-size: 32px; }
+    .filter-btn .fb-label { font-size: 12px; }
 }
-.classement-period-row .filter-btn { flex: 1; padding: 10px 8px; font-size: 13px; }
+@media (max-width: 360px) {
+    .classement-btn-grid { gap: 8px; padding: 8px 10px 4px; }
+    .filter-btn { border-radius: 16px; }
+    .filter-btn .fb-icon { font-size: 28px; }
+    .filter-btn .fb-label { font-size: 11px; }
+}
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .podium-view { display: none; }
@@ -405,13 +488,22 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     <!-- Titre + Boutons -->
     <div class="tab-section-title">Tâches réalisées</div>
 
-    <div class="classement-btn-group">
-        <div class="classement-period-row">
-            <div class="filter-btn" data-tab="tab-today">📋 Jour</div>
-            <div class="filter-btn" data-tab="tab-week">📊 Semaine</div>
-            <div class="filter-btn" data-tab="tab-month">📆 Mois</div>
+    <div class="classement-btn-grid">
+        <div class="filter-btn cl-jour" data-tab="tab-today">
+            <div class="fb-icon">📋</div>
+            <div class="fb-label">Jour</div>
         </div>
-        <div class="filter-btn filter-btn-stats" data-tab="tab-stats">📈 Statistiques</div>
+        <div class="filter-btn cl-semaine" data-tab="tab-week">
+            <div class="fb-icon">📊</div>
+            <div class="fb-label">Semaine</div>
+        </div>
+        <div class="filter-btn cl-mois" data-tab="tab-month">
+            <div class="fb-icon">📆</div>
+            <div class="fb-label">Mois</div>
+        </div>
+    </div>
+    <div class="filter-btn-stats-wrap">
+        <div class="filter-btn-stats" data-tab="tab-stats">📈 Statistiques</div>
     </div>
 
     <!-- ═══ TAB : Aujourd'hui ═══ -->
@@ -520,7 +612,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     document.querySelectorAll('.filter-btn').forEach(function(btn){
         btn.addEventListener('click', function(){
             var tab = btn.getAttribute('data-tab');
-            if(tab === 'tab-stats'){ window.location.href = '/sats'; return; }
             var wasActive = btn.classList.contains('active');
             document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
             document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
@@ -544,6 +635,12 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
             setTimeout(animateBars, 60);
         });
     });
+
+    /* ── Bouton Stats → redirection ── */
+    var statsBtn = document.querySelector('.filter-btn-stats');
+    if(statsBtn){
+        statsBtn.addEventListener('click', function(){ window.location.href = '/sats'; });
+    }
 })();
 
 function loadCWTasks(tabId){
