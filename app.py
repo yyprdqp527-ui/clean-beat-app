@@ -9777,7 +9777,7 @@ def classement():
                     email = p.get('email', '')
                     try:
                         # Daily
-                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(COALESCE(completed_at,date_done) AS TEXT) LIKE ?", (email, house_id, today_iso + '%'))
+                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(completed_at AS TEXT) LIKE ?", (email, house_id, today_iso + '%'))
                         rd = c.fetchone()
                         p['daily_points'] = int(rd[0]) if rd and rd[0] else 0
                         p['daily_tasks'] = int(rd[1]) if rd and rd[1] else 0
@@ -9785,7 +9785,7 @@ def classement():
                         pass
                     try:
                         # Weekly
-                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(COALESCE(completed_at,date_done) AS TEXT) >= ?", (email, house_id, monday))
+                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(completed_at AS TEXT) >= ?", (email, house_id, monday))
                         rw = c.fetchone()
                         p['weekly_points'] = int(rw[0]) if rw and rw[0] else 0
                         p['weekly_tasks'] = int(rw[1]) if rw and rw[1] else 0
@@ -9793,7 +9793,7 @@ def classement():
                         pass
                     try:
                         # Monthly (30 derniers jours)
-                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(COALESCE(completed_at,date_done) AS TEXT) >= ?", (email, house_id, thirty_days_ago))
+                        c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND house_id=? AND CAST(completed_at AS TEXT) >= ?", (email, house_id, thirty_days_ago))
                         rm = c.fetchone()
                         p['monthly_points'] = int(rm[0]) if rm and rm[0] else 0
                         p['monthly_tasks'] = int(rm[1]) if rm and rm[1] else 0
@@ -13040,13 +13040,13 @@ def api_daily_tasks():
 
         c.execute("""
             SELECT u.name, ct.task_name, ct.points, ct.category,
-                   COALESCE(ct.completed_at, ct.date_done) as done_at
+                   ct.completed_at as done_at
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
-              AND CAST(COALESCE(ct.completed_at, ct.date_done) AS TEXT) LIKE ?
+              AND CAST(ct.completed_at AS TEXT) LIKE ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
-            ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
+            ORDER BY ct.completed_at DESC
         """, (house_id, house_id, today + '%'))
         
         rows = c.fetchall()
@@ -13093,9 +13093,9 @@ def api_weekly_tasks():
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
-              AND CAST(COALESCE(ct.completed_at, ct.date_done) AS TEXT) >= ?
+              AND CAST(ct.completed_at AS TEXT) >= ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
-            ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
+            ORDER BY ct.completed_at DESC
         """, (house_id, house_id, monday))
         rows = c.fetchall()
         tasks = []
@@ -13130,9 +13130,9 @@ def api_monthly_tasks():
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
-              AND CAST(COALESCE(ct.completed_at, ct.date_done) AS TEXT) >= ?
+              AND CAST(ct.completed_at AS TEXT) >= ?
               AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
-            ORDER BY COALESCE(ct.completed_at, ct.date_done) DESC
+            ORDER BY ct.completed_at DESC
         """, (house_id, house_id, thirty_days_ago))
         rows = c.fetchall()
         tasks = []
