@@ -292,7 +292,7 @@
         <div class="section-title">À acheter ({{ active_count }})</div>
         {% for r in reminders %}
         <div class="reminder-card{{ ' done' if r.is_done else '' }}" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
-            <div class="reminder-check{{ ' checked' if r.is_done else '' }}" data-id="{{ r.id }}">{{ '✓' if r.is_done else '&#10003;' }}</div>
+            <div class="reminder-check{{ ' checked' if r.is_done else '' }}" data-id="{{ r.id }}">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
                 <div class="reminder-creator">
@@ -384,8 +384,13 @@
     // ─── Ajout ────────────────────────────────────────────────────────────────
     document.getElementById('addForm').addEventListener('submit', function(e){
         e.preventDefault();
+        const btn = e.target.querySelector('.btn-add');
+        if (btn.disabled) return;
         const title = document.getElementById('title').value.trim();
         if (!title) return;
+
+        btn.disabled = true;
+        btn.textContent = '⏳';
 
         const fd = new FormData();
         fd.append('title', title);
@@ -393,7 +398,7 @@
         fetch('/reminders/add', { method: 'POST', body: fd })
             .then(function(r){ return r.json(); })
             .then(function(data){
-                if (!data.success) { showToast('❌ Erreur'); return; }
+                if (!data.success) { showToast('❌ Erreur'); btn.disabled = false; btn.textContent = 'Ajouter'; return; }
 
                 // Supprimer l'état vide si présent
                 const emptyEl = document.getElementById('emptyState');
@@ -418,7 +423,7 @@
                 }
                 
                 card.innerHTML =
-                    '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">&#10003;</div>' +
+                    '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">✓</div>' +
                     '<div class="reminder-body">' +
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                         '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
@@ -439,8 +444,10 @@
                 _updateSectionTitle();
 
                 document.getElementById('title').value = '';
+                btn.disabled = false;
+                btn.textContent = 'Ajouter';
             })
-            .catch(function(){ showToast('❌ Erreur réseau'); });
+            .catch(function(){ showToast('❌ Erreur réseau'); btn.disabled = false; btn.textContent = 'Ajouter'; });
     });
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
@@ -480,7 +487,7 @@
                 } else {
                     card.classList.remove('done');
                     check.classList.remove('checked');
-                    check.innerHTML = '&#10003;';
+                    check.innerHTML = '✓';
                 }
                 _updateSectionTitle();
             });
@@ -522,7 +529,7 @@
             } else {
                 card.classList.remove('done');
                 check.classList.remove('checked');
-                check.innerHTML = '&#10003;';
+                check.innerHTML = '✓';
             }
             _updateSectionTitle();
         });
@@ -559,7 +566,7 @@
             }
 
             card.innerHTML =
-                '<div class="reminder-check" data-id="' + data.id + '">&#10003;</div>' +
+                '<div class="reminder-check" data-id="' + data.id + '">✓</div>' +
                 '<div class="reminder-body">' +
                     '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                     '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
