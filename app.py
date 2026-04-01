@@ -14,7 +14,7 @@ import sqlite3
 import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import secrets
 import os
 import random
@@ -24,6 +24,24 @@ import uuid
 import json
 import requests
 import time
+
+# ─── TIMEZONE EUROPE/PARIS ──────────────────────────────────────────────────
+try:
+    from zoneinfo import ZoneInfo
+    PARIS_TZ = ZoneInfo('Europe/Paris')
+except ImportError:
+    try:
+        import pytz
+        PARIS_TZ = pytz.timezone('Europe/Paris')
+    except ImportError:
+        PARIS_TZ = None
+
+def now_paris():
+    """Retourne datetime.now() en heure de Paris (naive, sans tzinfo)."""
+    if PARIS_TZ:
+        dt = datetime.now(PARIS_TZ)
+        return dt.replace(tzinfo=None)   # naive pour compatibilité DB
+    return datetime.now()
 
 # ─── COUCHE DE COMPATIBILITÉ DB (SQLite local / PostgreSQL Render) ──────────
 # Détecte automatiquement l'env Render via DATABASE_URL
@@ -695,7 +713,7 @@ def sats():
             return redirect(url_for('invite_partner'))
         
         house_id = row[0]
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         
         # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
         check_weekly_reset(house_id, conn)
@@ -715,14 +733,14 @@ def sats():
             skull_active = False
             if skull_expires_at_raw:
                 try:
-                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > datetime.utcnow()
+                    skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > now_paris()
                 except Exception:
                     pass
             # Vérifier si le bonus est actif
             bonus_active = False
             if bonus_expires_at_raw:
                 try:
-                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > datetime.utcnow()
+                    bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > now_paris()
                 except Exception:
                     pass
             # Vérifier si le joueur est accusé (preuve en attente)
@@ -817,7 +835,7 @@ def sats():
             daily_tasks = int(daily[1]) if daily[1] else 0
             
             # Points de la semaine (depuis lundi)
-            week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+            week_start = (now_paris().date() - timedelta(days=now_paris().date().weekday())).isoformat()
             c.execute("""
                 SELECT COALESCE(SUM(points), 0), COUNT(*) 
                 FROM completed_tasks 
@@ -828,7 +846,7 @@ def sats():
             weekly_tasks = int(weekly[1]) if weekly[1] else 0
             
             # Points du mois (depuis le 1er du mois)
-            month_start = date.today().replace(day=1).isoformat()
+            month_start = now_paris().date().replace(day=1).isoformat()
             c.execute("""
                 SELECT COALESCE(SUM(points), 0), COUNT(*) 
                 FROM completed_tasks 
@@ -841,8 +859,8 @@ def sats():
             # Progression hebdomadaire sur les 4 dernières semaines
             weekly_progression = []
             for week_offset in range(4, 0, -1):
-                week_start_offset = (date.today() - timedelta(days=date.today().weekday() + (week_offset - 1) * 7)).isoformat()
-                week_end_offset = (date.today() - timedelta(days=date.today().weekday() + (week_offset - 2) * 7)).isoformat()
+                week_start_offset = (now_paris().date() - timedelta(days=now_paris().date().weekday() + (week_offset - 1) * 7)).isoformat()
+                week_end_offset = (now_paris().date() - timedelta(days=now_paris().date().weekday() + (week_offset - 2) * 7)).isoformat()
                 c.execute("""
                     SELECT COALESCE(SUM(points), 0)
                     FROM completed_tasks 
@@ -1033,7 +1051,7 @@ def sats():
             })
         
         # === COMPTE À REBOURS JUSQU'AU DIMANCHE ===
-        today_date = date.today()
+        today_date = now_paris().date()
         days_until_sunday = (6 - today_date.weekday()) % 7
         if days_until_sunday == 0:
             countdown_text = "C'est dimanche ! 🎁"
@@ -1133,7 +1151,7 @@ def sats():
         rooms_list = sorted(rooms_recap.values(), key=lambda x: x['task_count'], reverse=True)
         
         # === RÉCUPÉRER LES TÂCHES DE LA SEMAINE POUR LE CAMEMBERT ===
-        week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+        week_start = (now_paris().date() - timedelta(days=now_paris().date().weekday())).isoformat()
         c.execute("""
             SELECT category, COUNT(*) as count
             FROM completed_tasks
@@ -1207,7 +1225,7 @@ def stats_graphique():
             return redirect(url_for('invite_partner'))
         
         house_id = row[0]
-        today = date.today()
+        today = now_paris().date()
         week_start = (today - timedelta(days=today.weekday())).isoformat()
         
         # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
@@ -1531,7 +1549,7 @@ def check_weekly_reset(house_id, conn=None):
     reset_performed = False
     
     try:
-        today = date.today()
+        today = now_paris().date()
         current_week_start = (today - timedelta(days=today.weekday())).isoformat()  # Lundi de cette semaine
         
         # Récupérer la date de dernière réinitialisation hebdomadaire
@@ -3194,7 +3212,7 @@ def compute_daily_streak(conn, email):
             return 0
         from datetime import date, timedelta
         streak = 0
-        current = date.today()
+        current = now_paris().date()
         # Compter à rebours tant que la date existe dans la liste
         while True:
             dstr = current.isoformat()
@@ -4013,7 +4031,7 @@ def check_house_activity_and_send_message(house_id):
         c = conn.cursor()
         
         # Vérifier l'activité récente (dernières 72h)
-        three_days_ago = (datetime.now() - timedelta(days=3)).isoformat()
+        three_days_ago = (now_paris() - timedelta(days=3)).isoformat()
         
         c.execute("""
             SELECT COUNT(*) FROM tasks 
@@ -4087,7 +4105,7 @@ def create_reminder(house_id, reminder_type, scheduled_for=None):
         from datetime import datetime, timedelta
         
         if scheduled_for is None:
-            scheduled_for = datetime.now() + timedelta(hours=1)
+            scheduled_for = now_paris() + timedelta(hours=1)
         elif isinstance(scheduled_for, str):
             scheduled_for = datetime.fromisoformat(scheduled_for)
         
@@ -4127,7 +4145,7 @@ def get_pending_reminders():
     conn = get_db_connection()
     c = conn.cursor()
     
-    now = datetime.now().isoformat()
+    now = now_paris().isoformat()
     c.execute("""
         SELECT id, house_id, reminder_type, message, scheduled_for
         FROM reminders
@@ -4184,7 +4202,7 @@ def send_reminder(reminder_id):
             UPDATE reminders 
             SET is_sent = 1, sent_at = ?
             WHERE id = ?
-        """, (datetime.now().isoformat(), reminder_id))
+        """, (now_paris().isoformat(), reminder_id))
         
         conn.commit()
         conn.close()
@@ -4277,7 +4295,7 @@ def update_user_reminder_settings(user_email, enabled=None, frequency=None, quie
             
             if updates:
                 updates.append("last_updated = ?")
-                params.append(datetime.now().isoformat())
+                params.append(now_paris().isoformat())
                 params.append(user_email)
                 
                 query = f"UPDATE user_reminder_settings SET {', '.join(updates)} WHERE user_email = ?"
@@ -4329,7 +4347,7 @@ def get_house_players_points(house_id, existing_conn=None):
     _own_conn = existing_conn is None
     conn = existing_conn if existing_conn else get_db_connection()
     c = conn.cursor()
-    today = date.today().isoformat()
+    today = now_paris().date().isoformat()
     
     # Récupérer tous les champs nécessaires pour les avatars
     c.execute("""
@@ -5361,7 +5379,7 @@ def add_players():
         
         # Points du jour pour le joueur actuel
         from datetime import date
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         c.execute("SELECT COALESCE(SUM(points),0) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (session['user'], today))
         pts = c.fetchone()
         current_user_daily_points = int(pts[0]) if pts and pts[0] else 0
@@ -6312,7 +6330,7 @@ def baby_messages():
 
     # 🗑️ NETTOYAGE AUTOMATIQUE : Supprimer les messages de plus d'un mois
     from datetime import datetime, timedelta
-    one_month_ago = (datetime.now() - timedelta(days=30)).isoformat()
+    one_month_ago = (now_paris() - timedelta(days=30)).isoformat()
     
     c.execute("""
         DELETE FROM messages 
@@ -6967,14 +6985,14 @@ def rewards():
     # Vérifier si c'est dimanche après 6h du matin
     # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - remettre les lignes suivantes pour la prod
     from datetime import datetime, timedelta
-    now = datetime.now()
+    now = now_paris()
     # is_sunday = now.weekday() == 6  # 6 = dimanche
     # is_after_6am = now.hour >= 6
     # can_open = is_sunday and is_after_6am
     can_open = True  # TEMP: Toujours accessible pour les tests
     
     # Déterminer le gagnant de la semaine (celui avec le plus de points cette semaine)
-    today = datetime.now()
+    today = now_paris()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     c.execute("""
@@ -7303,7 +7321,7 @@ def open_reward_box():
     # Vérifier si c'est dimanche après 6h du matin
     # TEMPORAIREMENT DÉSACTIVÉ POUR TEST
     from datetime import datetime, timedelta
-    now = datetime.now()
+    now = now_paris()
     # is_sunday = now.weekday() == 6
     # is_after_6am = now.hour >= 6
     # if not (is_sunday and is_after_6am):
@@ -7313,7 +7331,7 @@ def open_reward_box():
     # TEMP: Pas de vérification pour les tests
     
     # Calculer le début de la semaine
-    today = datetime.now()
+    today = now_paris()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     # Vérifier que l'utilisateur est le gagnant de la semaine
@@ -7806,7 +7824,7 @@ def buy_reward(reward_id):
     c.execute("SELECT cost FROM rewards WHERE id=?", (reward_id,))
     cost = c.fetchone()[0]
 
-    today = date.today().isoformat()
+    today = now_paris().date().isoformat()
     c.execute("SELECT * FROM user_rewards WHERE user_email=? AND reward_id=? AND purchased_date=?", (session['user'], reward_id, today))
     already_bought_today = c.fetchone()
 
@@ -7858,7 +7876,7 @@ def gifts():
     
     # Vérifier si c'est dimanche après 6h du matin
     from datetime import datetime
-    now = datetime.now()
+    now = now_paris()
     is_sunday = now.weekday() == 6  # 6 = dimanche
     is_morning_unlock = now.hour >= 6
     can_open_gifts = is_sunday and is_morning_unlock
@@ -7904,7 +7922,7 @@ def reveal_gift(gift_id):
     
     # Vérifier si c'est dimanche après 6h du matin
     from datetime import datetime
-    now = datetime.now()
+    now = now_paris()
     is_sunday = now.weekday() == 6
     is_morning_unlock = now.hour >= 6
     can_open_gifts = is_sunday and is_morning_unlock
@@ -7928,7 +7946,7 @@ def reveal_gift(gift_id):
         return redirect(url_for('gifts'))
     
     # Révéler le cadeau
-    current_date = datetime.now().isoformat()
+    current_date = now_paris().isoformat()
     c.execute("INSERT INTO revealed_gifts (house_id, gift_id, revealed_by, revealed_date) VALUES (?, ?, ?, ?)", 
               (house_id, gift_id, session['user'], current_date))
     conn.commit()
@@ -8242,7 +8260,7 @@ def forgot_password():
             c.execute("DELETE FROM password_reset_tokens WHERE email=? AND used=0", (email,))
             # Générer un token sécurisé valable 1 heure
             token = secrets.token_urlsafe(32)
-            expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
+            expires_at = (now_paris() + timedelta(hours=1)).isoformat()
             c.execute("INSERT INTO password_reset_tokens (token, email, expires_at, used) VALUES (?, ?, ?, 0)",
                       (token, email, expires_at))
             conn.commit()
@@ -8274,7 +8292,7 @@ def reset_password(token):
         flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
         return redirect(url_for('forgot_password'))
 
-    if datetime.now() > datetime.fromisoformat(expires_at):
+    if now_paris() > datetime.fromisoformat(expires_at):
         conn.close()
         flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
         return redirect(url_for('forgot_password'))
@@ -8630,7 +8648,7 @@ def create_profile_post():
         
         from datetime import date
         house_code = generate_house_code()
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         c.execute("""
             INSERT INTO houses (name, house_name, house_type, level, health, mood, code, progress, last_reset_date) 
             VALUES (?, ?, ?, 1, 100, 'happy', ?, 0, ?)
@@ -9172,7 +9190,7 @@ def fullhouse():
 @app.route('/menu')
 def menu():
     from datetime import datetime
-    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {datetime.now()} 🚨🚨🚨")
+    _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {now_paris()} 🚨🚨🚨")
     players = []
     current_user_name = session.get('user', '')
     house_name = None
@@ -9266,7 +9284,7 @@ def menu():
             
             # Réinitialisation quotidienne de la santé/progression de la maison
             try:
-                today = date.today().isoformat()
+                today = now_paris().date().isoformat()
                 c.execute("SELECT health, last_reset_date FROM houses WHERE id=?", (house_id,))
                 hrow = c.fetchone()
                 if hrow:
@@ -9276,7 +9294,7 @@ def menu():
                         conn.commit()
             except Exception:
                 try:
-                    today = date.today().isoformat()
+                    today = now_paris().date().isoformat()
                     c.execute("SELECT progress, last_reset_date FROM houses WHERE id=?", (house_id,))
                     prow = c.fetchone()
                     if prow:
@@ -9676,7 +9694,7 @@ def profil_joueur(player_email):
             except Exception:
                 pass
             try:
-                today = date.today().strftime('%Y-%m-%d')
+                today = now_paris().date().strftime('%Y-%m-%d')
                 c.execute("SELECT email, COUNT(*) FROM tasks WHERE house_id=? AND date=? AND done=1 GROUP BY email", (house_id, today))
                 daily_report = [{'email': r[0], 'count': r[1]} for r in c.fetchall()]
             except Exception:
@@ -9761,7 +9779,7 @@ def classement():
             try:
                 players = get_house_players_points(house_id, existing_conn=conn)
                 from datetime import date, timedelta
-                today = date.today()
+                today = now_paris().date()
                 monday = (today - timedelta(days=today.weekday())).isoformat()
                 thirty_days_ago = (today - timedelta(days=30)).isoformat()
                 today_iso = today.isoformat()
@@ -9934,7 +9952,7 @@ def api_send_malus():
 
         # Limiter à 3 malus envoyés par expéditeur par jour vers la même cible
         from datetime import date as _date
-        today = _date.today().isoformat()
+        today = now_paris().date().isoformat()
         c.execute("""
             SELECT COUNT(*) FROM completed_tasks
             WHERE user_email=? AND category='malus'
@@ -10214,7 +10232,7 @@ def api_give_malus():
 
         # Limiter à 3 malus par jour vers la même cible
         from datetime import date as _date
-        today = _date.today().isoformat()
+        today = now_paris().date().isoformat()
         c.execute("""
             SELECT COUNT(*) FROM completed_tasks
             WHERE user_email=? AND category='malus'
@@ -10252,7 +10270,7 @@ def api_give_malus():
 
         # 💀 SKULL : Ajouter un skull pendant 1h
         from datetime import timedelta
-        skull_expires = (datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        skull_expires = (now_paris() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
         c.execute("""
             UPDATE users 
             SET skull_count = COALESCE(skull_count, 0) + 1,
@@ -10297,7 +10315,7 @@ def api_active_malus():
 
         # Seuil = il y a 60 minutes
         from datetime import timedelta
-        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         # Joueurs ayant reçu un malus dans la dernière heure
         # Cast explicite pour compatibilité PostgreSQL
@@ -10352,7 +10370,7 @@ def api_active_bonus():
         house_id = row[0]
 
         from datetime import timedelta
-        since = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         c.execute("""
             SELECT ct.user_email, u.name, ct.task_name
@@ -10762,7 +10780,7 @@ def api_proof_validate():
             c.execute("""INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
                          VALUES (?, ?, 'proof_penalty', -10, ?, CURRENT_TIMESTAMP)""",
                       (target_email, f'💀 Tricherie prouvée sur : {task_name}', house_id))
-            skull_expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            skull_expires = (now_paris() + timedelta(hours=24)).isoformat()
             c.execute("""UPDATE users SET skull_count = COALESCE(skull_count, 0) + 1,
                                           skull_expires_at = ?
                          WHERE email=?""", (skull_expires, target_email))
@@ -11030,7 +11048,7 @@ def api_upload_proof():
 
         # Sauvegarder la photo
         filename = secure_filename(photo_file.filename)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = now_paris().strftime('%Y%m%d_%H%M%S')
         unique_filename = f"proof_{suspicion_id}_{timestamp}_{filename}"
         
         # Créer le dossier uploads/proofs s'il n'existe pas
@@ -11454,7 +11472,7 @@ def debug_points():
     players = get_house_players_points(house_id)
     # Calcul des points du jour (heure locale) comme dans /menu
     from datetime import date
-    today = date.today().isoformat()
+    today = now_paris().date().isoformat()
     for p in players:
         email = p.get('email')
         c.execute("SELECT COALESCE(SUM(points),0), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (email, today))
@@ -11939,7 +11957,7 @@ def custom_task_page(task_id):
         players = get_house_players_points(user_house_id)
         # calculs journaliers
         from datetime import date
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         c.execute("SELECT SUM(points), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (session['user'], today))
         sums = c.fetchone()
         if sums and sums[0] is not None:
@@ -11957,7 +11975,7 @@ def custom_task_page(task_id):
         # Valider la tâche personnalisée
         from datetime import datetime, date
         import random
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         
         # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
         baby_unlimited_tasks = [
@@ -12265,7 +12283,7 @@ def task_enhanced(cat, task_id):
                 pass
             # calculs journaliers
             from datetime import date
-            today = date.today().isoformat()
+            today = now_paris().date().isoformat()
             # Utiliser l'heure locale pour correspondre à l'affichage du menu
             c.execute("SELECT SUM(points), COUNT(*) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)=?", (session['user'], today))
             sums = c.fetchone()
@@ -12329,7 +12347,7 @@ def task_enhanced(cat, task_id):
 
         from datetime import datetime, date
         import random
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         
         # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
         baby_unlimited_tasks = [
@@ -12688,7 +12706,7 @@ def api_validate_task():
         _dbg(f"   📌 FINAL task_name = '{task_name}'")
         _dbg(f"📋 [END DEBUG]\n")
         
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
         
         # 🍼 Tâches bébé : aucune restriction (biberon, couche, dormir bébé...)
         baby_unlimited_tasks = [
@@ -12853,7 +12871,7 @@ def api_validate_task():
                     c.execute("""
                         INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
                         VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-                    """, (user_house_id, player_email, message_text, datetime.now().isoformat()))
+                    """, (user_house_id, player_email, message_text, now_paris().isoformat()))
                     message_id = c.lastrowid
                     _dbg(f"✅ Message baby_tracking créé avec ID: {message_id}")
                     
@@ -13041,8 +13059,7 @@ def api_daily_tasks():
             return {'tasks': []}, 200
         
         house_id = row[0]
-        from datetime import date
-        today = date.today().isoformat()
+        today = now_paris().date().isoformat()
 
         c.execute("""
             SELECT u.name, ct.task_name, ct.points, ct.category,
@@ -13093,7 +13110,7 @@ def api_weekly_tasks():
         if not row or not row[0]:
             return {'tasks': []}, 200
         house_id = row[0]
-        monday = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+        monday = (now_paris().date() - timedelta(days=now_paris().date().weekday())).isoformat()
         c.execute("""
             SELECT u.name, ct.task_name, ct.points, ct.category
             FROM completed_tasks ct
@@ -13130,7 +13147,7 @@ def api_monthly_tasks():
             return {'tasks': []}, 200
         house_id = row[0]
         # 30 derniers jours pour que le mois ait toujours >= semaine
-        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+        thirty_days_ago = (now_paris().date() - timedelta(days=30)).isoformat()
         c.execute("""
             SELECT u.name, ct.task_name, ct.points, ct.category
             FROM completed_tasks ct
@@ -13235,7 +13252,7 @@ def api_weekly_stats():
         house_id = row[0]
 
         # Lundi de la semaine en cours
-        today = date.today()
+        today = now_paris().date()
         monday = (today - timedelta(days=today.weekday())).isoformat()
 
         players = get_house_players_points(house_id)
@@ -13706,7 +13723,7 @@ def save_baby_tracking():
         c.execute("""
             INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
             VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-        """, (house_id, session['user'], message_text, datetime.now().isoformat()))
+        """, (house_id, session['user'], message_text, now_paris().isoformat()))
         
         message_id = c.lastrowid
         conn.commit()

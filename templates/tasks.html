@@ -21,7 +21,6 @@
     .avatar-square-wrapper .vbar { left: calc(100% + 12px); right: auto; }
 }
 
-
 /* Palette harmonisée */
 :root{
     --teal-light:#A6D3DC; /* A6D3DC */
@@ -80,49 +79,6 @@ body {
     min-height: 100vh;
 }
 
-/* Bouton retour glassmorphisme */
-.back-btn-glass {
-    position: fixed;
-    top: 24px;
-    left: 24px;
-    z-index: 2001;
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #153036;
-    font-size: 28px;
-    font-weight: bold;
-    text-decoration: none;
-    box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    transition: all 0.3s ease;
-}
-
-.back-btn-glass:hover {
-    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-.back-btn-glass:active {
-    transform: scale(0.95);
-}
-
-@media (max-width: 520px) {
-    .back-btn-glass {
-        top: 20px;
-        left: 20px;
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-    }
-}
 /* Titre de catégorie en noir */
 .container-menu h1 { color: var(--adaptive-text, #153036); }
 
@@ -340,7 +296,6 @@ body {
 .points-badge.animation-done {
     animation: none;
 }
-
 
 /* Modal d'édition des points - OPTIMISÉE MOBILE */
 .points-modal { position: fixed; inset: 0; display: none; z-index: 2000; }
@@ -700,7 +655,6 @@ window.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <div class="container-menu" style="max-width:900px; margin:0 auto; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius:30px; padding:40px 30px 50px; box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6); border: 2px solid rgba(255, 255, 255, 0.5);">
-
 
     <div class="tasks">
         {% if tasks_with_images and tasks_with_images|length > 0 %}
