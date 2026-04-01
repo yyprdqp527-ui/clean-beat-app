@@ -34,7 +34,7 @@
 }
 
 /* ══ Page Classement plein écran ══ */
-body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padding-bottom: 40px; }
+body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padding-bottom: 32px; }
 
 /* Cadre titre - Glassmorphisme identique à sats.html */
 .classement-title-card {
@@ -42,14 +42,14 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 24px;
-    padding: 20px;
-    margin: 12px 16px 0;
+    padding: 14px 20px;
+    margin: 8px 16px 0;
     border: 2px solid rgba(253,174,84,0.3);
     box-shadow: 0 12px 40px rgba(253,174,84,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
     text-align: center;
 }
 .classement-title-card h1 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 900;
     color: #153036;
     margin: 0;
@@ -82,7 +82,8 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     display: flex;
     flex-direction: column;
     font-family: 'Montserrat', sans-serif;
-    padding-bottom: 60px;
+    padding-bottom: 40px;
+    gap: 0;
 }
 
 /* Section titre */
@@ -107,7 +108,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 2px solid rgba(255,255,255,0.5);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 .cw-player:last-of-type { margin-bottom: 0; }
@@ -176,7 +177,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 .ranking-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px; padding: 10px; margin: 16px 16px 12px;
+    border-radius: 24px; padding: 6px 10px; margin: 10px 16px 8px;
     border: 2px solid rgba(255,255,255,0.5);
     box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
     overflow: visible;
@@ -184,7 +185,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 .ranking-wrapper { position: relative; display: flex; align-items: center; gap: 4px; }
 .players-row {
     display: flex; justify-content: center; align-items: flex-end;
-    gap: 10px; padding: 20px 10px 10px; min-height: 200px;
+    gap: 8px; padding: 14px 10px 8px; min-height: 160px;
     overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; flex: 1;
 }
 .players-row::-webkit-scrollbar { display: none; }
@@ -202,8 +203,8 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 .scroll-arrow:hover { transform: translateY(-50%) scale(1.15); }
 .scroll-arrow:active { transform: translateY(-50%) scale(0.9); }
 .player-card {
-    width: 90px; background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(166,211,220,0.2));
-    border-radius: 16px; padding: 12px 8px 28px; text-align: center;
+    width: 85px; background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(166,211,220,0.2));
+    border-radius: 16px; padding: 10px 6px 26px; text-align: center;
     border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 4px 16px rgba(89,113,118,0.15);
     transition: all 0.3s ease; position: relative; flex-shrink: 0;
 }
@@ -234,10 +235,10 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     max-width: 80px; margin: 0 auto; position: absolute; bottom: 6px;
     left: 50%; transform: translateX(-50%); width: calc(100% - 16px);
 }
-.player-points { font-size: 16px; font-weight: 900; color: #FDAE54; margin-bottom: 2px; margin-top: 8px; }
-.player-card.rank-1 .player-points { font-size: 20px; color: #FFD700; text-shadow: 0 2px 4px rgba(255,215,0,0.3); }
-.player-card.rank-2 .player-points { font-size: 17px; }
-.player-tasks-podium { font-size: 10px; color: #597176; margin-bottom: 26px; }
+.player-points { font-size: 15px; font-weight: 900; color: #FDAE54; margin-bottom: 2px; margin-top: 6px; }
+.player-card.rank-1 .player-points { font-size: 18px; color: #FFD700; text-shadow: 0 2px 4px rgba(255,215,0,0.3); }
+.player-card.rank-2 .player-points { font-size: 16px; }
+.player-tasks-podium { font-size: 10px; color: #597176; margin-bottom: 22px; }
 @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-4px);} }
 
 /* ══ Boutons filtre ══ */
@@ -245,14 +246,14 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
     padding: 0 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 .filter-btn {
-    padding: 14px 18px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.5);
+    padding: 12px 16px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.5);
     background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(166,211,220,0.15));
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    font-size: 14px; font-weight: 700; color: #597176;
+    font-size: 13px; font-weight: 700; color: #597176;
     cursor: pointer; transition: all 0.2s ease;
     box-shadow: 0 4px 12px rgba(89,113,118,0.1);
     text-align: center;
@@ -274,15 +275,25 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 20px; padd
 .classement-period-row {
     display: flex; gap: 8px;
 }
-.classement-period-row .filter-btn { flex: 1; padding: 12px 8px; font-size: 13px; }
+.classement-period-row .filter-btn { flex: 1; padding: 10px 8px; font-size: 13px; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .podium-view { display: none; }
 .podium-view.active { display: block; }
 .tab-section-title {
-    font-size: 16px; font-weight: 800; color: rgba(255,255,255,0.95);
-    padding: 18px 20px 6px; text-align: center;
+    font-size: 15px; font-weight: 800; color: rgba(255,255,255,0.95);
+    padding: 10px 20px 4px; text-align: center;
     text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ══ Tab-panels : remplir l'espace restant ══ */
+.tab-panel.active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.tab-panel .classement-players-wrap {
+    flex: 1;
 }
 
 </style>
