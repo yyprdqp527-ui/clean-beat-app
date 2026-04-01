@@ -108,6 +108,7 @@ class _CompatCursor:
         self.lastrowid = None
         self.rowcount = 0
         self._pragma_mode = False
+        self._sp_counter = 0
 
     def _adapt(self, sql):
         if not self._is_pg:
@@ -160,16 +161,33 @@ class _CompatCursor:
             self.lastrowid = row[0] if row else None
             self.rowcount = self._cur.rowcount
             return
+        if self._is_pg:
+            # Utiliser un SAVEPOINT pour ne PAS annuler les opérations précédentes en cas d'erreur
+            self._sp_counter += 1
+            sp_name = f"sp_{self._sp_counter}"
+            try:
+                self._cur.execute(f"SAVEPOINT {sp_name}")
+            except Exception:
+                pass
         try:
             self._cur.execute(sql, params if params else ())
         except Exception:
             if self._is_pg:
-                # PostgreSQL: rollback automatique pour débloquer la transaction
+                # Rollback seulement jusqu'au SAVEPOINT, pas toute la transaction
                 try:
-                    self._cur.connection.rollback()
+                    self._cur.execute(f"ROLLBACK TO SAVEPOINT {sp_name}")
+                except Exception:
+                    try:
+                        self._cur.connection.rollback()
+                    except Exception:
+                        pass
+            raise
+        else:
+            if self._is_pg:
+                try:
+                    self._cur.execute(f"RELEASE SAVEPOINT {sp_name}")
                 except Exception:
                     pass
-            raise
         if not self._is_pg:
             self.lastrowid = getattr(self._cur, 'lastrowid', None)
         self.rowcount = self._cur.rowcount
@@ -12761,6 +12779,10 @@ def api_validate_task():
                  (player_email, user_house_id, category, task_name, task_points))
         c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
 
+        # ✅ COMMIT IMMÉDIAT — sécuriser l'INSERT + UPDATE avant toute opération optionnelle
+        # Sur PostgreSQL, si une requête échoue après, le rollback auto annulerait l'INSERT
+        conn.commit()
+
         # 🟠 Éteindre la pastille de la pièce : marquer les task_added de cette catégorie comme lus
         # Pour les enfants sans téléphone : marquer aussi pour le parent connecté (session['user'])
         try:
@@ -12883,8 +12905,11 @@ def api_validate_task():
         except Exception:
             pass
 
-        # ✅ COMMIT en premier pour que les données soient disponibles pour les autres clients
-        conn.commit()
+        # ✅ Commit des opérations optionnelles (badges, santé, baby tracking)
+        try:
+            conn.commit()
+        except Exception:
+            pass
         
         # 🔌 WebSocket notification - APRÈS le commit pour que les autres clients voient les nouvelles données
         _dbg(f"🔍 DEBUG WebSocket: SOCKETIO_AVAILABLE={SOCKETIO_AVAILABLE}, socketio={socketio is not None}")
