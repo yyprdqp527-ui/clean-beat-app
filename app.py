@@ -3200,7 +3200,7 @@ def add_cache_headers(response):
             response.headers['Cache-Control'] = 'public, max-age=604800, immutable'  # 7 jours
         # Cache les CSS/JS pendant 1 jour
         elif any(ext in request.path for ext in ['.css', '.js']):
-            response.headers['Cache-Control'] = 'public, max-age=86400'  # 1 jour
+            response.headers['Cache-Control'] = 'public, max-age=3600'  # 1 heure (deploy fréquents)
         else:
             response.headers['Cache-Control'] = 'public, max-age=3600'  # 1h par défaut pour le reste
     else:
@@ -5498,11 +5498,20 @@ def add_child():
             # Emoji (legacy)
             avatar = child_avatar
         elif child_photo and child_photo.filename:
-            # Sauvegarder la photo
+            # Sauvegarder la photo (compressée)
             filename = secure_filename(child_photo.filename)
             unique_filename = f"child_{int(time.time())}_{filename}"
+            # Forcer extension .jpg après compression
+            unique_filename = os.path.splitext(unique_filename)[0] + '.jpg'
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            child_photo.save(filepath)
+            try:
+                from PIL import Image
+                import io as _io
+                img = Image.open(child_photo).convert('RGB')
+                img.thumbnail((400, 400), Image.LANCZOS)
+                img.save(filepath, format='JPEG', quality=75, optimize=True)
+            except ImportError:
+                child_photo.save(filepath)
             avatar_file = unique_filename
         else:
             # Avatar par défaut DiceBear
@@ -10739,6 +10748,10 @@ def api_proof_submit():
     # Limite taille ~2 Mo en base64
     if len(photo_data) > 2_800_000:
         return jsonify({'success': False, 'error': 'Photo trop grande (max 2 Mo)'}), 400
+    # Compresser la photo base64 (max 800×800, JPEG q75)
+    compressed = save_photo_from_base64(photo_data)
+    if compressed:
+        photo_data = compressed
     conn = get_db_connection()
     c = conn.cursor()
     try:
@@ -11090,8 +11103,18 @@ def api_upload_proof():
         proofs_dir = os.path.join(app.root_path, 'uploads', 'proofs')
         os.makedirs(proofs_dir, exist_ok=True)
         
-        photo_path = os.path.join(proofs_dir, unique_filename)
-        photo_file.save(photo_path)
+        # Compresser la photo avant sauvegarde (max 1200×1200, JPEG q80)
+        try:
+            from PIL import Image
+            import io as _io
+            img = Image.open(photo_file).convert('RGB')
+            img.thumbnail((1200, 1200), Image.LANCZOS)
+            unique_filename = os.path.splitext(unique_filename)[0] + '.jpg'
+            photo_path = os.path.join(proofs_dir, unique_filename)
+            img.save(photo_path, format='JPEG', quality=80, optimize=True)
+        except ImportError:
+            photo_path = os.path.join(proofs_dir, unique_filename)
+            photo_file.save(photo_path)
         
         # Enregistrer le chemin relatif dans la BD
         relative_path = f'uploads/proofs/{unique_filename}'
@@ -11786,7 +11809,17 @@ def add_task_page(cat, task_id=None):
                 filename = f"custom_{uuid.uuid4().hex}.{ext}"
                 image_path = os.path.join('static', 'images', filename)
                 os.makedirs(os.path.dirname(image_path), exist_ok=True)
-                file.save(image_path)
+                # Compresser l'image uploadée (max 800×800, JPEG q80)
+                try:
+                    from PIL import Image
+                    import io as _io
+                    img = Image.open(file).convert('RGB')
+                    img.thumbnail((800, 800), Image.LANCZOS)
+                    filename = f"custom_{uuid.uuid4().hex}.jpg"
+                    image_path = os.path.join('static', 'images', filename)
+                    img.save(image_path, format='JPEG', quality=80, optimize=True)
+                except ImportError:
+                    file.save(image_path)
                 task_image_filename = filename
         
         # Si pas de fichier uploadé, utiliser l'image sélectionnée
