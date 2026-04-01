@@ -171,6 +171,9 @@ class _CompatCursor:
                 pass
         try:
             self._cur.execute(sql, params if params else ())
+            if not self._is_pg:
+                self.lastrowid = getattr(self._cur, 'lastrowid', None)
+            self.rowcount = self._cur.rowcount
         except Exception:
             if self._is_pg:
                 # Rollback seulement jusqu'au SAVEPOINT, pas toute la transaction
@@ -182,15 +185,6 @@ class _CompatCursor:
                     except Exception:
                         pass
             raise
-        else:
-            if self._is_pg:
-                try:
-                    self._cur.execute(f"RELEASE SAVEPOINT {sp_name}")
-                except Exception:
-                    pass
-        if not self._is_pg:
-            self.lastrowid = getattr(self._cur, 'lastrowid', None)
-        self.rowcount = self._cur.rowcount
 
     def executemany(self, sql, params_list):
         sql = self._adapt(sql)
