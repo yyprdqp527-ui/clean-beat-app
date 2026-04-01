@@ -108,7 +108,6 @@ class _CompatCursor:
         self.lastrowid = None
         self.rowcount = 0
         self._pragma_mode = False
-        self._sp_counter = 0
 
     def _adapt(self, sql):
         if not self._is_pg:
@@ -161,30 +160,18 @@ class _CompatCursor:
             self.lastrowid = row[0] if row else None
             self.rowcount = self._cur.rowcount
             return
-        if self._is_pg:
-            # Utiliser un SAVEPOINT pour ne PAS annuler les opérations précédentes en cas d'erreur
-            self._sp_counter += 1
-            sp_name = f"sp_{self._sp_counter}"
-            try:
-                self._cur.execute(f"SAVEPOINT {sp_name}")
-            except Exception:
-                pass
         try:
             self._cur.execute(sql, params if params else ())
-            if not self._is_pg:
-                self.lastrowid = getattr(self._cur, 'lastrowid', None)
-            self.rowcount = self._cur.rowcount
         except Exception:
             if self._is_pg:
-                # Rollback seulement jusqu'au SAVEPOINT, pas toute la transaction
                 try:
-                    self._cur.execute(f"ROLLBACK TO SAVEPOINT {sp_name}")
+                    self._cur.connection.rollback()
                 except Exception:
-                    try:
-                        self._cur.connection.rollback()
-                    except Exception:
-                        pass
+                    pass
             raise
+        if not self._is_pg:
+            self.lastrowid = getattr(self._cur, 'lastrowid', None)
+        self.rowcount = self._cur.rowcount
 
     def executemany(self, sql, params_list):
         sql = self._adapt(sql)
