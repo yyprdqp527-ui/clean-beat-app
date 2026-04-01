@@ -4453,16 +4453,14 @@ def get_house_players_points(house_id, existing_conn=None):
         skull_active = False
         if skull_expires_at_raw:
             try:
-                from datetime import datetime as _dt2
-                skull_active = _dt2.fromisoformat(str(skull_expires_at_raw)) > _dt2.utcnow()
+                skull_active = datetime.fromisoformat(str(skull_expires_at_raw)) > now_paris()
             except Exception:
                 pass
         # Bonus actif (❤️)
         bonus_active = False
         if bonus_expires_at_raw:
             try:
-                from datetime import datetime as _dt3
-                bonus_active = _dt3.fromisoformat(str(bonus_expires_at_raw)) > _dt3.utcnow()
+                bonus_active = datetime.fromisoformat(str(bonus_expires_at_raw)) > now_paris()
             except Exception:
                 pass
         skull_pending = email in _skull_pending_map
@@ -10005,8 +10003,7 @@ def api_send_malus():
             VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
         """, (target_email, task_name, points, house_id))
         # Badge 💀 sur l'avatar de la cible pendant 1 heure
-        from datetime import datetime as _dt_malus, timedelta as _td_malus
-        skull_until = (_dt_malus.utcnow() + _td_malus(hours=1)).isoformat()
+        skull_until = (now_paris() + timedelta(hours=1)).isoformat()
         c.execute("UPDATE users SET skull_expires_at=? WHERE email=?", (skull_until, target_email))
         conn.commit()
 
@@ -10094,8 +10091,7 @@ def api_send_bonus():
             VALUES (?, ?, 'bonus', ?, ?, CURRENT_TIMESTAMP)
         """, (target_email, task_name, points, house_id))
         # Badge ❤️ sur l'avatar de la cible pendant 1 heure
-        from datetime import datetime as _dt_bonus, timedelta as _td_bonus
-        bonus_until = (_dt_bonus.utcnow() + _td_bonus(hours=1)).isoformat()
+        bonus_until = (now_paris() + timedelta(hours=1)).isoformat()
         c.execute("UPDATE users SET bonus_expires_at=? WHERE email=?", (bonus_until, target_email))
         conn.commit()
 
@@ -10488,6 +10484,8 @@ def api_house_suspicions():
             child_parent = row[12]  # created_by
             can_upload_for_child = (is_child and child_parent == session['user'])
             
+            photo_p = row[8]
+            photo_url = ('/' + photo_p) if photo_p else None
             suspicions.append({
                 'id': row[0],
                 'suspecting_email': row[1],
@@ -10497,7 +10495,8 @@ def api_house_suspicions():
                 'task_name': row[5],
                 'task_points': row[6],
                 'status': row[7],
-                'photo_path': row[8],
+                'photo_path': photo_p,
+                'photo_url': photo_url,
                 'created_at': str(row[9]),
                 'resolved_at': str(row[10]) if row[10] else None,
                 # Indiquer qui est l'utilisateur actuel
@@ -13099,7 +13098,7 @@ def api_daily_tasks():
 
         c.execute("""
             SELECT u.name, ct.task_name, ct.points, ct.category,
-                   ct.completed_at as done_at
+                   ct.completed_at as done_at, ct.user_email, ct.id
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
@@ -13110,7 +13109,7 @@ def api_daily_tasks():
         
         rows = c.fetchall()
         tasks = []
-        for name, task_name, points, category, done_at in rows:
+        for name, task_name, points, category, done_at, user_email, task_id in rows:
             time_str = ''
             try:
                 paris_dt = to_paris(done_at)
@@ -13122,9 +13121,12 @@ def api_daily_tasks():
                 pass
             tasks.append({
                 'player_name': name or '?',
+                'player_email': user_email or '',
                 'task_name': task_name,
                 'points': points or 0,
-                'time': time_str
+                'time': time_str,
+                'task_id': task_id or 0,
+                'is_current_user': (user_email == session.get('user', '')),
             })
         return {'tasks': tasks}, 200
         
