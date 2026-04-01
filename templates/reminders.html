@@ -425,12 +425,14 @@
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-                // Insérer avant le premier article coché (done), ou en fin de liste
-                var firstDone = list.querySelector('.reminder-card.done');
-                if (firstDone) {
-                    list.insertBefore(card, firstDone);
-                } else {
+                // Insérer en début de liste (après le section-title)
+                var sTitle = list.querySelector('.section-title');
+                if (sTitle && sTitle.nextSibling) {
+                    list.insertBefore(card, sTitle.nextSibling);
+                } else if (sTitle) {
                     list.appendChild(card);
+                } else {
+                    list.insertBefore(card, list.firstChild);
                 }
 
                 // Mettre à jour le compteur section-title
@@ -440,20 +442,6 @@
             })
             .catch(function(){ showToast('❌ Erreur réseau'); });
     });
-
-    // ─── Accumulation des points (toast au lieu de redirection) ─────────────────
-    var _pendingPts = 0;
-    var _ptsTimer = null;
-
-    function _showPtsToast() {
-        if (_ptsTimer) clearTimeout(_ptsTimer);
-        _ptsTimer = setTimeout(function() {
-            if (_pendingPts > 0) {
-                showToast('🎉 +' + _pendingPts + ' point' + (_pendingPts > 1 ? 's' : '') + ' !');
-                _pendingPts = 0;
-            }
-        }, 1500);
-    }
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
     window.toggleReminder = function(id) {
@@ -478,11 +466,7 @@
                     if (data.points_earned > 0 && checkEl) {
                         showPlusOne(checkEl);
                     }
-                    // Accumuler les points (affichage toast)
-                    if (data.points_earned > 0) {
-                        _pendingPts += data.points_earned;
-                        _showPtsToast();
-                    }
+
                     // Si plus aucun article non fait → effacer le badge icône
                     // Mettre à jour le badge icône app après chaque action
                     (function(){ fetch('/api/unread_counts', {cache: 'no-store'})
@@ -582,12 +566,14 @@
                 '</div>' +
                 '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-            // Insérer avant le premier article coché (done), ou en fin de liste
-            var firstDone = list.querySelector('.reminder-card.done');
-            if (firstDone) {
-                list.insertBefore(card, firstDone);
-            } else {
+            // Insérer en début de liste (après le section-title)
+            var wsTitle = list.querySelector('.section-title');
+            if (wsTitle && wsTitle.nextSibling) {
+                list.insertBefore(card, wsTitle.nextSibling);
+            } else if (wsTitle) {
                 list.appendChild(card);
+            } else {
+                list.insertBefore(card, list.firstChild);
             }
 
             // Mettre à jour le compteur section-title

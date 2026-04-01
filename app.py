@@ -5534,7 +5534,7 @@ def reminders():
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
-        ORDER BY pr.created_at ASC
+        ORDER BY pr.created_at DESC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
