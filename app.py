@@ -43,6 +43,27 @@ def now_paris():
         return dt.replace(tzinfo=None)   # naive pour compatibilité DB
     return datetime.now()
 
+def to_paris(dt_or_str):
+    """Convertit un datetime ou une chaîne ISO (stocké en UTC sur Render) en heure Paris.
+    Retourne un datetime naive en heure locale Paris."""
+    if dt_or_str is None:
+        return None
+    try:
+        if isinstance(dt_or_str, str):
+            dt_or_str = dt_or_str.replace('Z', '+00:00')
+            dt = datetime.fromisoformat(dt_or_str)
+        else:
+            dt = dt_or_str
+        # Si le datetime est naive, on le considère UTC (cas Render/PostgreSQL)
+        if dt.tzinfo is None and PARIS_TZ and _USE_PG:
+            dt = dt.replace(tzinfo=timezone.utc)
+        if dt.tzinfo is not None and PARIS_TZ:
+            dt = dt.astimezone(PARIS_TZ)
+            return dt.replace(tzinfo=None)
+        return dt
+    except Exception:
+        return dt_or_str
+
 # ─── COUCHE DE COMPATIBILITÉ DB (SQLite local / PostgreSQL Render) ──────────
 # Détecte automatiquement l'env Render via DATABASE_URL
 _PG_URL = os.environ.get('DATABASE_URL', '')
@@ -990,21 +1011,33 @@ def sats():
             else:
                 avatar = f'https://api.dicebear.com/7.x/adventurer/svg?seed={name or email}'
             
-            # Extraire l'heure (compatible str ISO et objet datetime)
+            # Extraire l'heure (compatible str ISO et objet datetime) — conversion UTC→Paris
             try:
-                if hasattr(completed_at, 'strftime'):
-                    time_str = completed_at.strftime('%H:%M')
+                paris_dt = to_paris(completed_at)
+                if hasattr(paris_dt, 'strftime'):
+                    time_str = paris_dt.strftime('%H:%M')
                 else:
-                    completed_at_str = str(completed_at or '')
-                    dt = datetime.fromisoformat(completed_at_str.replace('Z', '+00:00'))
-                    time_str = dt.strftime('%H:%M')
+                    completed_at_str = str(paris_dt or '')
+                    if ' ' in completed_at_str:
+                        time_str = completed_at_str.split(' ')[1][:5]
+                    elif 'T' in completed_at_str:
+                        time_str = completed_at_str.split('T')[1][:5]
+                    else:
+                        time_str = '??:??'
             except Exception:
-                completed_at_str = str(completed_at or '')
-                if ' ' in completed_at_str:
-                    time_str = completed_at_str.split(' ')[1][:5]
-                elif 'T' in completed_at_str:
-                    time_str = completed_at_str.split('T')[1][:5]
-                else:
+                try:
+                    fb = to_paris(completed_at)
+                    if hasattr(fb, 'strftime'):
+                        time_str = fb.strftime('%H:%M')
+                    else:
+                        completed_at_str = str(fb or '')
+                        if ' ' in completed_at_str:
+                            time_str = completed_at_str.split(' ')[1][:5]
+                        elif 'T' in completed_at_str:
+                            time_str = completed_at_str.split('T')[1][:5]
+                        else:
+                            time_str = '??:??'
+                except Exception:
                     time_str = '??:??'
             
             tasks_history.append({
@@ -6046,7 +6079,8 @@ def _comments_inner():
     messages_data = []
     for row in all_rows:
         msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, recipient_name, recipient_avatar, recipient_avatar_file, recipient_avatar_url, recipient_avatar_style, is_read_by_recipient, is_read_by_me, recipient_is_child = row
-        
+        # Convertir le timestamp UTC→Paris pour l'affichage
+        timestamp = to_paris(timestamp) or timestamp
         # Préparer l'avatar et nom de l'expéditeur
         if sender_type == 'house':
             # Pour les messages baby_tracking, sender_email contient l'email du joueur
@@ -6371,6 +6405,8 @@ def baby_messages():
     messages_data = []
     for row in all_rows:
         msg_id, sender_email, recipient_email, content, timestamp, sender_type, message_type, sender_name, sender_avatar, sender_avatar_file, sender_avatar_url, sender_avatar_style, is_read_by_me = row
+        # Convertir le timestamp UTC→Paris pour l'affichage
+        timestamp = to_paris(timestamp) or timestamp
         
         # Préparer l'avatar de l'expéditeur
         display_sender_avatar = None
@@ -13077,8 +13113,11 @@ def api_daily_tasks():
         for name, task_name, points, category, done_at in rows:
             time_str = ''
             try:
-                if done_at and ' ' in str(done_at):
-                    time_str = str(done_at).split(' ')[1][:5]
+                paris_dt = to_paris(done_at)
+                if hasattr(paris_dt, 'strftime'):
+                    time_str = paris_dt.strftime('%H:%M')
+                elif paris_dt and ' ' in str(paris_dt):
+                    time_str = str(paris_dt).split(' ')[1][:5]
             except Exception:
                 pass
             tasks.append({
