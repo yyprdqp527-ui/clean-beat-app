@@ -9856,15 +9856,14 @@ def profil_joueur(player_email):
         # ── Notifications gameplay reçues (bonus/malus/suspicions 48h) ──
         gameplay_notifs = []
         try:
-            since_48h = (now_paris() - timedelta(hours=48)).strftime('%Y-%m-%d %H:%M:%S')
-            # Bonus et Malus reçus
+            # Bonus et Malus reçus (48h)
             c.execute("""
                 SELECT ct.task_name, ct.category, ct.points, ct.completed_at
                 FROM completed_tasks ct
                 WHERE ct.user_email=? AND ct.category IN ('bonus','malus')
-                AND CAST(ct.completed_at AS TEXT) >= ?
+                AND ct.completed_at >= datetime('now', '-48 hours')
                 ORDER BY ct.completed_at DESC LIMIT 20
-            """, (player_email, since_48h))
+            """, (player_email,))
             seen_bonus = set()
             for r in c.fetchall():
                 key = (r[0], r[1])  # (task_name, category) — éviter doublons
@@ -9877,9 +9876,9 @@ def profil_joueur(player_email):
                 FROM suspicions s
                 INNER JOIN users u ON s.suspecting_player_email = u.email
                 WHERE s.suspected_player_email=?
-                AND CAST(s.created_at AS TEXT) >= ?
+                AND s.created_at >= datetime('now', '-48 hours')
                 ORDER BY s.created_at DESC LIMIT 10
-            """, (player_email, since_48h))
+            """, (player_email,))
             for r in c.fetchall():
                 gameplay_notifs.append({'text': r[0], 'type': 'suspicion', 'from': r[2], 'status': r[1], 'date': str(r[3]) if r[3] else ''})
             # Trier par date décroissante
@@ -10112,16 +10111,30 @@ def api_send_malus():
         target_name = target_row[1] or target_email.split('@')[0]
 
         # Limiter à 3 malus envoyés par expéditeur par jour vers la même cible
-        from datetime import date as _date
-        today = now_paris().date().isoformat()
         c.execute("""
             SELECT COUNT(*) FROM completed_tasks
             WHERE user_email=? AND category='malus'
-            AND task_name LIKE ? AND DATE(completed_at)=?
-        """, (target_email, '%' + sender_name + '%', today))
+            AND task_name LIKE ? AND DATE(completed_at)=DATE('now')
+        """, (target_email, '%' + sender_name + '%'))
         count_today = c.fetchone()[0]
         if count_today >= 3:
             return jsonify({'success': False, 'error': f'Tu as déjà envoyé 3 malus à {target_name} aujourd\'hui !'}), 200
+
+        # Max 1 sanction (bonus/malus/suspicion) par heure vers la même cible
+        c.execute("""
+            SELECT COUNT(*) FROM completed_tasks
+            WHERE user_email=? AND category IN ('malus','bonus')
+            AND task_name LIKE ? AND completed_at >= datetime('now', '-1 hour')
+        """, (target_email, f'%{sender_name}%'))
+        recent_ct = c.fetchone()[0]
+        c.execute("""
+            SELECT COUNT(*) FROM suspicions
+            WHERE suspecting_player_email=? AND suspected_player_email=?
+            AND created_at >= datetime('now', '-1 hour')
+        """, (sender_email, target_email))
+        recent_susp = c.fetchone()[0]
+        if recent_ct + recent_susp >= 1:
+            return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
         # Insérer le malus comme tâche avec points négatifs
         task_name = f'Malus de {sender_name} : {reason_label}'
