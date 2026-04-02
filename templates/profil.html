@@ -229,6 +229,66 @@ body { min-height: 100vh; }
 
 /* Boutons d'action */
 .profil-actions { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+
+/* ══ Notifications Gameplay ══ */
+.gp-notif-section { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+.gp-notif-card {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,0.09);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 18px; padding: 14px 16px;
+    position: relative; overflow: hidden;
+    animation: gpNotifSlideIn 0.5s ease-out both;
+}
+.gp-notif-card:nth-child(1) { animation-delay: 0.05s; }
+.gp-notif-card:nth-child(2) { animation-delay: 0.12s; }
+.gp-notif-card:nth-child(3) { animation-delay: 0.19s; }
+.gp-notif-card:nth-child(4) { animation-delay: 0.26s; }
+@keyframes gpNotifSlideIn {
+    from { opacity: 0; transform: translateX(-20px) scale(0.95); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+/* Bordure accent par type */
+.gp-notif-card.gp-bonus  { border-color: rgba(231,76,60,0.4); background: rgba(231,76,60,0.08); }
+.gp-notif-card.gp-malus  { border-color: rgba(46,204,113,0.4); background: rgba(46,204,113,0.08); }
+.gp-notif-card.gp-suspicion { border-color: rgba(253,174,84,0.4); background: rgba(253,174,84,0.08); }
+
+.gp-notif-emoji {
+    font-size: 36px; flex-shrink: 0;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    line-height: 1;
+}
+/* Pulse par type */
+.gp-bonus .gp-notif-emoji  { animation: gpPulseRed 1.8s ease-in-out infinite; }
+.gp-malus .gp-notif-emoji  { animation: gpPulseGreen 1.8s ease-in-out infinite; }
+.gp-suspicion .gp-notif-emoji { animation: gpPulseOrange 1.8s ease-in-out infinite; }
+
+@keyframes gpPulseRed {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(231,76,60,0)); }
+    50%      { transform: scale(1.25); filter: drop-shadow(0 0 16px rgba(231,76,60,0.7)); }
+}
+@keyframes gpPulseGreen {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(46,204,113,0)); }
+    50%      { transform: scale(1.25); filter: drop-shadow(0 0 16px rgba(46,204,113,0.7)); }
+}
+@keyframes gpPulseOrange {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(253,174,84,0)); }
+    50%      { transform: scale(1.25); filter: drop-shadow(0 0 16px rgba(253,174,84,0.7)); }
+}
+
+.gp-notif-body { flex: 1; min-width: 0; }
+.gp-notif-title { font-size: 13px; font-weight: 800; color: white; line-height: 1.3; }
+.gp-notif-detail { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); margin-top: 3px; line-height: 1.3; }
+.gp-notif-pts {
+    font-size: 14px; font-weight: 900; white-space: nowrap; flex-shrink: 0;
+    padding: 4px 10px; border-radius: 10px;
+}
+.gp-bonus .gp-notif-pts  { color: #ff6b6b; background: rgba(231,76,60,0.15); }
+.gp-malus .gp-notif-pts  { color: #2ecc71; background: rgba(46,204,113,0.15); }
+.gp-notif-empty {
+    text-align: center; padding: 20px;
+    color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 600;
+}
 .profil-action-btn {
     display: flex; align-items: center; justify-content: center;
     padding: 15px 20px; border-radius: 16px;
@@ -294,6 +354,42 @@ body { min-height: 100vh; }
         {% endif %}
         {% endif %}
     </div>
+
+    <!-- ══ Notifications Gameplay (bonus/malus/suspicions reçus) ══ -->
+    {% if gameplay_notifs|default([])|length > 0 %}
+    <div class="profil-section-title">🔔 Dernières notifs reçues</div>
+    <div class="gp-notif-section">
+        {% for n in gameplay_notifs[:8] %}
+        {% if n.type == 'bonus' %}
+        <div class="gp-notif-card gp-bonus">
+            <div class="gp-notif-emoji">❤️</div>
+            <div class="gp-notif-body">
+                <div class="gp-notif-title">{{ n.text }}</div>
+                <div class="gp-notif-detail">{{ n.date[:16].replace('T',' ')|default('') if n.date else '' }}</div>
+            </div>
+            <div class="gp-notif-pts">+{{ n.points|abs }} pts</div>
+        </div>
+        {% elif n.type == 'malus' %}
+        <div class="gp-notif-card gp-malus">
+            <div class="gp-notif-emoji">💀</div>
+            <div class="gp-notif-body">
+                <div class="gp-notif-title">{{ n.text }}</div>
+                <div class="gp-notif-detail">{{ n.date[:16].replace('T',' ')|default('') if n.date else '' }}</div>
+            </div>
+            <div class="gp-notif-pts">{{ n.points }} pts</div>
+        </div>
+        {% elif n.type == 'suspicion' %}
+        <div class="gp-notif-card gp-suspicion">
+            <div class="gp-notif-emoji">🔍</div>
+            <div class="gp-notif-body">
+                <div class="gp-notif-title">🕵️ {{ n.from|default('Quelqu\'un') }} te soupçonne !</div>
+                <div class="gp-notif-detail">📋 {{ n.text|default('Tâche inconnue') }} — {{ n.status|default('en cours') }}</div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- Statistiques -->
     <div class="profil-section-title">{% if is_own_profile %}Mes statistiques{% else %}Statistiques de {{ player1_name }}{% endif %}</div>

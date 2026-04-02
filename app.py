@@ -103,6 +103,16 @@ _RE_DATETIME_DATE_NOW_LOCAL = re.compile(
     r"datetime\s*\(\s*date\s*\(\s*'now'\s*,\s*'localtime'\s*\)\s*\)",
     re.IGNORECASE
 )
+# datetime('now', '-N unit') → (CURRENT_TIMESTAMP + INTERVAL '-N unit')
+_RE_DATETIME_NOW_OFFSET = re.compile(
+    r"datetime\s*\(\s*'now'\s*,\s*'([^']+)'\s*\)",
+    re.IGNORECASE
+)
+# datetime(col, 'localtime') → col::timestamp  (strip 'localtime' for PG)
+_RE_DATETIME_COL_LOCALTIME = re.compile(
+    r"datetime\s*\(\s*([^(),']+?)\s*,\s*'localtime'\s*\)",
+    re.IGNORECASE
+)
 # datetime(col) → col::timestamp
 _RE_DATETIME_COL = re.compile(
     r"datetime\s*\(\s*([^()]+?)\s*\)",
@@ -164,6 +174,10 @@ class _CompatCursor:
         sql = _RE_DATETIME_DATE_NOW_OFFSET.sub(r"(CURRENT_DATE + INTERVAL '\1')::timestamp", sql)
         # 3) datetime(date('now','localtime')) → CURRENT_TIMESTAMP
         sql = _RE_DATETIME_DATE_NOW_LOCAL.sub('CURRENT_TIMESTAMP', sql)
+        # 3b) datetime('now', '-1 hour') → (CURRENT_TIMESTAMP + INTERVAL '-1 hour')
+        sql = _RE_DATETIME_NOW_OFFSET.sub(r"(CURRENT_TIMESTAMP + INTERVAL '\1')", sql)
+        # 3c) datetime(col, 'localtime') → col::timestamp
+        sql = _RE_DATETIME_COL_LOCALTIME.sub(r'\1::timestamp', sql)
         # 4) datetime(col) → col::timestamp
         sql = _RE_DATETIME_COL.sub(r'\1::timestamp', sql)
         # 5) date('now','localtime','+N day') → CURRENT_DATE + INTERVAL 'N day'
@@ -9804,6 +9818,39 @@ def profil_joueur(player_email):
                 my_rewards_used = [{'id': r[0], 'text': r[1], 'won_date': r[2], 'used_date': r[3]} for r in c.fetchall()]
             except Exception:
                 my_rewards_used = []
+        # ── Notifications gameplay reçues (bonus/malus/suspicions 48h) ──
+        gameplay_notifs = []
+        try:
+            since_48h = (now_paris() - timedelta(hours=48)).strftime('%Y-%m-%d %H:%M:%S')
+            # Bonus et Malus reçus
+            c.execute("""
+                SELECT ct.task_name, ct.category, ct.points, ct.completed_at
+                FROM completed_tasks ct
+                WHERE ct.user_email=? AND ct.category IN ('bonus','malus')
+                AND CAST(ct.completed_at AS TEXT) >= ?
+                ORDER BY ct.completed_at DESC LIMIT 20
+            """, (player_email, since_48h))
+            seen_bonus = set()
+            for r in c.fetchall():
+                key = (r[0], r[1])  # (task_name, category) — éviter doublons
+                if key not in seen_bonus:
+                    seen_bonus.add(key)
+                    gameplay_notifs.append({'text': r[0], 'type': r[1], 'points': r[2], 'date': str(r[3]) if r[3] else ''})
+            # Suspicions reçues (où ce joueur est suspecté)
+            c.execute("""
+                SELECT s.task_name, s.status, u.name, s.created_at
+                FROM suspicions s
+                INNER JOIN users u ON s.suspecting_player_email = u.email
+                WHERE s.suspected_player_email=?
+                AND CAST(s.created_at AS TEXT) >= ?
+                ORDER BY s.created_at DESC LIMIT 10
+            """, (player_email, since_48h))
+            for r in c.fetchall():
+                gameplay_notifs.append({'text': r[0], 'type': 'suspicion', 'from': r[2], 'status': r[1], 'date': str(r[3]) if r[3] else ''})
+            # Trier par date décroissante
+            gameplay_notifs.sort(key=lambda x: x.get('date',''), reverse=True)
+        except Exception:
+            pass
         conn.close()
     except Exception:
         pass
@@ -9825,6 +9872,7 @@ def profil_joueur(player_email):
         unread_baby_tracking=unread_baby_tracking,
         my_rewards_available=my_rewards_available,
         my_rewards_used=my_rewards_used,
+        gameplay_notifs=gameplay_notifs,
     )
 
 
@@ -10041,7 +10089,7 @@ def api_send_malus():
             return jsonify({'success': False, 'error': f'Tu as déjà envoyé 3 malus à {target_name} aujourd\'hui !'}), 200
 
         # Insérer le malus comme tâche avec points négatifs
-        task_name = f'💀 Malus de {sender_name} : {reason_label}'
+        task_name = f'Malus de {sender_name} : {reason_label}'
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
@@ -10129,7 +10177,7 @@ def api_send_bonus():
         if recent_ct + recent_susp >= 1:
             return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
-        task_name = f'❤️ Bonus de {sender_name} : {reason_label}'
+        task_name = f'Bonus de {sender_name} : {reason_label}'
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'bonus', ?, ?, CURRENT_TIMESTAMP)
@@ -10338,7 +10386,7 @@ def api_give_malus():
         points = -10
 
         # Insérer le malus comme tâche avec points négatifs
-        malus_task_name = f'💀 Malus de {sender_name}' + (f' : {task_name}' if task_name else '')
+        malus_task_name = f'Malus de {sender_name}' + (f' : {task_name}' if task_name else '')
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)

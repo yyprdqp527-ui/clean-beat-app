@@ -195,6 +195,23 @@ body {
 .gw-task-malus-btn:active { background: rgba(212,133,106,0.3); transform: scale(0.93); }
 .gw-task-bonus-btn:active { background: rgba(122,186,197,0.3); transform: scale(0.93); }
 
+/* Pulse halo vert sur bouton 💀 malus */
+.gw-task-malus-btn {
+    animation: pulseHaloGreen 2s ease-in-out infinite;
+}
+@keyframes pulseHaloGreen {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.5); }
+    50% { box-shadow: 0 0 12px 6px rgba(46,204,113,0.35); }
+}
+/* Pulse halo rouge sur bouton ❤️ bonus */
+.gw-task-bonus-btn {
+    animation: pulseHaloRed 2s ease-in-out infinite;
+}
+@keyframes pulseHaloRed {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.5); }
+    50% { box-shadow: 0 0 12px 6px rgba(231,76,60,0.35); }
+}
+
 /* Cadre photo de preuve - Style glassmorphisme */
 .proof-photo-frame {
     margin-top: 12px;
