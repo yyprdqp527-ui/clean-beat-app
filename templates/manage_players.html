@@ -593,12 +593,6 @@
         <p class="room-subtitle">Modifiez les profils ou retirez des joueurs de la maison</p>
     </div>
     
-    <!-- Bouton Ajouter des joueurs -->
-    <a href="{{ url_for('invite_partner', source='manage') }}" class="btn-add-players">
-        <span class="btn-icon">➕</span>
-        <span class="btn-text">Ajouter des joueurs</span>
-    </a>
-    
     {% for player in players %}
     <div class="player-card" data-email="{{ player.email }}">
         <div class="player-header">
