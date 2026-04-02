@@ -23,7 +23,6 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"></noscript>
     <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
-    {% include '_theme_vars.html' %}
     <style>
         /* Supprimer le délai de 300ms sur mobile */
         html {
@@ -1034,7 +1033,6 @@
         }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
-    {% include '_theme_overrides.html' %}
 </head>
 <body>
     <!-- Brume mystérieuse -->
