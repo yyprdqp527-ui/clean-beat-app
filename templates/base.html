@@ -26,6 +26,7 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement pour éviter dépendance CDN externe -->
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    {% include '_theme_vars.html' %}
     {% block head_scripts %}{% endblock %}
     <style>
         /* ── Variables de couleur héritées du CSS moderne ── */
@@ -41,41 +42,6 @@
             --header-spacing-bottom: 4px;
         }
 
-        /* ── Adaptation couleur texte selon le thème choisi (clair/sombre) ── */
-        :root {
-            --adaptive-text: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
-            --adaptive-muted: {% if bg_theme_light %}rgba(21,48,54,0.7){% else %}rgba(255,255,255,0.7){% endif %};
-            --adaptive-light: {% if bg_theme_light %}rgba(21,48,54,0.5){% else %}rgba(255,255,255,0.5){% endif %};
-        }
-
-        /* Classes utilitaires explicites pour le texte adaptatif */
-        .text-adaptive { color: var(--adaptive-text) !important; }
-        .text-adaptive-muted { color: var(--adaptive-muted) !important; }
-        .text-adaptive-light { color: var(--adaptive-light) !important; }
-
-        /* ── Éléments à fond propre CLAIR : texte toujours foncé, peu importe le thème ── */
-        /* Inputs, textareas, selects : fond blanc/clair natif → texte foncé obligatoire */
-        input, textarea, select, [contenteditable] {
-            color: #153036 !important;
-        }
-        /* Cartes à fond blanc : le texte garde sa couleur propre (non overridée) */
-        .task-card:not(.negative-task),
-        .task-card:not(.negative-task) .task-name,
-        .room-header,
-        .room-header .room-name,
-        .room-header .room-subtitle,
-        .glass-card, .glass-panel, .glass-modal,
-        .back-btn-glass,
-        .header-menu {
-            color: #153036 !important;
-        }
-        /* Sous-textes de cartes claires */
-        .task-card:not(.negative-task) .task-subtitle,
-        .task-card:not(.negative-task) .task-desc,
-        .task-card:not(.negative-task) .task-points {
-            color: #597176 !important;
-        }
-
         /* ── Base harmonisée avec système de thèmes personnalisés ── */
         body {
             background: {{ bg_gradient }};
@@ -89,13 +55,15 @@
             justify-content: center; 
             gap: 12px; 
             flex-wrap: nowrap; 
-            background: white;
-            border: 1px solid #e8f4f8;
+            background: var(--header-bg, white);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border: 1px solid var(--header-border, #e8f4f8);
             padding: var(--header-padding-vertical) var(--header-padding-horizontal); 
             padding-top: calc(var(--header-padding-vertical) + env(safe-area-inset-top, 0px));
             border-radius: 0 0 24px 24px; 
-            box-shadow: 0 4px 16px rgba(89,113,118,0.12);
-            color: #153036; 
+            box-shadow: var(--header-shadow, 0 4px 16px rgba(89,113,118,0.12));
+            color: var(--adaptive-text, #153036); 
             position: fixed; 
             top: 0; 
             left: 0; 
@@ -779,6 +747,7 @@
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
+    {% include '_theme_overrides.html' %}
 </head>
 <body>
 {% if menu_page %}

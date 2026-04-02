@@ -1,0 +1,252 @@
+/* ══════════════════════════════════════════════════════════════
+   🎨 ADAPTIVE TEXT SYSTEM — Contraste automatique texte/fond
+   ──────────────────────────────────────────────────────────────
+   SYSTÈME DE RÈGLES (pas item par item) :
+   
+   1. RÈGLE BODY    → tout le texte hérite de --adaptive-text
+   2. FOND OPAQUE   → cartes blanches, modals, inputs → #153036
+   3. FOND COLORÉ   → boutons, badges, pills → white (inchangé)
+   4. GLASS/BORDER  → panneaux transparents sur gradient → adaptatif
+   
+   Fonctionne avec les CSS custom properties définies dans
+   _theme_vars.html :
+     --adaptive-text    : couleur de texte principale
+     --adaptive-muted   : texte secondaire (70%)
+     --adaptive-light   : texte tertiaire (50%)
+     --adaptive-border  : bordures sur fond dégradé
+     --adaptive-glass   : fond de panneaux glass sur dégradé
+     --adaptive-shadow  : ombre de texte (none sur fond clair)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Défauts (thème sombre — fallback si variables non définies) ── */
+:root {
+    --adaptive-text: #ffffff;
+    --adaptive-muted: rgba(255,255,255,0.7);
+    --adaptive-light: rgba(255,255,255,0.5);
+    --adaptive-border: rgba(255,255,255,0.15);
+    --adaptive-glass: rgba(255,255,255,0.08);
+    --adaptive-shadow: 0 2px 4px rgba(0,0,0,0.6);
+}
+
+/* ── Classes utilitaires ── */
+.text-adaptive       { color: var(--adaptive-text) !important; }
+.text-adaptive-muted { color: var(--adaptive-muted) !important; }
+.text-adaptive-light { color: var(--adaptive-light) !important; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLE 1 — BODY : tout texte hérite la couleur adaptative
+   Le body est sur le gradient → couleur de base s'adapte au thème
+   ══════════════════════════════════════════════════════════════ */
+body {
+    color: var(--adaptive-text) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLE 2 — TEXTE SUR GRADIENT : écraser les color:white hardcodés  
+   On cible les familles de classes qui vivent sur le gradient,
+   SANS cibler les boutons/badges qui ont leur propre fond coloré.
+   
+   Convention : tout sélecteur [class*="profil-"], [class*="profile-"],
+   etc. vivant sur le gradient doit adapter sa couleur.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Titres et texte principaux directement sur le gradient ── */
+/* On cible body > h1 et les pages standalone Auth */
+/* Les h1 dans des cartes (.page-header, .card, .room-header) héritent du
+   fond opaque et restent foncés via la RÈGLE 4 */
+h1, h2, h3 {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+/* ── Profil (profil-* dans profil.html) ── */
+[class*="profil-page"],
+[class*="profil-name"],
+[class*="profil-stat-value"],
+[class*="profil-rank-name"],
+[class*="profil-rank-row"],
+[class*="profil-reward-text"],
+[class*="profil-reminder-item"],
+[class*="profil-action-edit"] {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+[class*="profil-email"],
+[class*="profil-house-badge"],
+[class*="profil-stat-label"],
+[class*="profil-action-logout"] {
+    color: var(--adaptive-muted) !important;
+}
+
+[class*="profil-section-title"],
+[class*="profil-rank-pos"],
+[class*="profil-reward-date"],
+[class*="profil-used-rewards-toggle"] {
+    color: var(--adaptive-light) !important;
+}
+
+.profil-rank-pos.top1 { color: var(--adaptive-text) !important; }
+.profil-rank-pts      { color: rgba(253,174,84,0.9) !important; }
+.profil-rank-badge    { color: #FDAE54 !important; }
+
+/* ── Profile panel (profile-* dans menu.html — panneau latéral) ── */
+[class*="profile-name"],
+[class*="profile-stat-value"],
+[class*="profile-action-edit"],
+[class*="profile-reminder-item"],
+[class*="profile-rank-badge"] {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+[class*="profile-email"],
+[class*="profile-house-badge"],
+[class*="profile-stat-label"],
+[class*="profile-action-logout"] {
+    color: var(--adaptive-muted) !important;
+}
+
+[class*="profile-section-title"] {
+    color: var(--adaptive-light) !important;
+}
+
+/* ── Menu (éléments directement sur le gradient) ── */
+.avatar-name,
+.avatar-points,
+.house-name {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+/* ── Classement ── */
+.tab-section-title,
+[class*="classement-page"] {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+[class*="classement-section-title"] {
+    color: var(--adaptive-muted) !important;
+}
+
+/* ── Gameplay ── */
+[class*="gameplay-page"],
+.points-animation {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+/* ── Rewards / Grille mystère ── */
+[class*="lock-title"],
+[class*="not-winner-title"] {
+    color: var(--adaptive-text) !important;
+}
+
+[class*="lock-text"],
+[class*="countdown-label"],
+[class*="not-winner-text"],
+.info-list li,
+.footer-text {
+    color: var(--adaptive-muted) !important;
+}
+
+.countdown-time { color: #FFD700 !important; }
+
+/* ── Pages auth (login, register, forgot/reset password) ── */
+.auth-page h1,
+.auth-page .login-link a {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+/* ── Daily reward, welcome, etc. (texte sur gradient) ── */
+.daily-title,
+.daily-subtitle,
+.daily-message,
+[class*="welcome-title"],
+[class*="welcome-subtitle"],
+[class*="welcome-text"] {
+    color: var(--adaptive-text) !important;
+    text-shadow: var(--adaptive-shadow);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLE 3 — ÉLÉMENTS GLASS/TRANSPARENTS SUR GRADIENT
+   Panneaux semi-transparents → bordures et fond adaptatifs
+   ══════════════════════════════════════════════════════════════ */
+[class*="profil-stat-item"],
+[class*="profil-reminder-item"],
+[class*="profil-rank-row"],
+[class*="profil-reward-card"],
+[class*="profil-house-badge"],
+[class*="profil-action-logout"],
+[class*="profile-stat-item"],
+[class*="profile-reminder-item"],
+[class*="profile-rank-badge"],
+[class*="profile-house-badge"] {
+    border-color: var(--adaptive-border) !important;
+    background-color: var(--adaptive-glass) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLE 4 — ÉLÉMENTS SUR FOND OPAQUE CLAIR
+   Cartes blanches, modals, inputs → TOUJOURS texte foncé
+   (écrase la règle body pour ces contextes)
+   ══════════════════════════════════════════════════════════════ */
+input, textarea, select, [contenteditable] {
+    color: #153036 !important;
+}
+
+/* Cartes, modals et panneaux à fond blanc/clair — eux ET leurs enfants */
+.card, .card *,
+.page-header, .page-header *,
+.task-card:not(.negative-task),
+.task-card:not(.negative-task) *,
+.room-header, .room-header *,
+.glass-card, .glass-card *,
+.glass-panel, .glass-panel *,
+.glass-modal, .glass-modal *,
+.modal-content, .modal-content *,
+.back-btn-glass {
+    color: #153036 !important;
+    text-shadow: none !important;
+}
+
+.task-card:not(.negative-task) .task-subtitle,
+.task-card:not(.negative-task) .task-desc,
+.task-card:not(.negative-task) .task-points {
+    color: #597176 !important;
+}
+
+/* Popups rewards (fond blanc opaque) */
+.popup-winner-name          { color: #153036 !important; text-shadow: none !important; }
+.popup-subtitle             { color: #597176 !important; }
+.popup-message p            { color: #153036 !important; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLE 5 — ÉLÉMENTS AVEC FOND COLORÉ PROPRE → color: white OK
+   Boutons, badges, pills, notifications…
+   On ne touche PAS à leur couleur.
+   Pas besoin de règles ici : le `color: white` inline suffit.
+   Si jamais body color écrase, on le restaure explicitement.
+   ══════════════════════════════════════════════════════════════ */
+.notification-badge,
+.avatar-notification-badge,
+.burger-alert-pill,
+.room-mission-dot,
+.room-baby-dot,
+.filter-btn.active .fb-label,
+.ob-btn,
+.modal-button,
+[class*="btn-primary"],
+[class*="btn-gold"],
+.profil-reward-use-btn,
+button[style*="background"] {
+    color: white !important;
+}
