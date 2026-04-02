@@ -46,11 +46,11 @@ class PushNotificationManager {
                 await this.subscribe();
             }
 
-            // Si permission jamais demandée → demander automatiquement maintenant
-            // (le SW est chargé = contexte valide pour demander la permission)
+            // Si permission jamais demandée → ne PAS demander automatiquement
+            // iOS Safari exige un geste utilisateur pour requestPermission()
+            // La demande se fait via le bouton/banner sur menu.html
             if (Notification.permission === 'default') {
-                console.log('🔔 Demande automatique de permission notifications...');
-                await this.requestPermission();
+                console.log('🔔 Permission notifications pas encore demandée (attente geste utilisateur)');
             }
 
             return true;

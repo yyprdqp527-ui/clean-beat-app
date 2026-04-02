@@ -6101,12 +6101,19 @@ def _comments_inner():
                 try:
                     subscriptions = get_user_push_subscriptions(recipient_email)
                     if subscriptions:
+                        # Badge = total de TOUS les types non lus (pas juste les messages)
+                        total_badge = (
+                            recipient_unread_count +
+                            get_unread_count_by_type(recipient_email, house_id, 'baby_tracking') +
+                            get_unread_count_by_type(recipient_email, house_id, 'task_added') +
+                            get_unread_count_by_type(recipient_email, house_id, 'courses_added')
+                        )
                         notification_data = {
                             'title': f'💬 Message de {current_user_name}',
                             'body': content[:100] + ('...' if len(content) > 100 else ''),
                             'icon': '/static/images/logo.png',
                             'url': '/menu',
-                            'badge': recipient_unread_count
+                            'badge': max(1, total_badge)
                         }
                         for sub in subscriptions:
                             send_push_notification(sub, notification_data)

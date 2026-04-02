@@ -1310,22 +1310,34 @@ window.cbToast = function(message, type, duration) {
 <!-- Badge icone accueil : recalcule a chaque chargement de page -->
 <script>
 (function() {
-    if (!('setAppBadge' in navigator)) return;
-    fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
-        .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(counts) {
-            if (!counts) return;
-            var total = (counts.unread_received || 0)
-                      + (counts.unread_task_added || 0)
-                      + (counts.unread_courses_added || 0)
-                      + (counts.unread_baby || 0);
-            if (total > 0) {
-                navigator.setAppBadge(total).catch(function(){});
-            } else {
-                navigator.clearAppBadge().catch(function(){});
+    function refreshAppBadge() {
+        if (!('setAppBadge' in navigator)) return;
+        fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(counts) {
+                if (!counts) return;
+                var total = (counts.unread_received || 0)
+                          + (counts.unread_task_added || 0)
+                          + (counts.unread_courses_added || 0)
+                          + (counts.unread_baby || 0);
+                if (total > 0) {
+                    navigator.setAppBadge(total).catch(function(){});
+                } else {
+                    navigator.clearAppBadge().catch(function(){});
+                }
+            })
+            .catch(function() {});
+    }
+    // Recalcul initial
+    refreshAppBadge();
+    // Écouter les messages du Service Worker (REFRESH_BADGES après push)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'REFRESH_BADGES') {
+                refreshAppBadge();
             }
-        })
-        .catch(function() {});
+        });
+    }
 })();
 </script>
 </body>
