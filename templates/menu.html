@@ -105,7 +105,7 @@
             max-width: 100% !important;
         }
         img[src$=".png"]{ max-width:100%; height:auto; display:block; }
-        .header-menu { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:nowrap; background: rgba(255,255,255,0.24); backdrop-filter: saturate(180%) blur(30px); -webkit-backdrop-filter: saturate(180%) blur(30px); padding:14px 20px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); border-radius: 0 0 24px 24px; box-shadow: 0 12px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35); color:#153036; position:fixed; top:0; left:0; right:0; z-index:2000; box-sizing:border-box; border: 1px solid rgba(255,255,255,0.55); }
+        .header-menu { display:flex; align-items:center; justify-content:center; gap:6px 12px; flex-wrap:wrap; background: rgba(255,255,255,0.24); backdrop-filter: saturate(180%) blur(30px); -webkit-backdrop-filter: saturate(180%) blur(30px); padding:14px 20px 8px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); border-radius: 0 0 24px 24px; box-shadow: 0 12px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35); color:#153036; position:fixed; top:0; left:0; right:0; z-index:2000; box-sizing:border-box; border: 1px solid rgba(255,255,255,0.55); }
         
         /* Bouton beta testeur */
         .burger-menu {
@@ -337,10 +337,10 @@
             order: 2;
             flex-shrink: 0;
         }
-                /* Bouton Gameplay avec animation pulse */
-        @keyframes pulse-gameplay {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+                /* Bouton Gameplay avec effet halo */
+        @keyframes halo-gameplay {
+            0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35), 0 0 12px rgba(255,255,255,0.15); }
+            50% { box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35), 0 0 22px rgba(255,255,255,0.4); }
         }
         
         .gameplay-btn-wrapper {
@@ -349,6 +349,7 @@
           top: 14px;
           z-index: 9999;
           pointer-events: auto;
+          transition: top 0.3s ease;
         }
         
         .gameplay-btn {
@@ -364,15 +365,16 @@
           font-size: 24px;
           cursor: pointer;
           text-decoration: none;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 12px rgba(255,255,255,0.15);
           border: 1px solid rgba(255, 255, 255, 0.55);
           transition: transform 0.2s ease;
-          animation: pulse-gameplay 2s ease-in-out infinite;
+          animation: halo-gameplay 3s ease-in-out infinite;
         }
         
         .gameplay-btn:hover {
           animation: none;
           transform: scale(1.05);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35), 0 0 25px rgba(255,255,255,0.5);
         }
         
         .gameplay-btn:active {
@@ -383,7 +385,7 @@
 
           /* Conteneur centré à l'intérieur du header pour éloigner les avatars des bords
               et centrer le groupe d'avatars (les avatars doivent être côte-à-côte au centre) */
-          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 56px 0 8px; order: 1; }
+          .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 56px 0 8px; order: 1; flex-wrap: wrap; }
 
         /* Rangée centrée d'avatars : espace entre chaque avatar */
         .avatar-strip { display:flex; gap:56px; align-items:center; justify-content:center; }
@@ -409,25 +411,10 @@
             }
             
             /* Barre horizontale sous l'avatar sur mobile */
-            .avatar-square-wrapper .vbar {
-                position: relative !important;
-                left: auto !important;
-                right: auto !important;
-                top: auto !important;
-                transform: none !important;
-                width: 100% !important;
-                height: 8px !important;
-                min-width: auto !important;
-                border-radius: 999px;
-                margin-top: 4px;
-            }
-            
-            /* MOBILE: Cacher la barre verticale et afficher la barre horizontale */
-            .avatar-square-wrapper .vbar {
-                display: none !important;
-            }
+            /* Barres individuelles désactivées (remplacées par barre semaine commune) */
+            .avatar-square-wrapper .vbar,
             .vbar-horizontal {
-                display: block !important;
+                display: none !important;
             }
             
             /* Permettre noms longs sur mobile avec retour ligne */
@@ -453,6 +440,18 @@
                 font-weight: 700;
                 text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
             }
+            /* Barre semaine compacte sur mobile */
+            .week-progress-wrap {
+                flex: 0 0 100%;
+                margin-top: 2px;
+                padding: 0;
+            }
+            .week-bar-track { height: 6px; }
+            .week-bar-row { gap: 6px; }
+            .week-day { font-size: 6px; }
+            .week-countdown { font-size: 8px; right: -35px; }
+            .gameplay-btn-wrapper { right: 8px; }
+            .gameplay-btn { width: 42px; height: 42px; font-size: 20px; }
         }
           .header-left, .header-right { position: relative; z-index: 2001; display:flex; align-items:center; gap:12px; flex:0 0 auto; }
           /* petits ajustements : donner un petit espacement entre les deux groupes d'avatars
@@ -500,6 +499,8 @@
         /* Positionner la vbar légèrement à droite de l'avatar (avec un petit écart) */
         .avatar-square-wrapper .vbar { left: calc(100% + 16px); right: auto; }
         .avatar-square-wrapper .vbar .vbar-fill { transition: height 0.4s ease; box-shadow: 0 0 6px rgba(0,0,0,0.12); left:0; right:0; bottom:0; position:absolute; }
+        /* ── Barres individuelles avatars désactivées : remplacées par la barre semaine commune ── */
+        .vbar, .vbar-horizontal { display: none !important; visibility: hidden !important; }
         .vbar { 
             width: 10px; 
             min-width: 10px; 
@@ -510,8 +511,8 @@
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.12), 0 3px 10px rgba(0,0,0,0.1), 0 0 0 2px rgba(253,174,84,0.15); 
             flex: 0 0 10px; 
             border: 2px solid rgba(253,174,84,0.3); 
-            display: inline-block !important; 
-            visibility: visible !important;
+            display: none !important; 
+            visibility: hidden !important;
             position: relative; 
             transition: all 0.3s ease; 
         }
@@ -556,6 +557,144 @@
             height: 100%; 
             transition: width 0.6s ease;
             border-radius: 999px;
+        }
+
+        /* ── Barre de progression semaine (cadeau dimanche) ── */
+        .week-progress-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 0 0 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .week-bar-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+        .week-bar-track {
+            flex: 1;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: saturate(160%) blur(14px);
+            -webkit-backdrop-filter: saturate(160%) blur(14px);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.28);
+        }
+        .week-bar-fill {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--week-bar-color, linear-gradient(90deg, var(--gold, #FDAE54), var(--peach, #F4C68D)));
+            border-radius: 999px;
+            transition: width 0.8s cubic-bezier(.4,0,.2,1);
+        }
+        .week-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            animation: weekShimmer 3s ease-in-out infinite;
+        }
+        @keyframes weekShimmer {
+            0%, 100% { left: -100%; opacity: 0; }
+            50% { left: 100%; opacity: 1; }
+        }
+        .week-countdown {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.8);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            line-height: 1;
+            letter-spacing: 0.3px;
+            position: absolute;
+            right: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .week-days {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 2px;
+        }
+        .week-day {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 8px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.12);
+            line-height: 1;
+            flex: 1;
+            text-align: center;
+            transition: color 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+        .week-day.is-today {
+            color: #ffffff;
+            font-weight: 900;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .week-day.is-past {
+            color: rgba(255,255,255,0.2);
+            text-shadow: none;
+        }
+        .week-day-gift {
+            position: relative;
+        }
+        .week-gift {
+            position: absolute;
+            top: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            line-height: 1;
+            animation: pulse-gift 2s ease-in-out infinite;
+        }
+        @keyframes pulse-gift {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.3); }
+        }
+        .week-gift {
+            font-size: 10px;
+            line-height: 1;
+        }
+
+        /* ── Adaptation thème clair ── */
+        .week-progress-wrap.theme-light .week-bar-track {
+            background: rgba(0,0,0,0.07);
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .week-progress-wrap.theme-light .week-bar-fill {
+            filter: brightness(0.88) saturate(1.15);
+        }
+        .week-progress-wrap.theme-light .week-day {
+            color: rgba(0,0,0,0.28);
+            text-shadow: none;
+        }
+        .week-progress-wrap.theme-light .week-day.is-today {
+            color: rgba(0,0,0,0.7);
+        }
+        .week-progress-wrap.theme-light .week-day.is-past {
+            color: rgba(0,0,0,0.12);
+        }
+        .week-progress-wrap.theme-light .week-countdown {
+            color: rgba(0,0,0,0.5);
+            text-shadow: none;
+        }
+        /* ── Adaptation thème foncé ── */
+        .week-progress-wrap.theme-dark .week-bar-fill {
+            filter: brightness(1.2) saturate(0.95);
         }
         
         .svg-room .room-group { 
@@ -1442,15 +1581,8 @@
             }
             
             /* Barres verticales plus petites */
-            .vbar {
-                width: 6px !important;
-                min-width: 6px !important;
-                height: 36px !important;
-            }
-            
-            .avatar-square-wrapper .vbar {
-                left: calc(100% + 6px) !important;
-            }
+            /* vbar individuelles masquées — barre semaine commune active */
+            .vbar, .vbar-horizontal { display: none !important; }
             
             /* Dashboard compact réduit */
             .dashboard-compact {
@@ -1671,15 +1803,8 @@
                 gap: 0 !important;
             }
             
-            .vbar {
-                width: 5px !important;
-                min-width: 5px !important;
-                height: 44px !important;
-            }
-            
-            .avatar-square-wrapper .vbar {
-                left: calc(100% + 4px) !important;
-            }
+            /* vbar masquées */
+            .vbar, .vbar-horizontal { display: none !important; }
             
             .dashboard-compact [style*="min-width: 90px"],
             .dashboard-compact [style*="min-width: 70px"] {
@@ -1750,9 +1875,7 @@
                 gap: 0 !important;
             }
             
-            .vbar {
-                height: 26px !important;
-            }
+            .vbar { display: none !important; }
             
             .house-image-wrapper {
                 max-width: 220px !important;
@@ -2761,13 +2884,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                         {% if current_user_unread > 0 %}
                                         <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="window.location.href='{{ url_for('comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
                                         {% endif %}
-                                        <div class="vbar simple" aria-label="Progression du jour" title="{{ pct1 }}%" data-points="{{ points1 }}" data-fill="{{ fill1 }}">
-                                            <div class="vbar-fill" style="height: {{ fill1 }}%; background: {{ color1 }};"></div>
-                                        </div>
-                                    </div>
-                                    {# Barre horizontale pour mobile - Joueur 1 #}
-                                    <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points1 }}" data-fill="{{ fill1 }}">
-                                        <div class="vbar-fill" style="width: {{ fill1 }}%; background: {{ color1_h }};"></div>
                                     </div>
                                     <div class="avatar-points" aria-label="Points du jour">{{ points1 }} pts</div>
                                 </div>
@@ -2819,13 +2935,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 {% set p2_unread = 0 %}
                                             {% endif %}
                                             <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='/profil/{{ p2.email }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
-                                            <div class="vbar simple" aria-label="Progression du jour" title="{{ pct_p2 }}%" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
-                                                <div class="vbar-fill" style="height: {{ fill_p2 }}%; background: {{ color_p2 }};"></div>
-                                            </div>
-                                        </div>
-                                        {# Barre horizontale pour mobile - Joueur 2 #}
-                                        <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points_p2 }}" data-fill="{{ fill_p2 }}">
-                                            <div class="vbar-fill" style="width: {{ fill_p2 }}%; background: {{ color_p2_h }};"></div>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">{{ points_p2 }} pts</div>
                                     </div>
@@ -2873,13 +2982,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     {% set p_unread = 0 %}
                                                 {% endif %}
                                                 <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='/profil/{{ p.email }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
-                                                <div class="vbar simple" aria-label="Progression du jour" title="{{ pct }}%" data-points="{{ points }}" data-fill="{{ fill }}">
-                                                    <div class="vbar-fill" style="height: {{ fill }}%; background: {{ color }};"></div>
-                                                </div>
-                                            </div>
-                                            {# Barre horizontale pour mobile - Autres joueurs #}
-                                            <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points }}" data-fill="{{ fill }}">
-                                                <div class="vbar-fill" style="width: {{ fill }}%; background: {{ color_h }};"></div>
                                             </div>
                                             <div class="avatar-points" aria-label="Points du jour">{{ points }} pts</div>
                                         </div>
@@ -2898,13 +3000,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <div class="avatar-square">
                                                 <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=waiting" alt="Avatar en attente" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             </div>
-                                            <div class="vbar simple" aria-label="Progression du jour" title="0%" data-points="0" data-fill="0">
-                                                <div class="vbar-fill" style="height: 0%; background: hsl(0, 0%, 60%);"></div>
-                                            </div>
-                                        </div>
-                                        {# Barre horizontale pour mobile - En attente #}
-                                        <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="0" data-fill="0">
-                                            <div class="vbar-fill" style="width: 0%; background: hsl(0, 0%, 60%);"></div>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">0 pts</div>
                                     </div>
@@ -2912,7 +3007,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         {% endif %}
                     </div>
-                </div>
+                    <!-- Barre de progression semaine – Grille cadeau dimanche -->
+                    {% set bar_color = week_bar_color|default('#FDAE54') %}
+                    <div class="week-progress-wrap{% if bg_theme_light %} theme-light{% else %} theme-dark{% endif %}" id="weekProgressBar">
+                        <div class="week-bar-row">
+                            <div class="week-bar-track">
+                                <div class="week-bar-fill" id="weekBarFill" style="background: linear-gradient(90deg, {{ bar_color }}, {{ bar_color }}cc);"></div>
+                            </div>
+                            <span class="week-countdown" id="weekCountdown">--</span>
+                        </div>
+                        <div class="week-days">
+                            <span class="week-day" data-day="1">L</span>
+                            <span class="week-day" data-day="2">M</span>
+                            <span class="week-day" data-day="3">M</span>
+                            <span class="week-day" data-day="4">J</span>
+                            <span class="week-day" data-day="5">V</span>
+                            <span class="week-day" data-day="6">S</span>
+                            <span class="week-day week-day-gift" data-day="0"><span class="week-gift">🎁</span>D</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -2925,6 +3038,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         var h = document.querySelector('.header-menu');
                         var s = document.getElementById('header-spacer');
                         if(h && s){ s.style.height = Math.max(0, h.offsetHeight - 30) + 'px'; }
+                        // Aligner le bouton gameplay au niveau des avatars
+                        var btn = document.querySelector('.gameplay-btn-wrapper');
+                        var strip = document.querySelector('.avatar-strip');
+                        if(h && btn && strip){
+                            var stripRect = strip.getBoundingClientRect();
+                            var bH = btn.offsetHeight;
+                            var midStrip = stripRect.top + stripRect.height / 2;
+                            btn.style.top = Math.max(8, midStrip - bH / 2) + 'px';
+                        }
                     }
                     document.addEventListener('DOMContentLoaded', updateSpacer);
                     window.addEventListener('resize', updateSpacer);
@@ -3518,6 +3640,50 @@ body { padding-bottom: 84px !important; }
     }
     updateCWInfoBar();
     setInterval(updateCWInfoBar, 60000);
+
+    /* ── Barre de progression semaine (header game) ── */
+    function updateWeekProgressBar(){
+        var now = new Date();
+        var day = now.getDay(); // 0=dim, 1=lun ... 6=sam
+        // Ordre lundi→samedi : mapping jour JS → position 0-5, dimanche=6 (cadeau)
+        var dayMap = {1:0, 2:1, 3:2, 4:3, 5:4, 6:5, 0:6};
+        var pos = dayMap[day];
+        // Progression : lun 0h = 0%, sam 23h59 = 100%, dim = 100%
+        var total = 6 * 24; // lun 0h → sam 24h = 144h
+        var elapsed = Math.min(pos, 6) * 24 + now.getHours() + now.getMinutes()/60;
+        var pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+        var fill = document.getElementById('weekBarFill');
+        if(fill) fill.style.width = pct + '%';
+        // Mettre à jour les lettres jours
+        var days = document.querySelectorAll('.week-day');
+        days.forEach(function(el){
+            var d = parseInt(el.getAttribute('data-day'));
+            var p = dayMap[d];
+            el.classList.remove('is-today','is-past');
+            if(d === 0) return; // cadeau : toujours style par défaut (animé)
+            if(p === pos) el.classList.add('is-today');
+            else if(p < pos) el.classList.add('is-past');
+        });
+        // Countdown dimanche 22h
+        var daysToSun = (7 - day) % 7;
+        if(daysToSun === 0 && now.getHours() >= 22) daysToSun = 7;
+        var sunday = new Date(now);
+        sunday.setDate(now.getDate() + daysToSun);
+        sunday.setHours(22,0,0,0);
+        var diff = sunday - now;
+        var dd = Math.floor(diff/86400000);
+        var hh = Math.floor((diff%86400000)/3600000);
+        var mm = Math.floor((diff%3600000)/60000);
+        var cdEl = document.getElementById('weekCountdown');
+        if(!cdEl) return;
+        if(dd > 1) cdEl.textContent = dd+'j ' +hh+'h';
+        else if(dd === 1) cdEl.textContent = '1j ' +hh+'h';
+        else if(hh > 0) cdEl.textContent = hh+'h ' +mm+'min';
+        else if(mm > 0) cdEl.textContent = mm+'min';
+        else cdEl.textContent = 'Go !';
+    }
+    updateWeekProgressBar();
+    setInterval(updateWeekProgressBar, 60000);
 
     // Desactive: le bouton reste toujours 'Malus' avec le skull
     /*

@@ -619,6 +619,21 @@ BG_THEMES = {
 
 LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche'}
 
+# Couleur complémentaire de la barre de progression pour chaque thème
+BAR_COLORS = {
+    'marron':     '#5bb8d4',      # bleu clair (complémentaire du marron)
+    'bleu':       '#dc8c5c',      # orange cuivré
+    'foret':      '#d45b7a',      # rose framboise
+    'nuit':       '#c4a84d',      # or chaud
+    'ardoise':    '#d4855b',      # corail
+    'prune':      '#4dc48a',      # vert émeraude
+    'sable':      '#5b7abd',      # bleu lavande
+    'menthe':     '#bd5b7a',      # rose foncé
+    'framboise':  '#4dd4a8',      # turquoise
+    'rose':       '#5bbda0',      # vert menthe
+    'peche':      '#7a8cbd',      # bleu ardoise
+}
+
 @app.context_processor
 def inject_bg_theme():
     bg = BG_THEMES['bleu']
@@ -636,7 +651,8 @@ def inject_bg_theme():
     except Exception:
         pass
     is_light = theme_name in LIGHT_THEMES
-    return {'bg_gradient': bg, 'bg_theme_name': theme_name, 'bg_theme_light': is_light}
+    bar_color = BAR_COLORS.get(theme_name, '#FDAE54')
+    return {'bg_gradient': bg, 'bg_theme_name': theme_name, 'bg_theme_light': is_light, 'week_bar_color': bar_color}
 
 # Filtre Jinja pour nettoyer l'intitulé des tâches à l'affichage
 def clean_task(value: str) -> str:
