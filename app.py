@@ -615,9 +615,18 @@ BG_THEMES = {
     'framboise':  'linear-gradient(135deg, #7a1f3f 0%, #3d0d1e 100%)',
     'rose':       'linear-gradient(135deg, #f9c2d4 0%, #e88aab 100%)',
     'peche':      'linear-gradient(135deg, #fdd9c8 0%, #f4a07a 100%)',
+    'lavande':    'linear-gradient(135deg, #c7b8ea 0%, #8a6fbf 100%)',
+    'ocean':      'linear-gradient(135deg, #0077b6 0%, #023e8a 100%)',
+    'corail':     'linear-gradient(135deg, #ff6b6b 0%, #c0392b 100%)',
+    'emeraude':   'linear-gradient(135deg, #2ecc71 0%, #1a7a42 100%)',
+    'sunset':     'linear-gradient(135deg, #ff9a56 0%, #e84393 100%)',
+    'lilas':      'linear-gradient(135deg, #dda0dd 0%, #9b59b6 100%)',
+    'caramel':    'linear-gradient(135deg, #d4a056 0%, #8b5e2a 100%)',
+    'glacier':    'linear-gradient(135deg, #e0f4ff 0%, #89c4e1 100%)',
+    'tropique':   'linear-gradient(135deg, #00b894 0%, #006d5b 100%)',
 }
 
-LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche'}
+LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche', 'lavande', 'emeraude', 'lilas', 'glacier'}
 
 # Couleur complémentaire de la barre de progression pour chaque thème
 BAR_COLORS = {
@@ -632,6 +641,15 @@ BAR_COLORS = {
     'framboise':  '#4dd4a8',      # turquoise
     'rose':       '#5bbda0',      # vert menthe
     'peche':      '#7a8cbd',      # bleu ardoise
+    'lavande':    '#d4a855',      # or chaud
+    'ocean':      '#f4a07a',      # pêche
+    'corail':     '#4dd4d4',      # cyan
+    'emeraude':   '#d45ba0',      # rose magenta
+    'sunset':     '#4dc4e8',      # bleu ciel
+    'lilas':      '#7abd5b',      # vert pomme
+    'caramel':    '#5bb8d4',      # bleu glacier
+    'glacier':    '#d47a5b',      # terre cuite
+    'tropique':   '#d45bd4',      # fuchsia
 }
 
 @app.context_processor

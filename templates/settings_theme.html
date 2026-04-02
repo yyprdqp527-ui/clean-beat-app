@@ -119,6 +119,42 @@
                 style="background:linear-gradient(135deg,#fdd9c8 0%,#f4a07a 100%);">
                 <span class="bg-theme-check">✓</span><span>Pêche</span>
             </button>
+            <button class="bg-theme-btn bg-theme-btn--light" data-theme="lavande"
+                style="background:linear-gradient(135deg,#c7b8ea 0%,#8a6fbf 100%);">
+                <span class="bg-theme-check">✓</span><span>Lavande</span>
+            </button>
+            <button class="bg-theme-btn" data-theme="ocean"
+                style="background:linear-gradient(135deg,#0077b6 0%,#023e8a 100%);">
+                <span class="bg-theme-check">✓</span><span>Océan</span>
+            </button>
+            <button class="bg-theme-btn" data-theme="corail"
+                style="background:linear-gradient(135deg,#ff6b6b 0%,#c0392b 100%);">
+                <span class="bg-theme-check">✓</span><span>Corail</span>
+            </button>
+            <button class="bg-theme-btn bg-theme-btn--light" data-theme="emeraude"
+                style="background:linear-gradient(135deg,#2ecc71 0%,#1a7a42 100%);">
+                <span class="bg-theme-check">✓</span><span>Émeraude</span>
+            </button>
+            <button class="bg-theme-btn" data-theme="sunset"
+                style="background:linear-gradient(135deg,#ff9a56 0%,#e84393 100%);">
+                <span class="bg-theme-check">✓</span><span>Sunset</span>
+            </button>
+            <button class="bg-theme-btn bg-theme-btn--light" data-theme="lilas"
+                style="background:linear-gradient(135deg,#dda0dd 0%,#9b59b6 100%);">
+                <span class="bg-theme-check">✓</span><span>Lilas</span>
+            </button>
+            <button class="bg-theme-btn" data-theme="caramel"
+                style="background:linear-gradient(135deg,#d4a056 0%,#8b5e2a 100%);">
+                <span class="bg-theme-check">✓</span><span>Caramel</span>
+            </button>
+            <button class="bg-theme-btn bg-theme-btn--light" data-theme="glacier"
+                style="background:linear-gradient(135deg,#e0f4ff 0%,#89c4e1 100%);">
+                <span class="bg-theme-check">✓</span><span>Glacier</span>
+            </button>
+            <button class="bg-theme-btn" data-theme="tropique"
+                style="background:linear-gradient(135deg,#00b894 0%,#006d5b 100%);">
+                <span class="bg-theme-check">✓</span><span>Tropique</span>
+            </button>
         </div>
         <p id="bg-theme-msg" style="margin-top:10px; font-size:13px; color:#28a745; display:none; font-weight:600;">Thème enregistré !</p>
     </div>
@@ -136,6 +172,15 @@
         : '{{ bg_gradient }}' === 'linear-gradient(135deg, #7a1f3f 0%, #3d0d1e 100%)' ? 'framboise'
         : '{{ bg_gradient }}' === 'linear-gradient(135deg, #f9c2d4 0%, #e88aab 100%)' ? 'rose'
         : '{{ bg_gradient }}' === 'linear-gradient(135deg, #fdd9c8 0%, #f4a07a 100%)' ? 'peche'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #c7b8ea 0%, #8a6fbf 100%)' ? 'lavande'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #0077b6 0%, #023e8a 100%)' ? 'ocean'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #ff6b6b 0%, #c0392b 100%)' ? 'corail'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #2ecc71 0%, #1a7a42 100%)' ? 'emeraude'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #ff9a56 0%, #e84393 100%)' ? 'sunset'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #dda0dd 0%, #9b59b6 100%)' ? 'lilas'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #d4a056 0%, #8b5e2a 100%)' ? 'caramel'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #e0f4ff 0%, #89c4e1 100%)' ? 'glacier'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #00b894 0%, #006d5b 100%)' ? 'tropique'
         : 'marron';
     var activeBtn = document.querySelector('.bg-theme-btn[data-theme="' + currentTheme + '"]');
     if (activeBtn) activeBtn.classList.add('active');
@@ -163,6 +208,15 @@
                         'framboise': 'linear-gradient(135deg, #7a1f3f 0%, #3d0d1e 100%)',
                         'rose':    'linear-gradient(135deg, #f9c2d4 0%, #e88aab 100%)',
                         'peche':   'linear-gradient(135deg, #fdd9c8 0%, #f4a07a 100%)',
+                        'lavande': 'linear-gradient(135deg, #c7b8ea 0%, #8a6fbf 100%)',
+                        'ocean':   'linear-gradient(135deg, #0077b6 0%, #023e8a 100%)',
+                        'corail':  'linear-gradient(135deg, #ff6b6b 0%, #c0392b 100%)',
+                        'emeraude':'linear-gradient(135deg, #2ecc71 0%, #1a7a42 100%)',
+                        'sunset':  'linear-gradient(135deg, #ff9a56 0%, #e84393 100%)',
+                        'lilas':   'linear-gradient(135deg, #dda0dd 0%, #9b59b6 100%)',
+                        'caramel': 'linear-gradient(135deg, #d4a056 0%, #8b5e2a 100%)',
+                        'glacier': 'linear-gradient(135deg, #e0f4ff 0%, #89c4e1 100%)',
+                        'tropique':'linear-gradient(135deg, #00b894 0%, #006d5b 100%)',
                     };
                     document.body.style.background = gradients[theme];
                     document.querySelectorAll('.bg-theme-btn').forEach(function(b) { b.classList.remove('active'); });
