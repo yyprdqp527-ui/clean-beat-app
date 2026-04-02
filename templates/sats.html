@@ -55,18 +55,23 @@ body {
     text-align: center;
 }
 
+.stats-title-card .title-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1;
+}
 .stats-title-card h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 800;
     color: var(--dark);
-    text-shadow: 0 2px 4px rgba(255,255,255,0.8);
 }
-
-@media (max-width: 520px) {
-    .stats-title-card h1 {
-        font-size: 22px;
-    }
+.stats-title-card .stats-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: #597176;
+    margin-top: 4px;
 }
 
 /* === GRAPHIQUES === */
@@ -1821,7 +1826,9 @@ canvas {
 <div class="stats-container">
     <!-- Titre dans un cadre -->
     <div class="stats-title-card">
-        <h1>📊 Statistiques</h1>
+        <span class="title-icon">📊</span>
+        <h1>Statistiques</h1>
+        <p class="stats-subtitle">Analyse tes performances</p>
     </div>
     
 

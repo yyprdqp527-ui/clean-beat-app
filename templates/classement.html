@@ -20,20 +20,23 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     box-shadow: 0 12px 40px rgba(253,174,84,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
     text-align: center;
 }
+.classement-title-card .title-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1;
+}
 .classement-title-card h1 {
-    font-size: 20px;
-    font-weight: 900;
+    font-size: 22px;
+    font-weight: 800;
     color: #153036;
     margin: 0;
     letter-spacing: 0.3px;
-    text-shadow: 0 2px 4px rgba(255,255,255,0.8);
 }
 .classement-title-card .classement-subtitle {
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
     color: #597176;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     margin-top: 4px;
 }
 {% if house_name %}
@@ -372,7 +375,9 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 
     <!-- Titre simplifié -->
     <div class="classement-title-card">
-        <h1>🏆 Classement</h1>
+        <span class="title-icon">🏆</span>
+        <h1>Classement</h1>
+        <p class="classement-subtitle">Qui sera le champion du ménage ?</p>
     </div>
 
     <!-- Tâches réalisées + Boutons filtre -->

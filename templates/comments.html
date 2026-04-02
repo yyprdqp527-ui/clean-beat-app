@@ -208,14 +208,18 @@
         box-shadow: 0 8px 32px rgba(89,113,118,0.15);
     }
     
+    .messages-header .title-icon {
+        font-size: 48px;
+        display: block;
+        margin-bottom: 6px;
+        line-height: 1;
+    }
     .messages-header h1 {
         font-size: 22px;
         font-weight: 800;
         color: #153036;
         margin: 0;
-        text-shadow: none;
     }
-    
     .messages-header .house-name {
         font-size: 14px;
         color: #597176;
@@ -756,7 +760,7 @@
         }
         
         .messages-header h1 {
-            font-size: 24px;
+            font-size: 20px;
         }
         
         .message-form-container {
@@ -839,7 +843,8 @@
     <div class="messages-container">
         <!-- En-tête -->
         <div class="messages-header">
-            <h1>💬 Messagerie</h1>
+            <span class="title-icon">💬</span>
+            <h1>Messagerie</h1>
             <div class="house-name">{{ house_name }}</div>
         </div>
         
