@@ -217,7 +217,7 @@
 </head>
 <body>
 
-    <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+    <a href="{{ url_for('settings_page') }}" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
 
     <div class="header-below-zone">
 
@@ -230,123 +230,17 @@
             </p>
         </div>
 
-        <!-- Carte Nom de la maison -->
-        <div style="max-width:900px; width:100%; margin:0 auto 18px;">
-            <div style="background: linear-gradient(135deg, rgba(166, 211, 220, 0.3), rgba(244, 198, 141, 0.3)); padding: 20px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                    <h2 style="margin: 0; font-size: 18px; color: #153036; font-weight: 600;">Nom de la maison</h2>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap;">
-                    <input
-                        type="text"
-                        id="houseNameInput"
-                        value="{{ global_house_name or '' }}"
-                        maxlength="50"
-                        style="flex: 1; min-width: 200px; padding: 12px 16px; border: 2px solid rgba(21,48,54,0.2); border-radius: 12px; font-size: 16px; background: white; font-family: inherit;"
-                        placeholder="Nom de votre maison"
-                    >
-                    <button
-                        type="button"
-                        id="updateHouseNameBtn"
-                        style="padding: 12px 24px; background: linear-gradient(135deg, #A6D3DC, #597176); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap; min-width: 120px;"
-                    >
-                        Modifier
-                    </button>
-                </div>
-                <div id="houseNameFeedback" style="margin-top: 8px; font-size: 14px; display: none;"></div>
-            </div>
-        </div>
-
-        <!-- PICKER COULEUR FOND -->
-        <div class="container-menu" style="max-width:900px; margin-top:20px;">
-            <p class="section-label">🎨 Couleur du fond</p>
-            <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:8px;">
-
-                <!-- Couleurs foncées -->
-                <button class="bg-theme-btn" data-theme="marron"
-                    style="background:linear-gradient(135deg,#4a3428 0%,#1a1410 100%);"
-                    title="Marron">
-                    <span class="bg-theme-check" id="check-marron">✓</span>
-                    <span>Marron</span>
-                </button>
-
-                <button class="bg-theme-btn" data-theme="nuit"
-                    style="background:linear-gradient(135deg,#1e1e3a 0%,#0d0d20 100%);"
-                    title="Nuit">
-                    <span class="bg-theme-check" id="check-nuit">✓</span>
-                    <span>Nuit</span>
-                </button>
-
-                <button class="bg-theme-btn" data-theme="foret"
-                    style="background:linear-gradient(135deg,#1a3a2a 0%,#0d1f16 100%);"
-                    title="Forêt">
-                    <span class="bg-theme-check" id="check-foret">✓</span>
-                    <span>Forêt</span>
-                </button>
-
-                <button class="bg-theme-btn" data-theme="ardoise"
-                    style="background:linear-gradient(135deg,#2c3e50 0%,#1a252f 100%);"
-                    title="Ardoise">
-                    <span class="bg-theme-check" id="check-ardoise">✓</span>
-                    <span>Ardoise</span>
-                </button>
-
-                <button class="bg-theme-btn" data-theme="prune"
-                    style="background:linear-gradient(135deg,#3a1a2e 0%,#1a0d16 100%);"
-                    title="Prune">
-                    <span class="bg-theme-check" id="check-prune">✓</span>
-                    <span>Prune</span>
-                </button>
-
-                <button class="bg-theme-btn" data-theme="framboise"
-                    style="background:linear-gradient(135deg,#7a1f3f 0%,#3d0d1e 100%);"
-                    title="Framboise">
-                    <span class="bg-theme-check" id="check-framboise">✓</span>
-                    <span>Framboise</span>
-                </button>
-
-                <!-- Couleurs claires -->
-                <button class="bg-theme-btn bg-theme-btn--light" data-theme="bleu"
-                    style="background:linear-gradient(135deg,#A6D3DC 0%,#597176 100%);"
-                    title="Bleu">
-                    <span class="bg-theme-check" id="check-bleu">✓</span>
-                    <span>Bleu</span>
-                </button>
-
-                <button class="bg-theme-btn bg-theme-btn--light" data-theme="sable"
-                    style="background:linear-gradient(135deg,#f0e4d0 0%,#d4b896 100%);"
-                    title="Sable">
-                    <span class="bg-theme-check" id="check-sable">✓</span>
-                    <span>Sable</span>
-                </button>
-
-                <button class="bg-theme-btn bg-theme-btn--light" data-theme="menthe"
-                    style="background:linear-gradient(135deg,#c8e6d8 0%,#8cbfaa 100%);"
-                    title="Menthe">
-                    <span class="bg-theme-check" id="check-menthe">✓</span>
-                    <span>Menthe</span>
-                </button>
-
-                <button class="bg-theme-btn bg-theme-btn--light" data-theme="rose"
-                    style="background:linear-gradient(135deg,#f9c2d4 0%,#e88aab 100%);"
-                    title="Rose">
-                    <span class="bg-theme-check" id="check-rose">✓</span>
-                    <span>Rose</span>
-                </button>
-
-                <button class="bg-theme-btn bg-theme-btn--light" data-theme="peche"
-                    style="background:linear-gradient(135deg,#fdd9c8 0%,#f4a07a 100%);"
-                    title="Pêche">
-                    <span class="bg-theme-check" id="check-peche">✓</span>
-                    <span>Pêche</span>
-                </button>
-
-            </div>
-            <p id="bg-theme-msg" style="margin-top:10px; font-size:13px; color:#28a745; display:none; font-weight:600;">Thème enregistré !</p>
-        </div>
-
         <form method="POST" action="{{ url_for('personnaliser_maison') }}" style="max-width:900px; width:100%;">
             <div class="container-menu">
+
+                <!-- Nom de la maison -->
+                <p class="section-label">Nom de la maison</p>
+                <div style="margin-bottom:20px;">
+                    <input class="room-name-input" type="text" name="house_name"
+                           value="{{ current_house_name or '' }}" maxlength="50"
+                           placeholder="Nom de votre maison"
+                           style="max-width:100%; font-size:1rem; padding:10px 14px;">
+                </div>
 
                 <p class="section-label">Chambres</p>
 
@@ -394,105 +288,5 @@
 
     </div>
 
-<script>
-    document.getElementById('updateHouseNameBtn').addEventListener('click', async function() {
-        const input = document.getElementById('houseNameInput');
-        const newName = input.value.trim();
-        const feedback = document.getElementById('houseNameFeedback');
-        const btn = this;
-
-        if (!newName) {
-            feedback.textContent = 'Le nom ne peut pas être vide';
-            feedback.style.color = '#f44336';
-            feedback.style.display = 'block';
-            return;
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'En cours...';
-
-        try {
-            const formData = new FormData();
-            formData.append('house_name', newName);
-            const response = await fetch('/update_house_name', { method: 'POST', body: formData });
-            const data = await response.json();
-            if (data.success) {
-                feedback.textContent = 'Nom mis à jour !';
-                feedback.style.color = '#4CAF50';
-                feedback.style.display = 'block';
-                setTimeout(() => { feedback.style.display = 'none'; }, 2000);
-            } else {
-                feedback.textContent = data.error || 'Erreur';
-                feedback.style.color = '#f44336';
-                feedback.style.display = 'block';
-            }
-        } catch (e) {
-            feedback.textContent = 'Erreur de connexion';
-            feedback.style.color = '#f44336';
-            feedback.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Modifier';
-        }
-    });
-
-    // ===== PICKER COULEUR FOND =====
-    (function() {
-        var currentTheme = '{{ bg_gradient }}' === 'linear-gradient(135deg, #A6D3DC 0%, #597176 100%)' ? 'bleu'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #1a3a2a 0%, #0d1f16 100%)' ? 'foret'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #1e1e3a 0%, #0d0d20 100%)' ? 'nuit'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #2c3e50 0%, #1a252f 100%)' ? 'ardoise'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #3a1a2e 0%, #1a0d16 100%)' ? 'prune'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #f0e4d0 0%, #d4b896 100%)' ? 'sable'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #c8e6d8 0%, #8cbfaa 100%)' ? 'menthe'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #7a1f3f 0%, #3d0d1e 100%)' ? 'framboise'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #f9c2d4 0%, #e88aab 100%)' ? 'rose'
-            : '{{ bg_gradient }}' === 'linear-gradient(135deg, #fdd9c8 0%, #f4a07a 100%)' ? 'peche'
-            : 'marron';
-
-        // Marquer le bouton actif au chargement
-        var activeBtn = document.querySelector('.bg-theme-btn[data-theme="' + currentTheme + '"]');
-        if (activeBtn) activeBtn.classList.add('active');
-
-        // Clic sur un bouton
-        document.querySelectorAll('.bg-theme-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var theme = btn.getAttribute('data-theme');
-                fetch('/set_bg_theme', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({theme: theme})
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (data.ok) {
-                        // Mettre a jour le fond immediatement
-                        var gradients = {
-                            'marron':  'linear-gradient(135deg, #4a3428 0%, #1a1410 100%)',
-                            'bleu':    'linear-gradient(135deg, #A6D3DC 0%, #597176 100%)',
-                            'foret':   'linear-gradient(135deg, #1a3a2a 0%, #0d1f16 100%)',
-                            'nuit':    'linear-gradient(135deg, #1e1e3a 0%, #0d0d20 100%)',
-                            'ardoise': 'linear-gradient(135deg, #2c3e50 0%, #1a252f 100%)',
-                            'prune':   'linear-gradient(135deg, #3a1a2e 0%, #1a0d16 100%)',
-                            'sable':   'linear-gradient(135deg, #f0e4d0 0%, #d4b896 100%)',
-                            'menthe':  'linear-gradient(135deg, #c8e6d8 0%, #8cbfaa 100%)',
-                            'framboise': 'linear-gradient(135deg, #7a1f3f 0%, #3d0d1e 100%)',
-                            'rose':    'linear-gradient(135deg, #f9c2d4 0%, #e88aab 100%)',
-                            'peche':   'linear-gradient(135deg, #fdd9c8 0%, #f4a07a 100%)',
-                        };
-                        document.body.style.background = gradients[theme];
-                        // Mettre a jour les boutons
-                        document.querySelectorAll('.bg-theme-btn').forEach(function(b) { b.classList.remove('active'); });
-                        btn.classList.add('active');
-                        // Message de confirmation
-                        var msg = document.getElementById('bg-theme-msg');
-                        if (msg) { msg.style.display = 'block'; setTimeout(function() { msg.style.display = 'none'; }, 2500); }
-                    }
-                });
-            });
-        });
-    })();
-
-</script>
 </body>
 </html>

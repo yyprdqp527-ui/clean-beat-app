@@ -11430,7 +11430,7 @@ def personnaliser_maison():
             conn.close()
         if request.form.get('house_name', '').strip():
             _invalidate_house_cache(session['user'])  # ⚡ Invalider le cache si nom modifié
-        return redirect(url_for('menu'))
+        return redirect(url_for('settings_page'))
 
     # GET : charger les réglages actuels de la maison
     conn = get_db_connection()
@@ -11477,6 +11477,21 @@ def personnaliser_maison():
 
     return render_template('edit_house.html', rooms=rooms_data, house_members=house_members, current_house_name=current_house_name)
 
+
+@app.route('/settings')
+def settings_page():
+    """Page réglages — regroupe gestion maison et joueurs"""
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('settings.html')
+
+
+@app.route('/settings/theme')
+def settings_theme():
+    """Page dédiée : changement de thème / couleur de fond"""
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('settings_theme.html')
 
 
 # Page de nettoyage du cache

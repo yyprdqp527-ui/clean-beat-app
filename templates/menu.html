@@ -3306,7 +3306,6 @@ body { padding-bottom: 84px !important; }
 .cw-tab:nth-child(2) .cw-tab-icon { background: rgba(231,76,60,0.13); box-shadow: 0 2px 6px rgba(231,76,60,0.15); }
 .cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,180,120,0.18); box-shadow: 0 2px 6px rgba(46,180,120,0.18); }
 .cw-tab:nth-child(4) .cw-tab-icon { background: rgba(130,100,220,0.15); box-shadow: 0 2px 6px rgba(130,100,220,0.15); }
-.cw-tab:nth-child(5) .cw-tab-icon { background: rgba(166,211,220,0.30); box-shadow: 0 2px 6px rgba(89,113,118,0.15); }
 /* Onglet actif (classement ouvert) */
 .cw-tab.cw-tab--active .cw-tab-icon { box-shadow: 0 0 0 2px rgba(253,174,84,0.55); }
 .cw-tab.cw-tab--active .cw-tab-label { color: #153036; font-weight: 800; }
@@ -3381,7 +3380,7 @@ body { padding-bottom: 84px !important; }
 {% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='daily_points', reverse=True) %}
 <div class="cw-wrap" id="cwWrap">
-    <!-- ── Barre de navigation fixe — 5 onglets ── -->
+    <!-- ── Barre de navigation fixe — 4 onglets ── -->
     <div class="cw-tabs">
         <!-- 1. Classement (toggle panel) -->
         <a href="/classement" class="cw-tab" id="cwTabScore">
@@ -3404,15 +3403,10 @@ body { padding-bottom: 84px !important; }
             </span>
             <span class="cw-tab-label">Courses</span>
         </a>
-        <!-- 4. Joueurs -->
-        <a href="{{ url_for('manage_players') }}" class="cw-tab">
-            <span class="cw-tab-icon">👥</span>
-            <span class="cw-tab-label">Joueurs</span>
-        </a>
-        <!-- 5. Maison -->
-        <a href="{{ url_for('personnaliser_maison') }}" class="cw-tab">
-            <span class="cw-tab-icon">🏡</span>
-            <span class="cw-tab-label">Maison</span>
+        <!-- 4. Setting (regroupe Joueurs + Maison) -->
+        <a href="{{ url_for('settings_page') }}" class="cw-tab">
+            <span class="cw-tab-icon">⚙️</span>
+            <span class="cw-tab-label">Setting</span>
         </a>
     </div>
 
