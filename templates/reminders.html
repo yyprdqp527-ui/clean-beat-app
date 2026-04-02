@@ -406,15 +406,8 @@
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-                // Insérer en début de liste (après le section-title)
-                var sTitle = list.querySelector('.section-title');
-                if (sTitle && sTitle.nextSibling) {
-                    list.insertBefore(card, sTitle.nextSibling);
-                } else if (sTitle) {
-                    list.appendChild(card);
-                } else {
-                    list.insertBefore(card, list.firstChild);
-                }
+                // Insérer en fin de liste (les articles s'empilent)
+                list.appendChild(card);
 
                 // Mettre à jour le compteur section-title
                 _updateSectionTitle();
@@ -549,15 +542,8 @@
                 '</div>' +
                 '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-            // Insérer en début de liste (après le section-title)
-            var wsTitle = list.querySelector('.section-title');
-            if (wsTitle && wsTitle.nextSibling) {
-                list.insertBefore(card, wsTitle.nextSibling);
-            } else if (wsTitle) {
-                list.appendChild(card);
-            } else {
-                list.insertBefore(card, list.firstChild);
-            }
+            // Insérer en fin de liste (les articles s'empilent)
+            list.appendChild(card);
 
             // Mettre à jour le compteur section-title
             _updateSectionTitle();

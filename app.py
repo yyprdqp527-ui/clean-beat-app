@@ -5629,13 +5629,14 @@ def reminders():
         _dbg(f"⚠️ Erreur marquage courses_added: {e}")
 
     # Liste partagée par toute la maison (visible par tous les joueurs)
+    # Les articles restent à leur position, même une fois cochés
     c.execute("""
         SELECT pr.id, pr.title, pr.remind_at, pr.is_done, pr.created_at, pr.user_email, 
                u.name, u.avatar, u.avatar_file, u.avatar_url
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
-        ORDER BY pr.is_done ASC, CASE WHEN pr.remind_at IS NULL THEN 1 ELSE 0 END, pr.remind_at ASC, pr.created_at ASC
+        ORDER BY pr.created_at ASC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
@@ -5693,6 +5694,23 @@ def add_reminder():
         return jsonify({'success': False, 'error': 'Maison introuvable'})
 
     house_id = house_row[0]
+
+    # Reset auto : si la liste atteint 30 articles, supprimer tous les articles cochés
+    c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=?", (house_id,))
+    total_count = c.fetchone()[0] or 0
+    if total_count >= 30:
+        c.execute("DELETE FROM player_reminders WHERE house_id=? AND is_done=1", (house_id,))
+        # Si après purge on est encore à 30+, supprimer les plus anciens
+        c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=?", (house_id,))
+        still_count = c.fetchone()[0] or 0
+        if still_count >= 30:
+            c.execute("""
+                DELETE FROM player_reminders WHERE id IN (
+                    SELECT id FROM player_reminders WHERE house_id=?
+                    ORDER BY created_at ASC LIMIT ?
+                )
+            """, (house_id, still_count - 29))
+
     c.execute("""
         INSERT INTO player_reminders (user_email, house_id, title, remind_at)
         VALUES (?, ?, ?, ?)
