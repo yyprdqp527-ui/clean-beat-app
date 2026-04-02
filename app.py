@@ -13167,13 +13167,15 @@ def api_daily_tasks():
         """, (house_id, house_id, today + '%'))
         
         rows = c.fetchall()
+        _jours_fr = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
         tasks = []
         for name, task_name, points, category, done_at, user_email, task_id in rows:
             time_str = ''
             try:
                 paris_dt = to_paris(done_at)
                 if hasattr(paris_dt, 'strftime'):
-                    time_str = paris_dt.strftime('%H:%M')
+                    jour = _jours_fr[paris_dt.weekday()]
+                    time_str = jour + ' ' + paris_dt.strftime('%H:%M')
                 elif paris_dt and ' ' in str(paris_dt):
                     time_str = str(paris_dt).split(' ')[1][:5]
             except Exception:
@@ -13212,7 +13214,7 @@ def api_weekly_tasks():
         house_id = row[0]
         monday = (now_paris().date() - timedelta(days=now_paris().date().weekday())).isoformat()
         c.execute("""
-            SELECT u.name, ct.task_name, ct.points, ct.category
+            SELECT u.name, ct.task_name, ct.points, ct.category, ct.completed_at
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
@@ -13221,9 +13223,18 @@ def api_weekly_tasks():
             ORDER BY ct.completed_at DESC
         """, (house_id, house_id, monday))
         rows = c.fetchall()
+        _jours_fr = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
         tasks = []
-        for name, task_name, points, category in rows:
-            tasks.append({'player_name': name or '?', 'task_name': task_name, 'points': points or 0})
+        for name, task_name, points, category, done_at in rows:
+            time_str = ''
+            try:
+                paris_dt = to_paris(done_at)
+                if hasattr(paris_dt, 'strftime'):
+                    jour = _jours_fr[paris_dt.weekday()]
+                    time_str = jour + ' ' + paris_dt.strftime('%H:%M')
+            except Exception:
+                pass
+            tasks.append({'player_name': name or '?', 'task_name': task_name, 'points': points or 0, 'time': time_str})
         return {'tasks': tasks}, 200
     except Exception as e:
         _dbg(f"Erreur API weekly_tasks: {e}")
@@ -13249,7 +13260,7 @@ def api_monthly_tasks():
         # 30 derniers jours pour que le mois ait toujours >= semaine
         thirty_days_ago = (now_paris().date() - timedelta(days=30)).isoformat()
         c.execute("""
-            SELECT u.name, ct.task_name, ct.points, ct.category
+            SELECT u.name, ct.task_name, ct.points, ct.category, ct.completed_at
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
@@ -13258,9 +13269,18 @@ def api_monthly_tasks():
             ORDER BY ct.completed_at DESC
         """, (house_id, house_id, thirty_days_ago))
         rows = c.fetchall()
+        _jours_fr = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
         tasks = []
-        for name, task_name, points, category in rows:
-            tasks.append({'player_name': name or '?', 'task_name': task_name, 'points': points or 0})
+        for name, task_name, points, category, done_at in rows:
+            time_str = ''
+            try:
+                paris_dt = to_paris(done_at)
+                if hasattr(paris_dt, 'strftime'):
+                    jour = _jours_fr[paris_dt.weekday()]
+                    time_str = jour + ' ' + paris_dt.strftime('%H:%M')
+            except Exception:
+                pass
+            tasks.append({'player_name': name or '?', 'task_name': task_name, 'points': points or 0, 'time': time_str})
         return {'tasks': tasks}, 200
     except Exception as e:
         _dbg(f"Erreur API monthly_tasks: {e}")
