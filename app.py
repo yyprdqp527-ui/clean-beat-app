@@ -1651,9 +1651,11 @@ def save_photo_from_base64(base64_data):
 
         # Compresser avec Pillow si disponible (max 400×400, qualité 75)
         try:
-            from PIL import Image
+            from PIL import Image, ImageOps
             import io as _io
-            img = Image.open(_io.BytesIO(image_data)).convert('RGB')
+            img = Image.open(_io.BytesIO(image_data))
+            img = ImageOps.exif_transpose(img)
+            img = img.convert('RGB')
             img.thumbnail((400, 400), Image.LANCZOS)
             buf = _io.BytesIO()
             img.save(buf, format='JPEG', quality=75, optimize=True)
@@ -5192,9 +5194,11 @@ def update_player():
                 if file and file.filename:
                     raw_data = file.read()
                     try:
-                        from PIL import Image
+                        from PIL import Image, ImageOps
                         import io as _io_p
-                        img = Image.open(_io_p.BytesIO(raw_data)).convert('RGB')
+                        img = Image.open(_io_p.BytesIO(raw_data))
+                        img = ImageOps.exif_transpose(img)
+                        img = img.convert('RGB')
                         img.thumbnail((400, 400), Image.LANCZOS)
                         buf = _io_p.BytesIO()
                         img.save(buf, format='JPEG', quality=75, optimize=True)
@@ -5516,9 +5520,11 @@ def add_child():
             unique_filename = os.path.splitext(unique_filename)[0] + '.jpg'
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             try:
-                from PIL import Image
+                from PIL import Image, ImageOps
                 import io as _io
-                img = Image.open(child_photo).convert('RGB')
+                img = Image.open(child_photo)
+                img = ImageOps.exif_transpose(img)
+                img = img.convert('RGB')
                 img.thumbnail((400, 400), Image.LANCZOS)
                 img.save(filepath, format='JPEG', quality=75, optimize=True)
             except ImportError:
@@ -11134,9 +11140,11 @@ def api_upload_proof():
         
         # Compresser la photo avant sauvegarde (max 1200×1200, JPEG q80)
         try:
-            from PIL import Image
+            from PIL import Image, ImageOps
             import io as _io
-            img = Image.open(photo_file).convert('RGB')
+            img = Image.open(photo_file)
+            img = ImageOps.exif_transpose(img)
+            img = img.convert('RGB')
             img.thumbnail((1200, 1200), Image.LANCZOS)
             unique_filename = os.path.splitext(unique_filename)[0] + '.jpg'
             photo_path = os.path.join(proofs_dir, unique_filename)
@@ -11841,30 +11849,29 @@ def add_task_page(cat, task_id=None):
         except Exception:
             points = 10
         
-        # Gestion de l'image - priorité au fichier uploadé, sinon image sélectionnée
+        # Gestion de l'image - stockage base64 en DB (compatible Render filesystem éphémère)
         task_image_filename = None
         
         # Vérifier si un fichier a été uploadé
         if 'task_image' in request.files:
             file = request.files['task_image']
             if file and file.filename != '' and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                ext = filename.rsplit('.', 1)[1].lower()
-                filename = f"custom_{uuid.uuid4().hex}.{ext}"
-                image_path = os.path.join('static', 'images', filename)
-                os.makedirs(os.path.dirname(image_path), exist_ok=True)
-                # Compresser l'image uploadée (max 800×800, JPEG q80)
+                # Compresser et convertir en base64 data URI (pas de fichier sur disque)
                 try:
-                    from PIL import Image
+                    from PIL import Image, ImageOps
                     import io as _io
-                    img = Image.open(file).convert('RGB')
+                    img = Image.open(file)
+                    img = ImageOps.exif_transpose(img)
+                    img = img.convert('RGB')
                     img.thumbnail((800, 800), Image.LANCZOS)
-                    filename = f"custom_{uuid.uuid4().hex}.jpg"
-                    image_path = os.path.join('static', 'images', filename)
-                    img.save(image_path, format='JPEG', quality=80, optimize=True)
+                    buf = _io.BytesIO()
+                    img.save(buf, format='JPEG', quality=80, optimize=True)
+                    image_data = buf.getvalue()
                 except ImportError:
-                    file.save(image_path)
-                task_image_filename = filename
+                    image_data = file.read()
+                import base64 as _b64
+                compressed_b64 = _b64.b64encode(image_data).decode('utf-8')
+                task_image_filename = f"data:image/jpeg;base64,{compressed_b64}"
         
         # Si pas de fichier uploadé, utiliser l'image sélectionnée
         if not task_image_filename:

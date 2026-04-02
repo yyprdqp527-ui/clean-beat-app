@@ -679,7 +679,11 @@ window.addEventListener('DOMContentLoaded', function() {
                 <a href="{{ url_for('custom_task_page', task_id=custom_task.id) }}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
                     <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
                     <div class="task-image-container">
+                        {% if custom_task.image and custom_task.image.startswith('data:') %}
+                        <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}">
+                        {% else %}
                         <img src="{{ url_for('static', filename='images/' ~ (custom_task.image if custom_task.image else 'default.png')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}">
+                        {% endif %}
                         <span class="points-badge points-edit-trigger" role="button" tabindex="0"
                               data-action="{{ url_for('update_custom_task_points', cat=category, task_id=custom_task.id) }}"
                               data-points="{{ custom_task.points if custom_task.points is not none else 0 }}"

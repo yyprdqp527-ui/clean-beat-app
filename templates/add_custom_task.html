@@ -18,10 +18,8 @@ body > .header-menu {
 .header-page-spacer {
     display: none !important;
 }
-/* Palette harmonisée avec l'app */
+
 :root {
-    --brown-warm: #4a3428;
-    --brown-dark: #1a1410;
     --teal-light: #A6D3DC;
     --teal-medium: #89b4bb;
     --teal-dark: #597176;
@@ -42,7 +40,39 @@ body {
     padding-bottom: 120px;
 }
 
-/* Card formulaire glassmorphism */
+/* ---------- TITRE HEADER (pattern classement/stats/messagerie) ---------- */
+.mission-title-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.12) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 14px 20px;
+    margin-bottom: 16px;
+    border: 2px solid rgba(253,174,84,0.3);
+    box-shadow: 0 12px 40px rgba(253,174,84,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    text-align: center;
+}
+.mission-title-card .title-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1;
+}
+.mission-title-card h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #153036;
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+.mission-title-card .mission-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: #597176;
+    margin-top: 4px;
+}
+
+/* ---------- CARD FORMULAIRE ---------- */
 .add-task-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
     backdrop-filter: blur(20px);
@@ -55,29 +85,24 @@ body {
         inset 0 1px 0 rgba(255,255,255,0.6);
 }
 
-.add-task-card h2 {
-    text-align: center;
-    color: var(--dark);
-    margin: 0 0 24px 0;
-    font-size: 22px;
-    font-weight: 800;
-}
-
+/* ---------- FORMULAIRE ---------- */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
-
 .form-group label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 700;
     color: var(--teal-dark);
     margin-bottom: 8px;
     font-size: 14px;
 }
-
+.form-group label .label-emoji {
+    font-size: 18px;
+}
 .form-group input[type="text"],
-.form-group textarea,
-.form-group select {
+.form-group textarea {
     width: 100%;
     padding: 14px 16px;
     border: 2px solid rgba(166,211,220,0.5);
@@ -89,312 +114,206 @@ body {
     font-family: inherit;
     color: var(--dark);
 }
-
 .form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.form-group textarea:focus {
     outline: none;
     border-color: var(--gold);
     box-shadow: 0 0 0 4px rgba(253,174,84,0.2);
     background: white;
 }
-
 .form-group textarea {
     resize: vertical;
     min-height: 80px;
 }
 
-/* Slider de points */
-.points-slider {
+/* ---------- SAISIE LIBRE DES POINTS ---------- */
+.points-input-wrapper {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     margin-top: 8px;
 }
+.points-input-wrapper .pts-minus,
+.points-input-wrapper .pts-plus {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(253,174,84,0.5);
+    background: rgba(255,255,255,0.9);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    user-select: none;
+    flex-shrink: 0;
+}
+.points-input-wrapper .pts-minus:hover,
+.points-input-wrapper .pts-plus:hover {
+    background: linear-gradient(135deg, rgba(253,174,84,0.2) 0%, rgba(244,198,141,0.3) 100%);
+    border-color: var(--gold);
+    transform: scale(1.1);
+}
+.points-input-wrapper .pts-minus:active,
+.points-input-wrapper .pts-plus:active {
+    transform: scale(0.95);
+}
+.points-input-field {
+    flex: 1;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--dark);
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 16px;
+    padding: 10px 8px;
+    background: linear-gradient(135deg, rgba(253,174,84,0.08) 0%, rgba(244,198,141,0.12) 100%);
+    font-family: inherit;
+    min-width: 0;
+    -moz-appearance: textfield;
+}
+.points-input-field::-webkit-outer-spin-button,
+.points-input-field::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.points-input-field:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.2);
+    background: white;
+}
+.points-label-below {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    margin-top: 6px;
+}
 
-.points-slider span {
+/* ---------- PRESETS RAPIDES ---------- */
+.points-presets {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.preset-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 2px solid rgba(166,211,220,0.5);
+    background: rgba(255,255,255,0.8);
     font-size: 13px;
     font-weight: 700;
     color: var(--teal-dark);
-    min-width: 50px;
-}
-
-.slider {
-    flex: 1;
-    height: 8px;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--peach) 0%, var(--gold) 50%, #FF9A56 100%);
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-.slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: white;
     cursor: pointer;
-    border: 3px solid var(--gold);
-    box-shadow: 0 4px 12px rgba(253,174,84,0.4);
     transition: all 0.2s ease;
+    font-family: inherit;
+}
+.preset-chip:hover {
+    border-color: var(--gold);
+    background: rgba(253,174,84,0.1);
+    transform: translateY(-1px);
+}
+.preset-chip.active {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(253,174,84,0.2) 0%, rgba(244,198,141,0.25) 100%);
+    color: var(--dark);
+    box-shadow: 0 2px 8px rgba(253,174,84,0.3);
 }
 
-.slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-}
-
-.slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    border: 3px solid var(--gold);
-    box-shadow: 0 4px 12px rgba(253,174,84,0.4);
-}
-
-.points-display {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--gold);
+/* ---------- PHOTO UPLOAD ---------- */
+.photo-upload-zone {
+    position: relative;
+    margin-top: 8px;
+    border: 2px dashed var(--teal-medium);
+    border-radius: 18px;
+    padding: 24px 16px;
     text-align: center;
-    background: linear-gradient(135deg, rgba(253,174,84,0.15) 0%, rgba(244,198,141,0.2) 100%);
-    padding: 14px;
-    border-radius: 14px;
-    margin-top: 12px;
-    border: 2px solid rgba(253,174,84,0.3);
-}
-
-/* Sélecteur d'image */
-.image-selector {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.image-option {
-    aspect-ratio: 1;
-    border-radius: 12px;
-    border: 3px solid transparent;
-    overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: rgba(255,255,255,0.8);
+    background: rgba(166,211,220,0.1);
 }
-
-.image-option:hover {
-    transform: scale(1.05);
-    border-color: rgba(253,174,84,0.5);
-}
-
-.image-option.selected {
+.photo-upload-zone:hover {
     border-color: var(--gold);
-    box-shadow: 0 4px 16px rgba(253,174,84,0.4);
+    background: rgba(253,174,84,0.08);
 }
-
-.image-option img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.photo-upload-zone.has-photo {
+    border-style: solid;
+    border-color: var(--gold);
+    padding: 12px;
+    background: rgba(253,174,84,0.05);
 }
-
-.image-preview-container {
-    text-align: center;
-    margin-top: 12px;
-}
-
-.image-preview {
-    width: 120px;
-    height: 120px;
-    border-radius: 16px;
-    object-fit: cover;
-    border: 3px solid var(--gold);
-    box-shadow: 0 8px 24px rgba(253,174,84,0.3);
-}
-
-/* Upload file style */
-.file-upload {
-    position: relative;
-    margin-top: 12px;
-}
-
-.file-upload input[type="file"] {
+.photo-upload-zone input[type="file"] {
     position: absolute;
     opacity: 0;
     width: 100%;
     height: 100%;
+    top: 0;
+    left: 0;
     cursor: pointer;
+    z-index: 2;
 }
-
-.file-upload-btn {
+.photo-upload-placeholder {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 14px 20px;
-    background: rgba(166,211,220,0.3);
-    border: 2px dashed var(--teal-medium);
-    border-radius: 14px;
-    color: var(--teal-dark);
-    font-weight: 600;
+    gap: 8px;
+}
+.photo-upload-placeholder .upload-icon {
+    font-size: 40px;
+    line-height: 1;
+}
+.photo-upload-placeholder .upload-text {
     font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.file-upload:hover .file-upload-btn {
-    background: rgba(253,174,84,0.15);
-    border-color: var(--gold);
-    color: var(--dark);
-}
-
-/* Sélecteur de points */
-.points-picker-btn {
-    width: 100%;
-    background: linear-gradient(135deg, rgba(253,174,84,0.18) 0%, rgba(244,198,141,0.22) 100%);
-    border: 2px solid rgba(253,174,84,0.55);
-    border-radius: 16px;
-    padding: 18px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.3s ease;
-}
-.points-picker-btn:hover {
-    background: linear-gradient(135deg, rgba(253,174,84,0.28) 0%, rgba(244,198,141,0.32) 100%);
-    border-color: var(--gold);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(253,174,84,0.25);
-}
-.points-picker-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--dark);
-}
-.points-picker-hint {
-    font-size: 12px;
     font-weight: 600;
     color: var(--teal-dark);
-    opacity: 0.7;
 }
-.points-picker-panel {
-    margin-top: 10px;
-    background: white;
-    border: 2px solid rgba(253,174,84,0.5);
-    border-radius: 14px;
-    padding: 16px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    animation: fadeInDown 0.2s ease;
+.photo-upload-placeholder .upload-hint {
+    font-size: 12px;
+    color: var(--teal-medium);
 }
-.points-picker-panel input[type="number"] {
-    flex: 1;
-    height: 56px;
-    font-size: 26px;
-    font-weight: 800;
+.image-preview-container {
     text-align: center;
-    border: 2px solid rgba(253,174,84,0.5);
-    border-radius: 12px;
-    padding: 8px;
-    color: var(--dark);
-    min-width: 0;
-    font-family: inherit;
+    position: relative;
 }
-.points-picker-panel input[type="number"]:focus {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 4px rgba(253,174,84,0.2);
+.image-preview {
+    width: 100%;
+    max-width: 280px;
+    border-radius: 16px;
+    object-fit: cover;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.2);
 }
-.points-picker-ok {
-    height: 56px;
-    padding: 0 22px;
-    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+.remove-photo-btn {
+    position: absolute;
+    top: -8px;
+    right: calc(50% - 148px);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+    border: 2px solid white;
     color: white;
-    border: none;
-    border-radius: 12px;
     font-size: 16px;
     font-weight: 800;
     cursor: pointer;
-    white-space: nowrap;
-    font-family: inherit;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(253,174,84,0.35);
-}
-.points-picker-ok:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(253,174,84,0.5);
-}
-@keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Tuiles de points */
-.points-tiles {
     display: flex;
-    gap: 10px;
-    margin-top: 8px;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255,107,107,0.4);
+    z-index: 3;
+    transition: transform 0.2s ease;
 }
-.points-tile {
-    flex: 1;
-    background: rgba(255,255,255,0.8);
-    border: 2px solid rgba(166,211,220,0.5);
-    border-radius: 14px;
-    padding: 14px 10px;
-    text-align: center;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.25s ease;
-}
-.points-tile:hover {
-    border-color: var(--gold);
-    background: rgba(253,174,84,0.1);
-    transform: translateY(-2px);
-}
-.points-tile.selected {
-    border-color: var(--gold);
-    background: linear-gradient(135deg, rgba(253,174,84,0.2) 0%, rgba(244,198,141,0.25) 100%);
-    box-shadow: 0 4px 14px rgba(253,174,84,0.3);
-}
-.points-tile .tile-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--teal-dark);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.points-tile .tile-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--dark);
-    line-height: 1.2;
-    margin-top: 4px;
-}
-.points-tile .tile-pts {
-    font-size: 11px;
-    color: var(--teal-dark);
-    font-weight: 600;
+.remove-photo-btn:hover {
+    transform: scale(1.15);
 }
 
-/* Aide */
-.help-text {
-    background: linear-gradient(135deg, rgba(253,174,84,0.1) 0%, rgba(244,198,141,0.15) 100%);
-    padding: 12px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-    color: var(--teal-dark);
-    font-weight: 600;
-    margin-top: 8px;
-    border: 1px solid rgba(253,174,84,0.2);
-}
-
-/* Boutons */
+/* ---------- BOUTONS ---------- */
 .btn-container {
     display: flex;
     gap: 14px;
@@ -402,7 +321,6 @@ body {
     margin-top: 28px;
     flex-wrap: wrap;
 }
-
 .btn {
     padding: 14px 28px;
     border: none;
@@ -418,8 +336,8 @@ body {
     gap: 8px;
     flex: 1;
     min-width: 130px;
+    font-family: inherit;
 }
-
 .btn-primary {
     background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
     color: white;
@@ -427,57 +345,41 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-
 .btn-primary:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 12px 35px rgba(253,174,84,0.6);
 }
-
-.btn-secondary {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-    color: #153036;
-    border: 2px solid rgba(255,255,255,0.5);
-    box-shadow: 0 8px 25px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(89,113,118,0.25), inset 0 1px 0 rgba(255,255,255,0.7);
-}
-
 .btn-danger {
     background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
     color: white;
     box-shadow: 0 6px 20px rgba(255,107,107,0.3);
+    font-family: inherit;
 }
-
 .btn-danger:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 30px rgba(255,107,107,0.4);
 }
 
-/* Responsive */
+/* ---------- RESPONSIVE ---------- */
 @media (max-width: 480px) {
     .add-task-container {
         padding: 15px;
         padding-bottom: 100px;
     }
-    
     .add-task-card {
         padding: 20px 18px;
     }
-    
-    .image-selector {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    
     .btn-container {
         flex-direction: column;
     }
-    
     .btn {
         width: 100%;
+    }
+    .remove-photo-btn {
+        right: calc(50% - 108px);
+    }
+    .image-preview {
+        max-width: 200px;
     }
 }
 </style>
@@ -485,156 +387,182 @@ body {
 
 {% block content %}
 <style>
-/* Masquage forcé du header game */
 .header-menu {
     display: none !important;
     visibility: hidden !important;
-    opacity: 0 !important;
     height: 0 !important;
     overflow: hidden !important;
-    position: absolute !important;
-    top: -9999px !important;
 }
 </style>
-
-<script>
-// Masquer immédiatement le header sans attendre le DOM
-(function() {
-    const hideHeader = function() {
-        const header = document.querySelector('.header-menu');
-        if (header) {
-            header.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important;';
-            header.remove();
-        }
-    };
-    // Exécuter immédiatement
-    hideHeader();
-    // Et aussi au chargement du DOM
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideHeader);
-    }
-})();
-</script>
 
 <a href="{{ url_for('categorie', cat=category) }}" class="back-btn-glass" aria-label="Retour">←</a>
 
 <div class="add-task-container">
-    <!-- Formulaire -->
-    <div class="add-task-card">
-        <h2>{% if task %}Modifier ta mission{% else %}Crée ta mission{% endif %}</h2>
+    <!-- TITRE à la manière des autres pages -->
+    <div class="mission-title-card">
+        <span class="title-icon">🎯</span>
+        <h1>{% if task %}Modifie ta mission{% else %}Ajoute une mission{% endif %}</h1>
+        <p class="mission-subtitle">{{ category_name }} — {% if task %}Peaufine les détails !{% else %}Défie les autres joueurs !{% endif %}</p>
+    </div>
 
+    <!-- FORMULAIRE -->
+    <div class="add-task-card">
         <form method="POST" enctype="multipart/form-data">
             {% if task %}
             <input type="hidden" name="task_id" value="{{ task.id }}">
             {% endif %}
             
+            <!-- NOM DE LA MISSION -->
             <div class="form-group">
-                <label for="task_name">Nom de la mission</label>
+                <label for="task_name"><span class="label-emoji">✏️</span> Nom de la mission</label>
                 <input type="text" id="task_name" name="task_name" 
                        value="{{ task.name if task else '' }}"
-                       placeholder="Ex: Ranger le placard" required maxlength="50">
+                       placeholder="Ex: Ranger le placard, Nettoyer le frigo…" required maxlength="50">
             </div>
 
+            <!-- DESCRIPTION -->
             <div class="form-group">
-                <label for="task_description">Description (optionnel)</label>
+                <label for="task_description"><span class="label-emoji">💬</span> Décris la mission</label>
                 <textarea id="task_description" name="task_description" 
-                          placeholder="Décris les détails de ta mission..." 
+                          placeholder="Motive les troupes ! Qu'est-ce qu'il faut faire exactement ?" 
                           rows="3" maxlength="200">{{ task.description if task else '' }}</textarea>
             </div>
 
+            <!-- PHOTO -->
             <div class="form-group">
-                <label>Points</label>
-                <input type="hidden" id="points" name="points" value="{{ task.points if task else 10 }}">
-                <div class="points-tiles">
-                    <button type="button" class="points-tile{% if not task or task.points == 5 %} selected{% endif %}" onclick="selectPointsTile(this, 5)">
-                        <div class="tile-label">Facile</div>
-                        <div class="tile-value">5</div>
-                        <div class="tile-pts">points</div>
-                    </button>
-                    <button type="button" class="points-tile{% if task and task.points == 10 %} selected{% endif %}" onclick="selectPointsTile(this, 10)">
-                        <div class="tile-label">Moyen</div>
-                        <div class="tile-value">10</div>
-                        <div class="tile-pts">points</div>
-                    </button>
-                    <button type="button" class="points-tile{% if task and task.points == 20 %} selected{% endif %}" onclick="selectPointsTile(this, 20)">
-                        <div class="tile-label">Difficile</div>
-                        <div class="tile-value">20</div>
-                        <div class="tile-pts">points</div>
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Illustre ta mission (optionnel)</label>
-                <div class="file-upload">
+                <label><span class="label-emoji">📸</span> Une photo vaut mille mots !</label>
+                <div class="photo-upload-zone{% if task and task.image %} has-photo{% endif %}" id="photoZone">
                     <input type="file" id="task_image" name="task_image" accept="image/*" onchange="previewImage(event)">
-                    <div class="file-upload-btn">Ajouter une photo</div>
-                </div>
-                <input type="hidden" name="task_image_select" id="taskImageSelect"
-                       value="{{ task.image if task else '' }}">
-                <div class="image-preview-container" id="previewContainer" style="display: {% if task and task.image %}block{% else %}none{% endif %};">
-                    <img id="imagePreview" class="image-preview"
-                         src="{% if task and task.image %}{{ url_for('static', filename='images/' ~ task.image) }}{% endif %}"
-                         alt="Aperçu">
+                    <input type="hidden" name="task_image_select" id="taskImageSelect"
+                           value="{{ task.image if task else '' }}">
+                    <div class="photo-upload-placeholder" id="uploadPlaceholder" style="display: {% if task and task.image %}none{% else %}flex{% endif %};">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">Ajoute une photo</span>
+                        <span class="upload-hint">Astuce : ajoute une photo pour que tout le monde comprenne la mission du premier coup d'œil !</span>
+                    </div>
+                    <div class="image-preview-container" id="previewContainer" style="display: {% if task and task.image %}block{% else %}none{% endif %};">
+                        <img id="imagePreview" class="image-preview"
+                             src="{% if task and task.image %}{% if task.image.startswith('data:') %}{{ task.image }}{% else %}{{ url_for('static', filename='images/' ~ task.image) }}{% endif %}{% endif %}"
+                             alt="Aperçu">
+                        <button type="button" class="remove-photo-btn" onclick="removePhoto(event)">✕</button>
+                    </div>
                 </div>
             </div>
 
+            <!-- POINTS — saisie libre -->
+            <div class="form-group">
+                <label><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
+                <input type="hidden" id="points" name="points" value="{{ task.points if task else 10 }}">
+                <div class="points-input-wrapper">
+                    <button type="button" class="pts-minus" onclick="changePoints(-5)">−</button>
+                    <input type="number" class="points-input-field" id="pointsDisplay"
+                           value="{{ task.points if task else 10 }}" min="1" max="999"
+                           oninput="syncPoints(this.value)">
+                    <button type="button" class="pts-plus" onclick="changePoints(+5)">+</button>
+                </div>
+                <div class="points-label-below">points attribués au joueur qui réalise la mission</div>
+                <div class="points-presets">
+                    <button type="button" class="preset-chip" onclick="setPoints(5)">😌 5 pts</button>
+                    <button type="button" class="preset-chip" onclick="setPoints(10)">💪 10 pts</button>
+                    <button type="button" class="preset-chip" onclick="setPoints(20)">🔥 20 pts</button>
+                    <button type="button" class="preset-chip" onclick="setPoints(50)">🏆 50 pts</button>
+                </div>
+            </div>
+
+            <!-- BOUTON CRÉER / ENREGISTRER -->
             <div class="btn-container">
                 <button type="submit" class="btn btn-primary">
-                    {% if task %}Enregistrer{% else %}Créer{% endif %}
+                    {% if task %}💾 Enregistrer{% else %}🚀 Lancer la mission !{% endif %}
                 </button>
             </div>
             
             {% if task %}
             <div class="btn-container" style="margin-top: 16px;">
                 <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                    Supprimer cette mission
+                    🗑️ Supprimer cette mission
                 </button>
             </div>
             {% endif %}
         </form>
         
         {% if task %}
-        <form id="deleteForm" method="POST" action="{{ url_for('delete_custom_task', task_id=task.id, cat=category) }}" style="display:none;">
-        </form>
+        <form id="deleteForm" method="POST" action="{{ url_for('delete_custom_task', task_id=task.id, cat=category) }}" style="display:none;"></form>
         {% endif %}
+
     </div>
 </div>
 
 <script>
-function selectPointsTile(el, val) {
-    document.querySelectorAll('.points-tile').forEach(t => t.classList.remove('selected'));
-    el.classList.add('selected');
+/* === POINTS === */
+function syncPoints(val) {
+    val = parseInt(val) || 1;
+    if (val < 1) val = 1;
+    if (val > 999) val = 999;
     document.getElementById('points').value = val;
+    document.getElementById('pointsDisplay').value = val;
+    highlightPresets(val);
 }
 
-// Pré-sélectionner la tuile correspondante à la valeur initiale
-document.addEventListener('DOMContentLoaded', function() {
-    const current = parseInt(document.getElementById('points').value) || 10;
-    const tiles = document.querySelectorAll('.points-tile');
-    let matched = false;
-    tiles.forEach(t => {
-        const v = parseInt(t.querySelector('.tile-value').textContent);
-        if (v === current) { t.classList.add('selected'); matched = true; }
-        else t.classList.remove('selected');
+function changePoints(delta) {
+    const cur = parseInt(document.getElementById('pointsDisplay').value) || 10;
+    let next = cur + delta;
+    if (next < 1) next = 1;
+    if (next > 999) next = 999;
+    syncPoints(next);
+}
+
+function setPoints(val) {
+    syncPoints(val);
+}
+
+function highlightPresets(val) {
+    document.querySelectorAll('.preset-chip').forEach(chip => {
+        const chipVal = parseInt(chip.textContent.match(/\d+/));
+        chip.classList.toggle('active', chipVal === val);
     });
-    if (!matched && tiles.length) tiles[1].classList.add('selected');
+}
+
+/* Init presets on load */
+document.addEventListener('DOMContentLoaded', function() {
+    highlightPresets(parseInt(document.getElementById('points').value) || 10);
 });
 
+/* === PHOTO === */
 function previewImage(event) {
     const input = event.target;
     const preview = document.getElementById('imagePreview');
     const container = document.getElementById('previewContainer');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const zone = document.getElementById('photoZone');
     
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             preview.src = e.target.result;
             container.style.display = 'block';
+            placeholder.style.display = 'none';
+            zone.classList.add('has-photo');
             document.getElementById('taskImageSelect').value = '';
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+
+function removePhoto(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const preview = document.getElementById('imagePreview');
+    const container = document.getElementById('previewContainer');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const zone = document.getElementById('photoZone');
+    const fileInput = document.getElementById('task_image');
+    
+    preview.src = '';
+    container.style.display = 'none';
+    placeholder.style.display = 'flex';
+    zone.classList.remove('has-photo');
+    fileInput.value = '';
+    document.getElementById('taskImageSelect').value = '';
 }
 
 function confirmDelete() {
@@ -642,17 +570,5 @@ function confirmDelete() {
         document.getElementById('deleteForm').submit();
     }
 }
-
-// Masquer le header au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    const header = document.querySelector('.header-menu');
-    if (header) {
-        header.style.display = 'none';
-        header.style.visibility = 'hidden';
-        header.style.opacity = '0';
-        header.style.height = '0';
-        header.remove(); // Supprimer complètement l'élément
-    }
-});
 </script>
 {% endblock %}
