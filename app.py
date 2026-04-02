@@ -10437,21 +10437,17 @@ def api_active_malus():
 
         house_id = row[0]
 
-        # Seuil = il y a 60 minutes
-        from datetime import timedelta
-        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
-
         # Joueurs ayant reçu un malus dans la dernière heure
-        # Cast explicite pour compatibilité PostgreSQL
+        # datetime('now','-1 hour') → CURRENT_TIMESTAMP - 1h (cohérent avec CURRENT_TIMESTAMP à l'insertion)
         c.execute("""
             SELECT ct.user_email, u.name, ct.task_name
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
               AND ct.category = 'malus'
-              AND ct.completed_at >= CAST(? AS TIMESTAMP)
+              AND ct.completed_at >= datetime('now', '-1 hour')
             ORDER BY ct.completed_at DESC
-        """, (house_id, since))
+        """, (house_id,))
 
         rows = c.fetchall()
 
@@ -10493,18 +10489,16 @@ def api_active_bonus():
 
         house_id = row[0]
 
-        from datetime import timedelta
-        since = (now_paris() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
-
+        # datetime('now','-1 hour') → CURRENT_TIMESTAMP - 1h (cohérent avec CURRENT_TIMESTAMP à l'insertion)
         c.execute("""
             SELECT ct.user_email, u.name, ct.task_name
             FROM completed_tasks ct
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ?
               AND ct.category = 'bonus'
-              AND ct.completed_at >= CAST(? AS TIMESTAMP)
+              AND ct.completed_at >= datetime('now', '-1 hour')
             ORDER BY ct.completed_at DESC
-        """, (house_id, since))
+        """, (house_id,))
 
         rows = c.fetchall()
 

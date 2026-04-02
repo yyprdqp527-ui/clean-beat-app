@@ -880,7 +880,12 @@ function animateHouse(mood) {
 function showPointsAnimation(points) {
     const pointsDiv = document.createElement('div');
     pointsDiv.className = 'points-animation';
-    pointsDiv.textContent = '+' + points + ' points!';
+    pointsDiv.textContent = (points > 0 ? '+' : '') + points + ' points!';
+    if (points > 0) {
+        pointsDiv.style.color = '#7ABAC5';
+    } else {
+        pointsDiv.style.color = '#D4856A';
+    }
     document.body.appendChild(pointsDiv);
     
     setTimeout(() => {

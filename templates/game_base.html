@@ -567,7 +567,7 @@
         function showPointsAnimation(playerElement, points) {
             const bubble = document.createElement('div');
             bubble.className = 'points-bubble';
-            bubble.textContent = '+' + points;
+            bubble.textContent = (points > 0 ? '+' : '') + points;
             bubble.style.cssText = `
                 position: absolute;
                 top: -10px;
