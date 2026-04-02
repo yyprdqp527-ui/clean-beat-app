@@ -440,18 +440,13 @@
                 font-weight: 700;
                 text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
             }
-            /* Barre semaine compacte sur mobile */
+            /* Dots semaine compacte sur mobile */
             .week-progress-wrap {
-                flex: 0 0 100%;
-                margin-top: 2px;
-                padding: 0;
+                left: 8px;
             }
-            .week-bar-track { height: 14px; }
-            .week-bar-row { gap: 6px; }
-            .week-day { font-size: 7px; }
-            .week-bar-days { padding: 0 6px; }
-            .week-bar-cursor { font-size: 15px; }
-            .week-countdown { font-size: 11px; right: -42px; }
+            .week-dot { width: 6px; height: 6px; }
+            .week-dots-row { gap: 5px; }
+            .week-countdown-text { font-size: 9px; }
             .gameplay-btn-wrapper { right: 8px; }
             .gameplay-btn { width: 42px; height: 42px; font-size: 20px; }
         }
@@ -561,140 +556,91 @@
             border-radius: 999px;
         }
 
-        /* ── Barre de progression semaine (cadeau dimanche) ── */
+        /* ── Dots de progression semaine (récompenses dimanche) ── */
         .week-progress-wrap {
             display: flex;
             flex-direction: column;
-            gap: 3px;
-            flex: 0 0 100%;
-            margin: 0;
+            align-items: center;
+            gap: 4px;
+            position: fixed;
+            left: 14px;
+            z-index: 9998;
             padding: 0;
             box-sizing: border-box;
+            transition: top 0.3s ease;
         }
-        .week-bar-row {
+        .week-dots-row {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            width: 100%;
+            gap: 6px;
+        }
+        .week-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            transition: all 0.4s ease;
             position: relative;
         }
-        .week-bar-track {
-            flex: 1;
-            height: 16px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.18);
-            backdrop-filter: saturate(160%) blur(14px);
-            -webkit-backdrop-filter: saturate(160%) blur(14px);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
-            position: relative;
-            overflow: visible;
-            border: 1px solid rgba(255,255,255,0.28);
+        .week-dot.is-past {
+            background: var(--week-bar-color, #FDAE54);
+            border-color: var(--week-bar-color, #FDAE54);
+            box-shadow: 0 0 4px var(--week-bar-color, rgba(253,174,84,0.5));
         }
-        .week-bar-fill {
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            height: 100%;
-            width: 0%;
-            background: var(--week-bar-color, linear-gradient(90deg, var(--gold, #FDAE54), var(--peach, #F4C68D)));
-            border-radius: 999px;
-            transition: width 0.8s cubic-bezier(.4,0,.2,1);
-        }
-        .week-bar-fill::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%; right: 0; bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-            animation: weekShimmer 3s ease-in-out infinite;
-        }
-        @keyframes weekShimmer {
-            0%, 100% { left: -100%; opacity: 0; }
-            50% { left: 100%; opacity: 1; }
-        }
-        .week-countdown {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-            font-weight: 800;
-            color: rgba(255,255,255,0.85);
-            text-shadow: 0 1px 4px rgba(0,0,0,0.25);
-            white-space: nowrap;
-            line-height: 1;
-            letter-spacing: 0.3px;
-            position: absolute;
-            right: -50px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        .week-bar-days {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 8px;
-            z-index: 2;
-            pointer-events: none;
-        }
-        .week-day {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 9px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.5);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
-            line-height: 1;
-            text-align: center;
-            transition: color 0.3s ease, font-weight 0.3s ease;
-            letter-spacing: 0.3px;
-        }
-        .week-day.is-today {
-            color: #ffffff;
-            font-weight: 900;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
-        .week-day.is-past {
-            color: rgba(255,255,255,0.3);
-            text-shadow: none;
-        }
-        .week-bar-cursor {
-            position: absolute;
-            top: 50%;
-            left: 0%;
-            transform: translate(-50%, -50%);
-            font-size: 18px;
-            z-index: 3;
-            line-height: 1;
-            transition: left 0.8s cubic-bezier(.4,0,.2,1);
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-            animation: pulse-gift 2s ease-in-out infinite;
-        }
-        @keyframes pulse-gift {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.25); }
+        .week-dot.is-today {
+            background: var(--week-bar-color, #FDAE54);
+            border-color: #fff;
+            box-shadow: 0 0 8px var(--week-bar-color, rgba(253,174,84,0.6));
+            animation: dot-pulse 2s ease-in-out infinite;
         }
 
-        /* ── Adaptation thème clair ── */
-        .week-progress-wrap.theme-light .week-bar-track {
-            background: rgba(0,0,0,0.07);
-            border-color: rgba(0,0,0,0.08);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+        .week-dot-label {
+            display: none;
         }
-        .week-progress-wrap.theme-light .week-bar-fill {
+        .week-countdown-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.85);
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+            text-align: center;
+            transform: translateX(8px);
+            animation: countdown-glow 2.5s ease-in-out infinite;
+        }
+        @keyframes countdown-glow {
+            0%, 100% { opacity: 0.85; transform: translateX(8px) scale(1); }
+            50% { opacity: 1; transform: translateX(8px) scale(1.12); text-shadow: 0 0 8px rgba(253,174,84,0.7); }
+        }
+        @keyframes dot-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+        }
+
+
+        /* ── Adaptation thème clair ── */
+        .week-progress-wrap.theme-light .week-dot {
+            background: rgba(0,0,0,0.08);
+            border-color: rgba(0,0,0,0.1);
+        }
+        .week-progress-wrap.theme-light .week-dot.is-past {
+            background: var(--week-bar-color, #FDAE54);
+            border-color: var(--week-bar-color, #FDAE54);
             filter: brightness(0.88) saturate(1.15);
         }
-        .week-progress-wrap.theme-light .week-day {
-            color: rgba(0,0,0,0.35);
-            text-shadow: none;
+        .week-progress-wrap.theme-light .week-dot.is-today {
+            background: var(--week-bar-color, #FDAE54);
+            border-color: rgba(0,0,0,0.3);
+            filter: brightness(0.88) saturate(1.15);
         }
-        .week-progress-wrap.theme-light .week-day.is-today {
-            color: rgba(0,0,0,0.75);
-        }
-        .week-progress-wrap.theme-light .week-day.is-past {
-            color: rgba(0,0,0,0.15);
-        }
-        .week-progress-wrap.theme-light .week-countdown {
-            color: rgba(0,0,0,0.6);
-            text-shadow: none;
+        .week-progress-wrap.theme-light .week-countdown-text {
+            color: rgba(0,0,0,0.5);
         }
         /* ── Adaptation thème foncé ── */
-        .week-progress-wrap.theme-dark .week-bar-fill {
+        .week-progress-wrap.theme-dark .week-dot.is-past,
+        .week-progress-wrap.theme-dark .week-dot.is-today {
             filter: brightness(1.2) saturate(0.95);
         }
         
@@ -3008,25 +2954,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         {% endif %}
                     </div>
-                    <!-- Barre de progression semaine – Grille cadeau dimanche -->
+                    <!-- Dots de progression semaine – Récompenses dimanche -->
                     {% set bar_color = week_bar_color|default('#FDAE54') %}
-                    <div class="week-progress-wrap{% if bg_theme_light %} theme-light{% else %} theme-dark{% endif %}" id="weekProgressBar">
-                        <div class="week-bar-row">
-                            <div class="week-bar-track">
-                                <div class="week-bar-fill" id="weekBarFill" style="background: linear-gradient(90deg, {{ bar_color }}, {{ bar_color }}cc);"></div>
-                                <div class="week-bar-days">
-                                    <span class="week-day" data-day="1">Lun</span>
-                                    <span class="week-day" data-day="2">Mar</span>
-                                    <span class="week-day" data-day="3">Mer</span>
-                                    <span class="week-day" data-day="4">Jeu</span>
-                                    <span class="week-day" data-day="5">Ven</span>
-                                    <span class="week-day" data-day="6">Sam</span>
-                                    <span class="week-day" data-day="0">Dim</span>
-                                </div>
-                                <div class="week-bar-cursor" id="weekBarCursor">🎁</div>
-                            </div>
-                            <span class="week-countdown" id="weekCountdown">--</span>
+                    <div class="week-progress-wrap{% if bg_theme_light %} theme-light{% else %} theme-dark{% endif %}" id="weekProgressBar" style="--week-bar-color: {{ bar_color }};">
+                        <div class="week-dots-row">
+                            <div class="week-dot" data-day="1"></div>
+                            <div class="week-dot" data-day="2"></div>
+                            <div class="week-dot" data-day="3"></div>
+                            <div class="week-dot" data-day="4"></div>
+                            <div class="week-dot" data-day="5"></div>
+                            <div class="week-dot" data-day="6"></div>
+                            <div class="week-dot" data-day="0"></div>
                         </div>
+                        <span class="week-countdown-text" id="weekCountdown">--</span>
                     </div>
                 </div>
 
@@ -3049,6 +2989,27 @@ document.addEventListener('DOMContentLoaded', function() {
                             var midStrip = stripRect.top + stripRect.height / 2;
                             btn.style.top = Math.max(8, midStrip - bH / 2) + 'px';
                         }
+                        // Aligner les dots semaine à gauche, centré V dans le header
+                        var dotsWrap = document.getElementById('weekProgressBar');
+                        if(h && dotsWrap){
+                            var hRect = h.getBoundingClientRect();
+                            var dotsH = dotsWrap.offsetHeight;
+                            var midH = hRect.top + hRect.height / 2 + window.scrollY;
+                            dotsWrap.style.top = (midH - dotsH / 2) + 'px';
+                        }
+                        // Aligner le burger sous le bouton gameplay
+                        var leftActions = document.querySelector('.header-left-actions');
+                        if(btn && leftActions){
+                            var btnRect = btn.getBoundingClientRect();
+                            var btnBottom = btnRect.bottom + window.scrollY;
+                            leftActions.style.top = (btnBottom + 5) + 'px';
+                            // Centrer horizontalement avec le bouton gameplay
+                            var btnCenterX = btnRect.left + btnRect.width / 2;
+                            var actionsW = leftActions.offsetWidth;
+                            leftActions.style.right = 'auto';
+                            leftActions.style.left = (btnCenterX - actionsW / 2) + 'px';
+                        }
+
                     }
                     document.addEventListener('DOMContentLoaded', updateSpacer);
                     window.addEventListener('resize', updateSpacer);
@@ -3279,8 +3240,9 @@ body { padding-bottom: 84px !important; }
 
 /* ══ Boutons d'action droite du header (burger + bébé + mission) ══ */
 .header-left-actions {
-    position: absolute; left: 10px; margin-right: 8px; top: 50%; transform: translateY(-50%);
-    z-index: 2001; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    position: fixed; right: 14px;
+    z-index: 9998; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    transition: top 0.3s ease;
 }
 .beta-dot {
     width: 32px;
@@ -3346,7 +3308,7 @@ body { padding-bottom: 84px !important; }
     padding: 0 3px; border: 1px solid white;
 }
 @media (max-width: 360px) {
-    .header-left-actions { gap: 3px; }
+    .header-left-actions { gap: 3px; right: 8px; }
     .header-action-pill { width: 28px; height: 28px; font-size: 15px; }
 }
 
@@ -3643,32 +3605,23 @@ body { padding-bottom: 84px !important; }
     updateCWInfoBar();
     setInterval(updateCWInfoBar, 60000);
 
-    /* ── Barre de progression semaine (header game) ── */
+    /* ── Dots de progression semaine (header game) ── */
     function updateWeekProgressBar(){
         var now = new Date();
         var day = now.getDay(); // 0=dim, 1=lun ... 6=sam
-        // Ordre lundi→samedi : mapping jour JS → position 0-5, dimanche=6 (cadeau)
         var dayMap = {1:0, 2:1, 3:2, 4:3, 5:4, 6:5, 0:6};
         var pos = dayMap[day];
-        // Progression : lun 0h = 0%, sam 23h59 = 100%, dim = 100%
-        var total = 6 * 24; // lun 0h → sam 24h = 144h
-        var elapsed = Math.min(pos, 6) * 24 + now.getHours() + now.getMinutes()/60;
-        var pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
-        var fill = document.getElementById('weekBarFill');
-        if(fill) fill.style.width = pct + '%';
-        // Curseur 🎁 à la position de la barre
-        var cursor = document.getElementById('weekBarCursor');
-        if(cursor) cursor.style.left = pct + '%';
-        // Mettre à jour les lettres jours
-        var days = document.querySelectorAll('.week-day');
-        days.forEach(function(el){
+
+        // Mettre à jour les dots
+        var dots = document.querySelectorAll('.week-dot');
+        dots.forEach(function(el){
             var d = parseInt(el.getAttribute('data-day'));
             var p = dayMap[d];
             el.classList.remove('is-today','is-past');
-            if(d === 0) return; // cadeau : toujours style par défaut (animé)
             if(p === pos) el.classList.add('is-today');
             else if(p < pos) el.classList.add('is-past');
         });
+
         // Countdown dimanche 22h
         var daysToSun = (7 - day) % 7;
         if(daysToSun === 0 && now.getHours() >= 22) daysToSun = 7;
@@ -3681,11 +3634,12 @@ body { padding-bottom: 84px !important; }
         var mm = Math.floor((diff%3600000)/60000);
         var cdEl = document.getElementById('weekCountdown');
         if(!cdEl) return;
-        if(dd > 1) cdEl.textContent = dd+'j ' +hh+'h';
-        else if(dd === 1) cdEl.textContent = '1j ' +hh+'h';
-        else if(hh > 0) cdEl.textContent = hh+'h ' +mm+'min';
-        else if(mm > 0) cdEl.textContent = mm+'min';
-        else cdEl.textContent = 'Go !';
+        if(daysToSun === 0 && now.getHours() < 22) cdEl.textContent = '🎁 Go !';
+        else if(dd > 1) cdEl.textContent = 'J-'+dd+' 🎁';
+        else if(dd === 1) cdEl.textContent = 'J-1 🎁';
+        else if(hh > 0) cdEl.textContent = hh+'h 🎁';
+        else if(mm > 0) cdEl.textContent = mm+'min 🎁';
+        else cdEl.textContent = '🎁 Go !';
     }
     updateWeekProgressBar();
     setInterval(updateWeekProgressBar, 60000);
