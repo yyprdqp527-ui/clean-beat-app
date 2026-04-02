@@ -3305,7 +3305,8 @@ body { padding-bottom: 84px !important; }
 .cw-tab:nth-child(1) .cw-tab-icon { background: rgba(253,174,84,0.25); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
 .cw-tab:nth-child(2) .cw-tab-icon { background: rgba(231,76,60,0.13); box-shadow: 0 2px 6px rgba(231,76,60,0.15); }
 .cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,180,120,0.18); box-shadow: 0 2px 6px rgba(46,180,120,0.18); }
-.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(130,100,220,0.15); box-shadow: 0 2px 6px rgba(130,100,220,0.15); }
+.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(52,152,219,0.18); box-shadow: 0 2px 6px rgba(52,152,219,0.18); }
+.cw-tab:nth-child(5) .cw-tab-icon { background: rgba(130,100,220,0.15); box-shadow: 0 2px 6px rgba(130,100,220,0.15); }
 /* Onglet actif (classement ouvert) */
 .cw-tab.cw-tab--active .cw-tab-icon { box-shadow: 0 0 0 2px rgba(253,174,84,0.55); }
 .cw-tab.cw-tab--active .cw-tab-label { color: #153036; font-weight: 800; }
@@ -3403,7 +3404,12 @@ body { padding-bottom: 84px !important; }
             </span>
             <span class="cw-tab-label">Courses</span>
         </a>
-        <!-- 4. Setting (regroupe Joueurs + Maison) -->
+        <!-- 4. Statistiques -->
+        <a href="/sats" class="cw-tab">
+            <span class="cw-tab-icon">📈</span>
+            <span class="cw-tab-label">Stats</span>
+        </a>
+        <!-- 5. Setting (regroupe Joueurs + Maison) -->
         <a href="{{ url_for('settings_page') }}" class="cw-tab">
             <span class="cw-tab-icon">⚙️</span>
             <span class="cw-tab-label">Setting</span>
