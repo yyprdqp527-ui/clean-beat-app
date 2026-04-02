@@ -186,19 +186,30 @@ class _CompatCursor:
             return
         sql = self._adapt(sql)
         if self._is_pg and _RE_INSERT.match(sql) and 'RETURNING' not in sql.upper():
-            sql = sql + ' RETURNING id'
+            sql_ret = sql + ' RETURNING id'
             try:
-                self._cur.execute(sql, params if params else ())
+                self._cur.execute(sql_ret, params if params else ())
+                row = self._cur.fetchone()
+                self.lastrowid = row[0] if row else None
+                self.rowcount = self._cur.rowcount
+                return
             except Exception:
                 try:
                     self._cur.connection.rollback()
                 except Exception:
                     pass
-                raise
-            row = self._cur.fetchone()
-            self.lastrowid = row[0] if row else None
-            self.rowcount = self._cur.rowcount
-            return
+                # Table sans colonne id — exécuter sans RETURNING
+                try:
+                    self._cur.execute(sql, params if params else ())
+                    self.lastrowid = None
+                    self.rowcount = self._cur.rowcount
+                    return
+                except Exception:
+                    try:
+                        self._cur.connection.rollback()
+                    except Exception:
+                        pass
+                    raise
         try:
             self._cur.execute(sql, params if params else ())
         except Exception:
