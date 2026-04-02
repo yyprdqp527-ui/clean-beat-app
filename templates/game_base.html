@@ -6,6 +6,7 @@
     <title>{% block title %}Dust{% endblock %}</title>
     <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
     <style>
         * {
             margin: 0;
@@ -53,49 +54,7 @@
             text-decoration: none;
         }
 
-        /* Bouton retour glassmorphisme */
-        .back-btn-glass {
-            position: fixed;
-            top: 24px;
-            left: 24px;
-            z-index: 2001;
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, rgba(255,140,0,0.95) 0%, rgba(255,100,0,0.9) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 3px solid rgba(255, 165, 0, 0.8);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 38px;
-            font-weight: bold;
-            text-decoration: none;
-            box-shadow: 0 12px 40px rgba(255, 140, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-            transition: all 0.3s ease;
-        }
-
-        .back-btn-glass:hover {
-            background: linear-gradient(135deg, rgba(255,165,0,0.98) 0%, rgba(255,120,0,0.95) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 15px 50px rgba(255, 140, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-        }
-
-        .back-btn-glass:active {
-            transform: scale(0.95);
-        }
-
-        @media (max-width: 520px) {
-            .back-btn-glass {
-                top: 20px;
-                left: 20px;
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
-            }
-        }
+        /* Bouton retour : chargé via back-btn-glass.css */
 
         /* Maison centrée avec barre de santé */
         .house-center {
@@ -402,14 +361,6 @@
             .app-logo {
                 font-size: 1.5rem;
                 order: 1;
-            }
-
-            .back-btn-glass {
-                top: 20px;
-                left: 20px;
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
             }
 
             .house-message {
