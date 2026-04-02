@@ -2807,7 +2807,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
-                                            {% if p2.skull_active|default(false) %}<span class="skull-overlay">💀</span>{% elif p2.skull_pending|default(false) %}<span class="skull-overlay-pending">💀</span>{% endif %}
                                             <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
                                             {% if p2.email == session.get('user') %}
                                                 {# C'est MON avatar → afficher MES messages reçus #}
@@ -2857,7 +2856,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
-                                                {% if p.skull_active|default(false) %}<span class="skull-overlay">💀</span>{% elif p.skull_pending|default(false) %}<span class="skull-overlay-pending">💀</span>{% endif %}
                                                 <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
                                                 {# Logique simple:
                                                    - Si c'est MOI → afficher mes messages reçus non lus (visible uniquement sur mon téléphone)
@@ -6296,16 +6294,16 @@ function refreshAllBadges() {
                         // Afficher le skull sur chaque joueur ayant un malus actif
                         allMalus.forEach(m => {
                             const skullTitle = 'Malus reçu' + (m.task_name ? ' pour : ' + m.task_name : '');
-                            console.log('💀 Ajout skull pour:', m.email);
                             
-                            // Header : cibler TOUS les wrappers avatar (3 sections dans le DOM)
+                            // Header : cibler TOUS les wrappers avatar — 💀 en HAUT-GAUCHE
                             document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + m.email + '"]').forEach(function(avatarWrapper) {
+                                if (avatarWrapper.querySelector('.skull-badge')) return; // anti-doublon
                                 avatarWrapper.style.position = 'relative';
                                 const skull = document.createElement('span');
                                 skull.className = 'skull-badge';
                                 skull.textContent = '💀';
                                 skull.title = skullTitle;
-                                skull.style.cssText = 'position:absolute;top:-3px;left:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullBounce 0.8s ease infinite alternate;';
+                                skull.style.cssText = 'position:absolute;top:-6px;left:-6px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));animation:skullPulseHalo 1.8s ease-in-out infinite;';
                                 avatarWrapper.appendChild(skull);
                             });
                         });
@@ -6322,7 +6320,7 @@ function refreshAllBadges() {
                 if (!document.getElementById('skullBounceAnim')) {
                     const style = document.createElement('style');
                     style.id = 'skullBounceAnim';
-                    style.textContent = '@keyframes skullBounce { from { transform: translateY(0); } to { transform: translateY(-4px); } }';
+                    style.textContent = '@keyframes skullPulseHalo { 0%,100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); } 50% { transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(46,204,113,0.7)); } }';
                     document.head.appendChild(style);
                 }
                 
@@ -6370,12 +6368,13 @@ function refreshAllBadges() {
 
                         allBonus.forEach(b => {
                             document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + b.email + '"]').forEach(function(avatarWrapper) {
+                                if (avatarWrapper.querySelector('.heart-badge')) return; // anti-doublon
                                 avatarWrapper.style.position = 'relative';
                                 const heart = document.createElement('span');
                                 heart.className = 'heart-badge';
                                 heart.textContent = '\u2764\uFE0F';
                                 heart.title = 'Bonus reçu' + (b.task_name ? ' pour : ' + b.task_name : '');
-                                heart.style.cssText = 'position:absolute;top:-3px;left:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(46,204,113,0.5));animation:heartBounce 0.9s ease infinite alternate;';
+                                heart.style.cssText = 'position:absolute;top:-6px;right:-6px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(231,76,60,0.5));animation:heartPulseHalo 1.8s ease-in-out infinite;';
                                 avatarWrapper.appendChild(heart);
                             });
                         });
@@ -6391,7 +6390,7 @@ function refreshAllBadges() {
                 if (!document.getElementById('heartBounceAnim')) {
                     const style = document.createElement('style');
                     style.id = 'heartBounceAnim';
-                    style.textContent = '@keyframes heartBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-5px) scale(1.15); } }';
+                    style.textContent = '@keyframes heartPulseHalo { 0%,100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(231,76,60,0.5)); } 50% { transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(231,76,60,0.7)); } }';
                     document.head.appendChild(style);
                 }
 
@@ -6451,12 +6450,13 @@ function refreshAllBadges() {
                             
                             // Header : cibler TOUS les wrappers avatar (3 sections dans le DOM)
                             document.querySelectorAll('.avatar-square-wrapper[data-player-email="' + s.email + '"]').forEach(function(avatarWrapper) {
+                                if (avatarWrapper.querySelector('.loupe-badge')) return; // anti-doublon
                                 avatarWrapper.style.position = 'relative';
                                 const loupe = document.createElement('span');
                                 loupe.className = 'loupe-badge';
                                 loupe.textContent = '🔍';
                                 loupe.title = loupeTitle;
-                                loupe.style.cssText = 'position:absolute;top:-3px;right:-8px;font-size:18px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(255,165,0,0.5));animation:loupeBounce 0.9s ease infinite alternate;';
+                                loupe.style.cssText = 'position:absolute;bottom:-6px;right:-6px;font-size:16px;line-height:1;pointer-events:none;z-index:10;filter:drop-shadow(0 2px 4px rgba(255,165,0,0.5));animation:loupePulseHalo 1.8s ease-in-out infinite;';
                                 avatarWrapper.appendChild(loupe);
                             });
                         });
@@ -6473,7 +6473,7 @@ function refreshAllBadges() {
                 if (!document.getElementById('loupeBounceAnim')) {
                     const style = document.createElement('style');
                     style.id = 'loupeBounceAnim';
-                    style.textContent = '@keyframes loupeBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-5px) scale(1.15); } }';
+                    style.textContent = '@keyframes loupePulseHalo { 0%,100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(255,165,0,0.5)); } 50% { transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(255,165,0,0.7)); } }';
                     document.head.appendChild(style);
                 }
                 
