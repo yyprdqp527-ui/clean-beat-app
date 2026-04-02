@@ -55,21 +55,7 @@ body { min-height: 100vh; }
     letter-spacing: 0.3px; text-align: center; line-height: 1.2;
 }
 .profil-email { font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 600; }
-.profil-house-badge {
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 5px 14px;
-    font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85);
-}
-.profil-rank-badge {
-    background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.15));
-    border: 1.5px solid rgba(253,174,84,0.45);
-    border-radius: 20px;
-    padding: 5px 16px;
-    font-size: 13px; font-weight: 800; color: #FDAE54;
-}
+
 
 /* Section titre */
 .profil-section-title {
@@ -77,31 +63,6 @@ body { min-height: 100vh; }
     text-transform: uppercase; letter-spacing: 1px;
     padding: 16px 20px 8px;
 }
-
-/* Grille stats */
-.profil-stats-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px; padding: 0 20px;
-}
-.profil-stat-item {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 16px 12px;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    position: relative; overflow: hidden;
-}
-.profil-stat-item::before {
-    content: ''; position: absolute;
-    bottom: 0; left: 0; right: 0; height: 2px;
-}
-.profil-stat-item:nth-child(1)::before { background: linear-gradient(90deg, transparent, rgba(253,174,84,0.7), transparent); }
-.profil-stat-item:nth-child(2)::before { background: linear-gradient(90deg, transparent, rgba(166,211,220,0.7), transparent); }
-.profil-stat-item:nth-child(3)::before { background: linear-gradient(90deg, transparent, rgba(180,140,200,0.7), transparent); }
-.profil-stat-item:nth-child(4)::before { background: linear-gradient(90deg, transparent, rgba(240,180,80,0.7), transparent); }
-.profil-stat-value { font-size: 26px; font-weight: 900; color: white; line-height: 1; }
-.profil-stat-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* Rappels */
 .profil-reminders { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
@@ -124,32 +85,6 @@ body { min-height: 100vh; }
     display: flex; align-items: center; justify-content: center;
     padding: 0 4px;
 }
-
-/* Classement maison */
-.profil-ranking { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
-.profil-rank-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.06);
-    border: 1.5px solid rgba(255,255,255,0.1);
-    border-radius: 12px; transition: all 0.2s;
-    text-decoration: none; color: white;
-}
-.profil-rank-row:active { transform: scale(0.98); opacity: 0.85; }
-.profil-rank-row.me {
-    background: rgba(255,255,255,0.15);
-    border-color: rgba(255,255,255,0.25);
-}
-.profil-rank-pos { font-size: 18px; font-weight: 900; color: rgba(255,255,255,0.5); width: 24px; text-align: center; }
-.profil-rank-pos.top1 { color: rgba(255,255,255,0.9); }
-.profil-rank-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    overflow: hidden; background: rgba(255,255,255,0.15);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.profil-rank-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.profil-rank-name { flex: 1; font-size: 13px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.profil-rank-pts { font-size: 14px; font-weight: 800; color: rgba(253,174,84,0.9); }
 
 /* Cartes récompenses */
 .profil-reward-card {
@@ -239,7 +174,12 @@ body { min-height: 100vh; }
     border-radius: 18px; padding: 14px 16px;
     position: relative; overflow: hidden;
     animation: gpNotifSlideIn 0.5s ease-out both;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.gp-notif-card:active { transform: scale(0.97); }
 .gp-notif-card:nth-child(1) { animation-delay: 0.05s; }
 .gp-notif-card:nth-child(2) { animation-delay: 0.12s; }
 .gp-notif-card:nth-child(3) { animation-delay: 0.19s; }
@@ -335,24 +275,7 @@ body { min-height: 100vh; }
         {% if current_user_name %}
         <div class="profil-email">{{ current_user_name }}</div>
         {% endif %}
-        {% if house_name %}
-        <div class="profil-house-badge">🏡 {{ house_name }}</div>
-        {% endif %}
 
-        {% if cp %}
-        {% set total_pts = cp.total_points|default(0) %}
-        {% if total_pts >= 1000 %}
-        <div class="profil-rank-badge">🏆 Légende</div>
-        {% elif total_pts >= 500 %}
-        <div class="profil-rank-badge">⭐ Expert</div>
-        {% elif total_pts >= 200 %}
-        <div class="profil-rank-badge">✨ Confirmé</div>
-        {% elif total_pts >= 50 %}
-        <div class="profil-rank-badge">🌱 Apprenti</div>
-        {% else %}
-        <div class="profil-rank-badge">🐣 Débutant</div>
-        {% endif %}
-        {% endif %}
     </div>
 
     <!-- ══ Notifications Gameplay (bonus/malus/suspicions reçus) ══ -->
@@ -361,88 +284,39 @@ body { min-height: 100vh; }
     <div class="gp-notif-section">
         {% for n in gameplay_notifs[:8] %}
         {% if n.type == 'bonus' %}
-        <div class="gp-notif-card gp-bonus">
+        <a class="gp-notif-card gp-bonus" href="{{ url_for('gameplay') }}?section=malus">
             <div class="gp-notif-emoji">❤️</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">{{ n.text }}</div>
                 <div class="gp-notif-detail">{{ n.date[:16].replace('T',' ')|default('') if n.date else '' }}</div>
             </div>
             <div class="gp-notif-pts">+{{ n.points|abs }} pts</div>
-        </div>
+        </a>
         {% elif n.type == 'malus' %}
-        <div class="gp-notif-card gp-malus">
+        <a class="gp-notif-card gp-malus" href="{{ url_for('gameplay') }}?section=malus">
             <div class="gp-notif-emoji">💀</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">{{ n.text }}</div>
                 <div class="gp-notif-detail">{{ n.date[:16].replace('T',' ')|default('') if n.date else '' }}</div>
             </div>
             <div class="gp-notif-pts">{{ n.points }} pts</div>
-        </div>
+        </a>
         {% elif n.type == 'suspicion' %}
-        <div class="gp-notif-card gp-suspicion">
+        <a class="gp-notif-card gp-suspicion" href="{{ url_for('gameplay') }}?section=suspicion">
             <div class="gp-notif-emoji">🔍</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">🕵️ {{ n.from|default('Quelqu\'un') }} te soupçonne !</div>
                 <div class="gp-notif-detail">📋 {{ n.text|default('Tâche inconnue') }} — {{ n.status|default('en cours') }}</div>
             </div>
-        </div>
-        {% endif %}
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Statistiques -->
-    <div class="profil-section-title">{% if is_own_profile %}Mes statistiques{% else %}Statistiques de {{ player1_name }}{% endif %}</div>
-    <div class="profil-stats-grid">
-        <div class="profil-stat-item">
-            <div class="profil-stat-value">{{ cp.daily_tasks|default(0) if cp else 0 }}</div>
-            <div class="profil-stat-label">Tâches aujourd'hui</div>
-        </div>
-        <div class="profil-stat-item">
-            <div class="profil-stat-value">{{ cp.daily_points|default(0) if cp else 0 }}</div>
-            <div class="profil-stat-label">Points aujourd'hui</div>
-        </div>
-        <div class="profil-stat-item">
-            <div class="profil-stat-value">{{ cp.weekly_tasks|default(0) if cp else 0 }}</div>
-            <div class="profil-stat-label">Tâches semaine</div>
-        </div>
-        <div class="profil-stat-item">
-            <div class="profil-stat-value">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
-            <div class="profil-stat-label">Points semaine</div>
-        </div>
-    </div>
-
-    <!-- Classement dans la maison -->
-    {% if players|length > 1 %}
-    <div class="profil-section-title">Classement de la maison</div>
-    <div class="profil-ranking">
-        {% set sorted_players = players|sort(attribute='total_points', reverse=True) %}
-        {% for p in sorted_players %}
-        {% if p.email == current_user_name %}
-        <a href="{{ url_for('profil') }}" class="profil-rank-row me" style="text-decoration:none;">
-        {% else %}
-        <a href="{{ url_for('profil_joueur', player_email=p.email) }}" class="profil-rank-row" style="text-decoration:none;">
-        {% endif %}
-            <div class="profil-rank-pos{% if loop.index == 1 %} top1{% endif %}">
-                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
-            </div>
-            <div class="profil-rank-avatar">
-                {% if p.avatar_file %}
-                    <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
-                {% elif p.avatar_url %}
-                    <img src="{{ p.avatar_url }}" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
-                {% elif p.avatar and p.avatar|length <= 4 %}
-                    <span style="font-size:16px;">{{ p.avatar }}</span>
-                {% else %}
-                    <span style="font-size:16px;">👤</span>
-                {% endif %}
-            </div>
-            <div class="profil-rank-name">{{ p.name }}{% if p.email == current_user_name %} <span style="font-size:10px;opacity:0.6;">(moi)</span>{% endif %}</div>
-            <div class="profil-rank-pts">{{ p.total_points|default(0) }} pts</div>
         </a>
+        {% endif %}
         {% endfor %}
     </div>
     {% endif %}
+
+
+
+
 
     {% if is_own_profile %}
     <!-- Mes rappels -->

@@ -265,10 +265,33 @@
     <div id="remindersList">
 
         {% if reminders %}
-        <div class="section-title">À acheter ({{ active_count }})</div>
-        {% for r in reminders %}
-        <div class="reminder-card{{ ' done' if r.is_done else '' }}" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
-            <div class="reminder-check{{ ' checked' if r.is_done else '' }}" data-id="{{ r.id }}">✓</div>
+        <div class="section-title">À acheter ({{ active_reminders|length }})</div>
+        {% for r in active_reminders %}
+        <div class="reminder-card" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
+            <div class="reminder-check" data-id="{{ r.id }}">✓</div>
+            <div class="reminder-body">
+                <div class="reminder-title">{{ r.title }}</div>
+                <div class="reminder-creator">
+                    {% if r.creator_avatar_file %}
+                        <img class="reminder-creator-avatar" src="{{ url_for('static', filename='avatars/' + r.creator_avatar_file) }}" alt="{{ r.creator_name }}">
+                    {% elif r.creator_avatar_url %}
+                        <img class="reminder-creator-avatar" src="{{ r.creator_avatar_url }}" alt="{{ r.creator_name }}">
+                    {% elif r.creator_avatar %}
+                        <div class="reminder-creator-emoji">{{ r.creator_avatar }}</div>
+                    {% else %}
+                        <div class="reminder-creator-emoji">👤</div>
+                    {% endif %}
+                    <span class="reminder-creator-name">{{ r.creator_name }}</span>
+                </div>
+            </div>
+            <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
+        </div>
+        {% endfor %}
+        <!-- Séparateur articles cochés -->
+        <div id="doneSeparator"></div>
+        {% for r in done_reminders %}
+        <div class="reminder-card done" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
+            <div class="reminder-check checked" data-id="{{ r.id }}">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
                 <div class="reminder-creator">
@@ -406,8 +429,8 @@
                     '</div>' +
                     '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-                // Insérer en fin de liste (les articles s'empilent)
-                list.appendChild(card);
+                // Insérer avant les articles cochés (done)
+                _insertBeforeDone(list, card);
 
                 // Mettre à jour le compteur section-title
                 _updateSectionTitle();
@@ -438,6 +461,9 @@
                     card.classList.add('done');
                     check.classList.add('checked');
                     check.innerHTML = '✓';
+                    // Déplacer la carte après les articles actifs
+                    var list = document.getElementById('remindersList');
+                    list.appendChild(card);
                     // Animation +1 pt
                     if (data.points_earned > 0 && checkEl) {
                         showPlusOne(checkEl);
@@ -457,6 +483,9 @@
                     card.classList.remove('done');
                     check.classList.remove('checked');
                     check.innerHTML = '✓';
+                    // Remonter la carte avant les articles cochés
+                    var list = document.getElementById('remindersList');
+                    _insertBeforeDone(list, card);
                 }
                 _updateSectionTitle();
             });
@@ -542,8 +571,8 @@
                 '</div>' +
                 '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-            // Insérer en fin de liste (les articles s'empilent)
-            list.appendChild(card);
+            // Insérer avant les articles cochés
+            _insertBeforeDone(list, card);
 
             // Mettre à jour le compteur section-title
             _updateSectionTitle();
@@ -562,6 +591,19 @@
                 list.insertBefore(sectionTitle, list.firstChild);
             }
             sectionTitle.textContent = 'À acheter (' + activeCount + ')';
+        }
+    }
+
+    // ─── Insérer une carte avant les articles cochés ──────────────────────────
+    function _insertBeforeDone(list, card) {
+        var firstDone = list.querySelector('.reminder-card.done');
+        var sep = document.getElementById('doneSeparator');
+        if (firstDone) {
+            list.insertBefore(card, firstDone);
+        } else if (sep) {
+            list.insertBefore(card, sep);
+        } else {
+            list.appendChild(card);
         }
     }
 

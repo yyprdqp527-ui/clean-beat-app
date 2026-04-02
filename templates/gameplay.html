@@ -1121,6 +1121,12 @@ function closeSection() {
     document.getElementById('minigameGrid').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+// Auto-ouvrir une section si ?section= est dans l'URL
+(function(){
+    var params = new URLSearchParams(window.location.search);
+    var sec = params.get('section');
+    if (sec) { openSection(sec); }
+})();
 </script>
 
 <!-- Popup résultat roue -->

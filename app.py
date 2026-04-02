@@ -5822,13 +5822,14 @@ def toggle_reminder(reminder_id):
         conn.close()
         return jsonify({'success': False, 'error': 'Maison introuvable'})
     user_house = user_row[0]
-    c.execute("SELECT is_done FROM player_reminders WHERE id=? AND house_id=?",
+    c.execute("SELECT is_done, title FROM player_reminders WHERE id=? AND house_id=?",
               (reminder_id, user_house))
     row = c.fetchone()
     if not row:
         conn.close()
         return jsonify({'success': False, 'error': 'Article introuvable'})
 
+    item_title = row[1] or 'Article'
     new_done = 0 if row[0] else 1
     c.execute("UPDATE player_reminders SET is_done=? WHERE id=?", (new_done, reminder_id))
 
@@ -5845,7 +5846,7 @@ def toggle_reminder(reminder_id):
             c.execute("UPDATE users SET points=? WHERE email=?", (new_total_points, session['user']))
             # Insérer dans completed_tasks pour que daily_points du header soit correct
             c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-                      (session['user'], house_id, 'courses', 'Liste de courses', 1))
+                      (session['user'], house_id, 'courses', item_title, 1))
             points_earned = 1
 
     conn.commit()
