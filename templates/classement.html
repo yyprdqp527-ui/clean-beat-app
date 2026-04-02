@@ -482,11 +482,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 
     </div>
 
-    <!-- Bouton Stats -->
-    <div class="filter-btn-stats-wrap">
-        <div class="filter-btn-stats" data-tab="tab-stats">📈 Statistiques</div>
-    </div>
-
     <!-- ═══ TAB : Aujourd'hui ═══ -->
     <div class="tab-panel active" id="tab-today">
     <div class="classement-players-wrap">
@@ -618,11 +613,6 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
         });
     });
 
-    /* ── Bouton Stats → redirection ── */
-    var statsBtn = document.querySelector('.filter-btn-stats');
-    if(statsBtn){
-        statsBtn.addEventListener('click', function(){ window.location.href = '/sats'; });
-    }
 })();
 
 function loadCWTasks(tabId){

@@ -3388,7 +3388,12 @@ body { padding-bottom: 84px !important; }
             <span class="cw-tab-icon">🏆</span>
             <span class="cw-tab-label">Classement</span>
         </a>
-        <!-- 2. Messagerie -->
+        <!-- 2. Statistiques -->
+        <a href="/sats" class="cw-tab">
+            <span class="cw-tab-icon">📈</span>
+            <span class="cw-tab-label">Stats</span>
+        </a>
+        <!-- 3. Messagerie -->
         <a href="{{ url_for('comments') }}" class="cw-tab">
             <span class="cw-tab-icon" style="position:relative;">
                 💬
@@ -3396,18 +3401,13 @@ body { padding-bottom: 84px !important; }
             </span>
             <span class="cw-tab-label">Messagerie</span>
         </a>
-        <!-- 3. Courses -->
+        <!-- 4. Courses -->
         <a href="{{ url_for('reminders') }}" class="cw-tab" id="cwTabCourses">
             <span class="cw-tab-icon" style="position:relative;">
                 🛒
                 <span class="cw-tab-badge" id="courses-nav-badge" {% if not courses_pending_count or courses_pending_count <= 0 %}style="display:none;"{% endif %}>{{ courses_pending_count|default(0) if courses_pending_count|default(0) < 100 else '99+' }}</span>
             </span>
             <span class="cw-tab-label">Courses</span>
-        </a>
-        <!-- 4. Statistiques -->
-        <a href="/sats" class="cw-tab">
-            <span class="cw-tab-icon">📈</span>
-            <span class="cw-tab-label">Stats</span>
         </a>
         <!-- 5. Setting (regroupe Joueurs + Maison) -->
         <a href="{{ url_for('settings_page') }}" class="cw-tab">
