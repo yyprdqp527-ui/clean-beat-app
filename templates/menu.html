@@ -440,16 +440,7 @@
                 font-weight: 700;
                 text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
             }
-            /* Dots compacts sur mobile */
-            .week-progress-wrap.mode-dots {
-                left: 5px;
-            }
-            .week-dot { width: 6px; height: 6px; }
-            .week-dot-row.is-today .week-dot { width: 8px; height: 8px; }
-            .week-dots-col { gap: 2px; }
-            .week-dot-row { gap: 2px; }
-            .week-dot-label { font-size: 6px; width: 7px; }
-            .week-countdown-text { font-size: 9px; }
+
             /* Barre compacte sur mobile */
             .week-bar-track { height: 10px; }
             .week-bar-row { gap: 4px; }
@@ -566,172 +557,16 @@
             border-radius: 999px;
         }
 
-        /* ── 7 dots verticaux (progression semaine) – MODE DOTS ── */
-        .week-progress-wrap.mode-dots {
-            position: fixed;
-            left: 8px;
-            z-index: 9998;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            pointer-events: none;
-            animation: dots-slide-in 0.6s ease-out both;
-            justify-content: space-between;
-        }
-        .week-progress-wrap.mode-bar { display: none; }
-        .week-progress-wrap.mode-bar.active { display: flex; }
-        .week-progress-wrap.mode-dots.active { display: flex; }
-        .week-progress-wrap.mode-dots:not(.active) { display: none; }
-        .week-progress-wrap.mode-bar:not(.active) { display: none; }
-        @keyframes dots-slide-in {
-            0% { opacity: 0; transform: translateX(-20px) scale(0.8); }
-            60% { opacity: 1; transform: translateX(3px) scale(1.05); }
-            100% { opacity: 1; transform: translateX(0) scale(1); }
-        }
-        .week-dots-col {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            flex: 1;
-            justify-content: space-evenly;
-        }
-        .week-dot-row {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-        .week-dot-label {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 7px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.35);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            width: 8px;
-            text-align: right;
-            line-height: 1;
-            transition: all 0.3s ease;
-        }
-        .week-dot-row.is-today .week-dot-label {
-            color: #FDAE54;
-            font-weight: 900;
-            text-shadow: 0 0 6px rgba(253,174,84,0.5);
-        }
-        .week-dot-row.is-past .week-dot-label {
-            color: rgba(253,174,84,0.5);
-        }
-        .week-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.12);
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-        .week-dot-row.is-past .week-dot {
-            background: linear-gradient(135deg, #FDAE54, #F4C68D);
-            border-color: rgba(253,174,84,0.6);
-            box-shadow: 0 0 4px rgba(253,174,84,0.3);
-        }
-        .week-dot-row.is-today .week-dot {
-            width: 9px;
-            height: 9px;
-            background: linear-gradient(135deg, #ff6b35, #FDAE54);
-            border-color: rgba(255,107,53,0.7);
-            box-shadow: 0 0 8px rgba(255,107,53,0.6), 0 0 16px rgba(253,174,84,0.3);
-            animation: dot-fire 1.5s ease-in-out infinite;
-        }
-        @keyframes dot-fire {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255,107,53,0.6), 0 0 16px rgba(253,174,84,0.3); }
-            50% { transform: scale(1.5); box-shadow: 0 0 14px rgba(255,107,53,0.9), 0 0 24px rgba(253,174,84,0.5); }
-        }
-        .week-countdown-text {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 10px;
-            font-weight: 900;
-            color: #FDAE54;
-            text-shadow: 0 0 8px rgba(253,174,84,0.4);
-            white-space: nowrap;
-            line-height: 1.2;
-            letter-spacing: 0.3px;
-            text-align: center;
-            padding-top: 3px;
-        }
-        .week-countdown-text.urgency-low {
-            color: #FDAE54;
-            text-shadow: 0 0 8px rgba(253,174,84,0.4);
-            animation: countdown-pulse 2.5s ease-in-out infinite;
-        }
-        .week-countdown-text.urgency-mid {
-            color: #ff8c42;
-            text-shadow: 0 0 10px rgba(255,140,66,0.5);
-            animation: countdown-pulse 2s ease-in-out infinite;
-        }
-        .week-countdown-text.urgency-high {
-            color: #ff4757;
-            text-shadow: 0 0 12px rgba(255,71,87,0.6);
-            animation: countdown-shake 0.8s ease-in-out infinite;
-        }
-        .week-countdown-text.urgency-go {
-            color: #2ed573;
-            text-shadow: 0 0 14px rgba(46,213,115,0.7);
-            animation: countdown-shake 0.5s ease-in-out infinite;
-            font-size: 12px;
-        }
-        @keyframes countdown-pulse {
-            0%, 100% { opacity: 0.8; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.12); }
-        }
-        @keyframes countdown-shake {
-            0%, 100% { transform: translateX(0) scale(1); }
-            25% { transform: translateX(-1px) scale(1.05); }
-            75% { transform: translateX(1px) scale(1.05); }
-        }
-
-        /* ── Adaptation thème clair dots ── */
-        .week-progress-wrap.theme-light .week-dot {
-            background: rgba(0,0,0,0.1);
-            border-color: rgba(0,0,0,0.06);
-        }
-        .week-progress-wrap.theme-light .week-dot-label {
-            color: rgba(0,0,0,0.25);
-            text-shadow: none;
-        }
-        .week-progress-wrap.theme-light .week-dot-row.is-today .week-dot-label {
-            color: #e8731a;
-            text-shadow: none;
-        }
-        .week-progress-wrap.theme-light .week-dot-row.is-past .week-dot-label {
-            color: rgba(200,130,50,0.5);
-        }
-        .week-progress-wrap.theme-light .week-dot-row.is-past .week-dot {
-            background: linear-gradient(135deg, #e8931a, #f0b860);
-            border-color: rgba(200,130,50,0.4);
-        }
-        .week-progress-wrap.theme-light .week-dot-row.is-today .week-dot {
-            background: linear-gradient(135deg, #e05a1a, #e8931a);
-            border-color: rgba(224,90,26,0.5);
-            box-shadow: 0 0 8px rgba(224,90,26,0.4);
-        }
-        .week-progress-wrap.theme-light .week-countdown-text {
-            color: #c06a15;
-            text-shadow: none;
-        }
-        /* ── Adaptation thème foncé dots ── */
-        .week-progress-wrap.theme-dark .week-dot-row.is-today .week-dot {
-            box-shadow: 0 0 10px rgba(255,107,53,0.7), 0 0 20px rgba(253,174,84,0.4);
-        }
+        .week-progress-wrap.mode-bar { display: flex; }
 
         /* ══════════════════════════════════════════════════
            MODE BARRE HORIZONTALE (curseur cadeau)
            ══════════════════════════════════════════════════ */
         .week-progress-wrap.mode-bar {
             flex-direction: column;
-            gap: 3px;
+            gap: 0px;
             flex: 0 0 100%;
-            margin: 0 auto;
+            margin: -7px auto 0;
             padding: 0 0 0 48px;
             box-sizing: border-box;
         }
@@ -899,31 +734,7 @@
             filter: brightness(1.2) saturate(0.95);
         }
 
-        /* ── Toggle switch dots/barre ── */
-        .week-mode-toggle {
-            position: fixed;
-            left: 4px;
-            bottom: 80px;
-            z-index: 9999;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: 1.5px solid rgba(255,255,255,0.3);
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: #fff;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0.6;
-            transition: opacity 0.3s;
-        }
-        .week-mode-toggle:hover, .week-mode-toggle:active {
-            opacity: 1;
-        }
+
         
         .svg-room .room-group { 
             cursor: pointer; 
@@ -3235,22 +3046,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         {% endif %}
                     </div>
-                    <!-- MODE A: 7 dots verticaux – progression semaine -->
-                    <div class="week-progress-wrap mode-dots{% if bg_theme_light %} theme-light{% else %} theme-dark{% endif %}" id="weekProgressDots">
-                        <div class="week-dots-col">
-                            <div class="week-dot-row" data-day="1"><span class="week-dot-label">L</span><div class="week-dot"></div></div>
-                            <div class="week-dot-row" data-day="2"><span class="week-dot-label">M</span><div class="week-dot"></div></div>
-                            <div class="week-dot-row" data-day="3"><span class="week-dot-label">M</span><div class="week-dot"></div></div>
-                            <div class="week-dot-row" data-day="4"><span class="week-dot-label">J</span><div class="week-dot"></div></div>
-                            <div class="week-dot-row" data-day="5"><span class="week-dot-label">V</span><div class="week-dot"></div></div>
-                            <div class="week-dot-row" data-day="6"><span class="week-dot-label">S</span><div class="week-dot"></div></div>
-                            <div class="week-dot-row" data-day="0"><span class="week-dot-label">D</span><div class="week-dot"></div></div>
-                        </div>
-                        <span class="week-countdown-text" id="weekCountdown">--</span>
-                    </div>
-                    <!-- MODE B: Barre horizontale avec curseur cadeau -->
+                    <!-- Barre horizontale avec curseur cadeau -->
                     {% set bar_color = week_bar_color|default('#FDAE54') %}
-                    <div class="week-progress-wrap mode-bar active{% if bg_theme_light %} theme-light{% else %} theme-dark{% endif %}" id="weekProgressBar">
+                    <div class="week-progress-wrap mode-bar{% if bg_theme_light %} theme-light{% else %} theme-dark{% endif %}" id="weekProgressBar">
                         <div class="week-bar-row">
                             <div class="week-bar-track">
                                 <div class="week-bar-fill" id="weekBarFill" style="background: linear-gradient(90deg, {{ bar_color }}, {{ bar_color }}cc);"></div>
@@ -3272,9 +3070,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             </div>
 
-            <!-- Toggle dots/barre pour comparer -->
-            <div class="week-mode-toggle" id="weekModeToggle" onclick="toggleWeekMode()" title="Changer mode progression">⇄</div>
-
             <!-- Espace compensateur : JS mesure la vraie hauteur du header -->
             <div id="header-spacer" style="height:80px;"></div>
             <script>
@@ -3283,13 +3078,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         var h = document.querySelector('.header-menu');
                         var s = document.getElementById('header-spacer');
                         if(h && s){ s.style.height = Math.max(0, h.offsetHeight - 30) + 'px'; }
-                        // Positionner les dots sur toute la hauteur du header
-                        var dotsWrap = document.getElementById('weekProgressDots');
-                        if(h && dotsWrap){
-                            var hRect = h.getBoundingClientRect();
-                            dotsWrap.style.top = (hRect.top + 6) + 'px';
-                            dotsWrap.style.height = (hRect.height - 12) + 'px';
-                        }
                         // Burger en haut à droite (CSS fixe, pas de JS)
                     }
                     document.addEventListener('DOMContentLoaded', updateSpacer);
@@ -3885,34 +3673,14 @@ body { padding-bottom: 84px !important; }
     updateCWInfoBar();
     setInterval(updateCWInfoBar, 60000);
 
-    /* ── Progression semaine : DOTS + BARRE (toggle) ── */
-    var _weekMode = 'bar'; // 'dots' ou 'bar'
-
-    window.toggleWeekMode = function(){
-        _weekMode = (_weekMode === 'dots') ? 'bar' : 'dots';
-        var dots = document.getElementById('weekProgressDots');
-        var bar  = document.getElementById('weekProgressBar');
-        if(dots) { dots.classList.toggle('active', _weekMode === 'dots'); }
-        if(bar)  { bar.classList.toggle('active', _weekMode === 'bar'); }
-        updateWeekProgressBar();
-    };
-
+    /* ── Progression semaine : BARRE HORIZONTALE ── */
     function updateWeekProgressBar(){
         var now = new Date();
         var day = now.getDay(); // 0=dim, 1=lun ... 6=sam
         var dayMap = {1:0, 2:1, 3:2, 4:3, 5:4, 6:5, 0:6};
         var pos = dayMap[day];
 
-        // ── MODE DOTS ──
-        var rows = document.querySelectorAll('.week-dot-row');
-        rows.forEach(function(el){
-            var d = parseInt(el.getAttribute('data-day'));
-            var p = dayMap[d];
-            el.classList.remove('is-today','is-past');
-            if(p === pos) el.classList.add('is-today');
-            else if(p < pos) el.classList.add('is-past');
-        });
-        // Countdown dots (compétitif)
+        // Countdown : calcul jours/heures/minutes restants avant dimanche 22h
         var daysToSun = (7 - day) % 7;
         if(daysToSun === 0 && now.getHours() >= 22) daysToSun = 7;
         var sunday = new Date(now);
@@ -3922,18 +3690,6 @@ body { padding-bottom: 84px !important; }
         var dd = Math.floor(diff/86400000);
         var hh = Math.floor((diff%86400000)/3600000);
         var mm = Math.floor((diff%3600000)/60000);
-
-        var cdEl = document.getElementById('weekCountdown');
-        if(cdEl){
-            var flames = ['','🔥','🔥','🔥🔥','🔥🔥','🔥🔥🔥','🔥🔥🔥','🔥🔥🔥'];
-            var flame = flames[pos] || '';
-            cdEl.classList.remove('urgency-low','urgency-mid','urgency-high','urgency-go');
-            if(dd > 3) { cdEl.innerHTML = 'J-'+dd+'<br>'+flame; cdEl.classList.add('urgency-low'); }
-            else if(dd >= 2) { cdEl.innerHTML = 'J-'+dd+'<br>'+flame; cdEl.classList.add('urgency-mid'); }
-            else if(dd === 1) { cdEl.innerHTML = 'J-1!<br>'+flame; cdEl.classList.add('urgency-high'); }
-            else if(hh > 0) { cdEl.innerHTML = hh+'h!<br>⏰'; cdEl.classList.add('urgency-high'); }
-            else { cdEl.innerHTML = 'GO!<br>🎁'; cdEl.classList.add('urgency-go'); }
-        }
 
         // ── MODE BARRE COMPÉTITIF ──
         var total = 6 * 24;

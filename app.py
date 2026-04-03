@@ -624,6 +624,7 @@ BG_THEMES = {
     'caramel':    'linear-gradient(135deg, #d4a056 0%, #8b5e2a 100%)',
     'glacier':    'linear-gradient(135deg, #e0f4ff 0%, #89c4e1 100%)',
     'tropique':   'linear-gradient(135deg, #00b894 0%, #006d5b 100%)',
+    'cuivre':     'linear-gradient(135deg, #b87333 0%, #6d3a1a 100%)',
 }
 
 LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche', 'lavande', 'emeraude', 'lilas', 'glacier'}
@@ -650,6 +651,7 @@ BAR_COLORS = {
     'caramel':    '#5bb8d4',      # bleu glacier
     'glacier':    '#d47a5b',      # terre cuite
     'tropique':   '#d45bd4',      # fuchsia
+    'cuivre':     '#33a5b8',      # bleu cyan
 }
 
 @app.context_processor
@@ -9610,8 +9612,8 @@ def menu():
         {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/chambre enfant 4.webp',       'category': 'chambre_enfant',     'fixed': False},
         {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/chambre bébé4 .webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
-        {'key': 'salon',    'name': 'Salon',        'image': 'images/salonorange.webp',  'category': 'salon',      'fixed': True},
         {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/cuisinewoop.webp',  'category': 'cuisine',    'fixed': True},
+        {'key': 'salon',    'name': 'Salon',        'image': 'images/salonorange.webp',  'category': 'salon',      'fixed': True},
         {'key': 'bureau',   'name': 'Bureau',       'image': 'images/bureau.webp',       'category': 'piece_bonus', 'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/sdbwoop.webp',     'category': 'salle_bain', 'fixed': True},
         {'key': 'toilettes','name': 'Toilettes',    'image': 'images/Wc2.webp',          'category': 'wc',         'fixed': True},

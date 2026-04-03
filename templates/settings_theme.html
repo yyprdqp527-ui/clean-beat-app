@@ -155,6 +155,10 @@
                 style="background:linear-gradient(135deg,#00b894 0%,#006d5b 100%);">
                 <span class="bg-theme-check">✓</span><span>Tropique</span>
             </button>
+            <button class="bg-theme-btn" data-theme="cuivre"
+                style="background:linear-gradient(135deg,#b87333 0%,#6d3a1a 100%);">
+                <span class="bg-theme-check">✓</span><span>Cuivre</span>
+            </button>
         </div>
         <p id="bg-theme-msg" style="margin-top:10px; font-size:13px; color:#28a745; display:none; font-weight:600;">Thème enregistré !</p>
     </div>
@@ -181,6 +185,7 @@
         : '{{ bg_gradient }}' === 'linear-gradient(135deg, #d4a056 0%, #8b5e2a 100%)' ? 'caramel'
         : '{{ bg_gradient }}' === 'linear-gradient(135deg, #e0f4ff 0%, #89c4e1 100%)' ? 'glacier'
         : '{{ bg_gradient }}' === 'linear-gradient(135deg, #00b894 0%, #006d5b 100%)' ? 'tropique'
+        : '{{ bg_gradient }}' === 'linear-gradient(135deg, #b87333 0%, #6d3a1a 100%)' ? 'cuivre'
         : 'marron';
     var activeBtn = document.querySelector('.bg-theme-btn[data-theme="' + currentTheme + '"]');
     if (activeBtn) activeBtn.classList.add('active');
@@ -217,6 +222,7 @@
                         'caramel': 'linear-gradient(135deg, #d4a056 0%, #8b5e2a 100%)',
                         'glacier': 'linear-gradient(135deg, #e0f4ff 0%, #89c4e1 100%)',
                         'tropique':'linear-gradient(135deg, #00b894 0%, #006d5b 100%)',
+                        'cuivre':  'linear-gradient(135deg, #b87333 0%, #6d3a1a 100%)',
                     };
                     document.body.style.background = gradients[theme];
                     document.querySelectorAll('.bg-theme-btn').forEach(function(b) { b.classList.remove('active'); });
