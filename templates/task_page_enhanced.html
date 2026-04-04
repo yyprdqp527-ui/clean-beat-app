@@ -899,76 +899,7 @@
 <script>
 // ========== FONCTIONS GLOBALES ==========
 
-// 🔊 Son unique type iPhone pour tous les clics
-function playSound(){
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1400, now);
-        osc.frequency.exponentialRampToValueAtTime(1000, now + 0.02);
-        
-        gainNode.gain.setValueAtTime(0.1, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
-        
-        osc.start(now);
-        osc.stop(now + 0.03);
-    } catch(e) { /* Ignorer si pas de son */ }
-}
-
-// 🎵 Son de victoire (MP3 ou Web Audio fallback)
-var victoryAudioEl = new Audio('/static/audio/notification-sound-3-262896.mp3');
-victoryAudioEl.preload = 'auto';
-victoryAudioEl.volume = 1.0;
-
-function playVictorySound() {
-    console.log('🎉 Jouer son de victoire...');
-    try {
-        victoryAudioEl.currentTime = 0;
-        victoryAudioEl.play().then(function() {
-            console.log('✅ Son MP3 joué!');
-        }).catch(function(e) {
-            console.log('⚠️ MP3 bloqué, fallback Web Audio:', e);
-            playVictorySoundWebAudio();
-        });
-    } catch(e) {
-        console.log('⚠️ Erreur lecture MP3:', e);
-        playVictorySoundWebAudio();
-    }
-}
-
-function playVictorySoundWebAudio() {
-    try {
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
-        var now = ctx.currentTime;
-        
-        // Notes joyeuses
-        var notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        notes.forEach(function(freq, i) {
-            var osc = ctx.createOscillator();
-            var gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.15, now + i * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
-            osc.start(now + i * 0.1);
-            osc.stop(now + i * 0.1 + 0.4);
-        });
-        console.log('✅ Son Web Audio joué!');
-    } catch(e) {
-        console.log('❌ Erreur Web Audio:', e);
-    }
-}
-
-// 🚀 Validation AJAX de la tâche - VERSION OPTIMISÉE PERFORMANCE
+//  Validation AJAX de la tâche - VERSION OPTIMISÉE PERFORMANCE
 function validateTaskAjax(playerEmail) {
     // Récupérer les données de la tâche
     var taskName = {{ task_name|tojson }};
@@ -1029,10 +960,8 @@ function validateTaskAjax(playerEmail) {
         if (data.success) {
             // ✅ PAS de popup, PAS de confettis, mais garder son et animation avatar
             
-            // Jouer le son de victoire si disponible
-            if (typeof victoryAudioEl !== 'undefined') {
-                victoryAudioEl.play().catch(function(e) { console.log('Audio play blocked:', e); });
-            }
+            // Jouer le son de victoire
+            SoundManager.play('gainPoints');
             
             // Redirection avec paramètres pour l'animation de l'avatar
             var redirectUrl = '/menu?success=1&pts=' + (data.points || 0) + 

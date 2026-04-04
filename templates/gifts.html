@@ -308,30 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// 🔊 Son unique type iPhone
-function playSuccessSound() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1400, now);
-        osc.frequency.exponentialRampToValueAtTime(1000, now + 0.02);
-        
-        gainNode.gain.setValueAtTime(0.1, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
-        
-        osc.start(now);
-        osc.stop(now + 0.03);
-    } catch(e) { /* Ignorer si pas de son */ }
-}
-
-// 🔌 WebSocket pour mise à jour en temps réel des points
+//  WebSocket pour mise à jour en temps réel des points
 (function() {
     try {
         const socket = io({transports: ['websocket'], reconnectionAttempts: 3});

@@ -1615,11 +1615,7 @@ function showPointsAnimation(points) {
     document.body.appendChild(pointsDiv);
     
     // Jouer un son
-    try {
-        const audio = new Audio('/static/sounds/points.mp3');
-        audio.volume = 0.3;
-        audio.play().catch(() => {});
-    } catch(e) {}
+    SoundManager.play('gainPoints');
     
     setTimeout(() => {
         document.body.removeChild(pointsDiv);
@@ -1788,11 +1784,7 @@ function rejectProofInline(suspicionId, playerName) {
             document.body.appendChild(successDiv);
             
             // Son
-            try {
-                const audio = new Audio('/static/sounds/malus.mp3');
-                audio.volume = 0.4;
-                audio.play().catch(() => {});
-            } catch(e) {}
+            SoundManager.play('losePoints');
             
             setTimeout(() => {
                 document.body.removeChild(successDiv);
@@ -2161,25 +2153,9 @@ function validateWheelTask(btn, taskName, points) {
     });
 }
 
-// Son de récompense via Web Audio API (arpège montant)
+// Son de récompense via SoundManager
 function playRewardSound() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        [523, 659, 784, 1047].forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            const t = ctx.currentTime + i * 0.12;
-            gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.28, t + 0.025);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
-            osc.start(t);
-            osc.stop(t + 0.38);
-        });
-    } catch(e) {}
+    SoundManager.play('victory');
 }
 
 function floatPoints(text, anchorEl) {

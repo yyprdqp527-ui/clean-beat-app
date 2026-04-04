@@ -286,25 +286,7 @@
 
             // Son au clic
             submitBtn.addEventListener('click', function() {
-                try {
-                    const context = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = context.createOscillator();
-                    const gainNode = context.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(context.destination);
-                    
-                    oscillator.frequency.value = 600;
-                    oscillator.type = 'sine';
-                    
-                    gainNode.gain.setValueAtTime(0.1, context.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
-                    
-                    oscillator.start(context.currentTime);
-                    oscillator.stop(context.currentTime + 0.3);
-                } catch (e) {
-                    // Son non disponible
-                }
+                if (window.SoundManager) SoundManager.play('buttonClick');
             });
 
             // Auto-focus sur le premier champ

@@ -4078,143 +4078,6 @@ function sendMalus(reason, points){
 <!-- FIN WIDGET COMPETITION -->
 
                 <script>
-                //  SYSTÈME DE SONS AU CLIC
-                (function() {
-                    // Créer le contexte audio une seule fois
-                    let audioContext = null;
-                    
-                    function getAudioContext() {
-                        if (!audioContext) {
-                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        }
-                        return audioContext;
-                    }
-                    
-                    // Son de clic léger (pop)
-                    function playClickSound() {
-                        try {
-                            const ctx = getAudioContext();
-                            const oscillator = ctx.createOscillator();
-                            const gainNode = ctx.createGain();
-                            
-                            oscillator.connect(gainNode);
-                            gainNode.connect(ctx.destination);
-                            
-                            oscillator.frequency.setValueAtTime(800, ctx.currentTime);
-                            oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.1);
-                            oscillator.type = 'sine';
-                            
-                            gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-                            
-                            oscillator.start(ctx.currentTime);
-                            oscillator.stop(ctx.currentTime + 0.1);
-                        } catch(e) { /* Ignorer si pas de son */ }
-                    }
-                    
-                    // Son de succès (ding positif)
-                    function playSuccessSound() {
-                        try {
-                            const ctx = getAudioContext();
-                            const oscillator = ctx.createOscillator();
-                            const gainNode = ctx.createGain();
-                            
-                            oscillator.connect(gainNode);
-                            gainNode.connect(ctx.destination);
-                            
-                            oscillator.frequency.setValueAtTime(523, ctx.currentTime); // Do
-                            oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // Mi
-                            oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.2); // Sol
-                            oscillator.type = 'sine';
-                            
-                            gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                            
-                            oscillator.start(ctx.currentTime);
-                            oscillator.stop(ctx.currentTime + 0.3);
-                        } catch(e) { /* Ignorer si pas de son */ }
-                    }
-                    
-                    // Son de navigation (woosh léger)
-                    function playNavSound() {
-                        try {
-                            const ctx = getAudioContext();
-                            const oscillator = ctx.createOscillator();
-                            const gainNode = ctx.createGain();
-                            
-                            oscillator.connect(gainNode);
-                            gainNode.connect(ctx.destination);
-                            
-                            oscillator.frequency.setValueAtTime(300, ctx.currentTime);
-                            oscillator.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.08);
-                            oscillator.type = 'sine';
-                            
-                            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-                            
-                            oscillator.start(ctx.currentTime);
-                            oscillator.stop(ctx.currentTime + 0.08);
-                        } catch(e) { /* Ignorer si pas de son */ }
-                    }
-                    
-                    // 🎵 Son doux et harmonieux pour l'animation (whoosh élégant)
-                    function playRoomZoomSound() {
-                        try {
-                            const ctx = getAudioContext();
-                            const osc = ctx.createOscillator();
-                            const gain = ctx.createGain();
-                            
-                            osc.connect(gain);
-                            gain.connect(ctx.destination);
-                            
-                            // Son doux montant: Do → Sol (523Hz → 784Hz)
-                            osc.type = 'sine';
-                            osc.frequency.setValueAtTime(523, ctx.currentTime);
-                            osc.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.6);
-                            
-                            // Volume doux avec fade in/out élégant
-                            gain.gain.setValueAtTime(0, ctx.currentTime);
-                            gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.15);
-                            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-                            
-                            osc.start(ctx.currentTime);
-                            osc.stop(ctx.currentTime + 0.6);
-                        } catch(e) { /* Ignorer si pas de son */ }
-                    }
-                    
-                    // Exposer les fonctions globalement
-                    window.DustSounds = {
-                        click: playClickSound,
-                        success: playSuccessSound,
-                        nav: playNavSound,
-                        roomZoom: playRoomZoomSound
-                    };
-                    
-                    // Ajouter automatiquement les sons aux éléments cliquables
-                    document.addEventListener('click', function(e) {
-                        const target = e.target;
-                        
-                        // Boutons et liens
-                        if (target.matches('button, .burger-menu, .burger-nav-item, .burger-close, .dashboard-toggle')) {
-                            playClickSound();
-                        }
-                        // Pièces de la maison (SVG)
-                        else if (target.closest('.room-group, [data-room], svg a')) {
-                            playNavSound();
-                        }
-                        // Avatars
-                        else if (target.closest('.avatar-square, .avatar-col')) {
-                            playClickSound();
-                        }
-                        // Dashboard toggle
-                        else if (target.closest('.dashboard-floating')) {
-                            playClickSound();
-                        }
-                    }, true);
-                })();
-                </script>
-
-                <script>
                 // Script minimal pour initialiser la barre de santé, la date/heure et le bouton son
                 document.addEventListener('DOMContentLoaded', function(){
                     
@@ -5674,55 +5537,6 @@ function sendMalus(reason, points){
                         });
                         const userEmail = "{{ session.get('user', '') }}";
                         
-                        //  Son de notification pour les nouveaux messages
-                        const messageNotifSound = new Audio('/static/audio/livechat-129007.mp3');
-                        messageNotifSound.preload = 'auto';
-                        messageNotifSound.volume = 0.8;  // Volume augmenté pour être plus audible
-                        
-                        // 🔓 Débloquer l'audio dès la première interaction utilisateur
-                        let audioUnlocked = false;
-                        function unlockAudio() {
-                            if (!audioUnlocked) {
-                                console.log('🔓 Tentative de déblocage audio...');
-                                // Sauvegarder le volume actuel
-                                const savedVolume = messageNotifSound.volume;
-                                messageNotifSound.volume = 0;  // Mettre en silence pour le déverrouillage
-                                messageNotifSound.play().then(() => {
-                                    messageNotifSound.pause();
-                                    messageNotifSound.currentTime = 0;
-                                    messageNotifSound.volume = savedVolume;  // Restaurer le volume
-                                    audioUnlocked = true;
-                                    console.log('Audio débloqué pour les notifications');
-                                }).catch((err) => {
-                                    messageNotifSound.volume = savedVolume;  // Restaurer même en cas d'erreur
-                                    console.log('⚠️ Échec déblocage audio:', err.message);
-                                });
-                            }
-                        }
-                        // Débloquer au premier clic/touch sur la page
-                        ['click', 'touchstart', 'keydown'].forEach(event => {
-                            document.addEventListener(event, unlockAudio, { once: true });
-                        });
-                        
-                        function playMessageSound() {
-                            console.log('playMessageSound() appelée');
-                            console.log('audioUnlocked:', audioUnlocked);
-                            try {
-                                messageNotifSound.currentTime = 0;
-                                const playPromise = messageNotifSound.play();
-                                if (playPromise !== undefined) {
-                                    playPromise.then(() => {
-                                        console.log('Son de notification joué avec succès');
-                                    }).catch(function(e) {
-                                        console.log('🔇 Son notification bloqué (interaction utilisateur requise):', e.message);
-                                        console.log('Essayez de cliquer sur la page pour débloquer l\'audio');
-                                    });
-                                }
-                            } catch(e) {
-                                console.log('🔇 Erreur son notification:', e);
-                            }
-                        }
-                        
                         if (!userEmail) {
                             console.log('⚠️ WebSocket: Aucun utilisateur connecté');
                             throw new Error('NO_USER');
@@ -6017,7 +5831,7 @@ function sendMalus(reason, points){
                                 
                                 //  SON EN PREMIER
                                 console.log('Lecture du son de réception...');
-                                playMessageSound();
+                                SoundManager.play('receiveMessage');
                                 
                                 // Badge messages + badge PWA global
                                 console.log('Mise à jour de mon badge...');
@@ -6042,7 +5856,7 @@ function sendMalus(reason, points){
                                 
                                 //  SON
                                 console.log('Lecture du son de réception (message enfant)...');
-                                playMessageSound();
+                                SoundManager.play('receiveMessage');
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
@@ -6495,9 +6309,7 @@ function refreshAllBadges() {
                                     container.classList.add('animating');
                                     
                                     // 🎵 Son harmonieux pendant l'animation de zoom
-                                    if (window.DustSounds && window.DustSounds.roomZoom) {
-                                        window.DustSounds.roomZoom();
-                                    }
+                                    SoundManager.play('roomFullscreen');
                                 }, 50);
                                 
                                 //  Timing optimisé pour rapidité et fluidité :
