@@ -317,20 +317,13 @@
             return;
         }
 
-        // Sons synthétisés – attendre que l'AudioContext soit actif
+        // Sons synthétisés — résumer + jouer immédiatement (pas de .then()
+        // car iOS Safari considère les microtasks hors geste utilisateur)
         if (synth[eventName]) {
             var ctx = getCtx();
             if (!ctx) return;
-            var fn = function () {
-                try { synth[eventName](); } catch (e) { console.error('SoundManager synth error:', eventName, e); }
-            };
-            if (ctx.state === 'running') {
-                fn();
-            } else {
-                ctx.resume().then(fn).catch(function (e) {
-                    console.error('SoundManager resume error:', e);
-                });
-            }
+            if (ctx.state !== 'running') ctx.resume();
+            try { synth[eventName](); } catch (e) { console.error('SoundManager synth error:', eventName, e); }
             return;
         }
 
@@ -811,5 +804,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé (v5)', 'enabled:', prefs.enabled, 'master:', prefs.masterVolume, 'ui:', prefs.uiVolume);
+    console.log('🔊 SoundManager initialisé (v6)', 'enabled:', prefs.enabled, 'master:', prefs.masterVolume, 'ui:', prefs.uiVolume);
 })();
