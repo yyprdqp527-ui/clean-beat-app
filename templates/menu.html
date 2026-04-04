@@ -497,6 +497,17 @@
         /* Positionner la vbar légèrement à droite de l'avatar (avec un petit écart) */
         .avatar-square-wrapper .vbar { left: calc(100% + 16px); right: auto; }
         .avatar-square-wrapper .vbar .vbar-fill { transition: height 0.4s ease; box-shadow: 0 0 6px rgba(0,0,0,0.12); left:0; right:0; bottom:0; position:absolute; }
+        /* 👑 Couronne gagnant dimanche — centrée SUR la tête */
+        .avatar-square-wrapper .winner-crown {
+            position: absolute; top: -18px; left: 50%; z-index: 2200;
+            font-size: 32px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+            animation: crownBounce 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes crownBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotate(-5deg); }
+            50% { transform: translateX(-50%) translateY(-4px) rotate(5deg); }
+        }
         /* ── Barres individuelles avatars désactivées : remplacées par la barre semaine commune ── */
         .vbar, .vbar-horizontal { display: none !important; visibility: hidden !important; }
         .vbar { 
@@ -2897,6 +2908,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                     <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='/profil'">
+                                        {% if has_weekly_winner|default(false) and winner_email|default('') == current_user_name %}
+                                        <span class="winner-crown">👑</span>
+                                        {% endif %}
                                         {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
                                         <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none;">
                                             {% if session.get('user_avatar_url') %}
@@ -2945,6 +2959,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="avatar-row" style="gap:8px; align-items:center;">
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                         <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p2.email }}'">
+                                            {% if has_weekly_winner|default(false) and winner_email|default('') == p2.email %}
+                                            <span class="winner-crown">👑</span>
+                                            {% endif %}
                                             {% set border_color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else '#A6D3DC')) %}
                                             <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: none;">
                                                 {% if p2.avatar_file %}
@@ -2992,6 +3009,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="avatar-row" style="gap:6px; flex-shrink:0; align-items:center;">
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                             <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p.email }}'">
+                                                {% if has_weekly_winner|default(false) and winner_email|default('') == p.email %}
+                                                <span class="winner-crown">👑</span>
+                                                {% endif %}
                                                 {% set border_color_p = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else '#A6D3DC')) %}
                                                 <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: none;">
                                                     {% if p.avatar_file %}
@@ -3544,7 +3564,7 @@ body { padding-bottom: 84px !important; }
             <div class="cw-avatar-emoji">👤</div>
         {% endif %}
         <div class="cw-info">
-            <div class="cw-name">{{ p.name }}</div>
+            <div class="cw-name">{{ p.name }}{% if has_weekly_winner|default(false) and winner_email|default('') == p.email %} 👑{% endif %}</div>
             <div class="cw-bar-wrap">
                 <div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else "" }}" style="width:0%;"></div>
             </div>
@@ -3763,7 +3783,7 @@ body { padding-bottom: 84px !important; }
                 barCd.innerHTML = mm+'m<br>⏰';
                 barCd.classList.add('urg-high');
             } else {
-                barCd.innerHTML = 'GO!<br>🎁';
+                barCd.innerHTML = '<a href="/rewards" style="color:inherit;text-decoration:none;">GO!<br>🎁</a>';
                 barCd.classList.add('urg-go');
             }
         }

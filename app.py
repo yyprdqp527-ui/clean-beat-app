@@ -4498,6 +4498,23 @@ def get_house_players_points(house_id, existing_conn=None):
             _daily_map[row_dp[0]] = (int(row_dp[1]) if row_dp[1] else 0, int(row_dp[2]) if row_dp[2] else 0)
     except Exception:
         pass
+
+    # 🚀 BATCH: calculer weekly_points pour TOUS les joueurs en 1 seule requête (👑 couronne)
+    from datetime import timedelta
+    _today = now_paris().date()
+    _week_start = (_today - timedelta(days=_today.weekday())).isoformat()
+    _weekly_map = {}  # {email: points}
+    try:
+        c.execute("""
+            SELECT user_email, COALESCE(SUM(points),0)
+            FROM completed_tasks
+            WHERE house_id=? AND DATE(completed_at) >= ?
+            GROUP BY user_email
+        """, (house_id, _week_start))
+        for row_wp in c.fetchall():
+            _weekly_map[row_wp[0]] = int(row_wp[1]) if row_wp[1] else 0
+    except Exception:
+        pass
     
     for r in rows:
         email = r[0]
@@ -4568,6 +4585,7 @@ def get_house_players_points(house_id, existing_conn=None):
         # 🚀 Points du jour depuis le batch pré-calculé (0 requête DB ici)
         daily_points = _daily_map.get(email, (0, 0))[0]
         daily_tasks = _daily_map.get(email, (0, 0))[1]
+        weekly_points = _weekly_map.get(email, 0)
 
         # Nettoyer avatar_file et avatar_url des valeurs "None" (chaîne)
         clean_avatar_file = avatar_file if avatar_file and avatar_file != 'None' else None
@@ -4685,6 +4703,7 @@ def get_house_players_points(house_id, existing_conn=None):
             'points': points,
             'daily_points': daily_points,
             'daily_tasks': daily_tasks,
+            'weekly_points': weekly_points,
             'color': color_vertical if color_vertical else player_color,  # Gradient pour v-bar verticale (ou hex en fallback)
             'color_h': color_horizontal if color_horizontal else player_color,  # Gradient pour v-bar horizontale (ou hex en fallback)
             'player_color_hex': player_color,  # Couleur hex brute pour bordure d'avatar
@@ -4959,9 +4978,23 @@ def quick_login():
     c = conn.cursor()
     c.execute("SELECT name, password FROM users WHERE email=?", (email,))
     user = c.fetchone()
+    
+    _pwd_ok = False
+    if user and user[1]:
+        try:
+            _pwd_ok = check_password_hash(user[1], password)
+        except Exception:
+            _pwd_ok = False
+        if not _pwd_ok and user[1] == password:
+            _pwd_ok = True
+            _new_hash = generate_password_hash(password)
+            conn2 = get_db_connection()
+            conn2.execute("UPDATE users SET password=? WHERE email=?", (_new_hash, email))
+            conn2.commit()
+            conn2.close()
     conn.close()
     
-    if user and check_password_hash(user[1], password):
+    if user and _pwd_ok:
         session.permanent = True  # Session persistante après rafraîchissement
         session['user'] = email
         session['user_name'] = user[0]
@@ -7119,13 +7152,11 @@ def rewards():
     house_code = c.fetchone()[0]
     
     # Vérifier si c'est dimanche après 6h du matin
-    # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - remettre les lignes suivantes pour la prod
     from datetime import datetime, timedelta
     now = now_paris()
-    # is_sunday = now.weekday() == 6  # 6 = dimanche
-    # is_after_6am = now.hour >= 6
-    # can_open = is_sunday and is_after_6am
-    can_open = True  # TEMP: Toujours accessible pour les tests
+    is_sunday = now.weekday() == 6  # 6 = dimanche
+    is_after_6am = now.hour >= 6
+    can_open = is_sunday and is_after_6am
     
     # Déterminer le gagnant de la semaine (celui avec le plus de points cette semaine)
     today = now_paris()
@@ -7257,8 +7288,8 @@ def rewards():
     
     conn.close()
     
-    # MODE TEST: Forcer l'accès à la grille pour gérer les cadeaux
-    already_opened_this_week = False  # Désactivé pour les tests
+    # Vérifier si la case a déjà été ouverte cette semaine (valeur réelle)
+    # already_opened_this_week est déjà calculé plus haut
     
     # Préparer les trois grilles pour affichage - Récompenses par défaut
     default_rewards_family = [
@@ -7455,16 +7486,13 @@ def open_reward_box():
     house_id = user_row[0]
     
     # Vérifier si c'est dimanche après 6h du matin
-    # TEMPORAIREMENT DÉSACTIVÉ POUR TEST
     from datetime import datetime, timedelta
     now = now_paris()
-    # is_sunday = now.weekday() == 6
-    # is_after_6am = now.hour >= 6
-    # if not (is_sunday and is_after_6am):
-    #     conn.close()
-    #     return jsonify({'success': False, 'message': 'La grille cadeau mystère est disponible uniquement le dimanche à partir de 6h !'}), 403
-    
-    # TEMP: Pas de vérification pour les tests
+    is_sunday = now.weekday() == 6
+    is_after_6am = now.hour >= 6
+    if not (is_sunday and is_after_6am):
+        conn.close()
+        return jsonify({'success': False, 'message': 'La grille cadeau mystère est disponible uniquement le dimanche à partir de 6h !'}), 403
     
     # Calculer le début de la semaine
     today = now_paris()
@@ -7483,17 +7511,15 @@ def open_reward_box():
     """, (start_of_week, house_id))
     
     winner_row = c.fetchone()
-    # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - vérification du gagnant
-    # if not winner_row or winner_row[0] != session['user']:
-    #     conn.close()
-    #     return jsonify({'success': False, 'message': 'Seul le gagnant de la semaine peut ouvrir une case'}), 403
+    if not winner_row or winner_row[0] != session['user']:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Seul le gagnant de la semaine peut ouvrir une case'}), 403
     
-    # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - vérification déjà ouvert cette semaine
-    # c.execute("SELECT box_number FROM reward_boxes WHERE house_id=? AND opened_by=? AND week_start=?", 
-    #           (house_id, session['user'], start_of_week))
-    # if c.fetchone():
-    #     conn.close()
-    #     return jsonify({'success': False, 'message': 'Tu as déjà ouvert ton cadeau mystère cette semaine !'}), 400
+    c.execute("SELECT box_number FROM reward_boxes WHERE house_id=? AND opened_by=? AND week_start=?", 
+              (house_id, session['user'], start_of_week))
+    if c.fetchone():
+        conn.close()
+        return jsonify({'success': False, 'message': 'Tu as déjà ouvert ton cadeau mystère cette semaine !'}), 400
     
     # === GRILLES DE RÉCOMPENSES PAR TYPE DE FOYER ===
     
@@ -8129,7 +8155,22 @@ def login():
         c = conn.cursor()
         c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))
         user = c.fetchone()
-        if user and check_password_hash(user[0], password):
+        # Vérification robuste du mot de passe :
+        # 1) check_password_hash (cas normal)
+        # 2) Fallback comparaison directe (ancien compte non hashé) + re-hash auto
+        _pwd_ok = False
+        if user and user[0]:
+            try:
+                _pwd_ok = check_password_hash(user[0], password)
+            except Exception:
+                _pwd_ok = False
+            if not _pwd_ok and user[0] == password:
+                # Mot de passe stocké en clair → accepter et re-hasher
+                _pwd_ok = True
+                _new_hash = generate_password_hash(password)
+                c.execute("UPDATE users SET password=? WHERE email=?", (_new_hash, email))
+                conn.commit()
+        if user and _pwd_ok:
             session.permanent = True
             session['user'] = email
             _log_login(email)
@@ -8875,7 +8916,19 @@ def join_house():
             c.execute("SELECT email, password, name FROM users WHERE email=?", (email,))
             user = c.fetchone()
             
-            if not user or not check_password_hash(user[1], password):
+            _pwd_ok = False
+            if user and user[1]:
+                try:
+                    _pwd_ok = check_password_hash(user[1], password)
+                except Exception:
+                    _pwd_ok = False
+                if not _pwd_ok and user[1] == password:
+                    _pwd_ok = True
+                    _new_hash = generate_password_hash(password)
+                    c.execute("UPDATE users SET password=? WHERE email=?", (_new_hash, email))
+                    conn.commit()
+            
+            if not user or not _pwd_ok:
                 flash("Email ou mot de passe incorrect.", "danger")
                 conn.close()
                 return render_template('join_house.html', code=code_from_url)
@@ -9718,6 +9771,22 @@ def menu():
     if request.args.get('preview_onboarding') == '1':
         show_onboarding = True
 
+    # 👑 Déterminer le gagnant de la semaine (couronne visible tous les jours)
+    _now = now_paris()
+    _is_sunday = (_now.weekday() == 6)
+    # ⚙️ DEV: forcer dimanche via ?preview_sunday=1 (pour accès cadeaux)
+    if request.args.get('preview_sunday') == '1':
+        _is_sunday = True
+    _winner_name = ''
+    _winner_email = ''
+    _has_weekly_winner = False
+    if players:
+        _sorted = sorted(players, key=lambda x: x.get('daily_points', 0), reverse=True)
+        if _sorted and _sorted[0].get('daily_points', 0) > 0:
+            _winner_name = _sorted[0].get('name', '')
+            _winner_email = _sorted[0].get('email', '')
+            _has_weekly_winner = True
+
     resp = make_response(render_template(
         'menu.html',
         players=players,
@@ -9749,6 +9818,10 @@ def menu():
         custom_rooms=custom_rooms_data,
         show_onboarding=show_onboarding,
         rooms_with_new_missions=rooms_with_new_missions,
+        is_sunday=_is_sunday,
+        has_weekly_winner=_has_weekly_winner,
+        winner_name=_winner_name,
+        winner_email=_winner_email,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'

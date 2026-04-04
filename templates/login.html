@@ -244,14 +244,17 @@
            autocomplete="username" inputmode="email">
 
     <label>Mot de passe:</label>
-    <input type="password" id="loginPassword" name="password" required
-           autocomplete="current-password">
+    <div style="position:relative;">
+        <input type="password" id="loginPassword" name="password" required
+               autocomplete="current-password" style="width:100%;padding-right:50px;">
+        <button type="button" onclick="var p=document.getElementById('loginPassword');if(p.type==='password'){p.type='text';this.textContent='🙈'}else{p.type='password';this.textContent='👁️'}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;box-shadow:none;color:#666;">👁️</button>
+    </div>
 
     <button type="submit">Se connecter</button>
 </form>
 
 <div style="text-align:center;margin-top:10px;">
-    <a href="{{ url_for('signup_email') }}"
+    <a href="{{ url_for('forgot_password') }}"
        style="color:rgba(255,255,255,0.85);font-size:13px;text-decoration:underline;">
         Mot de passe oublié ?
     </a>
