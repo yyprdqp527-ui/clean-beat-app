@@ -901,7 +901,7 @@ function onTaskCompleted(points) {
     showPointsAnimation(points);
     
     // Son de réussite
-    playSound('pointsSound');
+    SoundManager.play('gainPoints');
     
     // Animation de la maison heureuse
     animateHouse('happy');
@@ -935,7 +935,7 @@ function updateHouseProgress() {
             animateHouse('excited');
             const celebrationMessage = houseMessages.celebration[Math.floor(Math.random() * houseMessages.celebration.length)];
             showHouseMessage(celebrationMessage, 'celebration');
-            playSound('happySound');
+            SoundManager.play('victory');
         }, 500);
     }
 }
@@ -1064,7 +1064,7 @@ function updateHouseHealth(amount = 5) {
             animateHouse('excited');
             const celebrationMessage = houseMessages.celebration[Math.floor(Math.random() * houseMessages.celebration.length)];
             showHouseMessage(celebrationMessage, 'celebration');
-            playSound('happySound');
+            SoundManager.play('victory');
         }, 500);
     }
     if (newVal <= 20) {
@@ -1076,7 +1076,7 @@ function updateHouseHealth(amount = 5) {
 function onTaskCompleted(points) {
     lastActivityTime = Date.now();
     showPointsAnimation(points);
-    playSound('pointsSound');
+    SoundManager.play('gainPoints');
     animateHouse('happy');
     const messages = houseMessages.encouragement;
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];

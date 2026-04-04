@@ -574,13 +574,6 @@
         var roomEl = e.target.closest('.room-group, [data-room], svg a, .room-card');
         if (roomEl) {
             play('selectRoom');
-            // Si c'est un lien <a>, retarder la navigation
-            var link = roomEl.closest('a[href]');
-            if (link && link.href && !link.href.startsWith('javascript')) {
-                e.preventDefault();
-                var href = link.href;
-                setTimeout(function () { window.location.href = href; }, 180);
-            }
             return;
         }
 
@@ -604,15 +597,6 @@
 
         var css = document.createElement('style');
         css.textContent = [
-            '#sm-toggle-btn{position:fixed;bottom:90px;left:14px;z-index:9998;',
-            'width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);',
-            'background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(166,211,220,.5));',
-            'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);',
-            'box-shadow:0 4px 16px rgba(21,48,54,.2);cursor:pointer;',
-            'display:flex;align-items:center;justify-content:center;font-size:20px;',
-            'transition:transform .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}',
-            '#sm-toggle-btn:active{transform:scale(.9)}',
-
             '#sm-panel-overlay{position:fixed;inset:0;z-index:9999;background:rgba(21,48,54,.55);',
             'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);',
             'display:none;align-items:center;justify-content:center;opacity:0;',
@@ -655,16 +639,7 @@
         ].join('\n');
         document.head.appendChild(css);
 
-        // Bouton flottant
-        var btn = document.createElement('button');
-        btn.id = 'sm-toggle-btn';
-        btn.setAttribute('aria-label', 'Paramètres son');
-        btn.innerHTML = '🔊';
-        btn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            openPanel();
-        });
-        document.body.appendChild(btn);
+        // Bouton flottant supprimé (panneau accessible via SoundManager.openPanel())
 
         // Overlay + panneau
         var overlay = document.createElement('div');
@@ -762,8 +737,6 @@
         });
 
         // Bouton flottant icône
-        var tb = document.getElementById('sm-toggle-btn');
-        if (tb) tb.innerHTML = p.enabled ? '🔊' : '🔇';
     }
 
     function openPanel() {
