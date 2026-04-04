@@ -823,6 +823,11 @@ function toggleFullHistory() {
 
 {% block extra_scripts %}
 <script>
+// Son d'entrée dans la pièce (plein écran)
+if (typeof SoundManager !== 'undefined') {
+    setTimeout(function() { SoundManager.play('roomFullscreen'); }, 200);
+}
+
 window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } });
 
 // Modal d'édition des points (ouverture sur clic de pastille)

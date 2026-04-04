@@ -220,6 +220,76 @@
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.1);
+        },
+
+        /* Entourloupe émise — suspense montant (350 ms) */
+        suspicionEmit: function () {
+            var ctx = getCtx(); if (!ctx) return;
+            var v = vol('game'); if (!v) return;
+            [330, 392, 466].forEach(function (f, i) {
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sawtooth';
+                var t = ctx.currentTime + i * 0.1;
+                osc.frequency.setValueAtTime(f, t);
+                gain.gain.setValueAtTime(0.08 * v, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+                osc.start(t);
+                osc.stop(t + 0.15);
+            });
+        },
+
+        /* Malus envoyé — impact sourd descendant (400 ms) */
+        malusImpact: function () {
+            var ctx = getCtx(); if (!ctx) return;
+            var v = vol('game'); if (!v) return;
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(400, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.35);
+            gain.gain.setValueAtTime(0.15 * v, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.45);
+        },
+
+        /* Bonus envoyé — ding joyeux ascendant (300 ms) */
+        bonusDing: function () {
+            var ctx = getCtx(); if (!ctx) return;
+            var v = vol('game'); if (!v) return;
+            [523, 659, 784].forEach(function (f, i) {
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sine';
+                var t = ctx.currentTime + i * 0.08;
+                osc.frequency.setValueAtTime(f, t);
+                gain.gain.setValueAtTime(0.12 * v, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+                osc.start(t);
+                osc.stop(t + 0.18);
+            });
+        },
+
+        /* Spin roue — tick-tick accéléré (600 ms) */
+        wheelSpin: function () {
+            var ctx = getCtx(); if (!ctx) return;
+            var v = vol('game'); if (!v) return;
+            for (var i = 0; i < 8; i++) {
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sine';
+                var t = ctx.currentTime + i * (0.06 + i * 0.005);
+                osc.frequency.setValueAtTime(800 + i * 50, t);
+                gain.gain.setValueAtTime(0.06 * v, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+                osc.start(t);
+                osc.stop(t + 0.05);
+            }
         }
     };
 
@@ -228,6 +298,10 @@
         gainPoints     : 'game',
         losePoints     : 'game',
         victory        : 'game',
+        suspicionEmit  : 'game',
+        malusImpact    : 'game',
+        bonusDing      : 'game',
+        wheelSpin      : 'game',
         receiveMessage : 'ui',
         sendMessage    : 'ui',
         buttonClick    : 'ui',
@@ -496,9 +570,17 @@
         // Éviter le double‑son si le panneau son est la cible
         if (e.target.closest('#sm-panel')) return;
 
-        // Pièces de la maison (SVG)
-        if (e.target.closest('.room-group, [data-room], svg a, .room-card')) {
+        // Pièces de la maison — intercepter <a> pour laisser le son jouer
+        var roomEl = e.target.closest('.room-group, [data-room], svg a, .room-card');
+        if (roomEl) {
             play('selectRoom');
+            // Si c'est un lien <a>, retarder la navigation
+            var link = roomEl.closest('a[href]');
+            if (link && link.href && !link.href.startsWith('javascript')) {
+                e.preventDefault();
+                var href = link.href;
+                setTimeout(function () { window.location.href = href; }, 180);
+            }
             return;
         }
 

@@ -441,6 +441,13 @@ body {
 .gw-avatar-penalty .gw-avatar-emoji {
     animation: gwAvatarPenalty 1.2s ease-out;
 }
+/* Animation bonus sur avatar (pulse gold) */
+@keyframes gwAvatarBonus {
+    0% { transform: scale(1); box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
+    20% { transform: scale(1.15); box-shadow: 0 0 25px rgba(255,215,0,0.7); }
+    50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+    100% { transform: scale(1); box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
+}
 
 /* ══ ROUE - Animation validation corvée ══ */
 @keyframes wheelPtsFloat {
@@ -1127,12 +1134,14 @@ body {
 <!-- JS navigation grille / sections -->
 <script>
 function openSection(name) {
+    SoundManager.play('navigate');
     document.getElementById('minigameGrid').classList.add('hidden');
     var sec = document.getElementById('section-' + name);
     if (sec) { sec.classList.add('visible'); }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function closeSection() {
+    SoundManager.play('buttonClick');
     document.querySelectorAll('.feature-container.visible').forEach(function(el) {
         el.classList.remove('visible');
     });
@@ -1410,15 +1419,19 @@ function sendBonus(reason, points){
         .then(function(r){return r.json();}).then(function(data){
             closeBonus();
             if(data.success){
+                SoundManager.play('bonusDing');
                 showPointsAnimation(points);
                 // Animation célébration sur l'avatar cible
                 var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
                 if (playerDiv) {
                     var avatarEl = playerDiv.querySelector('.gw-avatar-img, .gw-avatar-emoji');
-                    if (avatarEl) { avatarEl.style.animation = 'none'; avatarEl.offsetHeight; avatarEl.style.animation = 'gwAvatarPenalty 1.2s ease-out'; avatarEl.style.boxShadow = '0 0 25px rgba(255,215,0,0.7)'; setTimeout(function(){ avatarEl.style.boxShadow = ''; avatarEl.style.animation = ''; }, 1500); }
+                    if (avatarEl) { avatarEl.style.animation = 'none'; avatarEl.offsetHeight; avatarEl.style.animation = 'gwAvatarBonus 1.2s ease-out'; avatarEl.style.boxShadow = '0 0 25px rgba(255,215,0,0.7)'; setTimeout(function(){ avatarEl.style.boxShadow = ''; avatarEl.style.animation = ''; }, 1500); }
                 }
                 if(window._localBonusMap) window._localBonusMap[targetEmail] = Date.now();
-                setTimeout(function(){ window.location.reload(); }, 1800);
+                // Redirection vers menu avec animation sur l'avatar
+                setTimeout(function(){
+                    window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(targetEmail) + '&whon=' + encodeURIComponent(targetName);
+                }, 1800);
             }
             else { alert(data.error||'Erreur'); }
         }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
@@ -1437,6 +1450,7 @@ function sendMalus(reason, points){
         .then(function(r){return r.json();}).then(function(data){
             closeMalus();
             if(data.success){
+                SoundManager.play('malusImpact');
                 showPointsAnimation(points);
                 // Animation pénalité sur l'avatar cible
                 var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
@@ -1445,7 +1459,10 @@ function sendMalus(reason, points){
                     setTimeout(function(){ playerDiv.classList.remove('gw-avatar-penalty'); }, 1500);
                 }
                 if(window._localMalusMap) window._localMalusMap[targetEmail] = Date.now();
-                setTimeout(function(){ window.location.reload(); }, 2000);
+                // Redirection vers menu avec animation pénalité sur l'avatar
+                setTimeout(function(){
+                    window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(targetEmail) + '&whon=' + encodeURIComponent(targetName);
+                }, 2000);
             }
             else { alert(data.error||'Erreur'); }
         }).catch(function(){ closeMalus(); alert('Erreur réseau'); });
@@ -1889,6 +1906,7 @@ function emitSuspicion(email, name, taskName, points, taskId) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            SoundManager.play('suspicionEmit');
             alert(data.message);
             closeSuspicionPicker();
             loadMySuspicions();
@@ -1978,6 +1996,8 @@ function validateProof() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            SoundManager.play('losePoints');
+            showPointsAnimation(-10);
             alert(data.message);
             closeValidateProof();
             loadMySuspicions();
@@ -2007,6 +2027,7 @@ function rejectProof() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            SoundManager.play('malusImpact');
             alert(data.message);
             closeValidateProof();
             loadMySuspicions();
@@ -2100,6 +2121,7 @@ function drawWheel() {
 function spinWheel() {
     if (isSpinning) return;
     isSpinning = true;
+    SoundManager.play('wheelSpin');
     const spinBtn = document.getElementById('spinBtn');
     spinBtn.disabled = true;
     spinBtn.textContent = '\u23f3 En cours...';
