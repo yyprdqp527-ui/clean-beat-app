@@ -424,6 +424,24 @@ body {
     100% { transform: translateX(-50%) translateY(-100px) scale(1); opacity: 0; }
 }
 
+/* Animation pénalité sur avatar (secoue + halo rouge) */
+@keyframes gwAvatarPenalty {
+    0% { transform: translateX(0); box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
+    8% { transform: translateX(-5px); box-shadow: 0 0 20px rgba(220,60,60,0.6); }
+    16% { transform: translateX(5px); box-shadow: 0 0 25px rgba(220,60,60,0.7); }
+    24% { transform: translateX(-4px); box-shadow: 0 0 20px rgba(220,60,60,0.6); }
+    32% { transform: translateX(4px); box-shadow: 0 0 25px rgba(220,60,60,0.7); }
+    40% { transform: translateX(-3px); box-shadow: 0 0 18px rgba(220,60,60,0.5); }
+    48% { transform: translateX(3px); box-shadow: 0 0 18px rgba(220,60,60,0.5); }
+    60% { transform: translateX(-2px); box-shadow: 0 0 12px rgba(220,60,60,0.3); }
+    75% { transform: translateX(1px); box-shadow: 0 0 8px rgba(220,60,60,0.2); }
+    100% { transform: translateX(0); box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
+}
+.gw-avatar-penalty .gw-avatar-img,
+.gw-avatar-penalty .gw-avatar-emoji {
+    animation: gwAvatarPenalty 1.2s ease-out;
+}
+
 /* ══ ROUE - Animation validation corvée ══ */
 @keyframes wheelPtsFloat {
     0%   { transform: translateX(-50%) translateY(0)      scale(0.4); opacity: 0; }
@@ -1387,12 +1405,18 @@ function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getEl
 function sendBonus(reason, points){
     if(!_bonusEmail) return;
     var targetEmail = _bonusEmail;
+    var targetName = document.getElementById('bonusTargetName').textContent;
     fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
         .then(function(r){return r.json();}).then(function(data){
             closeBonus();
             if(data.success){
                 showPointsAnimation(points);
-                // Stocker localement pour mise à jour immédiate dans menu
+                // Animation célébration sur l'avatar cible
+                var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
+                if (playerDiv) {
+                    var avatarEl = playerDiv.querySelector('.gw-avatar-img, .gw-avatar-emoji');
+                    if (avatarEl) { avatarEl.style.animation = 'none'; avatarEl.offsetHeight; avatarEl.style.animation = 'gwAvatarPenalty 1.2s ease-out'; avatarEl.style.boxShadow = '0 0 25px rgba(255,215,0,0.7)'; setTimeout(function(){ avatarEl.style.boxShadow = ''; avatarEl.style.animation = ''; }, 1500); }
+                }
                 if(window._localBonusMap) window._localBonusMap[targetEmail] = Date.now();
                 setTimeout(function(){ window.location.reload(); }, 1800);
             }
@@ -1408,12 +1432,18 @@ function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getEl
 function sendMalus(reason, points){
     if(!_malusEmail) return;
     var targetEmail = _malusEmail;
+    var targetName = document.getElementById('malusTargetName').textContent;
     fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
         .then(function(r){return r.json();}).then(function(data){
             closeMalus();
             if(data.success){
                 showPointsAnimation(points);
-                // Stocker localement pour mise à jour immédiate dans menu
+                // Animation pénalité sur l'avatar cible
+                var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
+                if (playerDiv) {
+                    playerDiv.classList.add('gw-avatar-penalty');
+                    setTimeout(function(){ playerDiv.classList.remove('gw-avatar-penalty'); }, 1500);
+                }
                 if(window._localMalusMap) window._localMalusMap[targetEmail] = Date.now();
                 setTimeout(function(){ window.location.reload(); }, 2000);
             }
@@ -1614,8 +1644,12 @@ function showPointsAnimation(points) {
     }
     document.body.appendChild(pointsDiv);
     
-    // Jouer un son
-    SoundManager.play('gainPoints');
+    // Jouer le son adapté bonus/malus
+    if (points >= 0) {
+        SoundManager.play('gainPoints');
+    } else {
+        SoundManager.play('losePoints');
+    }
     
     setTimeout(() => {
         document.body.removeChild(pointsDiv);

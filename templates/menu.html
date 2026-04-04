@@ -838,6 +838,67 @@
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
+        /* === ANIMATION PERTE DE POINTS (PENALTY) === */
+        @keyframes avatar-penalty-shake {
+            0% { transform: translateX(0) scale(1); }
+            8% { transform: translateX(-6px) scale(1.05); }
+            16% { transform: translateX(6px) scale(1.05); }
+            24% { transform: translateX(-5px) scale(1.04); }
+            32% { transform: translateX(5px) scale(1.04); }
+            40% { transform: translateX(-4px) scale(1.03); }
+            48% { transform: translateX(4px) scale(1.03); }
+            56% { transform: translateX(-3px) scale(1.02); }
+            64% { transform: translateX(3px) scale(1.02); }
+            72% { transform: translateX(-2px) scale(1.01); }
+            80% { transform: translateX(2px) scale(1.01); }
+            90% { transform: translateX(-1px) scale(1); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        @keyframes avatar-penalty-glow {
+            0% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 0 rgba(220,60,60,0), 0 0 0 0 rgba(212,133,106,0); }
+            15% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 50px 20px rgba(220,60,60,0.7), 0 0 90px 40px rgba(212,133,106,0.4); }
+            40% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 60px 25px rgba(220,60,60,0.8), 0 0 100px 50px rgba(212,133,106,0.5); }
+            70% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 40px 15px rgba(220,60,60,0.5), 0 0 70px 30px rgba(212,133,106,0.3); }
+            100% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 0 rgba(220,60,60,0), 0 0 0 0 rgba(212,133,106,0); }
+        }
+        @keyframes penalty-popup {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.5); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(-15px) scale(1.4); }
+            30% { opacity: 1; transform: translateX(-50%) translateY(-20px) scale(1.2); }
+            70% { opacity: 1; transform: translateX(-50%) translateY(-25px) scale(1.1); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(0.8); }
+        }
+        .avatar-penalized {
+            animation: avatar-penalty-shake 1.5s ease-out, avatar-penalty-glow 2.5s ease-in-out 2;
+            z-index: 9999 !important;
+        }
+        .points-popup-penalty {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 800;
+            color: #8B0000;
+            z-index: 10000;
+            pointer-events: none;
+            animation: penalty-popup 4s ease-out forwards;
+            white-space: nowrap;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.95) 0%, 
+                rgba(220, 60, 60, 0.4) 50%,
+                rgba(212, 133, 106, 0.5) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 12px 20px;
+            box-shadow: 
+                0 20px 40px rgba(220, 60, 60, 0.35),
+                0 0 0 1px rgba(220, 60, 60, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
         .avatar-celebrating {
             animation: avatar-celebrate 2s ease-out, avatar-glow 3s ease-in-out 2;
             z-index: 9999 !important;
@@ -4461,6 +4522,7 @@ function sendMalus(reason, points){
                         var whon = params.get('whon');
                         
                         if (pts && ts) {
+                            var ptsNum = parseInt(pts);
                             setTimeout(function() {
                                 // Cibler l'avatar du bénéficiaire si fourni, sinon le joueur courant
                                 var targetWrapper = null;
@@ -4474,15 +4536,27 @@ function sendMalus(reason, points){
                                     console.log('Aucun wrapper pour', who, '-> fallback joueur courant');
                                     targetWrapper = document.getElementById('current-player-avatar-wrapper');
                                 }
-                                var winnerAvatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
-                                if (winnerAvatar) {
-                                    console.log('✨ Animation sur:', who || 'current');
-                                    // Ajouter animation de victoire
-                                    winnerAvatar.style.animation = 'winnerPulse 0.6s ease-in-out';
-                                    // Créer des particules/confettis autour
-                                    createWinnerEffects(winnerAvatar);
-                                    // Jouer un son de victoire
-                                    playProgressSound(parseInt(pts));
+                                var avatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
+                                if (avatar) {
+                                    if (ptsNum < 0) {
+                                        // === ANIMATION PERTE DE POINTS ===
+                                        console.log('💀 Animation pénalité sur:', who || 'current');
+                                        avatar.classList.add('avatar-penalized');
+                                        SoundManager.play('losePoints');
+                                        // Popup points perdus
+                                        var popup = document.createElement('div');
+                                        popup.className = 'points-popup-penalty';
+                                        popup.textContent = ptsNum + ' pts';
+                                        targetWrapper.appendChild(popup);
+                                        setTimeout(function() { popup.remove(); }, 4000);
+                                        setTimeout(function() { avatar.classList.remove('avatar-penalized'); }, 5000);
+                                    } else {
+                                        // === ANIMATION GAIN DE POINTS ===
+                                        console.log('✨ Animation sur:', who || 'current');
+                                        avatar.style.animation = 'winnerPulse 0.6s ease-in-out';
+                                        createWinnerEffects(avatar);
+                                        playProgressSound(ptsNum);
+                                    }
                                 }
                             }, 300);
                         }
@@ -4684,7 +4758,7 @@ function sendMalus(reason, points){
                         
                         // Sons automatiques activés
                         
-                        // Si on revient d'une validation de tâche (paramètre ts), jouer un son spécial et célébrer l'avatar
+                        // Si on revient d'une validation de tâche (paramètre ts), jouer un son spécial et célébrer/pénaliser l'avatar
                         const urlParams = new URLSearchParams(window.location.search);
                         if (urlParams.has('ts')) {
                             const pointsGained = parseInt(urlParams.get('pts')) || 0;
@@ -4692,8 +4766,6 @@ function sendMalus(reason, points){
                             const whon = urlParams.get('whon');
                             
                             setTimeout(() => {
-                                console.log('Tâche validée, animation de célébration...');
-                                
                                 // Trouver l'avatar du bénéficiaire si précisé, sinon joueur courant
                                 let avatarWrapper = null;
                                 if (who) {
@@ -4709,47 +4781,60 @@ function sendMalus(reason, points){
                                 const avatarSquare = avatarWrapper ? avatarWrapper.querySelector('#current-player-avatar, .avatar-square') : null;
                                 
                                 if (avatarSquare && avatarWrapper) {
-                                    // Ajouter la classe de célébration
-                                    console.log('✨ Célébration sur:', who || 'current');
-                                    avatarSquare.classList.add('avatar-celebrating');
-                                    
-                                    // Ajouter le halo lumineux
-                                    const halo = document.createElement('div');
-                                    halo.className = 'avatar-halo';
-                                    avatarSquare.appendChild(halo);
-                                    
-                                    // Afficher les points gagnés en popup
-                                    if (pointsGained > 0) {
-                                        const popup = document.createElement('div');
-                                        popup.className = 'points-popup';
-                                        popup.textContent = '+' + pointsGained + ' pts';
-                                        avatarWrapper.appendChild(popup);
+                                    if (pointsGained < 0) {
+                                        // === ANIMATION PERTE DE POINTS ===
+                                        console.log('💀 Pénalité sur:', who || 'current');
+                                        avatarSquare.classList.add('avatar-penalized');
+                                        SoundManager.play('losePoints');
                                         
-                                        // Supprimer le popup après l'animation
+                                        // Popup points perdus
+                                        const popup = document.createElement('div');
+                                        popup.className = 'points-popup-penalty';
+                                        popup.textContent = pointsGained + ' pts';
+                                        avatarWrapper.appendChild(popup);
                                         setTimeout(() => popup.remove(), 4000);
+                                        setTimeout(() => avatarSquare.classList.remove('avatar-penalized'), 5000);
+                                    } else {
+                                        // === ANIMATION GAIN DE POINTS ===
+                                        console.log('✨ Célébration sur:', who || 'current');
+                                        avatarSquare.classList.add('avatar-celebrating');
+                                        
+                                        // Ajouter le halo lumineux
+                                        const halo = document.createElement('div');
+                                        halo.className = 'avatar-halo';
+                                        avatarSquare.appendChild(halo);
+                                        
+                                        // Afficher les points gagnés en popup
+                                        if (pointsGained > 0) {
+                                            const popup = document.createElement('div');
+                                            popup.className = 'points-popup';
+                                            popup.textContent = '+' + pointsGained + ' pts';
+                                            avatarWrapper.appendChild(popup);
+                                            setTimeout(() => popup.remove(), 4000);
+                                        }
+                                        
+                                        // Ajouter des étoiles qui explosent
+                                        const stars = ['⭐', '✨', '🌟', '💫', '🎉'];
+                                        for (let i = 0; i < 8; i++) {
+                                            const star = document.createElement('div');
+                                            star.className = 'winner-star';
+                                            star.textContent = stars[Math.floor(Math.random() * stars.length)];
+                                            star.style.left = (50 + (Math.random() - 0.5) * 100) + '%';
+                                            star.style.top = (50 + (Math.random() - 0.5) * 100) + '%';
+                                            star.style.animationDelay = (Math.random() * 0.5) + 's';
+                                            avatarWrapper.appendChild(star);
+                                            setTimeout(() => star.remove(), 2500);
+                                        }
+                                        
+                                        // Jouer le son de succès
+                                        playProgressSound(pointsGained || 75);
+                                        
+                                        // Supprimer les effets après l'animation
+                                        setTimeout(() => {
+                                            avatarSquare.classList.remove('avatar-celebrating');
+                                            halo.remove();
+                                        }, 3000);
                                     }
-                                    
-                                    // Ajouter des étoiles qui explosent
-                                    const stars = ['⭐', '✨', '🌟', '💫', '🎉'];
-                                    for (let i = 0; i < 8; i++) {
-                                        const star = document.createElement('div');
-                                        star.className = 'winner-star';
-                                        star.textContent = stars[Math.floor(Math.random() * stars.length)];
-                                        star.style.left = (50 + (Math.random() - 0.5) * 100) + '%';
-                                        star.style.top = (50 + (Math.random() - 0.5) * 100) + '%';
-                                        star.style.animationDelay = (Math.random() * 0.5) + 's';
-                                        avatarWrapper.appendChild(star);
-                                        setTimeout(() => star.remove(), 2500);
-                                    }
-                                    
-                                    // Jouer le son de succès
-                                    playProgressSound(pointsGained || 75);
-                                    
-                                    // Supprimer les effets après l'animation
-                                    setTimeout(() => {
-                                        avatarSquare.classList.remove('avatar-celebrating');
-                                        halo.remove();
-                                    }, 3000);
                                 }
                                 
                                 // Nettoyer l'URL pour éviter de rejouer l'animation au refresh

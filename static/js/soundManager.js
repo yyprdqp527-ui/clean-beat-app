@@ -492,13 +492,21 @@
     // ─── Auto‑clic UI ──────────────────────────────────────────
     document.addEventListener('click', function (e) {
         unlock();
+        if (!e.target.closest) return;
+        // Éviter le double‑son si le panneau son est la cible
+        if (e.target.closest('#sm-panel')) return;
+
+        // Pièces de la maison (SVG)
+        if (e.target.closest('.room-group, [data-room], svg a, .room-card')) {
+            play('selectRoom');
+            return;
+        }
+
         var sel = 'button,.btn,a.btn,input[type="submit"],input[type="button"],' +
                   '.task-card,.avatar-square,.back-btn-glass,' +
                   '.burger-menu,.burger-nav-item,.burger-close,' +
                   '.dashboard-toggle,.dashboard-floating';
-        if (e.target.closest && e.target.closest(sel)) {
-            // Éviter le double‑son si le panneau son est la cible
-            if (e.target.closest('#sm-panel')) return;
+        if (e.target.closest(sel)) {
             play('buttonClick');
         }
     }, true);
