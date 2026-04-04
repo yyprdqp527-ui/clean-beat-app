@@ -160,7 +160,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 .ranking-wrapper { position: relative; display: flex; align-items: center; gap: 4px; }
 .players-row {
     display: flex; justify-content: center; align-items: flex-end;
-    gap: 8px; padding: 14px 10px 8px; min-height: 160px;
+    gap: 8px; padding: 10px 10px 4px; min-height: 130px;
     overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; flex: 1;
 }
 .players-row::-webkit-scrollbar { display: none; }
@@ -178,8 +178,8 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 .scroll-arrow:hover { transform: translateY(-50%) scale(1.15); }
 .scroll-arrow:active { transform: translateY(-50%) scale(0.9); }
 .player-card {
-    width: 85px; background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(166,211,220,0.2));
-    border-radius: 16px; padding: 10px 6px 26px; text-align: center;
+    width: 75px; background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(166,211,220,0.2));
+    border-radius: 14px; padding: 8px 5px 22px; text-align: center;
     border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 4px 16px rgba(89,113,118,0.15);
     transition: all 0.3s ease; position: relative; flex-shrink: 0;
 }
@@ -187,22 +187,22 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 .player-card.rank-2 { background: linear-gradient(135deg, rgba(192,192,192,0.25), rgba(150,150,150,0.15)); border-color: rgba(192,192,192,0.6); z-index: 2; }
 .player-card.rank-3 { background: linear-gradient(135deg, rgba(205,127,50,0.25), rgba(160,82,45,0.15)); border-color: rgba(205,127,50,0.6); z-index: 1; }
 .player-rank {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); z-index: 2;
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    font-size: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); z-index: 2;
 }
-.player-card.rank-1 .player-rank { font-size: 28px; animation: bounce 1s ease infinite; }
+.player-card.rank-1 .player-rank { font-size: 22px; animation: bounce 1s ease infinite; }
 .player-card.is-me { border: 3px solid #FDAE54 !important; box-shadow: 0 6px 24px rgba(253,174,84,0.4); }
-.player-avatar { width: 52px; height: 52px; border-radius: 8px; margin: 0 auto 12px; display: block; }
+.player-avatar { width: 42px; height: 42px; border-radius: 8px; margin: 0 auto 8px; display: block; }
 .player-avatar img, .player-avatar span {
     width: 100%; height: 100%; border-radius: 8px; object-fit: cover;
     border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     display: flex; align-items: center; justify-content: center;
 }
-.player-card.rank-1 .player-avatar { width: 60px; height: 60px; margin-bottom: 14px; }
-.player-card.rank-1 .player-avatar img, .player-card.rank-1 .player-avatar span { border: 4px solid #FFD700; box-shadow: 0 0 20px rgba(255,215,0,0.5); }
-.player-card.rank-2 .player-avatar { width: 56px; height: 56px; margin-bottom: 13px; }
+.player-card.rank-1 .player-avatar { width: 50px; height: 50px; margin-bottom: 10px; }
+.player-card.rank-1 .player-avatar img, .player-card.rank-1 .player-avatar span { border: 3px solid #FFD700; box-shadow: 0 0 16px rgba(255,215,0,0.5); }
+.player-card.rank-2 .player-avatar { width: 46px; height: 46px; margin-bottom: 9px; }
 .player-card.rank-2 .player-avatar img, .player-card.rank-2 .player-avatar span { border: 3px solid #C0C0C0; }
-.player-card.rank-3 .player-avatar { width: 54px; height: 54px; margin-bottom: 12px; }
+.player-card.rank-3 .player-avatar { width: 44px; height: 44px; margin-bottom: 8px; }
 .player-card.rank-3 .player-avatar img, .player-card.rank-3 .player-avatar span { border: 3px solid #CD7F32; }
 .player-name-podium {
     font-size: 11px; font-weight: 700; color: #153036;
@@ -210,10 +210,10 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     max-width: 80px; margin: 0 auto; position: absolute; bottom: 6px;
     left: 50%; transform: translateX(-50%); width: calc(100% - 16px);
 }
-.player-points { font-size: 15px; font-weight: 900; color: #FDAE54; margin-bottom: 2px; margin-top: 6px; }
-.player-card.rank-1 .player-points { font-size: 18px; color: #FFD700; text-shadow: 0 2px 4px rgba(255,215,0,0.3); }
-.player-card.rank-2 .player-points { font-size: 16px; }
-.player-tasks-podium { font-size: 10px; color: #597176; margin-bottom: 22px; }
+.player-points { font-size: 13px; font-weight: 900; color: #FDAE54; margin-bottom: 1px; margin-top: 4px; }
+.player-card.rank-1 .player-points { font-size: 15px; color: #FFD700; text-shadow: 0 2px 4px rgba(255,215,0,0.3); }
+.player-card.rank-2 .player-points { font-size: 14px; }
+.player-tasks-podium { font-size: 9px; color: #597176; margin-bottom: 18px; }
 @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-4px);} }
 
 /* ══ Grille de boutons filtre (style gameplay) ══ */
