@@ -528,6 +528,27 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* === PHOTO === */
+function compressImage(file, maxW, maxH, quality, callback) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+            var w = img.width, h = img.height;
+            if (w > maxW || h > maxH) {
+                var ratio = Math.min(maxW / w, maxH / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            canvas.toBlob(function(blob) { callback(blob); }, 'image/jpeg', quality);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 function previewImage(event) {
     const input = event.target;
     const preview = document.getElementById('imagePreview');
@@ -536,6 +557,13 @@ function previewImage(event) {
     const zone = document.getElementById('photoZone');
     
     if (input.files && input.files[0]) {
+        // Compresser côté client (max 800x800, JPEG q0.80) pour upload rapide
+        compressImage(input.files[0], 800, 800, 0.80, function(blob) {
+            // Remplacer le fichier dans le formulaire par le blob compressé
+            var dt = new DataTransfer();
+            dt.items.add(new File([blob], 'photo.jpg', { type: 'image/jpeg' }));
+            input.files = dt.files;
+        });
         const reader = new FileReader();
         reader.onload = function(e) {
             preview.src = e.target.result;

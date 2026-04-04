@@ -665,7 +665,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 <a href="{{ url_for('task_enhanced', cat=category, task_id=loop.index0) }}" class="task-card{% if task_points < 0 %} negative-task{% endif %}">
                     <p class="task-name">{{ task_name or 'Tâche sans nom' }}</p>
                     <div class="task-image-container">
-                        <img src="{{ url_for('static', filename='images/' ~ (task_image if task_image else 'default.png')) }}" alt="{{ task_name or 'Tâche' }}">
+                        <img src="{{ url_for('static', filename='images/' ~ (task_image if task_image else 'default.png')) }}" alt="{{ task_name or 'Tâche' }}" loading="lazy">
                         <span class="points-badge{% if task_points < 0 %} negative{% endif %} points-edit-trigger" role="button" tabindex="0" aria-label="{{ task_points }} points" data-action="{{ url_for('update_task_points', cat=category, task_id=loop.index0) }}" data-points="{{ task_points }}">{{ task_points }}</span>
                     </div>
                 </a>
@@ -680,9 +680,9 @@ window.addEventListener('DOMContentLoaded', function() {
                     <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
                     <div class="task-image-container">
                         {% if custom_task.image and custom_task.image.startswith('data:') %}
-                        <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}">
+                        <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
                         {% else %}
-                        <img src="{{ url_for('static', filename='images/' ~ (custom_task.image if custom_task.image else 'default.png')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}">
+                        <img src="{{ url_for('static', filename='images/' ~ (custom_task.image if custom_task.image else 'default.png')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
                         {% endif %}
                         <span class="points-badge points-edit-trigger" role="button" tabindex="0"
                               data-action="{{ url_for('update_custom_task_points', cat=category, task_id=custom_task.id) }}"
