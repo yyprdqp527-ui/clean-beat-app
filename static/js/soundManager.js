@@ -62,6 +62,8 @@
                 var merged = {};
                 for (var k in DEFAULT_PREFS) merged[k] = DEFAULT_PREFS[k];
                 for (var k2 in p) if (k2 in DEFAULT_PREFS) merged[k2] = p[k2];
+                // Toujours forcer enabled=true (pas de bouton mute visible)
+                merged.enabled = true;
                 return merged;
             }
         } catch (e) { /* ignore */ }
