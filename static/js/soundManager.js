@@ -55,20 +55,11 @@
 
     // ─── Préférences (localStorage) ────────────────────────────
     function loadPrefs() {
-        try {
-            var s = localStorage.getItem(STORAGE_KEY);
-            if (s) {
-                var p = JSON.parse(s);
-                var merged = {};
-                for (var k in DEFAULT_PREFS) merged[k] = DEFAULT_PREFS[k];
-                for (var k2 in p) if (k2 in DEFAULT_PREFS) merged[k2] = p[k2];
-                // Toujours forcer enabled=true (pas de bouton mute visible)
-                merged.enabled = true;
-                return merged;
-            }
-        } catch (e) { /* ignore */ }
+        // Purger l'ancien état potentiellement corrompu (volumes à 0, enabled false)
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+        // Toujours utiliser les réglages par défaut
         var out = {};
-        for (var k3 in DEFAULT_PREFS) out[k3] = DEFAULT_PREFS[k3];
+        for (var k in DEFAULT_PREFS) out[k] = DEFAULT_PREFS[k];
         return out;
     }
 
@@ -328,7 +319,7 @@
 
         // Sons synthétisés
         if (synth[eventName]) {
-            try { synth[eventName](); } catch (e) { /* ignore */ }
+            try { synth[eventName](); } catch (e) { console.error('SoundManager synth error:', eventName, e); }
             return;
         }
 
@@ -809,5 +800,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé');
+    console.log('🔊 SoundManager initialisé (v3)', 'enabled:', prefs.enabled, 'master:', prefs.masterVolume, 'ui:', prefs.uiVolume);
 })();
