@@ -284,10 +284,7 @@
                 }, 500);
             }
 
-            // Son au clic
-            submitBtn.addEventListener('click', function() {
-                if (window.SoundManager) SoundManager.play('buttonClick');
-            });
+            // (Son de clic géré automatiquement par SoundManager auto-click)
 
             // Auto-focus sur le premier champ
             document.getElementById('email').focus();

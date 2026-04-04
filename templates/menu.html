@@ -4602,77 +4602,15 @@ function sendMalus(reason, points){
                     }
 
                     // ===== SYSTÈME AUDIO =====
-                    let audioEnabled = false;
-                    let audioInitialized = false;
-                    
-                    // Son unique pour toutes les pièces (son du salon)
-                    function playRoomClickSound() {
-                        try {
-                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                            const oscillator = audioContext.createOscillator();
-                            const gainNode = audioContext.createGain();
-                            
-                            oscillator.connect(gainNode);
-                            gainNode.connect(audioContext.destination);
-                            
-                            oscillator.type = 'sine'; // Son doux
-                            
-                            // Effet de montée rapide
-                            const startFreq = 523.25 * 0.8; // Do - 523.25 Hz
-                            oscillator.frequency.setValueAtTime(startFreq, audioContext.currentTime);
-                            oscillator.frequency.exponentialRampToValueAtTime(
-                                523.25, 
-                                audioContext.currentTime + 0.045 // 0.15 * 0.3
-                            );
-                            
-                            // Volume avec fade out
-                            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(
-                                0.001, 
-                                audioContext.currentTime + 0.15
-                            );
-                            
-                            oscillator.start();
-                            oscillator.stop(audioContext.currentTime + 0.15);
-                            
-                            console.log('🎵 Son clic pièce: 523Hz (Do, sine)');
-                            return true;
-                        } catch (e) {
-                            console.error('Erreur audio:', e);
-                            return false;
-                        }
-                    }
-
-                    // Son de progression (points gagnés)
-                    function playProgressSound(points = 50) {
-                        console.log('Son progression..., points:', points);
-                        const freq = 400 + (points * 3); // Plus aigu avec plus de points
-                        try {
-                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                            const oscillator = audioContext.createOscillator();
-                            const gainNode = audioContext.createGain();
-                            
-                            oscillator.connect(gainNode);
-                            gainNode.connect(audioContext.destination);
-                            oscillator.type = 'triangle';
-                            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-                            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.25);
-                            
-                            oscillator.start();
-                            oscillator.stop(audioContext.currentTime + 0.25);
-                            return true;
-                        } catch (e) {
-                            return false;
-                        }
-                    }
+                    // (Sons gérés par SoundManager centralisé — voir soundManager.js)
+                    // Les aliases globaux playRoomClickSound() et playProgressSound()
+                    // sont définis dans soundManager.js, ne pas les redéfinir ici.
 
                     // Test audio simple
                     function testAudioSimple() {
                         console.log('🎵 Test audio simple...');
-                        const result = playRoomClickSound();
-                        audioEnabled = result;
-                        return result;
+                        if (window.SoundManager) { SoundManager.play('selectRoom'); return true; }
+                        return false;
                     }
 
                     // Animation de la barre avec son
@@ -4688,7 +4626,7 @@ function sendMalus(reason, points){
                             // Son selon la hauteur de la barre avec délai progressif
                             if (heightPercent > 0) {
                                 setTimeout(() => {
-                                    playProgressSound(heightPercent);
+                                    if (window.SoundManager) SoundManager.play('gainPoints');
                                     // Animation visuelle en plus
                                     fill.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.8)';
                                     setTimeout(() => {
@@ -6352,10 +6290,7 @@ function refreshAllBadges() {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
-                                //  Son de clic immédiat
-                                if (window.DustSounds && window.DustSounds.click) {
-                                    window.DustSounds.click();
-                                }
+                                // (selectRoom joué en phase capture par SoundManager)
                                 
                                 // Récupérer les infos de la carte
                                 const targetUrl = card.getAttribute('href');

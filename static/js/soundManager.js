@@ -111,7 +111,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.15 * v, ctx.currentTime);
+            gain.gain.setValueAtTime(0.35 * v, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.1);
@@ -127,7 +127,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(523, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.12);
-            gain.gain.setValueAtTime(0.12 * v, ctx.currentTime);
+            gain.gain.setValueAtTime(0.30 * v, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.15);
@@ -317,9 +317,20 @@
             return;
         }
 
-        // Sons synthétisés
+        // Sons synthétisés – attendre que l'AudioContext soit actif
         if (synth[eventName]) {
-            try { synth[eventName](); } catch (e) { console.error('SoundManager synth error:', eventName, e); }
+            var ctx = getCtx();
+            if (!ctx) return;
+            var fn = function () {
+                try { synth[eventName](); } catch (e) { console.error('SoundManager synth error:', eventName, e); }
+            };
+            if (ctx.state === 'running') {
+                fn();
+            } else {
+                ctx.resume().then(fn).catch(function (e) {
+                    console.error('SoundManager resume error:', e);
+                });
+            }
             return;
         }
 
@@ -800,5 +811,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé (v3)', 'enabled:', prefs.enabled, 'master:', prefs.masterVolume, 'ui:', prefs.uiVolume);
+    console.log('🔊 SoundManager initialisé (v5)', 'enabled:', prefs.enabled, 'master:', prefs.masterVolume, 'ui:', prefs.uiVolume);
 })();

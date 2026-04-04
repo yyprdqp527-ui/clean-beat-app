@@ -1420,7 +1420,7 @@ function sendBonus(reason, points){
             closeBonus();
             if(data.success){
                 SoundManager.play('bonusDing');
-                showPointsAnimation(points);
+                showPointsAnimation(points, true);
                 // Animation célébration sur l'avatar cible
                 var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
                 if (playerDiv) {
@@ -1451,7 +1451,7 @@ function sendMalus(reason, points){
             closeMalus();
             if(data.success){
                 SoundManager.play('malusImpact');
-                showPointsAnimation(points);
+                showPointsAnimation(points, true);
                 // Animation pénalité sur l'avatar cible
                 var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
                 if (playerDiv) {
@@ -1650,7 +1650,7 @@ function openSuspicionPicker() {
 }
 
 // ====== ANIMATION DES POINTS ======
-function showPointsAnimation(points) {
+function showPointsAnimation(points, silent) {
     const pointsDiv = document.createElement('div');
     pointsDiv.className = 'points-animation';
     pointsDiv.textContent = (points > 0 ? '+' : '') + points + ' points!';
@@ -1661,11 +1661,13 @@ function showPointsAnimation(points) {
     }
     document.body.appendChild(pointsDiv);
     
-    // Jouer le son adapté bonus/malus
-    if (points >= 0) {
-        SoundManager.play('gainPoints');
-    } else {
-        SoundManager.play('losePoints');
+    // Jouer le son adapté bonus/malus (sauf si l'appelant joue déjà son propre son)
+    if (!silent) {
+        if (points >= 0) {
+            SoundManager.play('gainPoints');
+        } else {
+            SoundManager.play('losePoints');
+        }
     }
     
     setTimeout(() => {
@@ -1997,7 +1999,7 @@ function validateProof() {
     .then(data => {
         if (data.success) {
             SoundManager.play('losePoints');
-            showPointsAnimation(-10);
+            showPointsAnimation(-10, true);
             alert(data.message);
             closeValidateProof();
             loadMySuspicions();
