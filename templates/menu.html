@@ -896,19 +896,19 @@
         }
         /* Flammes qui s'envolent autour de l'avatar malus */
         .malus-flame {
-            position: absolute;
-            font-size: 28px;
+            position: fixed;
+            font-size: 36px;
             pointer-events: none;
-            z-index: 9998;
-            animation: flame-rise 1.8s ease-out forwards;
-            filter: drop-shadow(0 0 6px rgba(255, 80, 0, 0.8));
+            z-index: 99999;
+            animation: flame-rise 2s ease-out forwards;
+            filter: drop-shadow(0 0 8px rgba(255, 80, 0, 0.9));
         }
         @keyframes flame-rise {
-            0% { opacity: 0; transform: scale(0.3) translateY(0) rotate(0deg); }
-            15% { opacity: 1; transform: scale(1.3) translateY(-10px) rotate(-15deg); }
-            40% { opacity: 1; transform: scale(1.1) translateY(-30px) rotate(10deg); }
-            70% { opacity: 0.7; transform: scale(0.9) translateY(-55px) rotate(-8deg); }
-            100% { opacity: 0; transform: scale(0.4) translateY(-80px) rotate(15deg); }
+            0% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+            20% { opacity: 1; transform: scale(1.5) translateY(-20px) rotate(-15deg); }
+            50% { opacity: 1; transform: scale(1.3) translateY(-50px) rotate(10deg); }
+            80% { opacity: 0.6; transform: scale(1) translateY(-90px) rotate(-8deg); }
+            100% { opacity: 0; transform: scale(0.5) translateY(-130px) rotate(15deg); }
         }
         /* Confetti sombres pour malus */
         .malus-spark {
@@ -4137,11 +4137,12 @@ function openTaskBonus(email, name, taskName){
 }
 function sendMalus(reason, points){
     if(!_malusEmail) return;
+    var savedEmail = _malusEmail;
     var targetName = document.getElementById('malusTargetName').textContent;
     fetch('/api/send_malus',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({target_email:_malusEmail, reason:reason, points:points})
+        body: JSON.stringify({target_email:savedEmail, reason:reason, points:points})
     }).then(function(r){return r.json();}).then(function(data){
         closeMalus();
         if(data.success){
@@ -4156,7 +4157,7 @@ function sendMalus(reason, points){
             }
             // Redirection vers menu avec params pour déclencher l'animation flammes 🔥
             setTimeout(function(){
-                window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(_malusEmail) + '&whon=' + encodeURIComponent(targetName);
+                window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(savedEmail) + '&whon=' + encodeURIComponent(targetName);
             }, 2000);
         } else {
             alert(data.error || 'Erreur');
@@ -4577,18 +4578,22 @@ function sendMalus(reason, points){
                                         popup.textContent = ptsNum + ' pts';
                                         targetWrapper.appendChild(popup);
                                         setTimeout(function() { popup.remove(); }, 4000);
-                                        // 🔥 Flammes
+                                        // 🔥 Flammes (position:fixed par rapport à l'écran)
+                                        var wrapRect = targetWrapper.getBoundingClientRect();
+                                        var cx = wrapRect.left + wrapRect.width / 2;
+                                        var cy = wrapRect.top + wrapRect.height / 2;
+                                        console.log('🔥 Flammes: centre avatar =', cx, cy, 'taille wrapper =', wrapRect.width, wrapRect.height);
                                         var flameEmojis = ['🔥', '💥', '☠️', '🔥', '💀', '🔥', '⚡', '🔥'];
-                                        for (var fi = 0; fi < 8; fi++) {
+                                        for (var fi = 0; fi < 10; fi++) {
                                             var fl = document.createElement('div');
                                             fl.className = 'malus-flame';
-                                            fl.textContent = flameEmojis[Math.floor(Math.random() * flameEmojis.length)];
-                                            fl.style.left = (50 + (Math.random() - 0.5) * 120) + '%';
-                                            fl.style.top = (50 + (Math.random() - 0.5) * 80) + '%';
-                                            fl.style.animationDelay = (Math.random() * 0.6) + 's';
-                                            fl.style.fontSize = (22 + Math.random() * 14) + 'px';
-                                            targetWrapper.appendChild(fl);
-                                            (function(el) { setTimeout(function() { el.remove(); }, 2500); })(fl);
+                                            fl.textContent = flameEmojis[fi % flameEmojis.length];
+                                            fl.style.left = (cx + (Math.random() - 0.5) * 100) + 'px';
+                                            fl.style.top = (cy + (Math.random() - 0.5) * 80) + 'px';
+                                            fl.style.animationDelay = (fi * 0.12) + 's';
+                                            fl.style.fontSize = (30 + Math.random() * 16) + 'px';
+                                            document.body.appendChild(fl);
+                                            (function(el) { setTimeout(function() { el.remove(); }, 3000); })(fl);
                                         }
                                         setTimeout(function() { avatar.classList.remove('avatar-penalized'); }, 5000);
                                     } else {
@@ -4773,34 +4778,40 @@ function sendMalus(reason, points){
                                         avatarWrapper.appendChild(popup);
                                         setTimeout(() => popup.remove(), 4000);
                                         
-                                        // 🔥 Flammes qui s'envolent autour de l'avatar
+                                        // 🔥 Flammes qui s'envolent autour de l'avatar (position:fixed)
+                                        const wRect = avatarWrapper.getBoundingClientRect();
+                                        const fcx = wRect.left + wRect.width / 2;
+                                        const fcy = wRect.top + wRect.height / 2;
+                                        console.log('🔥 Flammes B: centre =', fcx, fcy);
                                         const flames = ['🔥', '💥', '☠️', '🔥', '💀', '🔥', '⚡', '🔥'];
                                         for (let i = 0; i < 10; i++) {
                                             const flame = document.createElement('div');
                                             flame.className = 'malus-flame';
-                                            flame.textContent = flames[Math.floor(Math.random() * flames.length)];
-                                            flame.style.left = (50 + (Math.random() - 0.5) * 120) + '%';
-                                            flame.style.top = (50 + (Math.random() - 0.5) * 80) + '%';
-                                            flame.style.animationDelay = (Math.random() * 0.6) + 's';
-                                            flame.style.fontSize = (22 + Math.random() * 14) + 'px';
-                                            avatarWrapper.appendChild(flame);
-                                            setTimeout(() => flame.remove(), 2500);
+                                            flame.textContent = flames[i % flames.length];
+                                            flame.style.left = (fcx + (Math.random() - 0.5) * 100) + 'px';
+                                            flame.style.top = (fcy + (Math.random() - 0.5) * 80) + 'px';
+                                            flame.style.animationDelay = (i * 0.12) + 's';
+                                            flame.style.fontSize = (30 + Math.random() * 16) + 'px';
+                                            document.body.appendChild(flame);
+                                            setTimeout(() => flame.remove(), 3000);
                                         }
                                         
-                                        // ✨ Étincelles rouges/oranges
+                                        // ✨ Étincelles rouges/oranges (position:fixed)
                                         const sparkColors = ['#DC3C3C', '#FF6B35', '#FF4500', '#8B0000', '#FF8C00'];
                                         for (let i = 0; i < 12; i++) {
                                             const spark = document.createElement('div');
                                             spark.className = 'malus-spark';
+                                            spark.style.position = 'fixed';
+                                            spark.style.zIndex = '99999';
                                             spark.style.background = sparkColors[Math.floor(Math.random() * sparkColors.length)];
-                                            spark.style.left = '50%';
-                                            spark.style.top = '50%';
+                                            spark.style.left = fcx + 'px';
+                                            spark.style.top = fcy + 'px';
                                             const angle = (Math.PI * 2 * i) / 12;
-                                            const dist = 40 + Math.random() * 40;
+                                            const dist = 50 + Math.random() * 50;
                                             spark.style.setProperty('--sx', Math.cos(angle) * dist + 'px');
                                             spark.style.setProperty('--sy', Math.sin(angle) * dist + 'px');
                                             spark.style.animationDelay = (Math.random() * 0.3) + 's';
-                                            avatarWrapper.appendChild(spark);
+                                            document.body.appendChild(spark);
                                             setTimeout(() => spark.remove(), 1800);
                                         }
                                         
