@@ -5878,14 +5878,8 @@ function refreshAllBadges() {
                                 console.log('Mise à jour badge avec count:', counts.unread_received);
                                 updateUnreadBadge(counts.unread_received);
                             }
-                            // Fusionner unread_by_sender + unread_sent_to pour les pastilles avatars
-                            const merged = Object.assign({}, counts.unread_by_sender || {});
-                            if (counts.unread_sent_to) {
-                                Object.keys(counts.unread_sent_to).forEach(function(email) {
-                                    merged[email] = Math.max(merged[email] || 0, counts.unread_sent_to[email]);
-                                });
-                            }
-                            updateUnreadBySender(merged);
+                            // Pastilles avatars (deprecated unread_by_sender/sent_to → toujours vides)
+                            updateUnreadBySender({});
                             //  Mettre à jour aussi les badges des enfants
                             if (counts.children_unread) {
                                 updateChildrenBadges(counts.children_unread);

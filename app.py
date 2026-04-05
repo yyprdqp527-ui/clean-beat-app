@@ -3892,7 +3892,7 @@ def send_push_notification(subscription, notification_data):
         except Exception:
             pass
         print(f"❌ WebPush erreur (status={status_code}): {e}", flush=True)
-        if status_code in (404, 410):
+        if status_code in (404, 410, 401, 403):
             deactivate_push_subscription(subscription.get('endpoint'))
         return False
     except ImportError:
@@ -13645,8 +13645,6 @@ def api_unread_counts():
         
         # Récupérer les compteurs
         unread_received = get_unread_message_count(session['user'], house_id)
-        unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
-        unread_sent_to = get_unread_messages_sent_to(session['user'], house_id)
         children_unread = get_children_unread_counts(house_id)
         unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', include_own=True)
         unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
@@ -13664,8 +13662,8 @@ def api_unread_counts():
         
         resp = jsonify({
             'unread_received': unread_received,
-            'unread_by_sender': unread_by_sender,
-            'unread_sent_to': unread_sent_to,
+            'unread_by_sender': {},
+            'unread_sent_to': {},
             'children_unread': children_unread,
             'unread_baby': unread_baby,
             'unread_task_added': unread_task_added,
