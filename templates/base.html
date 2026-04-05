@@ -1149,15 +1149,17 @@ window.showGlassPopup = function(message, category = 'info', duration = 3000) {
 
 <!-- 🔊 Howler.js + SoundManager centralisé -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
-<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=7"></script>
+<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1000"></script>
 
 <!-- 📱 Service Worker pour PWA (mode app native) -->
 <script>
-// Forcer le renouvellement du cache une seule fois (v7)
+// Forcer le renouvellement du cache (v1000)
 (function() {
-    var PURGE_KEY = 'cb_cache_purged_v7';
+    var PURGE_KEY = 'cb_cache_purged_v1000';
     if (!localStorage.getItem(PURGE_KEY)) {
         localStorage.setItem(PURGE_KEY, '1');
+        // Purger aussi les préférences son pour garantir enabled=true
+        try { localStorage.removeItem('cleanbeat_sound_prefs'); } catch(e) {}
         if ('caches' in window) {
             caches.keys().then(function(names) {
                 names.forEach(function(name) { caches.delete(name); });

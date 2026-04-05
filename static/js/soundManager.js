@@ -55,11 +55,18 @@
 
     // ─── Préférences (localStorage) ────────────────────────────
     function loadPrefs() {
-        // Purger l'ancien état potentiellement corrompu (volumes à 0, enabled false)
-        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
-        // Toujours utiliser les réglages par défaut
+        try {
+            var s = localStorage.getItem(STORAGE_KEY);
+            if (s) {
+                var p = JSON.parse(s);
+                var merged = {};
+                for (var k in DEFAULT_PREFS) merged[k] = DEFAULT_PREFS[k];
+                for (var k2 in p) if (k2 in DEFAULT_PREFS) merged[k2] = p[k2];
+                return merged;
+            }
+        } catch (e) { /* ignore */ }
         var out = {};
-        for (var k in DEFAULT_PREFS) out[k] = DEFAULT_PREFS[k];
+        for (var k3 in DEFAULT_PREFS) out[k3] = DEFAULT_PREFS[k3];
         return out;
     }
 
@@ -111,7 +118,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.35 * v, ctx.currentTime);
+            gain.gain.setValueAtTime(0.15 * v, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.1);
@@ -127,7 +134,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(523, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.12);
-            gain.gain.setValueAtTime(0.30 * v, ctx.currentTime);
+            gain.gain.setValueAtTime(0.12 * v, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.15);
@@ -317,9 +324,19 @@
             return;
         }
 
-        // Sons synthétisés (chaque synth appelle getCtx() qui resume si besoin)
+        // Sons synthétisés
         if (synth[eventName]) {
-            try { synth[eventName](); } catch (e) { /* ignore */ }
+            var ctx = getCtx();
+            if (ctx && ctx.state === 'running') {
+                // Contexte déjà actif : jouer immédiatement
+                try { synth[eventName](); } catch (e) { /* ignore */ }
+            } else if (ctx) {
+                // iOS Safari : le contexte est encore suspendu
+                // resume() pendant un geste utilisateur le débloque
+                ctx.resume().then(function () {
+                    try { synth[eventName](); } catch (e) { /* ignore */ }
+                });
+            }
             return;
         }
 
@@ -567,6 +584,13 @@
         var roomEl = e.target.closest('.room-group, [data-room], svg a, .room-card');
         if (roomEl) {
             play('selectRoom');
+            // Si c'est un lien <a>, retarder la navigation
+            var link = roomEl.closest('a[href]');
+            if (link && link.href && !link.href.startsWith('javascript')) {
+                e.preventDefault();
+                var href = link.href;
+                setTimeout(function () { window.location.href = href; }, 180);
+            }
             return;
         }
 
@@ -631,8 +655,6 @@
             '.sm-ambient-btns button.active{background:rgba(89,113,118,.25);border-color:#597176;color:#153036}'
         ].join('\n');
         document.head.appendChild(css);
-
-        // Bouton flottant supprimé (panneau accessible via SoundManager.openPanel())
 
         // Overlay + panneau
         var overlay = document.createElement('div');
@@ -729,7 +751,7 @@
             b.classList.toggle('active', b.dataset.amb === p.currentAmbient);
         });
 
-        // Bouton flottant icône
+
     }
 
     function openPanel() {
@@ -753,7 +775,7 @@
     // ─── Initialisation ────────────────────────────────────────
     initHowlSounds();
 
-    // Injecter le bouton flottant après le chargement DOM
+    // Injecter le panneau (sans bouton flottant) après le chargement DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { injectPanel(); });
     } else {
@@ -800,5 +822,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé (v7)', 'enabled:', prefs.enabled, 'master:', prefs.masterVolume, 'ui:', prefs.uiVolume);
+    console.log('🔊 SoundManager initialisé (v1000)');
 })();
