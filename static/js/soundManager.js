@@ -584,7 +584,9 @@
         var roomEl = e.target.closest('.room-group, [data-room], svg a, .room-card');
         if (roomEl) {
             play('selectRoom');
-            // Si c'est un lien <a>, retarder la navigation
+            // Si c'est un .room-card, menu.html gère l'animation + navigation
+            if (roomEl.closest('.room-card')) return;
+            // Sinon (SVG rooms etc.), retarder la navigation pour le son
             var link = roomEl.closest('a[href]');
             if (link && link.href && !link.href.startsWith('javascript')) {
                 e.preventDefault();
@@ -822,5 +824,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé (v1000)');
+    console.log('🔊 SoundManager initialisé (v1001)');
 })();
