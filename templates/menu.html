@@ -4578,7 +4578,7 @@ function sendMalus(reason, points){
                                         // === ANIMATION PERTE DE POINTS (FLAMMES) ===
                                         console.log('�🔥🔥 NOUVELLE ANIM MALUS v1003 - flammes activées pour:', who || 'current');
                                         avatar.classList.add('avatar-penalized');
-                                        SoundManager.play('malusImpact');
+                                        if (window.SoundManager) SoundManager.play('malusImpact');
                                         // Popup points perdus
                                         var popup = document.createElement('div');
                                         popup.className = 'points-popup-penalty';
@@ -4608,7 +4608,7 @@ function sendMalus(reason, points){
                                         console.log('✨ Animation sur:', who || 'current');
                                         avatar.style.animation = 'winnerPulse 0.6s ease-in-out';
                                         createWinnerEffects(avatar);
-                                        SoundManager.play('gainPoints');
+                                        if (window.SoundManager) SoundManager.play('gainPoints');
                                     }
                                 }
                             }, 300);
@@ -4776,7 +4776,7 @@ function sendMalus(reason, points){
                                         // === ANIMATION PERTE DE POINTS (FLAMMES + ÉTINCELLES) ===
                                         console.log('�🔥🔥 NOUVELLE ANIM MALUS v1003 - flammes+sparks pour:', who || 'current');
                                         avatarSquare.classList.add('avatar-penalized');
-                                        SoundManager.play('malusImpact');
+                                        if (window.SoundManager) SoundManager.play('malusImpact');
                                         
                                         // Popup points perdus
                                         const popup = document.createElement('div');
@@ -4856,7 +4856,7 @@ function sendMalus(reason, points){
                                         }
                                         
                                         // Jouer le son de succès (même son que gains/courses)
-                                        SoundManager.play('gainPoints');
+                                        if (window.SoundManager) SoundManager.play('gainPoints');
                                         
                                         // Supprimer les effets après l'animation
                                         setTimeout(() => {
@@ -5945,7 +5945,7 @@ function sendMalus(reason, points){
                                 
                                 //  SON EN PREMIER
                                 console.log('Lecture du son de réception...');
-                                SoundManager.play('receiveMessage');
+                                if (window.SoundManager) SoundManager.play('receiveMessage');
                                 
                                 // Badge messages + badge PWA global
                                 console.log('Mise à jour de mon badge...');
@@ -5970,7 +5970,7 @@ function sendMalus(reason, points){
                                 
                                 //  SON
                                 console.log('Lecture du son de réception (message enfant)...');
-                                SoundManager.play('receiveMessage');
+                                if (window.SoundManager) SoundManager.play('receiveMessage');
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
@@ -6420,7 +6420,7 @@ function refreshAllBadges() {
                                     container.classList.add('animating');
                                     
                                     // 🎵 Son harmonieux pendant l'animation de zoom
-                                    SoundManager.play('roomFullscreen');
+                                    if (window.SoundManager) SoundManager.play('roomFullscreen');
                                 }, 50);
                                 
                                 //  Timing optimisé pour rapidité et fluidité :
