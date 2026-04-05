@@ -44,8 +44,10 @@ def now_paris():
     return datetime.now()
 
 def to_paris(dt_or_str):
-    """Convertit un datetime ou une chaîne ISO (stocké en UTC sur Render) en heure Paris.
-    Retourne un datetime naive en heure locale Paris."""
+    """Convertit un datetime ou une chaîne ISO en heure Paris.
+    Depuis le fix timezone, PostgreSQL stocke déjà en heure Paris
+    (SET timezone = 'Europe/Paris'), donc les naïves sont déjà correctes.
+    Seuls les datetime aware (avec +00:00 / Z) sont convertis."""
     if dt_or_str is None:
         return None
     try:
@@ -54,12 +56,11 @@ def to_paris(dt_or_str):
             dt = datetime.fromisoformat(dt_or_str)
         else:
             dt = dt_or_str
-        # Si le datetime est naive, on le considère UTC (cas Render/PostgreSQL)
-        if dt.tzinfo is None and PARIS_TZ and _USE_PG:
-            dt = dt.replace(tzinfo=timezone.utc)
+        # Si le datetime est aware (ex: chaîne avec +00:00), convertir en Paris
         if dt.tzinfo is not None and PARIS_TZ:
             dt = dt.astimezone(PARIS_TZ)
             return dt.replace(tzinfo=None)
+        # Naive → déjà en heure Paris (PostgreSQL timezone=Europe/Paris ou SQLite local)
         return dt
     except Exception:
         return dt_or_str
@@ -1597,7 +1598,8 @@ def get_db_connection(timeout=30.0):
         # Connexion directe PostgreSQL (compatible gevent/eventlet)
         for attempt in range(3):
             try:
-                conn = psycopg2.connect(_PG_URL, connect_timeout=10)
+                conn = psycopg2.connect(_PG_URL, connect_timeout=10,
+                                        options="-c timezone=Europe/Paris")
                 conn.autocommit = False
                 return _CompatConn(conn, is_pg=True)
             except Exception as e:
