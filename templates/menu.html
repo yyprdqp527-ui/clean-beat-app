@@ -23,6 +23,21 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement -->
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <!-- 🔊 Howler.js + SoundManager centralisé -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1003"></script>
+    <!-- 🔓 Déverrouillage audio mobile (iOS/Android) au premier toucher -->
+    <script>
+    (function(){
+        function unlockAudio(){
+            if(window.SoundManager) SoundManager.unlock();
+            document.removeEventListener('touchstart', unlockAudio, true);
+            document.removeEventListener('click', unlockAudio, true);
+        }
+        document.addEventListener('touchstart', unlockAudio, true);
+        document.addEventListener('click', unlockAudio, true);
+    })();
+    </script>
     <!-- Service Worker : cache des images en local pour chargement instantané -->
     <script>
     if ('serviceWorker' in navigator) {
@@ -5994,7 +6009,8 @@ function refreshAllBadges() {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
-                                // (selectRoom joué en phase capture par SoundManager)
+                                // 🎵 Son au clic sur l'image isométrique
+                                if (window.SoundManager) SoundManager.play('selectRoom');
                                 
                                 // Récupérer les infos de la carte
                                 const targetUrl = card.getAttribute('href');
