@@ -4154,7 +4154,10 @@ function sendMalus(reason, points){
                 document.body.appendChild(t);
                 setTimeout(function(){t.remove();},2500);
             }
-            setTimeout(function(){ window.location.reload(); }, 2000);
+            // Redirection vers menu avec params pour déclencher l'animation flammes 🔥
+            setTimeout(function(){
+                window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(_malusEmail) + '&whon=' + encodeURIComponent(targetName);
+            }, 2000);
         } else {
             alert(data.error || 'Erreur');
         }
