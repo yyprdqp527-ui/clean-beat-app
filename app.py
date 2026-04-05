@@ -7153,12 +7153,11 @@ def rewards():
     c.execute("SELECT code FROM houses WHERE id=?", (house_id,))
     house_code = c.fetchone()[0]
     
-    # Vérifier si c'est dimanche après 6h du matin
+    # Vérifier si c'est dimanche (gagnant désigné samedi à minuit = dimanche 00:00)
     from datetime import datetime, timedelta
     now = now_paris()
     is_sunday = now.weekday() == 6  # 6 = dimanche
-    is_after_6am = now.hour >= 6
-    can_open = is_sunday and is_after_6am
+    can_open = is_sunday
     
     # Déterminer le gagnant de la semaine (celui avec le plus de points cette semaine)
     today = now_paris()
@@ -8038,12 +8037,11 @@ def gifts():
     # Récupérer tous les joueurs
     players = get_house_players_points(house_id)
     
-    # Vérifier si c'est dimanche après 6h du matin
+    # Vérifier si c'est dimanche (accessible dès samedi minuit = dimanche 00:00)
     from datetime import datetime
     now = now_paris()
     is_sunday = now.weekday() == 6  # 6 = dimanche
-    is_morning_unlock = now.hour >= 6
-    can_open_gifts = is_sunday and is_morning_unlock
+    can_open_gifts = is_sunday
     
     # Liste des cadeaux prédéfinis
     default_gifts = [
@@ -8084,15 +8082,14 @@ def reveal_gift(gift_id):
     if 'user' not in session:
         return redirect(url_for('signup_email'))
     
-    # Vérifier si c'est dimanche après 6h du matin
+    # Vérifier si c'est dimanche (accessible dès samedi minuit = dimanche 00:00)
     from datetime import datetime
     now = now_paris()
     is_sunday = now.weekday() == 6
-    is_morning_unlock = now.hour >= 6
-    can_open_gifts = is_sunday and is_morning_unlock
+    can_open_gifts = is_sunday
     
     if not can_open_gifts:
-        flash("🚫 Les cadeaux ne peuvent être ouverts que le dimanche à partir de 6h du matin ! ⏰", "warning")
+        flash("🚫 Les cadeaux ne sont disponibles que le dimanche ! 🎁", "warning")
         return redirect(url_for('gifts'))
     
     conn = get_db_connection()
