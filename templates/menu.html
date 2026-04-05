@@ -508,6 +508,15 @@
             0%, 100% { transform: translateX(-50%) translateY(0) rotate(-5deg); }
             50% { transform: translateX(-50%) translateY(-4px) rotate(5deg); }
         }
+        /* ✨ Halo + pulse leader du jour */
+        .avatar-square-wrapper.daily-leader .avatar-square {
+            box-shadow: 0 0 18px 6px rgba(253,174,84,0.6), 0 0 40px 12px rgba(255,215,0,0.3);
+            animation: dailyLeaderPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes dailyLeaderPulse {
+            0%, 100% { box-shadow: 0 0 18px 6px rgba(253,174,84,0.6), 0 0 40px 12px rgba(255,215,0,0.3); }
+            50% { box-shadow: 0 0 28px 10px rgba(253,174,84,0.85), 0 0 55px 18px rgba(255,215,0,0.5); }
+        }
         /* ── Barres individuelles avatars désactivées : remplacées par la barre semaine commune ── */
         .vbar, .vbar-horizontal { display: none !important; visibility: hidden !important; }
         .vbar { 
@@ -3021,7 +3030,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                    <div class="avatar-square-wrapper" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='/profil'">
+                                    <div class="avatar-square-wrapper{% if daily_leader_email|default('') == current_user_name and not (has_weekly_winner|default(false) and winner_email|default('') == current_user_name) %} daily-leader{% endif %}" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='/profil'">
                                         {% if has_weekly_winner|default(false) and winner_email|default('') == current_user_name %}
                                         <span class="winner-crown">👑</span>
                                         {% endif %}
@@ -3072,7 +3081,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="avatar-name" style="font-weight:700;">{{ p2.name }}</div>
                                 <div class="avatar-row" style="gap:8px; align-items:center;">
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                        <div class="avatar-square-wrapper" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p2.email }}'">
+                                        <div class="avatar-square-wrapper{% if daily_leader_email|default('') == p2.email and not (has_weekly_winner|default(false) and winner_email|default('') == p2.email) %} daily-leader{% endif %}" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p2.email }}'">
                                             {% if has_weekly_winner|default(false) and winner_email|default('') == p2.email %}
                                             <span class="winner-crown">👑</span>
                                             {% endif %}
@@ -3122,7 +3131,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="avatar-name" style="font-weight:700;">{{ p.name }}</div>
                                     <div class="avatar-row" style="gap:6px; flex-shrink:0; align-items:center;">
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                            <div class="avatar-square-wrapper" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p.email }}'">
+                                            <div class="avatar-square-wrapper{% if daily_leader_email|default('') == p.email and not (has_weekly_winner|default(false) and winner_email|default('') == p.email) %} daily-leader{% endif %}" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p.email }}'">
                                                 {% if has_weekly_winner|default(false) and winner_email|default('') == p.email %}
                                                 <span class="winner-crown">👑</span>
                                                 {% endif %}
@@ -3678,7 +3687,7 @@ body { padding-bottom: 84px !important; }
             <div class="cw-avatar-emoji">👤</div>
         {% endif %}
         <div class="cw-info">
-            <div class="cw-name">{{ p.name }}{% if has_weekly_winner|default(false) and winner_email|default('') == p.email %} 👑{% endif %}</div>
+            <div class="cw-name">{{ p.name }}{% if has_weekly_winner|default(false) and winner_email|default('') == p.email %} 👑{% elif daily_leader_email|default('') == p.email %} ✨{% endif %}</div>
             <div class="cw-bar-wrap">
                 <div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else "" }}" style="width:0%;"></div>
             </div>

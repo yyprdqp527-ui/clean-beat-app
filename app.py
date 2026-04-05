@@ -9773,20 +9773,29 @@ def menu():
     if request.args.get('preview_onboarding') == '1':
         show_onboarding = True
 
-    # 👑 Déterminer le gagnant de la semaine (couronne visible tous les jours)
+    # 👑 Déterminer le leader du jour (halo+pulse) et le gagnant hebdomadaire (couronne dimanche)
     _now = now_paris()
     _is_sunday = (_now.weekday() == 6)
     # ⚙️ DEV: forcer dimanche via ?preview_sunday=1 (pour accès cadeaux)
     if request.args.get('preview_sunday') == '1':
         _is_sunday = True
+
+    # Leader du jour = celui avec le plus de daily_points
+    _daily_leader_email = ''
+    if players:
+        _sorted_daily = sorted(players, key=lambda x: x.get('daily_points', 0), reverse=True)
+        if _sorted_daily and _sorted_daily[0].get('daily_points', 0) > 0:
+            _daily_leader_email = _sorted_daily[0].get('email', '')
+
+    # Gagnant de la semaine = celui avec le plus de weekly_points (couronne dimanche uniquement)
     _winner_name = ''
     _winner_email = ''
     _has_weekly_winner = False
-    if players:
-        _sorted = sorted(players, key=lambda x: x.get('daily_points', 0), reverse=True)
-        if _sorted and _sorted[0].get('daily_points', 0) > 0:
-            _winner_name = _sorted[0].get('name', '')
-            _winner_email = _sorted[0].get('email', '')
+    if _is_sunday and players:
+        _sorted_weekly = sorted(players, key=lambda x: x.get('weekly_points', 0), reverse=True)
+        if _sorted_weekly and _sorted_weekly[0].get('weekly_points', 0) > 0:
+            _winner_name = _sorted_weekly[0].get('name', '')
+            _winner_email = _sorted_weekly[0].get('email', '')
             _has_weekly_winner = True
 
     resp = make_response(render_template(
@@ -9824,6 +9833,7 @@ def menu():
         has_weekly_winner=_has_weekly_winner,
         winner_name=_winner_name,
         winner_email=_winner_email,
+        daily_leader_email=_daily_leader_email,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
