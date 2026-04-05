@@ -4550,22 +4550,29 @@ function sendMalus(reason, points){
                         var who = params.get('who');
                         var whon = params.get('whon');
                         
+                        console.log('🎯 HANDLER-A: pts=' + pts + ' ts=' + ts + ' who=' + who + ' whon=' + whon + ' URL=' + window.location.search);
+                        
                         if (pts && ts) {
                             var ptsNum = parseInt(pts);
+                            console.log('🎯 HANDLER-A: ptsNum=' + ptsNum + ' (négatif=' + (ptsNum < 0) + ')');
                             setTimeout(function() {
                                 // Cibler l'avatar du bénéficiaire si fourni, sinon le joueur courant
                                 var targetWrapper = null;
                                 if (who) {
                                     targetWrapper = document.querySelector('.avatar-square-wrapper[data-player-email="' + who + '"]');
+                                    console.log('🎯 HANDLER-A: cherche wrapper par email "' + who + '" → trouvé=' + !!targetWrapper);
                                 }
                                 if (!targetWrapper && whon) {
                                     targetWrapper = document.querySelector('.avatar-square-wrapper[title="' + whon + '"]');
+                                    console.log('🎯 HANDLER-A: cherche wrapper par title "' + whon + '" → trouvé=' + !!targetWrapper);
                                 }
                                 if (!targetWrapper) {
-                                    console.log('Aucun wrapper pour', who, '-> fallback joueur courant');
+                                    console.log('🎯 HANDLER-A: fallback → current-player-avatar-wrapper');
                                     targetWrapper = document.getElementById('current-player-avatar-wrapper');
                                 }
+                                console.log('🎯 HANDLER-A: targetWrapper=' + (targetWrapper ? targetWrapper.id || targetWrapper.className : 'NULL'));
                                 var avatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
+                                console.log('🎯 HANDLER-A: avatar=' + (avatar ? 'TROUVÉ' : 'NULL'));
                                 if (avatar) {
                                     if (ptsNum < 0) {
                                         // === ANIMATION PERTE DE POINTS (FLAMMES) ===
