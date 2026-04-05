@@ -240,60 +240,48 @@
             });
         },
 
-        /* Malus envoyé — impact dramatique descendant avec grondement (1200 ms) */
+        /* Malus envoyé — son comique "wah-wah-waaah" descendant (1000 ms) */
         malusImpact: function () {
             var ctx = getCtx(); if (!ctx) return;
             var v = vol('game'); if (!v) return;
             var now = ctx.currentTime;
 
-            // 1. Impact initial — frappe sourde
-            var osc1 = ctx.createOscillator();
+            // "Wah" 1 — note haute
+            var o1 = ctx.createOscillator();
             var g1 = ctx.createGain();
-            osc1.connect(g1); g1.connect(ctx.destination);
-            osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(400, now);
-            osc1.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+            o1.connect(g1); g1.connect(ctx.destination);
+            o1.type = 'triangle';
+            o1.frequency.setValueAtTime(440, now);
+            o1.frequency.exponentialRampToValueAtTime(415, now + 0.22);
             g1.gain.setValueAtTime(0.18 * v, now);
-            g1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-            osc1.start(now);
-            osc1.stop(now + 0.55);
+            g1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            o1.start(now);
+            o1.stop(now + 0.28);
 
-            // 2. Grondement grave (bass rumble)
-            var osc2 = ctx.createOscillator();
+            // "Wah" 2 — note moyenne
+            var o2 = ctx.createOscillator();
             var g2 = ctx.createGain();
-            osc2.connect(g2); g2.connect(ctx.destination);
-            osc2.type = 'triangle';
-            osc2.frequency.setValueAtTime(80, now + 0.15);
-            osc2.frequency.exponentialRampToValueAtTime(40, now + 1.0);
-            g2.gain.setValueAtTime(0, now);
-            g2.gain.linearRampToValueAtTime(0.12 * v, now + 0.2);
-            g2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-            osc2.start(now + 0.1);
-            osc2.stop(now + 1.05);
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.type = 'triangle';
+            o2.frequency.setValueAtTime(370, now + 0.28);
+            o2.frequency.exponentialRampToValueAtTime(349, now + 0.50);
+            g2.gain.setValueAtTime(0.16 * v, now + 0.28);
+            g2.gain.exponentialRampToValueAtTime(0.001, now + 0.53);
+            o2.start(now + 0.28);
+            o2.stop(now + 0.56);
 
-            // 3. Sifflement descendant dramatique
-            var osc3 = ctx.createOscillator();
+            // "Waaah" 3 — note basse qui descend lentement (le plus long)
+            var o3 = ctx.createOscillator();
             var g3 = ctx.createGain();
-            osc3.connect(g3); g3.connect(ctx.destination);
-            osc3.type = 'sine';
-            osc3.frequency.setValueAtTime(900, now + 0.05);
-            osc3.frequency.exponentialRampToValueAtTime(120, now + 0.8);
-            g3.gain.setValueAtTime(0.06 * v, now + 0.05);
-            g3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
-            osc3.start(now + 0.05);
-            osc3.stop(now + 0.9);
-
-            // 4. Résonance finale
-            var osc4 = ctx.createOscillator();
-            var g4 = ctx.createGain();
-            osc4.connect(g4); g4.connect(ctx.destination);
-            osc4.type = 'sine';
-            osc4.frequency.setValueAtTime(55, now + 0.5);
-            g4.gain.setValueAtTime(0, now + 0.5);
-            g4.gain.linearRampToValueAtTime(0.08 * v, now + 0.6);
-            g4.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-            osc4.start(now + 0.5);
-            osc4.stop(now + 1.25);
+            o3.connect(g3); g3.connect(ctx.destination);
+            o3.type = 'triangle';
+            o3.frequency.setValueAtTime(311, now + 0.56);
+            o3.frequency.exponentialRampToValueAtTime(180, now + 1.1);
+            g3.gain.setValueAtTime(0.20 * v, now + 0.56);
+            g3.gain.linearRampToValueAtTime(0.12 * v, now + 0.85);
+            g3.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+            o3.start(now + 0.56);
+            o3.stop(now + 1.15);
         },
 
         /* Bonus envoyé — ding joyeux ascendant (300 ms) */
@@ -864,5 +852,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé (v1002)');
+    console.log('🔊 SoundManager initialisé (v1003)');
 })();
