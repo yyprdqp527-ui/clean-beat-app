@@ -899,6 +899,36 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
+        /* Flammes qui s'envolent autour de l'avatar malus */
+        .malus-flame {
+            position: absolute;
+            font-size: 28px;
+            pointer-events: none;
+            z-index: 9998;
+            animation: flame-rise 1.8s ease-out forwards;
+            filter: drop-shadow(0 0 6px rgba(255, 80, 0, 0.8));
+        }
+        @keyframes flame-rise {
+            0% { opacity: 0; transform: scale(0.3) translateY(0) rotate(0deg); }
+            15% { opacity: 1; transform: scale(1.3) translateY(-10px) rotate(-15deg); }
+            40% { opacity: 1; transform: scale(1.1) translateY(-30px) rotate(10deg); }
+            70% { opacity: 0.7; transform: scale(0.9) translateY(-55px) rotate(-8deg); }
+            100% { opacity: 0; transform: scale(0.4) translateY(-80px) rotate(15deg); }
+        }
+        /* Confetti sombres pour malus */
+        .malus-spark {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            animation: spark-burst 1.2s ease-out forwards;
+        }
+        @keyframes spark-burst {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+        }
         .avatar-celebrating {
             animation: avatar-celebrate 2s ease-out, avatar-glow 3s ease-in-out 2;
             z-index: 9999 !important;
@@ -4539,23 +4569,36 @@ function sendMalus(reason, points){
                                 var avatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
                                 if (avatar) {
                                     if (ptsNum < 0) {
-                                        // === ANIMATION PERTE DE POINTS ===
+                                        // === ANIMATION PERTE DE POINTS (FLAMMES) ===
                                         console.log('💀 Animation pénalité sur:', who || 'current');
                                         avatar.classList.add('avatar-penalized');
-                                        SoundManager.play('losePoints');
+                                        SoundManager.play('malusImpact');
                                         // Popup points perdus
                                         var popup = document.createElement('div');
                                         popup.className = 'points-popup-penalty';
                                         popup.textContent = ptsNum + ' pts';
                                         targetWrapper.appendChild(popup);
                                         setTimeout(function() { popup.remove(); }, 4000);
+                                        // 🔥 Flammes
+                                        var flameEmojis = ['🔥', '💥', '☠️', '🔥', '💀', '🔥', '⚡', '🔥'];
+                                        for (var fi = 0; fi < 8; fi++) {
+                                            var fl = document.createElement('div');
+                                            fl.className = 'malus-flame';
+                                            fl.textContent = flameEmojis[Math.floor(Math.random() * flameEmojis.length)];
+                                            fl.style.left = (50 + (Math.random() - 0.5) * 120) + '%';
+                                            fl.style.top = (50 + (Math.random() - 0.5) * 80) + '%';
+                                            fl.style.animationDelay = (Math.random() * 0.6) + 's';
+                                            fl.style.fontSize = (22 + Math.random() * 14) + 'px';
+                                            targetWrapper.appendChild(fl);
+                                            (function(el) { setTimeout(function() { el.remove(); }, 2500); })(fl);
+                                        }
                                         setTimeout(function() { avatar.classList.remove('avatar-penalized'); }, 5000);
                                     } else {
                                         // === ANIMATION GAIN DE POINTS ===
                                         console.log('✨ Animation sur:', who || 'current');
                                         avatar.style.animation = 'winnerPulse 0.6s ease-in-out';
                                         createWinnerEffects(avatar);
-                                        playProgressSound(ptsNum);
+                                        SoundManager.play('gainPoints');
                                     }
                                 }
                             }, 300);
@@ -4720,10 +4763,10 @@ function sendMalus(reason, points){
                                 
                                 if (avatarSquare && avatarWrapper) {
                                     if (pointsGained < 0) {
-                                        // === ANIMATION PERTE DE POINTS ===
+                                        // === ANIMATION PERTE DE POINTS (FLAMMES + ÉTINCELLES) ===
                                         console.log('💀 Pénalité sur:', who || 'current');
                                         avatarSquare.classList.add('avatar-penalized');
-                                        SoundManager.play('losePoints');
+                                        SoundManager.play('malusImpact');
                                         
                                         // Popup points perdus
                                         const popup = document.createElement('div');
@@ -4731,6 +4774,38 @@ function sendMalus(reason, points){
                                         popup.textContent = pointsGained + ' pts';
                                         avatarWrapper.appendChild(popup);
                                         setTimeout(() => popup.remove(), 4000);
+                                        
+                                        // 🔥 Flammes qui s'envolent autour de l'avatar
+                                        const flames = ['🔥', '💥', '☠️', '🔥', '💀', '🔥', '⚡', '🔥'];
+                                        for (let i = 0; i < 10; i++) {
+                                            const flame = document.createElement('div');
+                                            flame.className = 'malus-flame';
+                                            flame.textContent = flames[Math.floor(Math.random() * flames.length)];
+                                            flame.style.left = (50 + (Math.random() - 0.5) * 120) + '%';
+                                            flame.style.top = (50 + (Math.random() - 0.5) * 80) + '%';
+                                            flame.style.animationDelay = (Math.random() * 0.6) + 's';
+                                            flame.style.fontSize = (22 + Math.random() * 14) + 'px';
+                                            avatarWrapper.appendChild(flame);
+                                            setTimeout(() => flame.remove(), 2500);
+                                        }
+                                        
+                                        // ✨ Étincelles rouges/oranges
+                                        const sparkColors = ['#DC3C3C', '#FF6B35', '#FF4500', '#8B0000', '#FF8C00'];
+                                        for (let i = 0; i < 12; i++) {
+                                            const spark = document.createElement('div');
+                                            spark.className = 'malus-spark';
+                                            spark.style.background = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+                                            spark.style.left = '50%';
+                                            spark.style.top = '50%';
+                                            const angle = (Math.PI * 2 * i) / 12;
+                                            const dist = 40 + Math.random() * 40;
+                                            spark.style.setProperty('--sx', Math.cos(angle) * dist + 'px');
+                                            spark.style.setProperty('--sy', Math.sin(angle) * dist + 'px');
+                                            spark.style.animationDelay = (Math.random() * 0.3) + 's';
+                                            avatarWrapper.appendChild(spark);
+                                            setTimeout(() => spark.remove(), 1800);
+                                        }
+                                        
                                         setTimeout(() => avatarSquare.classList.remove('avatar-penalized'), 5000);
                                     } else {
                                         // === ANIMATION GAIN DE POINTS ===
@@ -4764,8 +4839,8 @@ function sendMalus(reason, points){
                                             setTimeout(() => star.remove(), 2500);
                                         }
                                         
-                                        // Jouer le son de succès
-                                        playProgressSound(pointsGained || 75);
+                                        // Jouer le son de succès (même son que gains/courses)
+                                        SoundManager.play('gainPoints');
                                         
                                         // Supprimer les effets après l'animation
                                         setTimeout(() => {

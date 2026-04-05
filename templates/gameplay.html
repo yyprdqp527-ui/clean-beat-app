@@ -409,37 +409,46 @@ body {
     top: 50%;
     left: 50%;
     transform: translateX(-50%) translateY(0);
-    font-size: 32px;
-    font-weight: 800;
+    font-size: 36px;
+    font-weight: 900;
     color: white;
     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     pointer-events: none;
     z-index: 10000;
-    animation: pointsFloat 2s ease-out forwards;
+    animation: pointsFloat 2.5s ease-out forwards;
+}
+.points-animation.malus {
+    color: #FF4500;
+    text-shadow: 0 2px 14px rgba(220,60,60,0.7), 0 0 30px rgba(255,69,0,0.4);
+}
+.points-animation.bonus {
+    color: #7ABAC5;
+    text-shadow: 0 2px 14px rgba(122,186,197,0.7), 0 0 30px rgba(255,215,0,0.4);
 }
 
 @keyframes pointsFloat {
-    0% { transform: translateX(-50%) translateY(0) scale(0.5); opacity: 0; }
-    20% { transform: translateX(-50%) translateY(-20px) scale(1.2); opacity: 1; }
-    100% { transform: translateX(-50%) translateY(-100px) scale(1); opacity: 0; }
+    0% { transform: translateX(-50%) translateY(0) scale(0.3); opacity: 0; }
+    15% { transform: translateX(-50%) translateY(-15px) scale(1.4); opacity: 1; }
+    30% { transform: translateX(-50%) translateY(-30px) scale(1.1); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-120px) scale(0.9); opacity: 0; }
 }
 
-/* Animation pénalité sur avatar (secoue + halo rouge) */
+/* Animation pénalité sur avatar (secoue + flamboiement rouge/orange) */
 @keyframes gwAvatarPenalty {
     0% { transform: translateX(0); box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
-    8% { transform: translateX(-5px); box-shadow: 0 0 20px rgba(220,60,60,0.6); }
-    16% { transform: translateX(5px); box-shadow: 0 0 25px rgba(220,60,60,0.7); }
-    24% { transform: translateX(-4px); box-shadow: 0 0 20px rgba(220,60,60,0.6); }
-    32% { transform: translateX(4px); box-shadow: 0 0 25px rgba(220,60,60,0.7); }
-    40% { transform: translateX(-3px); box-shadow: 0 0 18px rgba(220,60,60,0.5); }
-    48% { transform: translateX(3px); box-shadow: 0 0 18px rgba(220,60,60,0.5); }
-    60% { transform: translateX(-2px); box-shadow: 0 0 12px rgba(220,60,60,0.3); }
-    75% { transform: translateX(1px); box-shadow: 0 0 8px rgba(220,60,60,0.2); }
+    8% { transform: translateX(-6px); box-shadow: 0 0 25px rgba(255,69,0,0.7), 0 0 50px rgba(220,60,60,0.4); }
+    16% { transform: translateX(6px); box-shadow: 0 0 30px rgba(255,69,0,0.8), 0 0 60px rgba(220,60,60,0.5); }
+    24% { transform: translateX(-5px); box-shadow: 0 0 25px rgba(255,69,0,0.7), 0 0 50px rgba(220,60,60,0.4); }
+    32% { transform: translateX(5px); box-shadow: 0 0 30px rgba(255,69,0,0.8), 0 0 60px rgba(220,60,60,0.5); }
+    40% { transform: translateX(-4px); box-shadow: 0 0 22px rgba(255,69,0,0.6), 0 0 45px rgba(220,60,60,0.3); }
+    48% { transform: translateX(4px); box-shadow: 0 0 22px rgba(255,69,0,0.6), 0 0 45px rgba(220,60,60,0.3); }
+    60% { transform: translateX(-3px); box-shadow: 0 0 15px rgba(255,69,0,0.4), 0 0 30px rgba(220,60,60,0.2); }
+    75% { transform: translateX(1px); box-shadow: 0 0 10px rgba(255,69,0,0.2); }
     100% { transform: translateX(0); box-shadow: 0 2px 8px rgba(166,211,220,0.3); }
 }
 .gw-avatar-penalty .gw-avatar-img,
 .gw-avatar-penalty .gw-avatar-emoji {
-    animation: gwAvatarPenalty 1.2s ease-out;
+    animation: gwAvatarPenalty 1.5s ease-out;
 }
 /* Animation bonus sur avatar (pulse gold) */
 @keyframes gwAvatarBonus {
@@ -1419,7 +1428,7 @@ function sendBonus(reason, points){
         .then(function(r){return r.json();}).then(function(data){
             closeBonus();
             if(data.success){
-                SoundManager.play('bonusDing');
+                SoundManager.play('gainPoints');
                 showPointsAnimation(points, true);
                 // Animation célébration sur l'avatar cible
                 var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
@@ -1655,9 +1664,9 @@ function showPointsAnimation(points, silent) {
     pointsDiv.className = 'points-animation';
     pointsDiv.textContent = (points > 0 ? '+' : '') + points + ' points!';
     if (points > 0) {
-        pointsDiv.style.color = '#7ABAC5';
+        pointsDiv.classList.add('bonus');
     } else {
-        pointsDiv.style.color = '#D4856A';
+        pointsDiv.classList.add('malus');
     }
     document.body.appendChild(pointsDiv);
     
@@ -1666,13 +1675,13 @@ function showPointsAnimation(points, silent) {
         if (points >= 0) {
             SoundManager.play('gainPoints');
         } else {
-            SoundManager.play('losePoints');
+            SoundManager.play('malusImpact');
         }
     }
     
     setTimeout(() => {
         document.body.removeChild(pointsDiv);
-    }, 2000);
+    }, 3000);
 }
 
 // ====== COMPRESSION IMAGE CÔTÉ CLIENT ======

@@ -240,20 +240,60 @@
             });
         },
 
-        /* Malus envoyé — impact sourd descendant (400 ms) */
+        /* Malus envoyé — impact dramatique descendant avec grondement (1200 ms) */
         malusImpact: function () {
             var ctx = getCtx(); if (!ctx) return;
             var v = vol('game'); if (!v) return;
-            var osc = ctx.createOscillator();
-            var gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(400, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.35);
-            gain.gain.setValueAtTime(0.15 * v, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.45);
+            var now = ctx.currentTime;
+
+            // 1. Impact initial — frappe sourde
+            var osc1 = ctx.createOscillator();
+            var g1 = ctx.createGain();
+            osc1.connect(g1); g1.connect(ctx.destination);
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(400, now);
+            osc1.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+            g1.gain.setValueAtTime(0.18 * v, now);
+            g1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc1.start(now);
+            osc1.stop(now + 0.55);
+
+            // 2. Grondement grave (bass rumble)
+            var osc2 = ctx.createOscillator();
+            var g2 = ctx.createGain();
+            osc2.connect(g2); g2.connect(ctx.destination);
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(80, now + 0.15);
+            osc2.frequency.exponentialRampToValueAtTime(40, now + 1.0);
+            g2.gain.setValueAtTime(0, now);
+            g2.gain.linearRampToValueAtTime(0.12 * v, now + 0.2);
+            g2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+            osc2.start(now + 0.1);
+            osc2.stop(now + 1.05);
+
+            // 3. Sifflement descendant dramatique
+            var osc3 = ctx.createOscillator();
+            var g3 = ctx.createGain();
+            osc3.connect(g3); g3.connect(ctx.destination);
+            osc3.type = 'sine';
+            osc3.frequency.setValueAtTime(900, now + 0.05);
+            osc3.frequency.exponentialRampToValueAtTime(120, now + 0.8);
+            g3.gain.setValueAtTime(0.06 * v, now + 0.05);
+            g3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+            osc3.start(now + 0.05);
+            osc3.stop(now + 0.9);
+
+            // 4. Résonance finale
+            var osc4 = ctx.createOscillator();
+            var g4 = ctx.createGain();
+            osc4.connect(g4); g4.connect(ctx.destination);
+            osc4.type = 'sine';
+            osc4.frequency.setValueAtTime(55, now + 0.5);
+            g4.gain.setValueAtTime(0, now + 0.5);
+            g4.gain.linearRampToValueAtTime(0.08 * v, now + 0.6);
+            g4.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+            osc4.start(now + 0.5);
+            osc4.stop(now + 1.25);
         },
 
         /* Bonus envoyé — ding joyeux ascendant (300 ms) */
@@ -824,5 +864,5 @@
         roomZoom: function () { play('roomFullscreen'); }
     };
 
-    console.log('🔊 SoundManager initialisé (v1001)');
+    console.log('🔊 SoundManager initialisé (v1002)');
 })();
