@@ -854,7 +854,16 @@
             90% { transform: translateX(-1px) scale(1); }
             100% { transform: translateX(0) scale(1); }
         }
-        /* avatar-penalty-glow supprimé — les flammes 🔥 sont l'animation malus */
+        @keyframes avatar-penalty-glow {
+            0% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 0 rgba(220,60,60,0), 0 0 0 0 rgba(255,107,53,0); }
+            10% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 60px 25px rgba(220,60,60,0.8), 0 0 100px 50px rgba(255,107,53,0.4); }
+            20% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 40px 15px rgba(220,60,60,0.5), 0 0 80px 40px rgba(255,107,53,0.3); }
+            30% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 70px 30px rgba(220,60,60,0.9), 0 0 120px 60px rgba(255,107,53,0.5); }
+            50% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 50px 20px rgba(220,60,60,0.7), 0 0 90px 45px rgba(255,107,53,0.4); }
+            70% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 80px 35px rgba(220,60,60,1), 0 0 130px 65px rgba(255,107,53,0.6); }
+            85% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 45px 18px rgba(220,60,60,0.6), 0 0 70px 35px rgba(255,107,53,0.3); }
+            100% { box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 0 rgba(220,60,60,0), 0 0 0 0 rgba(255,107,53,0); }
+        }
         @keyframes penalty-popup {
             0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.5); }
             15% { opacity: 1; transform: translateX(-50%) translateY(-15px) scale(1.4); }
@@ -863,7 +872,7 @@
             100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(0.8); }
         }
         .avatar-penalized {
-            animation: avatar-penalty-shake 1.5s ease-out;
+            animation: avatar-penalty-shake 1.5s ease-out, avatar-penalty-glow 3s ease-in-out 2;
             z-index: 9999 !important;
             overflow: visible !important;
         }
@@ -894,8 +903,22 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
-        /* Flammes qui s'envolent autour de l'avatar malus — style identique aux particules gain */
-        /* (géré via element.animate() en JS, pas de CSS keyframes nécessaire) */
+        /* Flammes qui s'envolent autour de l'avatar malus */
+        .malus-flame {
+            position: absolute;
+            font-size: 28px;
+            pointer-events: none;
+            z-index: 9998;
+            animation: flame-rise 1.8s ease-out forwards;
+            filter: drop-shadow(0 0 6px rgba(255, 80, 0, 0.8));
+        }
+        @keyframes flame-rise {
+            0% { opacity: 0; transform: scale(0.3) translateY(0) rotate(0deg); }
+            15% { opacity: 1; transform: scale(1.3) translateY(-10px) rotate(-15deg); }
+            40% { opacity: 1; transform: scale(1.1) translateY(-30px) rotate(10deg); }
+            70% { opacity: 0.7; transform: scale(0.9) translateY(-55px) rotate(-8deg); }
+            100% { opacity: 0; transform: scale(0.4) translateY(-80px) rotate(15deg); }
+        }
         /* Confetti sombres pour malus */
         .malus-spark {
             position: absolute;
@@ -909,6 +932,25 @@
         @keyframes spark-burst {
             0% { opacity: 1; transform: translate(0, 0) scale(1); }
             100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+        }
+        .malus-halo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 150%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(220,60,60,0.6) 0%, rgba(255,107,53,0.3) 40%, transparent 70%);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: malus-halo-pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes malus-halo-pulse {
+            0%, 100% { opacity: 0; transform: scale(0.8); }
+            25% { opacity: 1; transform: scale(1.3); }
+            50% { opacity: 0.8; transform: scale(1.5); }
+            75% { opacity: 0.6; transform: scale(1.7); }
         }
         .avatar-celebrating {
             animation: avatar-celebrate 2s ease-out, avatar-glow 3s ease-in-out 2;
@@ -4157,494 +4199,6 @@ function sendMalus(reason, points){
                 // Script minimal pour initialiser la barre de santé, la date/heure et le bouton son
                 document.addEventListener('DOMContentLoaded', function(){
                     
-                    //  NOUVEAU : Charger la dernière tâche récente (VERSION COMPACTE)
-                    function loadRecentTasks() {
-                        fetch('/api/daily_tasks')
-                            .then(response => response.json())
-                            .then(data => {
-                                const taskText = document.getElementById('recent-task-text');
-                                if (!taskText) return;
-                                
-                                if (data.tasks && data.tasks.length > 0) {
-                                    const task = data.tasks[0]; // Seulement la plus récente
-                                    taskText.innerHTML = `<strong>${task.player_name}</strong> : ${task.task_name} <span style="color: #FDAE54; font-weight: 800;">(+${task.points} pts)</span> • <span style="color: #A6D3DC; font-weight: 700;">${task.time}</span>`;
-                                    taskText.style.opacity = '0';
-                                    setTimeout(() => {
-                                        taskText.style.transition = 'opacity 0.4s ease';
-                                        taskText.style.opacity = '1';
-                                    }, 50);
-                                } else {
-                                    taskText.textContent = 'Aucune tâche aujourd\'hui. Sois le premier ! 🎯';
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Erreur chargement tâches:', error);
-                            });
-                    }
-                    
-                    // Charger les tâches au démarrage
-                    loadRecentTasks();
-                    
-                    //  NOTIFICATION EN TEMPS RÉEL
-                    let lastTaskCount = 0;
-                    
-                    function checkForNewTasks() {
-                        fetch('/api/daily_tasks')
-                            .then(response => response.json())
-                            .then(data => {
-                                const currentCount = data.tasks ? data.tasks.length : 0;
-                                
-                                // Si nouvelle tâche détectée
-                                if (lastTaskCount > 0 && currentCount > lastTaskCount) {
-                                    const newTask = data.tasks[0]; // La plus récente
-                                    showNewTaskNotification(newTask);
-                                    
-                                    // Recharger la liste complète avec animation
-                                    loadRecentTasks();
-                                }
-                                
-                                lastTaskCount = currentCount;
-                            })
-                            .catch(error => console.error('Erreur détection nouvelles tâches:', error));
-                    }
-                    
-                    function showNewTaskNotification(task) {
-                        // Toast live glassmorphisme harmonisé
-                        var n = document.createElement('div');
-                        n.style.cssText =
-                            'position:fixed;top:100px;right:20px;z-index:10000;' +
-                            'background:linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(255,215,0,.3) 50%,rgba(253,174,84,.4) 100%);' +
-                            'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);' +
-                            'border:1px solid rgba(255,255,255,.3);border-radius:28px;' +
-                            'padding:14px 20px;' +
-                            'box-shadow:0 8px 32px rgba(21,48,54,.25),0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.6);' +
-                            'display:flex;align-items:center;gap:12px;' +
-                            'min-width:280px;max-width:320px;' +
-                            'transform:translateX(400px);opacity:0;' +
-                            'transition:all .5s cubic-bezier(.34,1.56,.64,1);' +
-                            'font-family:Montserrat,sans-serif;';
-                        n.innerHTML =
-                            '<div style="font-size:30px;line-height:1;">🎉</div>' +
-                            '<div style="flex:1;">' +
-                                '<div style="font-weight:800;font-size:13px;color:#153036;">' +
-                                    task.player_name + ' vient de valider :' +
-                                '</div>' +
-                                '<div style="font-size:12px;color:#597176;font-weight:600;margin-top:2px;">' +
-                                    task.task_name + ' (+' + task.points + ' pts)' +
-                                '</div>' +
-                            '</div>';
-                        document.body.appendChild(n);
-                        setTimeout(function() { n.style.transform = 'translateX(0)'; n.style.opacity = '1'; }, 100);
-                        // Son
-                        try {
-                            var ac = new (window.AudioContext || window.webkitAudioContext)();
-                            var osc = ac.createOscillator(); var g = ac.createGain();
-                            osc.connect(g); g.connect(ac.destination);
-                            osc.type = 'sine';
-                            osc.frequency.setValueAtTime(800, ac.currentTime);
-                            osc.frequency.exponentialRampToValueAtTime(1200, ac.currentTime + 0.1);
-                            g.gain.setValueAtTime(0.15, ac.currentTime);
-                            g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
-                            osc.start(); osc.stop(ac.currentTime + 0.3);
-                        } catch(e) {}
-                        // Sortie après 4s
-                        setTimeout(function() {
-                            n.style.transform = 'translateX(400px)'; n.style.opacity = '0';
-                            setTimeout(function() { if (n.parentNode) n.parentNode.removeChild(n); }, 500);
-                        }, 4000);
-                    }
-                    
-                    // Vérifier les nouvelles tâches toutes les 5 minutes (optimisé)
-                    setInterval(checkForNewTasks, 300000);
-                    
-                    // Initialiser le compteur
-                    fetch('/api/daily_tasks')
-                        .then(response => response.json())
-                        .then(data => {
-                            lastTaskCount = data.tasks ? data.tasks.length : 0;
-                        })
-                        .catch(err => console.error('Erreur chargement tâches:', err));
-                    
-                    // Recharger toutes les 5 minutes pour voir les nouvelles tâches (optimisé)
-                    setInterval(loadRecentTasks, 300000);
-                    
-                    // 🔄 MISE À JOUR AUTOMATIQUE DES POINTS EN TEMPS RÉEL
-                    function updatePlayersPointsMenu() {
-                        fetch('/api/players_points', { cache: 'no-store' })
-                            .then(response => response.json())
-                            .then(data => {
-                                // Debug: lister les wrappers d'avatar déjà présents dans le DOM
-                                try {
-                                    const wrappers = Array.from(document.querySelectorAll('.avatar-square-wrapper')).map(w => w.getAttribute('data-player-email'));
-                                } catch(e){ console.warn('  ⚠️ Impossible lister wrappers', e); }
-
-                                // Assurer la présence d'un conteneur de préchargement caché pour forcer les requêtes réseau
-                                let preloadContainer = document.getElementById('avatar-preload');
-                                try {
-                                    if (!preloadContainer) {
-                                        preloadContainer = document.createElement('div');
-                                        preloadContainer.id = 'avatar-preload';
-                                        preloadContainer.style.cssText = 'width:0;height:0;overflow:hidden;position:fixed;left:-9999px;top:-9999px;';
-                                        document.body.appendChild(preloadContainer);
-                                    }
-                                } catch(e) { console.warn('  ⚠️ Erreur création preload container', e); }
-                                if (data.players && data.players.length > 0) {
-                                    data.players.forEach(player => {
-                                        
-                                        // Mettre à jour les cartes de joueurs dans le podium
-                                        const playerCards = document.querySelectorAll('.player-name-link');
-                                        playerCards.forEach(card => {
-                                            const cardName = card.textContent.trim();
-                                            if (cardName === player.name) {
-                                                // Trouver le parent player-stat-card
-                                                const statCard = card.closest('.player-stat-card');
-                                                if (statCard) {
-                                                    const pointsElement = statCard.querySelector('.player-stat-value');
-                                                    if (pointsElement) {
-                                                        const oldPoints = parseInt(pointsElement.textContent) || 0;
-                                                        const newPoints = player.daily_points || 0;
-                                                        
-                                                        if (oldPoints !== newPoints) {
-                                                            // Animer le changement
-                                                            pointsElement.style.transform = 'scale(1.2)';
-                                                            pointsElement.style.color = '#28a745';
-                                                            pointsElement.textContent = newPoints;
-                                                            
-                                                            setTimeout(() => {
-                                                                pointsElement.style.transform = 'scale(1)';
-                                                                pointsElement.style.color = '';
-                                                            }, 500);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        });
-                                        
-                                        // Mettre à jour les avatars-wrapper avec data-player-email
-                                        const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${player.email}"]`);
-                                        
-                                        if (avatarWrapper) {
-                                            // Mettre à jour la barre verticale (vbar) et son data-points
-                                            const vbar = avatarWrapper.querySelector('.vbar');
-                                            if (vbar) {
-                                                const oldPoints = parseInt(vbar.getAttribute('data-points')) || 0;
-                                                const newPoints = player.daily_points || 0;
-                                                
-                                                if (oldPoints !== newPoints) {
-                                                    // Mettre à jour les données
-                                                    vbar.setAttribute('data-points', newPoints);
-                                                    vbar.setAttribute('title', `${newPoints} points aujourd'hui`);
-                                                    
-                                                    // Calculer le pourcentage de remplissage (max 30 points = 100%)
-                                                    const maxPoints = 30;
-                                                    let fillPercent = Math.min(100, (newPoints / maxPoints) * 100);
-                                                    fillPercent = Math.max(2, fillPercent); // Minimum 2% pour visibilité
-                                                    vbar.setAttribute('data-fill', fillPercent);
-                                                    
-                                                    // Mettre à jour la hauteur de la barre
-                                                    const vbarFill = vbar.querySelector('.vbar-fill');
-                                                    if (vbarFill) {
-                                                        vbarFill.style.height = fillPercent + '%';
-                                                        
-                                                        // Animation flash
-                                                        vbarFill.style.transition = 'none';
-                                                        vbarFill.style.filter = 'brightness(1.5)';
-                                                        setTimeout(() => {
-                                                            vbarFill.style.transition = 'height 0.4s ease, filter 0.3s ease';
-                                                            vbarFill.style.filter = 'brightness(1)';
-                                                        }, 100);
-                                                    }
-                                                }
-                                            }
-
-                                            // Mettre à jour le texte "pts" et la barre horizontale (joueur courant inclus)
-                                            const parentEl = avatarWrapper.closest('.avatar-col') || avatarWrapper.parentElement;
-                                            if (parentEl) {
-                                                const newPoints = player.daily_points || 0;
-                                                const pointsText = parentEl.querySelector('.avatar-points');
-                                                if (pointsText) pointsText.textContent = newPoints + ' pts';
-                                                const maxPoints = 30;
-                                                let fillPercent = Math.min(100, (newPoints / maxPoints) * 100);
-                                                fillPercent = Math.max(2, fillPercent);
-                                                const vbarH = parentEl.querySelector('.vbar-horizontal');
-                                                if (vbarH) {
-                                                    const vbarFillH = vbarH.querySelector('.vbar-fill');
-                                                    if (vbarFillH) vbarFillH.style.width = fillPercent + '%';
-                                                    vbarH.setAttribute('data-points', newPoints);
-                                                    vbarH.setAttribute('data-fill', fillPercent);
-                                                }
-                                            }
-
-                                            // Mettre à jour l'image de l'avatar si l'URL/fichier/seed a changé
-                                            try {
-                                                const avatarSquare = avatarWrapper.querySelector('.avatar-square');
-                                                if (avatarSquare) {
-                                                    let newAvatarUrl = null;
-                                                    if (player.avatar_url) {
-                                                        newAvatarUrl = player.avatar_url;
-                                                    } else if (player.avatar_file) {
-                                                        newAvatarUrl = '/static/avatars/' + player.avatar_file;
-                                                    } else if (player.avatar) {
-                                                        // seed DiceBear or emoji
-                                                        const raw = String(player.avatar || '');
-                                                        const isEmoji = raw.length <= 4 && /[^\x00-\x7F]/.test(raw);
-                                                        if (!isEmoji) {
-                                                            const style = player.avatar_style || 'adventurer'; // Changé de 'lorelei' à 'adventurer'
-                                                            newAvatarUrl = 'https://api.dicebear.com/7.x/' + encodeURIComponent(style) + '/svg?seed=' + encodeURIComponent(raw);
-                                                        }
-                                                    }
-
-                                                            // Préchargement forcé : créer une Image() cachée pour forcer la requête réseau
-                                                            try {
-                                                                if (newAvatarUrl) {
-                                                                    const probeForce = new Image();
-                                                                    probeForce.style.display = 'none';
-                                                                    probeForce.dataset.email = player.email || '';
-                                                                    probeForce.onload = function() { };
-                                                                    probeForce.onerror = function(ev) { console.warn('  ❌ Preload failed for', player.email, newAvatarUrl, ev); };
-                                                                    probeForce.src = newAvatarUrl;
-                                                                    try { preloadContainer.appendChild(probeForce); } catch(e) { /* ignore */ }
-                                                                }
-                                                            } catch(prefErr) { console.error('  ⚠️ Preload exception', prefErr); }
-
-                                                    if (newAvatarUrl) {
-                                                        const existingImg = avatarSquare.querySelector('img');
-                                                        if (existingImg) {
-                                                            // Compare absolute URLs safely by creating a URL object
-                                                            try {
-                                                                const existingSrc = new URL(existingImg.src, window.location.href).href;
-                                                                const plannedSrc = new URL(newAvatarUrl, window.location.href).href;
-                                                                if (existingSrc !== plannedSrc) {
-                                                                    // Probe loading with a temporary Image to capture load/error
-                                                                    try {
-                                                                        const probe = new Image();
-                                                                        probe.onload = function() {
-                                                                            existingImg.src = plannedSrc;
-                                                                        };
-                                                                        probe.onerror = function(ev) {
-                                                                            console.warn('  ❌ Failed to load avatar for', player.email, plannedSrc, ev);
-                                                                            // fallback to local static image
-                                                                            existingImg.src = MENU_DICEBEAR_FALLBACK;
-                                                                        };
-                                                                        probe.src = plannedSrc;
-                                                                    } catch (probeErr) {
-                                                                        console.error('  ⚠️ Probe error', probeErr);
-                                                                        existingImg.src = plannedSrc;
-                                                                    }
-                                                                    // Expose the planned src for inspection
-                                                                    try { avatarSquare.setAttribute('data-avatar-src', plannedSrc); } catch(e){}
-                                                                }
-                                                            } catch (uerr) {
-                                                                existingImg.src = newAvatarUrl;
-                                                            }
-                                                            // Ensure onerror fallback
-                                                            existingImg.onerror = function() { console.warn('Avatar image failed to load, using fallback for', player.email); this.onerror=null; this.src=MENU_DICEBEAR_FALLBACK; };
-                                                        } else {
-                                                            // Remplacer le contenu par une balise img avec onerror
-                                                            const size = parseInt(getComputedStyle(avatarSquare).getPropertyValue('--avatar-size')) || {{ 48 if False else 48 }};
-                                                            const imgHtml = '<img class="debug-avatar-img" src="' + newAvatarUrl + '" alt="Avatar ' + (player.name || '') + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">';
-                                                            try { avatarSquare.setAttribute('data-avatar-src', newAvatarUrl); } catch(e){}
-                                                            avatarSquare.innerHTML = imgHtml;
-                                                        }
-                                                    } else {
-                                                        // Si c'est un emoji, afficher le texte seul
-                                                        if (player.avatar && String(player.avatar).length <= 4) {
-                                                            avatarSquare.innerHTML = '<span style="font-size:calc(var(--avatar-size,48px) * 0.5);">' + player.avatar + '</span>';
-                                                        }
-                                                    }
-                                                }
-                                            } catch (e) {
-                                                console.error('Erreur mise à jour avatar DOM:', e);
-                                            }
-                                        }
-                                    });
-                                    
-                                    // Mettre à jour la santé de la maison
-                                    if (data.house_health !== undefined) {
-                                        const healthFills = document.querySelectorAll('.health-fill, #house-health-fill, #house-health-fill-header');
-                                        healthFills.forEach(fill => {
-                                            const newWidth = Math.max(0, Math.min(100, data.house_health));
-                                            fill.style.width = newWidth + '%';
-                                            fill.setAttribute('data-width', newWidth);
-                                        });
-                                    }
-                                }
-                            })
-                            .catch(err => console.error('Erreur mise à jour points:', err));
-                    }
-                    
-                    // Rafraîchir via API toutes les 5 secondes (filet de sécurité si WebSocket déconnecté)
-                    const menuUpdateInterval = setInterval(updatePlayersPointsMenu, 5000);
-                    
-                
-                    
-                    // Première mise à jour après 500ms
-                    setTimeout(updatePlayersPointsMenu, 500);
-                    setTimeout(function() { if (typeof refreshAllBadges === 'function') refreshAllBadges(); }, 500);
-                    // Première mise à jour après 500ms
-                    setTimeout(updatePlayersPointsMenu, 500);
-                    setTimeout(function() { if (typeof refreshAllBadges === 'function') refreshAllBadges(); }, 500);
-
-                    // Mise à jour des badges au retour sur l'app (PWA)
-                    document.addEventListener('visibilitychange', () => {
-                        if (document.visibilityState === 'visible') {
-                            if (typeof refreshAllBadges === 'function') refreshAllBadges();
-                        }
-                    });
-
-                    window.addEventListener('pageshow', (event) => {
-                        if (event.persisted) {
-                            if (typeof refreshAllBadges === 'function') refreshAllBadges();
-                        }
-                    });
-                    
-                    // Applique la largeur à la/aux barre(s) de santé
-                    document.querySelectorAll('.health-fill').forEach(function(fill){
-                        var w = fill.getAttribute('data-width');
-                        if(w !== null){ fill.style.width = w + '%'; }
-                    });
-
-                    // Mini-barres de santé des avatars
-                    document.querySelectorAll('.mini-health-fill').forEach(function(fill){
-                        var w = fill.getAttribute('data-width');
-                        if(w !== null){ fill.style.width = w + '%'; }
-                    });
-
-                    // Barre de santé de la maison: uniquement largeur, pas de texte ni icône
-                    var houseFill = document.getElementById('house-health-fill-header');
-                    if(houseFill){
-                        var hw = houseFill.getAttribute('data-width') || houseFill.style.width.replace('%','');
-                        if(hw){ houseFill.style.width = hw + '%'; }
-                    }
-
-                    // Date et heure (format français)
-                    function updateDateTime(){
-                        var now = new Date();
-                        var date = now.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' });
-                        var time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                        var el = document.getElementById('datetime');
-                        if(el){ el.textContent = date + ' • ' + time; }
-                    }
-                    updateDateTime();
-                    setInterval(updateDateTime, 60*1000);
-
-                    // === ANIMATION GAGNANT APRÈS VALIDATION DE TÂCHE ===
-                    (function() {
-                        var params = new URLSearchParams(window.location.search);
-                        var pts = params.get('pts');
-                        var ts = params.get('ts');
-                        var who = params.get('who');
-                        var whon = params.get('whon');
-                        
-                        console.log('🎯 HANDLER-A: pts=' + pts + ' ts=' + ts + ' who=' + who + ' whon=' + whon + ' URL=' + window.location.search);
-                        
-                        if (pts && ts) {
-                            var ptsNum = parseInt(pts);
-                            console.log('🎯 HANDLER-A: ptsNum=' + ptsNum + ' (négatif=' + (ptsNum < 0) + ')');
-                            setTimeout(function() {
-                                // Cibler l'avatar du bénéficiaire si fourni, sinon le joueur courant
-                                var targetWrapper = null;
-                                if (who) {
-                                    targetWrapper = document.querySelector('.avatar-square-wrapper[data-player-email="' + who + '"]');
-                                    console.log('🎯 HANDLER-A: cherche wrapper par email "' + who + '" → trouvé=' + !!targetWrapper);
-                                }
-                                if (!targetWrapper && whon) {
-                                    targetWrapper = document.querySelector('.avatar-square-wrapper[title="' + whon + '"]');
-                                    console.log('🎯 HANDLER-A: cherche wrapper par title "' + whon + '" → trouvé=' + !!targetWrapper);
-                                }
-                                if (!targetWrapper) {
-                                    console.log('🎯 HANDLER-A: fallback → current-player-avatar-wrapper');
-                                    targetWrapper = document.getElementById('current-player-avatar-wrapper');
-                                }
-                                console.log('🎯 HANDLER-A: targetWrapper=' + (targetWrapper ? targetWrapper.id || targetWrapper.className : 'NULL'));
-                                var avatar = targetWrapper ? targetWrapper.querySelector('.avatar-square') : null;
-                                console.log('🎯 HANDLER-A: avatar=' + (avatar ? 'TROUVÉ' : 'NULL'));
-                                if (avatar) {
-                                    if (ptsNum < 0) {
-                                        // === ANIMATION PERTE DE POINTS (FLAMMES) ===
-                                        console.log('�🔥🔥 NOUVELLE ANIM MALUS v1003 - flammes activées pour:', who || 'current');
-                                        avatar.classList.add('avatar-penalized');
-                                        if (window.SoundManager) SoundManager.play('malusImpact');
-                                        // Popup points perdus
-                                        var popup = document.createElement('div');
-                                        popup.className = 'points-popup-penalty';
-                                        popup.textContent = ptsNum + ' pts';
-                                        targetWrapper.appendChild(popup);
-                                        setTimeout(function() { popup.remove(); }, 4000);
-                                        // 🔥 Flammes — même style que createWinnerEffects
-                                        createMalusEffects(avatar);
-                                        setTimeout(function() { avatar.classList.remove('avatar-penalized'); }, 2500);
-                                    } else {
-                                        // === ANIMATION GAIN DE POINTS ===
-                                        console.log('✨ Animation sur:', who || 'current');
-                                        avatar.style.animation = 'winnerPulse 0.6s ease-in-out';
-                                        createWinnerEffects(avatar);
-                                        if (window.SoundManager) SoundManager.play('gainPoints');
-                                    }
-                                }
-                            }, 300);
-                        }
-                    })();
-
-                    // 🔥 Effet malus — flammes + skull, même pattern que createWinnerEffects
-                    function createMalusEffects(element) {
-                        var rect = element.getBoundingClientRect();
-                        var x = rect.left + rect.width / 2;
-                        var y = rect.top + rect.height / 2;
-
-                        // 6 flammes 🔥 en radial
-                        for (var i = 0; i < 6; i++) {
-                            var fl = document.createElement('div');
-                            fl.textContent = '🔥';
-                            fl.style.cssText = 'position:fixed;pointer-events:none;z-index:10000;font-size:18px;';
-                            fl.style.left = x + 'px';
-                            fl.style.top = y + 'px';
-                            document.body.appendChild(fl);
-                            var angle = (i / 6) * Math.PI * 2;
-                            var dist = 55 + Math.random() * 25;
-                            var tx = Math.cos(angle) * dist;
-                            var ty = Math.sin(angle) * dist;
-                            fl.animate([
-                                { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
-                                { transform: 'translate(calc(-50% + ' + tx + 'px), calc(-50% + ' + ty + 'px)) scale(0.2)', opacity: 0 }
-                            ], { duration: 900, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards' });
-                            setTimeout(function(el) { el.remove(); }, 900, fl);
-                        }
-
-                        // 1 skull 💀 central qui grossit puis disparaît
-                        var skull = document.createElement('div');
-                        skull.textContent = '💀';
-                        skull.style.cssText = 'position:fixed;pointer-events:none;z-index:10001;font-size:14px;';
-                        skull.style.left = x + 'px';
-                        skull.style.top = y + 'px';
-                        document.body.appendChild(skull);
-                        skull.animate([
-                            { transform: 'translate(-50%,-50%) scale(0.5)', opacity: 0 },
-                            { transform: 'translate(-50%,-80%) scale(1.3)', opacity: 1, offset: 0.3 },
-                            { transform: 'translate(-50%,-120%) scale(1)', opacity: 0 }
-                        ], { duration: 1100, easing: 'ease-out', fill: 'forwards' });
-                        setTimeout(function() { skull.remove(); }, 1100);
-
-                        // 6 étincelles rouges
-                        var sparkColors = ['#DC3C3C', '#FF6B35', '#FF4500', '#8B0000'];
-                        for (var j = 0; j < 6; j++) {
-                            var s = document.createElement('div');
-                            s.style.cssText = 'position:fixed;pointer-events:none;z-index:10000;width:7px;height:7px;border-radius:50%;';
-                            s.style.backgroundColor = sparkColors[j % sparkColors.length];
-                            s.style.left = x + 'px';
-                            s.style.top = y + 'px';
-                            document.body.appendChild(s);
-                            var a2 = ((j + 0.5) / 6) * Math.PI * 2;
-                            var d2 = 40 + Math.random() * 25;
-                            var sx = Math.cos(a2) * d2;
-                            var sy = Math.sin(a2) * d2;
-                            s.animate([
-                                { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
-                                { transform: 'translate(calc(-50% + ' + sx + 'px), calc(-50% + ' + sy + 'px)) scale(0)', opacity: 0 }
-                            ], { duration: 800, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards' });
-                            setTimeout(function(el) { el.remove(); }, 800, s);
-                        }
-                    }
 
                     function createWinnerEffects(element) {
                         var rect = element.getBoundingClientRect();
@@ -4804,7 +4358,40 @@ function sendMalus(reason, points){
                                 
                                 if (avatarSquare && avatarWrapper) {
                                     if (pointsGained < 0) {
-                                        // Malus géré par Handler A — ne rien faire ici
+                                        // === ANIMATION PERTE DE POINTS (même pattern que gain, emojis/couleurs feu) ===
+                                        avatarSquare.classList.add('avatar-penalized');
+                                        if (window.SoundManager) SoundManager.play('malusImpact');
+                                        
+                                        // Ajouter le halo rouge
+                                        const halo = document.createElement('div');
+                                        halo.className = 'malus-halo';
+                                        avatarSquare.appendChild(halo);
+                                        
+                                        // Popup points perdus
+                                        const popup = document.createElement('div');
+                                        popup.className = 'points-popup-penalty';
+                                        popup.textContent = pointsGained + ' pts';
+                                        avatarWrapper.appendChild(popup);
+                                        setTimeout(() => popup.remove(), 4000);
+                                        
+                                        // Flammes qui s'envolent autour de l'avatar (8, comme les étoiles du gain)
+                                        const flames = ['🔥', '💥', '🔥', '🧨', '🔥', '💥', '🔥', '🧨'];
+                                        for (let i = 0; i < 8; i++) {
+                                            const flame = document.createElement('div');
+                                            flame.className = 'malus-flame';
+                                            flame.textContent = flames[Math.floor(Math.random() * flames.length)];
+                                            flame.style.left = (50 + (Math.random() - 0.5) * 100) + '%';
+                                            flame.style.top = (50 + (Math.random() - 0.5) * 100) + '%';
+                                            flame.style.animationDelay = (Math.random() * 0.5) + 's';
+                                            avatarWrapper.appendChild(flame);
+                                            setTimeout(() => flame.remove(), 2500);
+                                        }
+                                        
+                                        // Supprimer les effets après l'animation
+                                        setTimeout(() => {
+                                            avatarSquare.classList.remove('avatar-penalized');
+                                            halo.remove();
+                                        }, 3000);
                                     } else {
                                         // === ANIMATION GAIN DE POINTS ===
                                         console.log('✨ Célébration sur:', who || 'current');
