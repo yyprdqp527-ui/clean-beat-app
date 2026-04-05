@@ -3073,7 +3073,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <!-- Badge pour les messages REÇUS par l'utilisateur connecté -->
                                         {% set current_user_unread = unread_messages_count|default(0) %}
                                         {% if current_user_unread > 0 %}
-                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="window.location.href='{{ url_for('comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
+                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="event.stopPropagation();window.location.href='{{ url_for('comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
                                         {% endif %}
                                     </div>
                                     <div class="avatar-points" aria-label="Points du jour">{{ points1 }} pts</div>
@@ -3128,7 +3128,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 {# C'est un AUTRE ADULTE → pas de pastille #}
                                                 {% set p2_unread = 0 %}
                                             {% endif %}
-                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="window.location.href='/profil/{{ p2.email }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
+                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">{{ points_p2 }} pts</div>
                                     </div>
@@ -3178,7 +3178,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     {# C'est un AUTRE ADULTE → pas de pastille #}
                                                     {% set p_unread = 0 %}
                                                 {% endif %}
-                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="window.location.href='/profil/{{ p.email }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
+                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                             </div>
                                             <div class="avatar-points" aria-label="Points du jour">{{ points }} pts</div>
                                         </div>
@@ -4632,7 +4632,7 @@ function sendMalus(reason, points){
                             <div class="rooms-isometric">
 
                                 {% for room in custom_rooms %}
-                                <a href="/categorie/{{ room.category }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
+                                <a href="{{ url_for('categorie', cat=room.category) }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
                                     <div class="room-card-title">{{ room.name }}</div>
                                     <div class="room-card-visual" data-category="{{ room.category }}">
                                         <picture>
