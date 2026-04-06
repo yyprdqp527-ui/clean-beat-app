@@ -1149,13 +1149,25 @@ window.showGlassPopup = function(message, category = 'info', duration = 3000) {
 
 <!-- 🔊 Howler.js + SoundManager centralisé -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
-<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1003"></script>
+<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
+<!-- 🔓 Déverrouillage audio mobile (iOS/Android) au premier toucher -->
+<script>
+(function(){
+    function unlockAudio(){
+        if(window.SoundManager) SoundManager.unlock();
+        document.removeEventListener('touchstart', unlockAudio, true);
+        document.removeEventListener('click', unlockAudio, true);
+    }
+    document.addEventListener('touchstart', unlockAudio, true);
+    document.addEventListener('click', unlockAudio, true);
+})();
+</script>
 
 <!-- 📱 Service Worker pour PWA (mode app native) -->
 <script>
 // Forcer le renouvellement du cache (v1003)
 (function() {
-    var PURGE_KEY = 'cb_cache_purged_v1003';
+    var PURGE_KEY = 'cb_cache_purged_v1004';
     if (!localStorage.getItem(PURGE_KEY)) {
         localStorage.setItem(PURGE_KEY, '1');
         // Purger aussi les préférences son pour garantir enabled=true
