@@ -9965,7 +9965,22 @@ def profil_joueur(player_email):
                 key = (r[0], r[1])  # (task_name, category) — éviter doublons
                 if key not in seen_bonus:
                     seen_bonus.add(key)
-                    gameplay_notifs.append({'text': r[0], 'type': r[1], 'points': r[2], 'date': str(r[3]) if r[3] else ''})
+                    # Parser "Bonus de Anne : Super travail" → giver="Anne", reason="Super travail"
+                    _raw = r[0] or ''
+                    _giver = ''
+                    _reason = ''
+                    if ' de ' in _raw:
+                        _after_de = _raw.split(' de ', 1)[1]
+                        if ' : ' in _after_de:
+                            _giver = _after_de.split(' : ', 1)[0].strip()
+                            _reason = _after_de.split(' : ', 1)[1].strip()
+                        else:
+                            _giver = _after_de.strip()
+                    gameplay_notifs.append({
+                        'text': r[0], 'type': r[1], 'points': r[2],
+                        'date': str(r[3]) if r[3] else '',
+                        'giver': _giver, 'reason': _reason
+                    })
             # Suspicions reçues (où ce joueur est suspecté)
             c.execute("""
                 SELECT s.task_name, s.status, u.name, s.created_at
