@@ -5720,14 +5720,14 @@ def reminders():
         _dbg(f"⚠️ Erreur marquage courses_added: {e}")
 
     # Liste partagée par toute la maison (visible par tous les joueurs)
-    # Les articles restent à leur position, même une fois cochés
+    # Actifs (non cochés) en premier, plus récents en haut ; puis cochés en bas
     c.execute("""
         SELECT pr.id, pr.title, pr.remind_at, pr.is_done, pr.created_at, pr.user_email, 
                u.name, u.avatar, u.avatar_file, u.avatar_url
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
-        ORDER BY pr.created_at ASC
+        ORDER BY pr.is_done ASC, pr.created_at DESC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
@@ -5786,21 +5786,11 @@ def add_reminder():
 
     house_id = house_row[0]
 
-    # Reset auto : si la liste atteint 30 articles, supprimer tous les articles cochés
-    c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=?", (house_id,))
-    total_count = c.fetchone()[0] or 0
-    if total_count >= 30:
+    # Reset auto : si 30 articles barrés, supprimer tous les articles cochés
+    c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=1", (house_id,))
+    done_count = c.fetchone()[0] or 0
+    if done_count >= 30:
         c.execute("DELETE FROM player_reminders WHERE house_id=? AND is_done=1", (house_id,))
-        # Si après purge on est encore à 30+, supprimer les plus anciens
-        c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=?", (house_id,))
-        still_count = c.fetchone()[0] or 0
-        if still_count >= 30:
-            c.execute("""
-                DELETE FROM player_reminders WHERE id IN (
-                    SELECT id FROM player_reminders WHERE house_id=?
-                    ORDER BY created_at ASC LIMIT ?
-                )
-            """, (house_id, still_count - 29))
 
     c.execute("""
         INSERT INTO player_reminders (user_email, house_id, title, remind_at)
@@ -5843,7 +5833,11 @@ def add_reminder():
         safe_socketio_emit('reminder_added', {
             'id': new_id,
             'title': title,
-            'pending_count': _courses_pending
+            'pending_count': _courses_pending,
+            'creator_name': creator_name,
+            'creator_avatar': creator_avatar,
+            'creator_avatar_file': creator_avatar_file,
+            'creator_avatar_url': creator_avatar_url
         }, namespace='/', room=f'house_{house_id}', broadcast=True)
     except Exception:
         pass
@@ -6014,13 +6008,24 @@ def delete_reminder(reminder_id):
         c.execute("DELETE FROM player_reminders WHERE id=? AND house_id=?",
                   (reminder_id, hr[0]))
     conn.commit()
+
+    # Compter les articles restants non cochés pour la pastille
+    _pending_after_delete = 0
+    if hr and hr[0]:
+        try:
+            c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (hr[0],))
+            _pending_after_delete = c.fetchone()[0] or 0
+        except Exception:
+            pass
+
     conn.close()
 
     # Synchroniser la suppression pour tous les joueurs
     if hr and hr[0]:
         try:
             safe_socketio_emit('reminder_deleted', {
-                'id': reminder_id
+                'id': reminder_id,
+                'pending_count': _pending_after_delete
             }, namespace='/', room=f'house_{hr[0]}', broadcast=True)
         except Exception:
             pass

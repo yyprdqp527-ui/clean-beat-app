@@ -5788,6 +5788,17 @@ function sendMalus(reason, points){
                             _forceRepaint();
                         });
 
+                        // Badge courses barre nav bas : article supprimé
+                        socket.on('reminder_deleted', function(data) {
+                            var cnt = data.pending_count || 0;
+                            var b = document.getElementById('courses-nav-badge');
+                            if (b) {
+                                if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; }
+                                else { b.style.display = 'none'; }
+                            }
+                            _forceRepaint();
+                        });
+
                         // 👶 Suivi bébé — rafraîchir la pastille quand un tracking est ajouté
                         socket.on('baby_badge_update', function(data) {
                             console.log('👶 WebSocket: baby_badge_update reçu', data);

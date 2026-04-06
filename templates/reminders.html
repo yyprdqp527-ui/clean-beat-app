@@ -356,13 +356,14 @@
                     avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
                 }
                 
+                card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
                 card.innerHTML =
-                    '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">✓</div>' +
+                    '<div class="reminder-check" data-id="' + data.id + '">✓</div>' +
                     '<div class="reminder-body">' +
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                         '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
                     '</div>' +
-                    '<button class="btn-delete" onclick="deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
+                    '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
                 // Insérer avant les articles cochés (done)
                 _insertBeforeDone(list, card);
@@ -436,8 +437,18 @@
                         const list = document.getElementById('remindersList');
                         list.innerHTML = '<div class="empty-state" id="emptyState"><span class="empty-icon">🛒</span>La liste est vide !<br>Ajoute ton premier article.</div>';
                     }
+                    _updateSectionTitle();
                 }, 300);
                 showToast('🗑 Article supprimé');
+                // Mettre à jour le badge icône app
+                fetch('/api/unread_counts', {cache: 'no-store'})
+                    .then(function(r){ return r.json(); })
+                    .then(function(c){
+                        var total = (c.unread_received||0) + (c.unread_baby||0)
+                                  + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                        if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
+                        else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+                    }).catch(function(){});
             });
     };
 
@@ -522,16 +533,15 @@
         }
     }
 
-    // ─── Insérer une carte avant les articles cochés ──────────────────────────
+    // ─── Insérer une nouvelle carte en haut de la liste (après le titre de section) ──
     function _insertBeforeDone(list, card) {
-        var firstDone = list.querySelector('.reminder-card.done');
-        var sep = document.getElementById('doneSeparator');
-        if (firstDone) {
-            list.insertBefore(card, firstDone);
-        } else if (sep) {
-            list.insertBefore(card, sep);
-        } else {
+        var sectionTitle = list.querySelector('.section-title');
+        if (sectionTitle && sectionTitle.nextSibling) {
+            list.insertBefore(card, sectionTitle.nextSibling);
+        } else if (sectionTitle) {
             list.appendChild(card);
+        } else {
+            list.insertBefore(card, list.firstChild);
         }
     }
 
@@ -539,6 +549,18 @@
     function escHtml(s) {
         return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+
+    // ─── Rafraîchir le badge PWA au chargement (les messages courses_added sont marqués lus côté serveur) ──
+    (function() {
+        fetch('/api/unread_counts', {cache: 'no-store'})
+            .then(function(r){ return r.json(); })
+            .then(function(c){
+                var total = (c.unread_received||0) + (c.unread_baby||0)
+                          + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
+                else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+            }).catch(function(){});
+    })();
 })();
 </script>
 {% endblock %}
