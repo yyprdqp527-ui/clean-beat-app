@@ -299,7 +299,10 @@ body { min-height: 100vh; }
             <div class="gp-notif-emoji">❤️</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">Bonus{% if n.reason %} · {{ n.reason }}{% endif %}</div>
-                <div class="gp-notif-detail">{% if n.giver %}De {{ n.giver }}{% endif %}{% if n.giver and n.date %} · {% endif %}{{ n.date }}</div>
+                <div class="gp-notif-detail">
+                    {% if n.giver %}👤 De <strong>{{ n.giver }}</strong>{% endif %}
+                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date }}{% endif %}
+                </div>
             </div>
             <div class="gp-notif-pts">+{{ n.points|abs }} pts</div>
         </a>
@@ -308,7 +311,10 @@ body { min-height: 100vh; }
             <div class="gp-notif-emoji">💀</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">Malus{% if n.reason %} · {{ n.reason }}{% endif %}</div>
-                <div class="gp-notif-detail">{% if n.giver %}De {{ n.giver }}{% endif %}{% if n.giver and n.date %} · {% endif %}{{ n.date }}</div>
+                <div class="gp-notif-detail">
+                    {% if n.giver %}👤 De <strong>{{ n.giver }}</strong>{% endif %}
+                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date }}{% endif %}
+                </div>
             </div>
             <div class="gp-notif-pts">{{ n.points }} pts</div>
         </a>

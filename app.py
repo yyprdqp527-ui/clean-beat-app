@@ -9966,17 +9966,25 @@ def profil_joueur(player_email):
                 key = (r[0], r[1])  # (task_name, category) — éviter doublons
                 if key not in seen_bonus:
                     seen_bonus.add(key)
-                    # Parser "Bonus de Anne : Super travail" → giver="Anne", reason="Super travail"
+                    # Parser "Malus de Anne : Vaisselle non rangée"
+                    # → giver="Anne", reason="Vaisselle non rangée"
                     _raw = r[0] or ''
                     _giver = ''
                     _reason = ''
-                    if ' de ' in _raw:
-                        _after_de = _raw.split(' de ', 1)[1]
+                    # Format attendu : "Bonus de Nom : Motif" ou "Malus de Nom : Motif"
+                    import re as _re_bm
+                    _m = _re_bm.match(r'^(?:Bonus|Malus)\s+de\s+(.+?)\s*:\s*(.+)$', _raw)
+                    if _m:
+                        _giver = _m.group(1).strip()
+                        _reason = _m.group(2).strip()
+                    elif ' de ' in _raw:
+                        # Fallback : "Malus de Anne" sans motif
+                        _after_de = _raw.split(' de ', 1)[1].strip()
                         if ' : ' in _after_de:
                             _giver = _after_de.split(' : ', 1)[0].strip()
                             _reason = _after_de.split(' : ', 1)[1].strip()
                         else:
-                            _giver = _after_de.strip()
+                            _giver = _after_de
                     # Convertir completed_at en heure Paris et formater "lundi à 9:03"
                     _date_str = ''
                     if r[3]:
