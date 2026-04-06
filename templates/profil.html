@@ -226,6 +226,7 @@ body { min-height: 100vh; }
 .gp-notif-body { flex: 1; min-width: 0; }
 .gp-notif-title { font-size: 13px; font-weight: 800; color: #153036; line-height: 1.3; }
 .gp-notif-detail { font-size: 11px; font-weight: 600; color: #597176; margin-top: 3px; line-height: 1.3; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.gp-notif-task { font-size: 11px; font-weight: 700; color: #2c3e50; margin-top: 2px; line-height: 1.3; }
 .gp-giver-avatar { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; flex-shrink: 0; }
 .gp-giver-emoji-av { width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
 .gp-notif-pts {
@@ -301,6 +302,7 @@ body { min-height: 100vh; }
             <div class="gp-notif-emoji">❤️</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">Bonus{% if n.reason %} · {{ n.reason }}{% endif %}</div>
+                {% if n.task_context %}<div class="gp-notif-task">📋 {{ n.task_context }}</div>{% endif %}
                 <div class="gp-notif-detail">
                     {% if n.giver %}
                     {% if n.giver_avatar_url %}<img class="gp-giver-avatar" src="{{ n.giver_avatar_url }}" alt="">
@@ -320,6 +322,7 @@ body { min-height: 100vh; }
             <div class="gp-notif-emoji">💀</div>
             <div class="gp-notif-body">
                 <div class="gp-notif-title">Malus{% if n.reason %} · {{ n.reason }}{% endif %}</div>
+                {% if n.task_context %}<div class="gp-notif-task">📋 {{ n.task_context }}</div>{% endif %}
                 <div class="gp-notif-detail">
                     {% if n.giver %}
                     {% if n.giver_avatar_url %}<img class="gp-giver-avatar" src="{{ n.giver_avatar_url }}" alt="">

@@ -9980,9 +9980,15 @@ def profil_joueur(player_email):
                     _raw = r[0] or ''
                     _giver = ''
                     _reason = ''
-                    # Format attendu : "Bonus de Nom : Motif" ou "💀 Malus de Nom : Motif"
+                    # Format attendu : "Bonus de Nom : Motif | Tâche" ou "💀 Malus de Nom : Motif"
                     import re as _re_bm
-                    _m = _re_bm.match(r'^(?:[^\w]*?)(?:Bonus|Malus)\s+de\s+(.+?)\s*:\s*(.+)$', _raw)
+                    # Séparer la tâche ménagère si présente (après |)
+                    _task_context = ''
+                    _parse_raw = _raw
+                    if ' | ' in _raw:
+                        _parse_raw, _task_context = _raw.rsplit(' | ', 1)
+                        _task_context = _task_context.strip()
+                    _m = _re_bm.match(r'^(?:[^\w]*?)(?:Bonus|Malus)\s+de\s+(.+?)\s*:\s*(.+)$', _parse_raw)
                     if _m:
                         _giver = _m.group(1).strip()
                         _reason = _m.group(2).strip()
@@ -10023,6 +10029,7 @@ def profil_joueur(player_email):
                         'text': r[0], 'type': r[1], 'points': r[2],
                         'date': _date_str,
                         'giver': _giver, 'reason': _reason,
+                        'task_context': _task_context,
                         'giver_avatar': _giver_avatar,
                         'giver_avatar_file': _giver_avatar_file,
                         'giver_avatar_url': _giver_avatar_url
@@ -10294,7 +10301,10 @@ def api_send_malus():
             return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
         # Insérer le malus comme tâche avec points négatifs
+        task_context = str(data.get('task', '')).strip()[:100]
         task_name = f'Malus de {sender_name} : {reason_label}'
+        if task_context:
+            task_name += f' | {task_context}'
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'malus', ?, ?, CURRENT_TIMESTAMP)
@@ -10382,7 +10392,10 @@ def api_send_bonus():
         if recent_ct + recent_susp >= 1:
             return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
+        task_context = str(data.get('task', '')).strip()[:100]
         task_name = f'Bonus de {sender_name} : {reason_label}'
+        if task_context:
+            task_name += f' | {task_context}'
         c.execute("""
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'bonus', ?, ?, CURRENT_TIMESTAMP)

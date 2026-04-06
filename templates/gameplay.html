@@ -1424,7 +1424,8 @@ function sendBonus(reason, points){
     if(!_bonusEmail) return;
     var targetEmail = _bonusEmail;
     var targetName = document.getElementById('bonusTargetName').textContent;
-    fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
+    var taskCtx = ''; var tn=document.getElementById('bonusTaskName'); if(tn && tn.textContent) taskCtx=tn.textContent;
+    fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points,task:taskCtx})})
         .then(function(r){return r.json();}).then(function(data){
             closeBonus();
             if(data.success){
@@ -1455,7 +1456,8 @@ function sendMalus(reason, points){
     if(!_malusEmail) return;
     var targetEmail = _malusEmail;
     var targetName = document.getElementById('malusTargetName').textContent;
-    fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points})})
+    var taskCtx = ''; var tn=document.getElementById('malusTaskName'); if(tn && tn.textContent) taskCtx=tn.textContent;
+    fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points,task:taskCtx})})
         .then(function(r){return r.json();}).then(function(data){
             closeMalus();
             if(data.success){
