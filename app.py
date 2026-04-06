@@ -9961,6 +9961,7 @@ def profil_joueur(player_email):
                 ORDER BY ct.completed_at DESC LIMIT 20
             """, (player_email,))
             seen_bonus = set()
+            _jours_fr = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
             for r in c.fetchall():
                 key = (r[0], r[1])  # (task_name, category) — éviter doublons
                 if key not in seen_bonus:
@@ -9976,9 +9977,25 @@ def profil_joueur(player_email):
                             _reason = _after_de.split(' : ', 1)[1].strip()
                         else:
                             _giver = _after_de.strip()
+                    # Convertir completed_at en heure Paris et formater "lundi à 9:03"
+                    _date_str = ''
+                    if r[3]:
+                        try:
+                            _raw_dt = str(r[3])[:19]
+                            _dt = datetime.strptime(_raw_dt, '%Y-%m-%d %H:%M:%S')
+                            # SQLite local: CURRENT_TIMESTAMP = UTC → convertir en Paris
+                            # PostgreSQL Render: CURRENT_TIMESTAMP = déjà Paris → pas de conversion
+                            if not _USE_PG and PARIS_TZ:
+                                from zoneinfo import ZoneInfo as _ZI
+                                _dt = _dt.replace(tzinfo=_ZI('UTC')).astimezone(PARIS_TZ).replace(tzinfo=None)
+                            _jour = _jours_fr[_dt.weekday()]
+                            _heure = f'{_dt.hour}:{_dt.minute:02d}'
+                            _date_str = f'{_jour} à {_heure}'
+                        except Exception:
+                            _date_str = str(r[3])[:16].replace('T', ' ')
                     gameplay_notifs.append({
                         'text': r[0], 'type': r[1], 'points': r[2],
-                        'date': str(r[3]) if r[3] else '',
+                        'date': _date_str,
                         'giver': _giver, 'reason': _reason
                     })
             # Suspicions reçues (où ce joueur est suspecté)
