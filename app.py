@@ -9951,6 +9951,15 @@ def profil_joueur(player_email):
                 my_rewards_used = []
         # ── Notifications gameplay reçues (bonus/malus/suspicions 48h) ──
         gameplay_notifs = []
+        # Précharger les avatars des joueurs de la maison pour les bonus/malus
+        _house_avatars = {}
+        try:
+            c.execute("SELECT name, avatar, avatar_file, avatar_url FROM users WHERE house_id=?", (house_id,))
+            for _ua in c.fetchall():
+                if _ua[0]:
+                    _house_avatars[_ua[0]] = {'avatar': _ua[1], 'avatar_file': _ua[2], 'avatar_url': _ua[3]}
+        except Exception:
+            pass
         try:
             # Bonus et Malus reçus (48h)
             c.execute("""
@@ -9971,9 +9980,9 @@ def profil_joueur(player_email):
                     _raw = r[0] or ''
                     _giver = ''
                     _reason = ''
-                    # Format attendu : "Bonus de Nom : Motif" ou "Malus de Nom : Motif"
+                    # Format attendu : "Bonus de Nom : Motif" ou "💀 Malus de Nom : Motif"
                     import re as _re_bm
-                    _m = _re_bm.match(r'^(?:Bonus|Malus)\s+de\s+(.+?)\s*:\s*(.+)$', _raw)
+                    _m = _re_bm.match(r'^(?:[^\w]*?)(?:Bonus|Malus)\s+de\s+(.+?)\s*:\s*(.+)$', _raw)
                     if _m:
                         _giver = _m.group(1).strip()
                         _reason = _m.group(2).strip()
@@ -10001,10 +10010,22 @@ def profil_joueur(player_email):
                             _date_str = f'{_jour} à {_heure}'
                         except Exception:
                             _date_str = str(r[3])[:16].replace('T', ' ')
+                    # Récupérer l'avatar du giver depuis le cache maison
+                    _giver_avatar = ''
+                    _giver_avatar_file = ''
+                    _giver_avatar_url = ''
+                    if _giver and _giver in _house_avatars:
+                        _ga = _house_avatars[_giver]
+                        _giver_avatar = _ga.get('avatar', '')
+                        _giver_avatar_file = _ga.get('avatar_file', '')
+                        _giver_avatar_url = _ga.get('avatar_url', '')
                     gameplay_notifs.append({
                         'text': r[0], 'type': r[1], 'points': r[2],
                         'date': _date_str,
-                        'giver': _giver, 'reason': _reason
+                        'giver': _giver, 'reason': _reason,
+                        'giver_avatar': _giver_avatar,
+                        'giver_avatar_file': _giver_avatar_file,
+                        'giver_avatar_url': _giver_avatar_url
                     })
             # Suspicions reçues (où ce joueur est suspecté)
             c.execute("""
