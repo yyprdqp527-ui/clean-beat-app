@@ -1658,6 +1658,13 @@ def check_weekly_reset(house_id, conn=None):
         if not last_weekly_reset or last_weekly_reset < current_week_start:
             # On est dans une nouvelle semaine, réinitialiser les statistiques
             
+            # 🟠 D'abord supprimer les custom_tasks de la semaine précédente
+            # (AVANT de supprimer les completed_tasks, sinon elles réapparaîtraient comme "en attente")
+            c.execute("""
+                DELETE FROM custom_tasks
+                WHERE house_id = ? AND DATE(created_at) < ?
+            """, (house_id, current_week_start))
+
             # Supprimer les tâches complétées de la semaine précédente (avant le lundi de cette semaine)
             c.execute("""
                 DELETE FROM completed_tasks 
@@ -9646,6 +9653,7 @@ def menu():
                             SELECT 1 FROM completed_tasks ctd
                             WHERE ctd.house_id = ct.house_id
                             AND ctd.category = ct.category
+                            AND ctd.task_name = ct.task_name
                             AND ctd.completed_at >= ct.created_at
                         )
                         GROUP BY ct.category
@@ -13264,22 +13272,25 @@ def api_validate_task():
         else:
             pass
         
-        # ✅ Marquer tous les messages task_added non lus comme lus pour ce joueur
-        # (il a validé une mission → le rappel peut s'éteindre)
+        # ✅ Marquer les messages task_added de CETTE catégorie non lus comme lus pour ce joueur
+        # (il a validé une mission de cette pièce → seul le rappel de cette pièce s'éteint)
         try:
-            c.execute("""
-                SELECT m.id FROM messages m
-                WHERE m.house_id = ? AND m.message_type = 'task_added'
-                AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr
-                    WHERE mr.message_id = m.id AND mr.user_email = ?
-                )
-            """, (user_house_id, player_email))
-            for msg_row in c.fetchall():
+            _cat_to_mark = normalize_category(category) if category else None
+            if _cat_to_mark:
                 c.execute("""
-                    INSERT INTO message_reads (message_id, user_email)
-                    VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
-                """, (msg_row[0], player_email))
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ? AND m.message_type = 'task_added'
+                    AND m.related_category = ?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM message_reads mr
+                        WHERE mr.message_id = m.id AND mr.user_email = ?
+                    )
+                """, (user_house_id, _cat_to_mark, player_email))
+                for msg_row in c.fetchall():
+                    c.execute("""
+                        INSERT INTO message_reads (message_id, user_email)
+                        VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
+                    """, (msg_row[0], player_email))
         except Exception:
             pass
 
@@ -13330,6 +13341,14 @@ def api_validate_task():
                 # Utiliser safe_socketio_emit() pour gérer les sessions invalides
                 safe_socketio_emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
+                }, namespace='/', room=room_name, broadcast=True)
+                
+                # 🟠 Notifier tous les joueurs que la mission a été validée
+                # → déclenche refreshMissionDots() + refreshAllBadges() côté client
+                safe_socketio_emit('task_validated', {
+                    'category': category,
+                    'task_name': task_name,
+                    'player_email': player_email
                 }, namespace='/', room=room_name, broadcast=True)
                 
                 _dbg(f"✅ WebSocket: Notification envoyée pour {player_email} (+{task_points} pts)")
@@ -13783,6 +13802,7 @@ def api_rooms_with_missions():
                 SELECT 1 FROM completed_tasks ctd
                 WHERE ctd.house_id = ct.house_id
                 AND ctd.category = ct.category
+                AND ctd.task_name = ct.task_name
                 AND ctd.completed_at >= ct.created_at
             )
             GROUP BY ct.category
