@@ -5286,6 +5286,7 @@ function sendMalus(reason, points){
                     });
                 }
                 // Protection: si socket.io n'est pas chargé, les badges restent fonctionnels
+                console.log('🔌 Tentative connexion WebSocket...');
                 try {
                         const socket = io({
                             transports: ['websocket', 'polling'],
@@ -5296,6 +5297,7 @@ function sendMalus(reason, points){
                             reconnectionAttempts: Infinity,
                             timeout: 20000
                         });
+                        console.log('🔌 Socket créé :', socket ? 'OK' : 'NULL');
                         const userEmail = "{{ session.get('user', '') }}";
                         
                         if (!userEmail) {
@@ -5821,6 +5823,7 @@ function sendMalus(reason, points){
                         
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
+                    console.error('🔌 ERREUR init socket :', socketError);
                     console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
                 }
                 
