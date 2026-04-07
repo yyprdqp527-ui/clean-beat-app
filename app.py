@@ -367,7 +367,6 @@ except ImportError:
     print("Twilio non installé. Installation: pip install twilio")
 
 # ...existing code...
-from name_house import bp as name_house_bp
 
 # Route pour supprimer une tâche personnalisée (à placer après la création de l'objet app)
 def register_delete_custom_task_route(app):
@@ -553,8 +552,6 @@ else:
     socketio = None
     print("⚠️ WebSocket désactivé - Flask-SocketIO non disponible")
 
-# Enregistrer le blueprint pour la route de nommage de maison
-app.register_blueprint(name_house_bp)
 
 # Enregistrer la route de suppression personnalisée après la création de l'app
 register_delete_custom_task_route(app)
