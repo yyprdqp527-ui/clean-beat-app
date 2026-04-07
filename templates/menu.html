@@ -4571,6 +4571,27 @@ function sendMalus(reason, points){
                                             }
                                         });
 
+                                        // --- Header : nom du joueur (.avatar-name) ---
+                                        const avatarCol = document.querySelector(`.avatar-square-wrapper[data-player-email="${player.email}"]`);
+                                        if (avatarCol) {
+                                            const parentCol = avatarCol.closest('.avatar-col') || avatarCol.parentElement;
+                                            if (parentCol) {
+                                                const nameEl = parentCol.querySelector('.avatar-name');
+                                                if (nameEl && player.name && nameEl.textContent.trim() !== player.name) {
+                                                    nameEl.textContent = player.name;
+                                                }
+                                            }
+                                        }
+
+                                        // --- Classement compétitif (.cw-pts / .cw-name) ---
+                                        const cwPlayer = document.querySelector(`.cw-player[data-cw-player-name="${player.name}"]`);
+                                        if (cwPlayer) {
+                                            const cwPts = cwPlayer.querySelector('.cw-pts');
+                                            if (cwPts) cwPts.textContent = (player.daily_points || 0) + ' pts';
+                                            const cwName = cwPlayer.querySelector('.cw-name');
+                                            if (cwName) cwName.textContent = player.name;
+                                        }
+
                                         // --- Header : avatar‑wrapper ---
                                         const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${player.email}"]`);
                                         if (avatarWrapper) {
@@ -5679,6 +5700,34 @@ function sendMalus(reason, points){
                                     }
                                 }
                             });
+                        });
+
+                        // Écouter les mises à jour de nom
+                        socket.on('player_name_updated', function(data) {
+                            console.log('Nom mis à jour:', data);
+                            if (data.email && data.new_name) {
+                                // Mettre à jour .avatar-name via data-player-email
+                                const wrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${data.email}"]`);
+                                if (wrapper) {
+                                    const col = wrapper.closest('.avatar-col') || wrapper.parentElement;
+                                    if (col) {
+                                        const nameEl = col.querySelector('.avatar-name');
+                                        if (nameEl) nameEl.textContent = data.new_name;
+                                    }
+                                }
+                                // Mettre à jour .cw-name dans le classement
+                                document.querySelectorAll('.cw-player').forEach(el => {
+                                    const cwName = el.querySelector('.cw-name');
+                                    if (cwName) {
+                                        const currentName = cwName.textContent.replace(/[👑✨]/g, '').trim();
+                                        const oldName = el.getAttribute('data-cw-player-name');
+                                        if (oldName === currentName || oldName === data.old_name) {
+                                            cwName.textContent = data.new_name;
+                                            el.setAttribute('data-cw-player-name', data.new_name);
+                                        }
+                                    }
+                                });
+                            }
                         });
 
                         // On initial load, replace DiceBear <img> with inline SVG for better reliability
