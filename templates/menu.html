@@ -4527,6 +4527,172 @@ function sendMalus(reason, points){
                 </script>
 
                 <script>
+                    // ═══ Polling filet de sécurité : mise à jour points toutes les 5s ═══
+                    function updatePlayersPointsMenu() {
+                        fetch('/api/players_points', { cache: 'no-store' })
+                            .then(response => response.json())
+                            .then(data => {
+                                // Conteneur de préchargement caché pour les avatars
+                                let preloadContainer = document.getElementById('avatar-preload');
+                                try {
+                                    if (!preloadContainer) {
+                                        preloadContainer = document.createElement('div');
+                                        preloadContainer.id = 'avatar-preload';
+                                        preloadContainer.style.cssText = 'width:0;height:0;overflow:hidden;position:fixed;left:-9999px;top:-9999px;';
+                                        document.body.appendChild(preloadContainer);
+                                    }
+                                } catch(e) {}
+
+                                if (data.players && data.players.length > 0) {
+                                    data.players.forEach(player => {
+
+                                        // --- Podium : cartes joueurs ---
+                                        const playerCards = document.querySelectorAll('.player-name-link');
+                                        playerCards.forEach(card => {
+                                            const cardName = card.textContent.trim();
+                                            if (cardName === player.name) {
+                                                const statCard = card.closest('.player-stat-card');
+                                                if (statCard) {
+                                                    const pointsElement = statCard.querySelector('.player-stat-value');
+                                                    if (pointsElement) {
+                                                        const oldPoints = parseInt(pointsElement.textContent) || 0;
+                                                        const newPoints = player.daily_points || 0;
+                                                        if (oldPoints !== newPoints) {
+                                                            pointsElement.style.transform = 'scale(1.2)';
+                                                            pointsElement.style.color = '#28a745';
+                                                            pointsElement.textContent = newPoints;
+                                                            setTimeout(() => {
+                                                                pointsElement.style.transform = 'scale(1)';
+                                                                pointsElement.style.color = '';
+                                                            }, 500);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+
+                                        // --- Header : avatar‑wrapper ---
+                                        const avatarWrapper = document.querySelector(`.avatar-square-wrapper[data-player-email="${player.email}"]`);
+                                        if (avatarWrapper) {
+                                            // Barre verticale
+                                            const vbar = avatarWrapper.querySelector('.vbar');
+                                            if (vbar) {
+                                                const oldPoints = parseInt(vbar.getAttribute('data-points')) || 0;
+                                                const newPoints = player.daily_points || 0;
+                                                if (oldPoints !== newPoints) {
+                                                    vbar.setAttribute('data-points', newPoints);
+                                                    vbar.setAttribute('title', `${newPoints} points aujourd'hui`);
+                                                    const maxPoints = 30;
+                                                    let fillPercent = Math.max(2, Math.min(100, (newPoints / maxPoints) * 100));
+                                                    vbar.setAttribute('data-fill', fillPercent);
+                                                    const vbarFill = vbar.querySelector('.vbar-fill');
+                                                    if (vbarFill) {
+                                                        vbarFill.style.transition = 'none';
+                                                        vbarFill.style.filter = 'brightness(1.5)';
+                                                        vbarFill.style.height = fillPercent + '%';
+                                                        setTimeout(() => {
+                                                            vbarFill.style.transition = 'height 0.4s ease, filter 0.3s ease';
+                                                            vbarFill.style.filter = 'brightness(1)';
+                                                        }, 100);
+                                                    }
+                                                }
+                                            }
+
+                                            // Texte "X pts" et barre horizontale
+                                            const parentEl = avatarWrapper.closest('.avatar-col') || avatarWrapper.parentElement;
+                                            if (parentEl) {
+                                                const newPoints = player.daily_points || 0;
+                                                const pointsText = parentEl.querySelector('.avatar-points');
+                                                if (pointsText) pointsText.textContent = newPoints + ' pts';
+                                                const maxPoints = 30;
+                                                let fillPercent = Math.max(2, Math.min(100, (newPoints / maxPoints) * 100));
+                                                const vbarH = parentEl.querySelector('.vbar-horizontal');
+                                                if (vbarH) {
+                                                    const vbarFillH = vbarH.querySelector('.vbar-fill');
+                                                    if (vbarFillH) vbarFillH.style.width = fillPercent + '%';
+                                                    vbarH.setAttribute('data-points', newPoints);
+                                                    vbarH.setAttribute('data-fill', fillPercent);
+                                                }
+                                            }
+
+                                            // Avatar image
+                                            try {
+                                                const avatarSquare = avatarWrapper.querySelector('.avatar-square');
+                                                if (avatarSquare) {
+                                                    let newAvatarUrl = null;
+                                                    if (player.avatar_url) {
+                                                        newAvatarUrl = player.avatar_url;
+                                                    } else if (player.avatar_file) {
+                                                        newAvatarUrl = '/static/avatars/' + player.avatar_file;
+                                                    } else if (player.avatar) {
+                                                        const raw = String(player.avatar || '');
+                                                        const isEmoji = raw.length <= 4 && /[^\x00-\x7F]/.test(raw);
+                                                        if (!isEmoji) {
+                                                            const style = player.avatar_style || 'adventurer';
+                                                            newAvatarUrl = 'https://api.dicebear.com/7.x/' + encodeURIComponent(style) + '/svg?seed=' + encodeURIComponent(raw);
+                                                        }
+                                                    }
+
+                                                    if (newAvatarUrl) {
+                                                        // Préchargement
+                                                        try {
+                                                            const probeForce = new Image();
+                                                            probeForce.style.display = 'none';
+                                                            probeForce.src = newAvatarUrl;
+                                                            try { preloadContainer.appendChild(probeForce); } catch(e) {}
+                                                        } catch(e) {}
+
+                                                        const existingImg = avatarSquare.querySelector('img');
+                                                        if (existingImg) {
+                                                            try {
+                                                                const existingSrc = new URL(existingImg.src, window.location.href).href;
+                                                                const plannedSrc = new URL(newAvatarUrl, window.location.href).href;
+                                                                if (existingSrc !== plannedSrc) {
+                                                                    const probe = new Image();
+                                                                    probe.onload = function() { existingImg.src = plannedSrc; };
+                                                                    probe.onerror = function() { existingImg.src = MENU_DICEBEAR_FALLBACK; };
+                                                                    probe.src = plannedSrc;
+                                                                    try { avatarSquare.setAttribute('data-avatar-src', plannedSrc); } catch(e){}
+                                                                }
+                                                            } catch (uerr) {
+                                                                existingImg.src = newAvatarUrl;
+                                                            }
+                                                            existingImg.onerror = function() { this.onerror=null; this.src=MENU_DICEBEAR_FALLBACK; };
+                                                        } else {
+                                                            const size = parseInt(getComputedStyle(avatarSquare).getPropertyValue('--avatar-size')) || 48;
+                                                            avatarSquare.innerHTML = '<img src="' + newAvatarUrl + '" alt="Avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">';
+                                                            try { avatarSquare.setAttribute('data-avatar-src', newAvatarUrl); } catch(e){}
+                                                        }
+                                                    } else if (player.avatar && String(player.avatar).length <= 4) {
+                                                        avatarSquare.innerHTML = '<span style="font-size:calc(var(--avatar-size,48px) * 0.5);">' + player.avatar + '</span>';
+                                                    }
+                                                }
+                                            } catch (e) {}
+                                        }
+                                    });
+
+                                    // Santé de la maison
+                                    if (data.house_health !== undefined) {
+                                        document.querySelectorAll('.health-fill, #house-health-fill, #house-health-fill-header').forEach(fill => {
+                                            const newWidth = Math.max(0, Math.min(100, data.house_health));
+                                            fill.style.width = newWidth + '%';
+                                            fill.setAttribute('data-width', newWidth);
+                                        });
+                                    }
+                                }
+                            })
+                            .catch(err => console.error('Erreur mise à jour points:', err));
+                    }
+
+                    // Polling toutes les 5 secondes (pause si onglet masqué)
+                    const menuUpdateInterval = setInterval(function() {
+                        if (!document.hidden) updatePlayersPointsMenu();
+                    }, 5000);
+                    // Premier appel après 500ms
+                    setTimeout(updatePlayersPointsMenu, 500);
+                </script>
+
+                <script>
                     // Debug rapide pour vérifier que le script de mise à jour des points s'exécute
                     try {
                         console.log('menu.html: debug script chargé');
