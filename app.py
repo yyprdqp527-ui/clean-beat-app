@@ -13336,6 +13336,7 @@ def api_validate_task():
                 _dbg(f"   🔍 DEBUG: SOCKETIO_AVAILABLE = {SOCKETIO_AVAILABLE}")
                 
                 # Utiliser safe_socketio_emit() pour gérer les sessions invalides
+                _dbg(f"🎯 Tentative emit players_points_update, room={room_name}, players={len(players_data)}")
                 safe_socketio_emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
                 }, namespace='/', room=room_name, broadcast=True)
