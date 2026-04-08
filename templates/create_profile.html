@@ -630,7 +630,7 @@
         
         <!-- Carte Profil -->
         <div class="profile-card">
-            <form method="POST" action="{{ url_for('update_profile') if change_avatar else url_for('create_profile_post') }}" enctype="multipart/form-data" id="profileForm">
+            <form method="POST" action="{{ url_for('players.update_profile') if change_avatar else url_for('players.create_profile_post') }}" enctype="multipart/form-data" id="profileForm">
             <!-- Section Photo/Avatar -->
             <div class="photo-section">
                 <div class="photo-container">
