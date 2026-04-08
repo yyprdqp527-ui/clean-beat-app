@@ -851,7 +851,7 @@
         <!-- Formulaire d'envoi -->
         <div class="message-form-container">
             {% if available_players %}
-            <form method="POST" action="{{ url_for('comments') }}">
+            <form method="POST" action="{{ url_for('messages.comments') }}">
                 <!-- Sélecteur de destinataire avec avatars -->
                 <div style="margin-bottom: 12px; position: relative;">
                     <label style="font-weight: 700; color: var(--dark); margin-bottom: 8px; display: block; font-size: 14px;">
@@ -1123,7 +1123,7 @@
             btn.disabled = true;
             btn.textContent = '⏳ Validation...';
             
-            fetch('{{ url_for("mark_all_messages_read") }}', {
+            fetch('{{ url_for("messages.mark_all_messages_read") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1174,7 +1174,7 @@
                 const userEmail = "{{ email }}";
                 
                 // � Ajouter le son d'envoi au formulaire
-                const messageForm = document.querySelector('form[action="{{ url_for('comments') }}"]');
+                const messageForm = document.querySelector('form[action="{{ url_for('messages.comments') }}"]');
                 if (messageForm) {
                     messageForm.addEventListener('submit', function(e) {
                         SoundManager.play('sendMessage');

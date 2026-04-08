@@ -3092,7 +3092,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <!-- Badge pour les messages REÇUS par l'utilisateur connecté -->
                                         {% set current_user_unread = unread_messages_count|default(0) %}
                                         {% if current_user_unread > 0 %}
-                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="event.stopPropagation();window.location.href='{{ url_for('comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
+                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="event.stopPropagation();window.location.href='{{ url_for('messages.comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
                                         {% endif %}
                                     </div>
                                     <div class="avatar-points" aria-label="Points du jour">{{ points1 }} pts</div>
@@ -3147,7 +3147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 {# C'est un AUTRE ADULTE → pas de pastille #}
                                                 {% set p2_unread = 0 %}
                                             {% endif %}
-                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
+                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('messages.comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">{{ points_p2 }} pts</div>
                                     </div>
@@ -3197,7 +3197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     {# C'est un AUTRE ADULTE → pas de pastille #}
                                                     {% set p_unread = 0 %}
                                                 {% endif %}
-                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
+                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('messages.comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                             </div>
                                             <div class="avatar-points" aria-label="Points du jour">{{ points }} pts</div>
                                         </div>
@@ -3676,7 +3676,7 @@ body { padding-bottom: 84px !important; }
             <span class="cw-tab-label">Stats</span>
         </a>
         <!-- 3. Messagerie -->
-        <a href="{{ url_for('comments') }}" class="cw-tab">
+        <a href="{{ url_for('messages.comments') }}" class="cw-tab">
             <span class="cw-tab-icon" style="position:relative;">
                 💬
                 <span class="cw-tab-badge" id="messages-nav-badge" {% if not unread_messages_count or unread_messages_count <= 0 %}style="display:none;"{% endif %}>{{ unread_messages_count if unread_messages_count and unread_messages_count < 100 else '99+' }}</span>
