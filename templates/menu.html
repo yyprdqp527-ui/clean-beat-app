@@ -5037,7 +5037,7 @@ function sendMalus(reason, points){
 
                         <!-- Boutons d'action -->
                         <div class="profile-actions">
-                            <a href="{{ url_for('edit_player', email=current_user_name) }}" class="profile-action-btn profile-action-edit">
+                            <a href="{{ url_for('players.edit_player', email=current_user_name) }}" class="profile-action-btn profile-action-edit">
                                 ✏️&nbsp; Modifier mon profil
                             </a>
                             <a href="{{ url_for('logout') }}" class="profile-action-btn profile-action-logout">

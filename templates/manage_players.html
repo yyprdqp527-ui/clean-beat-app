@@ -614,7 +614,7 @@
         </div>
 
         <div class="btn-group">
-            <a href="{{ url_for('edit_player', email=player.email) }}" class="btn btn-edit" style="text-decoration: none; text-align: center;">✏️ Modifier</a>
+            <a href="{{ url_for('players.edit_player', email=player.email) }}" class="btn btn-edit" style="text-decoration: none; text-align: center;">✏️ Modifier</a>
             <button class="btn btn-delete" onclick="confirmDelete('{{ player.email }}', '{{ player.name or player.email }}')">🗑️ Supprimer</button>
         </div>
     </div>
