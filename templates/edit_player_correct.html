@@ -841,7 +841,7 @@
             const result = await response.json();
             
             if (result.success) {
-                window.location.href = '{{ url_for("manage_players") }}';
+                window.location.href = '{{ url_for("players.manage_players") }}';
             } else {
                 alert('Erreur: ' + (result.error || 'Impossible de mettre à jour le joueur'));
             }

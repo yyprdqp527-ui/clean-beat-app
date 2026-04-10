@@ -928,7 +928,7 @@
                 
                 if (result.success) {
                     console.log('✅ Succès ! Redirection...');
-                    window.location.href = '{{ url_for("manage_players") }}';
+                    window.location.href = '{{ url_for("players.manage_players") }}';
                 } else {
                     console.error('❌ Erreur:', result.error);
                     alert('Erreur: ' + (result.error || 'Impossible de mettre à jour le joueur'));
