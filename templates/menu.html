@@ -4838,7 +4838,7 @@ function sendMalus(reason, points){
                             <div class="rooms-isometric">
 
                                 {% for room in custom_rooms %}
-                                <a href="{{ url_for('categorie', cat=room.category) }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
+                                <a href="{{ url_for('tasks.categorie', cat=room.category) }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
                                     <div class="room-card-title">{{ room.name }}</div>
                                     <div class="room-card-visual" data-category="{{ room.category }}">
                                         <picture>
@@ -5154,17 +5154,17 @@ function sendMalus(reason, points){
                     
                     // Map des pièces avec leurs liens de navigation vers les catégories
                     const roomLinks = [
-                        "{{ url_for('categorie', cat='Salon') }}", // Salon
-                        "{{ url_for('categorie', cat='Cuisine') }}", // Cuisine
-                        "{{ url_for('categorie', cat='Chambre Ado') }}", // Chambre Ado
-                        "{{ url_for('categorie', cat='Pièce Bonus') }}", // Pièce Bonus
-                        "{{ url_for('categorie', cat='Chambre Parentale') }}", // Chambre Parentale
-                        "{{ url_for('categorie', cat='Salle Bain') }}", // Salle Bain
-                        "{{ url_for('categorie', cat='Chambre Enfant') }}", // Chambre Enfant
-                        "{{ url_for('categorie', cat='Chambre Bébé') }}", // Chambre Bébé
-                        "{{ url_for('categorie', cat='WC') }}", // WC
-                        "{{ url_for('categorie', cat='Garage') }}", // Garage
-                        "{{ url_for('categorie', cat='Buanderie') }}" // Buanderie
+                        "{{ url_for('tasks.categorie', cat='Salon') }}", // Salon
+                        "{{ url_for('tasks.categorie', cat='Cuisine') }}", // Cuisine
+                        "{{ url_for('tasks.categorie', cat='Chambre Ado') }}", // Chambre Ado
+                        "{{ url_for('tasks.categorie', cat='Pièce Bonus') }}", // Pièce Bonus
+                        "{{ url_for('tasks.categorie', cat='Chambre Parentale') }}", // Chambre Parentale
+                        "{{ url_for('tasks.categorie', cat='Salle Bain') }}", // Salle Bain
+                        "{{ url_for('tasks.categorie', cat='Chambre Enfant') }}", // Chambre Enfant
+                        "{{ url_for('tasks.categorie', cat='Chambre Bébé') }}", // Chambre Bébé
+                        "{{ url_for('tasks.categorie', cat='WC') }}", // WC
+                        "{{ url_for('tasks.categorie', cat='Garage') }}", // Garage
+                        "{{ url_for('tasks.categorie', cat='Buanderie') }}" // Buanderie
                     ];
                     
                     // Permettre aussi le clic direct sur les zones

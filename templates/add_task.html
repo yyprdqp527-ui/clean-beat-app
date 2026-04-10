@@ -285,7 +285,7 @@ body {
 
             <div class="btn-container">
                 {% if selected_category %}
-                    <a href="{{ url_for('categorie', cat=selected_category) }}" class="btn btn-secondary">Retour</a>
+                    <a href="{{ url_for('tasks.categorie', cat=selected_category) }}" class="btn btn-secondary">Retour</a>
                 {% else %}
                     <a href="{{ url_for('menu') }}" class="btn btn-secondary">Retour au menu</a>
                 {% endif %}
