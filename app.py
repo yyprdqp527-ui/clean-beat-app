@@ -4315,55 +4315,6 @@ def add_child():
 # 🧪 FEEDBACK TESTEURS BÊTA
 # ══════════════════════════════════════════════════════════════════════════
 
-@app.route('/feedback', methods=['GET', 'POST'])
-def feedback():
-    """Formulaire de feedback pour les testeurs bêta"""
-    if 'user' not in session:
-        return redirect(url_for('auth.welcome'))
-
-    user_email = session.get('user')
-    user_name = session.get('player_name', '')
-
-    if request.method == 'POST':
-        try:
-            note_globale = request.form.get('note_globale') or None
-            note_facilite = request.form.get('note_facilite') or None
-            note_design = request.form.get('note_design') or None
-            ce_qui_plait = request.form.get('ce_qui_plait', '').strip() or None
-            ce_qui_deplait = request.form.get('ce_qui_deplait', '').strip() or None
-            ameliorations = request.form.get('ameliorations', '').strip() or None
-            pret_a_payer = int(request.form.get('pret_a_payer', 0))
-            prix_acceptable = request.form.get('prix_acceptable', '').strip() or None
-            recommande_raw = request.form.get('recommande', '')
-            recommande = int(recommande_raw) if recommande_raw.strip() in ('0', '1') else None
-            autres_commentaires = request.form.get('autres_commentaires', '').strip() or None
-
-            conn = get_db_connection()
-            c = conn.cursor()
-            c.execute("""
-                INSERT INTO beta_feedback
-                    (user_email, user_name, note_globale, note_facilite, note_design,
-                     ce_qui_plait, ce_qui_deplait, ameliorations,
-                     pret_a_payer, prix_acceptable, recommande, autres_commentaires)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                user_email, user_name,
-                int(note_globale) if note_globale else None,
-                int(note_facilite) if note_facilite else None,
-                int(note_design) if note_design else None,
-                ce_qui_plait, ce_qui_deplait, ameliorations,
-                pret_a_payer, prix_acceptable, recommande, autres_commentaires
-            ))
-            conn.commit()
-            conn.close()
-            return render_template('feedback.html', submitted=True)
-        except Exception as e:
-            _dbg(f"❌ Erreur feedback: {e}")
-            flash("Une erreur s'est produite. Réessaie.", "error")
-            return render_template('feedback.html', submitted=False)
-
-    return render_template('feedback.html', submitted=False)
-
 
 # Clé secrète admin (à changer !) — accessible via /admin_feedback?key=CETTE_CLE
 ADMIN_FEEDBACK_KEY = os.environ.get("ADMIN_FEEDBACK_KEY", "cleanbeat_admin_2026")
