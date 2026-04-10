@@ -217,7 +217,7 @@
 </head>
 <body>
 
-    <a href="{{ url_for('settings_page') }}" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
+    <a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
 
     <div class="header-below-zone">
 
@@ -230,7 +230,7 @@
             </p>
         </div>
 
-        <form method="POST" action="{{ url_for('personnaliser_maison') }}" style="max-width:900px; width:100%;">
+        <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
             <div class="container-menu">
 
                 <!-- Nom de la maison -->

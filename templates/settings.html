@@ -146,13 +146,13 @@
     <!-- GRILLE DE BOUTONS -->
     <div class="settings-grid">
         <!-- 1. Changer le thème / couleur du fond -->
-        <a href="{{ url_for('settings_theme') }}" class="settings-btn sg-theme">
+        <a href="{{ url_for('customize.settings_theme') }}" class="settings-btn sg-theme">
             <span class="sg-icon">🎨</span>
             <span class="sg-label">Thème &amp; couleur</span>
         </a>
 
         <!-- 2. Personnaliser la maison (chambres, pièces) -->
-        <a href="{{ url_for('personnaliser_maison') }}" class="settings-btn sg-house">
+        <a href="{{ url_for('customize.personnaliser_maison') }}" class="settings-btn sg-house">
             <span class="sg-icon">🏡</span>
             <span class="sg-label">Personnaliser maison</span>
         </a>
