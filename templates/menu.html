@@ -541,14 +541,16 @@
             0%, 100% { transform: translateX(-50%) translateY(0) rotate(-5deg); }
             50% { transform: translateX(-50%) translateY(-4px) rotate(5deg); }
         }
-        /* ✨ Halo + pulse leader du jour */
-        .avatar-square-wrapper.daily-leader .avatar-square {
-            box-shadow: 0 0 18px 6px rgba(253,174,84,0.6), 0 0 40px 12px rgba(255,215,0,0.3);
-            animation: dailyLeaderPulse 2.5s ease-in-out infinite;
+        /* ✨ Leader du jour — points en doré pulsant (plus de halo avatar) */
+        .avatar-square-wrapper.daily-leader + .avatar-points {
+            color: #FFD700 !important;
+            font-weight: 900 !important;
+            text-shadow: 0 1px 6px rgba(255,215,0,0.5) !important;
+            animation: leaderPointsPulse 2s ease-in-out infinite;
         }
-        @keyframes dailyLeaderPulse {
-            0%, 100% { box-shadow: 0 0 18px 6px rgba(253,174,84,0.6), 0 0 40px 12px rgba(255,215,0,0.3); }
-            50% { box-shadow: 0 0 28px 10px rgba(253,174,84,0.85), 0 0 55px 18px rgba(255,215,0,0.5); }
+        @keyframes leaderPointsPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.08); }
         }
         /* ── Barres individuelles avatars désactivées : remplacées par la barre semaine commune ── */
         .vbar, .vbar-horizontal { display: none !important; visibility: hidden !important; }
@@ -2720,6 +2722,7 @@
         {% if bg_theme_light %}
         .avatar-name { color: #153036 !important; text-shadow: none !important; }
         .avatar-points { color: #153036 !important; text-shadow: none !important; }
+        .avatar-square-wrapper.daily-leader + .avatar-points { color: #FFD700 !important; text-shadow: 0 1px 6px rgba(255,215,0,0.5) !important; }
         .house-name { color: #153036 !important; text-shadow: none !important; }
         .room-button { color: #153036 !important; text-shadow: none !important; background: rgba(255,255,255,0.55) !important; border-color: rgba(21,48,54,0.25) !important; }
         .burger-nav-divider { color: rgba(21,48,54,0.5) !important; }
