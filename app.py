@@ -6681,6 +6681,9 @@ app.register_blueprint(baby_bp)
 from routes.auth import auth_bp
 app.register_blueprint(auth_bp)
 
+from routes.admin import admin_bp
+app.register_blueprint(admin_bp)
+
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
     try:
