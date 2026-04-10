@@ -235,7 +235,7 @@
 
 <h1>🔐 Connexion</h1>
 
-<form method="post" action="{{ url_for('login') }}" autocomplete="on">
+<form method="post" action="{{ url_for('auth.login') }}" autocomplete="on">
     {% if request.args.get('next_code') %}
     <input type="hidden" name="next_code" value="{{ request.args.get('next_code') }}">
     {% endif %}
@@ -254,14 +254,14 @@
 </form>
 
 <div style="text-align:center;margin-top:10px;">
-    <a href="{{ url_for('forgot_password') }}"
+    <a href="{{ url_for('auth.forgot_password') }}"
        style="color:rgba(255,255,255,0.85);font-size:13px;text-decoration:underline;">
         Mot de passe oublié ?
     </a>
 </div>
 
 <div class="register-link">
-    <p>Pas de compte ? <a href="{{ url_for('signup_email') }}">Créer un compte</a></p>
+    <p>Pas de compte ? <a href="{{ url_for('auth.signup_email') }}">Créer un compte</a></p>
 </div>
 
 </body>

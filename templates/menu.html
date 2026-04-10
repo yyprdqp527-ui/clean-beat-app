@@ -4887,7 +4887,7 @@ function sendMalus(reason, points){
                         </span>
 
                         <!-- 💌 FEEDBACK TESTEURS -->
-                        <a href="{{ url_for('feedback') }}" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
+                        <a href="{{ url_for('admin.feedback') }}" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
                             <span class="burger-nav-icon">💌</span>
                             <span class="burger-nav-text" style="color:#153036;">Donner mon avis</span>
                         </a>
@@ -5040,7 +5040,7 @@ function sendMalus(reason, points){
                             <a href="{{ url_for('players.edit_player', email=current_user_name) }}" class="profile-action-btn profile-action-edit">
                                 ✏️&nbsp; Modifier mon profil
                             </a>
-                            <a href="{{ url_for('logout') }}" class="profile-action-btn profile-action-logout">
+                            <a href="{{ url_for('auth.logout') }}" class="profile-action-btn profile-action-logout">
                                 👋&nbsp; Se déconnecter
                             </a>
                         </div>

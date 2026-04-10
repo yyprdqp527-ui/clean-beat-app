@@ -526,7 +526,7 @@
 <body>
 
 <!-- Bouton retour glassmorphism -->
-<a href="{{ url_for('login') }}" class="back-btn-glass" aria-label="Retour">←</a>
+<a href="{{ url_for('auth.login') }}" class="back-btn-glass" aria-label="Retour">←</a>
 
 <!-- Header avec titre - style create_profile -->
 <div class="page-header">
@@ -540,10 +540,10 @@
     
     <!-- Boutons connexion/inscription avec glassmorphisme -->
     <div class="mode-toggle">
-        <button type="button" class="btn active" id="btnSignup" onclick="window.location.href='{{ url_for('signup_email') }}'">
+        <button type="button" class="btn active" id="btnSignup" onclick="window.location.href='{{ url_for('auth.signup_email') }}'">
             Créer ton compte
         </button>
-        <button type="button" class="btn" id="btnLogin" onclick="window.location.href='{{ url_for('login') }}'">
+        <button type="button" class="btn" id="btnLogin" onclick="window.location.href='{{ url_for('auth.login') }}'">
             🔐 Se connecter
         </button>
     </div>

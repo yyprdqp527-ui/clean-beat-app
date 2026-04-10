@@ -437,7 +437,7 @@ body { min-height: 100vh; }
     <!-- Boutons d'action -->
     <div class="profil-actions">
         {% if is_own_profile %}
-        <a href="{{ url_for('logout') }}" class="profil-action-btn profil-action-logout">
+        <a href="{{ url_for('auth.logout') }}" class="profil-action-btn profil-action-logout">
             👋&nbsp; Se déconnecter
         </a>
         {% endif %}

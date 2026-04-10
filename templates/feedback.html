@@ -242,7 +242,7 @@
             Tes retours sont précieux – réponds en 2 minutes.</p>
         </div>
 
-        <form method="POST" action="{{ url_for('feedback') }}" id="feedbackForm">
+        <form method="POST" action="{{ url_for('admin.feedback') }}" id="feedbackForm">
             <input type="hidden" name="pret_a_payer" id="pretPayerInput" value="0">
             <input type="hidden" name="recommande" id="recommandeInput" value="">
             <input type="hidden" name="note_globale" id="noteGlobaleInput" value="">
