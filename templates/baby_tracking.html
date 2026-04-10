@@ -15,7 +15,7 @@
             </h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('save_baby_tracking') }}">
+            <form method="POST" action="{{ url_for('baby.save_baby_tracking') }}">
                 <input type="hidden" name="task_type" value="{{ task_type }}">
                 <input type="hidden" name="task_name" value="{{ task_name }}">
                 <input type="hidden" name="category" value="{{ category }}">
