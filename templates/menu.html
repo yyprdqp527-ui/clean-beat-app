@@ -702,7 +702,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 8px;
-            z-index: 2;
+            z-index: 4;
             pointer-events: none;
         }
         .week-bday {
@@ -727,34 +727,18 @@
         }
         .week-bar-cursor {
             position: absolute;
-            top: 50%;
+            top: 1px;
+            bottom: 1px;
+            height: calc(100% - 2px);
+            width: calc(100% / 7 - 2px);
             left: 0%;
-            transform: translate(-50%, -50%);
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #fff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+            border-radius: 6px;
             z-index: 3;
             transition: left 0.8s cubic-bezier(.4,0,.2,1);
-        }
-        .week-bar-cursor.gift-calm,
-        .week-bar-cursor.gift-excited,
-        .week-bar-cursor.gift-shake {
-            animation: none;
-        }
-        @keyframes pulse-gift {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.2); }
-        }
-        @keyframes pulse-gift-fast {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.35); }
-        }
-        @keyframes gift-shake {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            25% { transform: translate(-50%, -60%) scale(1.2); }
-            75% { transform: translate(-50%, -40%) scale(1.2); }
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1.5px solid rgba(255,255,255,0.45);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 8px rgba(0,0,0,0.18);
         }
         /* Thème clair barre */
         .week-progress-wrap.mode-bar.theme-light .week-bar-track {
@@ -3235,7 +3219,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="week-bday" data-day="6">Sam</span>
                                     <span class="week-bday" data-day="0">Dim</span>
                                 </div>
-                                <div class="week-bar-cursor" id="weekBarCursor" style="background: {{ bar_color }};"></div>
+                                <div class="week-bar-cursor" id="weekBarCursor"></div>
                             </div>
                             <span class="week-bar-countdown" id="weekBarCountdown">--</span>
                         </div>
@@ -3876,24 +3860,29 @@ body { padding-bottom: 84px !important; }
         var cursor = document.getElementById('weekBarCursor');
 
         // Gradient d'urgence : vert → or → orange → rouge
+        // Curseur = bloc d'un jour (1/7). Fill = jours entièrement passés.
+        var pastPct = (pos / 7) * 100;
+        var dayHourPct = (now.getHours() + now.getMinutes() / 60) / 24 * 100;
+        var fillColor = '#FDAE54';
+        if(dd > 4) fillColor = '#2ed573';
+        else if(dd > 2) fillColor = '#ffa502';
+        else if(dd >= 1) fillColor = '#ff6348';
+        else fillColor = '#ff4757';
+
         if(fill){
-            fill.style.width = pct + '%';
+            fill.style.width = pastPct + '%';
             if(dd > 4) {
                 fill.style.background = 'linear-gradient(90deg, #2ed573, #7bed9f)';
                 fill.style.boxShadow = '0 0 6px rgba(46,213,115,0.3)';
-                if(cursor) cursor.style.background = '#2ed573';
             } else if(dd > 2) {
                 fill.style.background = 'linear-gradient(90deg, #ffa502, #FDAE54)';
                 fill.style.boxShadow = '0 0 6px rgba(253,174,84,0.4)';
-                if(cursor) cursor.style.background = '#ffa502';
             } else if(dd >= 1) {
                 fill.style.background = 'linear-gradient(90deg, #ff6348, #ff7f50)';
                 fill.style.boxShadow = '0 0 8px rgba(255,99,72,0.5)';
-                if(cursor) cursor.style.background = '#ff6348';
             } else {
                 fill.style.background = 'linear-gradient(90deg, #ff4757, #ff6b81)';
                 fill.style.boxShadow = '0 0 12px rgba(255,71,87,0.6)';
-                if(cursor) cursor.style.background = '#ff4757';
             }
         }
         // Track glow urgence
@@ -3902,13 +3891,12 @@ body { padding-bottom: 84px !important; }
             if(dd === 0 && hh > 0) track.classList.add('urgency-high');
             else if(dd === 0 && hh === 0) track.classList.add('urgency-go');
         }
-        // Cursor animation selon urgence
+        // Curseur bloc-jour : positionné sur le jour courant, gradient heures écoulées/restantes
         if(cursor){
-            cursor.style.left = pct + '%';
-            cursor.classList.remove('gift-calm','gift-excited','gift-shake');
-            if(dd > 3) cursor.classList.add('gift-calm');
-            else if(dd >= 1) cursor.classList.add('gift-excited');
-            else cursor.classList.add('gift-shake');
+            cursor.style.left = pastPct + '%';
+            cursor.style.background = 'linear-gradient(90deg, '
+                + fillColor + ' ' + dayHourPct.toFixed(1) + '%, '
+                + fillColor + '22 ' + dayHourPct.toFixed(1) + '%)';
         }
         // Lettres jours barre
         var bdays = document.querySelectorAll('.week-bday');
