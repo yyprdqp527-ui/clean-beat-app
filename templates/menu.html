@@ -480,7 +480,6 @@
             .week-bar-row { gap: 4px; }
             .week-bday { font-size: 6.5px; }
             .week-bar-days { padding: 0 4px; }
-            .week-bar-cursor { font-size: 9px; }
             .week-bar-countdown { font-size: 9px; }
             .gameplay-btn-wrapper { right: 8px; }
             .gameplay-btn { width: 42px; height: 42px; font-size: 20px; }
@@ -729,36 +728,31 @@
             top: 50%;
             left: 0%;
             transform: translate(-50%, -50%);
-            font-size: 11px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.35);
             z-index: 3;
-            line-height: 1;
             transition: left 0.8s cubic-bezier(.4,0,.2,1);
-            filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
-            animation: pulse-gift 2s ease-in-out infinite;
         }
-        .week-bar-cursor.gift-calm {
-            animation: pulse-gift 2.5s ease-in-out infinite;
-        }
-        .week-bar-cursor.gift-excited {
-            animation: pulse-gift-fast 1.2s ease-in-out infinite;
-        }
+        .week-bar-cursor.gift-calm,
+        .week-bar-cursor.gift-excited,
         .week-bar-cursor.gift-shake {
-            animation: gift-shake 0.5s ease-in-out infinite;
+            animation: none;
         }
         @keyframes pulse-gift {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.15); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
         }
         @keyframes pulse-gift-fast {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.25); }
+            50% { transform: translate(-50%, -50%) scale(1.35); }
         }
         @keyframes gift-shake {
-            0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-            20% { transform: translate(-50%, -50%) scale(1.2) rotate(-8deg); }
-            40% { transform: translate(-50%, -50%) scale(1.2) rotate(8deg); }
-            60% { transform: translate(-50%, -50%) scale(1.2) rotate(-5deg); }
-            80% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            25% { transform: translate(-50%, -60%) scale(1.2); }
+            75% { transform: translate(-50%, -40%) scale(1.2); }
         }
         /* Thème clair barre */
         .week-progress-wrap.mode-bar.theme-light .week-bar-track {
@@ -3238,7 +3232,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="week-bday" data-day="6">Sam</span>
                                     <span class="week-bday" data-day="0">Dim</span>
                                 </div>
-                                <div class="week-bar-cursor" id="weekBarCursor">🎁</div>
+                                <div class="week-bar-cursor" id="weekBarCursor" style="background: {{ bar_color }};"></div>
                             </div>
                             <span class="week-bar-countdown" id="weekBarCountdown">--</span>
                         </div>
@@ -3884,15 +3878,19 @@ body { padding-bottom: 84px !important; }
             if(dd > 4) {
                 fill.style.background = 'linear-gradient(90deg, #2ed573, #7bed9f)';
                 fill.style.boxShadow = '0 0 6px rgba(46,213,115,0.3)';
+                if(cursor) cursor.style.background = '#2ed573';
             } else if(dd > 2) {
                 fill.style.background = 'linear-gradient(90deg, #ffa502, #FDAE54)';
                 fill.style.boxShadow = '0 0 6px rgba(253,174,84,0.4)';
+                if(cursor) cursor.style.background = '#ffa502';
             } else if(dd >= 1) {
                 fill.style.background = 'linear-gradient(90deg, #ff6348, #ff7f50)';
                 fill.style.boxShadow = '0 0 8px rgba(255,99,72,0.5)';
+                if(cursor) cursor.style.background = '#ff6348';
             } else {
                 fill.style.background = 'linear-gradient(90deg, #ff4757, #ff6b81)';
                 fill.style.boxShadow = '0 0 12px rgba(255,71,87,0.6)';
+                if(cursor) cursor.style.background = '#ff4757';
             }
         }
         // Track glow urgence
@@ -3924,22 +3922,22 @@ body { padding-bottom: 84px !important; }
         if(barCd){
             barCd.classList.remove('urg-low','urg-mid','urg-high','urg-go');
             if(dd > 4) {
-                barCd.innerHTML = dd+'j<br>💪';
+                barCd.innerHTML = dd+'j<br>🎁';
                 barCd.classList.add('urg-low');
             } else if(dd > 2) {
-                barCd.innerHTML = 'J-'+dd+'<br>🔥';
+                barCd.innerHTML = 'J-'+dd+'<br>🎁';
                 barCd.classList.add('urg-mid');
             } else if(dd === 2) {
-                barCd.innerHTML = 'J-2<br>⚡';
+                barCd.innerHTML = 'J-2<br>🎁';
                 barCd.classList.add('urg-mid');
             } else if(dd === 1) {
-                barCd.innerHTML = 'J-1!<br>⚡';
+                barCd.innerHTML = 'J-1!<br>🎁';
                 barCd.classList.add('urg-high');
             } else if(hh > 0) {
-                barCd.innerHTML = hh+'h!<br>🔥';
+                barCd.innerHTML = hh+'h!<br>🎁';
                 barCd.classList.add('urg-high');
             } else if(mm > 0) {
-                barCd.innerHTML = mm+'m<br>⏰';
+                barCd.innerHTML = mm+'m<br>🎁';
                 barCd.classList.add('urg-high');
             } else {
                 barCd.innerHTML = '<a href="/rewards" id="goRewardLink" style="color:inherit;text-decoration:none;font-size:15px;font-weight:900;">GO!</a>';
