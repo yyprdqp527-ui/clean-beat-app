@@ -3684,7 +3684,7 @@ body { padding-bottom: 84px !important; }
             <span class="cw-tab-label">Messagerie</span>
         </a>
         <!-- 4. Courses -->
-        <a href="{{ url_for('reminders') }}" class="cw-tab" id="cwTabCourses">
+        <a href="{{ url_for('reminders.reminders') }}" class="cw-tab" id="cwTabCourses">
             <span class="cw-tab-icon" style="position:relative;">
                 🛒
                 <span class="cw-tab-badge" id="courses-nav-badge" {% if not courses_pending_count or courses_pending_count <= 0 %}style="display:none;"{% endif %}>{{ courses_pending_count|default(0) if courses_pending_count|default(0) < 100 else '99+' }}</span>
