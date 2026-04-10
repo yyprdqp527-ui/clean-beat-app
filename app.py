@@ -4564,44 +4564,6 @@ def api_unread_counts():
         _dbg(f"❌ Erreur API unread_counts: {e}")
         return jsonify({'error': str(e)}), 500
 
-
-
-
-@app.route('/invitation_partner')
-def invitation_partner():
-    """Page d'invitation pour les partenaires avec QR Code"""
-    if 'user' not in session:
-        return redirect(url_for('auth.login'))
-    
-    # Récupérer le code et le nom de la maison
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-    row = c.fetchone()
-    
-    house_code = None
-    house_name = None
-    if row and row[0]:
-        c.execute("SELECT code, house_name, name FROM houses WHERE id=?", (row[0],))
-        house_row = c.fetchone()
-        if house_row:
-            house_code = house_row[0]
-            house_name = house_row[1] if house_row[1] else house_row[2]
-    conn.close()
-    
-    if not house_code:
-        flash("Aucune maison trouvée. Créez d'abord une maison.", "warning")
-        return redirect(url_for('menu'))
-    
-    # Construire l'URL d'invitation
-    join_url = f"{request.host_url}invite/{house_code}"
-    
-    return render_template('invitation_partner.html', 
-                         house_code=house_code,
-                         house_name=house_name,
-                         join_url=join_url)
-
-
 # ==========================================
 # WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
 # ==========================================
