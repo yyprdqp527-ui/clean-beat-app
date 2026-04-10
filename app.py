@@ -374,7 +374,7 @@ def register_delete_custom_task_route(app):
     def delete_custom_task(task_id, cat):
         if 'user' not in session:
             flash("Connecte-toi pour supprimer une mission.", "warning")
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
 
         conn = get_db_connection()
         c = conn.cursor()
@@ -796,7 +796,7 @@ def index():
     if 'user' in session:
         return redirect(url_for('menu'))
     # Sinon, afficher la page de bienvenue
-    return redirect(url_for('welcome'))
+    return redirect(url_for('auth.welcome'))
 
 @app.route('/test_audio')
 def test_audio():
@@ -851,7 +851,7 @@ def signup():
     try:
         return render_template('signup.html')
     except Exception:
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
 
 
 # Routes de placeholder pour intégrations sociales mentionnées dans les templates
@@ -859,20 +859,20 @@ def signup():
 def signup_facebook():
     # Placeholder minimal: redirige vers l'inscription par email
     flash("Inscription via Facebook non configurée. Utilisez l'inscription par email.", "info")
-    return redirect(url_for('signup_email'))
+    return redirect(url_for('auth.signup_email'))
 
 
 @app.route('/signup_google')
 def signup_google():
     # Placeholder minimal: redirige vers l'inscription par email
     flash("Inscription via Google non configurée. Utilisez l'inscription par email.", "info")
-    return redirect(url_for('signup_email'))
+    return redirect(url_for('auth.signup_email'))
 
 
 @app.route('/home')
 def home():
     """Alias simple pour la page d'accueil (certaines templates utilisent 'home')."""
-    return redirect(url_for('welcome'))
+    return redirect(url_for('auth.welcome'))
 
 # Configuration pour l'upload de fichiers
 UPLOAD_FOLDER = 'static/avatars'
@@ -4108,7 +4108,7 @@ def signup_email():
                 # Compte complet → rediriger vers login
                 flash("Cet email est déjà utilisé. Connecte-toi avec ton mot de passe.", "danger")
                 conn.close()
-                return redirect(url_for('login'))
+                return redirect(url_for('auth.login'))
 
         try:
             hashed_password = generate_password_hash(password)
@@ -4166,7 +4166,7 @@ def choose_house_type():
     """ÉTAPE 2 : Choix du type de logement"""
     if 'user' not in session:
         flash("Veuillez d'abord vous inscrire", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     if request.method == 'POST':
         house_type = request.form.get('house_type', 'family')
@@ -4193,7 +4193,7 @@ def onboarding_invite():
     """ÉTAPE 3 : Page d'explication + invitation partenaires"""
     if 'user' not in session:
         flash("Veuillez d'abord vous inscrire", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
 
     # En inscription, imposer le passage par l'étape "type de logement"
     if session.get('registration_step') == 'email_signup' and not session.get('house_type'):
@@ -4250,7 +4250,7 @@ def name_house():
     """ÉTAPE 4 : Nommer le foyer"""
     if 'user' not in session:
         flash("Veuillez d'abord vous inscrire", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     if request.method == 'POST':
         house_name = request.form.get('house_name', '').strip()
@@ -4365,7 +4365,7 @@ def add_children():
     """Page pour ajouter des enfants (sans téléphone)"""
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     return render_template('add_children.html')
 
 
@@ -4510,7 +4510,7 @@ def add_child():
 def feedback():
     """Formulaire de feedback pour les testeurs bêta"""
     if 'user' not in session:
-        return redirect(url_for('welcome'))
+        return redirect(url_for('auth.welcome'))
 
     user_email = session.get('user')
     user_name = session.get('player_name', '')
@@ -4625,7 +4625,7 @@ def chat():
     """Chat/messagerie entre partenaires (placeholder)"""
     if 'user' not in session:
         flash("🔐 Connecte-toi pour accéder au chat !", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     flash("💬 Chat en cours de développement ! Bientôt vous pourrez échanger avec votre partenaire ! 🚀", "info")
     return redirect(url_for('menu'))
@@ -4689,7 +4689,7 @@ def login():
             return redirect(url_for('menu'))
         else:
             flash("Email ou mot de passe incorrect", "danger")
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
     return render_template('login.html')
 
 
@@ -4698,7 +4698,7 @@ def login():
 def logout():
     session.pop('user', None)
     flash("Déconnecté.", "success")
-    return redirect(url_for('login'))
+    return redirect(url_for('auth.login'))
 
 
 # ─── Route debug temporaire (à supprimer après usage) ───────────────────────
@@ -4949,18 +4949,18 @@ def reset_password(token):
     if not row:
         conn.close()
         flash("Lien invalide ou expiré.", "danger")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     email, expires_at, used = row
     if used:
         conn.close()
         flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
-        return redirect(url_for('forgot_password'))
+        return redirect(url_for('auth.forgot_password'))
 
     if now_paris() > datetime.fromisoformat(expires_at):
         conn.close()
         flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
-        return redirect(url_for('forgot_password'))
+        return redirect(url_for('auth.forgot_password'))
 
     if request.method == 'POST':
         new_password = request.form.get('password', '').strip()
@@ -4976,7 +4976,7 @@ def reset_password(token):
         conn.commit()
         conn.close()
         flash("✅ Mot de passe mis à jour ! Tu peux te connecter.", "success")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     conn.close()
     return render_template('reset_password.html', token=token, email=email)
@@ -5222,7 +5222,7 @@ def invite_partner():
     # Vérifier si l'utilisateur est connecté
     if 'user' not in session:
         flash("Connecte-toi pour inviter des partenaires !", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     house_code = None
     house_id = None
@@ -5423,7 +5423,7 @@ def partager_invitation():
     """Page simple pour partager l'invitation avec QR Code"""
     if 'user' not in session:
         flash("Connecte-toi pour inviter des partenaires !", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     # Récupérer le code et le nom de la maison
     conn = get_db_connection()
@@ -5496,7 +5496,7 @@ def update_house_type():
 def fullhouse():
     if 'user' not in session:
         flash("Connecte-toi pour accéder à cette page", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
@@ -5586,7 +5586,7 @@ def menu():
             
             if not user_row:
                 conn.close()
-                return redirect(url_for('welcome'))
+                return redirect(url_for('auth.welcome'))
             
             show_onboarding = not bool(has_seen_onboarding)
             print(f"🏠 MENU CHECK: name={user_name}, avatar={user_avatar}, file={user_avatar_file}, step={registration_step}", flush=True)
@@ -6402,7 +6402,7 @@ def set_bg_theme():
 @app.route('/personnaliser_maison', methods=['GET', 'POST'])
 def personnaliser_maison():
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     # Récupérer house_id depuis la DB (même pattern que menu())
     house_id = None
@@ -6524,7 +6524,7 @@ def personnaliser_maison():
 def settings_page():
     """Page réglages — regroupe gestion maison et joueurs"""
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     return render_template('settings.html')
 
 
@@ -6532,7 +6532,7 @@ def settings_page():
 def settings_theme():
     """Page dédiée : changement de thème / couleur de fond"""
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     return render_template('settings_theme.html')
 
 
@@ -6785,7 +6785,7 @@ def api_push_test():
 def invitation_partner():
     """Page d'invitation pour les partenaires avec QR Code"""
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     # Récupérer le code et le nom de la maison
     conn = get_db_connection()

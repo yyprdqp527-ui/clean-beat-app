@@ -13,7 +13,7 @@ def baby_tracking(cat, task_id):
 
     if 'user' not in session:
         flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     normalized_cat = normalize_category(cat)
 
@@ -73,7 +73,7 @@ def save_baby_tracking():
 
     if 'user' not in session:
         flash("Connecte-toi pour utiliser le suivi bébé.", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     task_type = request.form.get('task_type')
     task_name = request.form.get('task_name')

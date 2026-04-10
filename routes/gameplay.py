@@ -11,7 +11,7 @@ gameplay_bp = Blueprint('gameplay_bp', __name__)
 def gameplay():
     from app import get_db_connection, get_house_players_points, _dbg
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     current_user_name = session.get('user', '')
     players = []
     house_name = None

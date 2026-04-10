@@ -17,7 +17,7 @@ def rewards():
     import json
     if 'user' not in session:
         flash("Connecte-toi pour accéder aux récompenses", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     try:
         conn = get_db_connection()
@@ -732,7 +732,7 @@ def mes_recompenses():
     from app import get_db_connection, _dbg, get_house_players_points
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -869,7 +869,7 @@ def buy_reward(reward_id):
     
     if 'user' not in session:
         flash("Connecte-toi pour acheter une récompense", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -910,7 +910,7 @@ def gifts():
     from app import get_db_connection, now_paris, check_weekly_reset, get_house_players_points
     if 'user' not in session:
         flash("🔐 Connecte-toi pour voir tes cadeaux !", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -976,7 +976,7 @@ def reveal_gift(gift_id):
     """Révéler un cadeau"""
     from app import get_db_connection, now_paris
     if 'user' not in session:
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     # Vérifier si c'est dimanche (accessible dès samedi minuit = dimanche 00:00)
     from datetime import datetime

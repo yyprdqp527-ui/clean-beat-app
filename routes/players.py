@@ -14,7 +14,7 @@ def manage_players():
     from app import assign_player_color, get_db_connection, validate_avatar_file
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -83,7 +83,7 @@ def edit_player(email):
     from app import get_db_connection
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -438,7 +438,7 @@ def add_players():
     from app import get_db_connection, get_house_players_points, now_paris, validate_avatar_file
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     # Récupérer les joueurs de la maison pour afficher le header
     players = []
@@ -512,7 +512,7 @@ def profile():
     from app import get_db_connection
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -524,7 +524,7 @@ def profile():
     if not user:
         conn.close()
         flash("Utilisateur non trouvé", "danger")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     user_name, user_email, user_avatar, user_photo, house_id, user_avatar_url, user_avatar_style = user
     
@@ -555,7 +555,7 @@ def update_profile():
     from app import SOCKETIO_AVAILABLE, _dbg, get_db_connection, propagate_player_name_change, save_photo_from_base64, socketio
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     name = request.form.get('name', '').strip().capitalize()
     avatar = request.form.get('avatar', '').strip()
@@ -693,7 +693,7 @@ def create_profile():
     
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     # Vérifier si l'utilisateur a déjà un profil (mode modification)
     conn = get_db_connection()
@@ -753,7 +753,7 @@ def create_profile_post():
     from app import _dbg, generate_house_code, get_db_connection, now_paris, save_photo_from_base64
     if 'user' not in session:
         flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     name = request.form.get('name', '').strip().capitalize()
     bio = request.form.get('bio', '').strip()
@@ -869,7 +869,7 @@ def profil():
 def profil_joueur(player_email):
     from app import PARIS_TZ, _USE_PG, get_db_connection, get_house_players_points, get_unread_count_by_type, now_paris
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     current_user_name = session.get('user', '')
     # Rediriger vers /profil si c'est son propre profil (URL propre)
     if player_email == current_user_name and request.endpoint == 'profil_joueur':

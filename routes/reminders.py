@@ -13,7 +13,7 @@ def reminders():
     from app import get_db_connection, mark_message_as_read, _dbg
     if 'user' not in session:
         flash("Connecte-toi pour accéder à tes rappels", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     conn = get_db_connection()
     c = conn.cursor()

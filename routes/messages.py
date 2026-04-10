@@ -36,7 +36,7 @@ def _comments_inner():
                      get_house_players_points)
     if 'user' not in session:
         flash("Connecte-toi pour accéder à la messagerie", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -465,7 +465,7 @@ def baby_messages():
                      to_paris, get_house_players_points)
     if 'user' not in session:
         flash("Connecte-toi pour accéder aux messages bébé", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     conn = get_db_connection()
     c = conn.cursor()

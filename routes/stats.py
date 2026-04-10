@@ -21,7 +21,7 @@ def sats():
     - Compte à rebours jusqu'au dimanche (ouverture des cadeaux)
     """
     if 'user' not in session:
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
 
     from datetime import date, datetime, timedelta
     import sqlite3
@@ -550,7 +550,7 @@ def sats():
 def stats_graphique():
     """Page de statistiques avec graphiques détaillés"""
     if 'user' not in session:
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
 
     from datetime import date, datetime, timedelta
     import sqlite3
@@ -712,7 +712,7 @@ def stats_graphique():
 @stats_bp.route('/classement')
 def classement():
     if 'user' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     current_user_name = session.get('user', '')
     players = []
     house_name = None

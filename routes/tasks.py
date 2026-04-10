@@ -204,7 +204,7 @@ def add_task_page(cat, task_id=None):
     from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
     if 'user' not in session:
         flash("Connecte-toi pour créer une mission.", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     # Normaliser le nom de la catégorie
     normalized_cat = normalize_category(cat)
@@ -346,7 +346,7 @@ def update_task_points(cat, task_id):
     from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
     if 'user' not in session:
         flash("Connecte-toi pour modifier les points.", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     # Normaliser le nom de la catégorie
     normalized_cat = normalize_category(cat)
@@ -397,7 +397,7 @@ def update_custom_task_points(cat, task_id):
     from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
     if 'user' not in session:
         flash("Connecte-toi pour modifier les points.", "warning")
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     points_raw = request.form.get('points', '').strip()
     try:
         new_points = int(points_raw)
@@ -444,7 +444,7 @@ def custom_task_page(task_id):
     from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
     if 'user' not in session:
         flash("Connecte-toi pour accéder à cette tâche.", "warning")
-        return redirect(url_for('signup_email'))
+        return redirect(url_for('auth.signup_email'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -834,7 +834,7 @@ def task_enhanced(cat, task_id):
         # Valider la tâche pour l'utilisateur courant
         if 'user' not in session:
             flash("Connecte-toi pour valider une tâche.", "warning")
-            return redirect(url_for('signup_email'))
+            return redirect(url_for('auth.signup_email'))
 
         conn = get_db_connection()
         c = conn.cursor()
