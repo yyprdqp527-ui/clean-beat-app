@@ -369,7 +369,7 @@ def update_task_points(cat, task_id):
     if not house_id:
         conn.close()
         flash("Crée ou rejoins une maison pour personnaliser les tâches ! 🏠", "info")
-        return redirect(url_for('invite_partner'))
+        return redirect(url_for('house.invite_partner'))
 
     try:
         c.execute(
@@ -416,7 +416,7 @@ def update_custom_task_points(cat, task_id):
     if not house_id:
         conn.close()
         flash("Crée ou rejoins une maison pour personnaliser les tâches ! 🏠", "info")
-        return redirect(url_for('invite_partner'))
+        return redirect(url_for('house.invite_partner'))
     try:
         # Ne mettre à jour que si la tâche appartient à la même maison
         c.execute("UPDATE custom_tasks SET points=? WHERE id=? AND house_id=?", (new_points, task_id, house_id))

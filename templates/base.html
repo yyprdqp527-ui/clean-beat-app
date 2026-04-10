@@ -967,7 +967,7 @@ function startInactivityCheck() {
 // Fonction pour copier le lien d'invitation
 function copyInviteLink() {
     const baseUrl = window.location.origin;
-    const registerUrl = baseUrl + "{{ url_for('join_house') }}";
+    const registerUrl = baseUrl + "{{ url_for('house.join_house') }}";
     const inviteLink = registerUrl + "?code={{ house_code }}";
     
     navigator.clipboard.writeText(inviteLink).then(function() {

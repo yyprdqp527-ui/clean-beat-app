@@ -4741,7 +4741,7 @@ function sendMalus(reason, points){
                             <div class="modal-icon">🏡</div>
                             <h2 class="modal-title">Choisissez un nom pour votre maison</h2>
                             <p class="modal-subtitle">Ce sera le point de départ de votre aventure !</p>
-                            <form id="house-name-form" action="{{ url_for('name_house') }}" method="POST">
+                            <form id="house-name-form" action="{{ url_for('house.name_house') }}" method="POST">
                                 <input 
                                     id="house_name" 
                                     name="house_name" 

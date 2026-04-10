@@ -98,7 +98,7 @@ def signup_email():
                 session.pop('invite_code', None)
                 flash(f"Bienvenue {firstname} ! 🎉", "success")
                 # Joueur principal: passer par le choix du type de foyer
-                return redirect(url_for('choose_house_type'))
+                return redirect(url_for('house.choose_house_type'))
             else:
                 # Compte complet → rediriger vers login
                 flash("Cet email est déjà utilisé. Connecte-toi avec ton mot de passe.", "danger")
@@ -144,7 +144,7 @@ def signup_email():
                 return redirect(url_for('players.create_profile'))
 
             # Joueur principal: étape dédiée de choix famille/couple/coloc
-            return redirect(url_for('choose_house_type'))
+            return redirect(url_for('house.choose_house_type'))
 
         except _DBIntegrityError:
             flash("Erreur lors de la création du compte. Réessaie.", "danger")

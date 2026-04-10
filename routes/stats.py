@@ -38,7 +38,7 @@ def sats():
         if not row or not row[0]:
             conn.close()
             flash("Crée ou rejoins une maison pour voir les statistiques ! 🏠", "info")
-            return redirect(url_for('invite_partner'))
+            return redirect(url_for('house.invite_partner'))
 
         house_id = row[0]
         today = now_paris().date().isoformat()
@@ -566,7 +566,7 @@ def stats_graphique():
         if not row or not row[0]:
             conn.close()
             flash("Crée ou rejoins une maison pour voir les statistiques ! 🏠", "info")
-            return redirect(url_for('invite_partner'))
+            return redirect(url_for('house.invite_partner'))
 
         house_id = row[0]
         today = now_paris().date()
