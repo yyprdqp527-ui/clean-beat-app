@@ -72,6 +72,15 @@ def onboarding_invite():
             house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             c.execute("UPDATE houses SET code=? WHERE id=?", (house_code, house_id))
             conn.commit()
+
+        # FIX: appliquer le nom choisi dans choose_house_type si la maison n'en a pas encore
+        _session_name = session.get('house_name', '').strip()
+        if _session_name:
+            c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))
+            _existing = c.fetchone()
+            if _existing and (not _existing[0] or not _existing[0].strip()) and (not _existing[1] or not _existing[1].strip()):
+                c.execute("UPDATE houses SET name=?, house_name=? WHERE id=?", (_session_name, _session_name, house_id))
+                conn.commit()
     else:
         # Créer une nouvelle maison avec un code
         import random
@@ -79,7 +88,7 @@ def onboarding_invite():
         house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         house_name = session.get('house_name', '')
         house_type = session.get('house_type', 'family')
-        c.execute("INSERT INTO houses (code, name, house_name, house_type, health, last_reset_date) VALUES (?, ?, ?, ?, ?, date('now'))",
+        c.execute("INSERT INTO houses (code, name, house_name, house_type, health, last_reset_date, bg_theme) VALUES (?, ?, ?, ?, ?, date('now'), 'bleu')",
                   (house_code, house_name, house_name, house_type, 100))
         house_id = c.lastrowid
         c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
@@ -265,8 +274,8 @@ def add_child():
 
         # Insérer l'enfant dans la base avec le style d'avatar ET le flag is_child_account
         c.execute("""
-            INSERT INTO users (email, name, avatar, avatar_file, avatar_url, avatar_style, house_id, password, is_child_account)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 1)
+            INSERT INTO users (email, name, avatar, avatar_file, avatar_url, avatar_style, house_id, password, is_child_account, bg_theme)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 1, 'bleu')
         """, (child_email, child_name, avatar, avatar_file, avatar_url, child_avatar_style or None, house_id))
 
         conn.commit()
@@ -496,8 +505,8 @@ def join_house():
                 # Créer le nouvel utilisateur
                 hashed_password = generate_password_hash(password)
                 c.execute("""
-                    INSERT INTO users (email, password, name, house_id, points, avatar, registration_step)
-                    VALUES (?, ?, ?, ?, 0, '🧑', 'email_signup')
+                    INSERT INTO users (email, password, name, house_id, points, avatar, registration_step, bg_theme)
+                    VALUES (?, ?, ?, ?, 0, '🧑', 'email_signup', 'bleu')
                 """, (email, hashed_password, user_name, house_id))
 
                 conn.commit()
@@ -590,7 +599,7 @@ def invite_partner():
         house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
         # Créer la nouvelle maison
-        c.execute("INSERT INTO houses (code, name, health, last_reset_date) VALUES (?, ?, ?, date('now'))",
+        c.execute("INSERT INTO houses (code, name, health, last_reset_date, bg_theme) VALUES (?, ?, ?, date('now'), 'bleu')",
                   (house_code, '', 100))
         house_id = c.lastrowid
 
@@ -708,8 +717,8 @@ def invite_partner():
                             else:
                                 child_avatar_seed = child_avatar
                             c.execute("""
-                                INSERT INTO users (email, name, house_id, points, avatar, avatar_url, avatar_style, registration_step, is_child_account, created_by)
-                                VALUES (?, ?, ?, 0, ?, ?, ?, 'profile_created', 1, ?)
+                                INSERT INTO users (email, name, house_id, points, avatar, avatar_url, avatar_style, registration_step, is_child_account, created_by, bg_theme)
+                                VALUES (?, ?, ?, 0, ?, ?, ?, 'profile_created', 1, ?, 'bleu')
                             """, (child_email, child_name.capitalize(), house_id, child_avatar_seed, child_avatar_url, child_avatar_style, session.get('user', '')))
                             children_created += 1
                     except Exception as e:

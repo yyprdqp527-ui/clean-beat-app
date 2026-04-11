@@ -119,8 +119,8 @@ def signup_email():
                     return render_template('signup_email.html', invite_code=invite_code)
 
             c.execute("""
-                INSERT INTO users (firstname, name, email, password, phone, points, avatar, registration_step, house_id)
-                VALUES (?, ?, ?, ?, ?, 0, '👤', 'email_signup', ?)
+                INSERT INTO users (firstname, name, email, password, phone, points, avatar, registration_step, house_id, bg_theme)
+                VALUES (?, ?, ?, ?, ?, 0, '👤', 'email_signup', ?, 'bleu')
             """, (firstname, display_name, email, hashed_password, phone, house_id_to_join))
 
             conn.commit()
