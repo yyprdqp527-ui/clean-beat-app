@@ -897,7 +897,7 @@ def buy_reward(reward_id):
         flash("Récompense achetée !", "success")
 
     conn.close()
-    return redirect(url_for('rewards'))
+    return redirect(url_for('rewards.rewards'))
 
 
 # ===============================
@@ -986,7 +986,7 @@ def reveal_gift(gift_id):
     
     if not can_open_gifts:
         flash("🚫 Les cadeaux ne sont disponibles que le dimanche ! 🎁", "warning")
-        return redirect(url_for('gifts'))
+        return redirect(url_for('rewards.gifts'))
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -1000,7 +1000,7 @@ def reveal_gift(gift_id):
     if c.fetchone():
         flash("🎁 Ce cadeau a déjà été ouvert ! Choisissez-en un autre ! ✨", "info")
         conn.close()
-        return redirect(url_for('gifts'))
+        return redirect(url_for('rewards.gifts'))
     
     # Révéler le cadeau
     current_date = now_paris().isoformat()
@@ -1025,4 +1025,4 @@ def reveal_gift(gift_id):
     gift_name = gift_names.get(gift_id, 'Cadeau mystère')
     flash(f"🎊 FÉLICITATIONS ! Vous avez gagné : {gift_name} ! 🎉 Profitez bien ! ✨", "success")
     
-    return redirect(url_for('gifts'))
+    return redirect(url_for('rewards.gifts'))

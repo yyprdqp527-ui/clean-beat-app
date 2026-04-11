@@ -198,7 +198,7 @@
                 <div class="gift-description">Cliquez pour découvrir votre surprise ! 🎊</div>
                 <div class="gift-status available">🌟 Disponible 🌟</div>
                 <div style="margin-top: 15px;">
-                    <a href="{{ url_for('reveal_gift', gift_id=gift.id) }}" 
+                    <a href="{{ url_for('rewards.reveal_gift', gift_id=gift.id) }}" 
                        class="reveal-btn"
                        onclick="return confirm('🎁 Êtes-vous sûr de vouloir révéler ce cadeau ? Une fois ouvert, il ne peut plus être changé ! ✨')">
                         ✨ Révéler le Cadeau ✨
@@ -223,7 +223,7 @@
             🏠 Retour à la Maison
         </a>
         
-        <a href="{{ url_for('rewards') }}" 
+        <a href="{{ url_for('rewards.rewards') }}" 
            style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #8b4513; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: bold; margin: 10px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
             🎯 Récompenses Quotidiennes
         </a>
