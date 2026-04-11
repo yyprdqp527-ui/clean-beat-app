@@ -37,4 +37,4 @@ max_requests = 1000
 max_requests_jitter = 50
 
 # Options supplémentaires pour WebSocket
-worker_connections = 1000  # Nombre max de connexions simultanées par worker
+worker_connections = 100   # Réduit pour éviter OOM sur free tier (512 MB)

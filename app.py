@@ -464,14 +464,17 @@ if os.environ.get('RENDER'):
 app.config['TEMPLATES_AUTO_RELOAD'] = not bool(os.environ.get('RENDER'))
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
 
-# 🔥 DÉSACTIVER COMPLÈTEMENT LE CACHE JINJA2 (debug)
-app.jinja_env.auto_reload = True
-app.jinja_env.cache = {}
+# 🔥 Cache Jinja2 : activé en prod (économie RAM), désactivé en local (debug)
+if os.environ.get('RENDER'):
+    app.jinja_env.auto_reload = False
+    app.jinja_env.cache_size = 400
+else:
+    app.jinja_env.auto_reload = True
+    app.jinja_env.cache = {}
 
-# � FORCER RECHARGEMENT TEMPLATE AVANT CHAQUE REQUÊTE
-@app.before_request
-def clear_template_cache():
-    app.jinja_env.cache.clear()
+    @app.before_request
+    def clear_template_cache():
+        app.jinja_env.cache.clear()
 
 # �🗜️ Compression gzip pour réduire la taille des réponses (~70% plus léger)
 app.config['COMPRESS_LEVEL'] = 6          # Niveau de compression (1-9, 6 = bon équilibre vitesse/taille)
@@ -842,8 +845,8 @@ def get_db_connection(timeout=30.0):
         # Optimisations SQLite
         raw.execute('PRAGMA journal_mode=WAL')
         raw.execute('PRAGMA synchronous=NORMAL')
-        raw.execute('PRAGMA cache_size=10000')
-        raw.execute('PRAGMA temp_store=MEMORY')
+        raw.execute('PRAGMA cache_size=2000')
+        raw.execute('PRAGMA temp_store=FILE')
         return _CompatConn(raw, is_pg=False)
 
 # ===============================
