@@ -226,16 +226,14 @@ def toggle_reminder(reminder_id):
     # → marquer tous les courses_added non lus comme lus pour cet utilisateur
     if new_done == 1:
         try:
-            conn_check = get_db_connection()
-            c_check = conn_check.cursor()
-            c_check.execute(
+            c.execute(
                 "SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0",
                 (user_house,)
             )
-            remaining = c_check.fetchone()[0]
+            remaining = c.fetchone()[0]
             if remaining == 0:
                 # Toute la liste est cochée → éteindre la pill courses pour cet utilisateur
-                c_check.execute("""
+                c.execute("""
                     SELECT m.id FROM messages m
                     WHERE m.house_id = ? AND m.message_type = 'courses_added'
                     AND NOT EXISTS (
@@ -243,13 +241,12 @@ def toggle_reminder(reminder_id):
                         WHERE mr.message_id = m.id AND mr.user_email = ?
                     )
                 """, (user_house, session['user']))
-                for msg_row in c_check.fetchall():
-                    c_check.execute("""
+                for msg_row in c.fetchall():
+                    c.execute("""
                         INSERT INTO message_reads (message_id, user_email)
                         VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING
                     """, (msg_row[0], session['user']))
-                conn_check.commit()
-            conn_check.close()
+                conn.commit()
         except Exception:
             pass
 
@@ -296,10 +293,9 @@ def toggle_reminder(reminder_id):
     # Récupérer nom du joueur pour l'animation avatar côté menu
     player_name_resp = ''
     try:
-        conn2 = get_db_connection()
-        pn = conn2.execute("SELECT name FROM users WHERE email=?", (session['user'],)).fetchone()
+        c.execute("SELECT name FROM users WHERE email=?", (session['user'],))
+        pn = c.fetchone()
         player_name_resp = pn[0] if pn else session['user'].split('@')[0]
-        conn2.close()
     except Exception:
         player_name_resp = session['user'].split('@')[0]
 

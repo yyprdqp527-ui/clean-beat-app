@@ -318,13 +318,26 @@
     // ─── Ajout ────────────────────────────────────────────────────────────────
     document.getElementById('addForm').addEventListener('submit', function(e){
         e.preventDefault();
-        const btn = e.target.querySelector('.btn-add');
-        if (btn.disabled) return;
         const title = document.getElementById('title').value.trim();
         if (!title) return;
 
-        btn.disabled = true;
-        btn.textContent = '⏳';
+        // Vider le champ immédiatement (UX optimiste)
+        document.getElementById('title').value = '';
+
+        // OPTIMISTIC UPDATE : insérer la carte avant le retour serveur
+        const emptyEl = document.getElementById('emptyState');
+        if (emptyEl) emptyEl.remove();
+        const list = document.getElementById('remindersList');
+        const tempId = 'tmp-' + Date.now();
+        const card = document.createElement('div');
+        card.className = 'reminder-card';
+        card.id = 'card-' + tempId;
+        card.style.opacity = '0.5';
+        card.innerHTML =
+            '<div class="reminder-check" data-id="' + tempId + '">✓</div>' +
+            '<div class="reminder-body"><div class="reminder-title">' + escHtml(title) + '</div></div>';
+        _insertBeforeDone(list, card);
+        _updateSectionTitle();
 
         const fd = new FormData();
         fd.append('title', title);
@@ -332,19 +345,18 @@
         fetch('/reminders/add', { method: 'POST', body: fd })
             .then(function(r){ return r.json(); })
             .then(function(data){
-                if (!data.success) { showToast('❌ Erreur'); btn.disabled = false; btn.textContent = 'Ajouter'; return; }
+                if (!data.success) {
+                    card.remove();
+                    _updateSectionTitle();
+                    showToast('❌ Erreur');
+                    return;
+                }
 
-                // Supprimer l'état vide si présent
-                const emptyEl = document.getElementById('emptyState');
-                if (emptyEl) emptyEl.remove();
-
-                // Insérer la nouvelle carte en haut de la liste
-                const list = document.getElementById('remindersList');
-                const card = document.createElement('div');
-                card.className = 'reminder-card';
+                // Mettre à jour la carte temporaire avec les vraies données
                 card.id = 'card-' + data.id;
-                
-                // Construire l'avatar HTML
+                card.style.opacity = '1';
+                card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
+
                 var avatarHtml = '';
                 if (data.creator_avatar_file) {
                     avatarHtml = '<img class="reminder-creator-avatar" src="/static/avatars/' + escHtml(data.creator_avatar_file) + '" alt="' + escHtml(data.creator_name || 'Inconnu') + '">';
@@ -355,8 +367,7 @@
                 } else {
                     avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
                 }
-                
-                card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
+
                 card.innerHTML =
                     '<div class="reminder-check" data-id="' + data.id + '">✓</div>' +
                     '<div class="reminder-body">' +
@@ -364,25 +375,22 @@
                         '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
                     '</div>' +
                     '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
-
-                // Insérer avant les articles cochés (done)
-                _insertBeforeDone(list, card);
-
-                // Mettre à jour le compteur section-title
-                _updateSectionTitle();
-
-                document.getElementById('title').value = '';
-                btn.disabled = false;
-                btn.textContent = 'Ajouter';
             })
-            .catch(function(){ showToast('❌ Erreur réseau'); btn.disabled = false; btn.textContent = 'Ajouter'; });
+            .catch(function(){
+                card.remove();
+                _updateSectionTitle();
+                showToast('❌ Erreur réseau');
+            });
     });
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
     window.toggleReminder = function(id) {
-        var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
         var card = document.getElementById('card-' + id);
-        var alreadyDone = card && card.classList.contains('done');
+        // Protection re-clic : ignorer si un fetch est déjà en cours pour cet article
+        if (!card || card.dataset.pending === '1') return;
+        card.dataset.pending = '1';
+        var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
+        var alreadyDone = card.classList.contains('done');
         if (!alreadyDone) {
             // Jouer le son MAINTENANT (dans le geste utilisateur, avant le fetch)
             SoundManager.play('gainPoints');
@@ -390,8 +398,8 @@
         fetch('/reminders/toggle/' + id, { method: 'POST' })
             .then(function(r){ return r.json(); })
             .then(function(data){
+                card.dataset.pending = '0';
                 if (!data.success) return;
-                var card = document.getElementById('card-' + id);
                 var check = card.querySelector('.reminder-check');
                 if (data.is_done) {
                     card.classList.add('done');
