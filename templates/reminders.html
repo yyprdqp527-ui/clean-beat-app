@@ -121,9 +121,11 @@
         transition: all 0.3s ease;
     }
     .reminder-card.done {
-        opacity: 0.55;
+        opacity: 0.7;
         background: rgba(255,255,255,0.6);
         box-shadow: none;
+        pointer-events: none;
+        cursor: default;
     }
     .reminder-card.done .reminder-title {
         text-decoration: line-through;
@@ -315,35 +317,59 @@
         setTimeout(function(){ popup.remove(); }, 1500);
     }
 
-    // ─── Ajout ────────────────────────────────────────────────────────────────
+    // ─── Ajout (optimistic update) ─────────────────────────────────────────
     document.getElementById('addForm').addEventListener('submit', function(e){
         e.preventDefault();
-        const btn = e.target.querySelector('.btn-add');
-        if (btn.disabled) return;
         const title = document.getElementById('title').value.trim();
         if (!title) return;
 
-        btn.disabled = true;
-        btn.textContent = '⏳';
+        // 1. Optimistic update — carte temporaire immédiate
+        var tmpId = 'card-tmp-' + Date.now();
+        var list = document.getElementById('remindersList');
 
-        const fd = new FormData();
+        // Supprimer l'état vide si présent
+        var emptyEl = document.getElementById('emptyState');
+        if (emptyEl) emptyEl.remove();
+
+        var tmpCard = document.createElement('div');
+        tmpCard.className = 'reminder-card';
+        tmpCard.id = tmpId;
+        tmpCard.style.opacity = '0.6';
+        tmpCard.style.transition = 'opacity 0.3s ease';
+        tmpCard.innerHTML =
+            '<div class="reminder-check">✓</div>' +
+            '<div class="reminder-body">' +
+                '<div class="reminder-title">' + escHtml(title) + '</div>' +
+                '<div class="reminder-creator"><div class="reminder-creator-emoji">⏳</div><span class="reminder-creator-name">Ajout en cours…</span></div>' +
+            '</div>';
+
+        _insertBeforeDone(list, tmpCard);
+        _updateSectionTitle();
+
+        // Vider le champ immédiatement
+        document.getElementById('title').value = '';
+
+        // 2. Fetch en arrière-plan
+        var fd = new FormData();
         fd.append('title', title);
 
         fetch('/reminders/add', { method: 'POST', body: fd })
             .then(function(r){ return r.json(); })
             .then(function(data){
-                if (!data.success) { showToast('❌ Erreur'); btn.disabled = false; btn.textContent = 'Ajouter'; return; }
+                var oldCard = document.getElementById(tmpId);
+                if (!data.success) {
+                    // 4. Échec → supprimer la carte temporaire
+                    if (oldCard) oldCard.remove();
+                    _updateSectionTitle();
+                    showToast('❌ Erreur');
+                    return;
+                }
 
-                // Supprimer l'état vide si présent
-                const emptyEl = document.getElementById('emptyState');
-                if (emptyEl) emptyEl.remove();
-
-                // Insérer la nouvelle carte en haut de la liste
-                const list = document.getElementById('remindersList');
-                const card = document.createElement('div');
+                // 3. Succès → remplacer la carte tmp par la vraie
+                var card = document.createElement('div');
                 card.className = 'reminder-card';
                 card.id = 'card-' + data.id;
-                
+
                 // Construire l'avatar HTML
                 var avatarHtml = '';
                 if (data.creator_avatar_file) {
@@ -355,7 +381,7 @@
                 } else {
                     avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
                 }
-                
+
                 card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
                 card.innerHTML =
                     '<div class="reminder-check" data-id="' + data.id + '">✓</div>' +
@@ -365,17 +391,21 @@
                     '</div>' +
                     '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
 
-                // Insérer avant les articles cochés (done)
-                _insertBeforeDone(list, card);
-
-                // Mettre à jour le compteur section-title
+                // Remplacer la carte temporaire par la vraie
+                if (oldCard) {
+                    oldCard.parentNode.replaceChild(card, oldCard);
+                } else {
+                    _insertBeforeDone(list, card);
+                }
                 _updateSectionTitle();
-
-                document.getElementById('title').value = '';
-                btn.disabled = false;
-                btn.textContent = 'Ajouter';
             })
-            .catch(function(){ showToast('❌ Erreur réseau'); btn.disabled = false; btn.textContent = 'Ajouter'; });
+            .catch(function(){
+                // 4. Erreur réseau → supprimer la carte temporaire
+                var oldCard = document.getElementById(tmpId);
+                if (oldCard) oldCard.remove();
+                _updateSectionTitle();
+                showToast('❌ Erreur réseau');
+            });
     });
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
@@ -383,6 +413,7 @@
         var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
         var card = document.getElementById('card-' + id);
         var alreadyDone = card && card.classList.contains('done');
+        if (alreadyDone) return;
         if (!alreadyDone) {
             // Jouer le son MAINTENANT (dans le geste utilisateur, avant le fetch)
             SoundManager.play('gainPoints');
