@@ -6092,7 +6092,10 @@ function sendMalus(reason, points){
                         })
                         .catch(function() {}); // en cas d'erreur, l'état serveur est conservé
                 };
+var _refreshBadgesTimer = null;
 function refreshAllBadges() {
+                    if (_refreshBadgesTimer) clearTimeout(_refreshBadgesTimer);
+                    _refreshBadgesTimer = setTimeout(function() {
                     console.log('🔄 Rafraîchissement des badges...');
                     fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
                         .then(response => {
@@ -6142,6 +6145,7 @@ function refreshAllBadges() {
                             _forceRepaint();
                         })
                         .catch(error => console.error('❌ Erreur rafraîchissement badges:', error));
+                    }, 500);
                 }
                 
                 // 🧪 Fonction de test manuelle disponible dans la console
