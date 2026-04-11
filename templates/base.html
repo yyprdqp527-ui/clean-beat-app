@@ -1186,17 +1186,7 @@ window.showGlassPopup = function(message, category = 'info', duration = 3000) {
         }
     }
 })();
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/service-worker.js')
-            .then(registration => {
-                console.log('✅ Service Worker enregistré:', registration.scope);
-            })
-            .catch(error => {
-                console.log('❌ Erreur Service Worker:', error);
-            });
-    });
-}
+/* Service Worker unique : sw.js est enregistré par push-notifications.js */
 </script>
 
 {% block extra_scripts %}{% endblock %}
