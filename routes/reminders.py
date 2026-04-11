@@ -163,22 +163,6 @@ def add_reminder():
     except Exception:
         pass
 
-    # 🔔 Notification push aux autres joueurs de la maison
-    try:
-        from app import get_house_push_subscriptions, send_push_notification
-        subscriptions = get_house_push_subscriptions(house_id, exclude_email=session['user'])
-        if subscriptions:
-            notification_data = {
-                'title': '🛒 Liste de courses',
-                'body': f'{creator_name} a ajouté "{title}"',
-                'icon': '/static/images/logo.png',
-                'url': '/reminders'
-            }
-            for sub in subscriptions:
-                send_push_notification(sub, notification_data)
-    except Exception:
-        pass
-
     conn.close()
 
     return jsonify({
