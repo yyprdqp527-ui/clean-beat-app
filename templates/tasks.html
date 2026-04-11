@@ -619,13 +619,13 @@ function closeHelp() {
     }, 400);
     // Sauvegarder dans localStorage que l'utilisateur a vu le message pour cette catégorie
     const category = '{{ category }}';
-    localStorage.setItem('pointsHelpSeen_' + category, 'true');
+    localStorage.setItem('pointsHelpSeenV2_' + category, 'true');
 }
 
 // Masquer automatiquement si déjà vu pour cette catégorie
 window.addEventListener('DOMContentLoaded', function() {
     const category = '{{ category }}';
-    if (localStorage.getItem('pointsHelpSeen_' + category) === 'true') {
+    if (localStorage.getItem('pointsHelpSeenV2_' + category) === 'true') {
         document.getElementById('pointsHelp').style.display = 'none';
     } else {
         // Auto-masquer après 15 secondes si l'utilisateur ne clique pas
