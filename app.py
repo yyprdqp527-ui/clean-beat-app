@@ -4017,7 +4017,6 @@ def menu():
     players = []
     current_user_name = session.get('user', '')
     house_name = None
-    show_house_name_form = False
     show_intro_message = False
     house_health = None
     daily_report = []
@@ -4156,7 +4155,6 @@ def menu():
                 name, house_name_db, house_health_db = house_row
                 house_health = house_health_db if house_health_db is not None else 100
                 if (not name or not name.strip()) and (not house_name_db or not house_name_db.strip()):
-                    show_house_name_form = True
                     house_name = None
                 else:
                     house_name = house_name_db.strip() if house_name_db and house_name_db.strip() else name.strip() if name and name.strip() else None
@@ -4439,7 +4437,6 @@ def menu():
         is_child_account=is_child_account if 'is_child_account' in locals() else 0,  # Statut enfant de l'utilisateur actuel
         menu_page=True,
         house_name=house_name,
-        show_house_name_form=show_house_name_form,
         show_intro_message=show_intro_message,
         house_health=house_health,
         daily_report=daily_report,

@@ -303,8 +303,9 @@
         <div style="margin-bottom: 20px;">
             <label for="house_name" style="display:block; font-size:14px; font-weight:700; color:#153036; margin-bottom:8px;">🏷️ Donnez un surnom à votre maison</label>
             <input type="text" name="house_name" id="house_name" placeholder="Le QG, Notre Cocon, Sweet Home…"
-                   maxlength="40"
+                   maxlength="40" required
                    style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid rgba(253,174,84,0.4); background:rgba(255,255,255,0.6); font-size:15px; font-weight:600; color:#153036; outline:none; transition:border-color 0.2s;">
+            <div id="house_name_error" style="color:#e74c3c; font-size:13px; font-weight:600; margin-top:6px; display:none;">⚠️ Le nom de ta maison est obligatoire !</div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
                 <button type="button" class="name-chip" onclick="document.getElementById('house_name').value='Le QG'">Le QG</button>
                 <button type="button" class="name-chip" onclick="document.getElementById('house_name').value='Notre Cocon'">Notre Cocon</button>
@@ -336,12 +337,29 @@
         document.getElementById('submitBtn').disabled = false;
     }
 
-    // Empêcher la soumission si aucun type n'est sélectionné
+    // Empêcher la soumission si aucun type n'est sélectionné ou si le nom est vide
     document.getElementById('houseTypeForm').addEventListener('submit', function(e) {
         if (!document.getElementById('house_type').value) {
             e.preventDefault();
             alert('Veuillez sélectionner un type de logement');
+            return;
         }
+        var nameInput = document.getElementById('house_name');
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            nameInput.style.borderColor = '#e74c3c';
+            nameInput.style.boxShadow = '0 0 0 3px rgba(231,76,60,0.2)';
+            document.getElementById('house_name_error').style.display = 'block';
+            nameInput.focus();
+            return;
+        }
+    });
+
+    // Masquer l'erreur quand l'utilisateur tape
+    document.getElementById('house_name').addEventListener('input', function() {
+        this.style.borderColor = 'rgba(253,174,84,0.4)';
+        this.style.boxShadow = 'none';
+        document.getElementById('house_name_error').style.display = 'none';
     });
 </script>
 
