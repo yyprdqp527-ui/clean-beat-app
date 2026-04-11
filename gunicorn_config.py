@@ -16,8 +16,8 @@ workers = 1
 # Threads par worker (pas utilisé avec gevent mais défini pour clarté)
 threads = 1
 
-# Timeout long pour les connexions WebSocket persistantes
-timeout = 120
+# Timeout pour les connexions WebSocket persistantes
+timeout = 30
 graceful_timeout = 120
 keepalive = 5
 
@@ -34,7 +34,7 @@ preload_app = False  # False pour éviter les problèmes de monkey patching
 
 # Max requests avant restart worker (évite les fuites mémoire)
 max_requests = 1000
-max_requests_jitter = 50
+max_requests_jitter = 100
 
 # Options supplémentaires pour WebSocket
-worker_connections = 100   # Réduit pour éviter OOM sur free tier (512 MB)
+worker_connections = 200   # Augmenté pour tirer parti du single worker gevent
