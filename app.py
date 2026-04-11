@@ -2034,7 +2034,7 @@ CREATE TABLE IF NOT EXISTS users (
 
     # Thème de fond par joueur (indépendant de la maison)
     try:
-        c.execute("ALTER TABLE users ADD COLUMN bg_theme TEXT DEFAULT 'marron'")
+        c.execute("ALTER TABLE users ADD COLUMN bg_theme TEXT DEFAULT 'bleu'")
         conn.commit()
     except Exception:
         pass  # Colonne déjà existante
@@ -2068,7 +2068,7 @@ CREATE TABLE IF NOT EXISTS users (
 
     # Migration: thème de fond
     try:
-        c.execute("ALTER TABLE houses ADD COLUMN bg_theme TEXT DEFAULT 'marron'")
+        c.execute("ALTER TABLE houses ADD COLUMN bg_theme TEXT DEFAULT 'bleu'")
         conn.commit()
     except Exception:
         pass  # Colonne déjà existante

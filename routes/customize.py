@@ -8,7 +8,7 @@ def set_bg_theme():
     from app import get_db_connection, BG_THEMES
     if 'user' not in session:
         return {'ok': False, 'error': 'non connecté'}, 401
-    theme = request.json.get('theme', 'marron')
+    theme = request.json.get('theme', 'bleu')
     if theme not in BG_THEMES:
         return {'ok': False, 'error': 'thème invalide'}, 400
     try:
