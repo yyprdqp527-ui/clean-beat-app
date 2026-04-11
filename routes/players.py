@@ -845,6 +845,7 @@ def profil_joueur(player_email):
     player1_points = 0
     my_rewards_available = []
     my_rewards_used = []
+    gameplay_notifs = []
     try:
         conn = get_db_connection()
         c = conn.cursor()
@@ -928,7 +929,6 @@ def profil_joueur(player_email):
                 import traceback; traceback.print_exc()
                 my_rewards_used = []
         # ── Notifications gameplay reçues (bonus/malus/suspicions 48h) ──
-        gameplay_notifs = []
         # Précharger les avatars des joueurs de la maison pour les bonus/malus
         _house_avatars = {}
         try:
