@@ -479,9 +479,9 @@ def join_house():
                 conn.close()
                 return render_template('join_house.html', code=code_from_url)
 
-            # Vérifier que le mot de passe fait au moins 6 caractères
-            if len(password) < 6:
-                flash("Le mot de passe doit contenir au moins 6 caractères.", "danger")
+            # Vérifier que le mot de passe fait au moins 8 caractères
+            if len(password) < 8:
+                flash("Le mot de passe doit contenir au moins 8 caractères.", "danger")
                 conn.close()
                 return render_template('join_house.html', code=code_from_url)
 
