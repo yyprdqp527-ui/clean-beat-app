@@ -125,37 +125,15 @@ def save_baby_tracking():
     conn.close()
 
     try:
-        from datetime import datetime
-        conn = get_db_connection()
-        c = conn.cursor()
-
-        c.execute("""
-            INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, timestamp)
-            VALUES (?, ?, 'house', ?, 'baby_tracking', ?)
-        """, (house_id, session['user'], message_text, now_paris().isoformat()))
-
-        message_id = c.lastrowid
-        conn.commit()
-        conn.close()
-
-        _dbg(f"✅ Message baby_tracking créé avec ID: {message_id} pour {user_name}")
-
-        mark_message_as_read(message_id, session['user'])
-        _dbg(f"✅ Message baby_tracking ID {message_id} marqué comme lu pour l'auteur {session['user']}")
-
-        if SOCKETIO_AVAILABLE and socketio:
-            safe_socketio_emit('messages_list_update', {
-                'house_id': house_id,
-                'action': 'baby_tracking',
-                'sender_email': session['user'],
-                'sender_name': user_name,
-                'task_type': task_type
-            }, room=f'house_{house_id}', namespace='/', broadcast=True)
-            _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{house_id}")
+        from app import create_system_message
+        create_system_message(
+            house_id,
+            message_text,
+            'baby_tracking',
+            sender_email=session['user']
+        )
     except Exception as e:
-        _dbg(f"❌ Erreur création message baby_tracking: {e}")
-        import traceback
-        traceback.print_exc()
+        _dbg(f"❌ Erreur create_system_message baby: {e}")
 
     flash(f"✅ Suivi enregistré et partagé avec votre partenaire !", "success")
 
