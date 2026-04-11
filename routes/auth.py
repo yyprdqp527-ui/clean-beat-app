@@ -14,12 +14,8 @@ def welcome():
 # Route de compatibilité pour templates pointant sur 'signup'
 @auth_bp.route('/signup')
 def signup():
-    """Point d'entrée d'inscription générique (redirige vers le choix d'inscription)"""
-    # Si vous préférez afficher une page de choix d'inscription, utilisez 'signup.html'
-    try:
-        return render_template('signup.html')
-    except Exception:
-        return redirect(url_for('auth.signup_email'))
+    """Point d'entrée d'inscription générique — redirige vers signup_email"""
+    return redirect(url_for('auth.signup_email'))
 
 
 # Routes de placeholder pour intégrations sociales mentionnées dans les templates
