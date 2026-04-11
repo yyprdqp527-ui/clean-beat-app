@@ -1254,7 +1254,7 @@
             transform: scale(0.85);
             transform-origin: top center;
             transition: transform 0.22s ease, filter 0.22s ease;
-            animation: tileAppear 0.38s cubic-bezier(0.22, 0.61, 0.36, 1);
+            animation: tileAppear 0.38s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
@@ -1342,7 +1342,19 @@
         .rooms-isometric .room-card:nth-child(11) { z-index: 10; }
         .rooms-isometric .room-card:nth-child(12) { z-index: 9; }
 
-        /* Animation simultanée — cartes toujours visibles, effet de glissement uniquement */
+        /* Animation en cascade douce — chaque carte apparaît avec un léger décalage */
+        .rooms-isometric .room-card:nth-child(1)  { animation-delay: 0s; }
+        .rooms-isometric .room-card:nth-child(2)  { animation-delay: 0.06s; }
+        .rooms-isometric .room-card:nth-child(3)  { animation-delay: 0.12s; }
+        .rooms-isometric .room-card:nth-child(4)  { animation-delay: 0.18s; }
+        .rooms-isometric .room-card:nth-child(5)  { animation-delay: 0.24s; }
+        .rooms-isometric .room-card:nth-child(6)  { animation-delay: 0.30s; }
+        .rooms-isometric .room-card:nth-child(7)  { animation-delay: 0.36s; }
+        .rooms-isometric .room-card:nth-child(8)  { animation-delay: 0.42s; }
+        .rooms-isometric .room-card:nth-child(9)  { animation-delay: 0.48s; }
+        .rooms-isometric .room-card:nth-child(10) { animation-delay: 0.54s; }
+        .rooms-isometric .room-card:nth-child(11) { animation-delay: 0.60s; }
+        .rooms-isometric .room-card:nth-child(12) { animation-delay: 0.66s; }
 
         @keyframes tileAppear {
             from { transform: scale(0.75) translateY(14px); opacity: 0.7; }
