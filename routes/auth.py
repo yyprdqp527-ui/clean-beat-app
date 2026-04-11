@@ -154,52 +154,6 @@ def signup_email():
     return render_template('signup_email.html', invite_code=invite_code)
 
 
-@auth_bp.route('/quick_login', methods=['GET', 'POST'])
-def quick_login():
-    """Connexion rapide et joyeuse ! 🔑"""
-    from app import get_db_connection, _log_login
-    if request.method == 'GET':
-        return render_template('quick_login.html')
-
-    email = request.form.get('email', '').strip().lower()
-    password = request.form.get('password', '').strip()
-
-    if not email or not password:
-        flash("🤔 Email et mot de passe requis !", "danger")
-        return render_template('quick_login.html')
-
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT name, password FROM users WHERE email=?", (email,))
-    user = c.fetchone()
-
-    _pwd_ok = False
-    if user and user[1]:
-        try:
-            _pwd_ok = check_password_hash(user[1], password)
-        except Exception:
-            _pwd_ok = False
-        if not _pwd_ok and user[1] == password:
-            _pwd_ok = True
-            _new_hash = generate_password_hash(password)
-            conn2 = get_db_connection()
-            conn2.execute("UPDATE users SET password=? WHERE email=?", (_new_hash, email))
-            conn2.commit()
-            conn2.close()
-    conn.close()
-
-    if user and _pwd_ok:
-        session.permanent = True  # Session persistante après rafraîchissement
-        session['user'] = email
-        session['user_name'] = user[0]
-        _log_login(email)
-        flash(f"🎉 Re-bienvenue {user[0]} ! Prêt(e) pour de nouvelles aventures ? 🚀", "success")
-        return redirect(url_for('menu'))
-    else:
-        flash("🚫 Email ou mot de passe incorrect ! Vérifie tes infos !", "danger")
-        return render_template('quick_login.html')
-
-
 # Login
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():

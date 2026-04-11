@@ -506,50 +506,6 @@ def add_players():
                            hide_header=True)
 
 
-# Page Mon Profil (glassmorphisme)
-@players_bp.route('/profile')
-def profile():
-    from app import get_db_connection
-    if 'user' not in session:
-        flash("Connectez-vous d'abord", "warning")
-        return redirect(url_for('auth.login'))
-    
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    # Récupérer les infos utilisateur
-    c.execute("SELECT name, email, avatar, avatar_file, house_id, avatar_url, avatar_style FROM users WHERE email=?", (session['user'],))
-    user = c.fetchone()
-    
-    if not user:
-        conn.close()
-        flash("Utilisateur non trouvé", "danger")
-        return redirect(url_for('auth.login'))
-    
-    user_name, user_email, user_avatar, user_photo, house_id, user_avatar_url, user_avatar_style = user
-    
-    # Récupérer les infos de la maison
-    house_name = ''
-    house_code = ''
-    if house_id:
-        c.execute("SELECT house_name, code FROM houses WHERE id=?", (house_id,))
-        house = c.fetchone()
-        if house:
-            house_name, house_code = house
-    
-    conn.close()
-    
-    return render_template('profile.html',
-                           user_name=user_name,
-                           user_email=user_email,
-                           user_avatar=user_avatar,
-                           user_photo=user_photo,
-                           user_avatar_url=user_avatar_url,
-                           user_avatar_style=user_avatar_style,
-                           house_name=house_name,
-                           house_code=house_code)
-
-
 @players_bp.route('/update_profile', methods=['POST'])
 def update_profile():
     from app import SOCKETIO_AVAILABLE, _dbg, get_db_connection, propagate_player_name_change, save_photo_from_base64, socketio
