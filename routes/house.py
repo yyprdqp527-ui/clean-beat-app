@@ -77,8 +77,10 @@ def onboarding_invite():
         import random
         import string
         house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        c.execute("INSERT INTO houses (code, name, health, last_reset_date) VALUES (?, ?, ?, date('now'))",
-                  (house_code, '', 100))
+        house_name = session.get('house_name', '')
+        house_type = session.get('house_type', 'family')
+        c.execute("INSERT INTO houses (code, name, house_name, house_type, health, last_reset_date) VALUES (?, ?, ?, ?, ?, date('now'))",
+                  (house_code, house_name, house_name, house_type, 100))
         house_id = c.lastrowid
         c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
         conn.commit()
@@ -93,36 +95,6 @@ def onboarding_invite():
         join_url = f"{request.host_url}invite/{house_code}"
 
     return render_template('onboarding_invite.html', house_code=house_code, join_url=join_url)
-
-
-@house_bp.route('/name_house', methods=['GET', 'POST'])
-def name_house():
-    """ÉTAPE 4 : Nommer le foyer"""
-    from app import _dbg
-    if 'user' not in session:
-        flash("Veuillez d'abord vous inscrire", "warning")
-        return redirect(url_for('auth.signup_email'))
-
-    if request.method == 'POST':
-        house_name = request.form.get('house_name', '').strip()
-
-        _dbg(f"🏠 NAME_HOUSE POST: house_name={house_name}, user={session.get('user')}")
-
-        if not house_name:
-            flash("Veuillez donner un nom à votre foyer", "danger")
-            return render_template('name_house.html')
-
-        # Sauvegarder dans la session
-        session['house_name'] = house_name
-        session['registration_step'] = 'house_named'
-
-        _dbg(f"✅ NAME_HOUSE: Redirection vers create_profile")
-
-        # Rediriger vers l'étape 5 : création du profil (avatar + pseudo)
-        return redirect(url_for('players.create_profile'))
-
-    _dbg(f"📄 NAME_HOUSE GET: Affichage du formulaire pour {session.get('user')}")
-    return render_template('name_house.html')
 
 
 # ══════════════════════════════════════════════════════════════════════════

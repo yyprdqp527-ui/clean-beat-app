@@ -4588,7 +4588,7 @@ function sendMalus(reason, points){
                             <div class="modal-icon">🏡</div>
                             <h2 class="modal-title">Choisissez un nom pour votre maison</h2>
                             <p class="modal-subtitle">Ce sera le point de départ de votre aventure !</p>
-                            <form id="house-name-form" action="{{ url_for('house.name_house') }}" method="POST">
+                            <form id="house-name-form" action="{{ url_for('house.update_house_name') }}" method="POST">
                                 <input 
                                     id="house_name" 
                                     name="house_name" 
@@ -4624,12 +4624,22 @@ function sendMalus(reason, points){
                                     e.stopPropagation();
                                 });
                                 
-                                // Validation du formulaire
+                                // Validation du formulaire — envoi AJAX vers update_house_name
                                 form.addEventListener('submit', function(e){
-                                    if(input.value.trim().length === 0){
-                                        e.preventDefault();
+                                    e.preventDefault();
+                                    var name = input.value.trim();
+                                    if(name.length === 0){
                                         input.focus();
+                                        return;
                                     }
+                                    var formData = new FormData();
+                                    formData.append('house_name', name);
+                                    fetch(form.action, { method: 'POST', body: formData })
+                                        .then(function(r){ return r.json(); })
+                                        .then(function(data){
+                                            if(data.success){ location.reload(); }
+                                        })
+                                        .catch(function(err){ console.error(err); });
                                 });
                             }
                         })();

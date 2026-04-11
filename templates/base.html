@@ -831,12 +831,11 @@ function nameHouse() {
         return;
     }
     
-    fetch('/name_house', {
+    var formData = new FormData();
+    formData.append('house_name', houseName);
+    fetch('/house/update_house_name', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ house_name: houseName })
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
