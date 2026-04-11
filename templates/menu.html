@@ -2917,12 +2917,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ player1_avatar }}</span>
                                             {% elif player1_avatar and '.' not in player1_avatar %}
                                                 {# Treat stored value as a DiceBear seed (no file extension) #}
-                                                <img src="https://api.dicebear.com/7.x/{{ player1_avatar_style or 'adventurer' }}/svg?seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar and '.' in player1_avatar %}
                                                 {# Looks like a filename with extension -> serve static file #}
                                                 <img src="{{ url_for('static', filename='avatars/' + player1_avatar) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% else %}
-                                                <img src="https://api.dicebear.com/7.x/{{ player1_avatar_style or 'adventurer' }}/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% endif %}
                                         </div>
                                         
@@ -2966,11 +2966,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p2.avatar }}</span>
                                                 {% elif p2.avatar and '.' not in p2.avatar %}
                                                     {# Use stored seed for DiceBear when it's not a filename #}
-                                                    <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="/api/avatar_proxy?style={{ p2.avatar_style or 'adventurer' }}&seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar and '.' in p2.avatar %}
                                                     <img src="{{ url_for('static', filename='avatars/' + p2.avatar) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% else %}
-                                                    <img src="https://api.dicebear.com/7.x/{{ p2.avatar_style or 'adventurer' }}/svg?seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="/api/avatar_proxy?style={{ p2.avatar_style or 'adventurer' }}&seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
                                             <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
@@ -3015,7 +3015,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     {% elif p.avatar and p.avatar|length <= 4 %}
                                                         <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p.avatar }}</span>
                                                     {% else %}
-                                                        <img src="https://api.dicebear.com/7.x/{{ p.avatar_style or 'adventurer' }}/svg?seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                        <img src="/api/avatar_proxy?style={{ p.avatar_style or 'adventurer' }}&seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
                                                 <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
@@ -3051,7 +3051,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                         <div class="avatar-square-wrapper" title="Joueur en attente">
                                             <div class="avatar-square">
-                                                <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=waiting" alt="Avatar en attente" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="/api/avatar_proxy?style=lorelei&seed=waiting" alt="Avatar en attente" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             </div>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">0 pts</div>
@@ -4495,7 +4495,7 @@ function sendMalus(reason, points){
                                                         const isEmoji = raw.length <= 4 && /[^\x00-\x7F]/.test(raw);
                                                         if (!isEmoji) {
                                                             const style = player.avatar_style || 'adventurer';
-                                                            newAvatarUrl = 'https://api.dicebear.com/7.x/' + encodeURIComponent(style) + '/svg?seed=' + encodeURIComponent(raw);
+                                                            newAvatarUrl = '/api/avatar_proxy?style=' + encodeURIComponent(style) + '&seed=' + encodeURIComponent(raw);
                                                         }
                                                     }
 
@@ -4550,10 +4550,10 @@ function sendMalus(reason, points){
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
 
-                    // Polling toutes les 5 secondes (pause si onglet masqué)
+                    // Polling toutes les 30 secondes (pause si onglet masqué) — WebSocket assure le temps réel
                     const menuUpdateInterval = setInterval(function() {
                         if (!document.hidden) updatePlayersPointsMenu();
-                    }, 5000);
+                    }, 30000);
                     // Premier appel après 500ms
                     setTimeout(updatePlayersPointsMenu, 500);
                 </script>
@@ -4811,11 +4811,11 @@ function sendMalus(reason, points){
                                     {% elif player1_avatar and player1_avatar|length <= 4 %}
                                         <span class="profile-avatar-emoji">{{ player1_avatar }}</span>
                                     {% elif player1_avatar and '.' not in player1_avatar %}
-                                        <img src="https://api.dicebear.com/7.x/{{ player1_avatar_style or 'adventurer' }}/svg?seed={{ player1_avatar }}"
+                                        <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ player1_avatar }}"
                                              alt="{{ player1_name or 'Avatar' }}"
                                              onerror="this.onerror=null;this.innerHTML='👤';">
                                     {% else %}
-                                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}"
+                                        <img src="/api/avatar_proxy?style=adventurer&seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}"
                                              alt="{{ player1_name or 'Avatar' }}">
                                     {% endif %}
                                 </div>

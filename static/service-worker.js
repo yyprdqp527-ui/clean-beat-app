@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v114';
+const CACHE_NAME = 'cleanbeat-v115';
 const OFFLINE_URL = '/static/manifest.json';
 
 // Installation du Service Worker
@@ -51,6 +51,21 @@ self.addEventListener('fetch', (event) => {
     
     const url = new URL(event.request.url);
     
+    // 🎨 Cache First pour les avatars proxy (SVG cachés 7 jours côté serveur)
+    if (url.pathname === '/api/avatar_proxy') {
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    return response;
+                });
+            })
+        );
+        return;
+    }
+
     // 🚫 Ne JAMAIS mettre en cache les requêtes API ni les pages dynamiques
     // (les badges/compteurs/avatars doivent toujours être frais)
     if (url.pathname.startsWith('/api/') || 
