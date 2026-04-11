@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Inviter des partenaires - TOG</title>
+    <title>Inviter des partenaires - QuifaitQuoi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <style>
         * {
@@ -252,8 +252,7 @@
 
 <!-- Header avec titre -->
 <div class="page-header">
-    <div class="page-icon">🎮</div>
-    <h1 class="page-title">On ne joue pas seul !</h1>
+    <h1 class="page-title">Tout seul, c'est pas du jeu</h1>
 </div>
 
 <div class="container">
@@ -269,31 +268,24 @@
     </div>
 
     <div class="explanation">
-        <h2>🏆 Pourquoi inviter un partenaire ?</h2>
-        <p>TOG est une aventure collective ! Vous ne pouvez pas jouer seul(e).</p>
+        <h2>Pourquoi inviter quelqu'un ?</h2>
+        <p>QuifaitQuoi dans la baraque, c'est un sport d'equipe. Personne ne veut passer l'aspirateur pour la gloire, mais pour battre son coloc au score, la ca change tout.</p>
         
         <ul>
-            <li>Défiez vos colocataires ou votre partenaire</li>
-            <li>Gagnez des points ensemble</li>
-            <li>Créez une compétition fun et motivante</li>
-            <li>Maintenez votre logement propre sans effort</li>
+            <li>Lancez des defis menagers a ceux qui vivent sous votre toit</li>
+            <li>Marquez des points a chaque tache accomplie</li>
+            <li>Transformez la corvee en competition acharnee</li>
+            <li>Gardez un appart propre sans y penser (ou presque)</li>
         </ul>
 
         <p style="margin-top: 15px; font-weight: 600; color: #153036;">
-            Invitez au moins une personne pour commencer l'aventure ! 🚀
+            Invitez au moins une personne pour que la partie commence.
         </p>
-        
-        {% if house_code %}
-        <div style="margin-top: 20px; padding: 15px; background: rgba(253,174,84,0.15); border-radius: 12px; border: 2px solid rgba(253,174,84,0.3);">
-            <div style="font-size: 13px; color: #597176; font-weight: 600; margin-bottom: 5px;">🔑 Code de ta maison :</div>
-            <div style="font-size: 28px; font-weight: 900; color: #FDAE54; letter-spacing: 4px; font-family: 'Courier New', monospace;">{{ house_code }}</div>
-        </div>
-        {% endif %}
     </div>
 
     <div class="button-group">
         <button onclick="sendSMSInvitation()" class="btn btn-primary">
-            📱 Inviter un partenaire
+            Inviter un partenaire
         </button>
         <a href="{{ url_for('players.create_profile') }}" class="btn btn-secondary">
             Continuer →
@@ -316,17 +308,16 @@ function sendSMSInvitation() {
     }
     
     // Message SMS avec instructions claires
-    const message = `🎮 Rejoins-moi sur TOG !
+    const message = `Salut, j'ai un deal pour toi.
 
-Je t'invite à partager les tâches ménagères de façon fun ! 🏆
+On teste QuifaitQuoi dans la baraque : on se defie sur les taches menageres et on marque des points. Le perdant a officiellement tort.
 
-📱 Étape 1 : Clique sur ce lien
+Clique ici pour rejoindre la maison :
 ${joinUrl}
 
-🔑 Étape 2 : Entre ce code
-${houseCode}
+Ton code d'entree : ${houseCode}
 
-À tout de suite ! 💪`;
+A tout de suite, si t'es pas trop lache.`;
     
     const encodedMessage = encodeURIComponent(message);
     
