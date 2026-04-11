@@ -257,7 +257,15 @@ def api_send_bonus():
         c.execute("UPDATE users SET bonus_expires_at=? WHERE email=?", (bonus_until, target_email))
         conn.commit()
 
-        return jsonify({'success': True, 'message': f'❤️ Bonus envoyé à {target_name} ! (+{points} pts)'})
+        from datetime import date as _d
+        today = _d.today().isoformat()
+        c.execute("""
+            SELECT COALESCE(SUM(points), 0) FROM completed_tasks
+            WHERE user_email=? AND house_id=? AND DATE(completed_at)=?
+        """, (target_email, house_id, today))
+        new_total = int(c.fetchone()[0] or 0)
+
+        return jsonify({'success': True, 'new_total': new_total, 'message': f'❤️ Bonus envoyé à {target_name} ! (+{points} pts)'})
     except Exception as e:
         conn.rollback()
         _dbg(f"ERREUR api_send_bonus: {e}")

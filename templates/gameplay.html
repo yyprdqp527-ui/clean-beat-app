@@ -422,8 +422,8 @@ body {
     text-shadow: 0 2px 14px rgba(220,60,60,0.7), 0 0 30px rgba(255,69,0,0.4);
 }
 .points-animation.bonus {
-    color: #7ABAC5;
-    text-shadow: 0 2px 14px rgba(122,186,197,0.7), 0 0 30px rgba(255,215,0,0.4);
+    color: #00C851;
+    text-shadow: 0 2px 14px rgba(0,200,81,0.7), 0 0 30px rgba(0,200,81,0.4);
 }
 
 @keyframes pointsFloat {
@@ -1429,7 +1429,6 @@ function sendBonus(reason, points){
         .then(function(r){return r.json();}).then(function(data){
             closeBonus();
             if(data.success){
-                SoundManager.play('gainPoints');
                 showPointsAnimation(points, true);
                 // Animation célébration sur l'avatar cible
                 var playerDiv = document.querySelector('.gw-player[data-gw-player-name="' + targetName + '"]');
@@ -1437,6 +1436,13 @@ function sendBonus(reason, points){
                     var avatarEl = playerDiv.querySelector('.gw-avatar-img, .gw-avatar-emoji');
                     if (avatarEl) { avatarEl.style.animation = 'none'; avatarEl.offsetHeight; avatarEl.style.animation = 'gwAvatarBonus 1.2s ease-out'; avatarEl.style.boxShadow = '0 0 25px rgba(255,215,0,0.7)'; setTimeout(function(){ avatarEl.style.boxShadow = ''; avatarEl.style.animation = ''; }, 1500); }
                 }
+                // Mise à jour du compteur de points
+                var counter = document.getElementById('myWheelPts');
+                if (counter && data.new_total !== undefined) {
+                    counter.textContent = data.new_total;
+                }
+                // Son après mise à jour compteur
+                SoundManager.play('gainPoints');
                 if(window._localBonusMap) window._localBonusMap[targetEmail] = Date.now();
                 // Redirection vers menu avec animation sur l'avatar
                 setTimeout(function(){
