@@ -477,18 +477,6 @@
                 check.innerHTML = '✓';
             }
             _updateSectionTitle();
-            // Mettre à jour la pastille nav courses
-            var cnt = data.pending_count || 0;
-            var badge = document.getElementById('courses-nav-badge');
-            if (badge) {
-                if (cnt > 0) { badge.textContent = cnt < 100 ? cnt : '99+'; badge.style.display = ''; }
-                else { badge.style.display = 'none'; }
-            }
-            // Mettre à jour le badge PWA
-            if ('setAppBadge' in navigator) {
-                if (cnt > 0) navigator.setAppBadge(cnt).catch(function(){});
-                else navigator.clearAppBadge().catch(function(){});
-            }
         });
         _socket.on('reminder_deleted', function(data) {
             var card = document.getElementById('card-' + data.id);
