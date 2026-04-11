@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v113';
+const CACHE_NAME = 'cleanbeat-v114';
 const OFFLINE_URL = '/static/manifest.json';
 
 // Installation du Service Worker
@@ -53,7 +53,6 @@ self.addEventListener('fetch', (event) => {
     
     // 🚫 Ne JAMAIS mettre en cache les requêtes API ni les pages dynamiques
     // (les badges/compteurs/avatars doivent toujours être frais)
-    // 🚫 Ne JAMAIS mettre en cache les images des pièces (elles peuvent changer)
     if (url.pathname.startsWith('/api/') || 
         url.pathname === '/menu' || 
         url.pathname === '/comments' ||
@@ -61,13 +60,30 @@ self.addEventListener('fetch', (event) => {
         url.pathname === '/manage_players' ||
         url.pathname === '/rewards' ||
         url.pathname.startsWith('/edit_player/') ||
-        url.pathname === '/' ||
-        (url.pathname.startsWith('/static/images/') && url.pathname.endsWith('.webp'))) {
+        url.pathname === '/') {
         event.respondWith(
             fetch(event.request).catch(() => {
-                // Fallback cache uniquement en cas d'échec réseau
                 return caches.match(event.request).then((response) => {
                     return response || caches.match(OFFLINE_URL);
+                });
+            })
+        );
+        return;
+    }
+
+    // 🏠 Cache First pour les images isométriques des pièces
+    const isRoomImage = url.pathname.startsWith('/static/images/') &&
+        url.pathname.endsWith('.webp') &&
+        /\/(chambre|salon|cuisine|sdb|Wc|buanderie|Garage)/i.test(url.pathname);
+
+    if (isRoomImage) {
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    return response;
                 });
             })
         );
