@@ -2675,11 +2675,19 @@ def create_system_message(house_id, content, message_type='system', related_task
                 }
                 notif_url = notification_urls.get(message_type, '/menu')
                 
-                # Titre personnalisé pour les messages de la maison
+                # Titre personnalisé selon le type de notification
+                notification_titles = {
+                    'task_completed': '✅ CleanBeat',
+                    'task_added': '🆕 Nouvelle mission !',
+                    'courses_added': '🛒 Liste de courses',
+                    'baby_tracking': '👶 Suivi bébé',
+                }
                 if message_type in ['sermon', 'congratulation', 'reminder']:
                     title = f'{icon_emoji} {sender_name or "Maison"}'
+                elif message_type in notification_titles:
+                    title = notification_titles[message_type]
                 else:
-                    title = f'{icon_emoji} Dust'
+                    title = f'{icon_emoji} CleanBeat'
                 
                 notification_data = {
                     'title': title,
