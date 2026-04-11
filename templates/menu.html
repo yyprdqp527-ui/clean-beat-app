@@ -1283,8 +1283,12 @@
             position: relative;
             transform: scale(1.12);
             transform-origin: top left;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
             filter: drop-shadow(3px 6px 8px rgba(21,48,54,0.30));
+            opacity: 0;
+        }
+        .rooms-isometric.images-ready .room-card-visual img {
+            opacity: 1;
         }
         
         /* Titre EN DESSOUS du cadre */
@@ -4712,6 +4716,24 @@ function sendMalus(reason, points){
                                 {% endfor %}
 
                             </div><!-- fin rooms-isometric -->
+<script>
+(function(){
+    var grid = document.querySelector('.rooms-isometric');
+    if (!grid) return;
+    var imgs = grid.querySelectorAll('img');
+    if (!imgs.length) { grid.classList.add('images-ready'); return; }
+    var loaded = 0;
+    function check() {
+        loaded++;
+        if (loaded >= imgs.length) grid.classList.add('images-ready');
+    }
+    imgs.forEach(function(img) {
+        if (img.complete) { check(); }
+        else { img.addEventListener('load', check); img.addEventListener('error', check); }
+    });
+    setTimeout(function() { grid.classList.add('images-ready'); }, 1500);
+})();
+</script>
                                 </div><!-- fin house-glass-container -->
                             </div><!-- fin house-shadow-wrapper -->
 
