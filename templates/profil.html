@@ -355,17 +355,6 @@ body { min-height: 100vh; }
 
 
     {% if is_own_profile %}
-    <!-- Mes rappels -->
-    <div class="profil-section-title">Mes rappels</div>
-    <div class="profil-reminders">
-        {% if has_baby_tracking %}
-        <a href="{{ url_for('messages.baby_messages') }}" class="profil-reminder-item">
-            <span class="profil-reminder-icon">👶</span>
-            <span class="profil-reminder-text">Tracking bébé</span>
-            {% if unread_baby_tracking > 0 %}<span class="profil-reminder-badge">{{ unread_baby_tracking }}</span>{% endif %}
-        </a>
-        {% endif %}
-    </div>
 
     <!-- Mes récompenses -->
     <div class="profil-section-title">Mes récompenses</div>
