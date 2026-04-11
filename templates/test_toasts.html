@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview Toasts — {{ house_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body {
+    background: linear-gradient(135deg, #0a1628, #1a2a3a);
+    min-height: 100vh; margin: 0; padding: 0;
+    font-family: Montserrat, sans-serif; color: white;
+}
+.header-sim {
+    text-align: center; padding: 30px 20px 10px;
+}
+.house-name-sim {
+    font-weight: 800; font-size: 16px; color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.beta-tag { font-size: 10px; color: rgba(255,255,255,0.65); font-weight: 600; margin-top: 4px; }
+
+/* Bulle de dialogue (copie exacte de menu.html) */
+.house-speech-bubble {
+    position: relative;
+    max-width: 340px; width: 90%;
+    margin: 8px auto 16px auto;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, rgba(46,204,113,0.18), rgba(39,174,96,0.10));
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(46,204,113,0.25);
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 15px rgba(46,204,113,0.12);
+    color: #e8f5e9;
+    font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 600;
+    text-align: center; line-height: 1.4;
+    display: none;
+}
+.house-speech-bubble.sermon {
+    background: linear-gradient(135deg, rgba(52,152,219,0.18), rgba(41,128,185,0.10));
+    border-color: rgba(52,152,219,0.25);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 15px rgba(52,152,219,0.12);
+    color: #e3f2fd;
+}
+.house-speech-bubble.sermon-lazy {
+    background: linear-gradient(135deg, rgba(230,126,34,0.18), rgba(211,84,0,0.10));
+    border-color: rgba(230,126,34,0.25);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 15px rgba(230,126,34,0.12);
+    color: #fff3e0;
+}
+.speech-arrow {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 8px solid rgba(46,204,113,0.25);
+}
+.house-speech-bubble.sermon .speech-arrow { border-bottom-color: rgba(52,152,219,0.25); }
+.house-speech-bubble.sermon-lazy .speech-arrow { border-bottom-color: rgba(230,126,34,0.25); }
+@keyframes speechBubbleIn {
+    0% { opacity: 0; transform: scale(0.8) translateY(-10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes speechBubbleOut {
+    0% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0.8) translateY(-10px); }
+}
+
+.buttons { padding: 20px; }
+.btn {
+    display: block; width: 90%; max-width: 400px; margin: 12px auto;
+    padding: 14px; border: none; border-radius: 16px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: Montserrat, sans-serif;
+}
+.btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+.btn-blue  { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+.btn-orange{ background: linear-gradient(135deg, #e67e22, #d35400); color: white; }
+.note { margin: 20px auto; max-width: 420px; font-size: 13px; color: #aaa; text-align: center; padding: 0 20px; }
+</style>
+</head>
+<body>
+
+<!-- Simulation du header menu -->
+<div class="header-sim">
+    <div class="house-name-sim">🏡 {{ house_name }}</div>
+    <div class="beta-tag">✨ Version bêta</div>
+</div>
+
+<!-- Bulle de dialogue -->
+<div id="house-speech-bubble" class="house-speech-bubble" style="display:none;">
+    <div class="speech-arrow"></div>
+    <div class="speech-text"></div>
+</div>
+
+<div class="buttons">
+    <button class="btn btn-green" onclick="showBubble('encouragement', '')">🎉 Encouragement</button>
+    <button class="btn btn-blue"  onclick="showBubble('sermon_funny', 'sermon')">😜 Sermon Humoristique</button>
+    <button class="btn btn-orange" onclick="showBubble('sermon_lazy', 'sermon-lazy')">🏠 Sermon Inactivité</button>
+</div>
+
+<div class="note">
+    Clique pour voir la bulle apparaître sous le nom de la maison.<br>
+    Recharge la page pour générer de nouveaux messages aléatoires.
+</div>
+
+<script>
+const MSGS = {{ msgs_json|safe }};
+let timer;
+function showBubble(key, cssClass) {
+    const b = document.getElementById('house-speech-bubble');
+    clearTimeout(timer);
+    b.className = 'house-speech-bubble' + (cssClass ? ' ' + cssClass : '');
+    b.querySelector('.speech-text').textContent = MSGS[key];
+    b.style.display = 'block';
+    b.style.animation = 'none';
+    void b.offsetHeight;
+    b.style.animation = 'speechBubbleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    timer = setTimeout(function() {
+        b.style.animation = 'speechBubbleOut 0.4s ease forwards';
+        setTimeout(function() { b.style.display = 'none'; }, 400);
+    }, 8000);
+}
+</script>
+</body>
+</html>

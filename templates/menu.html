@@ -1700,6 +1700,54 @@
         /* Styles pour les infos de la maison - VERSION COMPACTE */
         .house-info { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 6px; margin-bottom: 0; }
         .house-name { font-weight: 800; color: #ffffff; text-align: center; font-size: 14px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); }
+
+        /* Bulle de dialogue de la maison */
+        .house-speech-bubble {
+            position: relative;
+            max-width: 340px; width: 90%;
+            margin: 0 auto 10px auto;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(46,204,113,0.18), rgba(39,174,96,0.10));
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(46,204,113,0.25);
+            border-radius: 20px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 15px rgba(46,204,113,0.12);
+            color: #e8f5e9;
+            font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 600;
+            text-align: center; line-height: 1.4;
+            animation: speechBubbleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .house-speech-bubble.sermon {
+            background: linear-gradient(135deg, rgba(52,152,219,0.18), rgba(41,128,185,0.10));
+            border-color: rgba(52,152,219,0.25);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 15px rgba(52,152,219,0.12);
+            color: #e3f2fd;
+        }
+        .house-speech-bubble.sermon-lazy {
+            background: linear-gradient(135deg, rgba(230,126,34,0.18), rgba(211,84,0,0.10));
+            border-color: rgba(230,126,34,0.25);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 15px rgba(230,126,34,0.12);
+            color: #fff3e0;
+        }
+        .speech-arrow {
+            position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 8px solid rgba(46,204,113,0.25);
+        }
+        .house-speech-bubble.sermon .speech-arrow { border-bottom-color: rgba(52,152,219,0.25); }
+        .house-speech-bubble.sermon-lazy .speech-arrow { border-bottom-color: rgba(230,126,34,0.25); }
+        .speech-text { font-size: 14px; }
+        @keyframes speechBubbleIn {
+            0% { opacity: 0; transform: scale(0.8) translateY(-10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes speechBubbleOut {
+            0% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 0; transform: scale(0.8) translateY(-10px); }
+        }
+
         .house-health-bar { width: 100%; max-width: 280px; height: 10px; background: rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,0.06); }
         
         @media (max-width: 480px) {
@@ -4824,6 +4872,12 @@ function sendMalus(reason, points){
                                 <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.5px;margin-top:2px;">✨ Version bêta</div>
                             </div>
 
+                            <!-- Bulle de dialogue de la maison -->
+                            <div id="house-speech-bubble" class="house-speech-bubble" style="display:none;">
+                                <div class="speech-arrow"></div>
+                                <div class="speech-text"></div>
+                            </div>
+
                             <div class="rooms-isometric">
 
                                 {% for room in custom_rooms %}
@@ -5461,6 +5515,34 @@ function sendMalus(reason, points){
                         badges.forEach(function(b) { if (cnt > 0) { b.textContent = cnt < 100 ? cnt : '99+'; b.style.display = ''; } else { b.style.display = 'none'; } });
                     });
                 }
+
+                // 🏠 Bulle de dialogue de la maison
+                var _speechTimer;
+                function showHouseSpeechBubble(message, toastType) {
+                    var bubble = document.getElementById('house-speech-bubble');
+                    if (!bubble) return;
+                    clearTimeout(_speechTimer);
+                    // Type visuel
+                    bubble.className = 'house-speech-bubble';
+                    if (toastType === 'sermon') bubble.classList.add('sermon');
+                    else if (toastType === 'sermon_lazy') bubble.classList.add('sermon-lazy');
+                    // Contenu
+                    bubble.querySelector('.speech-text').textContent = message;
+                    // Afficher avec animation
+                    bubble.style.display = 'block';
+                    bubble.style.animation = 'none';
+                    void bubble.offsetHeight;
+                    bubble.style.animation = 'speechBubbleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    // Scroll vers la bulle pour la voir
+                    bubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Masquer après 8 secondes
+                    _speechTimer = setTimeout(function() {
+                        bubble.style.animation = 'speechBubbleOut 0.4s ease forwards';
+                        setTimeout(function() { bubble.style.display = 'none'; }, 400);
+                    }, 8000);
+                }
+                window.showHouseSpeechBubble = showHouseSpeechBubble;
+
                 // Protection: si socket.io n'est pas chargé, les badges restent fonctionnels
                 try {
                         const socket = io({
@@ -6021,6 +6103,13 @@ function sendMalus(reason, points){
                             console.log('✅ WebSocket: task_validated reçu', data);
                             refreshMissionDots();
                             refreshAllBadges();
+                        });
+
+                        // 🏠 Toast sermon / congratulation → bulle de dialogue sous le nom de la maison
+                        socket.on('house_toast', function(data) {
+                            console.log('🏠 WebSocket: house_toast reçu', data);
+                            showHouseSpeechBubble(data.message, data.toast_type);
+                            if (window.SoundManager) SoundManager.play('receiveMessage');
                         });
                         
                         console.log('WebSocket: Système de synchronisation initialisé');

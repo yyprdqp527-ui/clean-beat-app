@@ -3268,16 +3268,16 @@ HOUSE_MESSAGES = {
         "🎉 Week-end mode ON ! Mais n'oublions pas les petites tâches !",
     ],
     'sermon_lazy': [
-        "🏠 Euh... je ne veux pas être désagréable mais... ça fait 3 jours que personne ne fait rien ! 😅",
-        "🏠 Les amis, je commence à ressembler à une maison hantée... Un petit coup de balai ? 👻",
-        "🏠 Je ne suis pas une maison auto-nettoyante hein ! Qui vient m'aider ? 🧹",
-        "🏠 Alors là, chapeau ! Vous battez des records... d'inactivité ! 😂",
-        "🏠 Je vais finir par me mettre en grève si ça continue comme ça ! 🪧",
-        "🏠 Les copains, la poussière organise une fête chez moi... Intervention requise ! 🎉🧹",
-        "🏠 Bon, qui a mis le mode pause sur l'application ? On reprend le jeu ! 🎮",
-        "🏠 Attention : niveau de saleté critique ! Envoyez les renforts ! 🚨",
-        "🏠 Je rêve ou vous avez oublié que j'existe ? 😢 Revenez vite !",
-        "🏠 SOS ! La vaisselle sale prépare une révolution ! Qui vient négocier ? 🍽️",
+        "🏠 Euh {name}... je ne veux pas être désagréable mais... ça fait 3 jours que personne ne fait rien ! 😅",
+        "🏠 {name}, je commence à ressembler à une maison hantée... Un petit coup de balai ? 👻",
+        "🏠 {name}, je ne suis pas une maison auto-nettoyante hein ! Viens m'aider ! 🧹",
+        "🏠 Alors là {name}, chapeau ! Tu bats des records... d'inactivité ! 😂",
+        "🏠 {name}, je vais finir par me mettre en grève si ça continue ! 🪧",
+        "🏠 {name}, la poussière organise une fête chez moi... Intervention requise ! 🎉🧹",
+        "🏠 {name}, qui a mis le mode pause sur l'appli ? On reprend le jeu ! 🎮",
+        "🏠 {name}, attention : niveau de saleté critique ! Envoie les renforts ! 🚨",
+        "🏠 {name}, je rêve ou tu as oublié que j'existe ? 😢 Reviens vite !",
+        "🏠 {name}, SOS ! La vaisselle sale prépare une révolution ! Viens négocier ! 🍽️",
     ],
     'sermon_funny': [
         "🏠 {name}, tu te caches ou quoi ? Ça fait un bail ! 🕵️",
@@ -3292,35 +3292,66 @@ HOUSE_MESSAGES = {
 }
 
 
+def _emit_house_toast(house_id, message, toast_type, sender_name):
+    """
+    Envoie un toast visuel (sans INSERT en DB) via WebSocket + push.
+    toast_type: 'sermon' ou 'congratulation'
+    """
+    # WebSocket → toast temps réel
+    if SOCKETIO_AVAILABLE and socketio:
+        safe_socketio_emit('house_toast', {
+            'house_id': house_id,
+            'message': message,
+            'toast_type': toast_type,
+            'sender_name': sender_name
+        }, room=f'house_{house_id}', namespace='/')
+        _dbg(f"🏠 Toast '{toast_type}' émis pour house_{house_id}")
+
+    # Push notification (pour les utilisateurs hors-ligne)
+    try:
+        icon = '🎉' if toast_type == 'congratulation' else '🏠'
+        notification_data = {
+            'title': f'{icon} {sender_name}',
+            'body': message,
+            'icon': '/static/images/logo.png',
+            'url': '/menu',
+            'messageType': toast_type,
+            'badge': 1
+        }
+        notify_house_members(house_id, notification_data)
+    except Exception as e:
+        _dbg(f"⚠️ Push toast échoué: {e}")
+
+
+# Anti-spam : dernier toast envoyé par maison {house_id: datetime}
+_last_house_toast = {}
+
 def send_house_encouragement(house_id, player_name=None):
     """
-    Envoie un message d'encouragement de la maison à tous les joueurs.
+    Envoie un toast d'encouragement de la maison (sans stocker en DB).
     """
     try:
+        # Anti-spam : max 1 toast par maison par 24h
+        last = _last_house_toast.get(house_id)
+        if last and (now_paris() - last).total_seconds() < 86400:
+            _dbg(f"⏭️ Toast encouragement ignoré pour house_{house_id} (anti-spam 24h)")
+            return False
+
         conn = get_db_connection()
         c = conn.cursor()
-        
-        # Récupérer le nom de la maison
         c.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
         house_row = c.fetchone()
+        conn.close()
         house_name = house_row[0] if (house_row and house_row[0]) else (house_row[1] if house_row else "Maison")
-        
-        # Choisir un message approprié
+
         if player_name:
             message = get_house_personality_message('congratulation', player_name=player_name, house_name=house_name)
         else:
             message = get_house_personality_message('encouragement', house_name=house_name)
-        
-        # Créer le message avec l'avatar de la maison
-        create_system_message(
-            house_id=house_id,
-            content=message,
-            message_type='congratulation' if player_name else 'encouragement',
-            send_push=True,
-            sender_name=f"🏠 {house_name}"
-        )
-        
-        conn.close()
+
+        sender_name = f"🏠 {house_name}"
+        _emit_house_toast(house_id, message, 'congratulation', sender_name)
+        _last_house_toast[house_id] = now_paris()
         return True
     except Exception as e:
         _dbg(f"❌ Erreur envoi encouragement maison: {e}")
@@ -3329,32 +3360,29 @@ def send_house_encouragement(house_id, player_name=None):
 
 def send_house_sermon(house_id, player_name=None, sermon_type='lazy'):
     """
-    Envoie un message humoristique de réprimande de la maison.
+    Envoie un toast humoristique de réprimande de la maison (sans stocker en DB).
     sermon_type: 'lazy' (inactivité générale) ou 'funny' (ciblé sur un joueur)
     """
     try:
+        # Anti-spam : max 1 toast par maison par 24h
+        last = _last_house_toast.get(house_id)
+        if last and (now_paris() - last).total_seconds() < 86400:
+            _dbg(f"⏭️ Toast sermon ignoré pour house_{house_id} (anti-spam 24h)")
+            return False
+
         conn = get_db_connection()
         c = conn.cursor()
-        
-        # Récupérer le nom de la maison
         c.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
         house_row = c.fetchone()
+        conn.close()
         house_name = house_row[0] if (house_row and house_row[0]) else (house_row[1] if house_row else "Maison")
-        
-        # Choisir un message approprié
+
         message_key = 'sermon_funny' if player_name and sermon_type == 'funny' else 'sermon_lazy'
         message = get_house_personality_message(message_key, player_name=player_name, house_name=house_name)
-        
-        # Créer le message avec l'avatar de la maison
-        create_system_message(
-            house_id=house_id,
-            content=message,
-            message_type='sermon',
-            send_push=True,
-            sender_name=f"🏠 {house_name}"
-        )
-        
-        conn.close()
+
+        sender_name = f"🏠 {house_name}"
+        _emit_house_toast(house_id, message, 'sermon', sender_name)
+        _last_house_toast[house_id] = now_paris()
         return True
     except Exception as e:
         _dbg(f"❌ Erreur envoi sermon maison: {e}")
@@ -4700,6 +4728,42 @@ if SOCKETIO_AVAILABLE:
 
 # 🏠 ========== ROUTES TEST MESSAGES MAISON ==========
 
+@app.route('/test_house_toasts')
+def test_house_toasts():
+    """Page de preview visuelle des toasts glassmorphisme"""
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
+    user_row = c.fetchone()
+    conn.close()
+    
+    house_name = "Maison"
+    player_name = "Joueur"
+    if user_row:
+        player_name = user_row[1] or session['user'].split('@')[0]
+        if user_row[0]:
+            conn2 = get_db_connection()
+            c2 = conn2.cursor()
+            c2.execute("SELECT house_name, name FROM houses WHERE id=?", (user_row[0],))
+            hr = c2.fetchone()
+            conn2.close()
+            house_name = (hr[0] if hr and hr[0] else hr[1]) if hr else "Maison"
+    
+    import json as _json
+    msgs = {
+        'encouragement': get_house_personality_message('congratulation', player_name=player_name, house_name=house_name),
+        'sermon_funny': get_house_personality_message('sermon_funny', player_name=player_name, house_name=house_name),
+        'sermon_lazy': get_house_personality_message('sermon_lazy', player_name=player_name, house_name=house_name),
+    }
+    return render_template('test_toasts.html',
+                           house_name=house_name,
+                           player_name=player_name,
+                           msgs_json=_json.dumps(msgs, ensure_ascii=False))
+
+
 @app.route('/test_house_encouragement')
 def test_house_encouragement():
     """Route de test pour envoyer un message d'encouragement de la maison"""
@@ -4719,7 +4783,8 @@ def test_house_encouragement():
         house_id = user_row[0]
         player_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
         
-        # Envoyer un message d'encouragement
+        # Bypass anti-spam pour les tests
+        _last_house_toast.pop(house_id, None)
         result = send_house_encouragement(house_id, player_name=player_name)
         
         return jsonify({'success': result, 'message': 'Message d\'encouragement envoyé !'})
@@ -4747,7 +4812,8 @@ def test_house_sermon():
         house_id = user_row[0]
         player_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
         
-        # Envoyer un sermon humoristique
+        # Bypass anti-spam pour les tests
+        _last_house_toast.pop(house_id, None)
         result = send_house_sermon(house_id, player_name=player_name, sermon_type='funny')
         
         return jsonify({'success': result, 'message': 'Sermon envoyé ! 😄'})
@@ -4774,7 +4840,8 @@ def test_house_sermon_lazy():
         
         house_id = user_row[0]
         
-        # Envoyer un sermon général
+        # Bypass anti-spam pour les tests
+        _last_house_toast.pop(house_id, None)
         result = send_house_sermon(house_id, sermon_type='lazy')
         
         return jsonify({'success': result, 'message': 'Sermon général envoyé ! 🏠'})
@@ -4830,6 +4897,40 @@ app.register_blueprint(suspicion_bp)
 
 from routes.push import push_bp
 app.register_blueprint(push_bp)
+
+# 🏠 ========== BOUCLE AUTOMATIQUE SERMON / CONGRATULATION ==========
+def _sermon_loop():
+    """Boucle background : vérifie l'activité de chaque maison toutes les 6h."""
+    import time
+    _dbg("🏠 Boucle sermon/congratulation démarrée (intervalle 6h)")
+    while True:
+        try:
+            if SOCKETIO_AVAILABLE and socketio:
+                socketio.sleep(6 * 3600)  # 6 heures
+            else:
+                time.sleep(6 * 3600)
+        except Exception:
+            break
+        try:
+            with app.app_context():
+                conn = get_db_connection()
+                c = conn.cursor()
+                c.execute("SELECT id FROM houses")
+                house_ids = [row[0] for row in c.fetchall()]
+                conn.close()
+                _dbg(f"🏠 Vérification activité pour {len(house_ids)} maison(s)")
+                for hid in house_ids:
+                    try:
+                        check_house_activity_and_send_message(hid)
+                    except Exception as e:
+                        _dbg(f"⚠️ Erreur check house {hid}: {e}")
+        except Exception as e:
+            _dbg(f"❌ Erreur boucle sermon: {e}")
+
+if SOCKETIO_AVAILABLE and socketio:
+    socketio.start_background_task(_sermon_loop)
+    _dbg("🏠 Background task sermon/congratulation enregistrée")
+# 🏠 ========== FIN BOUCLE SERMON / CONGRATULATION ==========
 
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
