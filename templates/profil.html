@@ -312,7 +312,7 @@ body { min-height: 100vh; }
                     {% endif %}
                     De <strong>{{ n.giver }}</strong>
                     {% endif %}
-                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date }}{% endif %}
+                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date | date_fr }}{% endif %}
                 </div>
             </div>
             <div class="gp-notif-pts">+{{ n.points|abs }} pts</div>
@@ -332,7 +332,7 @@ body { min-height: 100vh; }
                     {% endif %}
                     De <strong>{{ n.giver }}</strong>
                     {% endif %}
-                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date }}{% endif %}
+                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date | date_fr }}{% endif %}
                 </div>
             </div>
             <div class="gp-notif-pts">{{ n.points }} pts</div>
@@ -365,7 +365,7 @@ body { min-height: 100vh; }
             <div class="profil-reward-card">
                 <div class="profil-reward-info">
                     <div class="profil-reward-text">🎁 {{ reward.text }}</div>
-                    <div class="profil-reward-date">Gagnée le {{ reward.date }}</div>
+                    <div class="profil-reward-date">Gagnée le {{ reward.date | date_fr("day") }}</div>
                 </div>
                 <button class="profil-reward-use-btn"
                         data-reward-id="{{ reward.id }}"
@@ -390,7 +390,7 @@ body { min-height: 100vh; }
             <div class="profil-reward-card profil-reward-used">
                 <div class="profil-reward-info">
                     <div class="profil-reward-text">{{ reward.text }}</div>
-                    <div class="profil-reward-date">Utilisée le {{ reward.used_date }}</div>
+                    <div class="profil-reward-date">Utilisée le {{ reward.used_date | date_fr("day") }}</div>
                 </div>
                 <span class="profil-reward-used-badge">Utilisée</span>
             </div>
