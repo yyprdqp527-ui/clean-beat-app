@@ -1306,6 +1306,23 @@ def api_validate_task():
                 _dbg(f"   Message envoyé: '{funny_message}'")
                 return jsonify({'success': False, 'error': funny_message, 'duplicate': True}), 200
         
+        # 🏠 Missions custom : vérifier si un AUTRE joueur de la maison l'a déjà validée aujourd'hui
+        if task_type == 'custom':
+            c.execute("""SELECT u.name FROM completed_tasks ct
+                         JOIN users u ON u.email = ct.user_email
+                         WHERE ct.house_id=? AND ct.category=? AND ct.task_name=?
+                         AND DATE(ct.completed_at)=? AND ct.user_email != ?""",
+                     (user_house_id, category, task_name, today, player_email))
+            other = c.fetchone()
+            if other:
+                other_name = other[0] or 'Un coéquipier'
+                return jsonify({
+                    'success': False,
+                    'error': 'already_done_by_other',
+                    'message': f"{other_name} a déjà validé cette mission aujourd'hui ! Gardez-la pour un autre jour ou supprimez-la. 😊",
+                    'player_name': other_name
+                }), 200
+
         # Insérer la tâche complétée
         c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", 
                  (player_email, user_house_id, category, task_name, task_points))

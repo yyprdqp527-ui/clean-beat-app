@@ -975,7 +975,9 @@ function validateTaskAjax(playerEmail) {
             }, 2500);
         } else {
             // Erreur ou doublon
-            if (data.duplicate) {
+            if (data.error === 'already_done_by_other') {
+                showAlreadyDoneByOtherPopup(data.message, data.player_name);
+            } else if (data.duplicate) {
                 showDuplicatePopup(data.error);
                 setTimeout(() => { window.location.href = '/menu'; }, 3000);
             } else {
@@ -1566,6 +1568,43 @@ function showSuccessPopup(points, playerName) {
             overlay.remove();
         }
     }, 2800);
+}
+
+// 🏠 Popup "déjà validé par un autre joueur" — glassmorphisme avec Garder / Supprimer
+function showAlreadyDoneByOtherPopup(message, playerName) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+    var taskId = {{ current_task_id|default(0) }};
+    var category = {{ category|default("")|tojson }};
+
+    overlay.innerHTML = '<div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px;padding:28px 24px;max-width:340px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.25);color:#fff;">'
+        + '<div style="font-size:2.2em;margin-bottom:12px;">🏠</div>'
+        + '<p style="font-size:1em;line-height:1.5;margin:0 0 22px;">' + message + '</p>'
+        + '<div style="display:flex;gap:12px;justify-content:center;">'
+        + '<button id="keep-mission-btn" style="flex:1;padding:12px 0;border-radius:12px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:#fff;font-size:0.95em;font-weight:600;cursor:pointer;">Garder</button>'
+        + '<button id="delete-mission-btn" style="flex:1;padding:12px 0;border-radius:12px;border:none;background:#e74c3c;color:#fff;font-size:0.95em;font-weight:600;cursor:pointer;">Supprimer</button>'
+        + '</div></div>';
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('keep-mission-btn').addEventListener('click', function() {
+        overlay.remove();
+        window.location.href = '/menu';
+    });
+
+    document.getElementById('delete-mission-btn').addEventListener('click', function() {
+        // Soumettre un formulaire POST vers la route de suppression
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/delete_custom_task/' + taskId + '/' + encodeURIComponent(category);
+        document.body.appendChild(form);
+        form.submit();
+    });
+
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) { overlay.remove(); window.location.href = '/menu'; }
+    });
 }
 
 // 🔄 Popup pour les doublons - Utilise showGlassPopup universel
