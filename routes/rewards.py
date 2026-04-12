@@ -407,6 +407,65 @@ def open_reward_box():
         conn.close()
         return jsonify({'success': False, 'message': 'Seul le gagnant de la semaine peut ouvrir une case'}), 403
     
+    # Créer les tables si elles n'existent pas (AVANT tout SELECT dessus)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS reward_boxes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            house_id INTEGER NOT NULL,
+            box_number INTEGER NOT NULL,
+            reward_text TEXT NOT NULL,
+            opened_by TEXT NOT NULL,
+            opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            week_start DATE NOT NULL,
+            FOREIGN KEY (house_id) REFERENCES houses(id),
+            FOREIGN KEY (opened_by) REFERENCES users(email)
+        )
+    """)
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN week_start DATE")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN box_number INTEGER")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN reward_text TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_by TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS custom_rewards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            house_id INTEGER NOT NULL,
+            house_type TEXT NOT NULL,
+            rewards_json TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (house_id) REFERENCES houses(id),
+            UNIQUE(house_id, house_type)
+        )
+    """)
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN house_type TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN rewards_json TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE custom_rewards ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+
     c.execute("SELECT box_number FROM reward_boxes WHERE house_id=? AND opened_by=? AND week_start=?", 
               (house_id, session['user'], start_of_week))
     if c.fetchone():
@@ -421,76 +480,6 @@ def open_reward_box():
     house_type = house_type_row[0] if house_type_row and house_type_row[0] else 'family'
     
     _dbg(f"[DEBUG open_reward_box] house_id={house_id}, house_type={house_type}, box_number={box_number}")
-    
-    # Créer la table custom_rewards si elle n'existe pas
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS custom_rewards (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            house_id INTEGER NOT NULL,
-            house_type TEXT NOT NULL,
-            rewards_json TEXT NOT NULL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (house_id) REFERENCES houses(id),
-            UNIQUE(house_id, house_type)
-        )
-    """)
-    
-    # Ajouter les colonnes manquantes si elles n'existent pas
-    try:
-        c.execute("ALTER TABLE custom_rewards ADD COLUMN house_type TEXT")
-    except:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE custom_rewards ADD COLUMN rewards_json TEXT")
-    except:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE custom_rewards ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    except:
-        pass
-    
-    # Créer la table reward_boxes si elle n'existe pas
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS reward_boxes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            house_id INTEGER NOT NULL,
-            box_number INTEGER NOT NULL,
-            reward_text TEXT NOT NULL,
-            opened_by TEXT NOT NULL,
-            opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            week_start DATE NOT NULL,
-            FOREIGN KEY (house_id) REFERENCES houses(id),
-            FOREIGN KEY (opened_by) REFERENCES users(email)
-        )
-    """)
-    
-    # Ajouter les colonnes manquantes pour reward_boxes si elles n'existent pas
-    try:
-        c.execute("ALTER TABLE reward_boxes ADD COLUMN week_start DATE")
-    except:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE reward_boxes ADD COLUMN box_number INTEGER")
-    except:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE reward_boxes ADD COLUMN reward_text TEXT")
-    except:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_by TEXT")
-    except:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE reward_boxes ADD COLUMN opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    except:
-        pass
     
     # Charger les récompenses personnalisées ou les récompenses par défaut
     # Grille Parents/Enfants (40 récompenses par défaut)
