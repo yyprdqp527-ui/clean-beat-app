@@ -767,6 +767,44 @@ def task_action(value: str) -> str:
 
 app.jinja_env.filters['task_action'] = task_action
 
+@app.template_filter('date_fr')
+def date_fr_filter(value, format='long'):
+    """
+    Formate une date en français.
+    format='long' → 'dim. 12 avril à 10:42'
+    format='short' → '12/04/2026'
+    format='day' → 'dimanche 12 avril'
+    """
+    JOURS = ['lundi','mardi','mercredi',
+             'jeudi','vendredi','samedi','dimanche']
+    MOIS = ['','janvier','février','mars','avril',
+            'mai','juin','juillet','août',
+            'septembre','octobre','novembre','décembre']
+
+    if not value:
+        return ''
+
+    # Convertit string en datetime si nécessaire
+    if isinstance(value, str):
+        try:
+            from datetime import datetime
+            value = datetime.fromisoformat(value)
+        except Exception:
+            return value
+
+    jour = JOURS[value.weekday()]
+    jour_court = jour[:3] + '.'
+    mois = MOIS[value.month]
+
+    if format == 'long':
+        return f"{jour_court} {value.day} {mois} à {value.strftime('%H:%M')}"
+    elif format == 'short':
+        return value.strftime('%d/%m/%Y')
+    elif format == 'day':
+        return f"{jour} {value.day} {mois}"
+
+    return str(value)
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
