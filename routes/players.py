@@ -908,6 +908,7 @@ def profil_joueur(player_email):
                     FROM mystery_rewards
                     WHERE user_email=? AND used=0
                     ORDER BY id DESC
+                    LIMIT 3
                 """, (player_email,))
                 my_rewards_available = [{'id': r[0], 'text': r[1], 'date': r[2]} for r in c.fetchall()]
                 _dbg(f"🎁 Récompenses disponibles: {len(my_rewards_available)}")
