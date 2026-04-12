@@ -901,7 +901,7 @@ def profil_joueur(player_email):
                     pass
         # Récompenses : uniquement si c'est son propre profil
         if is_own_profile:
-            _dbg(f"🎁 profil récompenses: requête pour user={player_email}")
+            print(f"🎁 profil récompenses: requête pour user={player_email}", flush=True)
             try:
                 c.execute("""
                     SELECT id, reward_text, won_date
@@ -911,7 +911,7 @@ def profil_joueur(player_email):
                     LIMIT 3
                 """, (player_email,))
                 my_rewards_available = [{'id': r[0], 'text': r[1], 'date': r[2]} for r in c.fetchall()]
-                _dbg(f"🎁 Récompenses disponibles: {len(my_rewards_available)}")
+                print(f"🎁 Récompenses disponibles: {len(my_rewards_available)}", flush=True)
             except Exception as e:
                 _dbg(f"❌ Erreur récompenses disponibles: {e}")
                 import traceback; traceback.print_exc()
@@ -924,7 +924,7 @@ def profil_joueur(player_email):
                     ORDER BY used_date DESC
                 """, (player_email,))
                 my_rewards_used = [{'id': r[0], 'text': r[1], 'won_date': r[2], 'used_date': r[3]} for r in c.fetchall()]
-                _dbg(f"🎁 Récompenses utilisées: {len(my_rewards_used)}")
+                print(f"🎁 Récompenses utilisées: {len(my_rewards_used)}", flush=True)
             except Exception as e:
                 _dbg(f"❌ Erreur récompenses utilisées: {e}")
                 import traceback; traceback.print_exc()
