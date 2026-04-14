@@ -4356,20 +4356,20 @@ def menu():
     # Définir les pièces par défaut (correspond exactement aux 12 cartes du menu)
     ALL_DEFAULT_ROOMS = [
         # Chambres (optionnelles – peuvent être masquées et renommées)
-        {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/chambreparentale marron.webp', 'category': 'chambre_parentale', 'fixed': False},
-        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/chambre1.webp',                'category': 'chambre_parentale',  'fixed': False},
-        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/chambre2.webp',                'category': 'chambre_parentale',  'fixed': False},
-        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/chambre garçon3.webp',        'category': 'chambre_garcon',     'fixed': False},
-        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/chambre enfant 4.webp',       'category': 'chambre_enfant',     'fixed': False},
-        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/chambre bébé4 .webp',         'category': 'chambre_bebe',       'fixed': False},
+        {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/thumbs/chambreparentale_marron.webp', 'category': 'chambre_parentale', 'fixed': False},
+        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/thumbs/chambre1.webp',                'category': 'chambre_parentale',  'fixed': False},
+        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/thumbs/chambre2.webp',                'category': 'chambre_parentale',  'fixed': False},
+        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/thumbs/chambre_garçon3.webp',        'category': 'chambre_garcon',     'fixed': False},
+        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/thumbs/chambre_enfant_4.webp',       'category': 'chambre_enfant',     'fixed': False},
+        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/thumbs/chambre_bébé4_.webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
-        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/cuisinewoop.webp',  'category': 'cuisine',    'fixed': True},
-        {'key': 'salon',    'name': 'Salon',        'image': 'images/salonorange.webp',  'category': 'salon',      'fixed': True},
-        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/bureau.webp',       'category': 'piece_bonus', 'fixed': True},
-        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/sdbwoop.webp',     'category': 'salle_bain', 'fixed': True},
-        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/Wc2.webp',          'category': 'wc',         'fixed': True},
-        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/buanderie5.webp',   'category': 'buanderie',  'fixed': True},
-        {'key': 'garage',   'name': 'Garage',       'image': 'images/Garage2.webp',      'category': 'garage',     'fixed': False},
+        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/thumbs/cuisinewoop.webp',  'category': 'cuisine',    'fixed': True},
+        {'key': 'salon',    'name': 'Salon',        'image': 'images/thumbs/salonorange.webp',  'category': 'salon',      'fixed': True},
+        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/thumbs/bureau.webp',       'category': 'piece_bonus', 'fixed': True},
+        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/thumbs/sdbwoop.webp',     'category': 'salle_bain', 'fixed': True},
+        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/thumbs/Wc2.webp',          'category': 'wc',         'fixed': True},
+        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/thumbs/buanderie5.webp',   'category': 'buanderie',  'fixed': True},
+        {'key': 'garage',   'name': 'Garage',       'image': 'images/thumbs/Garage2.webp',      'category': 'garage',     'fixed': False},
     ]
     if house_id:
         for room in ALL_DEFAULT_ROOMS:

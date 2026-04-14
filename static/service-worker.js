@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v118';
+const CACHE_NAME = 'cleanbeat-v119';
 const OFFLINE_URL = '/static/manifest.json';
 
 const PRECACHE_URLS = [
