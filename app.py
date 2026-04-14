@@ -504,7 +504,8 @@ except ImportError:
 if os.environ.get('RENDER'):
     try:
         from whitenoise import WhiteNoise
-        app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/', max_age=31536000)
+        static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+        app.wsgi_app = WhiteNoise(app.wsgi_app, root=static_folder, prefix='static/', max_age=31536000)
         print("✅ WhiteNoise activé - fichiers statiques optimisés")
     except ImportError:
         print("⚠️ whitenoise non installé. Installation: pip install whitenoise")

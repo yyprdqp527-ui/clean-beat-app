@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v116';
+const CACHE_NAME = 'cleanbeat-v117';
 const OFFLINE_URL = '/static/manifest.json';
 
 const PRECACHE_URLS = [
@@ -96,12 +96,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 🏠 Cache First pour les images isométriques des pièces
-    const isRoomImage = url.pathname.startsWith('/static/images/') &&
-        url.pathname.endsWith('.webp') &&
-        /\/(chambre|salon|cuisine|sdb|Wc|buanderie|Garage)/i.test(url.pathname);
+    // 🏠 Cache First pour TOUTES les images statiques (pièces + tâches + récompenses)
+    const isStaticImage = url.pathname.startsWith('/static/images/') &&
+        /\.(webp|png|jpg|jpeg)$/i.test(url.pathname);
 
-    if (isRoomImage) {
+    if (isStaticImage) {
         event.respondWith(
             caches.match(event.request).then((cached) => {
                 if (cached) return cached;
