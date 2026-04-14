@@ -739,7 +739,7 @@
             {% if task_image and task_image.startswith('data:') %}
                 <img src="{{ task_image }}" alt="{{ task_name }}" class="task-image" loading="lazy">
             {% elif task_image %}
-                <img src="{{ url_for('static', filename='images/' ~ task_image) }}" alt="{{ task_name }}" class="task-image" loading="lazy">
+                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" class="task-image" loading="lazy">
             {% else %}
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ task_name }}" class="task-image">
             {% endif %}

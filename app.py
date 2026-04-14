@@ -518,6 +518,15 @@ def list_index_filter(lst, value):
     except (ValueError, AttributeError):
         return 0
 
+@app.template_filter('thumb')
+def thumb_filter(path):
+    """Convertit un chemin image en chemin thumb : cuisine/cafe.png -> cuisine/thumbs/cafe.webp"""
+    if not path or '/' not in path or path.startswith('data:'):
+        return path
+    parts = path.rsplit('/', 1)
+    name = parts[1].rsplit('.', 1)[0] + '.webp'
+    return parts[0] + '/thumbs/' + name
+
 # Configuration des sessions pour qu'elles persistent après rafraîchissement
 from datetime import timedelta
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Session valable 30 jours
