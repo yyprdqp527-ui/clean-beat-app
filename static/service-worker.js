@@ -1,26 +1,36 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v115';
+const CACHE_NAME = 'cleanbeat-v116';
 const OFFLINE_URL = '/static/manifest.json';
+
+const PRECACHE_URLS = [
+    '/static/manifest.json',
+    '/static/images/thumbs/chambreparentale_marron.webp',
+    '/static/images/thumbs/chambre1.webp',
+    '/static/images/thumbs/chambre2.webp',
+    '/static/images/thumbs/chambre_garçon3.webp',
+    '/static/images/thumbs/chambre_enfant_4.webp',
+    '/static/images/thumbs/chambre_bébé4_.webp',
+    '/static/images/thumbs/salonorange.webp',
+    '/static/images/thumbs/cuisinewoop.webp',
+    '/static/images/thumbs/sdbwoop.webp',
+    '/static/images/thumbs/Wc2.webp',
+    '/static/images/thumbs/buanderie5.webp',
+    '/static/images/thumbs/Garage2.webp',
+    '/static/socket.io.min.js',
+    '/static/soundManager.js',
+];
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
     console.log('🔧 Service Worker: Installation...');
-    
+
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log('📦 Service Worker: Cache ouvert');
-            // ⚠️ Ne PAS pré-cacher les pages dynamiques (menu, comments, /)
-            // car elles contiennent des badges/données qui changent constamment
-            return cache.addAll([
-                '/static/manifest.json'
-            ]);
-        })
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(PRECACHE_URLS))
+            .then(() => self.skipWaiting())
     );
-    
-    // Force le nouveau service worker à prendre le contrôle immédiatement
-    self.skipWaiting();
 });
 
 // Activation du Service Worker
