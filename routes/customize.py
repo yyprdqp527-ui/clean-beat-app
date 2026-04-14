@@ -45,18 +45,18 @@ def personnaliser_maison():
 
     # Liste complète de toutes les pièces
     ALL_ROOMS = [
-        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',     'image': 'images/chambreparentale marron.webp', 'fixed': False},
-        {'key': 'chambre1',          'default_name': 'Chambre 2',     'image': 'images/chambre1.webp',                'fixed': False},
-        {'key': 'chambre2',          'default_name': 'Chambre 3',     'image': 'images/chambre2.webp',                'fixed': False},
-        {'key': 'chambre_garcon',    'default_name': 'Chambre 4',     'image': 'images/chambre garçon3.webp',         'fixed': False},
-        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/chambre enfant 4.webp',        'fixed': False},
-        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/chambre bébé4 .webp',          'fixed': False},
-        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/salonorange.webp',             'fixed': True},
-        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/cuisinewoop.webp',             'fixed': True},
-        {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/sdbwoop.webp',                'fixed': True},
-        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/Wc2.webp',                    'fixed': True},
-        {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/buanderie5.webp',              'fixed': True},
-        {'key': 'garage',            'default_name': 'Garage',        'image': 'images/Garage2.webp',                'fixed': False},
+        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',     'image': 'images/thumbs/chambreparentale_marron.webp', 'fixed': False},
+        {'key': 'chambre1',          'default_name': 'Chambre 2',     'image': 'images/thumbs/chambre1.webp',                'fixed': False},
+        {'key': 'chambre2',          'default_name': 'Chambre 3',     'image': 'images/thumbs/chambre2.webp',                'fixed': False},
+        {'key': 'chambre_garcon',    'default_name': 'Chambre 4',     'image': 'images/thumbs/chambre_garçon3.webp',         'fixed': False},
+        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/thumbs/chambre_enfant_4.webp',        'fixed': False},
+        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/thumbs/chambre_bébé4_.webp',          'fixed': False},
+        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/thumbs/salonorange.webp',             'fixed': True},
+        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/thumbs/cuisinewoop.webp',             'fixed': True},
+        {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/thumbs/sdbwoop.webp',                'fixed': True},
+        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/thumbs/Wc2.webp',                    'fixed': True},
+        {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/thumbs/buanderie5.webp',              'fixed': True},
+        {'key': 'garage',            'default_name': 'Garage',        'image': 'images/thumbs/Garage2.webp',                'fixed': False},
     ]
 
     if request.method == 'POST':
