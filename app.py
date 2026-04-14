@@ -500,6 +500,15 @@ try:
 except ImportError:
     print("⚠️ flask-compress non installé. Installation: pip install flask-compress")
 
+# 🚀 WhiteNoise : sert les fichiers statiques efficacement en prod (gzip + cache immutable)
+if os.environ.get('RENDER'):
+    try:
+        from whitenoise import WhiteNoise
+        app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/', max_age=31536000)
+        print("✅ WhiteNoise activé - fichiers statiques optimisés")
+    except ImportError:
+        print("⚠️ whitenoise non installé. Installation: pip install whitenoise")
+
 # Ajouter un filtre Jinja personnalisé pour index
 @app.template_filter('index')
 def list_index_filter(lst, value):
