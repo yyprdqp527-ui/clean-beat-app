@@ -464,6 +464,15 @@ if os.environ.get('RENDER'):
 app.config['TEMPLATES_AUTO_RELOAD'] = not bool(os.environ.get('RENDER'))
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 jours pour les fichiers statiques
 
+@app.after_request
+def add_cache_headers(response):
+    # Cache 1 an pour les images statiques
+    if request.path.startswith('/static/images/'):
+        response.cache_control.max_age = 31536000
+        response.cache_control.public = True
+        response.headers['Vary'] = 'Accept-Encoding'
+    return response
+
 # 🔥 Cache Jinja2 : activé en prod (économie RAM), désactivé en local (debug)
 if os.environ.get('RENDER'):
     app.jinja_env.auto_reload = False
