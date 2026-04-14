@@ -1,4 +1,4 @@
-// Service Worker CleanBeat - Notifications Push v2
+// Service Worker CleanBeat - Notifications Push v3
 
 // Force le nouveau SW à prendre le contrôle immédiatement (sans attendre fermeture des onglets)
 self.addEventListener('install', function(event) {
