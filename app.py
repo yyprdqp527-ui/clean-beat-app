@@ -2768,7 +2768,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 }
                 
                 # Envoyer à tous les membres de la maison (sauf l'expéditeur si c'est un vrai utilisateur)
-                exclude = sender_email if message_type in ('task_added', 'courses_added', 'baby_tracking') else None
+                exclude = sender_email if message_type == 'baby_tracking' else None
                 notify_house_members(house_id, notification_data, exclude_email=exclude)
                 
             except Exception as e:
@@ -3264,8 +3264,8 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
                 total = (
                     get_unread_message_count(user_email, house_id) +
                     get_unread_count_by_type(user_email, house_id, 'baby_tracking') +
-                    get_unread_count_by_type(user_email, house_id, 'task_added') +
-                    get_unread_count_by_type(user_email, house_id, 'courses_added')
+                    get_unread_count_by_type(user_email, house_id, 'task_added', include_own=True) +
+                    get_unread_count_by_type(user_email, house_id, 'courses_added', include_own=True)
                 )
                 personalized_data['badge'] = max(1, total)
             except Exception:
@@ -4300,7 +4300,7 @@ def menu():
             
             # ✅ Messages baby_tracking et task_added : compteur pour badges burger
             unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=True)
-            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn)
+            unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn, include_own=True)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
             # 🛒 Articles non cochés dans la liste de courses (badge onglet navigation)
@@ -4635,8 +4635,8 @@ def api_unread_counts():
         unread_received = get_unread_message_count(session['user'], house_id)
         children_unread = get_children_unread_counts(house_id)
         unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', include_own=True)
-        unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added')
-        unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added')
+        unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', include_own=True)
+        unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added', include_own=True)
 
         # 🛒 Articles non cochés dans la liste de courses
         courses_pending_count = 0
