@@ -166,6 +166,29 @@ def api_send_malus():
         c.execute("UPDATE users SET skull_expires_at=? WHERE email=?", (skull_until, target_email))
         conn.commit()
 
+        # 🔌 WebSocket: diffuser la mise à jour des points à toute la maison
+        try:
+            from app import safe_socketio_emit, SOCKETIO_AVAILABLE, socketio
+            if SOCKETIO_AVAILABLE and socketio:
+                c.execute("""
+                    SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                           COALESCE(SUM(ct.points), 0) as daily_points
+                    FROM users u
+                    LEFT JOIN completed_tasks ct ON u.email = ct.user_email
+                        AND DATE(ct.completed_at) = DATE('now')
+                    WHERE u.house_id = ?
+                    GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.points
+                    ORDER BY daily_points DESC, u.points DESC
+                """, (house_id,))
+                players_data_ws = [{'email': p[0], 'name': p[1], 'avatar': p[2], 'avatar_url': p[3],
+                                    'avatar_file': p[4], 'total_points': p[5] or 0,
+                                    'daily_points': int(p[6]) if p[6] else 0} for p in c.fetchall()]
+                safe_socketio_emit('players_points_update', {
+                    'players': players_data_ws, 'updated_player': target_email
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception:
+            pass
+
         return jsonify({
             'success': True,
             'message': f'💀 Malus envoyé à {target_name} ! ({points} pts)'
@@ -264,6 +287,29 @@ def api_send_bonus():
             WHERE user_email=? AND house_id=? AND DATE(completed_at)=?
         """, (target_email, house_id, today))
         new_total = int(c.fetchone()[0] or 0)
+
+        # 🔌 WebSocket: diffuser la mise à jour des points à toute la maison
+        try:
+            from app import safe_socketio_emit, SOCKETIO_AVAILABLE, socketio
+            if SOCKETIO_AVAILABLE and socketio:
+                c.execute("""
+                    SELECT u.email, u.name, u.avatar, u.avatar_url, u.avatar_file, u.points,
+                           COALESCE(SUM(ct.points), 0) as daily_points
+                    FROM users u
+                    LEFT JOIN completed_tasks ct ON u.email = ct.user_email
+                        AND DATE(ct.completed_at) = DATE('now')
+                    WHERE u.house_id = ?
+                    GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.points
+                    ORDER BY daily_points DESC, u.points DESC
+                """, (house_id,))
+                players_data_ws = [{'email': p[0], 'name': p[1], 'avatar': p[2], 'avatar_url': p[3],
+                                    'avatar_file': p[4], 'total_points': p[5] or 0,
+                                    'daily_points': int(p[6]) if p[6] else 0} for p in c.fetchall()]
+                safe_socketio_emit('players_points_update', {
+                    'players': players_data_ws, 'updated_player': target_email
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception:
+            pass
 
         return jsonify({'success': True, 'new_total': new_total, 'message': f'❤️ Bonus envoyé à {target_name} ! (+{points} pts)'})
     except Exception as e:

@@ -86,7 +86,17 @@ def api_emit_suspicion():
         suspicion_id = c.lastrowid
         conn.commit()
 
-        # TODO: Créer une notification pour le joueur soupçonné
+        # 🔌 WebSocket: notifier la maison de la nouvelle suspicion
+        try:
+            from app import safe_socketio_emit, SOCKETIO_AVAILABLE, socketio
+            if SOCKETIO_AVAILABLE and socketio:
+                safe_socketio_emit('suspicion_update', {
+                    'house_id': house_id,
+                    'suspected': suspected_email,
+                    'by': suspecting_email
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception:
+            pass
 
         return jsonify({
             'success': True,

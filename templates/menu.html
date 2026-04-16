@@ -5657,6 +5657,13 @@ function sendMalus(reason, points){
                             refreshAllBadges();
                         });
 
+                        // 🔍 Suspicion émise — rafraîchir badges et loupes
+                        socket.on('suspicion_update', function(data) {
+                            console.log('🔍 WebSocket: suspicion_update reçu', data);
+                            refreshAllBadges();
+                            if (typeof loadActiveSuspicions === 'function') loadActiveSuspicions();
+                        });
+
                         // 🏠 Toast sermon / congratulation → bulle de dialogue sous le nom de la maison
                         socket.on('house_toast', function(data) {
                             console.log('🏠 WebSocket: house_toast reçu', data);
