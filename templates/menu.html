@@ -544,7 +544,7 @@
         .avatar-square-wrapper.daily-leader + .avatar-points {
             color: #FFD700 !important;
             font-weight: 900 !important;
-            text-shadow: 0 1px 6px rgba(255,215,0,0.5) !important;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 8px rgba(255,215,0,0.3) !important;
             animation: leaderPointsPulse 2s ease-in-out infinite;
         }
         @keyframes leaderPointsPulse {
@@ -620,7 +620,7 @@
             flex-direction: column;
             gap: 0px;
             flex: 0 0 100%;
-            margin: -12px auto 0;
+            margin: -10px auto 0;
             padding: 0 10px 0 23px;
             box-sizing: border-box;
         }
@@ -691,15 +691,19 @@
             text-shadow: none;
         }
         .week-bday.is-future {
-            color: rgba(0,0,0,0.45);
-            text-shadow: 0 0 7px rgba(255,255,255,0.9), 0 0 14px rgba(255,255,255,0.6);
+            color: rgba(0,0,0,0.5);
+            animation: dayShimmer 2s ease-in-out infinite;
+        }
+        @keyframes dayShimmer {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; text-shadow: 0 0 6px rgba(0,0,0,0.25); }
         }
         .week-bar-cursor {
             position: absolute;
-            top: 1px;
-            bottom: 1px;
-            height: calc(100% - 2px);
-            width: calc(100% / 7 - 2px);
+            top: -3px;
+            bottom: -3px;
+            height: calc(100% + 6px);
+            width: calc(100% / 7 + 4px);
             left: 0%;
             border-radius: 6px;
             z-index: 3;
@@ -715,11 +719,23 @@
             position: fixed;
             right: 14px;
             z-index: 9998;
-            transform: translateY(-50%);
             cursor: pointer;
-            transition: transform 0.2s, font-size 0.3s ease;
+            transition: font-size 0.3s ease;
+            animation: giftPulse 1.5s ease-in-out infinite;
         }
         .week-gift-icon:hover { transform: translateY(-50%) scale(1.2); }
+        .week-gift-star {
+            position: fixed;
+            right: 2px;
+            z-index: 9998;
+            font-size: 12px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        @keyframes giftPulse {
+          0%, 100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0px transparent); }
+          50%       { transform: translateY(-50%) scale(1.2) rotate(5deg); filter: drop-shadow(0 0 8px rgba(253,174,84,0.8)); }
+        }
         /* Thème clair barre */
         .week-progress-wrap.mode-bar.theme-light .week-bar-track {
             background: rgba(0,0,0,0.07);
@@ -2524,7 +2540,7 @@
         {% if bg_theme_light %}
         .avatar-name { color: #153036 !important; text-shadow: none !important; }
         .avatar-points { color: #153036 !important; text-shadow: none !important; }
-        .avatar-square-wrapper.daily-leader + .avatar-points { color: #FFD700 !important; text-shadow: 0 1px 6px rgba(255,215,0,0.5) !important; }
+        .avatar-square-wrapper.daily-leader + .avatar-points { color: #b8860b !important; text-shadow: none !important; font-weight: 900 !important; }
         .house-name { color: #153036 !important; text-shadow: none !important; }
         .room-button { color: #153036 !important; text-shadow: none !important; background: rgba(255,255,255,0.55) !important; border-color: rgba(21,48,54,0.25) !important; }
         .burger-nav-divider { color: rgba(21,48,54,0.5) !important; }
@@ -2850,6 +2866,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="week-bar-cursor" id="weekBarCursor"></div>
                             </div>
                             <span class="week-gift-icon" id="weekGiftIcon">🎁</span>
+                            <span class="week-gift-star" id="weekGiftStar"></span>
                         </div>
                     </div>
                 </div>
@@ -2871,6 +2888,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         if(bar && gift){
                             var rect = bar.getBoundingClientRect();
                             gift.style.top = (rect.top + rect.height / 2) + 'px';
+                            var star = document.getElementById('weekGiftStar');
+                            if(star) star.style.top = gift.style.top;
                         }
                     }
                     function updateAll(){ updateSpacer(); positionGift(); }
@@ -3528,9 +3547,9 @@ body { padding-bottom: 84px !important; }
             if(dd === 0 && hh > 0) track.classList.add('urgency-high');
             else if(dd === 0 && hh === 0) track.classList.add('urgency-go');
         }
-        // Curseur bloc-jour : positionné sur le jour courant, toujours plein (couleur unie)
+        // Curseur bloc-jour : centré sur le jour courant + couleur urgence + glassmorphism
         if(cursor){
-            cursor.style.left = pastPct + '%';
+            cursor.style.left = 'calc(' + pastPct + '% - 2px)';
             cursor.style.background = fillColor;
         }
         // Cadeau : grossit au fil des jours (0=Lun 14px … 6=Dim 24px)
@@ -3539,8 +3558,11 @@ body { padding-bottom: 84px !important; }
         if(giftEl){
             giftEl.style.fontSize = (giftSizes[pos] || 18) + 'px';
             var isRewardDay = (dd === 0);
-            giftEl.style.filter = isRewardDay ? 'drop-shadow(0 0 6px rgba(46,213,115,0.8))' : 'none';
+            giftEl.style.filter = '';
+            giftEl.style.animationDuration = isRewardDay ? '0.8s' : '1.5s';
             giftEl.title = isRewardDay ? 'GO ! Ouvre ta récompense 🎁' : '';
+            var starEl = document.getElementById('weekGiftStar');
+            if(starEl){ starEl.textContent = isRewardDay ? '✨' : ''; }
             // Attacher le clic une seule fois
             if(!giftEl._clickBound){
                 giftEl._clickBound = true;
@@ -3553,7 +3575,7 @@ body { padding-bottom: 84px !important; }
                         var leaderName = (typeof WEEK_LEADER_NAME !== 'undefined' && WEEK_LEADER_NAME) ? WEEK_LEADER_NAME : null;
                         var leaderPts  = (typeof WEEK_LEADER_PTS  !== 'undefined') ? WEEK_LEADER_PTS  : 0;
                         var msg = leaderName
-                            ? leaderName + ' est en tête avec ' + leaderPts + ' pts — mais tu peux encore le battre ! 💪'
+                            ? leaderName + ' est en tête avec ' + leaderPts + ' pts — mais tu peux encore le/la battre ! 💪'
                             : 'La semaine n\'est pas finie — tu peux encore tout changer ! 💪';
                         if(typeof showToast === 'function'){
                             showToast(msg);
@@ -3570,7 +3592,6 @@ body { padding-bottom: 84px !important; }
             var d = parseInt(el.getAttribute('data-day'));
             var p = dayMap[d];
             el.classList.remove('is-today','is-past','is-future');
-            if(d === 0) return;
             if(p === pos) el.classList.add('is-today');
             else if(p < pos) el.classList.add('is-past');
             else el.classList.add('is-future');
