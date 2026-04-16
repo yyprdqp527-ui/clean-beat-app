@@ -7,6 +7,41 @@
 
 {% block content %}
 
+<!-- Message d'aide pour les points -->
+<div id="pointsHelp" class="points-help-banner" style="
+    max-width: 900px;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 16px 24px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    border: 2px solid rgba(253,174,84,0.5);
+    color: #153036;
+    font-weight: 600;
+    position: relative;
+">
+    <span style="font-size: 28px;">💡</span>
+    <span style="flex: 1;">Clique sur la pastille rouge pour modifier la valeur des points !</span>
+    <button onclick="closeHelp()" style="
+        background: rgba(255,255,255,0.9);
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">✕</button>
+</div>
+
 <style>
     /* ========== COULEURS DYNAMIQUES PAR PIÈCE - Dégradés harmonieux ========== */
     :root {
@@ -918,41 +953,6 @@
 </div>
 
 <!-- Audio embarqué base64 supprimé (corrompu) -->
-
-<!-- Message d'aide pour les points -->
-<div id="pointsHelp" class="points-help-banner" style="
-    max-width: 900px;
-    margin: 20px auto;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 16px 24px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    display: none;
-    align-items: center;
-    gap: 12px;
-    border: 2px solid rgba(253,174,84,0.5);
-    color: #153036;
-    font-weight: 600;
-    position: relative;
-">
-    <span style="font-size: 28px;">💡</span>
-    <span style="flex: 1;">Clique sur la pastille rouge pour modifier la valeur des points !</span>
-    <button onclick="closeHelp()" style="
-        background: rgba(255,255,255,0.9);
-        border: none;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        cursor: pointer;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">✕</button>
-</div>
 
 <style>
 .points-help-banner.showing { display: flex !important; animation: slideDown 0.5s ease-out; }
