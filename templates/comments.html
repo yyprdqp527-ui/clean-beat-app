@@ -324,8 +324,9 @@
         font-size: 15px;
         font-family: inherit;
         resize: none;
+        overflow-y: auto;
         min-height: 50px;
-        max-height: 120px;
+        max-height: 300px;
         transition: all 0.3s ease;
     }
     
@@ -995,7 +996,7 @@
         if (textarea) {
             textarea.addEventListener('input', function() {
                 this.style.height = '';
-                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                this.style.height = Math.min(this.scrollHeight, 300) + 'px';
             });
         }
         
