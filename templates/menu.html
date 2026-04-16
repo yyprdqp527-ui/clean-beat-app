@@ -6142,9 +6142,15 @@ function refreshAllBadges() {
     <div style="display:flex; align-items:flex-start; gap:12px; max-width:500px; margin:0 auto;">
         <img src="/static/qfq-192.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
         <div style="flex:1;">
-            <div style="font-size:15px;font-weight:800;margin-bottom:4px;color:#153036;">📲 Installe CleanBeat sur ton écran d'accueil</div>
-            <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Pour recevoir les notifications : ouvre dans <strong>Safari</strong>, puis appuie sur <strong>Partager</strong> <svg style="display:inline-block;vertical-align:middle;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> → <strong>« Sur l'écran d'accueil »</strong>.</div>
-            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Installe l'app sur ton écran d'accueil pour recevoir les notifications 🔔</div>
+            <div style="font-size:15px;font-weight:800;margin-bottom:6px;color:#153036;">📲 Installe QuiFaitQuoi sur ton écran d'accueil</div>
+            <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.8;color:#597176;">
+                <strong style="color:#153036;">Suis ces 4 étapes&nbsp;:</strong><br>
+                1️⃣ Ouvre cette page dans <strong>Safari</strong> (pas Chrome)<br>
+                2️⃣ Appuie sur le bouton <strong>Partager</strong> <svg style="display:inline-block;vertical-align:middle;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> en bas de l'écran<br>
+                3️⃣ Fais défiler et appuie sur <strong>« Sur l'écran d'accueil »</strong><br>
+                4️⃣ Appuie sur <strong>« Ajouter »</strong> en haut à droite
+            </div>
+            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Appuie sur <strong>« Ajouter »</strong> ci-dessous pour installer QuiFaitQuoi sur ton écran d'accueil et recevoir les notifications même quand l'appli est fermée&nbsp;📲</div>
         </div>
         <button onclick="dismissPwaBanner()" style="background:rgba(21,48,54,0.07);border:none;color:#153036;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;border-radius:50%;">✕</button>
     </div>
@@ -6154,9 +6160,12 @@ function refreshAllBadges() {
 </div>
 <script>
 (function(){
+    // Déjà installée en mode standalone → ne pas afficher
     if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)return;
-    var d=localStorage.getItem('pwa_dismissed');
-    if(d&&(Date.now()-parseInt(d))<7*24*3600*1000)return;
+    // Déjà installée (Android a confirmé) → ne plus afficher
+    if(localStorage.getItem('pwa_installed'))return;
+    // Fermée pendant cette session → attendre la prochaine visite
+    if(sessionStorage.getItem('pwa_dismissed_session'))return;
     var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
@@ -6167,10 +6176,14 @@ function refreshAllBadges() {
         banner.style.display='block';
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
-        if(deferred){deferred.prompt();deferred.userChoice.then(function(){banner.style.display='none';deferred=null;});}
+        if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
+            if(c.outcome==='accepted')localStorage.setItem('pwa_installed','1');
+            banner.style.display='none';deferred=null;
+        });}
     });
     if(isIOS){document.getElementById('pwa-ios-msg').style.display='block';banner.style.display='block';}
-    window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';localStorage.setItem('pwa_dismissed',Date.now());};
+    // ✕ → cache pour cette session, réapparaît à la prochaine visite
+    window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';sessionStorage.setItem('pwa_dismissed_session','1');};
 })();
 </script>
 {% if show_onboarding %}
@@ -6360,81 +6373,5 @@ function refreshAllBadges() {
     </div>
 </div>
 
-<!-- 🔔 Bannière activation notifications push -->
-<div id="push-notif-banner" style="display:none; position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 32px); max-width:420px;">
-    <div style="background:linear-gradient(135deg,rgba(253,174,84,0.97),rgba(244,198,141,0.97)); backdrop-filter:blur(20px); border-radius:20px; padding:16px 20px; box-shadow:0 8px 32px rgba(0,0,0,0.18); border:2px solid rgba(255,255,255,0.5); display:flex; align-items:center; gap:14px;">
-        <span style="font-size:28px; flex-shrink:0;">🔔</span>
-        <div style="flex:1; min-width:0;">
-            <div style="font-weight:800; font-size:14px; color:#153036;">Activer les notifications</div>
-            <div style="font-size:12px; color:rgba(21,48,54,0.75); margin-top:2px;">Reçois les alertes même quand l'appli est fermée</div>
-        </div>
-        <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; flex-shrink:0; white-space:nowrap;">Activer</button>
-        <button id="push-notif-banner-close" style="background:none; border:none; color:rgba(21,48,54,0.5); font-size:20px; cursor:pointer; flex-shrink:0; padding:0 0 0 4px; line-height:1;">×</button>
-    </div>
-</div>
-<script>
-(function() {
-    document.addEventListener('DOMContentLoaded', async function() {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
-
-        var banner = document.getElementById('push-notif-banner');
-        var btn = document.getElementById('push-notif-banner-btn');
-        var closeBtn = document.getElementById('push-notif-banner-close');
-
-        // Permission déjà accordée → s'assurer que la subscription existe
-        if (Notification.permission === 'granted') {
-            if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
-                window.cleanBeatPush.requestPermission();
-            }
-            return;
-        }
-
-        // Permission refusée → rien à faire
-        if (Notification.permission === 'denied') return;
-
-        // Permission 'default' → tenter auto-demande (fonctionne sur Chrome/Firefox/Android)
-        try {
-            var ok = false;
-            if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
-                ok = await window.cleanBeatPush.requestPermission();
-            } else {
-                var perm = await Notification.requestPermission();
-                ok = (perm === 'granted');
-            }
-            if (ok) {
-                console.log('✅ Notifications push activées automatiquement');
-                return; // Pas besoin de bannière
-            }
-        } catch(e) {
-            console.log('⚠️ Auto-request échoué (geste requis):', e);
-        }
-
-        // Si toujours 'default' après tentative → bannière comme fallback (iOS)
-        if (Notification.permission === 'default' && banner) {
-            setTimeout(function() { banner.style.display = 'block'; }, 3000);
-        }
-
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                if (banner) banner.style.display = 'none';
-            });
-        }
-        if (btn) {
-            btn.addEventListener('click', async function() {
-                if (banner) banner.style.display = 'none';
-                if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
-                    var result = await window.cleanBeatPush.requestPermission();
-                    if (result) {
-                        alert('\u2705 Notifications activées\u00a0! Tu recevras les alertes même quand l\'appli est fermée.');
-                    }
-                } else {
-                    var p = await Notification.requestPermission();
-                    if (p === 'granted') alert('\u2705 Notifications activées\u00a0!');
-                }
-            });
-        }
-    });
-})();
-</script>
 </body>
 </html>
