@@ -546,106 +546,6 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
 <!-- Bouton retour vers le menu -->
 <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
 
-<!-- Message d'aide pour les points -->
-<div id="pointsHelp" class="points-help-banner" style="
-    max-width: 900px;
-    margin: {% if hide_header %}20px{% else %}120px{% endif %} auto 20px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 16px 24px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 2px solid rgba(253,174,84,0.5);
-    color: #153036;
-    font-weight: 600;
-    position: relative;
-    animation: slideDown 0.5s ease-out;
-">
-    <span style="font-size: 28px;">💡</span>
-    <span style="flex: 1;">Clique sur les pastilles rouges pour modifier la valeur des points !</span>
-    <button onclick="closeHelp()" style="
-        background: rgba(255,255,255,0.9);
-        border: none;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        cursor: pointer;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">✕</button>
-</div>
-
-<style>
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.points-help-banner.hide {
-    animation: slideUp 0.4s ease-out forwards;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-</style>
-
-<script>
-function closeHelp() {
-    const banner = document.getElementById('pointsHelp');
-    banner.classList.add('hide');
-    setTimeout(() => {
-        banner.style.display = 'none';
-    }, 400);
-    // Sauvegarder dans localStorage que l'utilisateur a vu le message pour cette catégorie
-    const category = '{{ category }}';
-    localStorage.setItem('pointsHelpSeenV2_' + category, 'true');
-}
-
-// Masquer automatiquement si déjà vu pour cette catégorie
-window.addEventListener('DOMContentLoaded', function() {
-    const category = '{{ category }}';
-    if (localStorage.getItem('pointsHelpSeenV2_' + category) === 'true') {
-        document.getElementById('pointsHelp').style.display = 'none';
-    } else {
-        // Auto-masquer après 15 secondes si l'utilisateur ne clique pas
-        setTimeout(() => {
-            const banner = document.getElementById('pointsHelp');
-            if (banner && banner.style.display !== 'none') {
-                closeHelp();
-            }
-        }, 15000);
-    }
-    
-    // Arrêter l'animation des pastilles après 10 secondes
-    setTimeout(() => {
-        document.querySelectorAll('.points-badge').forEach(badge => {
-            badge.classList.add('animation-done');
-        });
-    }, 10000);
-});
-</script>
-
 <div class="header-below-zone">
 <!-- Header de la pièce -->
 <div class="room-header" style="max-width:900px; width:100%; margin:0 auto 20px;">
@@ -666,7 +566,7 @@ window.addEventListener('DOMContentLoaded', function() {
                     <p class="task-name">{{ task_name or 'Tâche sans nom' }}</p>
                     <div class="task-image-container">
                         <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb if task_image else 'default.webp')) }}" alt="{{ task_name or 'Tâche' }}" loading="lazy">
-                        <span class="points-badge{% if task_points < 0 %} negative{% endif %} points-edit-trigger" role="button" tabindex="0" aria-label="{{ task_points }} points" data-action="{{ url_for('tasks.update_task_points', cat=category, task_id=loop.index0) }}" data-points="{{ task_points }}">{{ task_points }}</span>
+                        <span class="points-badge{% if task_points < 0 %} negative{% endif %}" aria-label="{{ task_points }} points">{{ task_points }}</span>
                     </div>
                 </a>
             {% endfor %}
@@ -684,10 +584,7 @@ window.addEventListener('DOMContentLoaded', function() {
                         {% else %}
                         <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
                         {% endif %}
-                        <span class="points-badge points-edit-trigger" role="button" tabindex="0"
-                              data-action="{{ url_for('tasks.update_custom_task_points', cat=category, task_id=custom_task.id) }}"
-                              data-points="{{ custom_task.points if custom_task.points is not none else 0 }}"
-                              aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
+                        <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
                         <!-- Petit bouton - discret sur l'image -->
                         <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" style="position:absolute; bottom:6px; left:6px; z-index:10;" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
                             <button type="submit" title="Supprimer" style="background:rgba(0,0,0,0.5); border:none; cursor:pointer; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:16px; font-weight:bold; line-height:1;">−</button>
@@ -791,23 +688,6 @@ function toggleFullHistory() {
 </script>
 
 {% endif %}
-<!-- Modal édition des points -->
-<div id="points-modal" class="points-modal" aria-hidden="true">
-    <div class="backdrop" data-close="1"></div>
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="points-modal-title">
-        <h3 id="points-modal-title">Modifier les points</h3>
-        <form id="points-form" method="POST" action="#">
-            <div class="row">
-                <input id="points-input" name="points" type="number" min="0" max="999" value="0" inputmode="numeric" />
-            </div>
-            <div class="actions">
-                <button type="button" class="btn-cancel" data-close="1">Annuler</button>
-                <button type="submit" class="btn-ok">OK</button>
-            </div>
-        </form>
-    </div>
-    </div>
-
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, msg in messages %}
         {% if category == 'success' %}
@@ -829,33 +709,6 @@ if (typeof SoundManager !== 'undefined') {
 }
 
 window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } });
-
-// Modal d'édition des points (ouverture sur clic de pastille)
-window.addEventListener('DOMContentLoaded', function(){
-    var modal = document.getElementById('points-modal');
-    var form = document.getElementById('points-form');
-    var input = document.getElementById('points-input');
-    function openModal(action, value){
-        if(!modal || !form || !input) return;
-        form.setAttribute('action', action || '#');
-        input.value = (value != null ? value : 0);
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden','false');
-        input.focus();
-    }
-    function closeModal(){
-        if(!modal) return;
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden','true');
-    }
-    document.querySelectorAll('.points-edit-trigger').forEach(function(el){
-        el.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openModal(el.getAttribute('data-action'), el.getAttribute('data-points')); });
-        el.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openModal(el.getAttribute('data-action'), el.getAttribute('data-points')); }});
-    });
-    if(modal){
-        modal.addEventListener('click', function(e){ if(e.target && e.target.getAttribute && e.target.getAttribute('data-close')){ closeModal(); }});
-    }
-});
 
 // ==========================================
 // 🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL

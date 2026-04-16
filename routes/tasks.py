@@ -1230,6 +1230,15 @@ def api_validate_task():
                 return jsonify({'success': False, 'error': 'Tâche introuvable'}), 404
             task = TASKS_CONFIG[normalized_cat][int(task_id)]
             task_points = task.get('points', 10)
+            # Vérifier si la maison a personnalisé les points pour cette tâche
+            try:
+                c.execute("SELECT points FROM task_points_overrides WHERE house_id=? AND category=? AND task_index=?",
+                          (user_house_id, normalized_cat, int(task_id)))
+                _ov = c.fetchone()
+                if _ov and _ov[0] is not None:
+                    task_points = int(_ov[0])
+            except Exception:
+                pass
             # Utiliser le nom du payload, sinon celui de TASKS_CONFIG
             task_name = task_name_from_payload if task_name_from_payload else task.get('name')
             # Appliquer multiplicateur si chambre bébé
