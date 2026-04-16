@@ -1,19 +1,25 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v122';
+const CACHE_NAME = 'cleanbeat-v123';
 const OFFLINE_URL = '/static/manifest.json';
 
 // URLs à purger du cache (anciennes images remplacées)
 const PURGE_URLS = [
     '/static/icon-192.png',
     '/static/icon-512.png',
+    '/static/icon-192.png?v=2',
+    '/static/icon-512.png?v=2',
+    '/static/icon-192.png?v=3',
+    '/static/icon-512.png?v=3',
     '/static/images/cuisinewoop.webp',
     '/static/images/thumbs/cuisinewoop.webp',
 ];
 
 const PRECACHE_URLS = [
     '/static/manifest.json',
+    '/static/icon-192-v3.png',
+    '/static/icon-512-v3.png',
     '/static/images/thumbs/chambreparentale_marron.webp',
     '/static/images/thumbs/chambre1.webp',
     '/static/images/thumbs/chambre2.webp',
