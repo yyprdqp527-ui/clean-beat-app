@@ -476,11 +476,10 @@
             }
 
             /* Barre compacte sur mobile */
-            .week-bar-track { height: 10px; }
+            .week-bar-track { height: 13px; }
             .week-bar-row { gap: 4px; }
             .week-bday { font-size: 6.5px; }
             .week-bar-days { padding: 0 4px; }
-            .week-bar-countdown { font-size: 9px; }
             .gameplay-btn-wrapper { right: 8px; }
             .gameplay-btn { width: 42px; height: 42px; font-size: 20px; }
         }
@@ -622,7 +621,7 @@
             gap: 0px;
             flex: 0 0 100%;
             margin: -12px auto 0;
-            padding: 0 0 0 48px;
+            padding: 0 10px 0 23px;
             box-sizing: border-box;
         }
         .week-bar-row {
@@ -633,7 +632,7 @@
         }
         .week-bar-track {
             flex: 1;
-            height: 12px;
+            height: 16px;
             border-radius: 999px;
             background: rgba(255,255,255,0.18);
             backdrop-filter: saturate(160%) blur(14px);
@@ -671,30 +670,6 @@
             0%, 100% { left: -100%; opacity: 0; }
             50% { left: 100%; opacity: 1; }
         }
-        .week-bar-countdown {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 13px;
-            font-weight: 900;
-            color: #FDAE54;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.35), 0 0 8px rgba(253,174,84,0.4);
-            white-space: nowrap;
-            line-height: 1;
-            letter-spacing: 0.5px;
-            text-align: center;
-            flex-shrink: 0;
-            min-width: 32px;
-            margin-left: 8px;
-            transition: color 0.3s ease;
-        }
-        .week-bar-countdown.urg-low { color: #FDAE54; text-shadow: 0 0 8px rgba(253,174,84,0.5), 0 1px 4px rgba(0,0,0,0.3); }
-        .week-bar-countdown.urg-mid { color: #ff8c42; text-shadow: 0 0 10px rgba(255,140,66,0.6), 0 1px 4px rgba(0,0,0,0.3); }
-        .week-bar-countdown.urg-high { color: #ff4757; text-shadow: 0 0 12px rgba(255,71,87,0.7), 0 1px 4px rgba(0,0,0,0.3); animation: bar-cd-shake 0.6s ease-in-out infinite; }
-        .week-bar-countdown.urg-go { color: #2ed573; text-shadow: 0 0 14px rgba(46,213,115,0.7), 0 1px 4px rgba(0,0,0,0.3); animation: bar-cd-shake 0.4s ease-in-out infinite; font-weight: 900; }
-        @keyframes bar-cd-shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-1px); }
-            75% { transform: translateX(1px); }
-        }
         .week-bar-days {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -707,22 +682,22 @@
         }
         .week-bday {
             font-family: 'Montserrat', sans-serif;
-            font-size: 8.5px;
+            font-size: 10px;
             font-weight: 700;
-            color: rgba(255,255,255,0.55);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            color: rgba(0,0,0,0.65);
+            text-shadow: none;
             line-height: 1;
             text-align: center;
             transition: color 0.3s ease, font-weight 0.3s ease;
             letter-spacing: 0.2px;
         }
         .week-bday.is-today {
-            color: #ffffff;
+            color: #000000;
             font-weight: 900;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            text-shadow: none;
         }
         .week-bday.is-past {
-            color: rgba(255,255,255,0.3);
+            color: rgba(0,0,0,0.3);
             text-shadow: none;
         }
         .week-bar-cursor {
@@ -737,9 +712,20 @@
             transition: left 0.8s cubic-bezier(.4,0,.2,1);
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
-            border: 1.5px solid rgba(255,255,255,0.45);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 8px rgba(0,0,0,0.18);
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.7);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 8px rgba(0,0,0,0.18), 0 0 6px rgba(255,255,255,0.3);
         }
+        .week-gift-icon {
+            font-size: 18px;
+            position: fixed;
+            right: 14px;
+            z-index: 9998;
+            transform: translateY(-50%);
+            cursor: pointer;
+            transition: transform 0.2s, font-size 0.3s ease;
+        }
+        .week-gift-icon:hover { transform: translateY(-50%) scale(1.2); }
         /* Thème clair barre */
         .week-progress-wrap.mode-bar.theme-light .week-bar-track {
             background: rgba(0,0,0,0.07);
@@ -750,18 +736,13 @@
             filter: brightness(0.88) saturate(1.15);
         }
         .week-progress-wrap.mode-bar.theme-light .week-bday {
-            color: rgba(0,0,0,0.35);
-            text-shadow: none;
+            color: rgba(0,0,0,0.55);
         }
         .week-progress-wrap.mode-bar.theme-light .week-bday.is-today {
-            color: rgba(0,0,0,0.75);
+            color: rgba(0,0,0,0.85);
         }
         .week-progress-wrap.mode-bar.theme-light .week-bday.is-past {
-            color: rgba(0,0,0,0.15);
-        }
-        .week-progress-wrap.mode-bar.theme-light .week-bar-countdown {
-            color: #c47a20;
-            text-shadow: none;
+            color: rgba(0,0,0,0.25);
         }
         /* Thème foncé barre */
         .week-progress-wrap.mode-bar.theme-dark .week-bar-fill {
@@ -2874,7 +2855,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                                 <div class="week-bar-cursor" id="weekBarCursor"></div>
                             </div>
-                            <span class="week-bar-countdown" id="weekBarCountdown">--</span>
+                            <span class="week-gift-icon" id="weekGiftIcon">🎁</span>
                         </div>
                     </div>
                 </div>
@@ -2889,11 +2870,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         var h = document.querySelector('.header-menu');
                         var s = document.getElementById('header-spacer');
                         if(h && s){ s.style.height = Math.max(0, h.offsetHeight - 30) + 'px'; }
-                        // Burger en haut à droite (CSS fixe, pas de JS)
                     }
-                    document.addEventListener('DOMContentLoaded', updateSpacer);
-                    window.addEventListener('resize', updateSpacer);
-                    setTimeout(updateSpacer, 200);
+                    function positionGift(){
+                        var bar = document.getElementById('weekProgressBar');
+                        var gift = document.getElementById('weekGiftIcon');
+                        if(bar && gift){
+                            var rect = bar.getBoundingClientRect();
+                            gift.style.top = (rect.top + rect.height / 2) + 'px';
+                        }
+                    }
+                    function updateAll(){ updateSpacer(); positionGift(); }
+                    document.addEventListener('DOMContentLoaded', updateAll);
+                    window.addEventListener('resize', updateAll);
+                    setTimeout(updateAll, 200);
+                    setTimeout(positionGift, 600);
                 })();
             </script>
 
@@ -3551,6 +3541,23 @@ body { padding-bottom: 84px !important; }
                 + fillColor + ' ' + dayHourPct.toFixed(1) + '%, '
                 + fillColor + '22 ' + dayHourPct.toFixed(1) + '%)';
         }
+        // Cadeau : grossit au fil des jours (0=Lun 14px … 6=Dim 24px)
+        var giftSizes = [14, 15, 16, 17, 18, 20, 24];
+        var giftEl = document.getElementById('weekGiftIcon');
+        if(giftEl){
+            giftEl.style.fontSize = (giftSizes[pos] || 18) + 'px';
+            // Dimanche (dd===0) : cadeau cliquable → /rewards, sinon désactivé
+            var isRewardDay = (dd === 0);
+            giftEl.title = isRewardDay ? 'GO ! Ouvre ta récompense 🎁' : '';
+            giftEl.style.filter = isRewardDay ? 'drop-shadow(0 0 6px rgba(46,213,115,0.8))' : 'none';
+            // Attacher le clic une seule fois
+            if(!giftEl._clickBound){
+                giftEl._clickBound = true;
+                giftEl.addEventListener('click', function(){
+                    if(dd === 0) window.location.href = '/rewards';
+                });
+            }
+        }
         // Lettres jours barre
         var bdays = document.querySelectorAll('.week-bday');
         bdays.forEach(function(el){
@@ -3561,66 +3568,6 @@ body { padding-bottom: 84px !important; }
             if(p === pos) el.classList.add('is-today');
             else if(p < pos) el.classList.add('is-past');
         });
-        // Countdown barre — texte compétitif
-        var barCd = document.getElementById('weekBarCountdown');
-        if(barCd){
-            barCd.classList.remove('urg-low','urg-mid','urg-high','urg-go');
-            if(dd > 4) {
-                barCd.innerHTML = dd+'j<br>🎁';
-                barCd.classList.add('urg-low');
-            } else if(dd > 2) {
-                barCd.innerHTML = 'J-'+dd+'<br>🎁';
-                barCd.classList.add('urg-mid');
-            } else if(dd === 2) {
-                barCd.innerHTML = 'J-2<br>🎁';
-                barCd.classList.add('urg-mid');
-            } else if(dd === 1) {
-                barCd.innerHTML = 'J-1!<br>🎁';
-                barCd.classList.add('urg-high');
-            } else if(hh > 0) {
-                barCd.innerHTML = hh+'h!<br>🎁';
-                barCd.classList.add('urg-high');
-            } else if(mm > 0) {
-                barCd.innerHTML = mm+'m<br>🎁';
-                barCd.classList.add('urg-high');
-            } else {
-                barCd.innerHTML = '<a href="/rewards" id="goRewardLink" style="color:inherit;text-decoration:none;font-size:15px;font-weight:900;">GO!</a>';
-                barCd.classList.add('urg-go');
-                // Toast guide : une seule fois (localStorage = persiste après fermeture)
-                if(!localStorage.getItem('goToastSeen')){
-                    setTimeout(function(){
-                        var toastEl = document.createElement('div');
-                        toastEl.id = 'goGuideToast';
-                        toastEl.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-18px);opacity:0;'
-                            + 'background:linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(46,213,115,0.25) 50%, rgba(255,215,0,0.3) 100%);'
-                            + 'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);'
-                            + 'border:1px solid rgba(255,255,255,0.4);'
-                            + 'color:#153036;padding:14px 22px;border-radius:20px;font-weight:700;'
-                            + 'z-index:99999;font-size:13px;font-family:Montserrat,sans-serif;'
-                            + 'box-shadow:0 8px 32px rgba(46,213,115,0.3), 0 0 0 1px rgba(255,215,0,0.3);'
-                            + 'text-align:center;max-width:320px;cursor:pointer;'
-                            + 'transition:opacity 0.35s,transform 0.35s cubic-bezier(0.34,1.56,0.64,1);';
-                        toastEl.innerHTML = '🏆 Clique sur <b style="color:#2ed573;">GO!</b> pour découvrir le gagnant et ouvrir ta récompense !';
-                        document.body.appendChild(toastEl);
-                        // Apparition
-                        setTimeout(function(){ toastEl.style.opacity='1'; toastEl.style.transform='translateX(-50%) translateY(0)'; }, 50);
-                        // Clic sur le toast le ferme aussi
-                        toastEl.addEventListener('click', function(){ toastEl.style.opacity='0'; localStorage.setItem('goToastSeen','1'); });
-                        // Auto-disparition après 6s
-                        setTimeout(function(){ if(toastEl.style.opacity!=='0'){ toastEl.style.opacity='0'; } }, 6000);
-                    }, 1200);
-                    // Quand le joueur clique sur GO!, marquer comme vu
-                    var goLink = document.getElementById('goRewardLink');
-                    if(goLink){
-                        goLink.addEventListener('click', function(){
-                            localStorage.setItem('goToastSeen','1');
-                            var t = document.getElementById('goGuideToast');
-                            if(t) t.style.opacity = '0';
-                        });
-                    }
-                }
-            }
-        }
     }
     updateWeekProgressBar();
     setInterval(updateWeekProgressBar, 60000);
