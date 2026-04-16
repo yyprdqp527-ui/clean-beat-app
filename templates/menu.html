@@ -659,17 +659,7 @@
             border-radius: 999px;
             transition: width 0.8s cubic-bezier(.4,0,.2,1), background 0.5s ease, box-shadow 0.5s ease;
         }
-        .week-bar-fill::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%; right: 0; bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-            animation: weekShimmer 3s ease-in-out infinite;
-        }
-        @keyframes weekShimmer {
-            0%, 100% { left: -100%; opacity: 0; }
-            50% { left: 100%; opacity: 1; }
-        }
+
         .week-bar-days {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -699,6 +689,10 @@
         .week-bday.is-past {
             color: rgba(0,0,0,0.3);
             text-shadow: none;
+        }
+        .week-bday.is-future {
+            color: rgba(0,0,0,0.45);
+            text-shadow: 0 0 7px rgba(255,255,255,0.9), 0 0 14px rgba(255,255,255,0.6);
         }
         .week-bar-cursor {
             position: absolute;
@@ -3534,27 +3528,39 @@ body { padding-bottom: 84px !important; }
             if(dd === 0 && hh > 0) track.classList.add('urgency-high');
             else if(dd === 0 && hh === 0) track.classList.add('urgency-go');
         }
-        // Curseur bloc-jour : positionné sur le jour courant, gradient heures écoulées/restantes
+        // Curseur bloc-jour : positionné sur le jour courant, toujours plein (couleur unie)
         if(cursor){
             cursor.style.left = pastPct + '%';
-            cursor.style.background = 'linear-gradient(90deg, '
-                + fillColor + ' ' + dayHourPct.toFixed(1) + '%, '
-                + fillColor + '22 ' + dayHourPct.toFixed(1) + '%)';
+            cursor.style.background = fillColor;
         }
         // Cadeau : grossit au fil des jours (0=Lun 14px … 6=Dim 24px)
         var giftSizes = [14, 15, 16, 17, 18, 20, 24];
         var giftEl = document.getElementById('weekGiftIcon');
         if(giftEl){
             giftEl.style.fontSize = (giftSizes[pos] || 18) + 'px';
-            // Dimanche (dd===0) : cadeau cliquable → /rewards, sinon désactivé
             var isRewardDay = (dd === 0);
-            giftEl.title = isRewardDay ? 'GO ! Ouvre ta récompense 🎁' : '';
             giftEl.style.filter = isRewardDay ? 'drop-shadow(0 0 6px rgba(46,213,115,0.8))' : 'none';
+            giftEl.title = isRewardDay ? 'GO ! Ouvre ta récompense 🎁' : '';
             // Attacher le clic une seule fois
             if(!giftEl._clickBound){
                 giftEl._clickBound = true;
                 giftEl.addEventListener('click', function(){
-                    if(dd === 0) window.location.href = '/rewards';
+                    var curDay = new Date().getDay();
+                    if(curDay === 0){
+                        window.location.href = '/rewards';
+                    } else {
+                        // Afficher le leader et encourager
+                        var leaderName = (typeof WEEK_LEADER_NAME !== 'undefined' && WEEK_LEADER_NAME) ? WEEK_LEADER_NAME : null;
+                        var leaderPts  = (typeof WEEK_LEADER_PTS  !== 'undefined') ? WEEK_LEADER_PTS  : 0;
+                        var msg = leaderName
+                            ? leaderName + ' est en tête avec ' + leaderPts + ' pts — mais tu peux encore le battre ! 💪'
+                            : 'La semaine n'est pas finie — tu peux encore tout changer ! 💪';
+                        if(typeof showToast === 'function'){
+                            showToast(msg);
+                        } else {
+                            alert(msg);
+                        }
+                    }
                 });
             }
         }
@@ -3563,12 +3569,17 @@ body { padding-bottom: 84px !important; }
         bdays.forEach(function(el){
             var d = parseInt(el.getAttribute('data-day'));
             var p = dayMap[d];
-            el.classList.remove('is-today','is-past');
+            el.classList.remove('is-today','is-past','is-future');
             if(d === 0) return;
             if(p === pos) el.classList.add('is-today');
             else if(p < pos) el.classList.add('is-past');
+            else el.classList.add('is-future');
         });
     }
+    // Données leader pour le cadeau (injectées par Jinja au rendu)
+    var WEEK_LEADER_NAME = "{{ sorted_by_week[0].name | e if sorted_by_week else '' }}";
+    var WEEK_LEADER_PTS  = {{ sorted_by_week[0].daily_points | default(0) if sorted_by_week else 0 }};
+
     updateWeekProgressBar();
     setInterval(updateWeekProgressBar, 60000);
 
