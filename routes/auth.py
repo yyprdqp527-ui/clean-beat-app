@@ -83,13 +83,13 @@ def signup_email():
                 c.execute("""
                     UPDATE users SET firstname=?, name=?, password=?, phone=?, avatar='👤'
                     WHERE email=?
-                """, (firstname, display_name, hashed_password, phone, email))
+                """, (firstname, firstname, hashed_password, phone, email))
                 conn.commit()
                 conn.close()
 
                 session.permanent = True
                 session['user'] = email
-                session['user_name'] = display_name
+                session['user_name'] = firstname
                 session['registration_step'] = 'email_signup'
                 session.pop('invite_code', None)
                 flash(f"Bienvenue {firstname} ! 🎉", "success")
@@ -121,7 +121,7 @@ def signup_email():
             c.execute("""
                 INSERT INTO users (firstname, name, email, password, phone, points, avatar, registration_step, house_id, bg_theme)
                 VALUES (?, ?, ?, ?, ?, 0, '👤', 'email_signup', ?, 'bleu')
-            """, (firstname, display_name, email, hashed_password, phone, house_id_to_join))
+            """, (firstname, firstname, email, hashed_password, phone, house_id_to_join))
 
             conn.commit()
             conn.close()
@@ -129,7 +129,7 @@ def signup_email():
             # Sauvegarder dans la session
             session.permanent = True
             session['user'] = email
-            session['user_name'] = display_name
+            session['user_name'] = firstname
             session['registration_step'] = 'email_signup'
             session.pop('invite_code', None)
 

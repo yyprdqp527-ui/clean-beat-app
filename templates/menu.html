@@ -691,12 +691,12 @@
             text-shadow: none;
         }
         .week-bday.is-future {
-            color: rgba(0,0,0,0.5);
             animation: dayShimmer 2s ease-in-out infinite;
+            color: rgba(255,255,255,0.4);
         }
         @keyframes dayShimmer {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; text-shadow: 0 0 6px rgba(0,0,0,0.25); }
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.9; text-shadow: 0 0 8px rgba(255,255,255,0.8); }
         }
         .week-bar-cursor {
             position: absolute;
@@ -2839,7 +2839,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                         <div class="avatar-square-wrapper" title="Joueur en attente">
                                             <div class="avatar-square">
-                                                <img src="/api/avatar_proxy?style=lorelei&seed=waiting" alt="Avatar en attente" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="/static/images/default.png" alt="Avatar en attente">
                                             </div>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">0 pts</div>
