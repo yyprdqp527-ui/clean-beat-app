@@ -2907,7 +2907,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% set color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else 'linear-gradient(180deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 {% set color1_h = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color_h if current_player else 'linear-gradient(90deg, rgba(120, 180, 230, 0.75) 0%, rgba(100, 160, 210, 0.65) 100%)')) %}
                                 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                    <div class="avatar-square-wrapper{% if daily_leader_email|default('') == current_user_name and not (has_weekly_winner|default(false) and winner_email|default('') == current_user_name) %} daily-leader{% endif %}" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="window.location.href='/profil'">
+                                    <div class="avatar-square-wrapper{% if daily_leader_email|default('') == current_user_name and not (has_weekly_winner|default(false) and winner_email|default('') == current_user_name) %} daily-leader{% endif %}" id="current-player-avatar-wrapper" title="{{ player1_name if player1_name else 'Joueur 1' }}" data-player-email="{{ current_user_name }}" style="position: relative; cursor: pointer;" onclick="sessionStorage.setItem('internalNav','1');window.location.href='/profil'">
                                         {% if has_weekly_winner|default(false) and winner_email|default('') == current_user_name %}
                                         <span class="winner-crown">👑</span>
                                         {% endif %}
@@ -2935,7 +2935,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <!-- Badge pour les messages REÇUS par l'utilisateur connecté -->
                                         {% set current_user_unread = unread_messages_count|default(0) %}
                                         {% if current_user_unread > 0 %}
-                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="event.stopPropagation();window.location.href='{{ url_for('messages.comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
+                                        <span class="avatar-notification-badge" data-recipient="{{ current_user_name }}" onclick="event.stopPropagation();sessionStorage.setItem('internalNav','1');window.location.href='{{ url_for('messages.comments') }}';">{{ current_user_unread if current_user_unread < 100 else '99+' }}</span>
                                         {% endif %}
                                     </div>
                                     <div class="avatar-points" aria-label="Points du jour">{{ points1 }} pts</div>
@@ -2958,7 +2958,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="avatar-name" style="font-weight:700;">{{ p2.name }}</div>
                                 <div class="avatar-row" style="gap:8px; align-items:center;">
                                     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                        <div class="avatar-square-wrapper{% if daily_leader_email|default('') == p2.email and not (has_weekly_winner|default(false) and winner_email|default('') == p2.email) %} daily-leader{% endif %}" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p2.email }}'">
+                                        <div class="avatar-square-wrapper{% if daily_leader_email|default('') == p2.email and not (has_weekly_winner|default(false) and winner_email|default('') == p2.email) %} daily-leader{% endif %}" title="{{ p2.name }}" data-player-email="{{ p2.email }}" style="cursor: pointer;" onclick="sessionStorage.setItem('internalNav','1');window.location.href='/profil/{{ p2.email }}'">
                                             {% if has_weekly_winner|default(false) and winner_email|default('') == p2.email %}
                                             <span class="winner-crown">👑</span>
                                             {% endif %}
@@ -2990,7 +2990,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 {# C'est un AUTRE ADULTE → pas de pastille #}
                                                 {% set p2_unread = 0 %}
                                             {% endif %}
-                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('messages.comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
+                                            <span class="avatar-notification-badge" data-recipient="{{ p2.email }}" onclick="event.stopPropagation();sessionStorage.setItem('internalNav','1');window.location.href='{{ url_for('messages.comments') }}';" title="{{ p2_unread }} message{{ 's' if p2_unread > 1 else '' }} non lu{{ 's' if p2_unread > 1 else '' }} pour {{ p2.name }}" style="{{ '' if p2_unread > 0 else 'display:none;' }}">{{ p2_unread if p2_unread < 100 else '99+' }}</span>
                                         </div>
                                         <div class="avatar-points" aria-label="Points du jour">{{ points_p2 }} pts</div>
                                     </div>
@@ -3008,7 +3008,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="avatar-name" style="font-weight:700;">{{ p.name }}</div>
                                     <div class="avatar-row" style="gap:6px; flex-shrink:0; align-items:center;">
                                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                            <div class="avatar-square-wrapper{% if daily_leader_email|default('') == p.email and not (has_weekly_winner|default(false) and winner_email|default('') == p.email) %} daily-leader{% endif %}" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="window.location.href='/profil/{{ p.email }}'">
+                                            <div class="avatar-square-wrapper{% if daily_leader_email|default('') == p.email and not (has_weekly_winner|default(false) and winner_email|default('') == p.email) %} daily-leader{% endif %}" title="{{ p.name }}" data-player-email="{{ p.email }}" style="cursor: pointer;" onclick="sessionStorage.setItem('internalNav','1');window.location.href='/profil/{{ p.email }}'">
                                                 {% if has_weekly_winner|default(false) and winner_email|default('') == p.email %}
                                                 <span class="winner-crown">👑</span>
                                                 {% endif %}
@@ -3040,7 +3040,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     {# C'est un AUTRE ADULTE → pas de pastille #}
                                                     {% set p_unread = 0 %}
                                                 {% endif %}
-                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="event.stopPropagation();window.location.href='{{ url_for('messages.comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
+                                                <span class="avatar-notification-badge" data-recipient="{{ p.email }}" onclick="event.stopPropagation();sessionStorage.setItem('internalNav','1');window.location.href='{{ url_for('messages.comments') }}';" title="{{ p_unread }} message{{ 's' if p_unread > 1 else '' }} non lu{{ 's' if p_unread > 1 else '' }} pour {{ p.name }}" style="{{ '' if p_unread > 0 else 'display:none;' }}">{{ p_unread if p_unread < 100 else '99+' }}</span>
                                             </div>
                                             <div class="avatar-points" aria-label="Points du jour">{{ points }} pts</div>
                                         </div>
@@ -3787,7 +3787,7 @@ body { padding-bottom: 84px !important; }
                 giftEl.addEventListener('click', function(){
                     var curDay = new Date().getDay();
                     if(curDay === 0){
-                        window.location.href = '/rewards';
+                        sessionStorage.setItem('internalNav', '1'); window.location.href = '/rewards';
                     } else {
                         // Afficher le leader et encourager
                         var leaderName = (typeof WEEK_LEADER_NAME !== 'undefined' && WEEK_LEADER_NAME) ? WEEK_LEADER_NAME : null;
@@ -4014,7 +4014,7 @@ function sendBonus(reason, points){
             if(!window._localBonusMap) window._localBonusMap = {};
             window._localBonusMap[targetEmail] = Date.now();
             if(typeof window.loadActiveBonuses === 'function') window.loadActiveBonuses();
-            setTimeout(function(){ window.location.reload(); }, 1800);
+            setTimeout(function(){ sessionStorage.setItem('internalNav','1'); window.location.reload(); }, 1800);
         } else {
             alert(data.error || 'Erreur');
         }
@@ -4102,7 +4102,7 @@ function sendMalus(reason, points){
             }
             // Redirection vers menu avec params pour déclencher l'animation flammes 🔥
             setTimeout(function(){
-                window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(savedEmail) + '&whon=' + encodeURIComponent(targetName);
+                sessionStorage.setItem('internalNav', '1'); window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(savedEmail) + '&whon=' + encodeURIComponent(targetName);
             }, 2000);
         } else {
             alert(data.error || 'Erreur');
@@ -4939,6 +4939,7 @@ function sendMalus(reason, points){
                             toggleRoomLight(index);
                             // Naviguer vers la catégorie de la pièce
                             setTimeout(() => {
+                                sessionStorage.setItem('internalNav', '1');
                                 window.location.href = roomLinks[index];
                             }, 200);
                         });
@@ -4966,6 +4967,7 @@ function sendMalus(reason, points){
                             toggleRoomLight(index);
                             // Naviguer vers la catégorie de la pièce
                             setTimeout(() => {
+                                sessionStorage.setItem('internalNav', '1');
                                 window.location.href = roomLinks[index];
                             }, 200);
                         });
@@ -6068,6 +6070,7 @@ function refreshAllBadges() {
                                     // Navigation IMMÉDIATE au début de la dissolution
                                     // La page charge pendant que l'image disparaît = transition fluide sans écran vide
                                     console.log('Navigation vers:', targetUrl);
+                                    sessionStorage.setItem('internalNav', '1');
                                     window.location.href = targetUrl;
                                 }, 1100);
                             });
@@ -6600,17 +6603,15 @@ function skipSplash() {
 }
 
 // Utilise sessionStorage pour détecter navigation interne vs ouverture appli
-var isInternalNav = sessionStorage.getItem('appStarted');
+var isInternal = sessionStorage.getItem('internalNav');
+sessionStorage.removeItem('internalNav');
 
-if (!isInternalNav) {
-  // Première page de la session = ouverture appli
-  sessionStorage.setItem('appStarted', '1');
-  setTimeout(startSplashTypewriter, 1800);
-  setTimeout(skipSplash, 6500);
+if (isInternal) {
+    var s = document.getElementById('splashScreen');
+    if (s) s.style.display = 'none';
 } else {
-  // Navigation interne = pas de splash
-  var s = document.getElementById('splashScreen');
-  if (s) s.style.display = 'none';
+    setTimeout(startSplashTypewriter, 100);
+    setTimeout(skipSplash, 5000);
 }
 </script>
 
