@@ -21,7 +21,6 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
     <!-- Socket.IO - hébergé localement -->
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
     <!-- 🔊 Howler.js + SoundManager centralisé -->
@@ -2548,6 +2547,11 @@
         {% endif %}
 
 /* ========== SPLASH SCREEN ========== */
+@font-face {
+  font-family: 'Bubblegum Sans';
+  src: url('/static/fonts/BubblegumSans.woff2') format('woff2');
+  font-display: swap;
+}
 .splash-screen {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
