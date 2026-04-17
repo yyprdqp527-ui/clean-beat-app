@@ -6593,8 +6593,19 @@ function skipSplash() {
   }
 }
 
-setTimeout(startSplashTypewriter, 1800);
-setTimeout(skipSplash, 6500);
+// Affiche le splash uniquement à la première 
+// visite de la session (ouverture de l'appli)
+// Pas à chaque rechargement de /menu
+
+if (!sessionStorage.getItem('splashShown')) {
+  sessionStorage.setItem('splashShown', '1');
+  setTimeout(startSplashTypewriter, 1800);
+  setTimeout(skipSplash, 6500);
+} else {
+  // Déjà vu dans cette session → cache immédiatement
+  var s = document.getElementById('splashScreen');
+  if (s) s.style.display = 'none';
+}
 </script>
 
 </body>
