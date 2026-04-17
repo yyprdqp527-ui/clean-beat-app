@@ -79,7 +79,6 @@ def signup_email():
             if existing_step == 'email_signup':
                 # Mettre à jour le compte incomplet avec les nouvelles données
                 hashed_password = generate_password_hash(password)
-                display_name = f"{firstname} {name}"
                 c.execute("""
                     UPDATE users SET firstname=?, name=?, password=?, phone=?, avatar='👤'
                     WHERE email=?
@@ -103,7 +102,6 @@ def signup_email():
 
         try:
             hashed_password = generate_password_hash(password)
-            display_name = f"{firstname} {name}"
 
             # Si joueur invité : trouver la maison du code
             house_id_to_join = None
