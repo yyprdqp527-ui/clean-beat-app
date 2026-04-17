@@ -96,14 +96,9 @@ def onboarding_invite():
 
     conn.close()
 
-    # Construire l'URL d'invitation (garantir que house_code n'est jamais None)
-    if not house_code:
-        house_code = "ERROR"
-        join_url = ""
-    else:
-        join_url = f"{request.host_url}invite/{house_code}"
-
-    return render_template('onboarding_invite.html', house_code=house_code, join_url=join_url)
+    # Rediriger vers le flux d'invitation unifié (invite_partner_new.html)
+    # Le code est dans l'URL, pas besoin de l'afficher séparément
+    return redirect(url_for('house.invite_partner', source='registration'))
 
 
 # ══════════════════════════════════════════════════════════════════════════
