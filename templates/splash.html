@@ -33,7 +33,7 @@
     }
 
     .sp-bubble {
-      position: absolute;
+      position: fixed;
       border-radius: 50%;
       background: {% if bg_theme_light %}rgba(0,0,0,0.06){% else %}white{% endif %};
       opacity: 0;
@@ -46,8 +46,8 @@
 
     @keyframes spBubble {
       0%   { opacity:0; transform:scale(0); }
-      60%  { opacity:0.2; transform:scale(1.15); }
-      100% { opacity:0.14; transform:scale(1); }
+      60%  { opacity:0.35; transform:scale(1.15); }
+      100% { opacity:0.25; transform:scale(1); }
     }
 
     .sp-glass {
