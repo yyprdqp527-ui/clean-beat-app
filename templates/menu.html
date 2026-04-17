@@ -2633,7 +2633,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div class="header-inner">
                         <script>
-                            const MENU_DICEBEAR_FALLBACK = "{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}";
+                            const MENU_DICEBEAR_FALLBACK = "/static/images/default.png";
                         </script>
                         <script>
                         // Appliquer un avatar d'aperçu provenant d'un cookie (mise en place rapide pour la démo)
@@ -2895,6 +2895,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     function updateAll(){ updateSpacer(); positionGift(); }
                     document.addEventListener('DOMContentLoaded', updateAll);
                     window.addEventListener('resize', updateAll);
+                    window.addEventListener('scroll', positionGift, { passive: true });
                     setTimeout(updateAll, 200);
                     setTimeout(positionGift, 600);
                 })();
