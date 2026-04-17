@@ -2615,11 +2615,19 @@
 <body>
 <script>
 // Si on arrive sans paramètre interne → splash
-if (!window.location.search.includes('nav=1') &&
-    !window.location.search.includes('pts=') &&
-    !window.location.search.includes('success=') &&
-    !window.location.search.includes('ts=') &&
-    !document.referrer.includes(window.location.host)) {
+var params = window.location.search;
+var ref = document.referrer;
+var isBack = performance.navigation &&
+             performance.navigation.type === 2;
+var hasNavParam = params.includes('nav=1') ||
+                  params.includes('pts=') ||
+                  params.includes('success=') ||
+                  params.includes('ts=');
+var isInternal = hasNavParam ||
+                 isBack ||
+                 (ref && ref.includes(window.location.host));
+
+if (!isInternal) {
     window.location.replace('/splash');
 }
 </script>
