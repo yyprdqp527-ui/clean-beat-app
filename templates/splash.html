@@ -180,6 +180,7 @@
   <script>
     function goToMenu() {
       localStorage.setItem('lastSplash', Date.now());
+      sessionStorage.setItem('splashDone', '1');
       window.location.href = '/menu?nav=1';
     }
 
