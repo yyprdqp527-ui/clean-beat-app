@@ -2616,18 +2616,14 @@
 <script>
 // Si on arrive sans paramètre interne → splash
 var params = window.location.search;
-var ref = document.referrer;
-var isBack = performance.navigation &&
-             performance.navigation.type === 2;
-var hasNavParam = params.includes('nav=1') ||
-                  params.includes('pts=') ||
-                  params.includes('success=') ||
-                  params.includes('ts=');
-var isInternal = hasNavParam ||
-                 isBack ||
-                 (ref && ref.includes(window.location.host));
+var isInternalNav =
+    params.includes('nav=1') ||
+    params.includes('pts=') ||
+    params.includes('success=') ||
+    params.includes('ts=') ||
+    params.includes('from_splash=1');
 
-if (!isInternal) {
+if (!isInternalNav) {
     window.location.replace('/splash');
 }
 </script>
