@@ -3601,6 +3601,8 @@ def menu():
     if not _is_internal:
         session['splash_shown'] = True
         return redirect(url_for('auth.splash'))
+    else:
+        session['splash_shown'] = True  # maintient le flag pour les navigations suivantes
 
     players = []
     current_user_name = session.get('user', '')
