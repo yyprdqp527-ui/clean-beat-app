@@ -179,6 +179,7 @@
 
   <script>
     function goToMenu() {
+      sessionStorage.setItem('splashDone', '1');
       window.location.href = '/menu?from_splash=1';
     }
 
