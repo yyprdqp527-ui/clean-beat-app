@@ -1,6 +1,6 @@
 {
-  "name": "CleanBeat",
-  "short_name": "CleanBeat",
+  "name": "QuiFaitQuoi",
+  "short_name": "QuiFaitQuoi",
   "description": "Application de gestion des tâches ménagères en duo",
   "start_url": "/menu",
   "display": "standalone",

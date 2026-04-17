@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitation Partenaire - Dust</title>
+    <title>Invitation Partenaire - QuiFaitQuoi</title>
     <style>
         * {
             margin: 0;
@@ -213,7 +213,7 @@
     <div class="container">
         <div class="logo">🏠</div>
         <h1>Inviter un Partenaire</h1>
-        <p class="subtitle">Partagez votre maison Dust</p>
+        <p class="subtitle">Partagez votre maison QuiFaitQuoi</p>
         
         <div class="info-card">
             <div class="house-name">🏡 {{ house_name or 'Ma Maison' }}</div>
@@ -294,7 +294,7 @@
         // Partager via l'API Web Share
         function shareLink() {
             const shareData = {
-                title: 'Rejoins ma maison Dust !',
+                title: 'Rejoins ma maison QuiFaitQuoi !',
                 text: 'Code d\'invitation : {{ house_code }}',
                 url: "{{ join_url }}"
             };

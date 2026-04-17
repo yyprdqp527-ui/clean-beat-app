@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Inviter des partenaires - Dust{% endblock %}
+{% block title %}Inviter des partenaires - QuiFaitQuoi{% endblock %}
 
 {% block page_styles %}
 <style>
@@ -1054,7 +1054,7 @@ body {
 
 <script>
 var joinUrl   = "{{ join_url or '' }}";
-var inviteMessage = "Rejoins-moi sur Dust ! 🏠\n\nJe t'invite à partager les tâches de façon fun !\n\nClique ici pour rejoindre ma maison :\n" + joinUrl;
+var inviteMessage = "Rejoins-moi sur QuiFaitQuoi ! 🏠\n\nJe t'invite à partager les tâches de façon fun !\n\nClique ici pour rejoindre ma maison :\n" + joinUrl;
 
 function selectHouseType(type) {
     ['family','couple','coloc'].forEach(function(t) {
@@ -1069,7 +1069,7 @@ function selectHouseType(type) {
 
 async function shareInvitation() {
     if (navigator.share) {
-        try { await navigator.share({ title: 'Invitation Dust', text: inviteMessage }); return; }
+        try { await navigator.share({ title: 'Invitation QuiFaitQuoi', text: inviteMessage }); return; }
         catch(e) { if (e.name === 'AbortError') return; }
     }
     var enc = encodeURIComponent(inviteMessage);

@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="CleanBeat">
+    <meta name="apple-mobile-web-app-title" content="QuiFaitQuoi">
     <meta name="theme-color" content="#597176">
     <link rel="manifest" href="/static/manifest.json?v=4">
     <link rel="apple-touch-icon" href="/static/qfq-512.png">
@@ -4527,7 +4527,7 @@ function sendMalus(reason, points){
                         <!-- 🧡 REMERCIEMENT BÊTA TESTEURS -->
                         <div style="margin: 4px 0 8px; padding: 14px 16px; background: linear-gradient(135deg, rgba(253,174,84,0.18), rgba(244,198,141,0.12)); border-radius: 16px; border: 1.5px solid rgba(253,174,84,0.35);">
                             <div style="font-size: 13px; font-weight: 800; color: #153036; margin-bottom: 4px;">🧡 Merci d'être bêta testeur !</div>
-                            <div style="font-size: 12px; color: rgba(21,48,54,0.7); line-height: 1.5;">Tu fais partie des premiers à tester CleanBeat. Certaines fonctionnalités sont encore en cours de polissage — ton avis compte énormément !</div>
+                            <div style="font-size: 12px; color: rgba(21,48,54,0.7); line-height: 1.5;">Tu fais partie des premiers à tester QuiFaitQuoi. Certaines fonctionnalités sont encore en cours de polissage — ton avis compte énormément !</div>
                         </div>
 
                         <!-- 📱 GUIDE AJOUT ÉCRAN ACCUEIL -->
@@ -5654,7 +5654,7 @@ function sendMalus(reason, points){
                         
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
-                    console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
+                    console.warn('[QuiFaitQuoi] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
                 }
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
@@ -6268,7 +6268,7 @@ function refreshAllBadges() {
                 sessionStorage.setItem('pushBannerDismissed', '1');
                 if (Notification.permission === 'denied') {
                     // iOS : impossible de demander via JS → guider vers les réglages
-                    alert('Pour activer les notifications, va dans Réglages > CleanBeat > Notifications.');
+                    alert('Pour activer les notifications, va dans Réglages > QuiFaitQuoi > Notifications.');
                     return;
                 }
                 if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
@@ -6339,7 +6339,7 @@ function refreshAllBadges() {
     <!-- Slide 1 : Bienvenue -->
     <div class="ob-slide active" id="ob-slide-1">
       <span class="ob-emoji">🏠✨</span>
-      <div class="ob-title">Bienvenue sur Klean !</div>
+      <div class="ob-title">Bienvenue sur QuiFaitQuoi !</div>
       <div class="ob-text">
         <strong>Le jeu qui rend le ménage fun et équitable !</strong><br><br>
         Principe simple :<br>
@@ -6439,12 +6439,12 @@ function refreshAllBadges() {
         <button onclick="document.getElementById('install-guide-modal').style.display='none'" style="position:absolute; top:16px; right:18px; background:rgba(21,48,54,0.08); border:none; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer; color:#153036; display:flex; align-items:center; justify-content:center;">×</button>
         <div style="text-align:center; margin-bottom:20px;">
             <div style="font-size:40px; margin-bottom:8px;">📱</div>
-            <div style="font-size:20px; font-weight:900; color:#153036;">Installer CleanBeat</div>
+            <div style="font-size:20px; font-weight:900; color:#153036;">Installer QuiFaitQuoi</div>
             <div style="font-size:13px; color:#597176; margin-top:4px;">Ajouter l'appli sur ton écran d'accueil</div>
         </div>
         <div style="background:linear-gradient(135deg,rgba(253,174,84,0.15),rgba(244,198,141,0.1)); border-radius:16px; padding:14px 16px; margin-bottom:20px; border:1.5px solid rgba(253,174,84,0.3);">
             <div style="font-size:13px; font-weight:800; color:#153036; margin-bottom:4px;">🧡 Tu es bêta testeur — merci !</div>
-            <div style="font-size:12px; color:rgba(21,48,54,0.72); line-height:1.55;">CleanBeat est encore en version bêta. Certaines notifications et fonctionnalités s'améliorent de semaine en semaine. Ton expérience et retours sont précieux pour nous aider à grandir ! 💪</div>
+            <div style="font-size:12px; color:rgba(21,48,54,0.72); line-height:1.55;">QuiFaitQuoi est encore en version bêta. Certaines notifications et fonctionnalités s'améliorent de semaine en semaine. Ton expérience et retours sont précieux pour nous aider à grandir ! 💪</div>
         </div>
         <div style="margin-bottom:18px;">
             <div style="font-size:14px; font-weight:800; color:#153036; margin-bottom:10px;">🍏 Sur iPhone (Safari)</div>
