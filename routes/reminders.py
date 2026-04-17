@@ -144,7 +144,7 @@ def add_reminder():
         else:
             creator_name = session['user'].split('@')[0]
         message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
-        create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
+        create_system_message(house_id, message_content, 'courses_added', sender_email=None)
     except Exception:
         if not creator_name:
             creator_name = session['user'].split('@')[0]
@@ -160,6 +160,19 @@ def add_reminder():
             'creator_avatar_file': creator_avatar_file,
             'creator_avatar_url': creator_avatar_url
         }, namespace='/', room=f'house_{house_id}', broadcast=True)
+    except Exception:
+        pass
+
+    try:
+        from app import get_house_push_subscriptions, send_push_notification
+        subs = get_house_push_subscriptions(house_id, exclude_email=session['user'])
+        for sub in subs:
+            send_push_notification(sub, {
+                'title': '🛒 Liste de courses',
+                'body': f'{creator_name} a ajouté "{title}"',
+                'icon': '/static/images/logo.png',
+                'url': '/reminders'
+            })
     except Exception:
         pass
 
@@ -199,6 +212,10 @@ def toggle_reminder(reminder_id):
     if not row:
         conn.close()
         return jsonify({'success': False, 'error': 'Article introuvable'})
+
+    if row[0] == 1:
+        conn.close()
+        return jsonify({'success': False, 'error': 'already_done', 'message': 'Cet article a déjà été validé'})
 
     item_title = row[1] or 'Article'
     new_done = 0 if row[0] else 1
