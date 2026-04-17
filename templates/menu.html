@@ -3113,7 +3113,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     function updateAll(){ updateSpacer(); positionGift(); }
                     document.addEventListener('DOMContentLoaded', updateAll);
                     window.addEventListener('resize', updateAll);
-                    window.addEventListener('scroll', positionGift, { passive: true });
                     setTimeout(updateAll, 200);
                     setTimeout(positionGift, 600);
                 })();
