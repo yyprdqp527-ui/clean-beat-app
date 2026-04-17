@@ -2746,26 +2746,6 @@
   </div>
 </div>
 
-<div class="splash-screen" id="splashScreen" onclick="skipSplash()">
-  <div class="sp-bubble sp-b1"></div>
-  <div class="sp-bubble sp-b2"></div>
-  <div class="sp-bubble sp-b3"></div>
-  <div class="sp-bubble sp-b4"></div>
-  <div class="sp-glass">
-    <div class="sp-t1">QUI FAIT QUOI</div>
-    <div class="sp-t2">DANS LA BARAQUE</div>
-    <div class="sp-divider" id="spDiv"></div>
-    <div class="sp-t3">
-      <span id="spLine3"></span>
-      <span class="sp-cursor" id="spCur3" style="height:22px;display:none"></span>
-    </div>
-    <div class="sp-t4">
-      <span id="spLine4"></span>
-      <span class="sp-cursor" id="spCur4" style="height:22px;display:none"></span>
-    </div>
-  </div>
-  <div class="sp-skip" id="spSkip">Appuie pour passer →</div>
-</div>
 
 <script>
 //  MENU BURGER - Définition globale immédiate
@@ -6552,39 +6532,6 @@ function refreshAllBadges() {
 </div>
 
 <script>
-function spType(elId, curId, text, speed, cb) {
-  var el = document.getElementById(elId);
-  var cur = document.getElementById(curId);
-  el.textContent = '';
-  cur.style.display = 'inline-block';
-  var i = 0;
-  var t = setInterval(function() {
-    el.textContent += text[i]; i++;
-    if (i >= text.length) {
-      clearInterval(t);
-      setTimeout(function() {
-        cur.style.display = 'none';
-        if (cb) cb();
-      }, 300);
-    }
-  }, speed);
-}
-
-function startSplashTypewriter() {
-  document.getElementById('spDiv').style.opacity = '1';
-  setTimeout(function() {
-    spType('spLine3', 'spCur3', "C'est pas toi...", 65, function() {
-      setTimeout(function() {
-        spType('spLine4', 'spCur4', "alors c'est qui ?", 65, function() {
-          setTimeout(function() {
-            document.getElementById('spSkip').style.opacity = '1';
-          }, 400);
-        });
-      }, 150);
-    });
-  }, 200);
-}
-
 function closeDailyReminder() {
   var popup = document.getElementById('dailyReminderPopup');
   if (popup) {
@@ -6594,25 +6541,6 @@ function closeDailyReminder() {
   }
 }
 
-function skipSplash() {
-  var s = document.getElementById('splashScreen');
-  if (s) {
-    s.classList.add('hiding');
-    setTimeout(function() { s.style.display = 'none'; }, 600);
-  }
-}
-
-// Utilise sessionStorage pour détecter navigation interne vs ouverture appli
-var isInternal = sessionStorage.getItem('internalNav') || (new URLSearchParams(window.location.search)).get('from_splash') === '1';
-sessionStorage.removeItem('internalNav');
-
-if (isInternal) {
-    var s = document.getElementById('splashScreen');
-    if (s) s.style.display = 'none';
-} else {
-    setTimeout(startSplashTypewriter, 100);
-    setTimeout(skipSplash, 5000);
-}
 </script>
 
 </body>
