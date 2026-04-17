@@ -6591,13 +6591,16 @@ function skipSplash() {
   }
 }
 
-var referrer = document.referrer;
-var sameOrigin = referrer && referrer.indexOf(window.location.origin) === 0;
+// Utilise sessionStorage pour détecter navigation interne vs ouverture appli
+var isInternalNav = sessionStorage.getItem('appStarted');
 
-if (!sameOrigin) {
+if (!isInternalNav) {
+  // Première page de la session = ouverture appli
+  sessionStorage.setItem('appStarted', '1');
   setTimeout(startSplashTypewriter, 1800);
   setTimeout(skipSplash, 6500);
 } else {
+  // Navigation interne = pas de splash
   var s = document.getElementById('splashScreen');
   if (s) s.style.display = 'none';
 }
