@@ -6,21 +6,20 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>QUI FAIT QUOI</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:visible; }
 
     @font-face {
       font-family: 'Bubblegum Sans';
       src: url('/static/fonts/BubblegumSans.woff2') format('woff2');
-      font-display: swap;
+      font-display: block;
     }
 
     body {
       background: {{ bg_gradient }};
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -34,19 +33,21 @@
     }
 
     .sp-bubble {
-      position: absolute;
+      position: fixed;
       border-radius: 50%;
       background: {% if bg_theme_light %}rgba(0,0,0,0.06){% else %}white{% endif %};
       opacity: 0;
+      pointer-events: none;
     }
-    .sp-b1 { width:200px;height:200px;top:0px;right:0px;animation:spBubble 0.7s ease 0.1s forwards; }
-    .sp-b2 { width:100px;height:100px;bottom:20px;left:0px;animation:spBubble 0.7s ease 0.3s forwards; }
-    .sp-b3 { width:60px;height:60px;top:80px;left:10px;animation:spBubble 0.7s ease 0.2s forwards; }
-    .sp-b4 { width:40px;height:40px;bottom:100px;right:10px;animation:spBubble 0.7s ease 0.4s forwards; }
+    .sp-b1 { width:220px; height:220px; top:-30px; right:-30px; animation:spBubble 0.8s ease 0.1s forwards; }
+    .sp-b2 { width:120px; height:120px; bottom:40px; left:-20px; animation:spBubble 0.8s ease 0.3s forwards; }
+    .sp-b3 { width:70px; height:70px; top:100px; left:20px; animation:spBubble 0.8s ease 0.2s forwards; }
+    .sp-b4 { width:50px; height:50px; bottom:140px; right:20px; animation:spBubble 0.8s ease 0.45s forwards; }
+
     @keyframes spBubble {
       0%   { opacity:0; transform:scale(0); }
-      60%  { opacity:0.18; transform:scale(1.1); }
-      100% { opacity:0.13; transform:scale(1); }
+      60%  { opacity:0.2; transform:scale(1.15); }
+      100% { opacity:0.14; transform:scale(1); }
     }
 
     .sp-glass {
@@ -71,6 +72,8 @@
       max-width: 360px;
       opacity: 0;
       animation: spCardPop 0.5s cubic-bezier(.36,.07,.19,.97) 0.2s forwards;
+      position: relative;
+      z-index: 1;
     }
     @keyframes spCardPop {
       0%   { opacity:0; transform:scale(0.8); }
@@ -79,6 +82,7 @@
     }
 
     .sp-t1 {
+      font-family: 'Bubblegum Sans', cursive;
       font-size: 72px;
       color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
       line-height: 0.9;
@@ -86,11 +90,12 @@
       animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 0.6s forwards;
     }
     .sp-t2 {
+      font-family: 'Bubblegum Sans', cursive;
       font-size: 52px;
       color: #CC1111;
       line-height: 0.95;
       opacity: 0;
-      animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 1.1s forwards;
+      animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 1.2s forwards;
     }
     @keyframes spBounce {
       0%   { opacity:0; transform:scale(0.3) translateY(30px) rotate(-4deg); }
@@ -100,38 +105,40 @@
     }
 
     .sp-divider {
-      width: 50px; height: 4px; border-radius: 2px;
+      width:50px; height:4px; border-radius:2px;
       background: {% if bg_theme_light %}rgba(0,0,0,0.15){% else %}rgba(255,255,255,0.3){% endif %};
-      margin: 10px 0 6px;
-      opacity: 0;
-      transition: opacity 0.4s;
+      margin:12px 0 8px;
+      opacity:0; transition:opacity 0.4s;
     }
     .sp-t3 {
+      font-family: 'Bubblegum Sans', cursive;
       font-size: 26px;
       color: {% if bg_theme_light %}rgba(0,0,0,0.5){% else %}rgba(255,255,255,0.7){% endif %};
-      line-height: 1.3; min-height: 34px;
+      line-height:1.3; min-height:34px;
     }
     .sp-t4 {
+      font-family: 'Bubblegum Sans', cursive;
       font-size: 26px;
       color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
-      line-height: 1.3; min-height: 34px;
+      line-height:1.3; min-height:34px;
     }
     .sp-cursor {
-      display: inline-block; width: 3px;
-      background: currentColor; margin-left: 2px;
-      vertical-align: middle;
-      animation: spBlink 0.5s step-end infinite;
+      display:inline-block; width:3px;
+      background:currentColor; margin-left:2px;
+      vertical-align:middle;
+      animation:spBlink 0.5s step-end infinite;
     }
     @keyframes spBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
     .sp-skip {
-      position: absolute;
-      bottom: max(22px, env(safe-area-inset-bottom));
+      position:fixed;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      left:50%; transform:translateX(-50%);
       font-family: 'Bubblegum Sans', cursive;
-      font-size: 14px;
+      font-size:14px;
       color: {% if bg_theme_light %}rgba(0,0,0,0.3){% else %}rgba(255,255,255,0.4){% endif %};
-      opacity: 0;
-      transition: opacity 0.5s;
+      opacity:0; transition:opacity 0.5s;
+      white-space:nowrap;
     }
   </style>
 </head>
@@ -178,23 +185,23 @@
       }, speed);
     }
 
-    function startSplash() {
+    function startTypewriter() {
       document.getElementById('spDiv').style.opacity = '1';
-      setTimeout(function() {
-        spType('spLine3', 'spCur3', "C'est pas toi...", 65, function() {
-          setTimeout(function() {
-            spType('spLine4', 'spCur4', "alors c'est qui ?", 65, function() {
-              setTimeout(function() {
-                document.getElementById('spSkip').style.opacity = '1';
-              }, 400);
-            });
-          }, 150);
-        });
-      }, 200);
+      spType('spLine3', 'spCur3', "C'est pas toi...", 65, function() {
+        setTimeout(function() {
+          spType('spLine4', 'spCur4', "alors c'est qui ?", 65, function() {
+            setTimeout(function() {
+              document.getElementById('spSkip').style.opacity = '1';
+            }, 400);
+          });
+        }, 150);
+      });
     }
 
-    setTimeout(startSplash, 100);
-    setTimeout(goToMenu, 4000);
+    // t1 bounce finit à 1.3s, t2 bounce finit à 1.9s
+    // Typewriter démarre à 2.1s
+    setTimeout(startTypewriter, 2100);
+    setTimeout(goToMenu, 5500);
   </script>
 </body>
 </html>
