@@ -2622,7 +2622,6 @@ function checkAndShowSplash() {
         params.includes('success=') ||
         params.includes('ts=') ||
         params.includes('from_splash=1');
-
     if (!isInternalNav) {
         window.location.replace('/splash');
     }
@@ -2631,27 +2630,27 @@ function checkAndShowSplash() {
 // Au chargement initial
 checkAndShowSplash();
 
-// Quand iOS restaure la page depuis la mémoire
+// iOS restaure depuis mémoire
 window.addEventListener('pageshow', function(e) {
     if (e.persisted) {
-        // Page restaurée depuis le cache iOS
         window.location.replace('/splash');
     }
 });
 
-// Quand l'appli revient au premier plan
+// Retour au premier plan après 10s minimum
+var _hiddenAt = null;
 document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible') {
-        var params = window.location.search;
-        var isInternalNav =
-            params.includes('nav=1') ||
-            params.includes('pts=') ||
-            params.includes('success=') ||
-            params.includes('ts=') ||
-            params.includes('from_splash=1');
-        if (!isInternalNav) {
+    if (document.visibilityState === 'hidden') {
+        _hiddenAt = Date.now();
+    }
+    if (document.visibilityState === 'visible' && _hiddenAt) {
+        var elapsed = Date.now() - _hiddenAt;
+        if (elapsed > 10000) {
+            // En arrière-plan depuis plus de 10s
+            // = vrai retour sur l'appli
             window.location.replace('/splash');
         }
+        _hiddenAt = null;
     }
 });
 </script>
