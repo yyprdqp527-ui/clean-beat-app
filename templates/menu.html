@@ -2613,6 +2613,16 @@
     </style>
 </head>
 <body>
+<script>
+// Si on arrive sans paramètre interne → splash
+if (!window.location.search.includes('nav=1') &&
+    !window.location.search.includes('pts=') &&
+    !window.location.search.includes('success=') &&
+    !window.location.search.includes('ts=') &&
+    !document.referrer.includes(window.location.host)) {
+    window.location.replace('/splash');
+}
+</script>
 
 <div id="dailyReminderPopup" style="display:none" onclick="closeDailyReminder()">
   <div class="daily-reminder-card" onclick="event.stopPropagation()">
