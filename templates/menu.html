@@ -6591,11 +6591,10 @@ function skipSplash() {
   }
 }
 
-var now = Date.now();
-var lastSplash = parseInt(localStorage.getItem('splashLastShown') || '0');
-var delay = 30 * 60 * 1000;
-if (now - lastSplash > delay) {
-  localStorage.setItem('splashLastShown', now);
+var referrer = document.referrer;
+var sameOrigin = referrer && referrer.indexOf(window.location.origin) === 0;
+
+if (!sameOrigin) {
   setTimeout(startSplashTypewriter, 1800);
   setTimeout(skipSplash, 6500);
 } else {
