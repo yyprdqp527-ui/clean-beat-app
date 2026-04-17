@@ -6603,7 +6603,7 @@ function skipSplash() {
 }
 
 // Utilise sessionStorage pour détecter navigation interne vs ouverture appli
-var isInternal = sessionStorage.getItem('internalNav');
+var isInternal = sessionStorage.getItem('internalNav') || (new URLSearchParams(window.location.search)).get('from_splash') === '1';
 sessionStorage.removeItem('internalNav');
 
 if (isInternal) {

@@ -11,6 +11,11 @@ def welcome():
     return render_template('welcome.html')
 
 
+@auth_bp.route('/splash')
+def splash():
+    return render_template('splash.html')
+
+
 # Route de compatibilité pour templates pointant sur 'signup'
 @auth_bp.route('/signup')
 def signup():
