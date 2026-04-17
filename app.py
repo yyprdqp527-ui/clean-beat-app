@@ -3594,17 +3594,6 @@ def menu():
     from datetime import datetime
     _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {now_paris()} 🚨🚨🚨")
 
-    # === Splash gate : redirect si ouverture directe (sans paramètre interne) ===
-    is_internal = (
-        request.args.get('from_splash') == '1'
-        or any(p in request.args for p in
-               ['success', 'pts', 'ts', 'cat', 'bonus',
-                'malus', 'pts_add', 'nav'])
-        or request.args.get('next') is not None
-    )
-    if not is_internal:
-        return redirect(url_for('auth.splash'))
-
     players = []
     current_user_name = session.get('user', '')
     house_name = None
