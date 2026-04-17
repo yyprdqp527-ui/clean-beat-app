@@ -6593,16 +6593,14 @@ function skipSplash() {
   }
 }
 
-// Affiche le splash uniquement à la première 
-// visite de la session (ouverture de l'appli)
-// Pas à chaque rechargement de /menu
-
-if (!sessionStorage.getItem('splashShown')) {
-  sessionStorage.setItem('splashShown', '1');
+var now = Date.now();
+var lastSplash = parseInt(localStorage.getItem('splashLastShown') || '0');
+var delay = 30 * 60 * 1000;
+if (now - lastSplash > delay) {
+  localStorage.setItem('splashLastShown', now);
   setTimeout(startSplashTypewriter, 1800);
   setTimeout(skipSplash, 6500);
 } else {
-  // Déjà vu dans cette session → cache immédiatement
   var s = document.getElementById('splashScreen');
   if (s) s.style.display = 'none';
 }
