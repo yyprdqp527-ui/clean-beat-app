@@ -22,7 +22,7 @@ CATEGORY_NAMES = {
 
 @tasks_bp.route('/categorie/<cat>')
 def categorie(cat):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     # Normaliser le nom de la catégorie pour correspondre aux clés TASKS_CONFIG
     normalized_cat = normalize_category(cat)
     
@@ -201,7 +201,7 @@ def categorie(cat):
 @tasks_bp.route('/add_task/<cat>', methods=['GET', 'POST'])
 @tasks_bp.route('/edit_custom_task/<cat>/<int:task_id>', methods=['GET', 'POST'])
 def add_task_page(cat, task_id=None):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     if 'user' not in session:
         flash("Connecte-toi pour créer une mission.", "warning")
         return redirect(url_for('auth.login'))
@@ -343,7 +343,7 @@ def add_task_page(cat, task_id=None):
 # Mettre à jour les points d'une tâche prédéfinie (override par maison)
 @tasks_bp.route('/update_task_points/<cat>/<int:task_id>', methods=['POST'])
 def update_task_points(cat, task_id):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     if 'user' not in session:
         flash("Connecte-toi pour modifier les points.", "warning")
         return redirect(url_for('auth.login'))
@@ -394,7 +394,7 @@ def update_task_points(cat, task_id):
 # Mettre à jour les points d'une tâche personnalisée
 @tasks_bp.route('/update_custom_task_points/<cat>/<int:task_id>', methods=['POST'])
 def update_custom_task_points(cat, task_id):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     if 'user' not in session:
         flash("Connecte-toi pour modifier les points.", "warning")
         return redirect(url_for('auth.login'))
@@ -431,7 +431,7 @@ def update_custom_task_points(cat, task_id):
 
 @tasks_bp.route('/task_page/<cat>/<int:task_id>')
 def task_page(cat, task_id):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     # Affiche une page simple ou un message temporaire
     return f"Page de la tâche {task_id} pour la catégorie : {cat} (à implémenter)"
 
@@ -441,7 +441,7 @@ def custom_task_page(task_id):
     Page de validation pour les tâches personnalisées (créées par les utilisateurs)
     Similaire à task_enhanced mais pour les custom_tasks
     """
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     if 'user' not in session:
         flash("Connecte-toi pour accéder à cette tâche.", "warning")
         return redirect(url_for('auth.signup_email'))
@@ -757,7 +757,7 @@ def custom_task_page(task_id):
 
 @tasks_bp.route('/task_enhanced/<cat>/<int:task_id>', methods=['GET', 'POST'])
 def task_enhanced(cat, task_id):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     # Normaliser le nom de la catégorie
     normalized_cat = normalize_category(cat)
     
@@ -1124,7 +1124,7 @@ def task_enhanced(cat, task_id):
 # 🔧 Route de test pour debug task_id
 @tasks_bp.route('/debug_task_id/<cat>/<int:tid>')
 def debug_task_id(cat, tid):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     return f"<html><body><h1>DEBUG</h1><p>cat={cat}, tid={tid}</p><script>var taskId = {tid}; console.log('taskId:', taskId);</script></body></html>"
 
 
@@ -1135,7 +1135,7 @@ def api_validate_task():
     Valide une tâche via AJAX sans rechargement de page.
     Retourne les infos nécessaires pour jouer le son et afficher l'animation.
     """
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     _dbg("="*80)
     _dbg("🎯 API VALIDATE_TASK APPELÉE !")
     _dbg("="*80)
@@ -1564,7 +1564,7 @@ def api_daily_tasks():
     Retourne les tâches validées aujourd'hui avec heure, joueur, points
     Format JSON pour affichage dans le dashboard
     """
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     if 'user' not in session:
         return {'tasks': []}, 200
     
@@ -1630,7 +1630,7 @@ def api_rooms_with_missions():
     API pour récupérer les pièces avec missions non validées.
     Utilisé pour mettre à jour les pastilles oranges en temps réel.
     """
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, get_house_personality_message
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
     if 'user' not in session:
         return jsonify({'error': 'Non authentifié'}), 401
     try:
