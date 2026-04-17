@@ -13,6 +13,7 @@ def welcome():
 
 @auth_bp.route('/splash')
 def splash():
+    session.pop('splash_shown', None)
     return render_template('splash.html')
 
 
