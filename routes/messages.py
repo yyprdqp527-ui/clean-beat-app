@@ -47,7 +47,7 @@ def _comments_inner():
     if not user_row or not user_row[0]:
         conn.close()
         flash("Tu dois rejoindre une maison pour accéder à la messagerie", "warning")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     house_id = user_row[0]
     current_user_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
@@ -476,7 +476,7 @@ def baby_messages():
     if not user_row or not user_row[0]:
         conn.close()
         flash("Tu dois rejoindre une maison pour accéder aux messages", "warning")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     house_id = user_row[0]
     current_user_name = user_row[1] if user_row[1] else session['user'].split('@')[0]

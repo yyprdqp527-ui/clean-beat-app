@@ -23,7 +23,7 @@ def reminders():
     if not row or not row[0]:
         conn.close()
         flash("Tu dois d'abord rejoindre une maison", "warning")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
 
     house_id, player_name = row[0], row[1]
 

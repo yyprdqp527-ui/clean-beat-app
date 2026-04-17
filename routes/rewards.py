@@ -29,10 +29,10 @@ def rewards():
         if not user_row or not user_row[0]:
             conn.close()
             flash("Tu dois rejoindre une maison pour accéder aux récompenses", "warning")
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
     except Exception as e:
         print(f"❌ Erreur rewards: {e}", flush=True)
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     house_id = user_row[0]
     user_name = user_row[1]
@@ -298,7 +298,7 @@ def rewards():
         import traceback
         traceback.print_exc()
         flash("Une erreur s'est produite lors du chargement de la grille", "danger")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
 
 
 @rewards_bp.route('/update_rewards', methods=['POST'])
@@ -732,7 +732,7 @@ def mes_recompenses():
     if not house_row or not house_row[0]:
         conn.close()
         flash("Vous devez rejoindre une maison", "warning")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     house_id = house_row[0]
     
@@ -854,7 +854,7 @@ def use_reward(reward_id):
 def buy_reward(reward_id):
     from app import get_db_connection, now_paris
     # Fonctionnalité temporairement désactivée
-    return redirect(url_for('menu'))
+    return redirect(url_for('menu') + '?nav=1')
     
     if 'user' not in session:
         flash("Connecte-toi pour acheter une récompense", "warning")

@@ -26,7 +26,7 @@ def manage_players():
     if not user_house or not user_house[0]:
         conn.close()
         flash("Vous devez d'abord rejoindre une maison", "warning")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     house_id = user_house[0]
     
@@ -638,7 +638,7 @@ def update_profile():
     conn.close()
     
     flash("Profil mis à jour avec succès ! ✨", "success")
-    return redirect(url_for('menu'))
+    return redirect(url_for('menu') + '?nav=1')
 
 
 # Routes pour la création de profil
@@ -814,7 +814,7 @@ def create_profile_post():
     session['registration_step'] = 'complete'
     
     flash("🎉 Profil créé ! Bienvenue dans l'aventure !", "success")
-    return redirect(url_for('menu'))
+    return redirect(url_for('menu') + '?nav=1')
 
 
 @players_bp.route('/profil')
@@ -868,7 +868,7 @@ def profil_joueur(player_email):
         # Sécurité : le joueur affiché doit être dans la même maison
         if house_id and viewer_house_id and house_id != viewer_house_id:
             conn.close()
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
         if house_id:
             try:
                 c.execute("SELECT name, house_name FROM houses WHERE id=?", (house_id,))

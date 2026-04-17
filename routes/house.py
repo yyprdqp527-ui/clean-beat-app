@@ -474,7 +474,7 @@ def join_house():
             _log_login(email)
 
             flash(f"🎉 Bienvenue {user[2]} ! Vous avez rejoint la maison !", "success")
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
 
         # MODE INSCRIPTION : nouvel utilisateur
         else:
@@ -738,7 +738,7 @@ def invite_partner():
         # Redirection : inscription → profil ; manage → menu
         invite_source = session.pop('invite_source', '')
         if invite_source == 'manage':
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
         elif from_registration or session.get('registration_step') == 'email_signup':
             # Vérifier si le profil est déjà complet en DB
             try:
@@ -749,13 +749,13 @@ def invite_partner():
                 conn_chk.close()
                 if row_chk and row_chk[0] == 'profile_created' and row_chk[1]:
                     # Profil déjà complet → aller directement au menu
-                    return redirect(url_for('menu'))
+                    return redirect(url_for('menu') + '?nav=1')
             except Exception:
                 pass
             session['registration_step'] = 'house_named'
             return redirect(url_for('players.create_profile'))
         else:
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
 
     # GET : construire l'URL d'invitation
     join_url = f"{request.host_url}invite/{house_code}" if house_code else ""
@@ -795,7 +795,7 @@ def partager_invitation():
 
     if not house_code:
         flash("Aucune maison trouvée. Créez d'abord une maison.", "warning")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
 
     # Construire l'URL d'invitation
     join_url = f"{request.host_url}invite/{house_code}"

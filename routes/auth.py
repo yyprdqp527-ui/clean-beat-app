@@ -200,7 +200,7 @@ def login():
                     conn.commit()
                     conn.close()
                     flash("🏠 Tu as rejoint la maison avec succès !", "success")
-                    return redirect(url_for('menu'))
+                    return redirect(url_for('menu') + '?nav=1')
 
             conn.close()
 
@@ -214,7 +214,7 @@ def login():
                 flash("✨ Complète ton profil pour commencer !", "info")
                 return redirect(url_for('players.create_profile'))
 
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
         else:
             flash("Email ou mot de passe incorrect", "danger")
             return redirect(url_for('auth.login'))

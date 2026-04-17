@@ -539,7 +539,7 @@ def sats():
         _dbg(f"{'='*60}\n")
         conn.close()
         flash(f"Erreur lors du chargement des stats: {e}", "error")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
 
 
 # ════════════════════════════════════════════════════════════

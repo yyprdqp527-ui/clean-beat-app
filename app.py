@@ -859,7 +859,7 @@ def index():
     """Page d'accueil - Redirection vers la page de bienvenue"""
     # Si l'utilisateur est déjà connecté, le rediriger vers le menu
     if 'user' in session:
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     # Sinon, afficher la page de bienvenue
     return redirect(url_for('auth.welcome'))
 
@@ -3599,7 +3599,7 @@ def menu():
         request.args.get('from_splash') == '1'
         or any(p in request.args for p in
                ['success', 'pts', 'ts', 'cat', 'bonus',
-                'malus', 'pts_add'])
+                'malus', 'pts_add', 'nav'])
         or request.args.get('next') is not None
     )
     if not is_internal:

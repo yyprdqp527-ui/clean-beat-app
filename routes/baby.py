@@ -121,7 +121,7 @@ def save_baby_tracking():
     if not house_id:
         flash("Erreur : maison introuvable.", "danger")
         conn.close()
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
 
     c.execute("""
         INSERT INTO baby_tracking (user_email, house_id, task_type, tracking_time, bottle_ml, observations)

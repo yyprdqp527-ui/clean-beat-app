@@ -220,7 +220,7 @@ def add_task_page(cat, task_id=None):
     if not row or not row[0]:
         conn.close()
         flash("Maison introuvable.", "danger")
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     house_id = row[0]
 
     # Si édition, charger la tâche existante
@@ -456,7 +456,7 @@ def custom_task_page(task_id):
     if not row:
         flash("Tâche personnalisée introuvable.", "warning")
         conn.close()
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     task_name = row[1] or "Tâche personnalisée"
     task_description = row[2] or ""
@@ -474,7 +474,7 @@ def custom_task_page(task_id):
     if task_house_id and user_house_id != task_house_id:
         flash("Tu n'as pas accès à cette tâche.", "warning")
         conn.close()
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu') + '?nav=1')
     
     # Récupérer les joueurs et stats
     players = []
@@ -528,7 +528,7 @@ def custom_task_page(task_id):
                 ]
                 flash(random.choice(funny_messages), "warning")
                 conn.close()
-                return redirect(url_for('menu'))
+                return redirect(url_for('menu') + '?nav=1')
         else:
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", (session['user'], category, task_name, today))
             if c.fetchone():
@@ -545,7 +545,7 @@ def custom_task_page(task_id):
                 ]
                 flash(random.choice(funny_messages), "warning")
                 conn.close()
-                return redirect(url_for('menu'))
+                return redirect(url_for('menu') + '?nav=1')
         
         # Récupérer le joueur qui a fait la tâche (depuis le formulaire)
         _raw_pe = request.form.get('player_email', '')
@@ -557,7 +557,7 @@ def custom_task_page(task_id):
         if not player_row or player_row[0] != user_house_id:
             flash("Erreur : joueur invalide", "danger")
             conn.close()
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
         
         # Insérer la tâche complétée
         try:
@@ -861,7 +861,7 @@ def task_enhanced(cat, task_id):
         if not user_house_id or not player_house_id or user_house_id != player_house_id:
             flash("Erreur : joueur invalide", "danger")
             conn.close()
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu') + '?nav=1')
         
         house_id = user_house_id
 
@@ -902,7 +902,7 @@ def task_enhanced(cat, task_id):
                 funny_message = random.choice(funny_messages)
                 flash(funny_message, "warning")
                 conn.close()
-                return redirect(url_for('menu'))
+                return redirect(url_for('menu') + '?nav=1')
         else:
             # Vérifier doublon sur la journée locale POUR LE JOUEUR QUI VALIDE
             c.execute("SELECT id FROM completed_tasks WHERE user_email=? AND category=? AND task_name=? AND DATE(completed_at)=?", (player_email, normalized_cat, task_name, today))
@@ -921,7 +921,7 @@ def task_enhanced(cat, task_id):
                 funny_message = random.choice(funny_messages)
                 flash(funny_message, "warning")
                 conn.close()
-                return redirect(url_for('menu'))
+                return redirect(url_for('menu') + '?nav=1')
 
         # insérer la tâche complétée POUR LE JOUEUR SÉLECTIONNÉ
         try:
