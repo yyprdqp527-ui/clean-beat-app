@@ -3,6 +3,7 @@
 {% set player_colors = ['rgba(120, 180, 230, 0.6)', 'rgba(180, 140, 200, 0.6)', 'rgba(240, 140, 140, 0.6)', 'rgba(250, 180, 100, 0.6)', 'rgba(130, 200, 150, 0.6)', 'rgba(240, 150, 170, 0.6)', 'rgba(120, 210, 200, 0.6)', 'rgba(255, 170, 170, 0.6)', 'rgba(140, 220, 210, 0.6)', 'rgba(255, 200, 120, 0.6)'] %}
 <head>
     <meta charset="utf-8">
+    <script>if(!sessionStorage.getItem('splashDone')){window.location.replace('/splash');}</script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -6236,46 +6237,40 @@ function refreshAllBadges() {
 </div>
 <script>
 (function() {
-    document.addEventListener('DOMContentLoaded', async function() {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!('Notification' in window)) return;
 
         var banner = document.getElementById('push-notif-banner');
         var btn = document.getElementById('push-notif-banner-btn');
         var closeBtn = document.getElementById('push-notif-banner-close');
 
-        // Permission déjà accordée → rien à faire
+        if (!banner) return;
+
+        // Permission déjà accordée → rien à afficher
         if (Notification.permission === 'granted') return;
 
-        // Permission refusée → rien à faire
-        if (Notification.permission === 'denied') return;
+        // Bannière déjà fermée dans cette session → ne pas re-afficher
+        if (sessionStorage.getItem('pushBannerDismissed')) return;
 
-        // Permission 'default' → tenter auto-demande (Chrome/Firefox/Android)
-        try {
-            var ok = false;
-            if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
-                ok = await window.cleanBeatPush.requestPermission();
-            } else {
-                var perm = await Notification.requestPermission();
-                ok = (perm === 'granted');
-            }
-            if (ok) return; // Activé automatiquement → pas de bannière
-        } catch(e) {
-            // Geste utilisateur requis (iOS) → on affiche la bannière
-        }
-
-        // Toujours 'default' → affiche la bannière après 3s
-        if (Notification.permission === 'default' && banner) {
-            setTimeout(function() { banner.style.display = 'block'; }, 3000);
-        }
+        // 'default' ou 'denied' → affiche la bannière après 3s (sans jamais demander automatiquement)
+        setTimeout(function() { banner.style.display = 'block'; }, 3000);
 
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
-                if (banner) banner.style.display = 'none';
+                banner.style.display = 'none';
+                sessionStorage.setItem('pushBannerDismissed', '1');
             });
         }
+
         if (btn) {
             btn.addEventListener('click', async function() {
-                if (banner) banner.style.display = 'none';
+                banner.style.display = 'none';
+                sessionStorage.setItem('pushBannerDismissed', '1');
+                if (Notification.permission === 'denied') {
+                    // iOS : impossible de demander via JS → guider vers les réglages
+                    alert('Pour activer les notifications, va dans Réglages > CleanBeat > Notifications.');
+                    return;
+                }
                 if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
                     await window.cleanBeatPush.requestPermission();
                 } else {
