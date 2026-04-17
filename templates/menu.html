@@ -5905,6 +5905,7 @@ function refreshAllBadges() {
                             var totalBadge = (counts.unread_received || 0)
                                            + (counts.unread_task_added || 0)
                                            + (counts.unread_courses_added || 0)
+                                           + (counts.courses_pending_count || 0)
                                            + (counts.unread_baby || 0);
                             updateAppBadge(totalBadge);
                             console.log('Badges rafraîchis:', counts);
