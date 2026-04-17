@@ -2570,6 +2570,68 @@
   opacity: 0;
   pointer-events: none;
 }
+/* ========== DAILY REMINDER POPUP ========== */
+#dailyReminderPopup {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: drFadeIn 0.4s ease;
+}
+@keyframes drFadeIn {
+  0%   { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.daily-reminder-card {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  padding: 36px 28px 28px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  color: #fff;
+}
+.daily-reminder-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+.daily-reminder-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+.daily-reminder-text {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  opacity: 0.9;
+  margin-bottom: 24px;
+  white-space: pre-line;
+}
+.daily-reminder-btn {
+  background: rgba(255,255,255,0.25);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 50px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s ease;
+}
+.daily-reminder-btn:active {
+  background: rgba(255,255,255,0.4);
+}
 .sp-bubble {
   position: absolute;
   border-radius: 50%;
@@ -2672,6 +2734,17 @@
     </style>
 </head>
 <body>
+
+<div id="dailyReminderPopup" style="display:none" onclick="closeDailyReminder()">
+  <div class="daily-reminder-card" onclick="event.stopPropagation()">
+    <div class="daily-reminder-icon">👀</div>
+    <div class="daily-reminder-title">Hé, t'es là ?</div>
+    <div class="daily-reminder-text" id="dailyReminderText"></div>
+    <button class="daily-reminder-btn" onclick="closeDailyReminder()">
+      Je vais valider mes tâches ! 💪
+    </button>
+  </div>
+</div>
 
 <div class="splash-screen" id="splashScreen" onclick="skipSplash()">
   <div class="sp-bubble sp-b1"></div>
@@ -5669,6 +5742,16 @@ function sendMalus(reason, points){
                             _forceRepaint();
                         });
 
+                        // ⏰ Rappel quotidien 20h
+                        socket.on('daily_reminder', function(data) {
+                            var popup = document.getElementById('dailyReminderPopup');
+                            var txt = document.getElementById('dailyReminderText');
+                            if (popup && txt) {
+                                txt.textContent = data.message || '';
+                                popup.style.display = 'flex';
+                            }
+                        });
+
                         // 👶 Suivi bébé — rafraîchir la pastille quand un tracking est ajouté
                         socket.on('baby_badge_update', function(data) {
                             console.log('👶 WebSocket: baby_badge_update reçu', data);
@@ -6490,6 +6573,15 @@ function startSplashTypewriter() {
       }, 150);
     });
   }, 200);
+}
+
+function closeDailyReminder() {
+  var popup = document.getElementById('dailyReminderPopup');
+  if (popup) {
+    popup.style.opacity = '0';
+    popup.style.transition = 'opacity 0.3s ease';
+    setTimeout(function() { popup.style.display = 'none'; popup.style.opacity = ''; popup.style.transition = ''; }, 300);
+  }
 }
 
 function skipSplash() {

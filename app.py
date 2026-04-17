@@ -4430,6 +4430,14 @@ def _daily_reminder_loop():
                 except Exception:
                     pass
 
+                # Toast temps réel via WebSocket
+                try:
+                    safe_socketio_emit('daily_reminder', {
+                        'message': message
+                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                except Exception:
+                    pass
+
         except Exception as e:
             _dbg(f"❌ Erreur daily_reminder_loop: {e}")
             socketio.sleep(3600)
