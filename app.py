@@ -17,7 +17,6 @@ from werkzeug.utils import secure_filename
 from datetime import date, datetime, timedelta, timezone
 import secrets
 import os
-import random
 import string
 import base64
 import uuid
@@ -412,7 +411,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import date
 import os
-import random
 import string
 import base64
 import uuid
@@ -838,7 +836,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import date
 import os
-import random
 import string
 import base64
 import uuid
@@ -1866,7 +1863,6 @@ def assign_player_color(email, house_id=None):
             used_colors = [row[0] for row in c.fetchall()]
             
             # Trouver une couleur disponible
-            import random
             available_colors = [c for c in PLAYER_COLOR_PALETTE if c not in used_colors]
             if not available_colors:
                 # Si toutes les couleurs sont utilisées, recommencer avec toute la palette
@@ -3280,488 +3276,6 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
 # 🔔 ========== FIN FONCTIONS PUSH NOTIFICATIONS ==========
 
 
-# 💬 ========== SYSTÈME DE RAPPELS ET PERSONNALITÉ MAISON ==========
-
-import random
-
-# Messages de personnalité de la maison par type
-HOUSE_MESSAGES = {
-    'congratulation': [
-        "🎉 Bravo {name} ! Tu cartonnes aujourd'hui !",
-        "✨ Super boulot {name} ! La maison brille grâce à toi !",
-        "🌟 {name}, tu es au top ! Continue comme ça !",
-        "🏆 Chapeau {name} ! Quelle efficacité !",
-        "💪 {name}, tu assures grave ! Respect !",
-        "🎊 Waouh {name} ! Tu es sur une lancée incroyable !",
-        "⭐ {name}, c'est toi la star du jour !",
-    ],
-    'encouragement': [
-        "💙 Courage {name} ! Chaque petit geste compte !",
-        "🌈 {name}, tu progresses, c'est super !",
-        "☀️ Allez {name}, un petit effort et ce sera nickel !",
-        "🌸 {name}, tu y es presque ! On croit en toi !",
-        "💚 {name}, prends ton temps, l'important c'est de participer !",
-    ],
-    'reminder_gentle': [
-        "🏠 Qui s'occupe du ménage aujourd'hui ? 🤔",
-        "✨ La maison attend son champion du jour !",
-        "🧹 C'est l'heure de faire briller la maison ! 💫",
-        "🌟 Petite mission du jour : rendre la maison encore plus belle !",
-        "🏡 Qui veut marquer des points aujourd'hui ? 😊",
-    ],
-    'reminder_funny': [
-        "🤖 Alerte ! Les moutons de poussière préparent une révolte ! 🐑",
-        "👻 Psst... la vaisselle dit qu'elle se sent seule...",
-        "🎭 Breaking news : le sol réclame un coup de balai !",
-        "🎪 Spectacle ce soir : qui relèvera le défi du ménage ?",
-        "🎮 Mission disponible ! XP et points à gagner ! 🏆",
-        "🦸 Recherche superhéros pour sauver la maison de la poussière !",
-    ],
-    'reminder_competitive': [
-        "🏁 Qui sera le champion de la semaine ? Le suspense est total !",
-        "⚡ La compétition s'intensifie ! Qui prendra la tête ?",
-        "🎯 Objectif du jour : dominer le classement ! Qui relève le défi ?",
-        "🔥 C'est le moment de faire la différence sur le leaderboard !",
-        "💎 Des points faciles à grappiller aujourd'hui ! Qui se lance ?",
-    ],
-    'milestone': [
-        "🎊 100 tâches complétées dans la maison ! Vous êtes incroyables !",
-        "🏅 Record battu ! La maison n'a jamais été aussi propre !",
-        "🌟 Semaine exceptionnelle ! Vous formez une super équipe !",
-        "🎉 Félicitations à toute la maison ! Quel travail d'équipe !",
-    ],
-    'weekend': [
-        "🎈 C'est le week-end ! Un petit coup de propre avant de se détendre ?",
-        "☀️ Bon week-end ! On garde la maison nickel pour en profiter !",
-        "🎉 Week-end mode ON ! Mais n'oublions pas les petites tâches !",
-    ],
-    'sermon_lazy': [
-        "🏠 Euh {name}... je ne veux pas être désagréable mais... ça fait 3 jours que personne ne fait rien ! 😅",
-        "🏠 {name}, je commence à ressembler à une maison hantée... Un petit coup de balai ? 👻",
-        "🏠 {name}, je ne suis pas une maison auto-nettoyante hein ! Viens m'aider ! 🧹",
-        "🏠 Alors là {name}, chapeau ! Tu bats des records... d'inactivité ! 😂",
-        "🏠 {name}, je vais finir par me mettre en grève si ça continue ! 🪧",
-        "🏠 {name}, la poussière organise une fête chez moi... Intervention requise ! 🎉🧹",
-        "🏠 {name}, qui a mis le mode pause sur l'appli ? On reprend le jeu ! 🎮",
-        "🏠 {name}, attention : niveau de saleté critique ! Envoie les renforts ! 🚨",
-        "🏠 {name}, je rêve ou tu as oublié que j'existe ? 😢 Reviens vite !",
-        "🏠 {name}, SOS ! La vaisselle sale prépare une révolution ! Viens négocier ! 🍽️",
-    ],
-    'sermon_funny': [
-        "🏠 {name}, tu te caches ou quoi ? Ça fait un bail ! 🕵️",
-        "🏠 {name}, j'ai failli t'oublier ! Tu existes encore ? 😜",
-        "🏠 {name}, je t'ai vu passer mais tu as fait zéro tâche ! C'est une technique ninja ? 🥷",
-        "🏠 Alors {name}, on prend des vacances ? 🏖️ (Sans moi apparemment...)",
-        "🏠 {name}, tu joues à cache-cache avec le ménage ? Tu gagnes ! 🙈",
-        "🏠 {name}, je croyais qu'on était amis... mais tu m'abandonnes ! 💔",
-        "🏠 {name}, même les plantes en font plus que toi ! Et elles bougent pas ! 🪴😂",
-        "🏠 {name}, tu attends que je fasse le ménage toute seule ? Spoiler : je sais pas ! 🤷",
-    ]
-}
-
-
-def _emit_house_toast(house_id, message, toast_type, sender_name):
-    """
-    Envoie un toast visuel (sans INSERT en DB) via WebSocket + push.
-    toast_type: 'sermon' ou 'congratulation'
-    """
-    # WebSocket → toast temps réel
-    if SOCKETIO_AVAILABLE and socketio:
-        safe_socketio_emit('house_toast', {
-            'house_id': house_id,
-            'message': message,
-            'toast_type': toast_type,
-            'sender_name': sender_name
-        }, room=f'house_{house_id}', namespace='/')
-        _dbg(f"🏠 Toast '{toast_type}' émis pour house_{house_id}")
-
-    # Push notification (pour les utilisateurs hors-ligne)
-    try:
-        icon = '🎉' if toast_type == 'congratulation' else '🏠'
-        notification_data = {
-            'title': f'{icon} {sender_name}',
-            'body': message,
-            'icon': '/static/images/logo.png',
-            'url': '/menu',
-            'messageType': toast_type,
-            'badge': 1
-        }
-        notify_house_members(house_id, notification_data)
-    except Exception as e:
-        _dbg(f"⚠️ Push toast échoué: {e}")
-
-
-# Anti-spam : dernier toast envoyé par maison {house_id: datetime}
-_last_house_toast = {}
-
-def send_house_encouragement(house_id, player_name=None):
-    """
-    Envoie un toast d'encouragement de la maison (sans stocker en DB).
-    """
-    try:
-        # Anti-spam : max 1 toast par maison par 24h
-        last = _last_house_toast.get(house_id)
-        if last and (now_paris() - last).total_seconds() < 86400:
-            _dbg(f"⏭️ Toast encouragement ignoré pour house_{house_id} (anti-spam 24h)")
-            return False
-
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
-        house_row = c.fetchone()
-        conn.close()
-        house_name = house_row[0] if (house_row and house_row[0]) else (house_row[1] if house_row else "Maison")
-
-        if player_name:
-            message = get_house_personality_message('congratulation', player_name=player_name, house_name=house_name)
-        else:
-            message = get_house_personality_message('encouragement', house_name=house_name)
-
-        sender_name = f"🏠 {house_name}"
-        _emit_house_toast(house_id, message, 'congratulation', sender_name)
-        _last_house_toast[house_id] = now_paris()
-        return True
-    except Exception as e:
-        _dbg(f"❌ Erreur envoi encouragement maison: {e}")
-        return False
-
-
-def send_house_sermon(house_id, player_name=None, sermon_type='lazy'):
-    """
-    Envoie un toast humoristique de réprimande de la maison (sans stocker en DB).
-    sermon_type: 'lazy' (inactivité générale) ou 'funny' (ciblé sur un joueur)
-    """
-    try:
-        # Anti-spam : max 1 toast par maison par 24h
-        last = _last_house_toast.get(house_id)
-        if last and (now_paris() - last).total_seconds() < 86400:
-            _dbg(f"⏭️ Toast sermon ignoré pour house_{house_id} (anti-spam 24h)")
-            return False
-
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT house_name, name FROM houses WHERE id=?", (house_id,))
-        house_row = c.fetchone()
-        conn.close()
-        house_name = house_row[0] if (house_row and house_row[0]) else (house_row[1] if house_row else "Maison")
-
-        message_key = 'sermon_funny' if player_name and sermon_type == 'funny' else 'sermon_lazy'
-        message = get_house_personality_message(message_key, player_name=player_name, house_name=house_name)
-
-        sender_name = f"🏠 {house_name}"
-        _emit_house_toast(house_id, message, 'sermon', sender_name)
-        _last_house_toast[house_id] = now_paris()
-        return True
-    except Exception as e:
-        _dbg(f"❌ Erreur envoi sermon maison: {e}")
-        return False
-
-
-def check_house_activity_and_send_message(house_id):
-    """
-    Vérifie l'activité de la maison et envoie un message approprié.
-    - Si aucune activité depuis 3 jours : sermon général
-    - Si un joueur inactif depuis longtemps : sermon personnalisé
-    - Si beaucoup d'activité : encouragement
-    """
-    try:
-        from datetime import datetime, timedelta
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Vérifier l'activité récente (dernières 72h)
-        three_days_ago = (now_paris() - timedelta(days=3)).isoformat()
-        
-        c.execute("""
-            SELECT COUNT(*) FROM tasks 
-            WHERE house_id=? AND completed=1 AND completed_at > ?
-        """, (house_id, three_days_ago))
-        
-        recent_tasks = c.fetchone()[0]
-        
-        # Si pas d'activité récente, envoyer un sermon général
-        if recent_tasks == 0:
-            conn.close()
-            return send_house_sermon(house_id, sermon_type='lazy')
-        
-        # Si beaucoup d'activité (>10 tâches en 3 jours), envoyer encouragement
-        elif recent_tasks > 10:
-            # Trouver le joueur le plus actif
-            c.execute("""
-                SELECT u.name, COUNT(*) as task_count
-                FROM tasks t
-                JOIN users u ON t.completed_by = u.email
-                WHERE t.house_id=? AND t.completed=1 AND t.completed_at > ?
-                GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
-                ORDER BY task_count DESC
-                LIMIT 1
-            """, (house_id, three_days_ago))
-            
-            top_player = c.fetchone()
-            player_name = top_player[0] if top_player else None
-            conn.close()
-            return send_house_encouragement(house_id, player_name=player_name)
-        
-        conn.close()
-        return False
-        
-    except Exception as e:
-        _dbg(f"❌ Erreur vérification activité maison: {e}")
-        return False
-
-
-# 💬 ========== FIN SYSTÈME DE RAPPELS ET PERSONNALITÉ MAISON ==========
-
-def get_house_personality_message(message_type, player_name=None, house_name=None):
-    """
-    Génère un message de personnalité de la maison.
-    
-    message_type: 'congratulation', 'encouragement', 'reminder_gentle', 
-                  'reminder_funny', 'reminder_competitive', 'milestone', 'weekend'
-    player_name: nom du joueur (optionnel, pour messages personnalisés)
-    house_name: nom de la maison (optionnel)
-    """
-    messages = HOUSE_MESSAGES.get(message_type, HOUSE_MESSAGES['reminder_gentle'])
-    message = random.choice(messages)
-    
-    # Remplacer les variables
-    if player_name and '{name}' in message:
-        message = message.replace('{name}', player_name)
-    if house_name and '{house}' in message:
-        message = message.replace('{house}', house_name)
-    
-    return message
-
-
-def create_reminder(house_id, reminder_type, scheduled_for=None):
-    """
-    Crée un rappel programmé pour une maison.
-    
-    reminder_type: type de message à envoyer
-    scheduled_for: datetime ou string ISO, si None = maintenant + 1h
-    """
-    try:
-        from datetime import datetime, timedelta
-        
-        if scheduled_for is None:
-            scheduled_for = now_paris() + timedelta(hours=1)
-        elif isinstance(scheduled_for, str):
-            scheduled_for = datetime.fromisoformat(scheduled_for)
-        
-        # Générer le message
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Récupérer le nom de la maison
-        c.execute("SELECT name FROM houses WHERE id=?", (house_id,))
-        house_row = c.fetchone()
-        house_name = house_row[0] if house_row else "votre maison"
-        
-        message = get_house_personality_message(reminder_type, house_name=house_name)
-        
-        # Créer le rappel
-        c.execute("""
-            INSERT INTO reminders (house_id, reminder_type, message, scheduled_for)
-            VALUES (?, ?, ?, ?)
-        """, (house_id, reminder_type, message, scheduled_for.isoformat()))
-        
-        reminder_id = c.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return reminder_id
-    except Exception as e:
-        _dbg(f"❌ Erreur création reminder: {e}")
-        return None
-
-
-def get_pending_reminders():
-    """
-    Récupère les rappels en attente d'envoi.
-    """
-    from datetime import datetime
-    
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    now = now_paris().isoformat()
-    c.execute("""
-        SELECT id, house_id, reminder_type, message, scheduled_for
-        FROM reminders
-        WHERE is_sent = 0 AND scheduled_for <= ?
-        ORDER BY scheduled_for ASC
-    """, (now,))
-    
-    reminders = []
-    for row in c.fetchall():
-        reminders.append({
-            'id': row[0],
-            'house_id': row[1],
-            'reminder_type': row[2],
-            'message': row[3],
-            'scheduled_for': row[4]
-        })
-    
-    conn.close()
-    return reminders
-
-
-def send_reminder(reminder_id):
-    """
-    Envoie un rappel via le système de messagerie.
-    """
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Récupérer le rappel
-        c.execute("""
-            SELECT house_id, message, reminder_type
-            FROM reminders WHERE id=?
-        """, (reminder_id,))
-        
-        row = c.fetchone()
-        if not row:
-            conn.close()
-            return False
-        
-        house_id, message, reminder_type = row
-        
-        # Créer le message système
-        create_system_message(
-            house_id=house_id,
-            content=message,
-            message_type='reminder',
-            send_push=True
-        )
-        
-        # Marquer comme envoyé
-        from datetime import datetime
-        c.execute("""
-            UPDATE reminders 
-            SET is_sent = 1, sent_at = ?
-            WHERE id = ?
-        """, (now_paris().isoformat(), reminder_id))
-        
-        conn.commit()
-        conn.close()
-        
-        return True
-    except Exception as e:
-        _dbg(f"❌ Erreur envoi reminder: {e}")
-        return False
-
-
-def process_pending_reminders():
-    """
-    Traite tous les rappels en attente.
-    À appeler périodiquement (cron, scheduler, etc.)
-    """
-    reminders = get_pending_reminders()
-    sent_count = 0
-    
-    for reminder in reminders:
-        if send_reminder(reminder['id']):
-            sent_count += 1
-    
-    return sent_count
-
-
-def get_user_reminder_settings(user_email):
-    """
-    Récupère les préférences de rappel d'un utilisateur.
-    """
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    c.execute("""
-        SELECT reminders_enabled, reminder_frequency, quiet_hours_start, quiet_hours_end
-        FROM user_reminder_settings
-        WHERE user_email = ?
-    """, (user_email,))
-    
-    row = c.fetchone()
-    conn.close()
-    
-    if row:
-        return {
-            'enabled': bool(row[0]),
-            'frequency': row[1],
-            'quiet_hours_start': row[2],
-            'quiet_hours_end': row[3]
-        }
-    else:
-        # Valeurs par défaut
-        return {
-            'enabled': True,
-            'frequency': 'daily',
-            'quiet_hours_start': '22:00',
-            'quiet_hours_end': '08:00'
-        }
-
-
-def update_user_reminder_settings(user_email, enabled=None, frequency=None, quiet_hours_start=None, quiet_hours_end=None):
-    """
-    Met à jour les préférences de rappel d'un utilisateur.
-    """
-    try:
-        from datetime import datetime
-        
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Vérifier si l'utilisateur a déjà des settings
-        c.execute("SELECT id FROM user_reminder_settings WHERE user_email=?", (user_email,))
-        exists = c.fetchone()
-        
-        if exists:
-            # UPDATE
-            updates = []
-            params = []
-            
-            if enabled is not None:
-                updates.append("reminders_enabled = ?")
-                params.append(1 if enabled else 0)
-            if frequency is not None:
-                updates.append("reminder_frequency = ?")
-                params.append(frequency)
-            if quiet_hours_start is not None:
-                updates.append("quiet_hours_start = ?")
-                params.append(quiet_hours_start)
-            if quiet_hours_end is not None:
-                updates.append("quiet_hours_end = ?")
-                params.append(quiet_hours_end)
-            
-            if updates:
-                updates.append("last_updated = ?")
-                params.append(now_paris().isoformat())
-                params.append(user_email)
-                
-                query = f"UPDATE user_reminder_settings SET {', '.join(updates)} WHERE user_email = ?"
-                c.execute(query, params)
-        else:
-            # INSERT
-            c.execute("""
-                INSERT INTO user_reminder_settings 
-                (user_email, reminders_enabled, reminder_frequency, quiet_hours_start, quiet_hours_end)
-                VALUES (?, ?, ?, ?, ?)
-            """, (
-                user_email,
-                1 if (enabled if enabled is not None else True) else 0,
-                frequency if frequency else 'daily',
-                quiet_hours_start if quiet_hours_start else '22:00',
-                quiet_hours_end if quiet_hours_end else '08:00'
-            ))
-        
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        _dbg(f"❌ Erreur update reminder settings: {e}")
-        return False
-
-
-# 💬 ========== FIN SYSTÈME DE RAPPELS ==========
 
 
 def validate_avatar_file(avatar_file_value):
@@ -4792,131 +4306,6 @@ if SOCKETIO_AVAILABLE:
 
 
 # 🏠 ========== ROUTES TEST MESSAGES MAISON ==========
-
-@app.route('/test_house_toasts')
-def test_house_toasts():
-    """Page de preview visuelle des toasts glassmorphisme"""
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
-    user_row = c.fetchone()
-    conn.close()
-    
-    house_name = "Maison"
-    player_name = "Joueur"
-    if user_row:
-        player_name = user_row[1] or session['user'].split('@')[0]
-        if user_row[0]:
-            conn2 = get_db_connection()
-            c2 = conn2.cursor()
-            c2.execute("SELECT house_name, name FROM houses WHERE id=?", (user_row[0],))
-            hr = c2.fetchone()
-            conn2.close()
-            house_name = (hr[0] if hr and hr[0] else hr[1]) if hr else "Maison"
-    
-    import json as _json
-    msgs = {
-        'encouragement': get_house_personality_message('congratulation', player_name=player_name, house_name=house_name),
-        'sermon_funny': get_house_personality_message('sermon_funny', player_name=player_name, house_name=house_name),
-        'sermon_lazy': get_house_personality_message('sermon_lazy', player_name=player_name, house_name=house_name),
-    }
-    return render_template('test_toasts.html',
-                           house_name=house_name,
-                           player_name=player_name,
-                           msgs_json=_json.dumps(msgs, ensure_ascii=False))
-
-
-@app.route('/test_house_encouragement')
-def test_house_encouragement():
-    """Route de test pour envoyer un message d'encouragement de la maison"""
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Non connecté'}), 401
-    
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
-        user_row = c.fetchone()
-        conn.close()
-        
-        if not user_row or not user_row[0]:
-            return jsonify({'success': False, 'error': 'Pas de maison'}), 400
-        
-        house_id = user_row[0]
-        player_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
-        
-        # Bypass anti-spam pour les tests
-        _last_house_toast.pop(house_id, None)
-        result = send_house_encouragement(house_id, player_name=player_name)
-        
-        return jsonify({'success': result, 'message': 'Message d\'encouragement envoyé !'})
-    except Exception as e:
-        _dbg(f"❌ Erreur test encouragement: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/test_house_sermon')
-def test_house_sermon():
-    """Route de test pour envoyer un sermon humoristique de la maison"""
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Non connecté'}), 401
-    
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT house_id, name FROM users WHERE email=?", (session['user'],))
-        user_row = c.fetchone()
-        conn.close()
-        
-        if not user_row or not user_row[0]:
-            return jsonify({'success': False, 'error': 'Pas de maison'}), 400
-        
-        house_id = user_row[0]
-        player_name = user_row[1] if user_row[1] else session['user'].split('@')[0]
-        
-        # Bypass anti-spam pour les tests
-        _last_house_toast.pop(house_id, None)
-        result = send_house_sermon(house_id, player_name=player_name, sermon_type='funny')
-        
-        return jsonify({'success': result, 'message': 'Sermon envoyé ! 😄'})
-    except Exception as e:
-        _dbg(f"❌ Erreur test sermon: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/test_house_sermon_lazy')
-def test_house_sermon_lazy():
-    """Route de test pour envoyer un sermon général d'inactivité"""
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Non connecté'}), 401
-    
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-        user_row = c.fetchone()
-        conn.close()
-        
-        if not user_row or not user_row[0]:
-            return jsonify({'success': False, 'error': 'Pas de maison'}), 400
-        
-        house_id = user_row[0]
-        
-        # Bypass anti-spam pour les tests
-        _last_house_toast.pop(house_id, None)
-        result = send_house_sermon(house_id, sermon_type='lazy')
-        
-        return jsonify({'success': result, 'message': 'Sermon général envoyé ! 🏠'})
-    except Exception as e:
-        _dbg(f"❌ Erreur test sermon lazy: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# 🏠 ========== FIN ROUTES TEST MESSAGES MAISON ==========
-
-
 # ─── KEEP-ALIVE supprimé (plan payant Render → serveur toujours allumé) ──────
 
 
@@ -4963,39 +4352,92 @@ app.register_blueprint(suspicion_bp)
 from routes.push import push_bp
 app.register_blueprint(push_bp)
 
-# 🏠 ========== BOUCLE AUTOMATIQUE SERMON / CONGRATULATION ==========
-def _sermon_loop():
-    """Boucle background : vérifie l'activité de chaque maison toutes les 6h."""
-    import time
-    _dbg("🏠 Boucle sermon/congratulation démarrée (intervalle 6h)")
+# 🏠 ========== BOUCLE AUTOMATIQUE RAPPEL QUOTIDIEN / DAILY REMINDER ==========
+def _daily_reminder_loop():
     while True:
         try:
-            if SOCKETIO_AVAILABLE and socketio:
-                socketio.sleep(6 * 3600)  # 6 heures
-            else:
-                time.sleep(6 * 3600)
-        except Exception:
-            break
-        try:
-            with app.app_context():
-                conn = get_db_connection()
-                c = conn.cursor()
-                c.execute("SELECT id FROM houses")
-                house_ids = [row[0] for row in c.fetchall()]
-                conn.close()
-                _dbg(f"🏠 Vérification activité pour {len(house_ids)} maison(s)")
-                for hid in house_ids:
-                    try:
-                        check_house_activity_and_send_message(hid)
-                    except Exception as e:
-                        _dbg(f"⚠️ Erreur check house {hid}: {e}")
+            # Calcule le temps jusqu'à 20h heure Paris
+            now = now_paris()
+            target = now.replace(hour=20, minute=0, second=0, microsecond=0)
+            if now >= target:
+                target = target + timedelta(days=1)
+            wait_seconds = (target - now).total_seconds()
+            socketio.sleep(wait_seconds)
+
+            # Envoie le rappel à tous les joueurs inactifs de toutes les maisons
+            conn = get_db_connection()
+            c = conn.cursor()
+
+            # Récupère tous les joueurs sans validation aujourd'hui
+            paris_today = now_paris().strftime('%Y-%m-%d')
+            c.execute("""
+                SELECT u.email, u.name, u.house_id
+                FROM users u
+                WHERE u.house_id IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT 1 FROM completed_tasks ct
+                    WHERE ct.user_email = u.email
+                    AND DATE(ct.completed_at) = ?
+                )
+            """, (paris_today,))
+            inactive_players = c.fetchall()
+            conn.close()
+
+            message = (
+                "Rien de validé aujourd'hui... "
+                "mais attends — t'as bien fait "
+                "quelque chose non ? T'as mis de "
+                "l'essence ? Fait un café ? Lancé "
+                "une machine ? Brossé tes dents ?\n\n"
+                "Chaque petit geste compte ! Valide "
+                "tes tâches et rappelle-toi — chaque "
+                "effort mérite sa récompense 🏆"
+            )
+
+            for player in inactive_players:
+                player_email = player[0]
+                house_id = player[2]
+
+                # Notification push
+                try:
+                    subs = get_house_push_subscriptions(
+                        house_id,
+                        exclude_email=None
+                    )
+                    player_subs = [
+                        s for s in subs
+                        if s.get('user_email') == player_email
+                    ]
+                    for sub in player_subs:
+                        send_push_notification(sub, {
+                            'title': "Hé, t'es là ? 👀",
+                            'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
+                            'url': '/menu',
+                            'icon': '/static/images/logo.png'
+                        })
+                except Exception:
+                    pass
+
+                # Message dans l'appli
+                try:
+                    create_system_message(
+                        house_id,
+                        message,
+                        'reminder',
+                        sender_email=None,
+                        send_push=False
+                    )
+                except Exception:
+                    pass
+
         except Exception as e:
-            _dbg(f"❌ Erreur boucle sermon: {e}")
+            _dbg(f"❌ Erreur daily_reminder_loop: {e}")
+            socketio.sleep(3600)
 
 if SOCKETIO_AVAILABLE and socketio:
-    socketio.start_background_task(_sermon_loop)
-    _dbg("🏠 Background task sermon/congratulation enregistrée")
-# 🏠 ========== FIN BOUCLE SERMON / CONGRATULATION ==========
+    socketio.start_background_task(_daily_reminder_loop)
+    _dbg("🏠 Background task daily_reminder enregistrée")
+# 🏠 ========== FIN BOUCLE RAPPEL QUOTIDIEN / DAILY REMINDER ==========
 
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
