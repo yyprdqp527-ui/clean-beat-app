@@ -10,6 +10,7 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; }
+    html { overflow:hidden; }
 
     @font-face {
       font-family: 'Bubblegum Sans';
@@ -35,19 +36,27 @@
     .sp-bubble {
       position: fixed;
       border-radius: 50%;
-      background: rgba(255,255,255,0.3);
-      opacity: 0;
+      background: rgba(255,255,255,0.25);
       pointer-events: none;
+      opacity: 0;
     }
-    .sp-b1 { width:220px; height:220px; top:0; right:0; animation:spBubble 0.8s ease 0.1s forwards; }
-    .sp-b2 { width:120px; height:120px; bottom:0; left:0; animation:spBubble 0.8s ease 0.3s forwards; }
-    .sp-b3 { width:70px; height:70px; top:100px; left:20px; animation:spBubble 0.8s ease 0.2s forwards; }
-    .sp-b4 { width:50px; height:50px; bottom:140px; right:20px; animation:spBubble 0.8s ease 0.45s forwards; }
+    /* Bulles qui montent */
+    .sp-b1  { width:90px;  height:90px;  left:8%;   bottom:-100px; animation:spRise 5.5s ease-in 0.2s infinite; }
+    .sp-b2  { width:50px;  height:50px;  left:20%;  bottom:-60px;  animation:spRise 4.2s ease-in 0.8s infinite; }
+    .sp-b3  { width:130px; height:130px; left:35%;  bottom:-150px; animation:spRise 6.5s ease-in 0.0s infinite; }
+    .sp-b4  { width:40px;  height:40px;  left:50%;  bottom:-50px;  animation:spRise 3.8s ease-in 1.2s infinite; }
+    .sp-b5  { width:70px;  height:70px;  left:62%;  bottom:-80px;  animation:spRise 5.0s ease-in 0.5s infinite; }
+    .sp-b6  { width:100px; height:100px; left:75%;  bottom:-110px; animation:spRise 6.0s ease-in 0.3s infinite; }
+    .sp-b7  { width:30px;  height:30px;  left:85%;  bottom:-40px;  animation:spRise 3.5s ease-in 1.8s infinite; }
+    .sp-b8  { width:60px;  height:60px;  left:5%;   bottom:-70px;  animation:spRise 4.8s ease-in 2.5s infinite; }
+    .sp-b9  { width:45px;  height:45px;  left:90%;  bottom:-55px;  animation:spRise 4.0s ease-in 0.9s infinite; }
+    .sp-b10 { width:80px;  height:80px;  left:45%;  bottom:-90px;  animation:spRise 5.8s ease-in 3.0s infinite; }
 
-    @keyframes spBubble {
-      0%   { opacity:0; transform:scale(0); }
-      60%  { opacity:0.35; transform:scale(1.15); }
-      100% { opacity:0.25; transform:scale(1); }
+    @keyframes spRise {
+      0%   { opacity:0;    transform:translateY(0)    scale(1); }
+      10%  { opacity:0.28; }
+      80%  { opacity:0.18; }
+      100% { opacity:0;    transform:translateY(-110vh) scale(1.2); }
     }
 
     .sp-glass {
@@ -147,6 +156,12 @@
   <div class="sp-bubble sp-b2"></div>
   <div class="sp-bubble sp-b3"></div>
   <div class="sp-bubble sp-b4"></div>
+  <div class="sp-bubble sp-b5"></div>
+  <div class="sp-bubble sp-b6"></div>
+  <div class="sp-bubble sp-b7"></div>
+  <div class="sp-bubble sp-b8"></div>
+  <div class="sp-bubble sp-b9"></div>
+  <div class="sp-bubble sp-b10"></div>
   <div class="sp-glass">
     <div class="sp-t1">QUI FAIT QUOI</div>
     <div class="sp-t2">DANS LA BARAQUE</div>
