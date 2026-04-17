@@ -3595,14 +3595,15 @@ def menu():
     _dbg(f"🚨🚨🚨 ROUTE /menu APPELÉE à {now_paris()} 🚨🚨🚨")
 
     # === Splash gate : redirige vers /splash si ouverture directe ===
-    _from_splash = request.args.get('from_splash', '0') == '1'
-    _has_params  = bool(request.args.get('success') or request.args.get('pts') or request.args.get('ts'))
-    _is_internal = _from_splash or _has_params or session.get('splash_shown')
-    if not _is_internal:
-        session['splash_shown'] = True
+    is_internal = (
+        request.args.get('from_splash') == '1'
+        or any(p in request.args for p in
+               ['success', 'pts', 'ts', 'cat', 'bonus',
+                'malus', 'pts_add'])
+        or request.args.get('next') is not None
+    )
+    if not is_internal:
         return redirect(url_for('auth.splash'))
-    else:
-        session['splash_shown'] = True  # maintient le flag pour les navigations suivantes
 
     players = []
     current_user_name = session.get('user', '')
