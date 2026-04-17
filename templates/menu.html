@@ -5754,6 +5754,10 @@ function sendMalus(reason, points){
                         // 👶 Suivi bébé — rafraîchir la pastille quand un tracking est ajouté
                         socket.on('baby_badge_update', function(data) {
                             console.log('👶 WebSocket: baby_badge_update reçu', data);
+                            var myEmail = '{{ session["user"] }}';
+                            if (data.user_email && data.user_email !== myEmail) return;
+                            var _babyDot = document.getElementById('room-baby-dot');
+                            if (_babyDot) { _babyDot.style.display = 'none'; }
                             refreshAllBadges();
                         });
 

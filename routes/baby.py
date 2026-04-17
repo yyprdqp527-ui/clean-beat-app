@@ -57,6 +57,32 @@ def baby_tracking(cat, task_id):
 
     conn.close()
 
+    # Marquer tous les messages baby_tracking comme lus pour cet utilisateur
+    if house_id:
+        try:
+            from app import get_db_connection, safe_socketio_emit
+            conn_mark = get_db_connection()
+            c_mark = conn_mark.cursor()
+            c_mark.execute("""
+                INSERT OR IGNORE INTO message_reads (message_id, user_email)
+                SELECT m.id, ?
+                FROM messages m
+                WHERE m.house_id = ?
+                AND m.message_type = 'baby_tracking'
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+            """, (session['user'], house_id, session['user']))
+            conn_mark.commit()
+            conn_mark.close()
+            safe_socketio_emit('baby_badge_update', {
+                'count': 0,
+                'user_email': session['user']
+            }, namespace='/', room=f'house_{house_id}', broadcast=False)
+        except Exception as e:
+            pass
+
     return render_template('baby_tracking.html',
                            task_name=task_name,
                            task_type=task_type,
