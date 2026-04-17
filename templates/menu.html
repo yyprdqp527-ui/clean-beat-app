@@ -2614,18 +2614,46 @@
 </head>
 <body>
 <script>
-// Si on arrive sans paramètre interne → splash
-var params = window.location.search;
-var isInternalNav =
-    params.includes('nav=1') ||
-    params.includes('pts=') ||
-    params.includes('success=') ||
-    params.includes('ts=') ||
-    params.includes('from_splash=1');
+function checkAndShowSplash() {
+    var params = window.location.search;
+    var isInternalNav =
+        params.includes('nav=1') ||
+        params.includes('pts=') ||
+        params.includes('success=') ||
+        params.includes('ts=') ||
+        params.includes('from_splash=1');
 
-if (!isInternalNav) {
-    window.location.replace('/splash');
+    if (!isInternalNav) {
+        window.location.replace('/splash');
+    }
 }
+
+// Au chargement initial
+checkAndShowSplash();
+
+// Quand iOS restaure la page depuis la mémoire
+window.addEventListener('pageshow', function(e) {
+    if (e.persisted) {
+        // Page restaurée depuis le cache iOS
+        window.location.replace('/splash');
+    }
+});
+
+// Quand l'appli revient au premier plan
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+        var params = window.location.search;
+        var isInternalNav =
+            params.includes('nav=1') ||
+            params.includes('pts=') ||
+            params.includes('success=') ||
+            params.includes('ts=') ||
+            params.includes('from_splash=1');
+        if (!isInternalNav) {
+            window.location.replace('/splash');
+        }
+    }
+});
 </script>
 
 <div id="dailyReminderPopup" style="display:none" onclick="closeDailyReminder()">
