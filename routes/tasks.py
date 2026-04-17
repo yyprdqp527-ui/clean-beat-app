@@ -1241,9 +1241,6 @@ def api_validate_task():
                 pass
             # Utiliser le nom du payload, sinon celui de TASKS_CONFIG
             task_name = task_name_from_payload if task_name_from_payload else task.get('name')
-            # Appliquer multiplicateur si chambre bébé
-            if normalized_cat == 'chambre_bebe':
-                task_points = int(task_points * 1.5)
         
         _dbg(f"   📌 FINAL task_name = '{task_name}'")
         _dbg(f"📋 [END DEBUG]\n")
