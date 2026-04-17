@@ -3597,9 +3597,9 @@ def menu():
     # === Splash gate : redirige vers /splash si ouverture directe ===
     _from_splash = request.args.get('from_splash', '0') == '1'
     _has_params  = bool(request.args.get('success') or request.args.get('pts') or request.args.get('ts'))
-    _referer     = request.referrer or ''
-    _is_internal = _from_splash or _has_params or (_referer and request.host in _referer)
+    _is_internal = _from_splash or _has_params or session.get('splash_shown')
     if not _is_internal:
+        session['splash_shown'] = True
         return redirect(url_for('auth.splash'))
 
     players = []
