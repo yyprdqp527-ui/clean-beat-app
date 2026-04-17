@@ -179,7 +179,7 @@
 
   <script>
     function goToMenu() {
-      sessionStorage.setItem('splashDone', '1');
+      localStorage.setItem('lastSplash', Date.now());
       window.location.href = '/menu?nav=1';
     }
 

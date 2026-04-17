@@ -2613,47 +2613,6 @@
     </style>
 </head>
 <body>
-<script>
-function checkAndShowSplash() {
-    var params = window.location.search;
-    var isInternalNav =
-        params.includes('nav=1') ||
-        params.includes('pts=') ||
-        params.includes('success=') ||
-        params.includes('ts=') ||
-        params.includes('from_splash=1');
-    if (!isInternalNav) {
-        window.location.replace('/splash');
-    }
-}
-
-// Au chargement initial
-checkAndShowSplash();
-
-// iOS restaure depuis mémoire
-window.addEventListener('pageshow', function(e) {
-    if (e.persisted) {
-        window.location.replace('/splash');
-    }
-});
-
-// Retour au premier plan après 10s minimum
-var _hiddenAt = null;
-document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden') {
-        _hiddenAt = Date.now();
-    }
-    if (document.visibilityState === 'visible' && _hiddenAt) {
-        var elapsed = Date.now() - _hiddenAt;
-        if (elapsed > 10000) {
-            // En arrière-plan depuis plus de 10s
-            // = vrai retour sur l'appli
-            window.location.replace('/splash');
-        }
-        _hiddenAt = null;
-    }
-});
-</script>
 
 <div id="dailyReminderPopup" style="display:none" onclick="closeDailyReminder()">
   <div class="daily-reminder-card" onclick="event.stopPropagation()">
