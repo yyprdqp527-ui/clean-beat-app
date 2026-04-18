@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Aperçu icônes — QuiFaitQuoi</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+      color: #fff;
+      gap: 48px;
+    }
+    h1 { font-size: 22px; opacity: .7; margin: 0; }
+    .row {
+      display: flex;
+      gap: 60px;
+      align-items: flex-end;
+    }
+    figure {
+      margin: 0;
+      text-align: center;
+    }
+    figure img {
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    figcaption {
+      margin-top: 12px;
+      font-size: 13px;
+      opacity: .6;
+    }
+    .checks {
+      background: rgba(255,255,255,.07);
+      border-radius: 16px;
+      padding: 20px 32px;
+      font-size: 15px;
+      line-height: 2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Icônes PWA — QuiFaitQuoi</h1>
+
+  <div class="row">
+    <figure>
+      <img src="qfq-icon-192.png" width="192" height="192" alt="192×192">
+      <figcaption>192 × 192 px</figcaption>
+    </figure>
+    <figure>
+      <img src="qfq-icon-512.png" width="512" height="512" alt="512×512">
+      <figcaption>512 × 512 px</figcaption>
+    </figure>
+  </div>
+
+  <div class="checks">
+    ✅ Police Bubblegum Sans<br>
+    ✅ QUI en noir (#1a1008)<br>
+    ✅ FAIT en rouge (#CC1111)<br>
+    ✅ QUOI en noir (#1a1008)<br>
+    ✅ Gradient jaune → orange → rouge<br>
+    ✅ Coins arrondis<br>
+    ✅ Rien de tronqué
+  </div>
+</body>
+</html>
