@@ -872,8 +872,8 @@ body {
     <div class="invite-header">
         <div class="invite-icon">🏠</div>
         {% if from_registration %}
-        <h1 class="invite-title">Configure ta maison</h1>
-        <p class="invite-subtitle">Nomme ton foyer, choisis son type et invite tes coéquipiers !</p>
+        <h1 class="invite-title">Invite tes coéquipiers !</h1>
+        <p class="invite-subtitle">Partage le lien pour que tes proches rejoignent ta maison.</p>
         {% elif from_manage %}
         <h1 class="invite-title">Inviter un partenaire</h1>
         <p class="invite-subtitle">Partage le code pour inviter quelqu'un à rejoindre ta maison !</p>
@@ -890,56 +890,9 @@ body {
         <input type="hidden" name="partners" id="partnersJSON" value="[]">
         <input type="hidden" name="children" id="childrenJSON" value="[]">
 
-        <!-- Nom et type de maison (inscription seulement) -->
-        {% if from_registration %}
-        <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">✏️</span> Nom de votre foyer</div>
-            <div>
-                <label style="display:block;font-size:13px;font-weight:700;color:#153036;margin-bottom:8px;font-family:'Montserrat',sans-serif;">Comment s'appelle votre chez-vous ?</label>
-                <input type="text" id="house_name_input" name="house_name"
-                       class="house-name-input-styled"
-                       placeholder="Ex : Notre Cocon, Sweet Home…"
-                       value="{{ house_name or '' }}"
-                       onfocus="this.style.borderColor='#FDAE54'" onblur="this.style.borderColor='rgba(166,211,220,0.4)'">
-                <div class="name-chips-house">
-                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Notre Cocon</button>
-                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Le QG</button>
-                    <button type="button" class="name-chip-house" onclick="document.getElementById('house_name_input').value=this.textContent">Sweet Home</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-card" style="margin-bottom:20px;">
-            <div class="card-title"><span class="card-title-icon">👥</span> Type de foyer</div>
-            <input type="hidden" name="house_type" id="houseTypeInput" value="{{ house_type or 'family' }}">
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-                <div onclick="selectHouseType('family')"
-                     style="border:2.5px solid #e0e0e0;border-radius:14px;padding:14px 8px 10px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;user-select:none;-webkit-tap-highlight-color:transparent;"
-                     id="ht-family" class="{% if (house_type or 'family') == 'family' %}ht-selected{% endif %}">
-                    <span style="font-size:1.8rem;display:block;margin-bottom:6px;">👨‍👩‍👧‍👦</span>
-                    <div style="font-size:12px;font-weight:700;color:#153036;">Famille</div>
-                    <div style="font-size:10px;color:#888;margin-top:3px;">parents + enfants</div>
-                </div>
-                <div onclick="selectHouseType('couple')"
-                     style="border:2.5px solid #e0e0e0;border-radius:14px;padding:14px 8px 10px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;user-select:none;-webkit-tap-highlight-color:transparent;"
-                     id="ht-couple" class="{% if (house_type or 'family') == 'couple' %}ht-selected{% endif %}">
-                    <span style="font-size:1.8rem;display:block;margin-bottom:6px;">💑</span>
-                    <div style="font-size:12px;font-weight:700;color:#153036;">Couple</div>
-                    <div style="font-size:10px;color:#888;margin-top:3px;">à deux</div>
-                </div>
-                <div onclick="selectHouseType('coloc')"
-                     style="border:2.5px solid #e0e0e0;border-radius:14px;padding:14px 8px 10px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;user-select:none;-webkit-tap-highlight-color:transparent;"
-                     id="ht-coloc" class="{% if (house_type or 'family') == 'coloc' %}ht-selected{% endif %}">
-                    <span style="font-size:1.8rem;display:block;margin-bottom:6px;">🏠</span>
-                    <div style="font-size:12px;font-weight:700;color:#153036;">Coloc</div>
-                    <div style="font-size:10px;color:#888;margin-top:3px;">colocataires</div>
-                </div>
-            </div>
-        </div>
-        {% else %}
+        <!-- Nom et type de maison : toujours transmis en hidden (déjà configurés à l'étape précédente) -->
         <input type="hidden" name="house_name" value="{{ house_name or '' }}">
         <input type="hidden" name="house_type" value="{{ house_type or 'family' }}">
-        {% endif %}
 
         <!-- Inviter par SMS -->
         <div class="glass-card" style="margin-bottom:20px;">
