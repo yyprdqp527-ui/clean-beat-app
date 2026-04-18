@@ -1142,6 +1142,11 @@
                         countDisplay.textContent = '0';
                     }
                     
+                    // Forcer le rafraîchissement des badges nav (si menu.html ouvert en parallèle)
+                    if (typeof refreshAllBadges === 'function') {
+                        refreshAllBadges();
+                    }
+
                     // Faire disparaître le bouton après 1 seconde
                     setTimeout(() => {
                         btn.style.opacity = '0';

@@ -119,11 +119,17 @@ def _comments_inner():
                     subscriptions = get_user_push_subscriptions(recipient_email)
                     if subscriptions:
                         # Badge = total de TOUS les types non lus (pas juste les messages)
+                        _courses_pending = 0
+                        try:
+                            c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
+                            _courses_pending = c.fetchone()[0] or 0
+                        except Exception:
+                            pass
                         total_badge = (
                             recipient_unread_count +
                             get_unread_count_by_type(recipient_email, house_id, 'baby_tracking') +
                             get_unread_count_by_type(recipient_email, house_id, 'task_added') +
-                            get_unread_count_by_type(recipient_email, house_id, 'courses_added')
+                            _courses_pending
                         )
                         notification_data = {
                             'title': f'💬 Message de {current_user_name}',
@@ -677,7 +683,13 @@ def mark_all_messages_read():
     # Marquer tous ces messages comme lus
     for msg_id in unread_message_ids:
         mark_message_as_read(msg_id, session['user'])
-    
+
+    # Émettre immédiatement la descente à 0 vers tous les appareils de la maison
+    safe_socketio_emit('unread_count_update', {
+        'user_email': session['user'],
+        'unread_received': 0
+    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+
     # Récupérer le nouveau compteur
     unread_count = get_unread_message_count(session['user'], house_id)
     unread_by_sender = get_unread_messages_by_sender(session['user'], house_id)
