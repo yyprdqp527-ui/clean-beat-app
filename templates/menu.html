@@ -3679,7 +3679,7 @@ body { padding-bottom: 84px !important; }
     }
     // Données leader pour le cadeau (injectées par Jinja au rendu)
     var WEEK_LEADER_NAME = "{{ sorted_by_week[0].name | e if sorted_by_week else '' }}";
-    var WEEK_LEADER_PTS  = {{ sorted_by_week[0].daily_points | default(0) if sorted_by_week else 0 }};
+    var WEEK_LEADER_PTS  = {{ sorted_by_week[0].weekly_points | default(0) if sorted_by_week else 0 }};
 
     updateWeekProgressBar();
     setInterval(updateWeekProgressBar, 60000);
