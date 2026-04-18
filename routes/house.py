@@ -768,43 +768,6 @@ def invite_partner():
                            from_registration=from_registration)
 
 
-@house_bp.route('/partager_invitation')
-def partager_invitation():
-    """Page simple pour partager l'invitation avec QR Code"""
-    from app import get_db_connection
-    if 'user' not in session:
-        flash("Connecte-toi pour inviter des partenaires !", "warning")
-        return redirect(url_for('auth.login'))
-
-    # Récupérer le code et le nom de la maison
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-    row = c.fetchone()
-
-    house_code = None
-    house_name = None
-    if row and row[0]:
-        c.execute("SELECT code, house_name, name FROM houses WHERE id=?", (row[0],))
-        house_row = c.fetchone()
-        if house_row:
-            house_code = house_row[0]
-            house_name = house_row[1] if house_row[1] else house_row[2]
-    conn.close()
-
-    if not house_code:
-        flash("Aucune maison trouvée. Créez d'abord une maison.", "warning")
-        return redirect(url_for('menu') + '?nav=1')
-
-    # Construire l'URL d'invitation
-    join_url = f"{request.host_url}invite/{house_code}"
-
-    return render_template('invitation_partner.html',
-                           house_code=house_code,
-                           house_name=house_name,
-                           join_url=join_url)
-
-
 # ══════════════════════════════════════════════════════════════════════════
 # DIVERS
 # ══════════════════════════════════════════════════════════════════════════
