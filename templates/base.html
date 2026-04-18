@@ -1246,7 +1246,7 @@ window.cbToast = function(message, type, duration) {
                 if (!counts) return;
                 var total = (counts.unread_received || 0)
                           + (counts.unread_task_added || 0)
-                          + (counts.unread_courses_added || 0)
+                          + (counts.courses_pending_count || 0)
                           + (counts.unread_baby || 0);
                 if (total > 0) {
                     navigator.setAppBadge(total).catch(function(){});

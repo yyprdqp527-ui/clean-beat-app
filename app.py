@@ -3251,6 +3251,19 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
     subscriptions = get_house_push_subscriptions(house_id, exclude_email)
     print(f"🔔 notify_house_members: house_id={house_id}, {len(subscriptions)} subscription(s) trouvée(s), exclude={exclude_email}", flush=True)
     
+    # courses_pending_count est identique pour tous les membres → 1 seule requête hors boucle
+    try:
+        _conn_cp = get_db_connection()
+        _c_cp = _conn_cp.cursor()
+        _c_cp.execute(
+            "SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0",
+            (house_id,)
+        )
+        _courses_pending = _c_cp.fetchone()[0] or 0
+        _conn_cp.close()
+    except Exception:
+        _courses_pending = 0
+
     success_count = 0
     for sub in subscriptions:
         user_email = sub.get('user_email')
@@ -3262,7 +3275,7 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
                     get_unread_message_count(user_email, house_id) +
                     get_unread_count_by_type(user_email, house_id, 'baby_tracking') +
                     get_unread_count_by_type(user_email, house_id, 'task_added', include_own=True) +
-                    get_unread_count_by_type(user_email, house_id, 'courses_added', include_own=True)
+                    _courses_pending
                 )
                 personalized_data['badge'] = max(1, total)
             except Exception:
