@@ -2552,9 +2552,9 @@
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: {{ bg_gradient }};
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2565,49 +2565,53 @@
   100% { opacity: 1; transform: scale(1); }
 }
 .daily-reminder-card {
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1.5px solid rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, #ffffff 0%, rgba(253,174,84,0.12) 100%);
+  border: 2px solid rgba(253,174,84,0.3);
   border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 8px 32px rgba(89,113,118,0.25);
   padding: 36px 28px 28px;
   max-width: 340px;
   width: 90%;
   text-align: center;
-  color: #fff;
+  color: #153036;
 }
 .daily-reminder-icon {
   font-size: 3rem;
   margin-bottom: 12px;
 }
 .daily-reminder-title {
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.3rem;
   font-weight: 700;
+  color: #153036;
   margin-bottom: 14px;
   letter-spacing: 0.02em;
 }
 .daily-reminder-text {
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.95rem;
   line-height: 1.55;
-  opacity: 0.9;
+  color: rgba(21,48,54,0.75);
   margin-bottom: 24px;
   white-space: pre-line;
 }
 .daily-reminder-btn {
-  background: rgba(255,255,255,0.25);
-  border: 1.5px solid rgba(255,255,255,0.4);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  background: linear-gradient(135deg, #FDAE54 0%, #f4c68d 100%);
+  border: none;
   border-radius: 50px;
-  color: #fff;
+  color: #153036;
   font-size: 1rem;
-  font-weight: 600;
   padding: 12px 24px;
   cursor: pointer;
   width: 100%;
-  transition: background 0.2s ease;
+  box-shadow: 0 4px 15px rgba(253,174,84,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .daily-reminder-btn:active {
-  background: rgba(255,255,255,0.4);
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px rgba(253,174,84,0.25);
 }
     </style>
 </head>
