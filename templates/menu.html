@@ -6397,16 +6397,14 @@ function refreshAllBadges() {
 .ob-phone-frame {
   position: relative;
   display: block;
-  width: 75%;
-  max-width: 260px;
+  width: min(260px, 85%);
+  margin: 0 auto;
   line-height: 0;
 }
 .ob-phone-img {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 44vh;
-  object-fit: contain;
   border-radius: 14px;
   box-shadow: 0 6px 24px rgba(21,48,54,0.22);
 }
