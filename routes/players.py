@@ -813,7 +813,7 @@ def create_profile_post():
     session['user_name'] = name
     session['registration_step'] = 'complete'
     
-    return redirect(url_for('menu') + '?nav=1')
+    return redirect(url_for('auth.splash'))
 
 
 @players_bp.route('/profil')
