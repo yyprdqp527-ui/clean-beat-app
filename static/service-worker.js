@@ -12,14 +12,16 @@ const PURGE_URLS = [
     '/static/icon-512.png?v=2',
     '/static/icon-192.png?v=3',
     '/static/icon-512.png?v=3',
+    '/static/icon-192-v3.png',
+    '/static/icon-512-v3.png',
     '/static/images/cuisinewoop.webp',
     '/static/images/thumbs/cuisinewoop.webp',
 ];
 
 const PRECACHE_URLS = [
     '/static/manifest.json',
-    '/static/icon-192-v3.png',
-    '/static/icon-512-v3.png',
+    '/static/qfq-icon-192.png',
+    '/static/qfq-icon-512.png',
     '/static/images/thumbs/chambreparentale_marron.webp',
     '/static/images/thumbs/chambre1.webp',
     '/static/images/thumbs/chambre2.webp',
