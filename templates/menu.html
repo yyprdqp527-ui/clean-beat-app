@@ -5614,14 +5614,22 @@ function sendMalus(reason, points){
                             }
                         });
 
-                        // 👶 Suivi bébé — rafraîchir la pastille quand un tracking est ajouté
+                        // 👶 Suivi bébé — la pastille disparaît pour TOUS quand quelqu'un visite la page
                         socket.on('baby_badge_update', function(data) {
                             console.log('👶 WebSocket: baby_badge_update reçu', data);
-                            var myEmail = '{{ session["user"] }}';
-                            if (data.user_email && data.user_email !== myEmail) return;
+                            // Seul le lecteur (data.user_email) voit sa pastille s'éteindre
+                            if (data.user_email && data.user_email !== '{{ session.get("user") }}') return;
                             var _babyDot = document.getElementById('room-baby-dot');
                             if (_babyDot) { _babyDot.style.display = 'none'; }
                             refreshAllBadges();
+                        });
+
+                        // 👶 Nouveau suivi bébé enregistré — le partenaire voit la pastille apparaître
+                        socket.on('baby_tracking_added', function(data) {
+                            console.log('👶 WebSocket: baby_tracking_added reçu', data);
+                            if (data.sender_email !== '{{ session.get("user") }}') {
+                                refreshAllBadges();
+                            }
                         });
 
                         // 🆕 Nouvelle mission ajoutée — rafraîchir les pastilles oranges
