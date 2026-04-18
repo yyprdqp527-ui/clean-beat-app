@@ -47,7 +47,7 @@ def reminders():
         FROM player_reminders pr
         LEFT JOIN users u ON pr.user_email = u.email
         WHERE pr.house_id=?
-        ORDER BY pr.is_done ASC, pr.created_at DESC
+        ORDER BY pr.created_at DESC
     """, (house_id,))
     reminders_rows = c.fetchall()
     conn.close()
@@ -144,7 +144,7 @@ def add_reminder():
         else:
             creator_name = session['user'].split('@')[0]
         message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
-        create_system_message(house_id, message_content, 'courses_added', sender_email=None)
+        create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
     except Exception:
         if not creator_name:
             creator_name = session['user'].split('@')[0]
@@ -163,18 +163,7 @@ def add_reminder():
     except Exception:
         pass
 
-    try:
-        from app import get_house_push_subscriptions, send_push_notification
-        subs = get_house_push_subscriptions(house_id, exclude_email=session['user'])
-        for sub in subs:
-            send_push_notification(sub, {
-                'title': '🛒 Liste de courses',
-                'body': f'{creator_name} a ajouté "{title}"',
-                'icon': '/static/images/logo.png',
-                'url': '/reminders'
-            })
-    except Exception:
-        pass
+    # Push géré par create_system_message ci-dessus (l'expéditeur est exclu via sender_email)
 
     conn.close()
 
