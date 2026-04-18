@@ -218,11 +218,8 @@ self.addEventListener('push_DISABLED', (event) => {
             vibrate: [200, 100, 200],
             timestamp: Date.now()
         }).then(() => {
-            // 🏠 Badge sur l'icône de l'app (écran d'accueil)
-            // Dans un Service Worker, l'API Badge est sur `self`, pas `navigator`
-            if ('setAppBadge' in self) {
-                return self.setAppBadge(1).catch(() => {});
-            }
+            // Badge géré par sw.js avec la valeur réelle — ne pas écraser ici
+            // if ('setAppBadge' in self) { return self.setAppBadge(1).catch(() => {}); }
         })
     );
 });

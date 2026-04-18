@@ -1390,7 +1390,7 @@
             .then(function(r){ return r.json(); })
             .then(function(c){
                 var total = (c.unread_received||0) + (c.unread_baby||0)
-                          + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                          + (c.unread_task_added||0) + (c.courses_pending_count||0);
                 if (total > 0) navigator.setAppBadge(total).catch(function(){});
                 else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
             }).catch(function(){});
