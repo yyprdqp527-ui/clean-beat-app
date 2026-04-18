@@ -3665,6 +3665,8 @@ def menu():
                 return redirect(url_for('auth.welcome'))
             
             show_onboarding = not bool(has_seen_onboarding)
+            is_invited_player = bool(session.get('invite_code') or session.get('joined_via_invite'))
+            onboarding_type = 'invited' if is_invited_player else 'creator'
             print(f"🏠 MENU CHECK: name={user_name}, avatar={user_avatar}, file={user_avatar_file}, step={registration_step}", flush=True)
             
             # Si le parcours d'inscription n'est pas terminé
@@ -4038,6 +4040,7 @@ def menu():
         has_baby_tracking=has_baby_tracking,
         custom_rooms=custom_rooms_data,
         show_onboarding=show_onboarding,
+        onboarding_type=onboarding_type if 'onboarding_type' in dir() else 'creator',
         rooms_with_new_missions=rooms_with_new_missions,
         is_sunday=_is_sunday,
         has_weekly_winner=_has_weekly_winner,
