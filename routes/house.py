@@ -602,7 +602,6 @@ def invite_partner():
         c.execute("UPDATE users SET house_id=? WHERE email=?", (house_id, session['user']))
         conn.commit()
 
-        flash("🏠 Ta maison a été créée ! Partage le code pour inviter des partenaires.", "success")
     elif row and row[0]:
         house_id = row[0]
         c.execute("SELECT code, house_name, name, house_type FROM houses WHERE id=?", (house_id,))
@@ -731,7 +730,7 @@ def invite_partner():
             messages.append(f"👶 {children_created} profil{'s' if children_created > 1 else ''} enfant{'s' if children_created > 1 else ''} créé{'s' if children_created > 1 else ''}")
 
         if messages:
-            flash("🎉 " + " • ".join(messages), "success")
+            pass  # flash success supprimé (flux inscription silencieux)
         elif not partners_data and not children_data:
             flash("C'est parti ! Tu pourras inviter des partenaires plus tard.", "info")
 

@@ -813,7 +813,6 @@ def create_profile_post():
     session['user_name'] = name
     session['registration_step'] = 'complete'
     
-    flash("🎉 Profil créé ! Bienvenue dans l'aventure !", "success")
     return redirect(url_for('menu') + '?nav=1')
 
 

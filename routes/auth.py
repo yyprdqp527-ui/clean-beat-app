@@ -97,7 +97,6 @@ def signup_email():
                 session['user_name'] = firstname
                 session['registration_step'] = 'email_signup'
                 session.pop('invite_code', None)
-                flash(f"Bienvenue {firstname} ! 🎉", "success")
                 # Joueur principal: passer par le choix du type de foyer
                 return redirect(url_for('house.choose_house_type'))
             else:
@@ -136,8 +135,6 @@ def signup_email():
             session['user_name'] = firstname
             session['registration_step'] = 'email_signup'
             session.pop('invite_code', None)
-
-            flash(f"Bienvenue {firstname} ! 🎉", "success")
 
             # Joueur invité → directement create_profile
             if house_id_to_join:
@@ -199,7 +196,6 @@ def login():
                     c.execute("UPDATE users SET house_id=? WHERE email=?", (house_row[0], email))
                     conn.commit()
                     conn.close()
-                    flash("🏠 Tu as rejoint la maison avec succès !", "success")
                     return redirect(url_for('menu') + '?nav=1')
 
             conn.close()
