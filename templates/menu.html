@@ -6303,43 +6303,73 @@ function refreshAllBadges() {
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     padding: 16px;
 }
+/* === .container-menu de tasks.html === */
 .ob-card {
-    background: rgba(255,255,255,0.28);
-    backdrop-filter: saturate(180%) blur(30px);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    border: 1px solid rgba(255,255,255,0.45);
-    border-radius: 28px;
-    box-shadow: 0 16px 48px rgba(21,48,54,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
-    padding: 32px 28px 24px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 24px 20px 20px;
+    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 2px solid rgba(255,255,255,0.5);
     max-width: 400px; width: 100%;
     text-align: center;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-.ob-emoji { font-size: 42px; margin-bottom: 12px; display: block; }
-.ob-title { font-size: 22px; font-weight: 900; color: #153036; margin-bottom: 8px; }
-.ob-text { font-size: 14px; line-height: 1.6; color: #597176; margin-bottom: 20px; }
-.ob-text strong { color: #153036; }
+.ob-emoji { font-size: 40px; display: block; margin-bottom: 6px; }
+/* === .room-header de tasks.html === */
+.ob-title {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    text-align: center;
+    border: 2px solid rgba(253,174,84,0.3);
+    box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+    font-size: 18px; font-weight: 800; color: #153036;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+/* === .task-card de task_page_enhanced.html === */
+.ob-content {
+    background: rgba(255, 255, 255, 0.24);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(21, 48, 54, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+.ob-text { font-size: 14px; line-height: 1.7; color: #597176; margin-bottom: 0; font-weight: 600; }
+.ob-text strong { color: #153036; font-weight: 800; }
 .ob-tag {
     display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(166,211,220,0.35); border: 1px solid rgba(166,211,220,0.5);
-    border-radius: 20px; padding: 5px 13px; font-size: 13px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(253,174,84,0.15) 0%, rgba(244,198,141,0.1) 100%);
+    border: 1px solid rgba(253,174,84,0.4);
+    border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 800;
     color: #153036; margin: 3px;
 }
-.ob-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
-.ob-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(89,113,118,0.3); transition: all 0.3s; }
-.ob-dot.active { background: #597176; width: 20px; border-radius: 4px; }
+.ob-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.ob-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(89,113,118,0.25); transition: all 0.3s; }
+.ob-dot.active { background: #FDAE54; width: 20px; border-radius: 4px; }
+/* === .add-task-btn de tasks.html === */
 .ob-btn {
-    width: 100%; padding: 14px; border: none; border-radius: 16px;
-    font-size: 16px; font-weight: 800; cursor: pointer;
-    background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
-    color: #fff; box-shadow: 0 4px 16px rgba(89,113,118,0.35);
-    transition: transform 0.15s, box-shadow 0.15s;
+    width: 100%; padding: 16px 24px; border: none; border-radius: 50px;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+    background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(253,174,84,0.4);
+    transition: all 0.3s ease;
 }
-.ob-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(89,113,118,0.25); }
+.ob-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 35px rgba(253,174,84,0.6); }
+.ob-btn:active { transform: scale(0.97); }
 .ob-btn-last {
     background: linear-gradient(135deg, #FDAE54 0%, #f59c35 100%);
-    box-shadow: 0 4px 16px rgba(253,174,84,0.4);
-    font-size: 17px;
+    box-shadow: 0 8px 25px rgba(253,174,84,0.5);
+    font-size: 16px;
 }
 .ob-slide { display: none; }
 .ob-slide.active { display: block; }
@@ -6349,53 +6379,58 @@ function refreshAllBadges() {
   <div class="ob-card">
     <!-- Slide 1 : Bienvenue -->
     <div class="ob-slide active" id="ob-slide-1">
-      <span class="ob-emoji">🏠✨</span>
-      <div class="ob-title">Bienvenue sur Klean !</div>
-      <div class="ob-text">
-        <strong>Le jeu qui rend le ménage fun et équitable !</strong><br><br>
-        Principe simple :<br>
-        faire les tâches <strong>en vrai</strong> = gagner des <strong>points</strong> 🏆
+      <div class="ob-title"><span class="ob-emoji">🏠✨</span>Bienvenue sur QuiFaitQuoi !</div>
+      <div class="ob-content">
+        <div class="ob-text">
+          <strong>Le jeu qui rend le ménage fun et équitable !</strong><br><br>
+          Principe simple :<br>
+          faire les tâches <strong>en vrai</strong> = gagner des <strong>points</strong> 🏆
+        </div>
       </div>
     </div>
     <!-- Slide 2 : Pièces & tâches -->
     <div class="ob-slide" id="ob-slide-2">
-      <span class="ob-emoji">🛋️🍳🛁</span>
-      <div class="ob-title">Choisis une pièce</div>
-      <div class="ob-text">
-        Clique sur une pièce → fais la tâche → valide → <strong>tu marques des points !</strong><br><br>
-        <span class="ob-tag">🧹 +10 pts</span>
-        <span class="ob-tag">🍽️ +5 pts</span>
-        <br><br>
-        ✏️ Tu peux <strong>modifier la valeur des points</strong><br>
-        ➕ Tu peux aussi <strong>ajouter tes propres tâches perso</strong>
+      <div class="ob-title"><span class="ob-emoji">🛋️🍳🛁</span>Choisis une pièce</div>
+      <div class="ob-content">
+        <div class="ob-text">
+          Clique sur une pièce → fais la tâche → valide → <strong>tu marques des points !</strong><br><br>
+          <span class="ob-tag">🧹 +10 pts</span>
+          <span class="ob-tag">🍽️ +5 pts</span>
+          <br><br>
+          ✏️ Tu peux <strong>modifier la valeur des points</strong><br>
+          ➕ Tu peux aussi <strong>ajouter tes propres tâches perso</strong>
+        </div>
       </div>
     </div>
     <!-- Slide 3 : Liste de courses -->
     <div class="ob-slide" id="ob-slide-3">
-      <span class="ob-emoji">🛒</span>
-      <div class="ob-title">Liste de courses partagée</div>
-      <div class="ob-text">
-        Cocher un article dans la liste de courses, ça rapporte des points aussi !<br><br>
-        <strong>Plus t'en fais, plus tu marques !</strong> 💪
+      <div class="ob-title"><span class="ob-emoji">🛒</span>Liste de courses partagée</div>
+      <div class="ob-content">
+        <div class="ob-text">
+          Cocher un article dans la liste de courses, ça rapporte des points aussi !<br><br>
+          <strong>Plus t'en fais, plus tu marques !</strong> 💪
+        </div>
       </div>
     </div>
     <!-- Slide 4 : Malus -->
     <div class="ob-slide" id="ob-slide-4">
-      <span class="ob-emoji">💀⚡</span>
-      <div class="ob-title">Envoie des malus !</div>
-      <div class="ob-text">
-        Tu peux envoyer un 💀 malus à l'autre joueur pour lui faire perdre des points.<br><br>
-        👇 <strong>Depuis le classement en bas de l'écran</strong>
+      <div class="ob-title"><span class="ob-emoji">💀⚡</span>Envoie des malus !</div>
+      <div class="ob-content">
+        <div class="ob-text">
+          Tu peux envoyer un 💀 malus à l'autre joueur pour lui faire perdre des points.<br><br>
+          👇 <strong>Depuis le classement en bas de l'écran</strong>
+        </div>
       </div>
     </div>
     <!-- Slide 5 : Gagnant -->
     <div class="ob-slide" id="ob-slide-5">
-      <span class="ob-emoji">👑🎉</span>
-      <div class="ob-title">Le dimanche, un gagnant est couronné !</div>
-      <div class="ob-text">
-        🎁 <strong>Les perdants lui offrent un cadeau pour féliciter le gagnant !</strong><br><br>
-        Petit-déj au lit, soirée film au choix, massage…<br>
-        à toi de décider 👑
+      <div class="ob-title"><span class="ob-emoji">👑🎉</span>Le dimanche, un gagnant est couronné !</div>
+      <div class="ob-content">
+        <div class="ob-text">
+          🎁 <strong>Les perdants lui offrent un cadeau pour féliciter le gagnant !</strong><br><br>
+          Petit-déj au lit, soirée film au choix, massage…<br>
+          à toi de décider 👑
+        </div>
       </div>
     </div>
 

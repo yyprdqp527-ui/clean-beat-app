@@ -23,6 +23,7 @@ import uuid
 import json
 import requests
 import time
+import random
 
 # ─── TIMEZONE EUROPE/PARIS ──────────────────────────────────────────────────
 try:
