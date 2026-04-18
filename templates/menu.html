@@ -6391,24 +6391,24 @@ function refreshAllBadges() {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 4px 0;
+  padding: 4px 0 8px;
 }
 /* Cadre exactement à la taille de l'image → cercles précis */
 .ob-phone-frame {
   position: relative;
-  display: inline-block;
+  display: block;
+  width: 75%;
+  max-width: 260px;
   line-height: 0;
 }
 .ob-phone-img {
   display: block;
-  width: 80%;
-  max-width: 240px;
+  width: 100%;
   height: auto;
-  max-height: 42vh;
+  max-height: 44vh;
   object-fit: contain;
   border-radius: 14px;
   box-shadow: 0 6px 24px rgba(21,48,54,0.22);
-  margin: 0 auto;
 }
 /* === Cercle pulsant orange === */
 .ob-ring {
