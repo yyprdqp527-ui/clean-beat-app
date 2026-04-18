@@ -2763,8 +2763,8 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'badge': 1
                 }
                 
-                # Envoyer à tous les membres de la maison (sauf l'expéditeur si c'est un vrai utilisateur)
-                exclude = sender_email if message_type == 'baby_tracking' else None
+                # Exclure l'expéditeur du push pour baby_tracking, task_added et courses_added
+                exclude = sender_email if message_type in ('baby_tracking', 'task_added', 'courses_added') else None
                 notify_house_members(house_id, notification_data, exclude_email=exclude)
                 
             except Exception as e:
@@ -4380,6 +4380,11 @@ def _daily_reminder_loop():
                     WHERE ct.user_email = u.email
                     AND DATE(ct.completed_at) = ?
                 )
+                AND EXISTS (
+                    SELECT 1 FROM completed_tasks ct2
+                    WHERE ct2.user_email = u.email
+                    AND ct2.completed_at >= DATE('now', '-30 days')
+                )
             """, (paris_today,))
             inactive_players = c.fetchall()
             conn.close()
@@ -4395,11 +4400,12 @@ def _daily_reminder_loop():
                 "effort mérite sa récompense 🏆"
             )
 
+            houses_done = set()
             for player in inactive_players:
                 player_email = player[0]
                 house_id = player[2]
 
-                # Notification push
+                # Notification push (individuel par joueur)
                 try:
                     subs = get_house_push_subscriptions(
                         house_id,
@@ -4419,17 +4425,19 @@ def _daily_reminder_loop():
                 except Exception:
                     pass
 
-                # Message dans l'appli
-                try:
-                    create_system_message(
-                        house_id,
-                        message,
-                        'reminder',
-                        sender_email=None,
-                        send_push=False
-                    )
-                except Exception:
-                    pass
+                # Message in-app → une seule fois par maison
+                if house_id not in houses_done:
+                    houses_done.add(house_id)
+                    try:
+                        create_system_message(
+                            house_id,
+                            message,
+                            'reminder',
+                            sender_email=None,
+                            send_push=False
+                        )
+                    except Exception:
+                        pass
 
                 # Toast temps réel via WebSocket
                 try:
