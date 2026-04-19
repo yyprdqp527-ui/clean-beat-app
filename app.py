@@ -4474,6 +4474,83 @@ if SOCKETIO_AVAILABLE and socketio:
     _dbg("🏠 Background task daily_reminder enregistrée")
 # 🏠 ========== FIN BOUCLE RAPPEL QUOTIDIEN / DAILY REMINDER ==========
 
+# 🔐 ========== CRON ENDPOINT EXTERNE / DAILY REMINDER ==========
+@app.route('/api/cron/daily-reminder', methods=['POST'])
+def cron_daily_reminder():
+    token = request.headers.get('X-Cron-Secret', '')
+    if token != os.environ.get('CRON_SECRET', ''):
+        return jsonify({'error': 'unauthorized'}), 401
+
+    try:
+        paris_today = now_paris().strftime('%Y-%m-%d')
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("""
+            SELECT u.email, u.name, u.house_id
+            FROM users u
+            WHERE u.house_id IS NOT NULL
+            AND u.is_child_account = 0
+            AND NOT EXISTS (
+                SELECT 1 FROM completed_tasks ct
+                WHERE ct.user_email = u.email
+                AND DATE(ct.completed_at) = ?
+            )
+            AND EXISTS (
+                SELECT 1 FROM completed_tasks ct2
+                WHERE ct2.user_email = u.email
+                AND ct2.completed_at >= DATE('now', '-30 days')
+            )
+        """, (paris_today,))
+        inactive_players = c.fetchall()
+        conn.close()
+
+        print(f"⏰ CRON 20h: {len(inactive_players)} joueurs inactifs", flush=True)
+
+        message = (
+            "Rien de validé aujourd'hui... "
+            "mais attends — t'as bien fait "
+            "quelque chose non ? T'as mis de "
+            "l'essence ? Fait un café ? Lancé "
+            "une machine ? Brossé tes dents ?\n\n"
+            "Chaque petit geste compte ! Valide "
+            "tes tâches et rappelle-toi — chaque "
+            "effort mérite sa récompense 🏆"
+        )
+
+        houses_done = set()
+        for player in inactive_players:
+            player_email = player[0]
+            house_id = player[2]
+
+            try:
+                subs = get_house_push_subscriptions(house_id, exclude_email=None)
+                player_subs = [s for s in subs if s.get('user_email') == player_email]
+                for sub in player_subs:
+                    send_push_notification(sub, {
+                        'title': "Hé, t'es là ? 👀",
+                        'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
+                        'url': '/menu',
+                        'icon': '/static/images/logo.png'
+                    })
+            except Exception as e:
+                print(f"❌ Push error: {e}", flush=True)
+
+            if house_id not in houses_done:
+                houses_done.add(house_id)
+                try:
+                    create_system_message(
+                        house_id, message, 'reminder',
+                        sender_email=None, send_push=False)
+                except Exception as e:
+                    print(f"❌ Message error: {e}", flush=True)
+
+        return jsonify({'success': True, 'players_notified': len(inactive_players)})
+
+    except Exception as e:
+        print(f"❌ CRON error: {e}", flush=True)
+        return jsonify({'error': str(e)}), 500
+# 🔐 ========== FIN CRON ENDPOINT ==========
+
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
     try:
