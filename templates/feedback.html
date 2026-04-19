@@ -217,6 +217,11 @@
         .success-card h2 { font-size: 22px; font-weight: 800; color: rgba(255,255,255,0.95); margin-bottom: 8px; }
         .success-card p { font-size: 14px; color: rgba(255,255,255,0.85); }
 
+        /* ─── Placeholder thème sombre (défaut) ─── */
+        textarea::placeholder, input::placeholder {
+            color: rgba(255,255,255,0.55);
+        }
+
         /* ─── Thème clair : restaurer couleurs sombres ─── */
         .light-theme .page-title { color: #153036; }
         .light-theme .intro-card p { color: #153036; }
@@ -225,6 +230,9 @@
         .light-theme .stars-hint { color: rgba(21,48,54,0.6); }
         .light-theme textarea, .light-theme input[type="text"],
         .light-theme input[type="email"], .light-theme select { color: #153036; }
+        .light-theme textarea::placeholder, .light-theme input::placeholder {
+            color: rgba(21,48,54,0.45);
+        }
         .light-theme .yesno-btn { color: #153036; }
         .light-theme .success-card h2 { color: #153036; }
         .light-theme .success-card p { color: #153036; opacity: 0.8; }
