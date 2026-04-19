@@ -102,7 +102,7 @@
         }
 
         .cta-button {
-            background: linear-gradient(45deg, #000, #333, #000);
+            background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);
             background-size: 300% 300%;
             color: white;
             border: none;
@@ -114,14 +114,13 @@
             transition: all 0.4s ease;
             text-decoration: none;
             display: inline-block;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 25px rgba(255,159,71,0.5);
             position: relative;
             overflow: hidden;
             text-transform: uppercase;
             letter-spacing: 2px;
-            animation: gradientShift 3s ease infinite;
             backdrop-filter: saturate(120%) blur(2px);
-            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            text-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
         @keyframes gradientShift {
@@ -147,8 +146,8 @@
 
         .cta-button:hover {
             transform: translateY(-4px) scale(1.05);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            background: linear-gradient(45deg, #333, #666, #333);
+            box-shadow: 0 15px 40px rgba(255,159,71,0.65);
+            background: linear-gradient(135deg, #FDB777 0%, #FF9F47 100%);
         }
 
         .cta-button:active {
