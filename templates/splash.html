@@ -175,7 +175,7 @@
       <span class="sp-cursor" id="spCur4" style="height:22px;display:none"></span>
     </div>
   </div>
-  <div class="sp-skip" id="spSkip">Appuie pour passer →</div>
+  <div class="sp-skip" id="spSkip" style="display:none"></div>
 
   <script>
     function goToMenu() {
@@ -204,13 +204,9 @@
 
     function startTypewriter() {
       document.getElementById('spDiv').style.opacity = '1';
-      spType('spLine3', 'spCur3', "C'est pas toi...", 65, function() {
+      spType('spLine3', 'spCur3', "Que le meilleur", 65, function() {
         setTimeout(function() {
-          spType('spLine4', 'spCur4', "alors c'est qui ?", 65, function() {
-            setTimeout(function() {
-              document.getElementById('spSkip').style.opacity = '1';
-            }, 400);
-          });
+          spType('spLine4', 'spCur4', "gagne !", 65, null);
         }, 150);
       });
     }
