@@ -4025,6 +4025,38 @@ def menu():
             _winner_email = _sorted_weekly[0].get('email', '')
             _has_weekly_winner = True
 
+    # ⏰ Rappel quotidien — vérifier si un message reminder non lu existe pour ce joueur
+    show_daily_reminder = False
+    daily_reminder_message = None
+    try:
+        _current_user_email = session.get('user')
+        _conn_r = get_db_connection()
+        _c_r = _conn_r.cursor()
+        _c_r.execute("""
+            SELECT m.id, m.content FROM messages m
+            WHERE m.house_id = ? AND m.message_type = 'reminder'
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr
+                WHERE mr.message_id = m.id AND mr.user_email = ?
+            )
+            ORDER BY m.timestamp DESC LIMIT 1
+        """, (house_id, _current_user_email))
+        _reminder_row = _c_r.fetchone()
+        if _reminder_row:
+            show_daily_reminder = True
+            daily_reminder_message = _reminder_row[1]
+            try:
+                _c_r.execute(
+                    "INSERT INTO message_reads (message_id, user_email) VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING",
+                    (_reminder_row[0], _current_user_email)
+                )
+                _conn_r.commit()
+            except Exception:
+                pass
+        _conn_r.close()
+    except Exception:
+        pass
+
     resp = make_response(render_template(
         'menu.html',
         players=players,
@@ -4061,6 +4093,8 @@ def menu():
         winner_name=_winner_name,
         winner_email=_winner_email,
         daily_leader_email=_daily_leader_email,
+        show_daily_reminder=show_daily_reminder,
+        daily_reminder_message=daily_reminder_message,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'

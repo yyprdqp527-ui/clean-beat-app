@@ -6718,6 +6718,18 @@ function closeDailyReminder() {
   }
 }
 
+// ⏰ Affichage popup reminder côté serveur au chargement
+{% if show_daily_reminder %}
+(function() {
+  var popup = document.getElementById('dailyReminderPopup');
+  var txt = document.getElementById('dailyReminderText');
+  if (popup && txt) {
+    txt.textContent = {{ daily_reminder_message | tojson }};
+    popup.style.display = 'flex';
+  }
+})();
+{% endif %}
+
 </script>
 
 </body>
