@@ -37,7 +37,7 @@
             padding: 30px 20px 0 20px;
             font-size: 18px;
             font-weight: 800;
-            color: #153036;
+            color: rgba(255,255,255,0.95);
         }
 
         /* ─── Contenu ─── */
@@ -58,7 +58,7 @@
         }
         .intro-emoji { font-size: 48px; margin-bottom: 8px; }
         .intro-card p {
-            color: #153036;
+            color: rgba(255,255,255,0.92);
             font-size: 14px;
             line-height: 1.6;
         }
@@ -78,7 +78,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: var(--teal-dark);
+            color: rgba(255,255,255,0.9);
             margin-bottom: 16px;
             display: flex;
             align-items: center;
@@ -91,7 +91,7 @@
             display: block;
             font-size: 14px;
             font-weight: 700;
-            color: #153036;
+            color: rgba(255,255,255,0.92);
             margin-bottom: 8px;
             margin-top: 14px;
         }
@@ -126,7 +126,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 11px;
-            color: rgba(21,48,54,0.6);
+            color: rgba(255,255,255,0.6);
             margin-top: 4px;
         }
 
@@ -139,7 +139,7 @@
             padding: 12px 14px;
             font-family: 'Montserrat', sans-serif;
             font-size: 14px;
-            color: #153036;
+            color: rgba(255,255,255,0.92);
             outline: none;
             transition: border-color 0.2s, background 0.2s;
             resize: vertical;
@@ -166,7 +166,7 @@
             font-size: 15px;
             font-weight: 700;
             cursor: pointer;
-            color: #153036;
+            color: rgba(255,255,255,0.92);
             transition: all 0.2s;
         }
         .yesno-btn:hover { background: rgba(255,255,255,0.4); }
@@ -210,11 +210,23 @@
             margin-top: 40px;
         }
         .success-emoji { font-size: 64px; margin-bottom: 16px; }
-        .success-card h2 { font-size: 22px; font-weight: 800; color: #153036; margin-bottom: 8px; }
-        .success-card p { font-size: 14px; color: #153036; opacity: 0.8; }
+        .success-card h2 { font-size: 22px; font-weight: 800; color: rgba(255,255,255,0.95); margin-bottom: 8px; }
+        .success-card p { font-size: 14px; color: rgba(255,255,255,0.85); }
+
+        /* ─── Thème clair : restaurer couleurs sombres ─── */
+        .light-theme .page-title { color: #153036; }
+        .light-theme .intro-card p { color: #153036; }
+        .light-theme .section-title { color: var(--teal-dark); }
+        .light-theme label.field-label { color: #153036; }
+        .light-theme .stars-hint { color: rgba(21,48,54,0.6); }
+        .light-theme textarea, .light-theme input[type="text"],
+        .light-theme input[type="email"], .light-theme select { color: #153036; }
+        .light-theme .yesno-btn { color: #153036; }
+        .light-theme .success-card h2 { color: #153036; }
+        .light-theme .success-card p { color: #153036; opacity: 0.8; }
     </style>
 </head>
-<body>
+<body class="{{ 'light-theme' if bg_theme_light else '' }}">
 {% include '_flash_popup.html' %}
 
     <!-- Bouton retour glassmorphisme -->
@@ -298,6 +310,16 @@
                 <textarea name="ameliorations" placeholder="Une fonctionnalité manquante, une idée…" rows="3"></textarea>
             </div>
 
+            <!-- ─── Section 3 : Paiement ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>💰</span> Et si c'était payant ?</div>
+                <label class="field-label">Serais-tu prêt(e) à payer pour cette appli ?</label>
+                <div class="yesno-row">
+                    <button type="button" class="yesno-btn" id="btnOui" onclick="setPayer(1)">👍 Oui</button>
+                    <button type="button" class="yesno-btn" id="btnNon" onclick="setPayer(0)">👎 Non</button>
+                </div>
+            </div>
+
             <!-- ─── Section 4 : Recommandation ─── -->
             <div class="section-card">
                 <div class="section-title"><span>📣</span> Tu en parlerais autour de toi ?</div>
@@ -342,15 +364,12 @@
             document.getElementById('pretPayerInput').value = val;
             var oui = document.getElementById('btnOui');
             var non = document.getElementById('btnNon');
-            var prixSection = document.getElementById('prixSection');
             if (val === 1) {
                 oui.classList.add('selected-yes');
                 non.classList.remove('selected-no');
-                prixSection.style.display = 'block';
             } else {
                 non.classList.add('selected-no');
                 oui.classList.remove('selected-yes');
-                prixSection.style.display = 'none';
             }
         }
 
