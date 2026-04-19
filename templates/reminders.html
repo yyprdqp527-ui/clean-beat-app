@@ -414,39 +414,37 @@
         var card = document.getElementById('card-' + id);
         var alreadyDone = card && card.classList.contains('done');
         if (alreadyDone) return;
-        if (!alreadyDone) {
-            // Jouer le son MAINTENANT (dans le geste utilisateur, avant le fetch)
-            SoundManager.play('gainPoints');
-        }
+
+        // Optimistic update : son + UI AVANT le fetch
+        SoundManager.play('gainPoints');
+        var check = card.querySelector('.reminder-check');
+        card.classList.add('done');
+        check.classList.add('checked');
+        check.innerHTML = '✓';
+
         fetch('/reminders/toggle/' + id, { method: 'POST' })
             .then(function(r){ return r.json(); })
             .then(function(data){
-                if (!data.success) return;
-                var card = document.getElementById('card-' + id);
-                var check = card.querySelector('.reminder-check');
-                if (data.is_done) {
-                    card.classList.add('done');
-                    check.classList.add('checked');
-                    check.innerHTML = '✓';
-                    // Animation +1 pt
-                    if (data.points_earned > 0 && checkEl) {
-                        showPlusOne(checkEl);
-                    }
-
-                    // Mettre à jour le badge icône app après chaque action
-                    (function(){ fetch('/api/unread_counts', {cache: 'no-store'})
-                        .then(function(r){ return r.json(); })
-                        .then(function(c){
-                            var total = (c.unread_received||0) + (c.unread_baby||0)
-                                      + (c.unread_task_added||0) + (c.unread_courses_added||0);
-                            if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
-                            else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
-                        }).catch(function(){}); })();
-                } else {
+                if (!data.success) {
+                    // Rollback si erreur serveur
                     card.classList.remove('done');
                     check.classList.remove('checked');
-                    check.innerHTML = '✓';
+                    return;
                 }
+                // Animation +1 pt
+                if (data.points_earned > 0 && checkEl) {
+                    showPlusOne(checkEl);
+                }
+
+                // Mettre à jour le badge icône app après chaque action
+                (function(){ fetch('/api/unread_counts', {cache: 'no-store'})
+                    .then(function(r){ return r.json(); })
+                    .then(function(c){
+                        var total = (c.unread_received||0) + (c.unread_baby||0)
+                                  + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                        if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
+                        else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+                    }).catch(function(){}); })();
                 _updateSectionTitle();
             });
     };

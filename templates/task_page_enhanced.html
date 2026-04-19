@@ -1055,7 +1055,7 @@ function validateTaskAjax(playerEmail) {
             // Délai pour laisser le son se jouer entièrement
             setTimeout(function() {
                 window.location.href = redirectUrl;
-            }, 2500);
+            }, 1200);
         } else {
             // Erreur ou doublon
             if (data.error === 'already_done_by_other') {
@@ -1313,13 +1313,9 @@ console.log('🔥🔥🔥 SCRIPT CHARGÉ - DÉBUT DE L\'IIFE 🔥🔥🔥');
                     inner.style.borderColor = 'rgba(166,211,220,0.9)';
                 }
                 
-                // Son de clic temporairement désactivé pour améliorer les performances
-                // try { playSound(); } catch(e) { console.log('Son bloqué:', e); }
-                
-                // Désactiver temporairement les feux d'artifice au clic pour améliorer les performances
-                // if (window.matchMedia('(hover: hover)').matches) {
-                //     try { createFireworks(); } catch(e) { console.log('Fireworks bloqué:', e); }
-                // }
+                // Optimistic update : son + feux d'artifice AVANT le fetch
+                try { SoundManager.play('gainPoints'); } catch(e) {}
+                try { createFireworks(); } catch(e) {}
                 
                 // Valider via AJAX
                 console.log('📡 Appel validateTaskAjax:', email);
