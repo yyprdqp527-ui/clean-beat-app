@@ -4392,6 +4392,7 @@ def _daily_reminder_loop():
                 SELECT u.email, u.name, u.house_id
                 FROM users u
                 WHERE u.house_id IS NOT NULL
+                AND u.is_child_account = 0
                 AND NOT EXISTS (
                     SELECT 1 FROM completed_tasks ct
                     WHERE ct.user_email = u.email
