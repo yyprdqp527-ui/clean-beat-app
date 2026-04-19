@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v126';
+const CACHE_NAME = 'cleanbeat-v127';
 const OFFLINE_URL = '/static/manifest.json';
 
 // URLs à purger du cache (anciennes images remplacées)
@@ -19,6 +19,7 @@ const PURGE_URLS = [
     '/static/qfq-icon-192.png',
     '/static/qfq-icon-512.png',
     '/static/qfq-192.png',
+    '/static/qfq-512.png',
 ];
 
 const PRECACHE_URLS = [
