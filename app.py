@@ -4544,6 +4544,19 @@ def cron_daily_reminder():
                 except Exception as e:
                     print(f"❌ Message error: {e}", flush=True)
 
+        # Émet le popup en temps réel pour les joueurs connectés
+        houses_ws = set()
+        for player in inactive_players:
+            house_id = player[2]
+            if house_id not in houses_ws:
+                houses_ws.add(house_id)
+                try:
+                    safe_socketio_emit('daily_reminder', {
+                        'message': message
+                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                except Exception:
+                    pass
+
         return jsonify({'success': True, 'players_notified': len(inactive_players)})
 
     except Exception as e:
