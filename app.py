@@ -4396,12 +4396,12 @@ def _daily_reminder_loop():
                 AND NOT EXISTS (
                     SELECT 1 FROM completed_tasks ct
                     WHERE ct.user_email = u.email
-                    AND DATE(ct.completed_at) = ?
+                    AND ct.completed_at::date = ?
                 )
                 AND EXISTS (
                     SELECT 1 FROM completed_tasks ct2
                     WHERE ct2.user_email = u.email
-                    AND ct2.completed_at >= DATE('now', '-30 days')
+                    AND ct2.completed_at >= CURRENT_DATE - INTERVAL '30 days'
                 )
             """, (paris_today,))
             inactive_players = c.fetchall()
@@ -4493,12 +4493,12 @@ def cron_daily_reminder():
             AND NOT EXISTS (
                 SELECT 1 FROM completed_tasks ct
                 WHERE ct.user_email = u.email
-                AND DATE(ct.completed_at) = ?
+                AND ct.completed_at::date = ?
             )
             AND EXISTS (
                 SELECT 1 FROM completed_tasks ct2
                 WHERE ct2.user_email = u.email
-                AND ct2.completed_at >= DATE('now', '-30 days')
+                AND ct2.completed_at >= CURRENT_DATE - INTERVAL '30 days'
             )
         """, (paris_today,))
         inactive_players = c.fetchall()
