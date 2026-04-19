@@ -7,16 +7,16 @@
       }
     </style>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#FFD454"/>
-      <stop offset="50%"  stop-color="#FF8C35"/>
-      <stop offset="100%" stop-color="#FF5733"/>
+      <stop offset="0%"   stop-color="#42A5F5"/>
+      <stop offset="50%"  stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#0F1F5C"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="115" fill="url(#bg)"/>
   <text x="256" y="185"  font-family="Bubblegum Sans" font-size="148"
-        text-anchor="middle" fill="#1a1008">QUI</text>
+        text-anchor="middle" fill="#FFFFFF">QUI</text>
   <text x="256" y="325"  font-family="Bubblegum Sans" font-size="148"
-        text-anchor="middle" fill="#CC1111">FAIT</text>
+        text-anchor="middle" fill="#7BC8F6">FAIT</text>
   <text x="256" y="465"  font-family="Bubblegum Sans" font-size="148"
-        text-anchor="middle" fill="#1a1008">QUOI</text>
+        text-anchor="middle" fill="#FFFFFF">QUOI</text>
 </svg>

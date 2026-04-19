@@ -47,18 +47,18 @@ SVG_CONTENT = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
       }}
     </style>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#FFD454"/>
-      <stop offset="50%"  stop-color="#FF8C35"/>
-      <stop offset="100%" stop-color="#FF5733"/>
+      <stop offset="0%"   stop-color="#42A5F5"/>
+      <stop offset="50%"  stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#0F1F5C"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="115" fill="url(#bg)"/>
   <text x="256" y="185"  font-family="Bubblegum Sans" font-size="148"
-        text-anchor="middle" fill="#1a1008">QUI</text>
+        text-anchor="middle" fill="#FFFFFF">QUI</text>
   <text x="256" y="325"  font-family="Bubblegum Sans" font-size="148"
-        text-anchor="middle" fill="#CC1111">FAIT</text>
+        text-anchor="middle" fill="#7BC8F6">FAIT</text>
   <text x="256" y="465"  font-family="Bubblegum Sans" font-size="148"
-        text-anchor="middle" fill="#1a1008">QUOI</text>
+        text-anchor="middle" fill="#FFFFFF">QUOI</text>
 </svg>"""
 
 SVG_PATH = os.path.join("static", "qfq-icon.svg")
@@ -108,10 +108,10 @@ def make_icon(size: int) -> Image.Image:
     W = H = size
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 
-    # ── Gradient diagonal #FFD454 → #FF8C35 → #FF5733 ───────────────────────
-    c0 = hex_to_rgb("#FFD454")
-    c1 = hex_to_rgb("#FF8C35")
-    c2 = hex_to_rgb("#FF5733")
+    # ── Gradient diagonal #42A5F5 → #1E3A8A → #0F1F5C ───────────────────────
+    c0 = hex_to_rgb("#42A5F5")
+    c1 = hex_to_rgb("#1E3A8A")
+    c2 = hex_to_rgb("#0F1F5C")
 
     def lerp(a, b, t):
         return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
@@ -135,9 +135,9 @@ def make_icon(size: int) -> Image.Image:
     stroke_w = max(2, size // 170)
 
     words = [
-        ("QUI",  int(H * 0.25), hex_to_rgb("#1a1008")),
-        ("FAIT", int(H * 0.50), hex_to_rgb("#CC1111")),
-        ("QUOI", int(H * 0.75), hex_to_rgb("#1a1008")),
+        ("QUI",  int(H * 0.25), hex_to_rgb("#FFFFFF")),
+        ("FAIT", int(H * 0.50), hex_to_rgb("#7BC8F6")),
+        ("QUOI", int(H * 0.75), hex_to_rgb("#FFFFFF")),
     ]
 
     for word, cy, color in words:
@@ -152,6 +152,8 @@ def make_icon(size: int) -> Image.Image:
 ICONS = [
     ("static/qfq-icon-192.png", 192),
     ("static/qfq-icon-512.png", 512),
+    ("static/qfq-icon-192-v2.png", 192),
+    ("static/qfq-icon-512-v2.png", 512),
 ]
 
 for out_path, size in ICONS:
@@ -167,13 +169,13 @@ with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
     manifest = json.load(f)
 
 manifest["icons"] = [
-    {"src": "/static/qfq-icon-192.png", "sizes": "192x192",
+    {"src": "/static/qfq-icon-192-v2.png", "sizes": "192x192",
      "type": "image/png", "purpose": "any"},
-    {"src": "/static/qfq-icon-192.png", "sizes": "192x192",
+    {"src": "/static/qfq-icon-192-v2.png", "sizes": "192x192",
      "type": "image/png", "purpose": "maskable"},
-    {"src": "/static/qfq-icon-512.png", "sizes": "512x512",
+    {"src": "/static/qfq-icon-512-v2.png", "sizes": "512x512",
      "type": "image/png", "purpose": "any"},
-    {"src": "/static/qfq-icon-512.png", "sizes": "512x512",
+    {"src": "/static/qfq-icon-512-v2.png", "sizes": "512x512",
      "type": "image/png", "purpose": "maskable"},
 ]
 

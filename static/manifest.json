@@ -16,25 +16,25 @@
   ],
   "icons": [
     {
-      "src": "/static/qfq-icon-192.png",
+      "src": "/static/qfq-icon-192-v2.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/qfq-icon-192.png",
+      "src": "/static/qfq-icon-192-v2.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/static/qfq-icon-512.png",
+      "src": "/static/qfq-icon-512-v2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/qfq-icon-512.png",
+      "src": "/static/qfq-icon-512-v2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
