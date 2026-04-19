@@ -683,8 +683,8 @@ BAR_COLORS = {
 
 @app.context_processor
 def inject_bg_theme():
-    bg = BG_THEMES['bleu']
-    theme_name = 'bleu'
+    bg = BG_THEMES['ocean']
+    theme_name = 'ocean'
     try:
         if 'user' in session:
             conn = get_db_connection()
