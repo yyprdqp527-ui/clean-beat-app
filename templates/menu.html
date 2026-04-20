@@ -6600,10 +6600,12 @@ function closeDailyReminder() {
   position: fixed;
   z-index: 9000;
   max-width: 280px;
-  background: #fff;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 3px solid #FDAE54;
-  border-radius: 22px 22px 22px 6px;
-  box-shadow: 0 6px 24px rgba(253,174,84,0.35), 0 2px 8px rgba(0,0,0,0.12);
+  border-radius: 24px 24px 24px 4px;
+  box-shadow: 0 6px 28px rgba(253,174,84,0.38), 0 2px 10px rgba(0,0,0,0.13);
   padding: 16px 18px;
   animation: tipIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -6650,43 +6652,43 @@ function closeDailyReminder() {
 .qfq-tip.pos-bottom::before {
   content: '';
   position: absolute;
-  top: -14px;
+  top: -16px;
   left: var(--arrow-x, 50%);
   transform: translateX(-50%);
-  border-left: 13px solid transparent;
-  border-right: 13px solid transparent;
-  border-bottom: 14px solid #FDAE54;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 16px solid #FDAE54;
 }
 .qfq-tip.pos-bottom::after {
   content: '';
   position: absolute;
-  top: -10px;
+  top: -11px;
   left: var(--arrow-x, 50%);
   transform: translateX(-50%);
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 11px solid #fff;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 12px solid rgba(255,255,255,0.88);
 }
 /* Queue BD pos-top : triangle pointe vers le bas (bulle au-dessus de la cible) */
 .qfq-tip.pos-top::before {
   content: '';
   position: absolute;
-  bottom: -14px;
+  bottom: -16px;
   left: var(--arrow-x, 50%);
   transform: translateX(-50%);
-  border-left: 13px solid transparent;
-  border-right: 13px solid transparent;
-  border-top: 14px solid #FDAE54;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 16px solid #FDAE54;
 }
 .qfq-tip.pos-top::after {
   content: '';
   position: absolute;
-  bottom: -10px;
+  bottom: -11px;
   left: var(--arrow-x, 50%);
   transform: translateX(-50%);
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 11px solid #fff;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-top: 12px solid rgba(255,255,255,0.88);
 }
 @keyframes tipIn {
   0%   { opacity: 0; transform: translateY(10px) scale(0.88); }
