@@ -6599,14 +6599,14 @@ function closeDailyReminder() {
 .qfq-tip {
   position: fixed;
   z-index: 9000;
-  max-width: 270px;
+  max-width: 280px;
   background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(253,174,84,0.12) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 3px solid rgba(253,174,84,0.45);
-  border-radius: 22px 20px 24px 18px;
+  border-radius: 20px;
   box-shadow: 0 8px 32px rgba(89,113,118,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
-  padding: 14px 16px 12px;
+  padding: 16px 18px;
   animation: tipIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
 }
@@ -6646,7 +6646,7 @@ function closeDailyReminder() {
   content: '';
   position: absolute;
   top: -10px;
-  left: 50%;
+  left: var(--arrow-x, 50%);
   transform: translateX(-50%);
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
@@ -6656,7 +6656,7 @@ function closeDailyReminder() {
   content: '';
   position: absolute;
   bottom: -10px;
-  left: 50%;
+  left: var(--arrow-x, 50%);
   transform: translateX(-50%);
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
@@ -6702,7 +6702,7 @@ function closeDailyReminder() {
     },
     {
       target: 'a[href*="gameplay"]',
-      text: "🎮 Bonus, malus, entourloupes... Le côté obscur du ménage ! Tu peux envoyer des bonus et malus à tes partenaires, gagner un max de points en faisant tourner la roue des Trucs chiants et débusquer les fumistes de la baraque...",
+      text: "🎮 Tu peux envoyer des bonus et malus à tes partenaires, gagner un max de points en faisant tourner la roue des Trucs chiants et débusquer les fumistes de la baraque...",
       pos: 'left'
     },
     {
@@ -6776,7 +6776,8 @@ function closeDailyReminder() {
   function positionTip(index, tip, el) {
     var rect = el.getBoundingClientRect();
     tipEl = document.createElement('div');
-    tipEl.className = 'qfq-tip pos-' + tip.pos;
+    // Mesurer dimensions sans classe de position
+    tipEl.className = 'qfq-tip';
     tipEl.innerHTML =
       '<div class="qfq-tip-text">' + tip.text + '</div>' +
       '<div class="qfq-tip-nav">' +
@@ -6785,36 +6786,34 @@ function closeDailyReminder() {
         '<button class="qfq-tip-next" onclick="qfqTipNext()">→</button>' +
       '</div>';
 
+    tipEl.style.visibility = 'hidden';
     document.body.appendChild(tipEl);
 
     var tw = tipEl.offsetWidth;
     var th = tipEl.offsetHeight;
-    var margin = 14;
 
-    var left, top;
-    if (tip.pos === 'top') {
-      left = rect.left + rect.width / 2 - tw / 2;
-      top = rect.top - th - margin;
-    } else if (tip.pos === 'bottom') {
-      left = rect.left + rect.width / 2 - tw / 2;
-      top = rect.bottom + margin;
-    } else if (tip.pos === 'left') {
-      left = rect.left - tw - margin;
-      top = rect.top + rect.height / 2 - th / 2;
+    // Centre horizontal exact de la cible
+    var targetCX = rect.left + rect.width / 2;
+    var left = Math.max(10, Math.min(targetCX - tw / 2, window.innerWidth - tw - 10));
+
+    // Vertical : dessous si ça rentre, sinon dessus
+    var top, posClass;
+    if (rect.bottom + th + 12 <= window.innerHeight - 10) {
+      top = rect.bottom + 12;
+      posClass = 'pos-bottom';
     } else {
-      left = rect.right + margin;
-      top = rect.top + rect.height / 2 - th / 2;
+      top = rect.top - th - 12;
+      posClass = 'pos-top';
     }
 
-    // Garder dans l'écran
-    if (left < 8) left = 8;
-    if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
-    if (top < 8) top = 8;
-    if (top + th > window.innerHeight - 8) top = window.innerHeight - th - 8;
+    // Flèche pointée exactement sur le centre de la cible
+    var arrowX = Math.max(14, Math.min(tw - 24, targetCX - left - 10));
 
+    tipEl.className = 'qfq-tip ' + posClass;
+    tipEl.style.setProperty('--arrow-x', arrowX + 'px');
+    tipEl.style.visibility = '';
     tipEl.style.left = left + 'px';
-    tipEl.style.top = top + 'px';
-
+    tipEl.style.top  = top  + 'px';
   }
 
   window.qfqTipNext = function() {
