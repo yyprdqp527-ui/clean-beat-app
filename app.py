@@ -659,24 +659,24 @@ LIGHT_THEMES = {'bleu', 'sable', 'menthe', 'rose', 'peche', 'lavande', 'emeraude
 # Couleur complémentaire de la barre de progression pour chaque thème
 BAR_COLORS = {
     'marron':     '#5bb8d4',      # bleu clair (complémentaire du marron)
-    'bleu':       '#dc8c5c',      # orange cuivré
+    'bleu':       '#c0392b',      # grenat
     'foret':      '#d45b7a',      # rose framboise
     'nuit':       '#c4a84d',      # or chaud
     'ardoise':    '#d4855b',      # corail
     'prune':      '#4dc48a',      # vert émeraude
-    'sable':      '#5b7abd',      # bleu lavande
+    'sable':      '#9b59b6',      # violet profond
     'menthe':     '#bd5b7a',      # rose foncé
     'framboise':  '#4dd4a8',      # turquoise
-    'rose':       '#5bbda0',      # vert menthe
-    'peche':      '#7a8cbd',      # bleu ardoise
+    'rose':       '#4ecdc4',      # turquoise
+    'peche':      '#6c5ce7',      # indigo vibrant
     'lavande':    '#d4a855',      # or chaud
-    'ocean':      '#f4a07a',      # pêche
+    'ocean':      '#e84393',      # rose magenta
     'corail':     '#4dd4d4',      # cyan
     'emeraude':   '#d45ba0',      # rose magenta
     'sunset':     '#4dc4e8',      # bleu ciel
     'lilas':      '#7abd5b',      # vert pomme
     'caramel':    '#5bb8d4',      # bleu glacier
-    'glacier':    '#d47a5b',      # terre cuite
+    'glacier':    '#e17055',      # brique vif
     'tropique':   '#d45bd4',      # fuchsia
     'cuivre':     '#33a5b8',      # bleu cyan
 }
@@ -1041,7 +1041,7 @@ def get_avatar_url(avatar_id, style='adventurer'):
 def send_sms_invitation(phone_number, user_name, house_code=None):
     """Envoie un SMS d'invitation"""
     # Obtenir l'URL de base depuis le contexte de la requête Flask
-    base_url = request.host_url if has_request_context() else "http://192.168.1.187:8000/"
+    base_url = os.environ.get("RENDER_EXTERNAL_URL", "https://clean-beat-app.onrender.com").rstrip("/") + "/"
     
     if not TWILIO_AVAILABLE:
         if house_code:

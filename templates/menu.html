@@ -652,6 +652,10 @@
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 12px rgba(46,213,115,0.4), 0 0 24px rgba(46,213,115,0.2);
             border-color: rgba(46,213,115,0.3);
         }
+        .week-bar-track.urgency-mid {
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 8px rgba(255,165,2,0.3), 0 0 16px rgba(255,165,2,0.12);
+            border-color: rgba(255,165,2,0.25);
+        }
         .week-bar-fill {
             position: absolute;
             left: 0; top: 0; bottom: 0;
@@ -693,11 +697,11 @@
         }
         .week-bday.is-future {
             animation: dayShimmer 2s ease-in-out infinite;
-            color: rgba(255,255,255,0.4);
+            color: rgba(0,0,0,0.4);
         }
         @keyframes dayShimmer {
           0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.9; text-shadow: 0 0 8px rgba(255,255,255,0.8); }
+          50% { opacity: 0.85; }
         }
         .week-bar-cursor {
             position: absolute;
@@ -3597,39 +3601,34 @@ body { padding-bottom: 84px !important; }
         var track = fill ? fill.parentElement : null;
         var cursor = document.getElementById('weekBarCursor');
 
-        // Gradient d'urgence : vert → or → orange → rouge
+        // Couleur dynamique : thème utilisateur + urgence selon jours restants
         // Curseur = bloc d'un jour (1/7). Fill = jours entièrement passés.
         var pastPct = (pos / 7) * 100;
-        var dayHourPct = (now.getHours() + now.getMinutes() / 60) / 24 * 100;
-        var fillColor = '#FDAE54';
-        if(dd > 4) fillColor = '#2ed573';
-        else if(dd > 2) fillColor = '#ffa502';
-        else if(dd >= 1) fillColor = '#ff6348';
-        else fillColor = '#ff4757';
+        var baseColor = '{{ week_bar_color }}';
+        var fillColor = baseColor;
+        var fillShadow = '0 0 6px ' + baseColor + '66';
+
+        if(dd <= 1) {
+            fillColor = '#ff4757';
+            fillShadow = '0 0 12px rgba(255,71,87,0.5)';
+        } else if(dd <= 3) {
+            fillColor = '#ffa502';
+            fillShadow = '0 0 12px rgba(255,165,2,0.5)';
+        }
 
         if(fill){
             fill.style.width = pastPct + '%';
-            if(dd > 4) {
-                fill.style.background = 'linear-gradient(90deg, #2ed573, #7bed9f)';
-                fill.style.boxShadow = '0 0 6px rgba(46,213,115,0.3)';
-            } else if(dd > 2) {
-                fill.style.background = 'linear-gradient(90deg, #ffa502, #FDAE54)';
-                fill.style.boxShadow = '0 0 6px rgba(253,174,84,0.4)';
-            } else if(dd >= 1) {
-                fill.style.background = 'linear-gradient(90deg, #ff6348, #ff7f50)';
-                fill.style.boxShadow = '0 0 8px rgba(255,99,72,0.5)';
-            } else {
-                fill.style.background = 'linear-gradient(90deg, #ff4757, #ff6b81)';
-                fill.style.boxShadow = '0 0 12px rgba(255,71,87,0.6)';
-            }
+            fill.style.background = 'linear-gradient(90deg, ' + fillColor + ', ' + fillColor + 'cc)';
+            fill.style.boxShadow = fillShadow;
         }
-        // Track glow urgence
+        // Track glow urgence (classes CSS)
         if(track){
-            track.classList.remove('urgency-high','urgency-go');
-            if(dd === 0 && hh > 0) track.classList.add('urgency-high');
-            else if(dd === 0 && hh === 0) track.classList.add('urgency-go');
+            track.classList.remove('urgency-high','urgency-mid','urgency-go');
+            if(dd === 0) track.classList.add('urgency-go');
+            else if(dd === 1) track.classList.add('urgency-high');
+            else if(dd <= 3) track.classList.add('urgency-mid');
         }
-        // Curseur bloc-jour : centré sur le jour courant + couleur urgence + glassmorphism
+        // Curseur bloc-jour : centré sur le jour courant + couleur urgence
         if(cursor){
             cursor.style.left = 'calc(' + pastPct + '% - 2px)';
             cursor.style.background = fillColor;
