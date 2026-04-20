@@ -6590,5 +6590,212 @@ function closeDailyReminder() {
 
 </script>
 
+<!-- ═══ BULLES D'AIDE CONTEXTUELLES ═══ -->
+<style>
+.qfq-tip {
+  position: fixed;
+  z-index: 9000;
+  max-width: 260px;
+  background: {% if bg_theme_light %}rgba(255,255,255,0.92){% else %}rgba(255,255,255,0.15){% endif %};
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid {% if bg_theme_light %}rgba(0,0,0,0.1){% else %}rgba(255,255,255,0.3){% endif %};
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  animation: tipIn 0.3s ease;
+  cursor: pointer;
+}
+.qfq-tip-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: {% if bg_theme_light %}#153036{% else %}white{% endif %};
+  line-height: 1.4;
+}
+.qfq-tip-counter {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 6px;
+  color: {% if bg_theme_light %}#153036{% else %}white{% endif %};
+}
+.qfq-tip-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: {% if bg_theme_light %}rgba(255,255,255,0.92){% else %}rgba(255,255,255,0.15){% endif %};
+  transform: rotate(45deg);
+  border: 1px solid {% if bg_theme_light %}rgba(0,0,0,0.1){% else %}rgba(255,255,255,0.3){% endif %};
+}
+/* Masquer les bords de la flèche qui dépassent dans la bulle */
+.qfq-tip-arrow.arrow-top    { border-bottom: none; border-right: none; }
+.qfq-tip-arrow.arrow-bottom { border-top: none; border-left: none; }
+.qfq-tip-arrow.arrow-left   { border-bottom: none; border-left: none; top: 50%; margin-top: -6px; }
+.qfq-tip-arrow.arrow-right  { border-top: none; border-right: none; top: 50%; margin-top: -6px; }
+@keyframes tipIn {
+  0%   { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes tipOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+</style>
+
+<script>
+(function() {
+  // Ne montrer qu'une seule fois
+  if (localStorage.getItem('qfq_tips_seen')) return;
+  // Ne pas montrer si l'onboarding est actif
+  if (document.getElementById('ob-overlay')) return;
+
+  var QFQ_TIPS = [
+    {
+      target: '.rooms-isometric .room-card:nth-child(1)',
+      text: "Choisis une pièce pour voir la liste des tâches à faire. C'est pénible, mais elles ne se font pas toutes seules !",
+      pos: 'top'
+    },
+    {
+      target: '#current-player-avatar-wrapper',
+      text: "Clique sur ton avatar pour voir ton profil, tes stats et tes récompenses !",
+      pos: 'bottom'
+    },
+    {
+      target: '#weekGiftIcon',
+      text: "Chaque tâche vaut des points. Celui qui en a le plus à la fin de la semaine ouvre la grille des récompenses 🎁",
+      pos: 'bottom'
+    },
+    {
+      target: '.gameplay-btn',
+      text: "Envoie des bonus et des malus à tes partenaires 😈 Mini-jeux, entourloupes ménagères… Amuse-toi !",
+      pos: 'left'
+    },
+    {
+      target: '#cwTabCourses',
+      text: "Liste de courses partagée en temps réel. Celui qui est le plus près du magasin prend le relais — et marque des points !",
+      pos: 'top'
+    },
+    {
+      target: '.cw-tab[href*="comments"]',
+      text: "Envoie des messages privés à tes partenaires. Tu peux aussi suivre les activités de bébé ici 👶",
+      pos: 'top'
+    },
+    {
+      target: '#cwTabScore',
+      text: "Classement du jour et de la semaine. Qui fait le plus de ménage ? 🏆",
+      pos: 'top'
+    },
+    {
+      target: '.cw-tab[href*="sats"]',
+      text: "Tes statistiques détaillées : points, tâches, évolution… tout est là 📈",
+      pos: 'top'
+    },
+    {
+      target: '.cw-tab[href*="settings"]',
+      text: "Personnalise l'appli à ta couleur, gère les joueurs et la maison ⚙️",
+      pos: 'top'
+    }
+  ];
+
+  var currentTip = 0;
+  var tipEl = null;
+  var tipTimer = null;
+
+  function removeTip(cb) {
+    if (tipEl) {
+      tipEl.style.animation = 'tipOut 0.2s ease forwards';
+      var el = tipEl;
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
+      tipEl = null;
+    }
+    if (tipTimer) { clearTimeout(tipTimer); tipTimer = null; }
+    if (cb) cb();
+  }
+
+  function showTip(index) {
+    if (index >= QFQ_TIPS.length) {
+      localStorage.setItem('qfq_tips_seen', '1');
+      return;
+    }
+    currentTip = index;
+    var tip = QFQ_TIPS[index];
+    var el = document.querySelector(tip.target);
+    if (!el) { showTip(index + 1); return; }
+
+    var rect = el.getBoundingClientRect();
+    // Créer la bulle
+    tipEl = document.createElement('div');
+    tipEl.className = 'qfq-tip';
+    tipEl.innerHTML =
+      '<div class="qfq-tip-text">' + tip.text + '</div>' +
+      '<div class="qfq-tip-counter">' + (index + 1) + ' / ' + QFQ_TIPS.length + ' · clic pour continuer</div>' +
+      '<div class="qfq-tip-arrow"></div>';
+
+    document.body.appendChild(tipEl);
+
+    // Positionner
+    var tw = tipEl.offsetWidth;
+    var th = tipEl.offsetHeight;
+    var arrow = tipEl.querySelector('.qfq-tip-arrow');
+    var margin = 14;
+
+    var left, top;
+    if (tip.pos === 'top') {
+      // Bulle au-dessus de l'élément
+      left = rect.left + rect.width / 2 - tw / 2;
+      top = rect.top - th - margin;
+      arrow.className = 'qfq-tip-arrow arrow-bottom';
+      arrow.style.bottom = '-6px';
+      arrow.style.left = (tw / 2 - 6) + 'px';
+    } else if (tip.pos === 'bottom') {
+      // Bulle en dessous
+      left = rect.left + rect.width / 2 - tw / 2;
+      top = rect.bottom + margin;
+      arrow.className = 'qfq-tip-arrow arrow-top';
+      arrow.style.top = '-6px';
+      arrow.style.left = (tw / 2 - 6) + 'px';
+    } else if (tip.pos === 'left') {
+      // Bulle à gauche
+      left = rect.left - tw - margin;
+      top = rect.top + rect.height / 2 - th / 2;
+      arrow.className = 'qfq-tip-arrow arrow-right';
+      arrow.style.right = '-6px';
+    } else {
+      // Bulle à droite
+      left = rect.right + margin;
+      top = rect.top + rect.height / 2 - th / 2;
+      arrow.className = 'qfq-tip-arrow arrow-left';
+      arrow.style.left = '-6px';
+    }
+
+    // Garder dans l'écran
+    if (left < 8) left = 8;
+    if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+    if (top < 8) top = 8;
+    if (top + th > window.innerHeight - 8) top = window.innerHeight - th - 8;
+
+    tipEl.style.left = left + 'px';
+    tipEl.style.top = top + 'px';
+
+    // Clic → suivant
+    tipEl.addEventListener('click', function() {
+      removeTip(function() { showTip(index + 1); });
+    });
+
+    // Auto-dismiss après 4s
+    tipTimer = setTimeout(function() {
+      removeTip(function() { showTip(index + 1); });
+    }, 4000);
+  }
+
+  // Lancer après le rendu complet (attendre onboarding + DOM)
+  setTimeout(function() {
+    // Si onboarding en cours, attendre qu'il soit fermé
+    if (document.getElementById('ob-overlay') &&
+        document.getElementById('ob-overlay').style.display !== 'none') return;
+    showTip(0);
+  }, 2000);
+})();
+</script>
+
 </body>
 </html>
