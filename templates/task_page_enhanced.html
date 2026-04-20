@@ -1500,4 +1500,74 @@ function closeHelp() {
     localStorage.setItem('pointsHelpSeenV2_' + {{ category|tojson }}, 'true');
 }
 </script>
+
+<!-- ═══ BULLE BD D'AIDE - MODIFIER LES POINTS ═══ -->
+<style>
+.qfq-page-tip {
+  position: fixed;
+  z-index: 9000;
+  max-width: 270px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(253,174,84,0.12) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 3px solid rgba(253,174,84,0.45);
+  border-radius: 22px 20px 24px 18px;
+  box-shadow: 0 8px 32px rgba(89,113,118,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
+  padding: 14px 16px 12px;
+  animation: pageTipIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+.qfq-page-tip-text { font-size: 13px; font-weight: 600; color: #153036; line-height: 1.5; }
+.qfq-page-tip-close {
+  position: absolute; top: 6px; right: 10px;
+  font-size: 18px; color: #FDAE54; font-weight: 800;
+  background: none; border: none; cursor: pointer; line-height: 1;
+}
+.qfq-page-tip-arrow {
+  position: absolute; width: 18px; height: 18px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(253,174,84,0.08) 100%);
+  transform: rotate(45deg);
+  border: 3px solid rgba(253,174,84,0.45);
+}
+.qfq-page-tip-arrow.arrow-top { border-bottom: none; border-right: none; }
+.qfq-page-tip-arrow.arrow-bottom { border-top: none; border-left: none; }
+@keyframes pageTipIn {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pageTipOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(-6px) scale(0.9); }
+}
+</style>
+<script>
+(function(){
+  var key = 'qfq_tip_points_seen';
+  if (localStorage.getItem(key)) return;
+  setTimeout(function(){
+    var el = document.querySelector('.task-points-badge');
+    if (!el) return;
+    var rect = el.getBoundingClientRect();
+    var tip = document.createElement('div');
+    tip.className = 'qfq-page-tip';
+    tip.innerHTML = '<div class="qfq-page-tip-text">Clique sur la pastille pour modifier les points de cette t\u00E2che ! Les joueurs d\u00E9cident ensemble de la valeur \uD83D\uDCAA</div>'
+      + '<button class="qfq-page-tip-close">\u2715</button>'
+      + '<div class="qfq-page-tip-arrow arrow-top"></div>';
+    document.body.appendChild(tip);
+    var tw = tip.offsetWidth;
+    var tipLeft = Math.max(8, Math.min(window.innerWidth - tw - 8, rect.left + rect.width/2 - tw/2));
+    tip.style.left = tipLeft + 'px';
+    tip.style.top = (rect.bottom + 16) + 'px';
+    var arr = tip.querySelector('.qfq-page-tip-arrow');
+    arr.style.top = '-9px';
+    arr.style.left = Math.min(tw - 24, Math.max(8, rect.left + rect.width/2 - tipLeft - 9)) + 'px';
+    tip.querySelector('.qfq-page-tip-close').addEventListener('click', function(e){
+      e.stopPropagation();
+      tip.style.animation = 'pageTipOut 0.25s ease forwards';
+      setTimeout(function(){ tip.remove(); }, 250);
+      localStorage.setItem(key, '1');
+    });
+  }, 1000);
+})();
+</script>
 {% endblock %}
