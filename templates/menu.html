@@ -6600,49 +6600,64 @@ function closeDailyReminder() {
   position: fixed;
   z-index: 9000;
   max-width: 280px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(253,174,84,0.12) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 3px solid rgba(253,174,84,0.45);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(89,113,118,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
+  background: #fff;
+  border: 3px solid #FDAE54;
+  border-radius: 22px 22px 22px 6px;
+  box-shadow: 0 6px 24px rgba(253,174,84,0.35), 0 2px 8px rgba(0,0,0,0.12);
   padding: 16px 18px;
-  animation: tipIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: tipIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
 }
 .qfq-tip-text {
   font-size: 13px;
-  font-weight: 600;
-  color: #153036;
-  line-height: 1.5;
+  font-weight: 700;
+  color: #2d2d2d;
+  line-height: 1.55;
 }
 .qfq-tip-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
+  margin-top: 10px;
   gap: 8px;
 }
 .qfq-tip-counter {
-  font-size: 10px;
-  opacity: 0.4;
-  color: rgba(21,48,54,0.6);
+  font-size: 11px;
+  font-weight: 600;
+  color: #FDAE54;
 }
 .qfq-tip-prev,
 .qfq-tip-next {
-  background: rgba(255,255,255,0.2);
-  border: 1px solid rgba(255,255,255,0.4);
+  background: #FDAE54;
+  border: none;
   border-radius: 20px;
-  color: white;
-  font-size: 14px;
-  padding: 4px 10px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 4px 14px;
   cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.15s;
 }
+.qfq-tip-prev:hover,
+.qfq-tip-next:hover { background: #f09530; }
 .qfq-tip-prev:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: default;
+  background: #ccc;
 }
+/* Queue BD pos-bottom : triangle pointe vers le haut (bulle en dessous de la cible) */
 .qfq-tip.pos-bottom::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: var(--arrow-x, 50%);
+  transform: translateX(-50%);
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-bottom: 14px solid #FDAE54;
+}
+.qfq-tip.pos-bottom::after {
   content: '';
   position: absolute;
   top: -10px;
@@ -6650,9 +6665,20 @@ function closeDailyReminder() {
   transform: translateX(-50%);
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-bottom: 10px solid rgba(255,255,255,0.92);
+  border-bottom: 11px solid #fff;
 }
+/* Queue BD pos-top : triangle pointe vers le bas (bulle au-dessus de la cible) */
 .qfq-tip.pos-top::before {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: var(--arrow-x, 50%);
+  transform: translateX(-50%);
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-top: 14px solid #FDAE54;
+}
+.qfq-tip.pos-top::after {
   content: '';
   position: absolute;
   bottom: -10px;
@@ -6660,15 +6686,15 @@ function closeDailyReminder() {
   transform: translateX(-50%);
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-top: 10px solid rgba(255,255,255,0.92);
+  border-top: 11px solid #fff;
 }
 @keyframes tipIn {
-  0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+  0%   { opacity: 0; transform: translateY(10px) scale(0.88); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes tipOut {
   0%   { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: translateY(-6px) scale(0.9); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.9); }
 }
 </style>
 
@@ -6688,11 +6714,6 @@ function closeDailyReminder() {
     {
       target: '.rooms-isometric .room-card:nth-child(1)',
       text: "🏠 Clique sur une pièce pour découvrir les tâches. Tu y trouveras les tâches basiques. Mais tu peux en rajouter en cliquant sur Ajoute une mission.",
-      pos: 'top'
-    },
-    {
-      target: '#current-player-avatar-wrapper',
-      text: "C'est toi ça ! Motive les joueurs en attente. Partager les tâches ménagères, c'est toujours mieux 💪",
       pos: 'bottom'
     },
     {
