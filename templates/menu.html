@@ -372,27 +372,6 @@
             order: 2;
             flex-shrink: 0;
         }
-
-        /* Burger fixe en haut à gauche */
-        .burger-fixed-wrapper {
-            position: fixed;
-            left: 14px;
-            top: calc(10px + env(safe-area-inset-top, 0px));
-            z-index: 10001;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            pointer-events: auto;
-        }
-        .burger-fixed-wrapper .beta-label {
-            font-size: 9px;
-            color: rgba(255,255,255,0.75);
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.3);
-            white-space: nowrap;
-        }
                 /* Bouton Gameplay avec effet halo */
         @keyframes halo-gameplay {
             0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35), 0 0 12px rgba(255,255,255,0.15); }
@@ -2723,12 +2702,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="gameplay-btn-wrapper">
                     <a href="{{ url_for('gameplay_bp.gameplay') }}" class="gameplay-btn" title="Gameplay">🎮</a>
                 </div>
-
-                <!-- Burger fixe en haut à gauche -->
-                <div class="burger-fixed-wrapper">
-                    <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
-                    <span class="beta-label">✨ Bêta</span>
-                </div>
+                <!-- burger déplacé dans house-info -->
 
                 <div class="header-inner">
                         <script>
@@ -4509,7 +4483,9 @@ function sendMalus(reason, points){
                             <div class="house-info" style="margin-bottom:4px;">
                                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
                                     <div class="house-name">{{ house_name if house_name else 'Ma Maison' }}</div>
+                                    <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
                                 </div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.5px;margin-top:2px;">✨ Version bêta</div>
                             </div>
 
                             <!-- Bulle de dialogue de la maison -->
