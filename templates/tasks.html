@@ -457,10 +457,10 @@ body {
     }
 }
 
-/* Bouton ajouter tâche flottant */
-.add-task-btn { position: fixed; bottom: 82px; right: 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color:white; padding:18px 25px; border-radius:50px; text-decoration:none; font-weight:800; box-shadow:0 8px 25px rgba(253, 174, 84, 0.4); transition: all .3s ease; z-index:1000; display:flex; align-items:center; gap:10px; font-size: 15px; }
+/* Bouton ajouter tâche — centré sous les tâches */
+.add-task-btn { position: static; display: block; width: max-content; margin: 20px auto 28px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color:white; padding:14px 22px; border-radius:50px; text-decoration:none; font-weight:800; box-shadow:0 6px 20px rgba(253, 174, 84, 0.4); transition: all .3s ease; font-size: 15px; }
 
-.add-task-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow:0 12px 35px rgba(253, 174, 84, 0.6); }
+.add-task-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow:0 8px 28px rgba(253, 174, 84, 0.5); }
 
 /* ===== BARRE DE NAVIGATION FIXE EN BAS ===== */
 body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important; }
