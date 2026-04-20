@@ -3604,21 +3604,25 @@ body { padding-bottom: 84px !important; }
         // Couleur dynamique : thème utilisateur + urgence selon jours restants
         // Curseur = bloc d'un jour (1/7). Fill = jours entièrement passés.
         var pastPct = (pos / 7) * 100;
-        var baseColor = '{{ week_bar_color }}';
-        var fillColor = baseColor;
-        var fillShadow = '0 0 6px ' + baseColor + '66';
+        var fillColor, fillShadow;
 
-        if(dd <= 1) {
-            fillColor = '#ff4757';
-            fillShadow = '0 0 12px rgba(255,71,87,0.5)';
-        } else if(dd <= 3) {
-            fillColor = '#ffa502';
-            fillShadow = '0 0 12px rgba(255,165,2,0.5)';
+        if(dd > 4) {
+            fillColor = 'linear-gradient(90deg, #2ed573, #7bed9f)';
+            fillShadow = '0 0 6px rgba(46,213,115,0.3)';
+        } else if(dd > 2) {
+            fillColor = 'linear-gradient(90deg, #ffa502, #FDAE54)';
+            fillShadow = '0 0 6px rgba(253,174,84,0.4)';
+        } else if(dd >= 1) {
+            fillColor = 'linear-gradient(90deg, #ff6348, #ff7f50)';
+            fillShadow = '0 0 8px rgba(255,99,72,0.5)';
+        } else {
+            fillColor = 'linear-gradient(90deg, #ff4757, #ff6b81)';
+            fillShadow = '0 0 12px rgba(255,71,87,0.6)';
         }
 
         if(fill){
             fill.style.width = pastPct + '%';
-            fill.style.background = 'linear-gradient(90deg, ' + fillColor + ', ' + fillColor + 'cc)';
+            fill.style.background = fillColor;
             fill.style.boxShadow = fillShadow;
         }
         // Track glow urgence (classes CSS)
@@ -3629,9 +3633,10 @@ body { padding-bottom: 84px !important; }
             else if(dd <= 3) track.classList.add('urgency-mid');
         }
         // Curseur bloc-jour : centré sur le jour courant + couleur urgence
+        var cursorColor = dd > 4 ? '#2ed573' : dd > 2 ? '#ffa502' : dd >= 1 ? '#ff6348' : '#ff4757';
         if(cursor){
             cursor.style.left = 'calc(' + pastPct + '% - 2px)';
-            cursor.style.background = fillColor;
+            cursor.style.background = cursorColor;
         }
         // Cadeau : grossit au fil des jours (0=Lun 14px … 6=Dim 24px)
         var giftSizes = [14, 15, 16, 17, 18, 20, 24];
