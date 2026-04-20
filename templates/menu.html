@@ -172,8 +172,8 @@
             left: 0;
             width: 280px;
             height: 100%;
-            background: linear-gradient(180deg, #ffffff 0%, #f5f8f9 100%);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.15);
+            background: {{ bg_gradient }};
+            box-shadow: 4px 0 30px rgba(0,0,0,0.25);
             transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -190,12 +190,12 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(21,48,54,0.08);
-            border: 2px solid rgba(21,48,54,0.12);
+            background: {% if bg_theme_light %}rgba(21,48,54,0.08){% else %}rgba(255,255,255,0.15){% endif %};
+            border: 2px solid {% if bg_theme_light %}rgba(21,48,54,0.12){% else %}rgba(255,255,255,0.2){% endif %};
             border-radius: 50%;
             width: 44px;
             height: 44px;
-            color: #153036;
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
             font-size: 32px;
             cursor: pointer;
             display: flex;
@@ -222,12 +222,12 @@
             align-items: center;
             gap: 16px;
             padding: 18px 20px;
-            background: rgba(21,48,54,0.04);
+            background: {% if bg_theme_light %}rgba(21,48,54,0.04){% else %}rgba(255,255,255,0.1){% endif %};
             border-radius: 16px;
             text-decoration: none;
-            color: #153036;
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
             transition: all 0.3s ease;
-            border: 1.5px solid rgba(21,48,54,0.08);
+            border: 1.5px solid {% if bg_theme_light %}rgba(21,48,54,0.08){% else %}rgba(255,255,255,0.15){% endif %};
             box-shadow: none;
         }
         
@@ -252,7 +252,7 @@
         .burger-nav-text {
             font-size: 17px;
             font-weight: 700;
-            color: #153036;
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
         }
         
         /* Badge de notification */
@@ -718,7 +718,7 @@
         .week-gift-icon {
             font-size: 18px;
             position: fixed;
-            right: 14px;
+            right: 19px;
             z-index: 9998;
             cursor: pointer;
             transition: font-size 0.3s ease;
@@ -1200,7 +1200,7 @@
         }
         .health-bar { width:100%; height:12px; background: rgba(0,0,0,0.08); border-radius:10px; overflow:hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,0.06); }
         .health-fill { height:100%; width:0%; background: linear-gradient(90deg, var(--gold), var(--peach)); border-radius:10px; transition: width 0.6s ease; }
-        .avatar-points { font-size:12px; font-weight:800; color:#ffffff; margin-top:6px; white-space:nowrap; text-align:center; display:block !important; visibility: visible !important; opacity: 1 !important; min-height: 16px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
+        .avatar-points { font-size:12px; font-weight:800; color:#ffffff; margin-top:2px; margin-bottom:10px; white-space:nowrap; text-align:center; display:block !important; visibility: visible !important; opacity: 1 !important; min-height: 16px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
         /* Debug: ajoute un contour visible aux vbar lorsque debug activé via ?vbar_debug=1 */
         .vbar.vbar-debug { outline: 2px solid rgba(255,60,60,0.85); box-shadow: 0 0 0 2px rgba(255,60,60,0.06) inset; }
         
@@ -2702,14 +2702,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="gameplay-btn-wrapper">
                     <a href="{{ url_for('gameplay_bp.gameplay') }}" class="gameplay-btn" title="Gameplay">🎮</a>
                 </div>
-                <div class="header-left-actions">
-                    <div class="burger-wrapper">
-                        <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
-                        <div class="burger-alerts" id="burger-alerts">
-                            
-                        </div>
-                    </div>
-                </div>
+                <!-- burger déplacé dans house-info -->
 
                 <div class="header-inner">
                         <script>
@@ -4488,7 +4481,10 @@ function sendMalus(reason, points){
                                  ═══════════════════════════════════════════════ -->
                             <!-- Informations de la maison : nom + barre de progression -->
                             <div class="house-info" style="margin-bottom:4px;">
-                                <div class="house-name">{{ house_name if house_name else 'Ma Maison' }}</div>
+                                <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                                    <div class="house-name">{{ house_name if house_name else 'Ma Maison' }}</div>
+                                    <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
+                                </div>
                                 <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.5px;margin-top:2px;">✨ Version bêta</div>
                             </div>
 
@@ -4539,8 +4535,8 @@ function sendMalus(reason, points){
 
                         <!-- 🧡 REMERCIEMENT BÊTA TESTEURS -->
                         <div style="margin: 4px 0 8px; padding: 14px 16px; background: linear-gradient(135deg, rgba(253,174,84,0.18), rgba(244,198,141,0.12)); border-radius: 16px; border: 1.5px solid rgba(253,174,84,0.35);">
-                            <div style="font-size: 13px; font-weight: 800; color: #153036; margin-bottom: 4px;">🧡 Merci d'être bêta testeur !</div>
-                            <div style="font-size: 12px; color: rgba(21,48,54,0.7); line-height: 1.5;">Tu fais partie des premiers à tester CleanBeat. Certaines fonctionnalités sont encore en cours de polissage — ton avis compte énormément !</div>
+                            <div style="font-size: 13px; font-weight: 800; color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %}; margin-bottom: 4px;">🧡 Merci d'être bêta testeur !</div>
+                            <div style="font-size: 12px; color: {% if bg_theme_light %}rgba(21,48,54,0.7){% else %}rgba(255,255,255,0.8){% endif %}; line-height: 1.5;">Tu fais partie des premiers à tester QuiFaitQuoi. Les images utilisées sont temporaires — nous cherchons d'ailleurs un illustrateur (si tu en connais un, fais-le nous savoir !). Certaines fonctionnalités sont encore en cours de polissage et il peut y avoir des bugs — c'est normal pour une version bêta ! Ton avis compte énormément. 💙</div>
                         </div>
 
                         <!-- 📱 GUIDE AJOUT ÉCRAN ACCUEIL -->
@@ -4555,17 +4551,6 @@ function sendMalus(reason, points){
                             <span class="burger-nav-text" style="color:#153036;">Donner mon avis</span>
                         </a>
                         
-                        <!-- 🔔 Bouton notifications -->
-                        <span id="notificationToggle" class="burger-nav-item" style="cursor:pointer;">
-                            <span id="notifIcon">🔔</span>
-                            <span id="notifText">Activer les notifications</span>
-                            <span id="notifStatus"></span>
-                        </span>
-                        <span id="reminderToggle" style="display:none;">
-                            <span id="reminderIcon">⏰</span>
-                            <span id="reminderText">Activer les rappels</span>
-                            <span id="reminderStatus"></span>
-                        </span>
                     </nav>
 
                     <!-- ══════════════════════════════════════════════
@@ -4858,133 +4843,6 @@ function sendMalus(reason, points){
                             });
                         }
                     });
-                })();
-                
-                //  GESTION DES NOTIFICATIONS PUSH
-                (function() {
-                    const notifToggle = document.getElementById('notificationToggle');
-                    const notifIcon = document.getElementById('notifIcon');
-                    const notifText = document.getElementById('notifText');
-                    const notifStatus = document.getElementById('notifStatus');
-                    
-                    if (!notifToggle) return;
-                    
-                    // Fonction pour mettre à jour l'interface
-                    function updateNotificationUI() {
-                        // Défensif : pushManager peut ne pas être initialisé ou remplacé
-                        let status = 'unsupported';
-                        if (window.cleanBeatPush && typeof window.cleanBeatPush.getStatus === 'function') {
-                            status = window.cleanBeatPush.getStatus();
-                        } else {
-                            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                                status = 'unsupported';
-                            } else if (Notification.permission === 'denied') {
-                                status = 'denied';
-                            } else if (Notification.permission === 'granted') {
-                                status = 'granted';
-                            } else {
-                                status = 'default';
-                            }
-                        }
-
-                        switch(status) {
-                            case 'granted':
-                                notifIcon.textContent = '🔔';
-                                notifText.textContent = 'Notifications activées';
-                                notifStatus.textContent = '✓';
-                                notifStatus.style.color = '#4CAF50';
-                                break;
-                            case 'denied':
-                                notifIcon.textContent = '🔕';
-                                notifText.textContent = 'Notifications bloquées';
-                                notifStatus.textContent = '✗';
-                                notifStatus.style.color = '#f44336';
-                                break;
-                            case 'unsupported':
-                                notifIcon.textContent = '🔕';
-                                notifText.textContent = 'Non supporté';
-                                notifStatus.textContent = '';
-                                notifToggle.style.opacity = '0.5';
-                                notifToggle.style.pointerEvents = 'none';
-                                break;
-                            default:
-                                notifIcon.textContent = '🔔';
-                                notifText.textContent = 'Activer les notifications';
-                                notifStatus.textContent = '';
-                        }
-                    }
-                    
-                    // Clic sur le bouton
-                    notifToggle.addEventListener('click', async () => {
-                        if (!window.cleanBeatPush) {
-                            alert('❌ Votre navigateur ne supporte pas les notifications push');
-                            return;
-                        }
-                        
-                        // Défensif : obtenir le statut via pushManager si possible, sinon déduire
-                        let status = 'unsupported';
-                        if (window.cleanBeatPush && typeof window.cleanBeatPush.getStatus === 'function') {
-                            status = window.cleanBeatPush.getStatus();
-                        } else {
-                            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                                status = 'unsupported';
-                            } else if (Notification.permission === 'denied') {
-                                status = 'denied';
-                            } else if (Notification.permission === 'granted') {
-                                status = 'granted';
-                            } else {
-                                status = 'default';
-                            }
-                        }
-
-                        if (status === 'denied') {
-                            alert('❌ Vous avez bloqué les notifications.\n\nPour les réactiver :\n1. Cliquez sur l\'icône 🔒 dans la barre d\'adresse\n2. Autorisez les notifications\n3. Rechargez la page');
-                            return;
-                        }
-                        
-                        if (status === 'unsupported') {
-                            alert('❌ Votre navigateur ne supporte pas les notifications push');
-                            return;
-                        }
-                        
-                        if (status === 'granted') {
-                            // Envoyer une notification de test
-                            const testSuccess = await window.cleanBeatPush.sendTestNotification();
-                            if (testSuccess) {
-                                alert('✅ Notification test envoyée !\n\nVous recevrez des notifications quand :\n• Une tâche est validée\n• Une nouvelle tâche est ajoutée\n• Un message est envoyé');
-                            } else {
-                                alert('⚠️ Erreur envoi notification test');
-                            }
-                            return;
-                        }
-                        
-                        // Demander la permission
-                        notifText.textContent = 'Activation...';
-                        const success = await window.cleanBeatPush.requestPermission();
-                        
-                        if (success) {
-                            updateNotificationUI();
-                            alert('✅ Notifications activées !\n\nVous recevrez des notifications quand :\n• Une tâche est validée\n• Une nouvelle tâche est ajoutée\n• Un message est envoyé');
-                            
-                            // Envoyer une notification de test
-                            setTimeout(() => {
-                                window.cleanBeatPush.sendTestNotification();
-                            }, 1000);
-                        } else {
-                            updateNotificationUI();
-                            alert('❌ Permission refusée');
-                        }
-                    });
-                    
-                    // Mettre à jour l'UI au chargement (après init du pushManager)
-                    setTimeout(updateNotificationUI, 1000);
-                    
-                    // Écouter les changements de permission
-                    if ('permissions' in navigator) {
-                        navigator.permissions.query({name: 'notifications'}).then(permission => {
-                            permission.addEventListener('change', updateNotificationUI);
-                        });
-                    }
                 })();
                 
                 })();
@@ -6683,7 +6541,7 @@ function refreshAllBadges() {
         </div>
         <div style="background:linear-gradient(135deg,rgba(253,174,84,0.15),rgba(244,198,141,0.1)); border-radius:16px; padding:14px 16px; margin-bottom:20px; border:1.5px solid rgba(253,174,84,0.3);">
             <div style="font-size:13px; font-weight:800; color:#153036; margin-bottom:4px;">🧡 Tu es bêta testeur — merci !</div>
-            <div style="font-size:12px; color:rgba(21,48,54,0.72); line-height:1.55;">CleanBeat est encore en version bêta. Certaines notifications et fonctionnalités s'améliorent de semaine en semaine. Ton expérience et retours sont précieux pour nous aider à grandir ! 💪</div>
+            <div style="font-size:12px; color:rgba(21,48,54,0.72); line-height:1.55;">QuiFaitQuoi est encore en version bêta. Les images sont temporaires et certaines fonctionnalités s'améliorent de semaine en semaine. Ton expérience et retours sont précieux ! 💪</div>
         </div>
         <div style="margin-bottom:18px;">
             <div style="font-size:14px; font-weight:800; color:#153036; margin-bottom:10px;">🍏 Sur iPhone (Safari)</div>
