@@ -6695,8 +6695,13 @@ function closeDailyReminder() {
       fallback: '.rooms-isometric .room-card:last-child'
     },
     {
-      target: '#cwTabCourses',
-      text: "La liste de courses partagée. Celui qui passe devant le magasin prend le relais… et les points 🛒",
+      target: '#cwTabScore',
+      text: "Qui est le champion du balai cette semaine ? Le classement ne ment jamais 🏆",
+      pos: 'top'
+    },
+    {
+      target: '.cw-tab[href*="sats"]',
+      text: "Tes stats détaillées : points, tâches, évolution… La preuve que tu bosses (ou pas) 📈",
       pos: 'top'
     },
     {
@@ -6705,13 +6710,8 @@ function closeDailyReminder() {
       pos: 'top'
     },
     {
-      target: '#cwTabScore',
-      text: "Qui est le champion du balai cette semaine ? Le classement ne ment jamais 🏆",
-      pos: 'top'
-    },
-    {
-      target: '.cw-tab[href*="sats"]',
-      text: "Tes stats détaillées : points, tâches, évolution… La preuve que tu bosses (ou pas) 📈",
+      target: '#cwTabCourses',
+      text: "La liste de courses partagée. Celui qui passe devant le magasin prend le relais… et les points 🛒",
       pos: 'top'
     },
     {
@@ -6778,18 +6778,18 @@ function closeDailyReminder() {
     var margin = 14;
 
     var left, top;
+    var targetCenterX = rect.left + rect.width / 2;
+    var targetCenterY = rect.top + rect.height / 2;
     if (tip.pos === 'top') {
       left = rect.left + rect.width / 2 - tw / 2;
       top = rect.top - th - margin;
       arrow.className = 'qfq-tip-arrow arrow-bottom';
       arrow.style.bottom = '-9px';
-      arrow.style.left = (tw / 2 - 9) + 'px';
     } else if (tip.pos === 'bottom') {
       left = rect.left + rect.width / 2 - tw / 2;
       top = rect.bottom + margin;
       arrow.className = 'qfq-tip-arrow arrow-top';
       arrow.style.top = '-9px';
-      arrow.style.left = (tw / 2 - 9) + 'px';
     } else if (tip.pos === 'left') {
       left = rect.left - tw - margin;
       top = rect.top + rect.height / 2 - th / 2;
@@ -6807,6 +6807,15 @@ function closeDailyReminder() {
     if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
     if (top < 8) top = 8;
     if (top + th > window.innerHeight - 8) top = window.innerHeight - th - 8;
+
+    // Recalculer la position de la flèche pour pointer vers la cible réelle
+    if (tip.pos === 'top' || tip.pos === 'bottom') {
+      var arrowX = Math.max(14, Math.min(tw - 24, targetCenterX - left - 9));
+      arrow.style.left = arrowX + 'px';
+    } else {
+      var arrowY = Math.max(14, Math.min(th - 24, targetCenterY - top - 9));
+      arrow.style.top = arrowY + 'px';
+    }
 
     tipEl.style.left = left + 'px';
     tipEl.style.top = top + 'px';
