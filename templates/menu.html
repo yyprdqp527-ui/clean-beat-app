@@ -6595,36 +6595,54 @@ function closeDailyReminder() {
 .qfq-tip {
   position: fixed;
   z-index: 9000;
-  max-width: 260px;
-  background: {% if bg_theme_light %}rgba(255,255,255,0.92){% else %}rgba(255,255,255,0.15){% endif %};
+  max-width: 280px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid {% if bg_theme_light %}rgba(0,0,0,0.1){% else %}rgba(255,255,255,0.3){% endif %};
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  border: 2px solid rgba(253,174,84,0.3);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(89,113,118,0.25);
+  padding: 18px 20px;
   animation: tipIn 0.3s ease;
   cursor: pointer;
 }
 .qfq-tip-text {
   font-size: 14px;
   font-weight: 600;
-  color: {% if bg_theme_light %}#153036{% else %}white{% endif %};
-  line-height: 1.4;
+  color: #153036;
+  line-height: 1.5;
 }
 .qfq-tip-counter {
   font-size: 11px;
   opacity: 0.5;
-  margin-top: 6px;
-  color: {% if bg_theme_light %}#153036{% else %}white{% endif %};
+  margin-top: 8px;
+  color: rgba(21,48,54,0.6);
+}
+.qfq-tip-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+  border: none;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #153036;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(253,174,84,0.35);
+  transition: transform 0.15s ease;
+}
+.qfq-tip-btn:active {
+  transform: scale(0.97);
 }
 .qfq-tip-arrow {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: {% if bg_theme_light %}rgba(255,255,255,0.92){% else %}rgba(255,255,255,0.15){% endif %};
+  background: rgba(255,255,255,0.95);
   transform: rotate(45deg);
-  border: 1px solid {% if bg_theme_light %}rgba(0,0,0,0.1){% else %}rgba(255,255,255,0.3){% endif %};
+  border: 2px solid rgba(253,174,84,0.3);
 }
 /* Masquer les bords de la flèche qui dépassent dans la bulle */
 .qfq-tip-arrow.arrow-top    { border-bottom: none; border-right: none; }
@@ -6727,7 +6745,8 @@ function closeDailyReminder() {
     tipEl.className = 'qfq-tip';
     tipEl.innerHTML =
       '<div class="qfq-tip-text">' + tip.text + '</div>' +
-      '<div class="qfq-tip-counter">' + (index + 1) + ' / ' + QFQ_TIPS.length + ' · clic pour continuer</div>' +
+      '<div class="qfq-tip-counter">' + (index + 1) + ' / ' + QFQ_TIPS.length + '</div>' +
+      '<button class="qfq-tip-btn">' + (index + 1 < QFQ_TIPS.length ? 'Suivant →' : 'C\'est compris ! 🚀') + '</button>' +
       '<div class="qfq-tip-arrow"></div>';
 
     document.body.appendChild(tipEl);
@@ -6776,15 +6795,11 @@ function closeDailyReminder() {
     tipEl.style.left = left + 'px';
     tipEl.style.top = top + 'px';
 
-    // Clic → suivant
-    tipEl.addEventListener('click', function() {
+    // Clic sur le bouton → suivant
+    tipEl.querySelector('.qfq-tip-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
       removeTip(function() { showTip(index + 1); });
     });
-
-    // Auto-dismiss après 4s
-    tipTimer = setTimeout(function() {
-      removeTip(function() { showTip(index + 1); });
-    }, 4000);
   }
 
   // Lancer après le rendu complet (attendre onboarding + DOM)
