@@ -6595,46 +6595,47 @@ function closeDailyReminder() {
 .qfq-tip {
   position: fixed;
   z-index: 9000;
-  max-width: 280px;
+  max-width: 260px;
   background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 2px solid rgba(253,174,84,0.3);
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow: 0 8px 32px rgba(89,113,118,0.25);
-  padding: 18px 20px;
-  animation: tipIn 0.3s ease;
+  padding: 14px 16px 12px;
+  animation: tipIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
 }
 .qfq-tip-text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #153036;
   line-height: 1.5;
 }
-.qfq-tip-counter {
-  font-size: 11px;
-  opacity: 0.5;
+.qfq-tip-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 8px;
+}
+.qfq-tip-counter {
+  font-size: 10px;
+  opacity: 0.4;
   color: rgba(21,48,54,0.6);
 }
-.qfq-tip-btn {
-  display: block;
-  width: 100%;
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
-  border: none;
-  border-radius: 50px;
-  font-size: 13px;
+.qfq-tip-next {
+  font-size: 18px;
+  color: #FDAE54;
   font-weight: 800;
-  color: #153036;
+  background: none;
+  border: none;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(253,174,84,0.35);
+  padding: 2px 4px;
+  line-height: 1;
   transition: transform 0.15s ease;
 }
-.qfq-tip-btn:active {
-  transform: scale(0.97);
+.qfq-tip-next:active {
+  transform: scale(0.85);
 }
 .qfq-tip-arrow {
   position: absolute;
@@ -6650,12 +6651,12 @@ function closeDailyReminder() {
 .qfq-tip-arrow.arrow-left   { border-bottom: none; border-left: none; top: 50%; margin-top: -6px; }
 .qfq-tip-arrow.arrow-right  { border-top: none; border-right: none; top: 50%; margin-top: -6px; }
 @keyframes tipIn {
-  0%   { opacity: 0; transform: scale(0.8); }
-  100% { opacity: 1; transform: scale(1); }
+  0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes tipOut {
   0%   { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 0; transform: translateY(-6px) scale(0.9); }
 }
 </style>
 
@@ -6669,64 +6670,68 @@ function closeDailyReminder() {
   var QFQ_TIPS = [
     {
       target: '.rooms-isometric .room-card:nth-child(1)',
-      text: "Choisis une pièce pour voir la liste des tâches à faire. C'est pénible, mais elles ne se font pas toutes seules !",
+      text: "Clique sur une pièce pour découvrir les tâches. Spoiler : elles se font pas toutes seules 😏",
       pos: 'top'
     },
     {
       target: '#current-player-avatar-wrapper',
-      text: "Clique sur ton avatar pour voir ton profil, tes stats et tes récompenses !",
+      text: "C'est toi ça ! Clique pour voir ton profil, tes stats et tes récompenses 🏅",
       pos: 'bottom'
     },
     {
       target: '#weekGiftIcon',
-      text: "Chaque tâche vaut des points. Celui qui en a le plus à la fin de la semaine ouvre la grille des récompenses 🎁",
+      text: "Chaque tâche = des points. Le boss du ménage à la fin de la semaine débloque les récompenses 🎁",
       pos: 'bottom'
     },
     {
       target: '.gameplay-btn',
-      text: "Envoie des bonus et des malus à tes partenaires 😈 Mini-jeux, entourloupes ménagères… Amuse-toi !",
+      text: "Bonus, malus, entourloupes… Le côté obscur du ménage 😈",
       pos: 'left'
     },
     {
+      target: '.room-card:has(.room-card-visual[data-category="chambre_bebe"])',
+      text: "Biberon, couches, dodo 👶 Note tout ici et suis l'évolution de bébé en temps réel avec ton partenaire !",
+      pos: 'top',
+      fallback: '.rooms-isometric .room-card:last-child'
+    },
+    {
       target: '#cwTabCourses',
-      text: "Liste de courses partagée en temps réel. Celui qui est le plus près du magasin prend le relais — et marque des points !",
+      text: "La liste de courses partagée. Celui qui passe devant le magasin prend le relais… et les points 🛒",
       pos: 'top'
     },
     {
       target: '.cw-tab[href*="comments"]',
-      text: "Envoie des messages privés à tes partenaires. Tu peux aussi suivre les activités de bébé ici 👶",
+      text: "Envoie des messages privés à tes partenaires. SMS tactiques et mots doux autorisés 💬",
       pos: 'top'
     },
     {
       target: '#cwTabScore',
-      text: "Classement du jour et de la semaine. Qui fait le plus de ménage ? 🏆",
+      text: "Qui est le champion du balai cette semaine ? Le classement ne ment jamais 🏆",
       pos: 'top'
     },
     {
       target: '.cw-tab[href*="sats"]',
-      text: "Tes statistiques détaillées : points, tâches, évolution… tout est là 📈",
+      text: "Tes stats détaillées : points, tâches, évolution… La preuve que tu bosses (ou pas) 📈",
       pos: 'top'
     },
     {
       target: '.cw-tab[href*="settings"]',
-      text: "Personnalise l'appli à ta couleur, gère les joueurs et la maison ⚙️",
+      text: "Personnalise l'appli à ta couleur et gère ta team ménage ⚙️",
       pos: 'top'
     }
   ];
 
   var currentTip = 0;
   var tipEl = null;
-  var tipTimer = null;
 
   function removeTip(cb) {
     if (tipEl) {
-      tipEl.style.animation = 'tipOut 0.2s ease forwards';
+      tipEl.style.animation = 'tipOut 0.25s ease forwards';
       var el = tipEl;
-      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
       tipEl = null;
     }
-    if (tipTimer) { clearTimeout(tipTimer); tipTimer = null; }
-    if (cb) cb();
+    if (cb) setTimeout(cb, 280);
   }
 
   function showTip(index) {
@@ -6737,21 +6742,36 @@ function closeDailyReminder() {
     currentTip = index;
     var tip = QFQ_TIPS[index];
     var el = document.querySelector(tip.target);
+    // Fallback si la cible n'existe pas
+    if (!el && tip.fallback) el = document.querySelector(tip.fallback);
     if (!el) { showTip(index + 1); return; }
 
+    // Scroll vers l'élément si hors écran
     var rect = el.getBoundingClientRect();
-    // Créer la bulle
+    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(function() { positionTip(index, tip, el); }, 400);
+    } else {
+      positionTip(index, tip, el);
+    }
+  }
+
+  function positionTip(index, tip, el) {
+    var rect = el.getBoundingClientRect();
     tipEl = document.createElement('div');
     tipEl.className = 'qfq-tip';
+
+    var isLast = (index + 1 >= QFQ_TIPS.length);
     tipEl.innerHTML =
       '<div class="qfq-tip-text">' + tip.text + '</div>' +
-      '<div class="qfq-tip-counter">' + (index + 1) + ' / ' + QFQ_TIPS.length + '</div>' +
-      '<button class="qfq-tip-btn">' + (index + 1 < QFQ_TIPS.length ? 'Suivant →' : 'C\'est compris ! 🚀') + '</button>' +
+      '<div class="qfq-tip-footer">' +
+        '<span class="qfq-tip-counter">' + (index + 1) + '/' + QFQ_TIPS.length + '</span>' +
+        '<button class="qfq-tip-next">' + (isLast ? '✓' : '→') + '</button>' +
+      '</div>' +
       '<div class="qfq-tip-arrow"></div>';
 
     document.body.appendChild(tipEl);
 
-    // Positionner
     var tw = tipEl.offsetWidth;
     var th = tipEl.offsetHeight;
     var arrow = tipEl.querySelector('.qfq-tip-arrow');
@@ -6759,27 +6779,23 @@ function closeDailyReminder() {
 
     var left, top;
     if (tip.pos === 'top') {
-      // Bulle au-dessus de l'élément
       left = rect.left + rect.width / 2 - tw / 2;
       top = rect.top - th - margin;
       arrow.className = 'qfq-tip-arrow arrow-bottom';
       arrow.style.bottom = '-6px';
       arrow.style.left = (tw / 2 - 6) + 'px';
     } else if (tip.pos === 'bottom') {
-      // Bulle en dessous
       left = rect.left + rect.width / 2 - tw / 2;
       top = rect.bottom + margin;
       arrow.className = 'qfq-tip-arrow arrow-top';
       arrow.style.top = '-6px';
       arrow.style.left = (tw / 2 - 6) + 'px';
     } else if (tip.pos === 'left') {
-      // Bulle à gauche
       left = rect.left - tw - margin;
       top = rect.top + rect.height / 2 - th / 2;
       arrow.className = 'qfq-tip-arrow arrow-right';
       arrow.style.right = '-6px';
     } else {
-      // Bulle à droite
       left = rect.right + margin;
       top = rect.top + rect.height / 2 - th / 2;
       arrow.className = 'qfq-tip-arrow arrow-left';
@@ -6795,8 +6811,8 @@ function closeDailyReminder() {
     tipEl.style.left = left + 'px';
     tipEl.style.top = top + 'px';
 
-    // Clic sur le bouton → suivant
-    tipEl.querySelector('.qfq-tip-btn').addEventListener('click', function(e) {
+    // Clic sur → suivant
+    tipEl.querySelector('.qfq-tip-next').addEventListener('click', function(e) {
       e.stopPropagation();
       removeTip(function() { showTip(index + 1); });
     });
