@@ -898,36 +898,35 @@ def profil_joueur(player_email):
                     unread_baby_tracking = get_unread_count_by_type(current_user_name, house_id, 'baby_tracking', existing_conn=conn, include_own=True)
                 except Exception:
                     pass
-        # Récompenses : uniquement si c'est son propre profil
-        if is_own_profile:
-            print(f"🎁 profil récompenses: requête pour user={player_email}", flush=True)
-            try:
-                c.execute("""
-                    SELECT id, reward_text, won_date
-                    FROM mystery_rewards
-                    WHERE user_email=? AND used=0
-                    ORDER BY id DESC
-                    LIMIT 3
-                """, (player_email,))
-                my_rewards_available = [{'id': r[0], 'text': r[1], 'date': r[2]} for r in c.fetchall()]
-                print(f"🎁 Récompenses disponibles: {len(my_rewards_available)}", flush=True)
-            except Exception as e:
-                _dbg(f"❌ Erreur récompenses disponibles: {e}")
-                import traceback; traceback.print_exc()
-                my_rewards_available = []
-            try:
-                c.execute("""
-                    SELECT id, reward_text, won_date, used_date
-                    FROM mystery_rewards
-                    WHERE user_email=? AND used=1
-                    ORDER BY used_date DESC
-                """, (player_email,))
-                my_rewards_used = [{'id': r[0], 'text': r[1], 'won_date': r[2], 'used_date': r[3]} for r in c.fetchall()]
-                print(f"🎁 Récompenses utilisées: {len(my_rewards_used)}", flush=True)
-            except Exception as e:
-                _dbg(f"❌ Erreur récompenses utilisées: {e}")
-                import traceback; traceback.print_exc()
-                my_rewards_used = []
+        # Récompenses : pour tout profil (pas seulement le sien)
+        print(f"🎁 profil récompenses: requête pour user={player_email}", flush=True)
+        try:
+            c.execute("""
+                SELECT id, reward_text, won_date
+                FROM mystery_rewards
+                WHERE user_email=? AND used=0
+                ORDER BY id DESC
+                LIMIT 3
+            """, (player_email,))
+            my_rewards_available = [{'id': r[0], 'text': r[1], 'date': r[2]} for r in c.fetchall()]
+            print(f"🎁 Récompenses disponibles: {len(my_rewards_available)}", flush=True)
+        except Exception as e:
+            _dbg(f"❌ Erreur récompenses disponibles: {e}")
+            import traceback; traceback.print_exc()
+            my_rewards_available = []
+        try:
+            c.execute("""
+                SELECT id, reward_text, won_date, used_date
+                FROM mystery_rewards
+                WHERE user_email=? AND used=1
+                ORDER BY used_date DESC
+            """, (player_email,))
+            my_rewards_used = [{'id': r[0], 'text': r[1], 'won_date': r[2], 'used_date': r[3]} for r in c.fetchall()]
+            print(f"🎁 Récompenses utilisées: {len(my_rewards_used)}", flush=True)
+        except Exception as e:
+            _dbg(f"❌ Erreur récompenses utilisées: {e}")
+            import traceback; traceback.print_exc()
+            my_rewards_used = []
         # ── Notifications gameplay reçues (bonus/malus/suspicions 48h) ──
         # Précharger les avatars des joueurs de la maison pour les bonus/malus
         _house_avatars = {}

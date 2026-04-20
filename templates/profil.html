@@ -354,10 +354,8 @@ body { min-height: 100vh; }
 
 
 
-    {% if is_own_profile %}
-
-    <!-- Mes récompenses -->
-    <div class="profil-section-title">Mes récompenses</div>
+    <!-- Récompenses -->
+    <div class="profil-section-title">{% if is_own_profile %}Mes récompenses{% else %}Récompenses{% endif %}</div>
     {% if my_rewards_available or my_rewards_used %}
     <div class="profil-reminders">
         {% if my_rewards_available %}
@@ -367,12 +365,14 @@ body { min-height: 100vh; }
                     <div class="profil-reward-text">🎁 {{ reward.text }}</div>
                     <div class="profil-reward-date">Gagnée le {{ reward.date | date_fr("day") }}</div>
                 </div>
+                {% if is_own_profile %}
                 <button class="profil-reward-use-btn"
                         data-reward-id="{{ reward.id }}"
                         data-reward-text="{{ reward.text }}"
                         onclick="profilConfirmUse(this.dataset.rewardId, this.dataset.rewardText)">
                     Utiliser
                 </button>
+                {% endif %}
             </div>
             {% endfor %}
         {% else %}
@@ -407,6 +407,7 @@ body { min-height: 100vh; }
     </div>
     {% endif %}
 
+    {% if is_own_profile %}
     <!-- Modal confirmation utilisation récompense -->
     <div id="profilRewardModal" class="profil-reward-modal" onclick="profilCloseModal()">
         <div class="profil-reward-modal-content" onclick="event.stopPropagation()">
