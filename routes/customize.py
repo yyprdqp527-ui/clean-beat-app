@@ -22,6 +22,38 @@ def set_bg_theme():
         return {'ok': False, 'error': str(e)}, 500
 
 
+@customize_bp.route('/toggle_room', methods=['POST'])
+def toggle_room():
+    from app import get_db_connection, _invalidate_house_cache
+    if 'user' not in session:
+        return {'ok': False}, 401
+    data = request.get_json(force=True)
+    room_key  = data.get('room_key', '')
+    is_hidden = 1 if data.get('is_hidden') else 0
+    if not room_key:
+        return {'ok': False, 'error': 'room_key manquant'}, 400
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row:
+            return {'ok': False}, 403
+        house_id = row[0]
+        c.execute("""
+            INSERT INTO custom_rooms (house_id, room_key, is_hidden)
+            VALUES (?, ?, ?)
+            ON CONFLICT(house_id, room_key) DO UPDATE SET is_hidden = excluded.is_hidden
+        """, (house_id, room_key, is_hidden))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return {'ok': False, 'error': str(e)}, 500
+    finally:
+        conn.close()
+    return {'ok': True}
+
+
 @customize_bp.route('/personnaliser_maison', methods=['GET', 'POST'])
 def personnaliser_maison():
     from app import (get_db_connection, _dbg, _invalidate_house_cache,

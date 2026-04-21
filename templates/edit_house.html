@@ -271,7 +271,7 @@
                                     type="checkbox"
                                     name="hidden_{{ room.key }}"
                                     {% if room.is_hidden %}checked{% endif %}
-                                    onchange="document.getElementById('item-{{ room.key }}').classList.toggle('is-hidden-item', this.checked)"
+                                    onchange="toggleRoom('{{ room.key }}', this)"
                                 >
                                 <span class="toggle-slider"></span>
                             </label>
@@ -287,6 +287,28 @@
         </form>
 
     </div>
+
+<script>
+function toggleRoom(roomKey, checkbox) {
+    var item = document.getElementById('item-' + roomKey);
+    item.classList.toggle('is-hidden-item', checkbox.checked);
+    fetch('/toggle_room', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ room_key: roomKey, is_hidden: checkbox.checked })
+    }).then(function(r) {
+        if (!r.ok) {
+            // rollback visuel si erreur
+            checkbox.checked = !checkbox.checked;
+            item.classList.toggle('is-hidden-item', checkbox.checked);
+        }
+    }).catch(function() {
+        checkbox.checked = !checkbox.checked;
+        item.classList.toggle('is-hidden-item', checkbox.checked);
+    });
+}
+</script>
 
 </body>
 </html>
