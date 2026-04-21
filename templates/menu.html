@@ -42,9 +42,10 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        var PURGE_KEY = 'cb_cache_purged_v1006';
+        var PURGE_KEY = 'cb_cache_purged_v1007';
         if (!localStorage.getItem(PURGE_KEY)) {
             localStorage.setItem(PURGE_KEY, '1');
+            localStorage.removeItem('qfq_tips_menu');
             localStorage.removeItem('qfq_tips_seen_v2');
             localStorage.removeItem('qfq_tip_tasks_seen');
             localStorage.removeItem('qfq_tip_points_seen');
