@@ -904,6 +904,13 @@ body {
                 <span class="share-invite-icon">📤</span>
                 <span class="share-invite-text">Envoyer l'invitation</span>
             </button>
+            <!-- icône cliquable à la place du lien texte -->
+            <a href="{{ join_url or '#' }}"
+               class="invite-link-icon"
+               target="_blank">
+              🏠
+              <span>Rejoindre la maison</span>
+            </a>
         </div>
 
         <!-- Enfants -->
@@ -1044,11 +1051,40 @@ body {
     display:flex;align-items:center;justify-content:center;
     padding:0;margin-right:6px;
 }
+.invite-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 50px;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  margin: 12px 0;
+}
+.invite-link-icon:active {
+  background: rgba(255,255,255,0.35);
+  transform: scale(0.97);
+}
 </style>
 
 <script>
 var joinUrl   = "{{ join_url or '' }}";
-var inviteMessage = "Les tâches ménagères c'est ch❤️ant...\non le sait tous ! 😅 Rejoins-moi sur\nQuiFaitQuoi et on s'aide à garder\nla maison nickel ! 🏠✨\n\nClique ici pour rejoindre ma maison 👇\n\n" + joinUrl + "\n\nCode : {{ house_code or '' }}";
+var inviteMessage = "On va pas se mentir, " +
+"les tâches ménagères c'est chiant !\n" +
+"Et s'embrouiller à cause d'elles, " +
+"c'est encore pire.\n" +
+"J'ai trouvé une appli géniale qui va " +
+"nous donner envie de les faire... 🏠✨\n\n" +
+"Alors, si t'es pas un crevard 😉, " +
+"rejoins-moi sur « QuiFaitQuoi »\n\n" +
+"Clique ici pour rejoindre notre maison 👇\n" +
+joinUrl;
 
 function selectHouseType(type) {
     ['family','couple','coloc'].forEach(function(t) {
