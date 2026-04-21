@@ -157,7 +157,14 @@ window.QfqTips = {
       '</div>';
 
     document.body.appendChild(this._tipEl);
-    this._position(target, tip.position || 'bottom');
+
+    // Attend le rendu pour que offsetHeight soit correct
+    var self2 = this;
+    var tgt2 = target;
+    var pos2 = tip.position || 'bottom';
+    requestAnimationFrame(function() {
+      self2._position(tgt2, pos2);
+    });
 
     // Navigation
     var self = this;
