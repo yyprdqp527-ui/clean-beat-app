@@ -49,8 +49,9 @@
       "url": "/comments",
       "icons": [
         {
-          "src": "/static/images/logo.png",
-          "sizes": "192x192"
+          "src": "/static/qfq-icon-192-v2.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }
