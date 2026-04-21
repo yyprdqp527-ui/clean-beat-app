@@ -6175,11 +6175,6 @@ function refreshAllBadges() {
             btn.addEventListener('click', async function() {
                 banner.style.display = 'none';
                 sessionStorage.setItem('pushBannerDismissed', '1');
-                if (Notification.permission === 'denied') {
-                    // iOS : impossible de demander via JS → guider vers les réglages
-                    alert('Pour activer les notifications, va dans Réglages > CleanBeat > Notifications.');
-                    return;
-                }
                 if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
                     await window.cleanBeatPush.requestPermission();
                 } else {
