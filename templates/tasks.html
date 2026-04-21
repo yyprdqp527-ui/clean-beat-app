@@ -778,5 +778,35 @@ window.addEventListener('DOMContentLoaded', function(){ var toast=document.getEl
 })();
 </script>
 
+<script src="{{ url_for('static', filename='js/qfq-tips.js') }}"></script>
+<script>
+(function() {
+  var KEY = 'qfq_tips_tasks';
+  if (localStorage.getItem(KEY)) return;
+
+  var TIPS = [
+    {
+      target: 'a.task-card',
+      text: '✅ Fais la tâche en vrai, puis clique sur ton avatar pour valider et marquer tes points !',
+      position: 'bottom'
+    },
+    {
+      target: '.points-badge',
+      text: '✏️ Tu peux modifier les points de chaque tâche selon sa difficulté !',
+      position: 'bottom'
+    },
+    {
+      target: 'a.add-task-btn',
+      text: '⭐ Ajoute tes propres missions perso ! Elles valent des points aussi.',
+      position: 'top'
+    }
+  ];
+
+  setTimeout(function() {
+    window.QfqTips.init(TIPS, KEY, null);
+  }, 800);
+})();
+</script>
+
 {% endblock %}
 

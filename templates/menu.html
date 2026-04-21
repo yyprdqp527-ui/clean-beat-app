@@ -6543,6 +6543,7 @@ function refreshAllBadges() {
       .style.display = 'none';
     fetch('/api/mark_onboarding_seen',
       {method:'POST'});
+    window.dispatchEvent(new Event('qfq_onboarding_done'));
   }
 
   window.obNext = obNext;
@@ -6609,6 +6610,57 @@ function closeDailyReminder() {
 })();
 {% endif %}
 
+</script>
+
+<script src="{{ url_for('static', filename='js/qfq-tips.js') }}"></script>
+<script>
+(function() {
+  var KEY = 'qfq_tips_menu';
+  if (localStorage.getItem(KEY)) return;
+
+  var TIPS = [
+    {
+      target: '.rooms-isometric .room-card:first-child',
+      text: '🏠 Choisis une pièce, fais la tâche en vrai et valide-la pour gagner des points !',
+      position: 'bottom'
+    },
+    {
+      target: '#weekGiftIcon',
+      text: '🎁 Chaque dimanche, le joueur avec le plus de points ouvre une grille de récompenses que les autres devront lui faire !',
+      position: 'bottom'
+    },
+    {
+      target: '.room-card-visual[data-category="chambre_bebe"]',
+      text: '👶 Suivez ensemble biberon, couches et dodo en temps réel ! Pas de bébé ? Supprimez la chambre dans Settings.',
+      position: 'bottom'
+    },
+    {
+      target: '.gameplay-btn',
+      text: '🎮 Envoie des bonus ou des malus à tes partenaires, récupère un max de points en faisant des trucs chiants et débusque les fumistes de la baraque !',
+      position: 'top'
+    },
+    {
+      target: '#cwTabCourses',
+      text: '🛒 Liste de courses partagée. Chaque article coché = 1 point !',
+      position: 'top'
+    }
+  ];
+
+  function startTips() {
+    if (localStorage.getItem(KEY)) return;
+    window.QfqTips.init(TIPS, KEY, null);
+  }
+
+  // Si onboarding visible → attend sa fermeture
+  var obOverlay = document.getElementById('ob-overlay');
+  if (obOverlay &&
+      obOverlay.style.display !== 'none' &&
+      obOverlay.offsetParent !== null) {
+    window.addEventListener('qfq_onboarding_done', startTips);
+  } else {
+    setTimeout(startTips, 800);
+  }
+})();
 </script>
 
 
