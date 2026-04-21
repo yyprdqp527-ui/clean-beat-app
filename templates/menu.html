@@ -6105,9 +6105,11 @@ function refreshAllBadges() {
     var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
+    window._pwaCanInstall = false;
     function showInstallBanner(){banner.style.display='block';} window.showInstallBanner = showInstallBanner;
     window.addEventListener('beforeinstallprompt',function(e){
         e.preventDefault();deferred=e;
+        window._pwaCanInstall = true;
         document.getElementById('pwa-android-msg').style.display='block';
         document.getElementById('pwa-android-btn-wrap').style.display='block';
         if (localStorage.getItem('qfq_tips_menu')) {
@@ -6122,6 +6124,7 @@ function refreshAllBadges() {
         });}
     });
     if(isIOS){
+        window._pwaCanInstall = true;
         document.getElementById('pwa-ios-msg').style.display='block';
         if (localStorage.getItem('qfq_tips_menu')) {
           showInstallBanner();
@@ -6185,11 +6188,23 @@ function refreshAllBadges() {
         if (pwaBanner) {
           pwaObserver.observe(pwaBanner, {attributes: true});
         }
-        setTimeout(function() {
-          if (pwaBanner && pwaBanner.style.display !== 'block') {
-            tryShowPushBanner();
-          }
-        }, 8000);
+        if (localStorage.getItem('qfq_tips_menu')) {
+          // Bulles déjà vues → fallback 8s normal
+          setTimeout(function() {
+            if (pwaBanner && pwaBanner.style.display !== 'block') {
+              tryShowPushBanner();
+            }
+          }, 8000);
+        } else {
+          // Première visite → attend la fin des bulles, puis le PWA banner
+          window.addEventListener('qfq_tips_done', function() {
+            setTimeout(function() {
+              if (pwaBanner && pwaBanner.style.display !== 'block') {
+                tryShowPushBanner();
+              }
+            }, 10000);
+          }, {once: true});
+        }
 
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
@@ -6682,7 +6697,7 @@ function closeDailyReminder() {
     if (localStorage.getItem(KEY)) return;
     window.QfqTips.init(TIPS, KEY, function() {
       setTimeout(function() {
-        if (typeof showInstallBanner === 'function') {
+        if (typeof showInstallBanner === 'function' && window._pwaCanInstall) {
           showInstallBanner();
         }
       }, 500);
