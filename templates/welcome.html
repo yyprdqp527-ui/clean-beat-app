@@ -112,11 +112,22 @@
       100% { opacity:1; transform:scale(1) translateY(0) rotate(0); }
     }
 
-    .sp-divider {
-      width:50px; height:4px; border-radius:2px;
-      background: {% if bg_theme_light %}rgba(0,0,0,0.15){% else %}rgba(255,255,255,0.3){% endif %};
-      margin:12px 0 8px;
-      opacity:0; transition:opacity 0.4s;
+    /* Point d'interrogation pêche animé */
+    .sp-question {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 80px;
+      color: #FDAE54;
+      line-height: 1;
+      opacity: 0;
+      animation: spQPop 1.8s cubic-bezier(.36,.07,.19,.97) 2.0s forwards;
+    }
+    @keyframes spQPop {
+      0%   { opacity:0; transform:scale(0.2) rotate(-15deg); }
+      35%  { opacity:1; transform:scale(1.4) rotate(10deg); }
+      55%  { opacity:1; transform:scale(1.0) rotate(-4deg); }
+      70%  { opacity:1; transform:scale(1.25) rotate(2deg); }
+      85%  { opacity:0.6; transform:scale(1.8) rotate(0deg); }
+      100% { opacity:0; transform:scale(3.0) rotate(0deg); }
     }
     .sp-t3 {
       font-family: 'Bubblegum Sans', cursive;
@@ -198,14 +209,10 @@
   <div class="sp-glass">
     <div class="sp-t1">QUI FAIT QUOI</div>
     <div class="sp-t2">DANS LA BARAQUE</div>
-    <div class="sp-divider" id="spDiv"></div>
+    <div class="sp-question" id="spQ">?</div>
     <div class="sp-t3">
       <span id="spLine3"></span>
       <span class="sp-cursor" id="spCur3" style="height:22px;display:none"></span>
-    </div>
-    <div class="sp-t4">
-      <span id="spLine4"></span>
-      <span class="sp-cursor" id="spCur4" style="height:22px;display:none"></span>
     </div>
     <div class="welcome-buttons" id="welcomeButtons">
       <a href="{{ url_for('auth.signup_email') }}" class="welcome-btn-primary">Créer mon compte</a>
@@ -233,235 +240,13 @@
     }
 
     function startTypewriter() {
-      document.getElementById('spDiv').style.opacity = '1';
-      spType('spLine3', 'spCur3', "Que le meilleur", 65, function() {
-        setTimeout(function() {
-          spType('spLine4', 'spCur4', "gagne !", 65, function() {
-            document.getElementById('welcomeButtons').style.opacity = '1';
-          });
-        }, 150);
+      spType('spLine3', 'spCur3', "Enfin la vérité !", 65, function() {
+        document.getElementById('welcomeButtons').style.opacity = '1';
       });
     }
 
-    setTimeout(startTypewriter, 2100);
+    // Le ? apparaît à 2s et dure 1.8s → typewriter démarre à 3.9s
+    setTimeout(startTypewriter, 3900);
   </script>
-</body>
-</html>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: {{ bg_gradient }};
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        .welcome-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 40px 20px;
-            position: relative;
-        }
-
-        /* Bulles décoratives */
-        .welcome-bubble {
-            position: fixed;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.08);
-            animation: bubbleFloat 6s ease-in-out infinite;
-        }
-        .welcome-bubble.b1 {
-            width: 200px; height: 200px;
-            top: -50px; left: -80px;
-            animation-delay: 0s;
-        }
-        .welcome-bubble.b2 {
-            width: 150px; height: 150px;
-            top: 30%; right: -40px;
-            animation-delay: 1s;
-        }
-        .welcome-bubble.b3 {
-            width: 100px; height: 100px;
-            bottom: 20%; left: 10%;
-            animation-delay: 2s;
-        }
-        .welcome-bubble.b4 {
-            width: 250px; height: 250px;
-            bottom: -80px; right: -60px;
-            animation-delay: 0.5s;
-        }
-        @keyframes bubbleFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
-        /* Texte principal */
-        .welcome-title {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .w-line1, .w-line2, .w-line3 {
-            font-family: 'Bubblegum Sans', cursive;
-            font-size: clamp(52px, 15vw, 80px);
-            color: white;
-            line-height: 1;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            animation: bounceIn 0.6s ease both;
-        }
-        .w-line1 { animation-delay: 0.1s; }
-        .w-line2 { animation-delay: 0.3s; }
-        .w-line3 { animation-delay: 0.5s; }
-        .w-line4 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: clamp(16px, 4vw, 22px);
-            color: rgba(255,255,255,0.85);
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-top: 6px;
-            animation: bounceIn 0.6s ease 0.7s both;
-        }
-
-        @keyframes bounceIn {
-            0% { opacity: 0; transform: scale(0.3); }
-            50% { transform: scale(1.1); }
-            70% { transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Point d'interrogation animé */
-        .welcome-question {
-            font-family: 'Bubblegum Sans', cursive;
-            font-size: clamp(60px, 18vw, 100px);
-            color: #FDAE54;
-            text-shadow: 0 4px 20px rgba(253,174,84,0.4);
-            animation: questionPulse 1.5s ease-in-out infinite;
-            line-height: 1;
-            margin: -10px 0;
-        }
-        @keyframes questionPulse {
-            0%, 100% {
-                transform: scale(1) rotate(-5deg);
-                text-shadow: 0 4px 20px rgba(253,174,84,0.4);
-            }
-            50% {
-                transform: scale(1.2) rotate(5deg);
-                text-shadow: 0 8px 30px rgba(253,174,84,0.7);
-            }
-        }
-
-        /* Sous-titre */
-        .welcome-subtitle {
-            font-family: 'Montserrat', sans-serif;
-            font-size: clamp(18px, 5vw, 26px);
-            font-weight: 800;
-            color: white;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            margin: 16px 0 40px;
-            animation: bounceIn 0.6s ease 0.9s both;
-        }
-
-        /* Boutons */
-        .welcome-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            width: 100%;
-            max-width: 300px;
-            animation: bounceIn 0.6s ease 1.1s both;
-        }
-        .welcome-btn-primary {
-            display: block;
-            text-align: center;
-            padding: 16px 24px;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.25);
-            border: 2px solid rgba(255,255,255,0.5);
-            color: white;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            text-decoration: none;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s ease;
-        }
-        .welcome-btn-primary:active {
-            background: rgba(255,255,255,0.4);
-            transform: scale(0.97);
-        }
-        .welcome-btn-secondary {
-            display: block;
-            text-align: center;
-            padding: 14px 24px;
-            border-radius: 50px;
-            background: transparent;
-            border: 1.5px solid rgba(255,255,255,0.35);
-            color: rgba(255,255,255,0.85);
-            font-family: 'Montserrat', sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .welcome-btn-secondary:active {
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* Police Bubblegum Sans */
-        @font-face {
-            font-family: 'Bubblegum Sans';
-            src: url("{{ url_for('static', filename='fonts/BubblegumSans-Regular.ttf') }}") format('truetype');
-        }
-    </style>
-</head>
-<body>
-
-    <div class="welcome-container">
-
-        <!-- Bulles décoratives comme splash -->
-        <div class="welcome-bubble b1"></div>
-        <div class="welcome-bubble b2"></div>
-        <div class="welcome-bubble b3"></div>
-        <div class="welcome-bubble b4"></div>
-
-        <!-- Texte principal animé -->
-        <div class="welcome-title">
-            <span class="w-line1">QUI</span>
-            <span class="w-line2">FAIT</span>
-            <span class="w-line3">QUOI</span>
-            <span class="w-line4">DANS LA BARAQUE</span>
-        </div>
-
-        <!-- Point d'interrogation animé -->
-        <div class="welcome-question">?</div>
-
-        <!-- Sous-titre -->
-        <div class="welcome-subtitle">
-            Enfin la vérité !
-        </div>
-
-        <!-- Boutons -->
-        <div class="welcome-buttons">
-            <a href="{{ url_for('auth.signup_email') }}"
-               class="welcome-btn-primary">
-                Créer mon compte
-            </a>
-            <a href="{{ url_for('auth.login') }}"
-               class="welcome-btn-secondary">
-                J'ai déjà un compte
-            </a>
-        </div>
-
-    </div>
-
 </body>
 </html>
