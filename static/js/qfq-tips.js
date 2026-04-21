@@ -10,7 +10,7 @@ var QFQ_TIPS_CSS = `
   max-width: 260px;
   padding: 14px 16px 10px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.92) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.45);
@@ -19,6 +19,7 @@ var QFQ_TIPS_CSS = `
   font-family: 'Montserrat', sans-serif;
   cursor: pointer;
   animation: qfqTipIn 0.3s ease;
+  color: #153036 !important;
 }
 @keyframes qfqTipIn {
   0% { opacity:0; transform:scale(0.85); }
@@ -28,7 +29,7 @@ var QFQ_TIPS_CSS = `
   font-size: 13px;
   font-weight: 600;
   line-height: 1.45;
-  color: #153036;
+  color: #153036 !important;
 }
 .qfq-tip-nav {
   display: flex;
@@ -42,7 +43,7 @@ var QFQ_TIPS_CSS = `
   background: rgba(21,48,54,0.12);
   border: 1px solid rgba(21,48,54,0.2);
   border-radius: 20px;
-  color: #153036;
+  color: #153036 !important;
   font-size: 13px;
   font-weight: 600;
   padding: 4px 10px;
@@ -54,7 +55,7 @@ var QFQ_TIPS_CSS = `
 }
 .qfq-tip-counter {
   font-size: 11px;
-  color: rgba(21,48,54,0.5);
+  color: rgba(21,48,54,0.5) !important;
   font-weight: 500;
 }
 /* Triangle rouge pointeur */
@@ -198,6 +199,8 @@ window.QfqTips = {
     } else {
       top = rect.top - tipH - margin;
     }
+    // Clamping vertical : jamais hors viewport
+    top = Math.max(10, Math.min(top, window.innerHeight - tipH - 10));
 
     // Position flèche rouge sur la cible
     var arrowLeft = rect.left + rect.width / 2 - left;
