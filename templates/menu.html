@@ -6110,7 +6110,13 @@ function refreshAllBadges() {
         e.preventDefault();deferred=e;
         document.getElementById('pwa-android-msg').style.display='block';
         document.getElementById('pwa-android-btn-wrap').style.display='block';
-        showInstallBanner();
+        if (localStorage.getItem('qfq_tips_menu')) {
+          showInstallBanner();
+        } else {
+          window.addEventListener('qfq_tips_done', function() {
+            setTimeout(showInstallBanner, 500);
+          }, {once: true});
+        }
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
         if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
@@ -6120,7 +6126,13 @@ function refreshAllBadges() {
     });
     if(isIOS){
         document.getElementById('pwa-ios-msg').style.display='block';
-        showInstallBanner();
+        if (localStorage.getItem('qfq_tips_menu')) {
+          showInstallBanner();
+        } else {
+          window.addEventListener('qfq_tips_done', function() {
+            setTimeout(showInstallBanner, 500);
+          }, {once: true});
+        }
     }
     // ✕ → cache pour cette session, réapparaît à la prochaine visite
     window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';sessionStorage.setItem('pwa_dismissed_session','1');};
@@ -6157,7 +6169,33 @@ function refreshAllBadges() {
 
         // 'default' ou 'denied' → affiche la bannière après 3s (sans jamais demander automatiquement)
         function showPushBanner(){ banner.style.display = 'block'; }
-        setTimeout(showPushBanner, 3000);
+        function tryShowPushBanner() {
+          if (Notification.permission === 'granted') return;
+          if (sessionStorage.getItem('pushBannerDismissed')) return;
+          showPushBanner();
+        }
+        var pwaBanner = document.getElementById('pwa-install-banner');
+        function onPwaClosed() {
+          setTimeout(tryShowPushBanner, 2000);
+        }
+        var pwaObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(m) {
+            if (m.type === 'attributes' && m.attributeName === 'style') {
+              if (pwaBanner.style.display === 'none') {
+                pwaObserver.disconnect();
+                onPwaClosed();
+              }
+            }
+          });
+        });
+        if (pwaBanner) {
+          pwaObserver.observe(pwaBanner, {attributes: true});
+        }
+        setTimeout(function() {
+          if (pwaBanner && pwaBanner.style.display !== 'block') {
+            tryShowPushBanner();
+          }
+        }, 8000);
 
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
