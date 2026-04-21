@@ -45,7 +45,12 @@
         var PURGE_KEY = 'cb_cache_purged_v1006';
         if (!localStorage.getItem(PURGE_KEY)) {
             localStorage.setItem(PURGE_KEY, '1');
-            try { localStorage.removeItem('cleanbeat_sound_prefs'); } catch(e) {}
+            localStorage.removeItem('qfq_tips_seen_v2');
+            localStorage.removeItem('qfq_tip_tasks_seen');
+            localStorage.removeItem('qfq_tip_points_seen');
+            localStorage.removeItem('qfq_tip_settings_avatar');
+            localStorage.removeItem('qfq_tip_settings_house');
+            localStorage.removeItem('cb_cache_purged_v1004');
             if ('caches' in window) {
                 caches.keys().then(function(names) {
                     names.forEach(function(name) { caches.delete(name); });
@@ -6105,8 +6110,7 @@ function refreshAllBadges() {
         e.preventDefault();deferred=e;
         document.getElementById('pwa-android-msg').style.display='block';
         document.getElementById('pwa-android-btn-wrap').style.display='block';
-        if(localStorage.getItem('qfq_tips_seen_v2')){showInstallBanner();}
-        else{window.addEventListener('qfq_tips_done',function(){showInstallBanner();},{once:true});}
+        showInstallBanner();
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
         if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
@@ -6116,8 +6120,7 @@ function refreshAllBadges() {
     });
     if(isIOS){
         document.getElementById('pwa-ios-msg').style.display='block';
-        if(localStorage.getItem('qfq_tips_seen_v2')){showInstallBanner();}
-        else{window.addEventListener('qfq_tips_done',function(){showInstallBanner();},{once:true});}
+        showInstallBanner();
     }
     // ✕ → cache pour cette session, réapparaît à la prochaine visite
     window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';sessionStorage.setItem('pwa_dismissed_session','1');};
@@ -6155,7 +6158,7 @@ function refreshAllBadges() {
         // 'default' ou 'denied' → affiche la bannière après 3s (sans jamais demander automatiquement)
         function showPushBanner(){ banner.style.display = 'block'; }
         setTimeout(function() {
-            if(localStorage.getItem('qfq_tips_seen_v2')){
+            if(localStorage.getItem('qfq_tips_menu')){
                 showPushBanner();
             } else {
                 window.addEventListener('qfq_tips_done', function(){
@@ -6548,7 +6551,7 @@ function refreshAllBadges() {
       .style.display = 'none';
     fetch('/api/mark_onboarding_seen',
       {method:'POST'});
-    if (!localStorage.getItem('qfq_tips_seen_v2')) {
+    if (!localStorage.getItem('qfq_tips_menu')) {
       setTimeout(function() { showTip(0); }, 500);
     }
   }
@@ -6709,8 +6712,8 @@ function closeDailyReminder() {
 
 <script>
 (function() {
-  // Ne montrer qu'une seule fois (v2 = reset après corrections)
-  if (localStorage.getItem('qfq_tips_seen_v2')) return;
+  // Ne montrer qu'une seule fois
+  if (localStorage.getItem('qfq_tips_menu')) return;
   // Ne pas montrer si l'onboarding est actif
   if (document.getElementById('ob-overlay')) return;
 
@@ -6783,7 +6786,7 @@ function closeDailyReminder() {
 
   function showTip(index) {
     if (index >= QFQ_TIPS.length) {
-      localStorage.setItem('qfq_tips_seen_v2', '1');
+      localStorage.setItem('qfq_tips_menu', '1');
       window.dispatchEvent(new Event('qfq_tips_done'));
       return;
     }
@@ -6827,7 +6830,7 @@ function closeDailyReminder() {
     var left = Math.max(10, Math.min(targetCX - tw / 2, window.innerWidth - tw - 10));
 
     // Vertical : dessous si ça rentre, sinon dessus
-    var avatarExtra = (tip.target === '.avatar-col:first-child') ? 13 : 0;
+    var avatarExtra = (tip.target === '.avatar-col:first-child') ? 16 : 0;
     var top, posClass;
     if (rect.bottom + th + 12 <= window.innerHeight - 10) {
       top = rect.bottom + 12;

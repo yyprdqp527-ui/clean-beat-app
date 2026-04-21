@@ -1162,32 +1162,6 @@ window.showGlassPopup = function(message, category = 'info', duration = 3000) {
 })();
 </script>
 
-<!-- 📱 Service Worker pour PWA (mode app native) -->
-<script>
-// Forcer le renouvellement du cache (v1003)
-(function() {
-    var PURGE_KEY = 'cb_cache_purged_v1004';
-    if (!localStorage.getItem(PURGE_KEY)) {
-        localStorage.setItem(PURGE_KEY, '1');
-        // Purger aussi les préférences son pour garantir enabled=true
-        try { localStorage.removeItem('cleanbeat_sound_prefs'); } catch(e) {}
-        if ('caches' in window) {
-            caches.keys().then(function(names) {
-                names.forEach(function(name) { caches.delete(name); });
-            });
-        }
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
-                regs.forEach(function(r) { r.unregister(); });
-                setTimeout(function() { location.reload(true); }, 500);
-            });
-            return;
-        }
-    }
-})();
-/* Service Worker unique : sw.js est enregistré par push-notifications.js */
-</script>
-
 {% block extra_scripts %}{% endblock %}
 
 <script>
