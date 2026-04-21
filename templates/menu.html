@@ -6062,11 +6062,24 @@ function refreshAllBadges() {
         <div style="flex:1;">
             <div style="font-size:15px;font-weight:800;margin-bottom:6px;color:#153036;">📲 Installe QuiFaitQuoi sur ton écran d'accueil</div>
             <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.8;color:#597176;">
-                <strong style="color:#153036;">Suis ces 4 étapes&nbsp;:</strong><br>
-                1️⃣ Ouvre cette page dans <strong>Safari</strong> (pas Chrome)<br>
-                2️⃣ Appuie sur le bouton <strong>Partager</strong> <svg style="display:inline-block;vertical-align:middle;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> en bas de l'écran<br>
-                3️⃣ Fais défiler et appuie sur <strong>« Sur l'écran d'accueil »</strong><br>
-                4️⃣ Appuie sur <strong>« Ajouter »</strong> en haut à droite
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;align-items:flex-start;gap:8px;">
+                        <span style="background:#153036;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;">1</span>
+                        <span>Ouvre cette page dans <strong>Safari</strong> (pas Chrome)</span>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:8px;">
+                        <span style="background:#153036;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;">2</span>
+                        <span>Appuie sur le bouton <strong>Partager</strong> <svg style="display:inline-block;vertical-align:middle;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> en bas de l'écran.<br><small style="opacity:0.7">⚠️ Ce bouton peut aussi se trouver dans le rond avec 3 petits points ···</small></span>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:8px;">
+                        <span style="background:#153036;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;">3</span>
+                        <span>Appuie sur <strong>« Sur l'écran d'accueil »</strong></span>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:8px;">
+                        <span style="background:#153036;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;">4</span>
+                        <span>Appuie sur <strong>« Ajouter »</strong> ✅</span>
+                    </div>
+                </div>
             </div>
             <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Appuie sur <strong>« Ajouter »</strong> ci-dessous pour installer QuiFaitQuoi sur ton écran d'accueil et recevoir les notifications même quand l'appli est fermée&nbsp;📲</div>
         </div>
@@ -6117,7 +6130,6 @@ function refreshAllBadges() {
         <span style="font-size:28px; flex-shrink:0;">🔔</span>
         <div style="flex:1; min-width:0;">
             <div style="font-weight:800; font-size:14px; color:#153036;">Activer les notifications</div>
-            <div style="font-size:12px; color:rgba(21,48,54,0.75); margin-top:2px;">Reçois les alertes même quand l'appli est fermée</div>
         </div>
         <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; flex-shrink:0; white-space:nowrap;">Activer</button>
         <button id="push-notif-banner-close" style="background:none; border:none; color:rgba(21,48,54,0.5); font-size:20px; cursor:pointer; flex-shrink:0; padding:0 0 0 4px; line-height:1;">×</button>
@@ -6820,12 +6832,13 @@ function closeDailyReminder() {
     var left = Math.max(10, Math.min(targetCX - tw / 2, window.innerWidth - tw - 10));
 
     // Vertical : dessous si ça rentre, sinon dessus
+    var avatarExtra = (tip.target === '.avatar-col:first-child') ? 13 : 0;
     var top, posClass;
     if (rect.bottom + th + 12 <= window.innerHeight - 10) {
       top = rect.bottom + 12;
       posClass = 'pos-bottom';
     } else {
-      top = rect.top - th - 12;
+      top = rect.top - th - 12 - avatarExtra;
       posClass = 'pos-top';
     }
 
