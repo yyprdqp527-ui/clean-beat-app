@@ -1651,7 +1651,7 @@ def api_rooms_with_missions():
                 WHERE ctd.house_id = ct.house_id
                 AND ctd.category = ct.category
                 AND ctd.task_name = ct.task_name
-                AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
+                AND ctd.completed_at >= ct.created_at
             )
             GROUP BY ct.category
         """, (house_id,))
