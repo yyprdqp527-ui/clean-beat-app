@@ -49,6 +49,10 @@ def home():
 def signup_email():
     """Inscription avec email - ÉTAPE 1 du parcours"""
     from app import get_db_connection, _DBIntegrityError
+    # Si pas de code dans l'URL → supprime l'ancien code en session
+    # pour éviter de bloquer le joueur principal avec un code périmé
+    if not request.args.get('code'):
+        session.pop('invite_code', None)
     # Code d'invitation éventuel (joueur invité via SMS)
     invite_code = request.args.get('code', '').strip().upper() or session.get('invite_code', '')
 
