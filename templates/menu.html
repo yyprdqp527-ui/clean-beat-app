@@ -6188,23 +6188,16 @@ function refreshAllBadges() {
         if (pwaBanner) {
           pwaObserver.observe(pwaBanner, {attributes: true});
         }
-        if (localStorage.getItem('qfq_tips_menu')) {
-          // Bulles déjà vues → fallback 8s normal
+        // Après les bulles (ou si déjà vues) :
+        // - Pas de PWA → push après 3s
+        // - PWA visible → le MutationObserver déclenche push quand il se ferme
+        window.addEventListener('menu_tips_done', function() {
           setTimeout(function() {
-            if (pwaBanner && pwaBanner.style.display !== 'block') {
-              tryShowPushBanner();
+            if (!window._pwaCanInstall) {
+              setTimeout(tryShowPushBanner, 3000);
             }
-          }, 8000);
-        } else {
-          // Première visite → attend la fin des bulles, puis le PWA banner
-          window.addEventListener('qfq_tips_done', function() {
-            setTimeout(function() {
-              if (pwaBanner && pwaBanner.style.display !== 'block') {
-                tryShowPushBanner();
-              }
-            }, 10000);
-          }, {once: true});
-        }
+          }, 500);
+        }, {once: true});
 
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
@@ -6694,25 +6687,18 @@ function closeDailyReminder() {
   ];
 
   function startTips() {
-    if (localStorage.getItem(KEY)) return;
+    if (localStorage.getItem(KEY)) {
+      // Bulles déjà vues → déclenche la suite directement
+      window.dispatchEvent(new Event('menu_tips_done'));
+      return;
+    }
     window.QfqTips.init(TIPS, KEY, function() {
-      setTimeout(function() {
-        if (typeof showInstallBanner === 'function' && window._pwaCanInstall) {
-          showInstallBanner();
-        }
-      }, 500);
+      window.dispatchEvent(new Event('menu_tips_done'));
     });
   }
 
-  // Si onboarding visible → attend sa fermeture
-  var obOverlay = document.getElementById('ob-overlay');
-  if (obOverlay &&
-      obOverlay.style.display !== 'none' &&
-      obOverlay.offsetParent !== null) {
-    window.addEventListener('qfq_onboarding_done', startTips);
-  } else {
-    setTimeout(startTips, 800);
-  }
+  // Démarre les bulles après 1s (laisse le DOM se stabiliser)
+  setTimeout(startTips, 1000);
 })();
 </script>
 
