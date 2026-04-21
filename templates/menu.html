@@ -6105,18 +6105,15 @@ function refreshAllBadges() {
     var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
-    function showInstallBanner(){banner.style.display='block';}
+    function showInstallBanner(){banner.style.display='block';} window.showInstallBanner = showInstallBanner;
     window.addEventListener('beforeinstallprompt',function(e){
         e.preventDefault();deferred=e;
         document.getElementById('pwa-android-msg').style.display='block';
         document.getElementById('pwa-android-btn-wrap').style.display='block';
         if (localStorage.getItem('qfq_tips_menu')) {
           showInstallBanner();
-        } else {
-          window.addEventListener('qfq_tips_done', function() {
-            setTimeout(showInstallBanner, 500);
-          }, {once: true});
         }
+        // Sinon le callback QfqTips.init() s'en charge
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
         if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
@@ -6128,11 +6125,8 @@ function refreshAllBadges() {
         document.getElementById('pwa-ios-msg').style.display='block';
         if (localStorage.getItem('qfq_tips_menu')) {
           showInstallBanner();
-        } else {
-          window.addEventListener('qfq_tips_done', function() {
-            setTimeout(showInstallBanner, 500);
-          }, {once: true});
         }
+        // Sinon le callback QfqTips.init() s'en charge
     }
     // ✕ → cache pour cette session, réapparaît à la prochaine visite
     window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';sessionStorage.setItem('pwa_dismissed_session','1');};
@@ -6686,7 +6680,13 @@ function closeDailyReminder() {
 
   function startTips() {
     if (localStorage.getItem(KEY)) return;
-    window.QfqTips.init(TIPS, KEY, null);
+    window.QfqTips.init(TIPS, KEY, function() {
+      setTimeout(function() {
+        if (typeof showInstallBanner === 'function') {
+          showInstallBanner();
+        }
+      }, 500);
+    });
   }
 
   // Si onboarding visible → attend sa fermeture

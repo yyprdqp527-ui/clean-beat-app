@@ -3678,7 +3678,7 @@ def menu():
                 conn.close()
                 return redirect(url_for('auth.welcome'))
             
-            show_onboarding = not bool(has_seen_onboarding)
+            show_onboarding = False  # Slides remplacées par les bulles QfqTips
             is_invited_player = bool(session.get('invite_code') or session.get('joined_via_invite'))
             onboarding_type = 'invited' if is_invited_player else 'creator'
             print(f"🏠 MENU CHECK: name={user_name}, avatar={user_avatar}, file={user_avatar_file}, step={registration_step}", flush=True)
