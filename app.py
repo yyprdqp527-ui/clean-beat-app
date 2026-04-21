@@ -692,7 +692,7 @@ def inject_bg_theme():
             c.execute("SELECT bg_theme FROM users WHERE email=?", (session['user'],))
             row = c.fetchone()
             conn.close()
-            if row and row[0] and row[0] in BG_THEMES:
+            if row and row[0] and row[0] != 'bleu' and row[0] in BG_THEMES:
                 theme_name = row[0]
                 bg = BG_THEMES[theme_name]
     except Exception:
@@ -2096,7 +2096,7 @@ CREATE TABLE IF NOT EXISTS users (
 
     # Thème de fond par joueur (indépendant de la maison)
     try:
-        c.execute("ALTER TABLE users ADD COLUMN bg_theme TEXT DEFAULT 'bleu'")
+        c.execute("ALTER TABLE users ADD COLUMN bg_theme TEXT DEFAULT 'ocean'")
         conn.commit()
     except Exception:
         pass  # Colonne déjà existante
