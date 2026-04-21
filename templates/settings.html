@@ -193,14 +193,16 @@
   font-size: 18px; color: #FDAE54; font-weight: 800;
   background: none; border: none; cursor: pointer; line-height: 1;
 }
-.qfq-page-tip-arrow {
-  position: absolute; width: 18px; height: 18px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(253,174,84,0.08) 100%);
-  transform: rotate(45deg);
-  border: 3px solid rgba(253,174,84,0.45);
+.qfq-page-tip.pos-top::before {
+  content: ''; position: absolute; bottom: -16px; left: var(--arrow-x, 50%); transform: translateX(-50%);
+  border-left: 15px solid transparent; border-right: 15px solid transparent;
+  border-top: 16px solid rgba(255,71,87,0.25);
 }
-.qfq-page-tip-arrow.arrow-top { border-bottom: none; border-right: none; }
-.qfq-page-tip-arrow.arrow-bottom { border-top: none; border-left: none; }
+.qfq-page-tip.pos-top::after {
+  content: ''; position: absolute; bottom: -11px; left: var(--arrow-x, 50%); transform: translateX(-50%);
+  border-left: 11px solid transparent; border-right: 11px solid transparent;
+  border-top: 12px solid #ff4757;
+}
 @keyframes pageTipIn {
   0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -236,20 +238,20 @@
     var el = document.querySelector(t.target);
     if (!el) { idx++; showTip(); return; }
     var rect = el.getBoundingClientRect();
+    var targetCX = rect.left + rect.width / 2;
     var tip = document.createElement('div');
-    tip.className = 'qfq-page-tip';
+    tip.className = 'qfq-page-tip pos-top';
     tip.innerHTML = '<div class="qfq-page-tip-text">' + t.text + '</div>'
-      + '<button class="qfq-page-tip-close">\u2715</button>'
-      + '<div class="qfq-page-tip-arrow arrow-bottom"></div>';
+      + '<button class="qfq-page-tip-close">\u2715</button>';
+    tip.style.visibility = 'hidden';
     document.body.appendChild(tip);
     var tw = tip.offsetWidth, th = tip.offsetHeight;
-    var arr = tip.querySelector('.qfq-page-tip-arrow');
-    var left = Math.max(8, Math.min(window.innerWidth - tw - 8, rect.left + rect.width/2 - tw/2));
+    var left = Math.max(8, Math.min(window.innerWidth - tw - 8, targetCX - tw / 2));
+    var arrowX = Math.max(14, Math.min(tw - 24, targetCX - left - 11));
+    tip.style.setProperty('--arrow-x', arrowX + 'px');
     tip.style.left = left + 'px';
     tip.style.top = (rect.top - th - 16) + 'px';
-    arr.style.bottom = '-9px';
-    var arrowX = Math.max(14, Math.min(tw - 24, rect.left + rect.width/2 - left - 9));
-    arr.style.left = arrowX + 'px';
+    tip.style.visibility = '';
     function dismiss(e) {
       if (e) e.stopPropagation();
       tip.style.animation = 'pageTipOut 0.25s ease forwards';

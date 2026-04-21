@@ -42,7 +42,7 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        var PURGE_KEY = 'cb_cache_purged_v1004';
+        var PURGE_KEY = 'cb_cache_purged_v1006';
         if (!localStorage.getItem(PURGE_KEY)) {
             localStorage.setItem(PURGE_KEY, '1');
             try { localStorage.removeItem('cleanbeat_sound_prefs'); } catch(e) {}
@@ -4995,7 +4995,7 @@ function sendMalus(reason, points){
                             //  Utiliser directement les données WebSocket (pas d'appel API !)
                             if (data.players && Array.isArray(data.players)) {
                                 data.players.forEach(function(player) {
-                                    console.log(`   🔄 Mise à jour ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
+                                    console.log(`   MAJ ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
                                     
                                     //  1. Mettre à jour les CARTES PODIUM (.player-stat-card)
                                     const playerCards = document.querySelectorAll('.player-name-link');
@@ -5009,7 +5009,7 @@ function sendMalus(reason, points){
                                                     const oldPoints = parseInt(pointsElement.textContent) || 0;
                                                     const newPoints = player.daily_points || 0;
                                                     
-                                                    console.log(`      Carte podium ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                    console.log(`      Carte podium ${player.name}: ${oldPoints} -> ${newPoints}`);
                                                     
                                                     pointsElement.textContent = newPoints;
                                                     
@@ -5043,7 +5043,7 @@ function sendMalus(reason, points){
                                                 const oldPoints = parseInt(pointsEl.textContent) || 0;
                                                 const newPoints = player.daily_points || 0;
                                                 
-                                                console.log(`      Avatar header ${player.name}: ${oldPoints} → ${newPoints}`);
+                                                console.log(`      Avatar header ${player.name}: ${oldPoints} -> ${newPoints}`);
                                                 
                                                 pointsEl.textContent = newPoints + ' pts';
                                                 
@@ -5226,11 +5226,11 @@ function sendMalus(reason, points){
                             console.log('🔄 WebSocket: Mise à jour liste joueurs reçue', data);
                             
                             if (data.action === 'child_added') {
-                                console.log(`👶 Enfant ajouté: ${data.new_player}`);
+                                console.log(`Enfant ajoute: ${data.new_player}`);
                             } else if (data.action === 'player_joined') {
                                 console.log(`Joueur a rejoint: ${data.new_player}`);
                             } else if (data.action === 'player_registered') {
-                                console.log(`✨ Nouveau joueur inscrit: ${data.new_player}`);
+                                console.log(`Nouveau joueur inscrit: ${data.new_player}`);
                             }
                             
                             // Recharger le menu pour afficher les nouveaux joueurs
@@ -6648,47 +6648,29 @@ function closeDailyReminder() {
   cursor: default;
   background: #ccc;
 }
-/* Queue BD pos-bottom : triangle pointe vers le haut (bulle en dessous de la cible) */
-.qfq-tip.pos-bottom::before {
-  content: '';
-  position: absolute;
-  top: -16px;
-  left: var(--arrow-x, 50%);
-  transform: translateX(-50%);
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent;
-  border-bottom: 16px solid rgba(253,174,84,0.3);
-}
+/* Queue pos-bottom : triangle rouge pointant vers le haut */
+.qfq-tip.pos-bottom::before { display: none !important; }
 .qfq-tip.pos-bottom::after {
-  content: '';
-  position: absolute;
-  top: -11px;
-  left: var(--arrow-x, 50%);
-  transform: translateX(-50%);
-  border-left: 11px solid transparent;
-  border-right: 11px solid transparent;
-  border-bottom: 12px solid #FDAE54;
+  content: '' !important;
+  position: absolute !important;
+  top: -12px !important;
+  left: var(--arrow-x, 50%) !important;
+  transform: translateX(-50%) !important;
+  border-left: 11px solid transparent !important;
+  border-right: 11px solid transparent !important;
+  border-bottom: 12px solid #ff4757 !important;
 }
-/* Queue BD pos-top : triangle pointe vers le bas (bulle au-dessus de la cible) */
-.qfq-tip.pos-top::before {
-  content: '';
-  position: absolute;
-  bottom: -16px;
-  left: var(--arrow-x, 50%);
-  transform: translateX(-50%);
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent;
-  border-top: 16px solid rgba(253,174,84,0.3);
-}
+/* Queue pos-top : triangle rouge pointant vers le bas */
+.qfq-tip.pos-top::before { display: none !important; }
 .qfq-tip.pos-top::after {
-  content: '';
-  position: absolute;
-  bottom: -11px;
-  left: var(--arrow-x, 50%);
-  transform: translateX(-50%);
-  border-left: 11px solid transparent;
-  border-right: 11px solid transparent;
-  border-top: 12px solid #FDAE54;
+  content: '' !important;
+  position: absolute !important;
+  bottom: -12px !important;
+  left: var(--arrow-x, 50%) !important;
+  transform: translateX(-50%) !important;
+  border-left: 11px solid transparent !important;
+  border-right: 11px solid transparent !important;
+  border-top: 12px solid #ff4757 !important;
 }
 @keyframes tipIn {
   0%   { opacity: 0; transform: translateY(10px) scale(0.88); }
@@ -6702,8 +6684,8 @@ function closeDailyReminder() {
 
 <script>
 (function() {
-  // Ne montrer qu'une seule fois
-  if (localStorage.getItem('qfq_tips_seen')) return;
+  // Ne montrer qu'une seule fois (v2 = reset après corrections)
+  if (localStorage.getItem('qfq_tips_seen_v2')) return;
   // Ne pas montrer si l'onboarding est actif
   if (document.getElementById('ob-overlay')) return;
 
@@ -6776,7 +6758,7 @@ function closeDailyReminder() {
 
   function showTip(index) {
     if (index >= QFQ_TIPS.length) {
-      localStorage.setItem('qfq_tips_seen', '1');
+      localStorage.setItem('qfq_tips_seen_v2', '1');
       return;
     }
     currentTip = index;
@@ -6799,7 +6781,6 @@ function closeDailyReminder() {
   function positionTip(index, tip, el) {
     var rect = el.getBoundingClientRect();
     tipEl = document.createElement('div');
-    // Mesurer dimensions sans classe de position
     tipEl.className = 'qfq-tip';
     tipEl.innerHTML =
       '<div class="qfq-tip-text">' + tip.text + '</div>' +
@@ -6834,6 +6815,15 @@ function closeDailyReminder() {
 
     tipEl.className = 'qfq-tip ' + posClass;
     tipEl.style.setProperty('--arrow-x', arrowX + 'px');
+
+    // Triangle HTML inline (rouge garanti, aucun CSS ne peut l'écraser)
+    var arrow = document.createElement('div');
+    arrow.style.cssText = 'position:absolute;width:0;height:0;left:' + arrowX + 'px;transform:translateX(-50%);' +
+      (posClass === 'pos-bottom'
+        ? 'top:-12px;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:12px solid #ff4757;'
+        : 'bottom:-12px;border-left:11px solid transparent;border-right:11px solid transparent;border-top:12px solid #ff4757;');
+    tipEl.appendChild(arrow);
+
     tipEl.style.visibility = '';
     tipEl.style.left = left + 'px';
     tipEl.style.top  = top  + 'px';
