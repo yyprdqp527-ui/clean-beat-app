@@ -798,6 +798,7 @@ window.addEventListener('DOMContentLoaded', function(){ var toast=document.getEl
   ];
 
   setTimeout(function() {
+    if (!window.QfqTips) return;
     window.QfqTips.init(TIPS, KEY, null);
   }, 800);
 })();
