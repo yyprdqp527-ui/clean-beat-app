@@ -6163,6 +6163,7 @@ function refreshAllBadges() {
 
         // 'default' ou 'denied' → affiche la bannière après 3s (sans jamais demander automatiquement)
         function showPushBanner(){ banner.style.display = 'block'; }
+        window.showPushBanner = showPushBanner;
         function tryShowPushBanner() {
           if (Notification.permission === 'granted') return;
           if (sessionStorage.getItem('pushBannerDismissed')) return;
@@ -6691,6 +6692,12 @@ function closeDailyReminder() {
     }
     window.QfqTips.init(TIPS, KEY, function() {
       window.dispatchEvent(new Event('menu_tips_done'));
+      // Déclenche PWA banner
+      setTimeout(function() {
+        if (typeof window.showInstallBanner === 'function') {
+          window.showInstallBanner();
+        }
+      }, 500);
     });
   }
 
