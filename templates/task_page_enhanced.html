@@ -1448,4 +1448,22 @@ window.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
+<script src="{{ url_for('static', filename='js/qfq-tips.js') }}"></script>
+<script>
+(function() {
+  var KEY = 'qfq_tips_task';
+  if (localStorage.getItem(KEY)) return;
+  var TIPS = [
+    {
+      target: '.points-badge, .task-points-badge',
+      text: '✏️ Tu peux modifier les points de cette tâche selon sa difficulté !',
+      position: 'bottom'
+    }
+  ];
+  setTimeout(function() {
+    window.QfqTips.init(TIPS, KEY, null);
+  }, 800);
+})();
+</script>
+
 {% endblock %}
