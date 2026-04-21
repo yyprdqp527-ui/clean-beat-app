@@ -2704,7 +2704,7 @@ def create_system_message(house_id, content, message_type='system', related_task
         c.execute("""
             INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, related_task_id, related_category)
             VALUES (?, ?, 'house', ?, ?, ?, ?)
-        """, (house_id, actual_sender, content, message_type, related_task_id, related_category))
+        """, (house_id, actual_sender if actual_sender and '@' in str(actual_sender) else None, content, message_type, related_task_id, related_category))
         message_id = c.lastrowid
         conn.commit()
         conn.close()
