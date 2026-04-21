@@ -922,11 +922,7 @@ body {
         <div class="glass-card" style="padding:16px;margin-bottom:20px;">
             <button type="submit" class="share-invite-btn" onclick="prepareSubmit()"
                     style="background:linear-gradient(135deg,#FDAE54 0%,#F4C68D 100%);border:none;">
-                {% if from_registration %}
-                    Continuer →
-                {% else %}
-                    Enregistrer
-                {% endif %}
+                Continuer →
             </button>
         </div>
 
@@ -1015,11 +1011,44 @@ body {
     transform: scale(1.15);
 }
 .btn-remove { flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;align-self:flex-start;margin-top:2px; }
+.child-save-btn {
+    width:100%;margin-top:12px;padding:12px;
+    background:linear-gradient(135deg,#FDAE54 0%,#F4C68D 100%);
+    border:none;border-radius:14px;
+    color:#fff;font-size:14px;font-weight:700;
+    font-family:'Montserrat',sans-serif;
+    cursor:pointer;transition:transform .15s,box-shadow .15s;
+    box-shadow:0 4px 14px rgba(253,174,84,.35);
+}
+.child-save-btn:active { transform:scale(.97); }
+.child-row-saved {
+    align-items:center;
+    background:rgba(253,174,84,.08);
+    border-color:rgba(253,174,84,.4);
+}
+.child-saved-av {
+    width:44px;height:44px;border-radius:50%;
+    border:2.5px solid rgba(253,174,84,.5);
+    flex-shrink:0;
+}
+.child-saved-name {
+    flex:1;font-size:15px;font-weight:700;
+    color:#153036;font-family:'Montserrat',sans-serif;
+    padding:0 8px;
+}
+.child-edit-btn {
+    flex-shrink:0;width:34px;height:34px;border-radius:50%;
+    border:2px solid rgba(166,211,220,0.5);
+    background:rgba(255,255,255,0.8);
+    font-size:15px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    padding:0;margin-right:6px;
+}
 </style>
 
 <script>
 var joinUrl   = "{{ join_url or '' }}";
-var inviteMessage = "Les tâches ménagères c'est ch❤️ant...\non le sait tous ! 😅 Rejoins-moi sur\nQuiFaitQuoi et on s'aide à garder\nla maison nickel ! 🏠✨\nClique ici pour rejoindre ma maison 👇\n" + joinUrl;
+var inviteMessage = "Les tâches ménagères c'est ch❤️ant...\non le sait tous ! 😅 Rejoins-moi sur\nQuiFaitQuoi et on s'aide à garder\nla maison nickel ! 🏠✨\n\nClique ici pour rejoindre ma maison 👇\n\n" + joinUrl + "\n\nCode : {{ house_code or '' }}";
 
 function selectHouseType(type) {
     ['family','couple','coloc'].forEach(function(t) {
@@ -1080,6 +1109,7 @@ function addChildRow() {
         '<div style="flex:1">'
         + '<input type="text" class="child-name-input child-name" placeholder="Pr\u00e9nom de l\'enfant" autocapitalize="words" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">'  
         + avHtml
+        + '<button type="button" class="child-save-btn" onclick="saveChildRow(' + id + ')">Enregistrer</button>'
         + '</div>'
         + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
 
@@ -1096,14 +1126,65 @@ function selectChildAv(btn, rowId) {
 
 function removeRow(id) { var el = document.getElementById(id); if (el) el.remove(); }
 
+function saveChildRow(id) {
+    var row = document.getElementById('crow' + id);
+    var nameInput = row.querySelector('.child-name');
+    var n = nameInput ? nameInput.value.trim() : '';
+    if (!n) {
+        if (nameInput) { nameInput.style.borderColor = '#ff4757'; nameInput.focus(); }
+        return;
+    }
+    n = n.charAt(0).toUpperCase() + n.slice(1);
+    var selAv = row.querySelector('.child-av.av-selected');
+    var av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
+    row.classList.add('child-row-saved');
+    row.setAttribute('data-name', n);
+    row.setAttribute('data-avatar', av);
+    row.innerHTML =
+        '<img src="' + av + '" class="child-saved-av" alt="' + n + '">'
+        + '<span class="child-saved-name">' + n + '</span>'
+        + '<button type="button" class="child-edit-btn" onclick="editChildRow(' + id + ')" title="Modifier">✏️</button>'
+        + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
+}
+
+function editChildRow(id) {
+    var row = document.getElementById('crow' + id);
+    var savedName = row.getAttribute('data-name') || '';
+    var savedAv   = row.getAttribute('data-avatar') || '';
+    row.classList.remove('child-row-saved');
+    var avHtml = '<div class="child-avatars-row" id="avrow' + id + '">';
+    CHILD_AVATARS.forEach(function(av, i) {
+        var url = dbUrl(av);
+        var sel = (url === savedAv) ? ' av-selected' : (i === 0 && !savedAv ? ' av-selected' : '');
+        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')" data-avatar="' + url + '">'
+            + '<img src="' + url + '" alt="' + av.seed + '" loading="lazy"></button>';
+    });
+    avHtml += '</div>';
+    row.innerHTML =
+        '<div style="flex:1">'
+        + '<input type="text" class="child-name-input child-name" placeholder="Pr\u00e9nom de l\'enfant" autocapitalize="words" value="' + savedName + '" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">'  
+        + avHtml
+        + '<button type="button" class="child-save-btn" onclick="saveChildRow(' + id + ')">Enregistrer</button>'
+        + '</div>'
+        + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
+    row.querySelector('.child-name-input').focus();
+}
+
 function prepareSubmit() {
     document.getElementById('partnersJSON').value = JSON.stringify([]);
     var children = [];
     document.querySelectorAll('.child-row').forEach(function(row) {
-        var n = row.querySelector('.child-name').value.trim();
-        if (n.length > 0) n = n.charAt(0).toUpperCase() + n.slice(1);
-        var selAv = row.querySelector('.child-av.av-selected');
-        var av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
+        var n, av;
+        if (row.classList.contains('child-row-saved')) {
+            n  = row.getAttribute('data-name') || '';
+            av = row.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0]);
+        } else {
+            var nameInput = row.querySelector('.child-name');
+            n = nameInput ? nameInput.value.trim() : '';
+            if (n.length > 0) n = n.charAt(0).toUpperCase() + n.slice(1);
+            var selAv = row.querySelector('.child-av.av-selected');
+            av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
+        }
         if (n) children.push({ name: n, avatar: av });
     });
     document.getElementById('childrenJSON').value = JSON.stringify(children);
