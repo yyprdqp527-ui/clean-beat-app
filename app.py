@@ -1130,7 +1130,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '🍽️ Tetris version vaisselle : optimise l\'espace !',
             'ad_text': 'Lance ton lave-vaisselle le soir en heures creuses, tu économises jusqu\'à 30% !',
-            'ad_link': 'https://www.amazon.fr/s?k=tablettes+lave+vaisselle'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+lave+vaisselle+economie'
         },
         {
             'name': 'Passer l\'éponge',
@@ -1139,7 +1139,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '🧽 Frotte, frotte ! On efface les traces du festin !',
             'ad_text': 'Change ton éponge toutes les semaines pour éviter les bactéries !',
-            'ad_link': 'https://www.amazon.fr/s?k=eponge+ecologique'
+            'ad_link': 'https://www.consoglobe.com/eponges-ecologiques-cg'
         },
         {
             'name': 'Nettoyer le plan de travail',
@@ -1148,7 +1148,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '✨ Un plan de travail nickel, c\'est la base d\'une cuisine pro !',
             'ad_text': 'Bicarbonate + citron = le combo magique pour dégraisser sans produits chimiques !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+entretien+naturel'
+            'ad_link': 'https://www.youtube.com/results?search_query=produits+menagers+naturels+bicarbonate'
         },
         {
             'name': 'Ranger la vaisselle',
@@ -1177,7 +1177,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '🧺 Trie bien tes couleurs, sinon gare aux chaussettes roses !',
             'ad_text': '30° suffisent pour 90% du linge ! Tu économises de l\'énergie et tes vêtements durent plus longtemps.',
-            'ad_link': 'https://www.amazon.fr/s?k=lessive+ecologique'
+            'ad_link': 'https://www.youtube.com/results?search_query=lessive+maison+ecologique+recette'
         },
         {
             'name': 'Sécher son linge',
@@ -1186,7 +1186,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🌞 Le soleil est le meilleur sèche-linge !',
             'ad_text': 'Le séchage à l\'air libre préserve tes vêtements et économise de l\'énergie.',
-            'ad_link': 'https://www.amazon.fr/s?k=etendoir+linge'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+secher+linge+rapidement'
         },
         {
             'name': 'Plier son linge',
@@ -1204,7 +1204,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🗄️ Une place pour chaque chose, chaque chose à sa place !',
             'ad_text': 'Organisateurs de tiroirs : trouve ce que tu cherches en 2 secondes !',
-            'ad_link': 'https://www.amazon.fr/s?k=organisateur+tiroir'
+            'ad_link': 'https://www.youtube.com/results?search_query=marie+kondo+pliage+tiroir'
         }
     ],
     'toilettes': [
@@ -1215,7 +1215,7 @@ TASKS_CONFIG = {
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+toilettes'
+            'ad_link': 'https://www.youtube.com/results?search_query=nettoyer+toilettes+vinaigre+naturel'
         },
         {
             'name': 'Changer le rouleau de papier toilette',
@@ -1224,7 +1224,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
-            'ad_link': 'https://www.amazon.fr/s?k=papier+toilette+recycle'
+            'ad_link': 'https://www.youtube.com/results?search_query=papier+toilette+ecologique+choisir'
         },
         {
             'name': 'Relever la cuvette',
@@ -1233,7 +1233,7 @@ TASKS_CONFIG = {
             'points': 1,
             'fun_text': '🚽 Un petit geste, un grand respect !',
             'ad_text': 'Astuce : un abattant WC à fermeture ralentie évite les claquements !',
-            'ad_link': 'https://www.amazon.fr/s?k=abattant+wc+fermeture+ralentie'
+            'ad_link': 'https://www.youtube.com/results?search_query=installer+abattant+wc+frein+chute'
         },
         {
             'name': 'Séjourner aux toilettes',
@@ -1242,7 +1242,7 @@ TASKS_CONFIG = {
             'points': -3,
             'fun_text': '📱 La bibliothèque préférée de la maison !',
             'ad_text': 'Un repose-pieds physiologique améliore le confort et la santé intestinale !',
-            'ad_link': 'https://www.amazon.fr/s?k=repose+pieds+toilettes'
+            'ad_link': 'https://www.youtube.com/results?search_query=position+ideale+toilettes+sante'
         }
     ],
     'chambre': [
@@ -1253,7 +1253,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🛏️ Un lit fait = une journée bien commencée !',
             'ad_text': 'Astuce hôtel : tire d\'abord le drap du dessous bien tendu, puis borde les côtés. Résultat pro en 2 min !',
-            'ad_link': 'https://www.amazon.fr/s?k=draps+de+lit'
+            'ad_link': 'https://www.youtube.com/results?search_query=faire+son+lit+comme+un+hotel'
         },
         {
             'name': 'Ranger sa chambre',
@@ -1262,7 +1262,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '✨ Une chambre rangée, c\'est un esprit apaisé !',
             'ad_text': 'La règle des 3 piles : à garder, à donner, à laver. En 10 min, ta chambre respire !',
-            'ad_link': 'https://www.amazon.fr/s?k=organisateur+placard'
+            'ad_link': 'https://www.youtube.com/results?search_query=marie+kondo+rangement+placard'
         },
         {
             'name': 'Aérer sa chambre',
@@ -1271,7 +1271,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '💨 Un peu d\'air frais, ça fait du bien !',
             'ad_text': 'Aérer 10 minutes par jour réduit l\'humidité et améliore la qualité de ton sommeil !',
-            'ad_link': 'https://www.amazon.fr/s?k=purificateur+air'
+            'ad_link': 'https://www.youtube.com/results?search_query=bien+aerer+sa+chambre+conseils'
         },
         {
             'name': 'Mettre ses vêtements dans la corbeille',
@@ -1280,7 +1280,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '👕 Direction le panier à linge !',
             'ad_text': 'Un panier à linge bien placé = moins de vêtements par terre !',
-            'ad_link': 'https://www.amazon.fr/s?k=panier+linge'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+gestion+linge+sale'
         },
         {
             'name': 'Vider sa corbeille',
@@ -1289,7 +1289,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🗑️ Hop, à la poubelle !',
             'ad_text': 'Une poubelle vide tous les 2-3 jours évite les mauvaises odeurs !',
-            'ad_link': 'https://www.amazon.fr/s?k=poubelle+chambre'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+reduire+dechets+chambre'
         },
         {
             'name': 'Faire ses devoirs',
@@ -1298,7 +1298,7 @@ TASKS_CONFIG = {
             'points': 8,
             'fun_text': '📚 Le savoir, c\'est le pouvoir !',
             'ad_text': 'La technique Pomodoro : 25 min de travail, 5 min de pause. Efficacité maximale !',
-            'ad_link': 'https://www.amazon.fr/s?k=fournitures+scolaires'
+            'ad_link': 'https://www.youtube.com/results?search_query=technique+pomodoro+devoirs'
         }
     ],
     'chambre_ado': [
@@ -1309,7 +1309,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '✨ Une chambre rangée, c\'est un esprit apaisé !',
             'ad_text': 'La règle des 3 piles : à garder, à donner, à laver. En 10 min, ta chambre respire !',
-            'ad_link': 'https://www.amazon.fr/s?k=organisateur+placard'
+            'ad_link': 'https://www.youtube.com/results?search_query=marie+kondo+rangement+placard'
         },
         {
             'name': 'Faire son lit',
@@ -1318,7 +1318,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🛏️ Un lit fait = une journée bien commencée !',
             'ad_text': 'Astuce hôtel : tire d\'abord le drap du dessous bien tendu, puis borde les côtés. Résultat pro en 2 min !',
-            'ad_link': 'https://www.amazon.fr/s?k=draps+de+lit'
+            'ad_link': 'https://www.youtube.com/results?search_query=faire+son+lit+comme+un+hotel'
         },
         {
             'name': 'Aérer sa chambre',
@@ -1327,7 +1327,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '💨 Un peu d\'air frais, ça fait du bien !',
             'ad_text': 'Aérer 10 minutes par jour réduit l\'humidité et améliore la qualité de ton sommeil !',
-            'ad_link': 'https://www.amazon.fr/s?k=purificateur+air'
+            'ad_link': 'https://www.youtube.com/results?search_query=bien+aerer+sa+chambre+conseils'
         },
         {
             'name': 'Mettre ses vêtements dans la corbeille',
@@ -1336,7 +1336,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '👕 Direction le panier à linge !',
             'ad_text': 'Un panier à linge bien placé = moins de vêtements par terre !',
-            'ad_link': 'https://www.amazon.fr/s?k=panier+linge'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+gestion+linge+sale'
         },
         {
             'name': 'Vider sa corbeille',
@@ -1345,7 +1345,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🗑️ Hop, à la poubelle !',
             'ad_text': 'Une poubelle vide tous les 2-3 jours évite les mauvaises odeurs !',
-            'ad_link': 'https://www.amazon.fr/s?k=poubelle+chambre'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+reduire+dechets+chambre'
         },
         {
             'name': 'Faire ses devoirs',
@@ -1354,7 +1354,7 @@ TASKS_CONFIG = {
             'points': 8,
             'fun_text': '📚 Le savoir, c\'est le pouvoir !',
             'ad_text': 'La technique Pomodoro : 25 min de travail, 5 min de pause. Efficacité maximale !',
-            'ad_link': 'https://www.amazon.fr/s?k=fournitures+scolaires'
+            'ad_link': 'https://www.youtube.com/results?search_query=technique+pomodoro+devoirs'
         }
     ],
     'salon': [
@@ -1365,7 +1365,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '🧹 Un salon rangé, c\'est un salon où on respire !',
             'ad_text': 'Paniers et boîtes de rangement !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+salon'
+            'ad_link': 'https://www.youtube.com/results?search_query=marie+kondo+rangement+salon'
         },
         {
             'name': 'Faire la poussière',
@@ -1374,7 +1374,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '✨ Adieu la poussière, bonjour la propreté !',
             'ad_text': 'Chiffons microfibres magiques !',
-            'ad_link': 'https://www.amazon.fr/s?k=chiffon+microfibre'
+            'ad_link': 'https://www.youtube.com/results?search_query=utiliser+chiffon+microfibre+menage'
         },
         {
             'name': 'Laver les sols',
@@ -1383,7 +1383,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🧼 Des sols qui brillent de mille feux !',
             'ad_text': 'Serpillières et produits sols !',
-            'ad_link': 'https://www.amazon.fr/s?k=nettoyage+sol'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+laver+sols+rapidement'
         },
         {
             'name': 'Passer l\'aspirateur',
@@ -1392,7 +1392,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🌪️ La tornade du ménage passe par ici !',
             'ad_text': 'Aspirateurs performants en promo !',
-            'ad_link': 'https://www.amazon.fr/s?k=aspirateur'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+passer+aspirateur+efficace'
         },
         {
             'name': 'Laver les vitres',
@@ -1401,7 +1401,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🪟 La vue sera encore plus belle !',
             'ad_text': 'Produits vitres sans traces !',
-            'ad_link': 'https://www.amazon.fr/s?k=produit+vitres'
+            'ad_link': 'https://www.youtube.com/results?search_query=nettoyer+vitres+sans+traces+vinaigre'
         },
         {
             'name': 'Arroser les plantes',
@@ -1410,7 +1410,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🌱 Un peu d\'eau pour la jungle urbaine !',
             'ad_text': 'Arrosoirs design et pratiques !',
-            'ad_link': 'https://www.amazon.fr/s?k=arrosoir'
+            'ad_link': 'https://www.youtube.com/results?search_query=arroser+plantes+interieur+conseils'
         }
     ],
     'chambre_parentale': [
@@ -1421,7 +1421,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🛏️ Un lit au carré pour bien démarrer la journée !',
             'ad_text': 'Linge de lit de qualité !',
-            'ad_link': 'https://www.amazon.fr/s?k=draps+de+lit'
+            'ad_link': 'https://www.youtube.com/results?search_query=faire+son+lit+comme+un+hotel'
         },
         {
             'name': 'Changer les draps',
@@ -1430,7 +1430,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '🧺 Des draps frais pour de beaux rêves !',
             'ad_text': 'Draps confortables en promo !',
-            'ad_link': 'https://www.amazon.fr/s?k=draps'
+            'ad_link': 'https://www.youtube.com/results?search_query=changer+draps+rapidement+astuce'
         },
         {
             'name': 'Ranger ses vêtements',
@@ -1439,7 +1439,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '👔 Une armoire bien organisée !',
             'ad_text': 'Organisateurs de placard !',
-            'ad_link': 'https://www.amazon.fr/s?k=organisateur+placard'
+            'ad_link': 'https://www.youtube.com/results?search_query=marie+kondo+rangement+placard'
         }
     ],
     'salle_bain': [
@@ -1450,7 +1450,7 @@ TASKS_CONFIG = {
             'points': 1,
             'fun_text': '🦷 Un sourire éclatant pour bien commencer la journée !',
             'ad_text': 'Brosses à dents électriques !',
-            'ad_link': 'https://www.amazon.fr/s?k=brosse+dents+electrique'
+            'ad_link': 'https://www.youtube.com/results?search_query=brossage+dents+technique+dentiste'
         },
         {
             'name': 'Reboucher le dentifrice',
@@ -1459,7 +1459,7 @@ TASKS_CONFIG = {
             'points': 1,
             'fun_text': '🧴 Un tube bien fermé pour éviter le gaspillage !',
             'ad_text': 'Dentifrices pour toute la famille !',
-            'ad_link': 'https://www.amazon.fr/s?k=dentifrice'
+            'ad_link': 'https://www.youtube.com/results?search_query=brossage+dents+technique+dentiste'
         },
         {
             'name': 'Nettoyer ses cheveux',
@@ -1468,7 +1468,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '💇 Plus de cheveux dans le lavabo !',
             'ad_text': 'Accessoires salle de bain !',
-            'ad_link': 'https://www.amazon.fr/s?k=accessoires+salle+de+bain'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+sechage+cheveux+sain'
         },
         {
             'name': 'Nettoyer ses poils de barbe',
@@ -1477,7 +1477,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🪒 La barbe de trois jours se range !',
             'ad_text': 'Rasoirs et accessoires !',
-            'ad_link': 'https://www.amazon.fr/s?k=rasoir'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+rasage+sans+irritation'
         },
         {
             'name': 'Jeter les bouteilles vides',
@@ -1486,7 +1486,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '♻️ Faire de la place pour les nouvelles !',
             'ad_text': 'Organisateurs salle de bain !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+salle+de+bain'
+            'ad_link': 'https://www.youtube.com/results?search_query=marie+kondo+salle+de+bain'
         },
         {
             'name': 'Éponger l\'eau par terre',
@@ -1495,7 +1495,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '💦 Plus de flaques pour éviter de glisser !',
             'ad_text': 'Tapis de bain absorbants !',
-            'ad_link': 'https://www.amazon.fr/s?k=tapis+bain'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+eviter+eau+salle+de+bain'
         }
     ],
     'garage': [
@@ -1505,7 +1505,7 @@ TASKS_CONFIG = {
             'description': 'Un garage bien organisé !',
             'points': 5,
             'ad_text': 'Solutions de rangement garage !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+garage'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+rangement+garage+atelier'
         },
         {
             'name': 'Balayer le garage',
@@ -1513,7 +1513,7 @@ TASKS_CONFIG = {
             'description': 'Un garage propre !',
             'points': 4,
             'ad_text': 'Matériel de nettoyage !',
-            'ad_link': 'https://www.amazon.fr/s?k=balai+garage'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+nettoyer+garage+rapidement'
         }
     ],
     'piece_bonus': [
@@ -1524,7 +1524,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🍪 Le goûter c\'est important !',
             'ad_text': 'Boîtes à goûter !',
-            'ad_link': 'https://www.amazon.fr/s?k=boite+gouter'
+            'ad_link': 'https://www.youtube.com/results?search_query=idees+gouter+sain+enfant'
         },
         {
             'name': 'Signer les mots',
@@ -1533,7 +1533,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '✍️ Les devoirs administratifs !',
             'ad_text': 'Fournitures scolaires !',
-            'ad_link': 'https://www.amazon.fr/s?k=fournitures+scolaires'
+            'ad_link': 'https://www.youtube.com/results?search_query=technique+pomodoro+devoirs'
         },
         {
             'name': 'Aller aux réunions d\'école',
@@ -1542,7 +1542,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🏫 Le suivi scolaire c\'est essentiel !',
             'ad_text': 'Agendas pour parents !',
-            'ad_link': 'https://www.amazon.fr/s?k=agenda+parents'
+            'ad_link': 'https://www.youtube.com/results?search_query=organisation+parents+ecole+conseils'
         },
         {
             'name': 'Prendre les RDV médicaux',
@@ -1551,7 +1551,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🏥 La santé avant tout !',
             'ad_text': 'Applications de santé !',
-            'ad_link': 'https://www.amazon.fr/s?k=carnet+santé'
+            'ad_link': 'https://www.youtube.com/results?search_query=organiser+rdv+medicaux+famille'
         },
         {
             'name': 'Organiser les anniversaires',
@@ -1560,7 +1560,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🎉 Les anniversaires c\'est la fête !',
             'ad_text': 'Décorations d\'anniversaire !',
-            'ad_link': 'https://www.amazon.fr/s?k=decoration+anniversaire'
+            'ad_link': 'https://www.youtube.com/results?search_query=organiser+anniversaire+enfant+idees'
         },
         {
             'name': 'Déclarer les impôts',
@@ -1569,7 +1569,7 @@ TASKS_CONFIG = {
             'points': 6,
             'fun_text': '💰 Les devoirs citoyens !',
             'ad_text': 'Solutions de gestion administrative !',
-            'ad_link': 'https://www.amazon.fr/s?k=classeur+documents'
+            'ad_link': 'https://www.youtube.com/results?search_query=organiser+papiers+administratifs+impots'
         }
     ],
     'chambre_garcon': [
@@ -1580,7 +1580,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🛏️ Un lit bien fait, une journée bien partie !',
             'ad_text': 'Parures de lit pour chambre enfant !',
-            'ad_link': 'https://www.amazon.fr/s?k=parure+lit+enfant'
+            'ad_link': 'https://www.youtube.com/results?search_query=apprendre+enfant+faire+son+lit'
         },
         {
             'name': 'Ranger sa chambre',
@@ -1589,7 +1589,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '✨ Une chambre rangée c\'est une chambre heureuse !',
             'ad_text': 'Rangements pratiques pour chambre enfant !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+chambre+enfant'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+rangement+chambre+enfant'
         },
         {
             'name': 'Aérer sa chambre',
@@ -1598,7 +1598,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '💨 Un air frais pour bien dormir !',
             'ad_text': 'Purificateurs d\'air pour chambre !',
-            'ad_link': 'https://www.amazon.fr/s?k=purificateur+air+chambre'
+            'ad_link': 'https://www.youtube.com/results?search_query=bien+aerer+sa+chambre+conseils'
         },
         {
             'name': 'Mettre les vêtements dans le panier',
@@ -1607,7 +1607,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '👕 Droit au but, dans le panier !',
             'ad_text': 'Paniers à linge design !',
-            'ad_link': 'https://www.amazon.fr/s?k=panier+linge+enfant'
+            'ad_link': 'https://www.youtube.com/results?search_query=apprendre+enfant+ranger+vetements'
         },
         {
             'name': 'Vider sa corbeille',
@@ -1616,7 +1616,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🗑️ Poubelle vide, esprit clair !',
             'ad_text': 'Jolies corbeilles pour chambre !',
-            'ad_link': 'https://www.amazon.fr/s?k=corbeille+chambre+enfant'
+            'ad_link': 'https://www.youtube.com/results?search_query=astuce+rangement+enfant+jouets'
         },
         {
             'name': 'Faire ses devoirs',
@@ -1625,7 +1625,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '📚 Les devoirs d\'abord, les jeux ensuite !',
             'ad_text': 'Fournitures scolaires et bureaux enfants !',
-            'ad_link': 'https://www.amazon.fr/s?k=bureau+enfant+scolaire'
+            'ad_link': 'https://www.youtube.com/results?search_query=technique+pomodoro+enfant+devoirs'
         }
     ],
     'chambre_enfant': [
@@ -1636,7 +1636,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '🧸 Une chambre bien rangée pour mieux jouer !',
             'ad_text': 'Boîtes de rangement pour enfants !',
-            'ad_link': 'https://www.amazon.fr/s?k=rangement+enfant'
+            'ad_link': 'https://www.youtube.com/results?search_query=apprendre+enfant+ranger+jouets'
         },
         {
             'name': 'Lire 10 minutes par jour',
@@ -1645,7 +1645,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '📚 Lire c\'est grandir !',
             'ad_text': 'Livres pour enfants !',
-            'ad_link': 'https://www.amazon.fr/s?k=livres+enfant'
+            'ad_link': 'https://www.youtube.com/results?search_query=lecture+enfant+habituer+livre'
         }
     ],
     'chambre_bebe': [
@@ -1656,7 +1656,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🍼 L\'heure du biberon !',
             'ad_text': 'Les meilleurs biberons anti-coliques pour bébé !',
-            'ad_link': 'https://www.amazon.fr/s?k=biberon+bebe'
+            'ad_link': 'https://www.youtube.com/results?search_query=preparer+biberon+bebe+conseils'
         },
         {
             'name': 'Changer les couches',
@@ -1665,7 +1665,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '👶 Change moi vite !',
             'ad_text': 'Couches douces et absorbantes pour bébé !',
-            'ad_link': 'https://www.amazon.fr/s?k=couches+bebe'
+            'ad_link': 'https://www.youtube.com/results?search_query=changer+couche+bebe+technique'
         },
         {
             'name': 'Faire dormir le bébé',
@@ -1674,7 +1674,7 @@ TASKS_CONFIG = {
             'points': 6,
             'fun_text': '😴 Dodo, l\'enfant do !',
             'ad_text': 'Veilleuses et musiques douces pour endormir bébé !',
-            'ad_link': 'https://www.amazon.fr/s?k=veilleuse+bebe'
+            'ad_link': 'https://www.youtube.com/results?search_query=endormir+bebe+technique+sommeil'
         },
         {
             'name': 'Laver les vêtements',
@@ -1683,7 +1683,7 @@ TASKS_CONFIG = {
             'points': 4,
             'fun_text': '👕 Lessive spéciale bébé !',
             'ad_text': 'Lessives hypoallergéniques pour la peau de bébé !',
-            'ad_link': 'https://www.amazon.fr/s?k=lessive+bebe'
+            'ad_link': 'https://www.youtube.com/results?search_query=laver+vetements+bebe+conseils'
         },
         {
             'name': 'Vider la poubelle',
@@ -1692,7 +1692,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '🗑️ Une chambre sans odeurs !',
             'ad_text': 'Poubelles à couches anti-odeurs !',
-            'ad_link': 'https://www.amazon.fr/s?k=poubelle+couches'
+            'ad_link': 'https://www.youtube.com/results?search_query=couches+bebe+lavables+ecologique'
         }
     ],
     'wc': [
@@ -1703,7 +1703,7 @@ TASKS_CONFIG = {
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
-            'ad_link': 'https://www.amazon.fr/s?k=produits+toilettes'
+            'ad_link': 'https://www.youtube.com/results?search_query=nettoyer+toilettes+vinaigre+naturel'
         },
         {
             'name': 'Changer le rouleau de papier toilette',
@@ -1712,7 +1712,7 @@ TASKS_CONFIG = {
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
-            'ad_link': 'https://www.amazon.fr/s?k=papier+toilette+recycle'
+            'ad_link': 'https://www.youtube.com/results?search_query=papier+toilette+ecologique+choisir'
         },
         {
             'name': 'Relever la cuvette',
@@ -1721,7 +1721,7 @@ TASKS_CONFIG = {
             'points': 1,
             'fun_text': '🚽 Un petit geste, un grand respect !',
             'ad_text': 'Astuce : un abattant WC à fermeture ralentie évite les claquements !',
-            'ad_link': 'https://www.amazon.fr/s?k=abattant+wc+fermeture+ralentie'
+            'ad_link': 'https://www.youtube.com/results?search_query=installer+abattant+wc+frein+chute'
         },
         {
             'name': 'Séjourner aux toilettes',
@@ -1730,7 +1730,7 @@ TASKS_CONFIG = {
             'points': -3,
             'fun_text': '📱 La bibliothèque préférée de la maison !',
             'ad_text': 'Un repose-pieds physiologique améliore le confort et la santé intestinale !',
-            'ad_link': 'https://www.amazon.fr/s?k=repose+pieds+toilettes'
+            'ad_link': 'https://www.youtube.com/results?search_query=position+ideale+toilettes+sante'
         }
     ],
     'garage': [
@@ -1741,7 +1741,7 @@ TASKS_CONFIG = {
             'points': 5,
             'fun_text': '🚗 Ça brille de mille feux !',
             'ad_text': 'Produits pour un lavage auto impeccable !',
-            'ad_link': 'https://www.amazon.fr/s?k=lavage+voiture'
+            'ad_link': 'https://www.youtube.com/results?search_query=laver+voiture+technique+sans+rayures'
         },
         {
             'name': 'Prendre de l\'essence',
@@ -1750,7 +1750,7 @@ TASKS_CONFIG = {
             'points': 3,
             'fun_text': '⛽ Le plein d\'énergie !',
             'ad_text': 'Carte carburant pour économiser !',
-            'ad_link': 'https://www.amazon.fr/s?k=carte+carburant'
+            'ad_link': 'https://www.youtube.com/results?search_query=eco+conduite+economiser+carburant'
         },
         {
             'name': 'Contrôle technique',
@@ -1759,7 +1759,7 @@ TASKS_CONFIG = {
             'points': 6,
             'fun_text': '🔧 Sécurité avant tout !',
             'ad_text': 'Kit d\'entretien auto !',
-            'ad_link': 'https://www.amazon.fr/s?k=entretien+voiture'
+            'ad_link': 'https://www.youtube.com/results?search_query=entretien+voiture+conseils+mecanicien'
         }
     ]
 }
