@@ -6087,11 +6087,13 @@ function refreshAllBadges() {
     var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
+    function showInstallBanner(){banner.style.display='block';}
     window.addEventListener('beforeinstallprompt',function(e){
         e.preventDefault();deferred=e;
         document.getElementById('pwa-android-msg').style.display='block';
         document.getElementById('pwa-android-btn-wrap').style.display='block';
-        banner.style.display='block';
+        if(localStorage.getItem('qfq_tips_seen_v2')){showInstallBanner();}
+        else{window.addEventListener('qfq_tips_done',function(){showInstallBanner();},{once:true});}
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
         if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
@@ -6099,7 +6101,11 @@ function refreshAllBadges() {
             banner.style.display='none';deferred=null;
         });}
     });
-    if(isIOS){document.getElementById('pwa-ios-msg').style.display='block';banner.style.display='block';}
+    if(isIOS){
+        document.getElementById('pwa-ios-msg').style.display='block';
+        if(localStorage.getItem('qfq_tips_seen_v2')){showInstallBanner();}
+        else{window.addEventListener('qfq_tips_done',function(){showInstallBanner();},{once:true});}
+    }
     // ✕ → cache pour cette session, réapparaît à la prochaine visite
     window.dismissPwaBanner=function(){document.getElementById('pwa-install-banner').style.display='none';sessionStorage.setItem('pwa_dismissed_session','1');};
 })();
@@ -6135,7 +6141,16 @@ function refreshAllBadges() {
         if (sessionStorage.getItem('pushBannerDismissed')) return;
 
         // 'default' ou 'denied' → affiche la bannière après 3s (sans jamais demander automatiquement)
-        setTimeout(function() { banner.style.display = 'block'; }, 3000);
+        function showPushBanner(){ banner.style.display = 'block'; }
+        setTimeout(function() {
+            if(localStorage.getItem('qfq_tips_seen_v2')){
+                showPushBanner();
+            } else {
+                window.addEventListener('qfq_tips_done', function(){
+                    setTimeout(showPushBanner, 1000);
+                }, {once:true});
+            }
+        }, 3000);
 
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
@@ -6526,6 +6541,9 @@ function refreshAllBadges() {
       .style.display = 'none';
     fetch('/api/mark_onboarding_seen',
       {method:'POST'});
+    if (!localStorage.getItem('qfq_tips_seen_v2')) {
+      setTimeout(function() { showTip(0); }, 500);
+    }
   }
 
   window.obNext = obNext;
@@ -6759,6 +6777,7 @@ function closeDailyReminder() {
   function showTip(index) {
     if (index >= QFQ_TIPS.length) {
       localStorage.setItem('qfq_tips_seen_v2', '1');
+      window.dispatchEvent(new Event('qfq_tips_done'));
       return;
     }
     currentTip = index;
