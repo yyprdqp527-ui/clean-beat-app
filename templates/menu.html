@@ -42,17 +42,18 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        var PURGE_KEY = 'cb_cache_purged_v1008';
+        var PURGE_KEY = 'cb_cache_purged_v1009';
         if (!localStorage.getItem(PURGE_KEY)) {
-            localStorage.setItem(PURGE_KEY, '1');
+            localStorage.setItem('cb_cache_purged_v1009', '1');
             localStorage.removeItem('qfq_tips_menu');
-            localStorage.removeItem('qfq_tips_seen_v2');
             localStorage.removeItem('qfq_tips_tasks');
             localStorage.removeItem('qfq_tips_task');
+            localStorage.removeItem('qfq_tips_seen_v2');
             localStorage.removeItem('qfq_tip_tasks_seen');
             localStorage.removeItem('qfq_tip_points_seen');
             localStorage.removeItem('qfq_tip_settings_avatar');
             localStorage.removeItem('qfq_tip_settings_house');
+            localStorage.removeItem('cb_cache_purged_v1008');
             localStorage.removeItem('cb_cache_purged_v1004');
             if ('caches' in window) {
                 caches.keys().then(function(names) {
