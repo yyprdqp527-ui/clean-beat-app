@@ -630,7 +630,7 @@
             </div>
         </div>
         
-        <button type="button" class="modal-confirm" id="confirmAvatar" onclick="confirmAvatarSelection()" disabled>
+        <button type="button" class="modal-confirm" id="confirmAvatar" onclick="confirmAvatarSelection()" disabled style="display:none">
             ✓ Choisir cet avatar
         </button>
     </div>
@@ -853,8 +853,9 @@
             };
         }
         
-        // Activer bouton confirmer
+        // Enregistrer directement sans bouton de confirmation
         document.getElementById('confirmAvatar').disabled = false;
+        confirmAvatarSelection();
     }
     
     function confirmAvatarSelection() {
