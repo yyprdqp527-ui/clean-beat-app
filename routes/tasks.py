@@ -202,7 +202,7 @@ def categorie(cat):
 @tasks_bp.route('/add_task/<cat>', methods=['GET', 'POST'])
 @tasks_bp.route('/edit_custom_task/<cat>/<int:task_id>', methods=['GET', 'POST'])
 def add_task_page(cat, task_id=None):
-    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio
+    from app import get_db_connection, normalize_category, get_house_players_points, get_house_players_with_colors, get_house_push_subscriptions, create_system_message, safe_socketio_emit, _dbg, TASKS_CONFIG, allowed_file, get_user_points, mark_message_as_read, now_paris, to_paris, SOCKETIO_AVAILABLE, socketio, notify_house_members
     if 'user' not in session:
         flash("Connecte-toi pour créer une mission.", "warning")
         return redirect(url_for('auth.login'))
@@ -318,6 +318,10 @@ def add_task_page(cat, task_id=None):
                 _msg = message_content
                 _sender = session['user']
                 _cat = normalized_cat
+                _category_name = category_name
+                _task_name = task_name
+                _points = points
+                _creator_name = creator_name
                 def _notif():
                     try:
                         create_system_message(
@@ -326,6 +330,16 @@ def add_task_page(cat, task_id=None):
                             related_category=_cat)
                     except Exception:
                         pass
+                    # 🔔 Push notification à tous les membres (sauf le créateur)
+                    try:
+                        notify_house_members(_house_id, {
+                            'title': f'⭐ Nouvelle mission',
+                            'body': f"{_creator_name} a ajouté '{_task_name}' dans {_category_name} ({_points} pts)",
+                            'icon': '/static/images/logo.png',
+                            'url': '/menu'
+                        }, exclude_email=_sender)
+                    except Exception as _e_push:
+                        print(f'⚠️ Erreur push task_added: {_e_push}', flush=True)
                 threading.Thread(
                     target=_notif, daemon=True).start()
             except Exception as _e_msg:
