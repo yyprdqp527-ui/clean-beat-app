@@ -3856,12 +3856,7 @@ def menu():
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
             # 🛒 Articles non cochés dans la liste de courses (badge onglet navigation)
-            courses_pending_count = 0
-            try:
-                c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
-                courses_pending_count = c.fetchone()[0] or 0
-            except Exception:
-                pass
+            courses_pending_count = _get_house_courses_pending(house_id)
 
             # 🍼 Vérifier si la maison utilise le tracking bébé
             try:
@@ -4246,12 +4241,7 @@ def api_unread_counts():
         unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added', include_own=True)
 
         # 🛒 Articles non cochés dans la liste de courses
-        courses_pending_count = 0
-        try:
-            c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
-            courses_pending_count = c.fetchone()[0] or 0
-        except Exception:
-            pass
+        courses_pending_count = _get_house_courses_pending(house_id)
         
         conn.close()
         
