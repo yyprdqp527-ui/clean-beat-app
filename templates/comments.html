@@ -955,6 +955,7 @@
                 <p>Commence la conversation avec ta maison !</p>
             </div>
         {% endif %}
+        <div id="typing-indicator" style="display:none; font-size:12px; color:rgba(255,255,255,0.6); padding:4px 16px; font-style:italic; min-height:20px;"></div>
     </div>
     
     <script>
@@ -1221,12 +1222,23 @@
                 const messageForm = document.querySelector('form[action="{{ url_for(\'messages.comments\') }}"]');
                 if (messageForm) {
                     const ta = messageForm.querySelector('textarea[name="content"]');
+                    var _typingTimer = null;
                     if (ta) {
                         ta.addEventListener('keydown', function(e) {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 messageForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                             }
+                        });
+                        ta.addEventListener('input', function() {
+                            if (socket && socket.connected) {
+                                socket.emit('typing', {
+                                    user_email: userEmail,
+                                    user_name: myName
+                                });
+                            }
+                            clearTimeout(_typingTimer);
+                            _typingTimer = setTimeout(function() {}, 1500);
                         });
                     }
                     messageForm.addEventListener('submit', function(e) {
@@ -1429,6 +1441,20 @@
                     if (data.updated_player) {
                         console.log('🎯 Joueur mis à jour:', data.updated_player);
                     }
+                });
+
+                // 💬 Indicateur de frappe "X est en train d'écrire..."
+                var _typingTimeout = null;
+                socket.on('user_typing', function(data) {
+                    if (data.user_email === userEmail) return;
+                    var indicator = document.getElementById('typing-indicator');
+                    if (!indicator) return;
+                    indicator.textContent = data.user_name + ' est en train d\'écrire...';
+                    indicator.style.display = 'block';
+                    clearTimeout(_typingTimeout);
+                    _typingTimeout = setTimeout(function() {
+                        indicator.style.display = 'none';
+                    }, 2000);
                 });
                 
                 console.log('✅ WebSocket Comments: Synchronisation temps réel initialisée');

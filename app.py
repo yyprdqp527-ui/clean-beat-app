@@ -4356,6 +4356,28 @@ if SOCKETIO_AVAILABLE:
         except Exception as e:
             _dbg(f'❌ Erreur avatar_updated: {e}')
 
+    @socketio.on('typing')
+    def handle_typing(data):
+        """Diffuser l'indicateur de frappe à tous les membres de la maison"""
+        try:
+            user_email = data.get('user_email')
+            user_name = data.get('user_name')
+            if not user_email or not user_name:
+                return
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute('SELECT house_id FROM users WHERE email=?', (user_email,))
+            row = c.fetchone()
+            conn.close()
+            if row and row[0]:
+                house_id = row[0]
+                safe_socketio_emit('user_typing', {
+                    'user_name': user_name,
+                    'user_email': user_email
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception as e:
+            _dbg(f'❌ Erreur handle_typing: {e}')
+
 
 # 🏠 ========== ROUTES TEST MESSAGES MAISON ==========
 # ─── KEEP-ALIVE supprimé (plan payant Render → serveur toujours allumé) ──────
