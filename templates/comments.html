@@ -1234,7 +1234,11 @@
                                 });
                             }
                             clearTimeout(_typingTimer);
-                            _typingTimer = setTimeout(function() {}, 1500);
+                            _typingTimer = setTimeout(function() {
+                                if (socket && socket.connected) {
+                                    socket.emit('stop_typing', { user_email: userEmail });
+                                }
+                            }, 1500);
                         });
                     }
                     messageForm.addEventListener('submit', function(e) {
@@ -1364,43 +1368,44 @@
                     }
                 });
                 
-                // Écouter les nouveaux messages pour rafraîchir la page
+                // 🔄 Helper : mise à jour immédiate du badge #messages-nav-badge depuis /api/unread_counts
+                function _refreshNavBadgeFromApi() {
+                    fetch('/api/unread_counts', { cache: 'no-store' })
+                        .then(function(r) { return r.json(); })
+                        .then(function(c) {
+                            var badge = document.getElementById('messages-nav-badge');
+                            if (badge) {
+                                var n = c.unread_received || 0;
+                                if (n > 0) {
+                                    badge.textContent = n < 100 ? n : '99+';
+                                    badge.style.display = '';
+                                } else {
+                                    badge.style.display = 'none';
+                                }
+                            }
+                            // Badge PWA global
+                            if ('setAppBadge' in navigator || 'clearAppBadge' in navigator) {
+                                var total = (c.unread_received||0) + (c.unread_baby||0)
+                                          + (c.unread_task_added||0) + (c.courses_pending_count||0);
+                                if (total > 0) navigator.setAppBadge(total).catch(function(){});
+                                else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+                            }
+                        })
+                        .catch(function(){});
+                }
+
+                // Écouter les nouveaux messages : MAJ badge immédiat (pas de reload — messages_list_update s'en charge)
                 socket.on('new_message_notification', function(data) {
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('💬 WebSocket Comments: Nouveau message reçu');
-                    console.log('📧 sender_email:', data.sender_email);
-                    console.log('📧 recipient_email:', data.recipient_email);
-                    console.log('👤 userEmail (MOI):', userEmail);
-                    console.log('👶 recipient_is_child:', data.recipient_is_child);
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    
-                    // ❌ Si JE suis l'expéditeur → ne rien faire (je vois déjà mon message)
-                    if (data.sender_email === userEmail) {
-                        console.log('⏭️ JE SUIS L\'EXPÉDITEUR → pas de rechargement, pas de son');
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-                        return;
+                    console.log('💬 WebSocket Comments: Nouveau message reçu', data);
+
+                    // Si JE suis l'expéditeur → rien à faire
+                    if (data.sender_email === userEmail) return;
+
+                    // Destinataire direct ou message pour enfant (parent voit) → son + badge instantané
+                    if (data.recipient_email === userEmail || data.recipient_is_child === true) {
+                        if (window.SoundManager) SoundManager.play('receiveMessage');
+                        _refreshNavBadgeFromApi();
                     }
-                    
-                    // ✅ Si JE suis le destinataire → recharger la page avec le son
-                    if (data.recipient_email === userEmail) {
-                        console.log('✅ JE SUIS LE DESTINATAIRE ! → Son + Rechargement...');
-                        SoundManager.play('receiveMessage');
-                        setTimeout(function() { location.reload(); }, 1500);
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-                        return;
-                    }
-                    
-                    // ✅ Si le destinataire est un ENFANT et je suis parent
-                    if (data.recipient_is_child === true) {
-                        console.log('👶 Message pour ENFANT → Son + Rechargement (parents voient)...');
-                        SoundManager.play('receiveMessage');
-                        setTimeout(function() { location.reload(); }, 1500);
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-                        return;
-                    }
-                    
-                    console.log('⏭️ Ce message ne me concerne pas');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                 });
                 
                 // 🔌 Synchroniser la liste des messages pour tous
@@ -1451,6 +1456,13 @@
                     _typingTimeout = setTimeout(function() {
                         indicator.style.display = 'none';
                     }, 2000);
+                });
+                socket.on('user_stop_typing', function(data) {
+                    if (data.user_email === userEmail) return;
+                    var indicator = document.getElementById('typing-indicator');
+                    if (!indicator) return;
+                    clearTimeout(_typingTimeout);
+                    indicator.style.display = 'none';
                 });
                 
                 console.log('✅ WebSocket Comments: Synchronisation temps réel initialisée');

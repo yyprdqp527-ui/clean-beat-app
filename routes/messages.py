@@ -33,7 +33,7 @@ def _comments_inner():
                      get_unread_messages_sent_to, get_house_players_with_colors,
                      to_paris, validate_avatar_file,
                      get_user_push_subscriptions, send_push_notification,
-                     get_house_players_points)
+                     get_house_players_points, compute_user_total_badge)
     if 'user' not in session:
         flash("Connecte-toi pour accéder à la messagerie", "warning")
         return redirect(url_for('auth.login'))
@@ -118,19 +118,8 @@ def _comments_inner():
                 try:
                     subscriptions = get_user_push_subscriptions(recipient_email)
                     if subscriptions:
-                        # Badge = total de TOUS les types non lus (pas juste les messages)
-                        _courses_pending = 0
-                        try:
-                            c.execute("SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0", (house_id,))
-                            _courses_pending = c.fetchone()[0] or 0
-                        except Exception:
-                            pass
-                        total_badge = (
-                            recipient_unread_count +
-                            get_unread_count_by_type(recipient_email, house_id, 'baby_tracking') +
-                            get_unread_count_by_type(recipient_email, house_id, 'task_added') +
-                            _courses_pending
-                        )
+                        # Badge unifié via helper (même formule que notify_house_members)
+                        total_badge = compute_user_total_badge(recipient_email, house_id)
                         notification_data = {
                             'title': f'💬 Message de {current_user_name}',
                             'body': content[:100] + ('...' if len(content) > 100 else ''),

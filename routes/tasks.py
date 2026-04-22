@@ -1086,30 +1086,33 @@ def task_enhanced(cat, task_id):
             else:
                 _dbg(f"⏭️ Pas de tracking_time fourni - formulaire baby tracking non rempli")
             
-            # 🎯 Messages automatiques désactivés
-            # Les messages ne sont plus envoyés lors de la validation pour éviter l'encombrement
-            # try:
-            #     message_content = f"✅ {player_name} a validé '{task_name}' (+{final_task_points} pts)"
-            #     create_system_message(house_id, message_content, 'task_completed')
-            #     
-            #     # 💬 Envoyer un message de félicitation si le joueur a fait 3 tâches ou plus aujourd'hui
-            #     try:
-            #         today = date.today().isoformat()
-            #         c_check = conn.cursor()
-            #         c_check.execute("""
-            #             SELECT COUNT(*) FROM completed_tasks 
-            #             WHERE user_email=? AND DATE(completed_at)=?
-            #         """, (player_email, today))
-            #         task_count = c_check.fetchone()[0]
-            #         
-            #         if task_count >= 3 and task_count % 3 == 0:  # À chaque multiple de 3
-            #             congrats_msg = get_house_personality_message('congratulation', player_name)
-            #             create_system_message(house_id, congrats_msg, 'congratulation')
-            #     except Exception:
-            #         pass  # Ne pas bloquer si ça échoue
-            #         
-            # except Exception:
-            #     pass  # Ne pas bloquer si le message échoue
+            # 🎯 Message automatique à la validation de tâche
+            try:
+                message_content = f"✅ {player_name} a validé '{task_name}' (+{final_task_points} pts)"
+                create_system_message(house_id, message_content, 'task_completed')
+
+                # 💬 Envoyer un message de félicitation si le joueur a fait 3 tâches ou plus aujourd'hui
+                try:
+                    today = date.today().isoformat()
+                    c_check = conn.cursor()
+                    c_check.execute("""
+                        SELECT COUNT(*) FROM completed_tasks
+                        WHERE user_email=? AND DATE(completed_at)=?
+                    """, (player_email, today))
+                    task_count = c_check.fetchone()[0]
+
+                    if task_count >= 3 and task_count % 3 == 0:  # À chaque multiple de 3
+                        congratulation_msg = (
+                            f"🏆 {player_name} a validé "
+                            f"'{task_name}' et gagne "
+                            f"{final_task_points} points !"
+                        )
+                        create_system_message(house_id, congratulation_msg, 'congratulation')
+                except Exception:
+                    pass  # Ne pas bloquer si ça échoue
+
+            except Exception:
+                pass  # Ne pas bloquer si le message échoue
             
             # flash(f"Tâche validée ! +{final_task_points} pts pour {player_name}", "success")
         except Exception as e:

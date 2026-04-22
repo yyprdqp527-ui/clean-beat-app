@@ -3236,6 +3236,40 @@ def deactivate_push_subscription(endpoint):
         return False
 
 
+def _get_house_courses_pending(house_id):
+    """Compteur 'rappels courses non faits' partagé pour toute la maison."""
+    try:
+        _conn = get_db_connection()
+        _c = _conn.cursor()
+        _c.execute(
+            "SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0",
+            (house_id,)
+        )
+        n = _c.fetchone()[0] or 0
+        _conn.close()
+        return n
+    except Exception:
+        return 0
+
+
+def compute_user_total_badge(user_email, house_id, courses_pending=None):
+    """
+    Total unifié des notifications non lues pour le badge PWA d'un utilisateur.
+    Source unique de vérité — utilisée par notify_house_members() et routes/messages.add_comment().
+    """
+    if courses_pending is None:
+        courses_pending = _get_house_courses_pending(house_id)
+    try:
+        return (
+            get_unread_message_count(user_email, house_id) +
+            get_unread_count_by_type(user_email, house_id, 'baby_tracking') +
+            get_unread_count_by_type(user_email, house_id, 'task_added', include_own=True) +
+            courses_pending
+        )
+    except Exception:
+        return 0
+
+
 def notify_house_members(house_id, notification_data, exclude_email=None):
     """
     Envoie une notification push à tous les membres d'une maison.
@@ -3252,33 +3286,18 @@ def notify_house_members(house_id, notification_data, exclude_email=None):
     """
     subscriptions = get_house_push_subscriptions(house_id, exclude_email)
     print(f"🔔 notify_house_members: house_id={house_id}, {len(subscriptions)} subscription(s) trouvée(s), exclude={exclude_email}", flush=True)
-    
+
     # courses_pending_count est identique pour tous les membres → 1 seule requête hors boucle
-    try:
-        _conn_cp = get_db_connection()
-        _c_cp = _conn_cp.cursor()
-        _c_cp.execute(
-            "SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0",
-            (house_id,)
-        )
-        _courses_pending = _c_cp.fetchone()[0] or 0
-        _conn_cp.close()
-    except Exception:
-        _courses_pending = 0
+    _courses_pending = _get_house_courses_pending(house_id)
 
     success_count = 0
     for sub in subscriptions:
         user_email = sub.get('user_email')
-        # Calculer le badge count réel pour cet utilisateur
+        # Calculer le badge count réel pour cet utilisateur via le helper unifié
         personalized_data = dict(notification_data)
         if user_email:
             try:
-                total = (
-                    get_unread_message_count(user_email, house_id) +
-                    get_unread_count_by_type(user_email, house_id, 'baby_tracking') +
-                    get_unread_count_by_type(user_email, house_id, 'task_added', include_own=True) +
-                    _courses_pending
-                )
+                total = compute_user_total_badge(user_email, house_id, courses_pending=_courses_pending)
                 personalized_data['badge'] = max(1, total)
             except Exception:
                 personalized_data['badge'] = 1
@@ -4399,6 +4418,26 @@ if SOCKETIO_AVAILABLE:
                 }, namespace='/', room=f'house_{house_id}', broadcast=True)
         except Exception as e:
             _dbg(f'❌ Erreur handle_typing: {e}')
+
+    @socketio.on('stop_typing')
+    def handle_stop_typing(data):
+        """Diffuser l'arrêt de frappe à tous les membres de la maison"""
+        try:
+            user_email = data.get('user_email')
+            if not user_email:
+                return
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute('SELECT house_id FROM users WHERE email=?', (user_email,))
+            row = c.fetchone()
+            conn.close()
+            if row and row[0]:
+                house_id = row[0]
+                safe_socketio_emit('user_stop_typing', {
+                    'user_email': user_email
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception as e:
+            _dbg(f'❌ Erreur handle_stop_typing: {e}')
 
 
 # 🏠 ========== ROUTES TEST MESSAGES MAISON ==========
