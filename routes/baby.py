@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, jsonify
 
 baby_bp = Blueprint('baby', __name__)
 
@@ -188,6 +188,11 @@ def save_baby_tracking():
     except Exception as e:
         _dbg(f"⚠️ WebSocket baby_tracking_added: {e}")
 
-    flash(f"✅ Suivi enregistré et partagé avec votre partenaire !", "success")
+    redirect_url = url_for('tasks.task_enhanced', cat=category, task_id=task_id)
 
-    return redirect(url_for('tasks.task_enhanced', cat=category, task_id=task_id))
+    # 📡 Réponse AJAX (optimistic update côté client)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in (request.headers.get('Accept') or ''):
+        return jsonify({'success': True, 'redirect': redirect_url, 'message': message_text})
+
+    flash(f"✅ Suivi enregistré et partagé avec votre partenaire !", "success")
+    return redirect(redirect_url)

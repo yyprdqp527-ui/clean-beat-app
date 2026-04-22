@@ -3,19 +3,17 @@
 {% block title %}Suivi Bébé - {{ task_name }}{% endblock %}
 
 {% block content %}
-<style>
-</style>
 <a href="{{ url_for('tasks.categorie', cat=category) }}" class="back-btn-glass" aria-label="Retour">←</a>
 <div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header" style="background: linear-gradient(135deg, #a8e6cf 0%, #ffd3b6 100%);">
+    <div class="card baby-glass-card">
+        <div class="card-header baby-glass-header">
             <h3 class="mb-0">
                 {% if task_type == 'biberon' %}🍼{% elif task_type == 'couches' %}👶{% else %}😴{% endif %}
                 {{ task_name }}
             </h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('baby.save_baby_tracking') }}">
+            <form id="babyForm" method="POST" action="{{ url_for('baby.save_baby_tracking') }}">
                 <input type="hidden" name="task_type" value="{{ task_type }}">
                 <input type="hidden" name="task_name" value="{{ task_name }}">
                 <input type="hidden" name="category" value="{{ category }}">
@@ -52,8 +50,9 @@
 
                 <!-- Boutons -->
                 <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-success">
-                        ✅ Valider et partager
+                    <button type="submit" id="babySubmitBtn" class="btn baby-glass-btn">
+                        <span class="baby-btn-label">✅ Valider et partager</span>
+                        <span class="baby-btn-spinner" style="display:none;">⏳ Envoi…</span>
                     </button>
                 </div>
             </form>
@@ -62,14 +61,14 @@
 
     <!-- Historique des derniers enregistrements -->
     {% if history %}
-    <div class="card shadow-sm mt-4">
-        <div class="card-header bg-light">
+    <div class="card baby-glass-card mt-4">
+        <div class="card-header baby-glass-header-light">
             <h5 class="mb-0">📊 Historique récent</h5>
         </div>
         <div class="card-body">
-            <div class="list-group">
+            <div class="list-group baby-history-list">
                 {% for entry in history %}
-                <div class="list-group-item">
+                <div class="list-group-item baby-history-item">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="mb-1">
@@ -79,11 +78,11 @@
                                 {% endif %}
                             </h6>
                             {% if entry.observations %}
-                            <p class="mb-1 text-muted small">{{ entry.observations }}</p>
+                            <p class="mb-1 baby-history-obs">{{ entry.observations }}</p>
                             {% endif %}
-                            <small class="text-muted">Par {{ entry.user_email.split('@')[0] }}</small>
+                            <small class="baby-history-author">Par {{ entry.user_email.split('@')[0] }}</small>
                         </div>
-                        <small class="text-muted">{{ entry.created_at }}</small>
+                        <small class="baby-history-author">{{ entry.created_at }}</small>
                     </div>
                 </div>
                 {% endfor %}
@@ -94,25 +93,107 @@
 </div>
 
 <style>
-.card {
-    border-radius: 15px;
+/* 🍼 Baby tracking — glassmorphisme harmonisé avec l'app */
+.baby-glass-card {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     overflow: hidden;
 }
-.card-header {
-    color: #333;
+.baby-glass-header {
+    background: linear-gradient(135deg, rgba(168,230,207,0.55) 0%, rgba(255,211,182,0.55) 100%);
+    backdrop-filter: blur(12px);
+    color: #2d3a3a;
     font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
 }
-.form-control:focus {
+.baby-glass-header-light {
+    background: rgba(255,255,255,0.30);
+    backdrop-filter: blur(12px);
+    color: #2d3a3a;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+}
+.baby-glass-card .form-control {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 12px;
+}
+.baby-glass-card .form-control:focus {
+    background: rgba(255,255,255,0.75);
     border-color: #a8e6cf;
-    box-shadow: 0 0 0 0.2rem rgba(168, 230, 207, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(168, 230, 207, 0.35);
 }
-.btn-success {
-    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-    border: none;
+.baby-glass-btn {
+    background: linear-gradient(135deg, rgba(132,250,176,0.85) 0%, rgba(143,211,244,0.85) 100%);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #1d3a2a;
     font-weight: bold;
+    border-radius: 14px;
+    padding: 10px 22px;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 14px rgba(132,250,176,0.35);
 }
-.btn-success:hover {
-    background: linear-gradient(135deg, #6dd5a3 0%, #7bc4e8 100%);
+.baby-glass-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(132,250,176,0.45);
 }
+.baby-glass-btn:disabled { opacity: .75; cursor: wait; }
+.baby-history-list { background: transparent; }
+.baby-history-item {
+    background: rgba(255,255,255,0.35);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+.baby-history-obs { color: #4a5d52; }
+.baby-history-author { color: #5a6a62; }
 </style>
+
+<script>
+(function(){
+    var form = document.getElementById('babyForm');
+    if (!form) return;
+    var btn = document.getElementById('babySubmitBtn');
+    var label = btn.querySelector('.baby-btn-label');
+    var spinner = btn.querySelector('.baby-btn-spinner');
+
+    form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        if (btn.disabled) return;
+
+        // 🚀 Optimistic UI : désactiver bouton + spinner immédiat
+        btn.disabled = true;
+        if (label) label.style.display = 'none';
+        if (spinner) spinner.style.display = '';
+
+        var fd = new FormData(form);
+        fetch(form.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        })
+        .then(function(r){ return r.json().catch(function(){ return null; }); })
+        .then(function(data){
+            if (data && data.success && data.redirect) {
+                // Petite animation "✓" avant redirection pour feedback
+                if (spinner) spinner.textContent = '✅ Enregistré !';
+                setTimeout(function(){ window.location.href = data.redirect; }, 250);
+            } else {
+                // Fallback : rechargement classique
+                form.submit();
+            }
+        })
+        .catch(function(){
+            // Réseau KO : retomber sur soumission classique
+            form.submit();
+        });
+    });
+})();
+</script>
 {% endblock %}
