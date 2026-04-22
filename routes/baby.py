@@ -152,12 +152,29 @@ def save_baby_tracking():
 
     try:
         from app import create_system_message
-        create_system_message(
-            house_id,
-            message_text,
-            'baby_tracking',
-            sender_email=session['user']
-        )
+        import threading
+        if task_type == 'biberon':
+            _push_title = '🍼 Biberon donné !'
+        elif task_type == 'couches':
+            _push_title = '👶 Change de couche !'
+        elif task_type == 'sommeil':
+            _push_title = '😴 Bébé dort !'
+        else:
+            _push_title = '👶 Suivi bébé'
+        _house_id = house_id
+        _msg = message_text
+        _sender = session['user']
+        _title = _push_title
+        def _notif():
+            try:
+                create_system_message(
+                    _house_id, _msg,
+                    'baby_tracking',
+                    sender_email=_sender,
+                    push_title=_title)
+            except Exception:
+                pass
+        threading.Thread(target=_notif, daemon=True).start()
     except Exception as e:
         _dbg(f"❌ Erreur create_system_message baby: {e}")
 

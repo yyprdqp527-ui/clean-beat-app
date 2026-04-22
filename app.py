@@ -2674,7 +2674,7 @@ def propagate_player_name_change(cursor, email, old_name, new_name, house_id):
     return updated_count
 
 
-def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None, related_category=None):
+def create_system_message(house_id, content, message_type='system', related_task_id=None, send_push=True, sender_name=None, sender_email=None, related_category=None, push_title=None):
     """
     Crée un message système automatique pour la maison.
     Types: 'system', 'task_completed', 'task_added', 'congratulation', 'reminder', 'sermon', 'baby_tracking', 'courses_added'
@@ -2747,7 +2747,9 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'courses_added': '🛒 Liste de courses',
                     'baby_tracking': '👶 Suivi bébé',
                 }
-                if message_type in ['sermon', 'congratulation', 'reminder']:
+                if push_title:
+                    title = push_title
+                elif message_type in ['sermon', 'congratulation', 'reminder']:
                     title = f'{icon_emoji} {sender_name or "Maison"}'
                 elif message_type in notification_titles:
                     title = notification_titles[message_type]
@@ -3830,7 +3832,7 @@ def menu():
             unread_sent_to = {}    # Non utilisé dans nouvelle logique
             
             # ✅ Messages baby_tracking et task_added : compteur pour badges burger
-            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=True)
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=False)
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn, include_own=True)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
@@ -4220,7 +4222,7 @@ def api_unread_counts():
         # Récupérer les compteurs
         unread_received = get_unread_message_count(session['user'], house_id)
         children_unread = get_children_unread_counts(house_id)
-        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', include_own=True)
+        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', include_own=False)
         unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', include_own=True)
         unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added', include_own=True)
 

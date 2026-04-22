@@ -5506,12 +5506,10 @@ function sendMalus(reason, points){
                             refreshAllBadges();
                         });
 
-                        // 👶 Nouveau suivi bébé enregistré — le partenaire voit la pastille apparaître
+                        // 👶 Nouveau suivi bébé enregistré — tout le monde rafraîchit ses badges
                         socket.on('baby_tracking_added', function(data) {
                             console.log('👶 WebSocket: baby_tracking_added reçu', data);
-                            if (data.sender_email !== '{{ session.get("user") }}') {
-                                refreshAllBadges();
-                            }
+                            refreshAllBadges();
                         });
 
                         // 🆕 Nouvelle mission ajoutée — rafraîchir les pastilles oranges
