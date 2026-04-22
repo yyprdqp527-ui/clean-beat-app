@@ -1219,7 +1219,7 @@
                 }
 
                 // 📨 Formulaire d'envoi : fetch async + optimistic update + Enter pour envoyer
-                const messageForm = document.querySelector('form[action="{{ url_for(\'messages.comments\') }}"]');
+                const messageForm = document.querySelector('form[action="{{ url_for("messages.comments") }}"]');
                 if (messageForm) {
                     const ta = messageForm.querySelector('textarea[name="content"]');
                     var _typingTimer = null;
