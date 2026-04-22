@@ -6632,7 +6632,7 @@ function closeDailyReminder() {
   if (popup) {
     popup.style.opacity = '0';
     popup.style.transition = 'opacity 0.3s ease';
-    setTimeout(function() { popup.style.display = 'none'; popup.style.opacity = ''; popup.style.transition = ''; }, 300);
+    setTimeout(function() { popup.style.display = 'none'; popup.style.opacity = ''; popup.style.transition = ''; popup.dispatchEvent(new Event('qfq_reminder_closed')); }, 300);
   }
   if (_dailyReminderMsgId) {
     fetch('/api/mark_reminder_read', {
@@ -6699,6 +6699,23 @@ function closeDailyReminder() {
       window.dispatchEvent(new Event('menu_tips_done'));
       return;
     }
+
+    // Attend que le popup reminder soit fermé avant de lancer les bulles
+    var reminderPopup = document.getElementById('dailyReminderPopup');
+    if (reminderPopup && reminderPopup.style.display !== 'none') {
+      reminderPopup.addEventListener('qfq_reminder_closed', function() {
+        window.QfqTips.init(TIPS, KEY, function() {
+          window.dispatchEvent(new Event('menu_tips_done'));
+          setTimeout(function() {
+            if (typeof window.showInstallBanner === 'function') {
+              window.showInstallBanner();
+            }
+          }, 500);
+        });
+      }, {once: true});
+      return;
+    }
+
     window.QfqTips.init(TIPS, KEY, function() {
       window.dispatchEvent(new Event('menu_tips_done'));
       // Déclenche PWA banner
