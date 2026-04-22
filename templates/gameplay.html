@@ -2151,7 +2151,10 @@ function spinWheel() {
     canvas.style.transform = `rotate(${currentRotation + totalRotation}deg)`;
     const finalAngle = (currentRotation + totalRotation) % 360;
     const sliceAngle = 360 / wheelTasks.length;
-    const selectedIndex = Math.floor((360 - finalAngle + sliceAngle / 2) / sliceAngle) % wheelTasks.length;
+    // Le pointeur est en haut (12h = angle canvas 270°). Après rotation de finalAngle degrés,
+    // l'angle canvas qui se retrouve sous le pointeur est : (270 - finalAngle + 360) % 360
+    const canvas_angle_at_pointer = ((270 - finalAngle) % 360 + 360) % 360;
+    const selectedIndex = Math.floor(canvas_angle_at_pointer / sliceAngle) % wheelTasks.length;
     const selectedTask = wheelTasks[selectedIndex];
     currentRotation = (currentRotation + totalRotation) % 360;
     setTimeout(() => {
