@@ -6628,12 +6628,21 @@ function refreshAllBadges() {
 </div>
 
 <script>
+var _dailyReminderMsgId = null;
 function closeDailyReminder() {
   var popup = document.getElementById('dailyReminderPopup');
   if (popup) {
     popup.style.opacity = '0';
     popup.style.transition = 'opacity 0.3s ease';
     setTimeout(function() { popup.style.display = 'none'; popup.style.opacity = ''; popup.style.transition = ''; }, 300);
+  }
+  if (_dailyReminderMsgId) {
+    fetch('/api/mark_reminder_read', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message_id: _dailyReminderMsgId})
+    }).catch(function() {});
+    _dailyReminderMsgId = null;
   }
 }
 
@@ -6643,6 +6652,7 @@ function closeDailyReminder() {
   var popup = document.getElementById('dailyReminderPopup');
   var txt = document.getElementById('dailyReminderText');
   if (popup && txt) {
+    _dailyReminderMsgId = {{ daily_reminder_message_id | tojson }};
     txt.textContent = {{ daily_reminder_message | tojson }};
     popup.style.display = 'flex';
   }

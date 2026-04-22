@@ -4028,6 +4028,7 @@ def menu():
     # ⏰ Rappel quotidien — vérifier si un message reminder non lu existe pour ce joueur
     show_daily_reminder = False
     daily_reminder_message = None
+    daily_reminder_message_id = None
     try:
         _current_user_email = session.get('user')
         _conn_r = get_db_connection()
@@ -4044,15 +4045,8 @@ def menu():
         _reminder_row = _c_r.fetchone()
         if _reminder_row:
             show_daily_reminder = True
+            daily_reminder_message_id = _reminder_row[0]
             daily_reminder_message = _reminder_row[1]
-            try:
-                _c_r.execute(
-                    "INSERT INTO message_reads (message_id, user_email) VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING",
-                    (_reminder_row[0], _current_user_email)
-                )
-                _conn_r.commit()
-            except Exception:
-                pass
         _conn_r.close()
     except Exception:
         pass
@@ -4095,12 +4089,38 @@ def menu():
         daily_leader_email=_daily_leader_email,
         show_daily_reminder=show_daily_reminder,
         daily_reminder_message=daily_reminder_message,
+        daily_reminder_message_id=daily_reminder_message_id,
     ))
     # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'
     return resp
+
+
+@app.route('/api/mark_reminder_read', methods=['POST'])
+def mark_reminder_read():
+    """Marquer un message reminder comme lu (appelé au clic sur 'Je vais valider')"""
+    if 'user' not in session:
+        return jsonify({'error': 'not logged in'}), 401
+    data = request.get_json(silent=True) or {}
+    message_id = data.get('message_id')
+    if not message_id:
+        return jsonify({'error': 'missing message_id'}), 400
+    user_email = session['user']
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute(
+            'INSERT INTO message_reads (message_id, user_email) VALUES (?, ?) ON CONFLICT(message_id, user_email) DO NOTHING',
+            (message_id, user_email)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        _dbg(f'❌ Erreur mark_reminder_read: {e}')
+        return jsonify({'error': 'db error'}), 500
+    return jsonify({'ok': True})
 
 
 # ════════════════════════════════════════════════════════════
