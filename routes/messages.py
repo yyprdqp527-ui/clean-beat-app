@@ -138,19 +138,38 @@ def _comments_inner():
                             'url': '/menu',
                             'badge': max(1, total_badge)
                         }
-                        for sub in subscriptions:
-                            send_push_notification(sub, notification_data)
-                        _dbg(f"🔔 Notification push envoyée à {recipient_email}")
+                        import threading
+                        def _do_push(_subs, _data):
+                            for _sub in _subs:
+                                try:
+                                    send_push_notification(_sub, _data)
+                                except Exception:
+                                    pass
+                        threading.Thread(
+                            target=_do_push,
+                            args=(list(subscriptions), dict(notification_data)),
+                            daemon=True
+                        ).start()
+                        _dbg(f"🔔 Notification push lancée en background pour {recipient_email}")
                 except Exception as e:
                     _dbg(f"⚠️ Erreur envoi notification push: {e}")
                 
                 # Pas de flash() ici → évite double notification (flash sur /comments + flash sur /menu)
                 # La confirmation est faite via ?sent=1 (toast JS local, sans session flash)
                 recipient_name = recipient[1] if recipient[1] else recipient[0]
+                if request.headers.get('X-Requested-With') == 'fetch':
+                    conn.close()
+                    return jsonify({'success': True, 'recipient_name': recipient_name})
                 return redirect(url_for('messages.comments') + f'?sent=1&to={recipient_name}')
             else:
+                if request.headers.get('X-Requested-With') == 'fetch':
+                    conn.close()
+                    return jsonify({'success': False, 'error': 'Destinataire invalide'}), 400
                 flash("Destinataire invalide.", "danger")
         else:
+            if request.headers.get('X-Requested-With') == 'fetch':
+                conn.close()
+                return jsonify({'success': False, 'error': 'Message ou destinataire manquant'}), 400
             flash("Veuillez sélectionner un destinataire et écrire un message.", "danger")
         
         return redirect(url_for('messages.comments'))

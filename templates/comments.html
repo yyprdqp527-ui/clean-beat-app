@@ -1180,12 +1180,94 @@
                     timeout: 10000
                 });
                 const userEmail = "{{ email }}";
-                
-                // � Ajouter le son d'envoi au formulaire
-                const messageForm = document.querySelector('form[action="{{ url_for('messages.comments') }}"]');
+                const myName = "{{ current_user_name }}";
+
+                // 🔔 Toast léger
+                function _toastMsg(text, isError) {
+                    const t = document.createElement('div');
+                    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:' + (isError ? '#ff4757' : '#27ae60') + ';color:#fff;padding:10px 20px;border-radius:20px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.3);transition:opacity 0.3s;';
+                    t.textContent = text;
+                    document.body.appendChild(t);
+                    setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 350); }, 2500);
+                }
+
+                // 🏗️ Construire un message optimiste (apparence identique aux messages "moi")
+                function _buildOptimisticMsg(content, recipientName) {
+                    const now = new Date();
+                    const hh = String(now.getHours()).padStart(2, '0');
+                    const mm = String(now.getMinutes()).padStart(2, '0');
+                    const existingMe = document.querySelector('.message-item.message-me');
+                    const myColor = existingMe ? getComputedStyle(existingMe).getPropertyValue('--message-color').trim() : '#4A90E2';
+                    const myBgColor = existingMe ? getComputedStyle(existingMe).getPropertyValue('--message-bg-color').trim() : 'rgba(74,144,226,0.15)';
+                    const avatarEl = existingMe ? existingMe.querySelector('.message-avatar') : null;
+                    const avatarHtml = avatarEl ? avatarEl.innerHTML : '<span style="font-size:24px">👤</span>';
+                    const avatarStyle = avatarEl ? (avatarEl.getAttribute('style') || '') : '';
+                    const safeContent = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+                    const el = document.createElement('div');
+                    el.className = 'message-item message-me';
+                    el.dataset.optimistic = '1';
+                    el.style.cssText = '--message-color:' + myColor + ';--message-bg-color:' + myBgColor + ';opacity:0.7;';
+                    el.innerHTML = '<div class="message-avatar" style="' + avatarStyle + '">' + avatarHtml + '</div>'
+                        + '<div class="message-content"><div class="message-bubble">'
+                        + '<div class="message-sender-name">' + myName + (recipientName ? ' <span style="opacity:0.7;font-size:0.9em"> → ' + recipientName + '</span>' : '') + '</div>'
+                        + '<p class="message-text">' + safeContent + '</p>'
+                        + '<div class="message-timestamp">' + hh + ':' + mm + '</div>'
+                        + '<div class="read-receipt receipt-sent">✓</div>'
+                        + '</div></div>';
+                    return el;
+                }
+
+                // 📨 Formulaire d'envoi : fetch async + optimistic update + Enter pour envoyer
+                const messageForm = document.querySelector('form[action="{{ url_for(\'messages.comments\') }}"]');
                 if (messageForm) {
+                    const ta = messageForm.querySelector('textarea[name="content"]');
+                    if (ta) {
+                        ta.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                messageForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                            }
+                        });
+                    }
                     messageForm.addEventListener('submit', function(e) {
-                        SoundManager.play('sendMessage');
+                        e.preventDefault();
+                        const content = ta ? ta.value.trim() : '';
+                        const recipientRadio = messageForm.querySelector('input[name="recipient"]:checked');
+                        if (!content || !recipientRadio) {
+                            _toastMsg('Sélectionne un destinataire et écris un message.', true);
+                            return;
+                        }
+                        const recipientEmail = recipientRadio.value;
+                        const recipientLabel = recipientRadio.closest('label');
+                        const recipientName = recipientLabel ? ((recipientLabel.querySelector('.avatar-name') || {}).textContent || '').trim() : '';
+                        if (window.SoundManager) SoundManager.play('sendMessage');
+                        const msgList = document.querySelector('.messages-list');
+                        const optimEl = _buildOptimisticMsg(content, recipientName);
+                        if (msgList) msgList.prepend(optimEl);
+                        if (ta) { ta.value = ''; ta.style.height = ''; }
+                        if (msgList) msgList.scrollTop = 0;
+                        const formData = new FormData();
+                        formData.append('content', content);
+                        formData.append('recipient', recipientEmail);
+                        fetch('{{ url_for("messages.comments") }}', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'fetch' },
+                            body: formData
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data.success) {
+                                if (optimEl) { optimEl.style.opacity = '1'; optimEl.style.transition = 'opacity 0.2s'; }
+                                _toastMsg('✓ Envoyé à ' + (data.recipient_name || recipientName), false);
+                            } else {
+                                if (optimEl) optimEl.remove();
+                                _toastMsg('❌ ' + (data.error || "Erreur lors de l'envoi"), true);
+                            }
+                        })
+                        .catch(function() {
+                            if (optimEl) optimEl.remove();
+                            _toastMsg('❌ Erreur réseau', true);
+                        });
                     });
                 }
                 
