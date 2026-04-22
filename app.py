@@ -4627,22 +4627,42 @@ def cron_daily_reminder():
         )
 
         houses_done = set()
+        details = []
         for player in inactive_players:
             player_email = player[0]
+            player_name = player[1]
             house_id = player[2]
+            push_sent = 0
+            push_error = None
+            subs_count = 0
 
             try:
                 subs = get_house_push_subscriptions(house_id, exclude_email=None)
                 player_subs = [s for s in subs if s.get('user_email') == player_email]
+                subs_count = len(player_subs)
                 for sub in player_subs:
-                    send_push_notification(sub, {
-                        'title': "Hé, t'es là ? 👀",
-                        'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
-                        'url': '/menu',
-                        'icon': '/static/images/logo.png'
-                    })
+                    try:
+                        send_push_notification(sub, {
+                            'title': "Hé, t'es là ? 👀",
+                            'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
+                            'url': '/menu',
+                            'icon': '/static/images/logo.png'
+                        })
+                        push_sent += 1
+                    except Exception as pe:
+                        push_error = str(pe)[:200]
             except Exception as e:
+                push_error = str(e)[:200]
                 print(f"❌ Push error: {e}", flush=True)
+
+            details.append({
+                'name': player_name,
+                'email': player_email,
+                'house_id': house_id,
+                'subs_count': subs_count,
+                'push_sent': push_sent,
+                'push_error': push_error
+            })
 
             if house_id not in houses_done:
                 houses_done.add(house_id)
@@ -4666,7 +4686,7 @@ def cron_daily_reminder():
                 except Exception:
                     pass
 
-        return jsonify({'success': True, 'players_notified': len(inactive_players)})
+        return jsonify({'success': True, 'players_notified': len(inactive_players), 'details': details})
 
     except Exception as e:
         print(f"❌ CRON error: {e}", flush=True)
