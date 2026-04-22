@@ -144,7 +144,8 @@ def add_reminder():
         else:
             creator_name = session['user'].split('@')[0]
         message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
-        create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
+        import threading as _t
+        _t.Thread(target=create_system_message, args=(house_id, message_content, 'courses_added'), kwargs={'sender_email': session['user']}, daemon=True).start()
     except Exception:
         if not creator_name:
             creator_name = session['user'].split('@')[0]
@@ -302,10 +303,8 @@ def toggle_reminder(reminder_id):
     # Récupérer nom du joueur pour l'animation avatar côté menu
     player_name_resp = ''
     try:
-        conn2 = get_db_connection()
-        pn = conn2.execute("SELECT name FROM users WHERE email=?", (session['user'],)).fetchone()
+        pn = c.execute("SELECT name FROM users WHERE email=?", (session['user'],)).fetchone()
         player_name_resp = pn[0] if pn else session['user'].split('@')[0]
-        conn2.close()
     except Exception:
         player_name_resp = session['user'].split('@')[0]
 

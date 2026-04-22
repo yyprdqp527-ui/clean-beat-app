@@ -441,7 +441,7 @@
                     .then(function(r){ return r.json(); })
                     .then(function(c){
                         var total = (c.unread_received||0) + (c.unread_baby||0)
-                                  + (c.unread_task_added||0) + (c.unread_courses_added||0);
+                                  + (c.unread_task_added||0) + (c.courses_pending_count||0);
                         if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
                         else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
                     }).catch(function(){}); })();
@@ -498,6 +498,15 @@
                 check.innerHTML = '✓';
             }
             _updateSectionTitle();
+            // Mettre à jour le badge PWA quand un autre joueur valide un article
+            fetch('/api/unread_counts', {cache: 'no-store'})
+                .then(function(r){ return r.json(); })
+                .then(function(c){
+                    var cnt = (c.courses_pending_count||0);
+                    var total = (c.unread_received||0) + (c.unread_baby||0) + (c.unread_task_added||0) + cnt;
+                    if (total > 0 && 'setAppBadge' in navigator) navigator.setAppBadge(total).catch(function(){});
+                    else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
+                }).catch(function(){});
         });
         _socket.on('reminder_deleted', function(data) {
             var card = document.getElementById('card-' + data.id);
