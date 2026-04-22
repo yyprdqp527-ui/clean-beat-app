@@ -4673,6 +4673,35 @@ def cron_daily_reminder():
         return jsonify({'error': str(e)}), 500
 # 🔐 ========== FIN CRON ENDPOINT ==========
 
+@app.route('/api/cron/list-players', methods=['GET'])
+def cron_list_players():
+    token = request.headers.get('X-Cron-Secret', '')
+    if token != os.environ.get('CRON_SECRET', ''):
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("""
+            SELECT u.name, u.email, u.house_id, u.points,
+                   MAX(ct.completed_at) as last_task
+            FROM users u
+            LEFT JOIN completed_tasks ct ON ct.user_email = u.email
+            WHERE u.house_id IS NOT NULL
+            AND u.is_child_account = 0
+            GROUP BY u.id, u.name, u.email, u.house_id, u.points
+            ORDER BY last_task DESC NULLS LAST
+        """)
+        rows = c.fetchall()
+        conn.close()
+        players = [
+            {'name': r[0], 'email': r[1], 'house_id': r[2],
+             'points': r[3], 'last_task': str(r[4]) if r[4] else None}
+            for r in rows
+        ]
+        return jsonify({'success': True, 'count': len(players), 'players': players})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
     try:
