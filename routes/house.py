@@ -610,6 +610,13 @@ def invite_partner():
             house_code = house_row[0]
             house_name = house_row[1] if house_row[1] else house_row[2]
             house_type = house_row[3] if house_row[3] else 'family'
+            # Générer un code si la maison n'en a pas encore
+            if not house_code:
+                import random
+                import string
+                house_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                c.execute("UPDATE houses SET code=? WHERE id=?", (house_code, house_id))
+                conn.commit()
     conn.close()
 
     # Déterminer le contexte : inscription ou depuis manage_players
@@ -756,8 +763,10 @@ def invite_partner():
         else:
             return redirect(url_for('menu') + '?nav=1')
 
-    # GET : construire l'URL d'invitation
-    join_url = f"{request.host_url}invite/{house_code}" if house_code else ""
+    # GET : construire l'URL d'invitation (URL publique Render, fallback locale)
+    import os
+    public_base = os.environ.get('RENDER_EXTERNAL_URL', 'https://clean-beat-app.onrender.com').rstrip('/')
+    join_url = f"{public_base}/invite/{house_code}" if house_code else ""
 
     return render_template('invite_partner_new.html',
                            house_code=house_code,

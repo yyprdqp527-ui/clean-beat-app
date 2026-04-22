@@ -897,6 +897,12 @@
             #complete-btn:active {
                 transform: scale(0.97);
             }
+            @keyframes task-pts-popup {
+                0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+                20%  { opacity:1; transform:translate(-50%,-70%) scale(1.35); }
+                50%  { opacity:1; transform:translate(-50%,-85%) scale(1.15); }
+                100% { opacity:0; transform:translate(-50%,-130%) scale(0.9); }
+            }
         </style>
         <div style="text-align:center;">
             <button id="complete-btn" type="button" class="ajax-validate-btn-solo" style="padding:16px 28px;border-radius:14px;color:#fff;border:none;font-weight:800;cursor:pointer;font-size:17px;width:100%;max-width:320px;transition:all 0.2s ease;">
@@ -998,18 +1004,26 @@ function validateTaskAjax(playerEmail) {
     })
     .then(function(data) {
         if (data.success) {
-            // ✅ PAS de popup, PAS de confettis, mais garder son et animation avatar
-            
-            // Jouer le son de victoire
+            // ✅ Son + animation +X pts + redirection menu (identique tâches standard)
             SoundManager.play('gainPoints');
-            
-            // Redirection avec paramètres pour l'animation de l'avatar
+
+            // Animation +X pts flottante au centre de l'écran
+            var pts = data.points || 0;
+            if (pts > 0) {
+                var popup = document.createElement('div');
+                popup.textContent = '+' + pts + ' pts';
+                popup.style.cssText = 'position:fixed;top:50%;left:50%;font-size:2.2em;font-weight:800;color:#153036;z-index:99999;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,0.95) 0%,rgba(255,215,0,0.4) 50%,rgba(255,255,255,0.9) 100%);padding:10px 22px;border-radius:50px;box-shadow:0 4px 20px rgba(0,0,0,0.15);animation:task-pts-popup 1.2s ease-out forwards;';
+                document.body.appendChild(popup);
+                setTimeout(function() { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 1300);
+            }
+
+            // Redirection avec paramètres pour l'animation de l'avatar sur /menu
             var redirectUrl = '/menu?success=1&pts=' + (data.points || 0) + 
                 '&ts=' + (data.timestamp || Date.now()) + 
                 '&who=' + encodeURIComponent(data.player_email || '') + 
                 '&whon=' + encodeURIComponent(data.player_name || '');
-            
-            // Délai pour laisser le son se jouer entièrement
+
+            // Délai pour laisser le son et l'animation se jouer
             setTimeout(function() {
                 window.location.href = redirectUrl;
             }, 1200);

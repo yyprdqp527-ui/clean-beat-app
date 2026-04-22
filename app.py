@@ -2743,7 +2743,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 # Titre personnalisé selon le type de notification
                 notification_titles = {
                     'task_completed': '✅ CleanBeat',
-                    'task_added': '🆕 Nouvelle mission !',
+                    'task_added': '⭐ Nouvelle mission !',
                     'courses_added': '🛒 Liste de courses',
                     'baby_tracking': '👶 Suivi bébé',
                 }

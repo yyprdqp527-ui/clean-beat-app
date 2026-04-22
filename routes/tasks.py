@@ -1,6 +1,7 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, jsonify, flash
 import os
 import sys
+import threading
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -312,8 +313,21 @@ def add_task_page(cat, task_id=None):
                 creator_row = c.fetchone()
                 creator_name = creator_row[0] if creator_row and creator_row[0] else session['user'].split('@')[0]
                 
-                message_content = f"🆕 {creator_name} a ajouté une nouvelle tâche : '{task_name}' dans {category_name} ({points} pts)"
-                create_system_message(house_id, message_content, 'task_added', sender_email=session['user'], related_category=normalized_cat)
+                message_content = f"⭐ {creator_name} a ajouté une nouvelle mission : '{task_name}' dans {category_name} ({points} pts)"
+                _house_id = house_id
+                _msg = message_content
+                _sender = session['user']
+                _cat = normalized_cat
+                def _notif():
+                    try:
+                        create_system_message(
+                            _house_id, _msg, 'task_added',
+                            sender_email=_sender,
+                            related_category=_cat)
+                    except Exception:
+                        pass
+                threading.Thread(
+                    target=_notif, daemon=True).start()
             except Exception as _e_msg:
                 print(f'⚠️ Erreur création message task_added: {_e_msg}', flush=True)
 
@@ -1651,7 +1665,7 @@ def api_rooms_with_missions():
                 WHERE ctd.house_id = ct.house_id
                 AND ctd.category = ct.category
                 AND ctd.task_name = ct.task_name
-                AND ctd.completed_at >= ct.created_at
+                AND COALESCE(ctd.completed_at, ctd.date_done) >= ct.created_at
             )
             GROUP BY ct.category
         """, (house_id,))
