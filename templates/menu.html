@@ -5236,15 +5236,25 @@ function sendMalus(reason, points){
                         socket.on('players_list_update', function(data) {
                             console.log('🔄 WebSocket: Mise à jour liste joueurs reçue', data);
                             
-                            if (data.action === 'child_added') {
-                                console.log(`Enfant ajoute: ${data.new_player}`);
-                            } else if (data.action === 'player_joined') {
-                                console.log(`Joueur a rejoint: ${data.new_player}`);
-                            } else if (data.action === 'player_registered') {
-                                console.log(`Nouveau joueur inscrit: ${data.new_player}`);
+                            var isNewPlayer = (data.action === 'child_added'
+                                            || data.action === 'player_joined'
+                                            || data.action === 'player_registered');
+
+                            if (isNewPlayer) {
+                                console.log(`✨ Nouveau joueur (${data.action}): ${data.new_player}`);
+                                // Vérifier s'il est déjà présent dans le DOM (sinon reload pour
+                                // créer ses éléments avatar/nom/barre — updatePlayersPointsMenu
+                                // ne sait que mettre à jour des éléments existants)
+                                var serverCount = (data.players && data.players.length) || 0;
+                                var domCount = document.querySelectorAll('.avatar-square-wrapper[data-player-email]').length;
+                                if (serverCount > 0 && serverCount > domCount) {
+                                    console.log(`🔁 Reload menu — joueurs serveur=${serverCount}, DOM=${domCount}`);
+                                    setTimeout(function() { window.location.reload(); }, 800);
+                                    return;
+                                }
                             }
-                            
-                            // Recharger le menu pour afficher les nouveaux joueurs
+
+                            // Sinon : simple rafraîchissement des données existantes
                             if (typeof updatePlayersPointsMenu === 'function') {
                                 console.log('🔄 Rafraîchissement du menu après ajout joueur');
                                 updatePlayersPointsMenu();
@@ -6071,7 +6081,7 @@ function refreshAllBadges() {
         <div style="flex:1;">
             <div style="font-size:15px;font-weight:800;margin-bottom:4px;color:#153036;">📲 Installe QuiFaitQuoi sur ton écran d'accueil</div>
             <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#FDAE54;background:rgba(253,174,84,0.15);padding:4px 10px;border-radius:8px;display:inline-block;">⚡ Étape obligatoire — version bêta testeur</div>
-            <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.8;color:#597176;">
+            <div id="pwa-ios-msg" style="display:none;font-size:13px;line-height:1.8;color:#2d4a52;font-weight:600;">
                 <div style="display:flex;flex-direction:column;gap:8px;">
                     <div style="display:flex;align-items:flex-start;gap:8px;">
                         <span style="background:#153036;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;">1</span>
@@ -6091,7 +6101,7 @@ function refreshAllBadges() {
                     </div>
                 </div>
             </div>
-            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#597176;">Appuie sur <strong>« Ajouter »</strong> ci-dessous pour installer QuiFaitQuoi sur ton écran d'accueil et recevoir les notifications même quand l'appli est fermée&nbsp;📲</div>
+            <div id="pwa-android-msg" style="display:none;font-size:13px;line-height:1.5;color:#2d4a52;font-weight:600;">Appuie sur <strong>« Ajouter »</strong> ci-dessous pour installer QuiFaitQuoi sur ton écran d'accueil et recevoir les notifications même quand l'appli est fermée&nbsp;📲</div>
         </div>
     </div>
     <div id="pwa-android-btn-wrap" style="display:none;max-width:500px;margin:12px auto 0;">
@@ -6140,7 +6150,7 @@ function refreshAllBadges() {
         <span style="font-size:28px; flex-shrink:0;">🔔</span>
         <div style="flex:1; min-width:0;">
             <div style="font-weight:800; font-size:14px; color:#153036;">Active les notifications</div>
-            <div style="font-size:11px; color:#597176; margin-top:2px;">Pour recevoir rappels et messages de tes partenaires</div>
+            <div style="font-size:11px; color:#2d4a52; font-weight:600; margin-top:2px;">Pour recevoir rappels et messages de tes partenaires</div>
         </div>
         <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; flex-shrink:0; white-space:nowrap;">Activer</button>
     </div>
@@ -6571,7 +6581,7 @@ function refreshAllBadges() {
         <div style="text-align:center; margin-bottom:20px;">
             <div style="font-size:40px; margin-bottom:8px;">📱</div>
             <div style="font-size:20px; font-weight:900; color:#153036;">Installer CleanBeat</div>
-            <div style="font-size:13px; color:#597176; margin-top:4px;">Ajouter l'appli sur ton écran d'accueil</div>
+            <div style="font-size:13px; color:#2d4a52; font-weight:600; margin-top:4px;">Ajouter l'appli sur ton écran d'accueil</div>
         </div>
         <div style="background:linear-gradient(135deg,rgba(253,174,84,0.15),rgba(244,198,141,0.1)); border-radius:16px; padding:14px 16px; margin-bottom:20px; border:1.5px solid rgba(253,174,84,0.3);">
             <div style="font-size:13px; font-weight:800; color:#153036; margin-bottom:4px;">🧡 Tu es bêta testeur — merci !</div>
@@ -6640,7 +6650,9 @@ function closeDailyReminder() {
   var KEY = 'qfq_tips_menu';
   if (localStorage.getItem(KEY)) return;
 
-  var TIPS = [
+  var IS_INVITED = {{ 'true' if is_invited_player else 'false' }};
+
+  var TIPS_CREATOR = [
     {
       target: '.rooms-isometric .room-card:first-child',
       text: '🏠 Choisis une pièce, fais la tâche en vrai et valide-la pour gagner des points !',
@@ -6667,6 +6679,32 @@ function closeDailyReminder() {
       position: 'top'
     }
   ];
+
+  // 👋 Tips spécifiques pour un joueur qui REJOINT (pas le créateur)
+  var TIPS_INVITED = [
+    {
+      target: '.rooms-isometric .room-card:first-child',
+      text: '🎉 Bienvenue dans la baraque ! Choisis une pièce, fais la tâche en vrai et valide-la pour marquer des points.',
+      position: 'bottom'
+    },
+    {
+      target: '.gameplay-btn',
+      text: '🎮 Envoie des bonus à ton équipe pour les récompenser… ou des malus aux fumistes 😉',
+      position: 'bottom'
+    },
+    {
+      target: '#cwTabCourses',
+      text: '🛒 La liste de courses est partagée avec toute la maison. Chaque article coché = 1 point !',
+      position: 'top'
+    },
+    {
+      target: '#weekGiftIcon',
+      text: '🎁 Chaque dimanche, celui qui a le plus de points choisit une récompense que les autres doivent lui offrir !',
+      position: 'bottom'
+    }
+  ];
+
+  var TIPS = IS_INVITED ? TIPS_INVITED : TIPS_CREATOR;
 
   function startTips() {
     if (localStorage.getItem(KEY)) {

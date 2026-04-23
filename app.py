@@ -4097,6 +4097,7 @@ def menu():
         custom_rooms=custom_rooms_data,
         show_onboarding=show_onboarding,
         onboarding_type=onboarding_type if 'onboarding_type' in dir() else 'creator',
+        is_invited_player=is_invited_player if 'is_invited_player' in dir() else False,
         rooms_with_new_missions=rooms_with_new_missions,
         is_sunday=_is_sunday,
         has_weekly_winner=_has_weekly_winner,
