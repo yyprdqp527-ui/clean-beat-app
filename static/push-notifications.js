@@ -286,15 +286,15 @@ class PushNotificationManager {
             // Notification browser simple
             new Notification(title, {
                 body: options.body || '',
-                icon: options.icon || '/static/images/logo.png',
-                badge: options.badge || '/static/images/logo.png'
+                icon: options.icon || '/static/qfq-icon-192-v2.png',
+                badge: options.badge || '/static/qfq-icon-192-v2.png'
             });
         } else {
             // Notification via Service Worker
             await this.registration.showNotification(title, {
                 body: options.body || '',
-                icon: options.icon || '/static/images/logo.png',
-                badge: options.badge || '/static/images/logo.png',
+                icon: options.icon || '/static/qfq-icon-192-v2.png',
+                badge: options.badge || '/static/qfq-icon-192-v2.png',
                 tag: options.tag || 'cleanbeat-local',
                 requireInteraction: options.requireInteraction || false,
                 vibrate: [200, 100, 200]

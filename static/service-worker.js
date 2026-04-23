@@ -170,8 +170,8 @@ self.addEventListener('push_DISABLED', (event) => {
     let notificationData = {
         title: 'CleanBeat',
         body: 'Vous avez un nouveau message',
-        icon: '/static/images/logo.png',
-        badge: '/static/images/logo.png',
+        icon: '/static/qfq-icon-192-v2.png',
+        badge: '/static/qfq-icon-192-v2.png',
         tag: 'cleanbeat-notification',
         requireInteraction: false,
         data: {
@@ -185,8 +185,8 @@ self.addEventListener('push_DISABLED', (event) => {
             notificationData = {
                 title: data.title || 'CleanBeat',
                 body: data.body || data.message || 'Vous avez un nouveau message',
-                icon: data.icon || '/static/images/logo.png',
-                badge: '/static/images/logo.png',
+                icon: data.icon || '/static/qfq-icon-192-v2.png',
+                badge: '/static/qfq-icon-192-v2.png',
                 tag: data.tag || 'cleanbeat-notification',
                 requireInteraction: data.requireInteraction || false,
                 data: {
