@@ -4633,6 +4633,7 @@ def cron_daily_reminder():
             player_name = player[1]
             house_id = player[2]
             push_sent = 0
+            push_failed = 0
             push_error = None
             subs_count = 0
 
@@ -4642,14 +4643,25 @@ def cron_daily_reminder():
                 subs_count = len(player_subs)
                 for sub in player_subs:
                     try:
-                        send_push_notification(sub, {
+                        # ✅ Inclure 'badge': 1 → setAppBadge sur l'icône d'accueil
+                        # ⚠️ Utiliser le RETOUR (True/False), send_push_notification ne lève pas
+                        ok = send_push_notification(sub, {
                             'title': "Hé, t'es là ? 👀",
                             'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
                             'url': '/menu',
-                            'icon': '/static/images/logo.png'
+                            'icon': '/static/images/logo.png',
+                            'badge': 1,
+                            'tag': f'reminder-{paris_today}',
+                            'requireInteraction': True
                         })
-                        push_sent += 1
+                        if ok:
+                            push_sent += 1
+                        else:
+                            push_failed += 1
+                            if not push_error:
+                                push_error = 'send_push_notification returned False (sub probablement expirée)'
                     except Exception as pe:
+                        push_failed += 1
                         push_error = str(pe)[:200]
             except Exception as e:
                 push_error = str(e)[:200]
@@ -4661,6 +4673,7 @@ def cron_daily_reminder():
                 'house_id': house_id,
                 'subs_count': subs_count,
                 'push_sent': push_sent,
+                'push_failed': push_failed,
                 'push_error': push_error
             })
 
