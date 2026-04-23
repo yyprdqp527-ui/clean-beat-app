@@ -525,7 +525,7 @@
             cursor: pointer;
             overflow: hidden;
         }
-        .avatar-square img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; display: block; padding: 4px; box-sizing: border-box; }
+        .avatar-square img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; transform: scale(1.1); }
         .avatar-square:hover { transform: none; box-shadow: none; }
         .avatar-square:active { transform: none; }
         /* Wrapper qui aligne la vbar exactement au côté droit de l'avatar */
@@ -2786,21 +2786,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                         {% set border_color1 = (current_player.player_color_hex if current_player and current_player.player_color_hex else (current_player.color if current_player else '#A6D3DC')) %}
                                         <div class="avatar-square" id="current-player-avatar" style="--avatar-accent: {{ border_color1 }}; border: none;">
                                             {% if session.get('user_avatar_url') %}
-                                                <img src="{{ session.get('user_avatar_url') }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="{{ session.get('user_avatar_url') }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar_file %}
-                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar_url %}
-                                                <img src="{{ player1_avatar_url }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="{{ player1_avatar_url }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar and player1_avatar|length <= 4 %}
                                                 <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ player1_avatar }}</span>
                                             {% elif player1_avatar and '.' not in player1_avatar %}
                                                 {# Treat stored value as a DiceBear seed (no file extension) #}
-                                                <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ player1_avatar }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% elif player1_avatar and '.' in player1_avatar %}
                                                 {# Looks like a filename with extension -> serve static file #}
-                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="{{ url_for('static', filename='avatars/' + player1_avatar) }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% else %}
-                                                <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="Avatar {{ player1_name if player1_name else 'Joueur 1' }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                             {% endif %}
                                         </div>
                                         
@@ -2837,18 +2837,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                             {% set border_color_p2 = (p2.player_color_hex if p2 and p2.player_color_hex else (p2.color if p2.color else '#A6D3DC')) %}
                                             <div class="avatar-square" style="--avatar-accent: {{ border_color_p2 }}; border: none;">
                                                 {% if p2.avatar_file %}
-                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar_file) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar_file) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar_url %}
-                                                    <img src="{{ p2.avatar_url }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="{{ p2.avatar_url }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar and p2.avatar|length <= 4 %}
                                                     <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p2.avatar }}</span>
                                                 {% elif p2.avatar and '.' not in p2.avatar %}
                                                     {# Use stored seed for DiceBear when it's not a filename #}
-                                                    <img src="/api/avatar_proxy?style={{ p2.avatar_style or 'adventurer' }}&seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="/api/avatar_proxy?style={{ p2.avatar_style or 'adventurer' }}&seed={{ p2.avatar }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% elif p2.avatar and '.' in p2.avatar %}
-                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="{{ url_for('static', filename='avatars/' + p2.avatar) }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% else %}
-                                                    <img src="/api/avatar_proxy?style={{ p2.avatar_style or 'adventurer' }}&seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                    <img src="/api/avatar_proxy?style={{ p2.avatar_style or 'adventurer' }}&seed={{ p2.email.split('@')[0] if p2.email else 'player2' }}" alt="Avatar {{ p2.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                 {% endif %}
                                             </div>
                                             <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
@@ -2887,13 +2887,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 {% set border_color_p = (p.player_color_hex if p and p.player_color_hex else (p.color if p.color else '#A6D3DC')) %}
                                                 <div class="avatar-square" style="--avatar-accent: {{ border_color_p }}; border: none;">
                                                     {% if p.avatar_file %}
-                                                        <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                        <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% elif p.avatar_url %}
-                                                        <img src="{{ p.avatar_url }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                        <img src="{{ p.avatar_url }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% elif p.avatar and p.avatar|length <= 4 %}
                                                         <span style="font-size:{{ (avatar_size * 0.5)|int }}px;">{{ p.avatar }}</span>
                                                     {% else %}
-                                                        <img src="/api/avatar_proxy?style={{ p.avatar_style or 'adventurer' }}&seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
+                                                        <img src="/api/avatar_proxy?style={{ p.avatar_style or 'adventurer' }}&seed={{ p.email.split('@')[0] if p.email else 'player' }}" alt="Avatar {{ p.name }}" style="width:{{ avatar_size }}px;height:{{ avatar_size }}px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">
                                                     {% endif %}
                                                 </div>
                                                 <!-- ✅ PASTILLES MESSAGERIE SIMPLIFIÉES -->
@@ -3809,9 +3809,9 @@ function loadCWWeekStats() {
                 var medal = medals[i] !== undefined ? medals[i] : (i + 1) + '.';
                 var avatarHtml;
                 if (p.avatar_file) {
-                    avatarHtml = '<img src="/static/avatars/' + p.avatar_file + '" style="width:26px;height:26px;border-radius:50%;object-fit:contain;flex-shrink:0;">';
+                    avatarHtml = '<img src="/static/avatars/' + p.avatar_file + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
                 } else if (p.avatar_url) {
-                    avatarHtml = '<img src="' + p.avatar_url + '" style="width:26px;height:26px;border-radius:50%;object-fit:contain;flex-shrink:0;" onerror="this.remove()">';
+                    avatarHtml = '<img src="' + p.avatar_url + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.remove()">';
                 } else {
                     avatarHtml = '<span style="font-size:18px;flex-shrink:0;">👤</span>';
                 }
@@ -4401,7 +4401,7 @@ function sendMalus(reason, points){
                                                             existingImg.onerror = function() { this.onerror=null; this.src=MENU_DICEBEAR_FALLBACK; };
                                                         } else {
                                                             const size = parseInt(getComputedStyle(avatarSquare).getPropertyValue('--avatar-size')) || 48;
-                                                            avatarSquare.innerHTML = '<img src="' + newAvatarUrl + '" alt="Avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:contain;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">';
+                                                            avatarSquare.innerHTML = '<img src="' + newAvatarUrl + '" alt="Avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src=MENU_DICEBEAR_FALLBACK;">';
                                                             try { avatarSquare.setAttribute('data-avatar-src', newAvatarUrl); } catch(e){}
                                                         }
                                                     } else if (player.avatar && String(player.avatar).length <= 4) {

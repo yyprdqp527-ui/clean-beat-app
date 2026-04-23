@@ -885,7 +885,7 @@
                         placeholder="Écris ton message privé..." 
                         required
                         rows="1"
-                        oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"
+                        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,200)+'px';"
                     ></textarea>
                     <button type="submit" class="send-btn">Envoyer</button>
                 </div>
