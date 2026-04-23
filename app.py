@@ -4742,8 +4742,12 @@ def purge_test_accounts():
     if token != os.environ.get('CRON_SECRET', ''):
         return jsonify({'error': 'unauthorized'}), 401
     keep_email = 'agdaval@yahoo.fr'
+    db_url = os.environ.get('DATABASE_URL', '')
+    if not db_url:
+        return jsonify({'error': 'DATABASE_URL manquant'}), 500
     try:
-        conn = get_db_connection()
+        import psycopg2 as _pg2
+        conn = _pg2.connect(db_url)
         conn.autocommit = True
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=%s", (keep_email,))
@@ -4753,6 +4757,7 @@ def purge_test_accounts():
             return jsonify({'error': 'compte principal introuvable'}), 400
         keep_house_id = row[0]
         deleted = {}
+        # FK children first
         for tbl in ['push_subscriptions', 'completed_tasks', 'message_reads',
                     'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards',
                     'baby_events_views']:
