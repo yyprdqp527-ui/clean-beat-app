@@ -4757,7 +4757,6 @@ def purge_test_accounts():
             return jsonify({'error': 'compte principal introuvable'}), 400
         keep_house_id = row[0]
         deleted = {}
-        # FK children first
         for tbl in ['push_subscriptions', 'completed_tasks', 'message_reads',
                     'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards',
                     'baby_events_views']:
@@ -4766,6 +4765,11 @@ def purge_test_accounts():
                 deleted[tbl] = c.rowcount
             except Exception as ex:
                 deleted[tbl] = f'skip:{ex}'
+        try:
+            c.execute("DELETE FROM messages WHERE sender_email IS NOT NULL AND sender_email != %s", (keep_email,))
+            deleted['messages_by_sender'] = c.rowcount
+        except Exception as ex:
+            deleted['messages_by_sender'] = f'skip:{ex}'
         try:
             c.execute("DELETE FROM baby_tracking_messages WHERE sender_email != %s AND recipient_email != %s", (keep_email, keep_email))
             deleted['baby_tracking_messages'] = c.rowcount
