@@ -463,6 +463,12 @@ def join_house():
                     'new_player': user[2],
                     'action': 'player_joined'
                 }, namespace='/', room=f'house_{house_id}')
+                # 🆕 Event dédié → reload immédiat côté clients déjà connectés (avatars header)
+                socketio.emit('player_joined', {
+                    'email': email,
+                    'name': user[2],
+                    'avatar': display_avatar_url
+                }, namespace='/', room=f'house_{house_id}')
                 _dbg(f"🔌 WebSocket: Joueur '{user[2]}' a rejoint la maison (room: house_{house_id})")
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket join house: {ws_err}")
