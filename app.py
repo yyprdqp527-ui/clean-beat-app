@@ -4745,8 +4745,7 @@ def purge_test_accounts():
     try:
         conn = get_db_connection()
         c = conn.cursor()
-        ph = get_placeholder()
-        c.execute(f"SELECT house_id FROM users WHERE email={ph}", (keep_email,))
+        c.execute("SELECT house_id FROM users WHERE email=%s", (keep_email,))
         row = c.fetchone()
         if not row:
             conn.close()
@@ -4755,31 +4754,31 @@ def purge_test_accounts():
         for tbl in ['push_subscriptions', 'completed_tasks', 'message_reads',
                     'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards']:
             try:
-                c.execute(f"DELETE FROM {tbl} WHERE user_email != {ph}", (keep_email,))
+                c.execute(f"DELETE FROM {tbl} WHERE user_email != %s", (keep_email,))
             except Exception:
                 pass
         try:
-            c.execute(f"DELETE FROM baby_tracking_messages WHERE sender_email != {ph} AND recipient_email != {ph}", (keep_email, keep_email))
+            c.execute("DELETE FROM baby_tracking_messages WHERE sender_email != %s AND recipient_email != %s", (keep_email, keep_email))
         except Exception:
             pass
         try:
-            c.execute(f"DELETE FROM baby_events_views WHERE user_email != {ph}", (keep_email,))
+            c.execute("DELETE FROM baby_events_views WHERE user_email != %s", (keep_email,))
         except Exception:
             pass
         try:
-            c.execute(f"DELETE FROM comments WHERE user_email != {ph}", (keep_email,))
+            c.execute("DELETE FROM comments WHERE user_email != %s", (keep_email,))
         except Exception:
             pass
         for tbl in ['malus', 'messages', 'custom_tasks', 'player_reminders',
                     'baby_tracking', 'suspicions', 'contests', 'task_points_overrides',
                     'custom_rooms', 'reminders', 'revealed_gifts']:
             try:
-                c.execute(f"DELETE FROM {tbl} WHERE house_id != {ph}", (keep_house_id,))
+                c.execute(f"DELETE FROM {tbl} WHERE house_id != %s", (keep_house_id,))
             except Exception:
                 pass
-        c.execute(f"DELETE FROM users WHERE email != {ph}", (keep_email,))
+        c.execute("DELETE FROM users WHERE email != %s", (keep_email,))
         deleted_users = c.rowcount
-        c.execute(f"DELETE FROM houses WHERE id != {ph}", (keep_house_id,))
+        c.execute("DELETE FROM houses WHERE id != %s", (keep_house_id,))
         deleted_houses = c.rowcount
         conn.commit()
         conn.close()
