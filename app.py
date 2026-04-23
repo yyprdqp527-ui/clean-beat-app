@@ -4735,6 +4735,58 @@ def cron_list_players():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/cron/purge-test-accounts', methods=['POST'])
+def purge_test_accounts():
+    token = request.headers.get('X-Cron-Secret', '')
+    if token != os.environ.get('CRON_SECRET', ''):
+        return jsonify({'error': 'unauthorized'}), 401
+    keep_email = 'agdaval@yahoo.fr'
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        ph = get_placeholder()
+        c.execute(f"SELECT house_id FROM users WHERE email={ph}", (keep_email,))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({'error': 'compte principal introuvable'}), 400
+        keep_house_id = row[0]
+        for tbl in ['push_subscriptions', 'completed_tasks', 'message_reads',
+                    'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards']:
+            try:
+                c.execute(f"DELETE FROM {tbl} WHERE user_email != {ph}", (keep_email,))
+            except Exception:
+                pass
+        try:
+            c.execute(f"DELETE FROM baby_tracking_messages WHERE sender_email != {ph} AND recipient_email != {ph}", (keep_email, keep_email))
+        except Exception:
+            pass
+        try:
+            c.execute(f"DELETE FROM baby_events_views WHERE user_email != {ph}", (keep_email,))
+        except Exception:
+            pass
+        try:
+            c.execute(f"DELETE FROM comments WHERE user_email != {ph}", (keep_email,))
+        except Exception:
+            pass
+        for tbl in ['malus', 'messages', 'custom_tasks', 'player_reminders',
+                    'baby_tracking', 'suspicions', 'contests', 'task_points_overrides',
+                    'custom_rooms', 'reminders', 'revealed_gifts']:
+            try:
+                c.execute(f"DELETE FROM {tbl} WHERE house_id != {ph}", (keep_house_id,))
+            except Exception:
+                pass
+        c.execute(f"DELETE FROM users WHERE email != {ph}", (keep_email,))
+        deleted_users = c.rowcount
+        c.execute(f"DELETE FROM houses WHERE id != {ph}", (keep_house_id,))
+        deleted_houses = c.rowcount
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'deleted_users': deleted_users, 'deleted_houses': deleted_houses})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Affiche la table des routes au démarrage (utile pour debug)
     try:
