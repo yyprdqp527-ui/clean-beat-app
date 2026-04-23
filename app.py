@@ -4145,6 +4145,12 @@ def mark_reminder_read():
 @app.route('/ping')
 def ping():
     return 'OK', 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+# 🚀 Page promo / invitation beta testeurs (partageable SMS / WhatsApp / mail)
+@app.route('/beta')
+def beta_invite():
+    return render_template('beta_invite.html')
+
 # Page de nettoyage du cache
 @app.route('/clear_cache')
 def clear_cache_page():

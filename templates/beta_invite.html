@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Qui Fait Quoi dans la baraque ? — Devenez beta testeur</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#fdae54">
+
+    <!-- Open Graph / Facebook / WhatsApp / SMS preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://clean-beat-app.onrender.com/beta">
+    <meta property="og:title" content="Qui Fait Quoi dans la baraque ? 🏠">
+    <meta property="og:description" content="Marre de vivre avec quelqu'un qui n'en rame pas une à la maison ? Devenez beta testeur de l'appli qui va changer votre quotidien !">
+    <meta property="og:image" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
+    <meta property="og:image:secure_url" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="QuiFaitQuoi">
+
+    <!-- Twitter / iMessage rich link -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Qui Fait Quoi dans la baraque ? 🏠">
+    <meta name="twitter:description" content="Devenez beta testeur de l'appli qui met tout le monde au boulot !">
+    <meta name="twitter:image" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
+
+    <!-- Favicon / iOS icon -->
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='qfq-icon-512-v2.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='qfq-icon-512-v2.png') }}">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #2c2c2c;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 15% 20%, rgba(253,174,84,0.45) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(255,107,107,0.35) 0%, transparent 50%),
+                linear-gradient(135deg, #ffd89b 0%, #ff9966 50%, #ff6b6b 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 18px 60px;
+            gap: 24px;
+        }
+
+        /* Bulles décoratives flottantes */
+        .bubble {
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            pointer-events: none;
+            animation: float 9s ease-in-out infinite;
+            z-index: 0;
+        }
+        .bubble.b1 { width: 110px; height: 110px; top: 8%; left: -20px; animation-delay: 0s; }
+        .bubble.b2 { width: 70px;  height: 70px;  top: 35%; right: -15px; animation-delay: 2s; }
+        .bubble.b3 { width: 140px; height: 140px; bottom: 5%; left: 10%; animation-delay: 4s; opacity: 0.6; }
+
+        @keyframes float {
+            0%,100% { transform: translateY(0) rotate(0deg); }
+            50%     { transform: translateY(-22px) rotate(8deg); }
+        }
+
+        /* Logo / icône appli */
+        .app-icon-wrap {
+            position: relative;
+            z-index: 2;
+            margin-top: 8px;
+            animation: popIn 0.7s cubic-bezier(.34,1.56,.64,1);
+        }
+        .app-icon-wrap img {
+            width: 120px;
+            height: 120px;
+            border-radius: 28px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15);
+            display: block;
+        }
+        .app-icon-wrap::after {
+            content: 'BETA';
+            position: absolute;
+            top: -8px;
+            right: -14px;
+            background: #2c2c2c;
+            color: #fdae54;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            padding: 5px 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: rotate(8deg);
+        }
+
+        @keyframes popIn {
+            0%   { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Titre principal */
+        h1.headline {
+            position: relative;
+            z-index: 2;
+            font-size: 2em;
+            font-weight: 900;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 4px 18px rgba(0,0,0,0.25);
+            line-height: 1.15;
+            max-width: 560px;
+            padding: 0 8px;
+            animation: fadeUp 0.7s ease-out 0.1s backwards;
+        }
+        h1.headline em {
+            font-style: normal;
+            background: linear-gradient(120deg, #fff 0%, #ffe9c9 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Carte glassmorphisme contenant le pitch */
+        .pitch-card {
+            position: relative;
+            z-index: 2;
+            background: rgba(255,255,255,0.22);
+            backdrop-filter: blur(22px) saturate(160%);
+            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            border: 1px solid rgba(255,255,255,0.45);
+            border-radius: 28px;
+            padding: 26px 24px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+            animation: fadeUp 0.7s ease-out 0.2s backwards;
+        }
+        .pitch-card p {
+            font-size: 1.05em;
+            line-height: 1.55;
+            color: #2c2c2c;
+            margin-bottom: 14px;
+        }
+        .pitch-card p:last-child { margin-bottom: 0; }
+        .pitch-card strong {
+            color: #c0392b;
+            font-weight: 800;
+        }
+        .pitch-card .signature {
+            font-style: italic;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        /* Bouton CTA principal — glassmorphisme orange */
+        .cta-wrap {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            justify-content: center;
+            animation: fadeUp 0.7s ease-out 0.35s backwards;
+        }
+
+        .cta-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.20) 100%);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1.5px solid rgba(255,255,255,0.6);
+            border-radius: 22px;
+            padding: 14px 22px 14px 14px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.8);
+            color: #2c2c2c;
+            font-weight: 800;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 280px;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+        .cta-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shine 3.2s ease-in-out infinite;
+        }
+        @keyframes shine {
+            0%,100% { left: -100%; }
+            50%     { left: 100%; }
+        }
+
+        .cta-btn img {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            flex-shrink: 0;
+            background: #fff;
+        }
+        .cta-btn .cta-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.2;
+        }
+        .cta-btn .cta-text small {
+            font-size: 0.72em;
+            font-weight: 600;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .cta-btn .cta-text span {
+            font-size: 1.1em;
+            font-weight: 900;
+            color: #c0392b;
+        }
+        .cta-btn .arrow {
+            margin-left: auto;
+            font-size: 1.4em;
+            color: #c0392b;
+            font-weight: 900;
+        }
+
+        /* Bandeau partage */
+        .share-row {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 520px;
+            width: 100%;
+            animation: fadeUp 0.7s ease-out 0.45s backwards;
+        }
+        .share-btn {
+            flex: 1 1 130px;
+            min-width: 130px;
+            text-decoration: none;
+            text-align: center;
+            background: rgba(255,255,255,0.28);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 16px;
+            padding: 12px 10px;
+            color: #2c2c2c;
+            font-weight: 700;
+            font-size: 0.92em;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .share-btn:hover {
+            background: rgba(255,255,255,0.42);
+            transform: translateY(-2px);
+        }
+        .share-btn:active { transform: scale(0.96); }
+        .share-btn .ico { font-size: 1.3em; display: block; margin-bottom: 2px; }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 2;
+            color: rgba(255,255,255,0.85);
+            font-size: 0.82em;
+            text-align: center;
+            padding: 12px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        footer a { color: #fff; font-weight: 700; text-decoration: none; }
+
+        /* Toast copie */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(44,44,44,0.92);
+            backdrop-filter: blur(12px);
+            color: #fff;
+            padding: 12px 22px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.95em;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 100;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            h1.headline { font-size: 1.55em; }
+            .app-icon-wrap img { width: 100px; height: 100px; border-radius: 24px; }
+            .pitch-card { padding: 22px 20px; }
+            .pitch-card p { font-size: 1em; }
+            .cta-btn { min-width: 0; width: 100%; padding: 12px 18px 12px 12px; }
+            .cta-btn img { width: 46px; height: 46px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bubble b1"></div>
+    <div class="bubble b2"></div>
+    <div class="bubble b3"></div>
+
+    <div class="app-icon-wrap">
+        <img src="{{ url_for('static', filename='qfq-icon-512-v2.png') }}" alt="QuiFaitQuoi">
+    </div>
+
+    <h1 class="headline">« Qui Fait Quoi <em>dans la baraque</em> ? »</h1>
+
+    <section class="pitch-card">
+        <p><strong>Vous en avez marre de vivre avec quelqu'un qui n'en rame pas une à la maison ?</strong></p>
+        <p>Vous aimeriez que ça change ?</p>
+        <p>
+            <strong>Anne et Jean</strong> ont trouvé la solution pour mettre tout le monde au boulot…
+            Cliquez sur le lien ci-dessous, devenez <strong>« beta testeur »</strong> de
+            <em>« Qui Fait Quoi dans la baraque »</em> et aidez-nous à améliorer cette application
+            qui va changer votre quotidien.
+        </p>
+        <p class="signature">📲 Une appli pensée pour les couples, familles et colocs.</p>
+    </section>
+
+    <div class="cta-wrap">
+        <a class="cta-btn" href="https://clean-beat-app.onrender.com" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='qfq-icon-512-v2.png') }}" alt="">
+            <div class="cta-text">
+                <small>Ouvrir l'application</small>
+                <span>QuiFaitQuoi</span>
+            </div>
+            <span class="arrow">→</span>
+        </a>
+    </div>
+
+    <div class="share-row">
+        <a class="share-btn" id="shareSms" href="#">
+            <span class="ico">💬</span>
+            Envoyer par SMS
+        </a>
+        <a class="share-btn" id="shareWhatsapp" href="#" target="_blank" rel="noopener">
+            <span class="ico">🟢</span>
+            WhatsApp
+        </a>
+        <a class="share-btn" id="shareMail" href="#">
+            <span class="ico">✉️</span>
+            E-mail
+        </a>
+        <a class="share-btn" id="shareCopy" href="#">
+            <span class="ico">🔗</span>
+            Copier le lien
+        </a>
+    </div>
+
+    <footer>
+        Made with ❤️ par Anne &amp; Jean — <a href="https://clean-beat-app.onrender.com">clean-beat-app.onrender.com</a>
+    </footer>
+
+    <div class="toast" id="toast">Lien copié ✨</div>
+
+    <script>
+        (function() {
+            var url = 'https://clean-beat-app.onrender.com';
+            var msg =
+                '« Qui Fait Quoi dans la baraque ? »\n\n' +
+                "Vous en avez marre de vivre avec quelqu'un qui n'en rame pas une à la maison ?\n" +
+                'Vous aimeriez que ça change ?\n\n' +
+                'Anne et Jean ont trouvé la solution pour mettre tout le monde au boulot… ' +
+                "cliquez sur le lien suivant, devenez « beta testeur » de " +
+                '« Qui Fait Quoi dans la baraque » et aidez-nous à améliorer ' +
+                'cette application qui va changer votre quotidien.\n\n' +
+                '📲 ' + url;
+
+            var enc = encodeURIComponent(msg);
+            var ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+            // SMS
+            document.getElementById('shareSms').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (navigator.share) {
+                    navigator.share({ title: 'QuiFaitQuoi', text: msg }).catch(function(){});
+                    return;
+                }
+                window.location.href = ios ? 'sms:&body=' + enc : 'sms:?body=' + enc;
+            });
+
+            // WhatsApp
+            document.getElementById('shareWhatsapp').href =
+                'https://wa.me/?text=' + enc;
+
+            // Mail
+            document.getElementById('shareMail').addEventListener('click', function(e) {
+                e.preventDefault();
+                var subject = encodeURIComponent('Devenez beta testeur de QuiFaitQuoi 🏠');
+                window.location.href = 'mailto:?subject=' + subject + '&body=' + enc;
+            });
+
+            // Copier
+            document.getElementById('shareCopy').addEventListener('click', function(e) {
+                e.preventDefault();
+                var toast = document.getElementById('toast');
+                var fallback = function() {
+                    var ta = document.createElement('textarea');
+                    ta.value = url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); } catch(_) {}
+                    document.body.removeChild(ta);
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(url).catch(fallback);
+                } else {
+                    fallback();
+                }
+                toast.classList.add('show');
+                setTimeout(function() { toast.classList.remove('show'); }, 1800);
+            });
+        })();
+    </script>
+</body>
+</html>
