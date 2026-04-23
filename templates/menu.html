@@ -6197,9 +6197,21 @@ function refreshAllBadges() {
                 } else {
                     await Notification.requestPermission();
                 }
-                // Si accordé → cache la bannière. Sinon elle reste visible.
+                // Si accordé → cache la bannière. Sinon popup refus.
                 if (Notification.permission === 'granted') {
                     banner.style.display = 'none';
+                } else if (Notification.permission === 'denied') {
+                    banner.style.display = 'none';
+                    var refusPopup = document.createElement('div');
+                    refusPopup.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+                    refusPopup.innerHTML = '<div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.45);border-radius:24px;color:white;font-family:\'Montserrat\',sans-serif;padding:28px;max-width:320px;text-align:center;">'
+                      + '<p style="font-size:16px;font-weight:700;margin:0 0 12px;">😅 Tu as le droit de refuser !</p>'
+                      + '<p style="font-size:13px;line-height:1.6;margin:0 0 12px;">Mais sache que sans notifications, tu ne pourras pas :<br>- Être prévenu des nouvelles missions<br>- Recevoir les messages de tes partenaires<br>- Partager la liste de courses<br>- Recevoir le rappel quotidien</p>'
+                      + '<p style="font-size:13px;line-height:1.6;margin:0 0 16px;">Pour une meilleure expérience bêta testeur, on te conseille d\'activer les notifications !<br><br>Tu peux les activer plus tard dans<br><strong>Réglages → Safari → QuiFaitQuoi → Notifications</strong></p>'
+                      + '<button style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.5);border-radius:20px;color:white;font-family:\'Montserrat\',sans-serif;font-weight:700;font-size:14px;padding:12px 28px;cursor:pointer;">J\'ai compris 👍</button>'
+                      + '</div>';
+                    refusPopup.querySelector('button').onclick = function() { refusPopup.remove(); };
+                    document.body.appendChild(refusPopup);
                 }
             });
         }

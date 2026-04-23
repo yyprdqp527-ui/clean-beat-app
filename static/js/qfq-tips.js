@@ -110,6 +110,16 @@ window.QfqTips = {
     this._doneKey = doneKey;
     this._doneCallback = doneCallback;
     this._currentIndex = 0;
+    // Crée overlay bloquant
+    var overlay = document.createElement('div');
+    overlay.id = 'qfq-tips-overlay';
+    overlay.style.cssText =
+      'position:fixed;inset:0;' +
+      'z-index:9997;' +
+      'background:rgba(0,0,0,0.5);' +
+      'backdrop-filter:blur(2px);' +
+      '-webkit-backdrop-filter:blur(2px);';
+    document.body.appendChild(overlay);
     this.show(0);
   },
 
@@ -226,6 +236,9 @@ window.QfqTips = {
 
   done: function() {
     this.remove();
+    // Supprime l'overlay bloquant
+    var overlay = document.getElementById('qfq-tips-overlay');
+    if (overlay) overlay.remove();
     if (this._doneKey) {
       localStorage.setItem(this._doneKey, '1');
     }
