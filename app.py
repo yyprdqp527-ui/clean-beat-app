@@ -4744,6 +4744,7 @@ def purge_test_accounts():
     keep_email = 'agdaval@yahoo.fr'
     try:
         conn = get_db_connection()
+        conn.autocommit = True
         c = conn.cursor()
         c.execute("SELECT house_id FROM users WHERE email=%s", (keep_email,))
         row = c.fetchone()
@@ -4751,43 +4752,42 @@ def purge_test_accounts():
             conn.close()
             return jsonify({'error': 'compte principal introuvable'}), 400
         keep_house_id = row[0]
+        deleted = {}
         for tbl in ['push_subscriptions', 'completed_tasks', 'message_reads',
-                    'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards']:
+                    'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards',
+                    'baby_events_views']:
             try:
                 c.execute(f"DELETE FROM {tbl} WHERE user_email != %s", (keep_email,))
-            except Exception:
-                pass
+                deleted[tbl] = c.rowcount
+            except Exception as ex:
+                deleted[tbl] = f'skip:{ex}'
         try:
             c.execute("DELETE FROM baby_tracking_messages WHERE sender_email != %s AND recipient_email != %s", (keep_email, keep_email))
-        except Exception:
-            pass
-        try:
-            c.execute("DELETE FROM baby_events_views WHERE user_email != %s", (keep_email,))
-        except Exception:
-            pass
+            deleted['baby_tracking_messages'] = c.rowcount
+        except Exception as ex:
+            deleted['baby_tracking_messages'] = f'skip:{ex}'
         try:
             c.execute("DELETE FROM comments WHERE user_email != %s", (keep_email,))
-        except Exception:
-            pass
+            deleted['comments'] = c.rowcount
+        except Exception as ex:
+            deleted['comments'] = f'skip:{ex}'
         for tbl in ['malus', 'messages', 'custom_tasks', 'player_reminders',
                     'baby_tracking', 'suspicions', 'contests', 'task_points_overrides',
                     'custom_rooms', 'reminders', 'revealed_gifts']:
             try:
                 c.execute(f"DELETE FROM {tbl} WHERE house_id != %s", (keep_house_id,))
-            except Exception:
-                pass
+                deleted[tbl] = c.rowcount
+            except Exception as ex:
+                deleted[tbl] = f'skip:{ex}'
         c.execute("DELETE FROM users WHERE email != %s", (keep_email,))
-        deleted_users = c.rowcount
+        deleted['users'] = c.rowcount
         c.execute("DELETE FROM houses WHERE id != %s", (keep_house_id,))
-        deleted_houses = c.rowcount
-        conn.commit()
+        deleted['houses'] = c.rowcount
         conn.close()
-        return jsonify({'success': True, 'deleted_users': deleted_users, 'deleted_houses': deleted_houses})
+        return jsonify({'success': True, 'deleted': deleted})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    # Affiche la table des routes au démarrage (utile pour debug)
     try:
         _dbg('\n--- Flask URL Map ---')
         for rule in app.url_map.iter_rules():
