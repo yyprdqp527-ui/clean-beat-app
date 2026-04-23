@@ -4757,37 +4757,48 @@ def purge_test_accounts():
             return jsonify({'error': 'compte principal introuvable'}), 400
         keep_house_id = row[0]
         deleted = {}
-        for tbl in ['push_subscriptions', 'completed_tasks', 'message_reads',
-                    'player_skulls', 'user_rewards', 'beta_feedback', 'mystery_rewards',
-                    'baby_events_views']:
+
+        # 1. Découvrir automatiquement TOUTES les FK pointant sur users.email
+        c.execute("""
+            SELECT kcu.table_name, kcu.column_name, col.is_nullable
+            FROM information_schema.referential_constraints rc
+            JOIN information_schema.key_column_usage kcu
+                ON kcu.constraint_name = rc.constraint_name
+                AND kcu.table_schema = rc.constraint_schema
+            JOIN information_schema.key_column_usage ccu
+                ON ccu.constraint_name = rc.unique_constraint_name
+                AND ccu.table_schema = rc.unique_constraint_schema
+            JOIN information_schema.columns col
+                ON col.table_name = kcu.table_name
+                AND col.column_name = kcu.column_name
+                AND col.table_schema = kcu.table_schema
+            WHERE ccu.table_name = 'users' AND ccu.column_name = 'email'
+            AND kcu.table_schema = 'public'
+        """)
+        fk_refs = c.fetchall()
+        for tbl, col, nullable in fk_refs:
             try:
-                c.execute(f"DELETE FROM {tbl} WHERE user_email != %s", (keep_email,))
-                deleted[tbl] = c.rowcount
+                if nullable == 'YES':
+                    c.execute(f"UPDATE {tbl} SET {col} = NULL WHERE {col} IS NOT NULL AND {col} != %s", (keep_email,))
+                    deleted[f'{tbl}.{col}=NULL'] = c.rowcount
+                else:
+                    c.execute(f"DELETE FROM {tbl} WHERE {col} IS NOT NULL AND {col} != %s", (keep_email,))
+                    deleted[f'{tbl}.{col}'] = c.rowcount
             except Exception as ex:
-                deleted[tbl] = f'skip:{ex}'
-        try:
-            c.execute("DELETE FROM messages WHERE sender_email IS NOT NULL AND sender_email != %s", (keep_email,))
-            deleted['messages_by_sender'] = c.rowcount
-        except Exception as ex:
-            deleted['messages_by_sender'] = f'skip:{ex}'
-        try:
-            c.execute("DELETE FROM baby_tracking_messages WHERE sender_email != %s AND recipient_email != %s", (keep_email, keep_email))
-            deleted['baby_tracking_messages'] = c.rowcount
-        except Exception as ex:
-            deleted['baby_tracking_messages'] = f'skip:{ex}'
-        try:
-            c.execute("DELETE FROM comments WHERE user_email != %s", (keep_email,))
-            deleted['comments'] = c.rowcount
-        except Exception as ex:
-            deleted['comments'] = f'skip:{ex}'
+                deleted[f'{tbl}.{col}'] = f'skip:{ex}'
+
+        # 2. Tables liées à house_id
         for tbl in ['malus', 'messages', 'custom_tasks', 'player_reminders',
                     'baby_tracking', 'suspicions', 'contests', 'task_points_overrides',
-                    'custom_rooms', 'reminders', 'revealed_gifts']:
+                    'custom_rooms', 'reminders', 'revealed_gifts',
+                    'baby_tracking_messages', 'comments']:
             try:
                 c.execute(f"DELETE FROM {tbl} WHERE house_id != %s", (keep_house_id,))
-                deleted[tbl] = c.rowcount
+                deleted[f'{tbl}(house)'] = c.rowcount
             except Exception as ex:
-                deleted[tbl] = f'skip:{ex}'
+                deleted[f'{tbl}(house)'] = f'skip:{ex}'
+
+        # 3. Supprimer users et houses (toutes FK déjà nettoyées)
         c.execute("DELETE FROM users WHERE email != %s", (keep_email,))
         deleted['users'] = c.rowcount
         c.execute("DELETE FROM houses WHERE id != %s", (keep_house_id,))
