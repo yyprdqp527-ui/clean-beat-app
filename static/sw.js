@@ -12,12 +12,12 @@ self.addEventListener('push', function(event) {
     if (!event.data) return;
     
     const data = event.data.json();
-    const title = data.title || 'CleanBeat';
+    const title = data.title || 'QuiFaitQuoi';
     const badgeCount = (data.badge !== undefined && data.badge !== null) ? parseInt(data.badge, 10) : 1;
     const options = {
         body: data.body || '',
-        icon: data.icon || '/static/images/logo.png',
-        badge: '/static/images/logo.png',
+        icon: data.icon || '/static/qfq-icon-192-v2.png',
+        badge: '/static/qfq-icon-192-v2.png',
         tag: 'cleanbeat-notification',   // tag unique → remplace la notif précédente
         renotify: true,                  // son/vibration même si même tag
         vibrate: [200, 100, 200],
