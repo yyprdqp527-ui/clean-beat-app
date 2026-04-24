@@ -559,7 +559,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             {% for custom_task in custom_tasks %}
             <div class="task-card custom-task" style="position:relative;">
                 <!-- Bouton supprimer (haut GAUCHE, à l'intérieur car .task-card a overflow:hidden) -->
-                <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" class="custom-task-delete" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
+                <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" class="custom-task-delete" data-task-name="{{ custom_task.name or 'cette mission' }}" onclick="event.preventDefault(); event.stopPropagation(); confirmDeleteMission(this);">
                     <button type="submit" title="Supprimer cette mission" aria-label="Supprimer cette mission">×</button>
                 </form>
                 <!-- Lien vers la page de validation -->
@@ -585,6 +585,51 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
 
     <!-- Bouton ajouter une mission -->
     <a href="{{ url_for('tasks.add_task_page', cat=category) }}" class="add-task-btn">⭐ Ajoute une mission</a>
+
+    <!-- Modal glassmorphism : confirmation suppression mission -->
+    <div id="deleteMissionModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,0.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px; animation:fadeInModal .25s ease;">
+        <div style="max-width:380px; width:100%; background:linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(254,226,226,0.55) 100%); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-radius:24px; padding:28px 24px 22px; box-shadow:0 20px 60px rgba(220,38,38,0.25), 0 8px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.7); border:2px solid rgba(255,255,255,0.6); text-align:center; animation:scaleInModal .3s cubic-bezier(.34,1.56,.64,1);">
+            <div style="width:64px; height:64px; margin:0 auto 14px; border-radius:50%; background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%); display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 8px 22px rgba(220,38,38,0.45);">🗑️</div>
+            <h3 style="margin:0 0 8px; font-size:19px; font-weight:800; color:#153036;">Supprimer cette mission ?</h3>
+            <p id="deleteMissionName" style="margin:0 0 20px; font-size:14px; color:#475569; line-height:1.4;"></p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button type="button" id="deleteMissionCancel" style="flex:1; max-width:140px; padding:12px 18px; border-radius:14px; border:2px solid rgba(166,211,220,0.45); background:rgba(255,255,255,0.75); color:#153036; font-weight:700; font-size:14px; cursor:pointer; transition:all .2s ease; font-family:inherit;">Annuler</button>
+                <button type="button" id="deleteMissionConfirm" style="flex:1; max-width:140px; padding:12px 18px; border-radius:14px; border:none; background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%); color:#fff; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 6px 18px rgba(220,38,38,0.4); transition:all .2s ease; font-family:inherit;">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    @keyframes fadeInModal { from { opacity:0; } to { opacity:1; } }
+    @keyframes scaleInModal { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+    #deleteMissionCancel:hover { background:rgba(255,255,255,0.95); transform:translateY(-1px); }
+    #deleteMissionConfirm:hover { transform:translateY(-1px) scale(1.02); box-shadow:0 8px 24px rgba(220,38,38,0.5); }
+    </style>
+
+    <script>
+    (function(){
+        var modal = document.getElementById('deleteMissionModal');
+        var nameEl = document.getElementById('deleteMissionName');
+        var btnCancel = document.getElementById('deleteMissionCancel');
+        var btnConfirm = document.getElementById('deleteMissionConfirm');
+        var pendingForm = null;
+
+        window.confirmDeleteMission = function(form){
+            pendingForm = form;
+            var name = form.getAttribute('data-task-name') || 'cette mission';
+            nameEl.textContent = '« ' + name + ' » sera définitivement supprimée.';
+            modal.style.display = 'flex';
+        };
+        function close(){ modal.style.display = 'none'; pendingForm = null; }
+        btnCancel.addEventListener('click', close);
+        modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
+        document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex') close(); });
+        btnConfirm.addEventListener('click', function(){
+            if(pendingForm){ pendingForm.submit(); }
+            close();
+        });
+    })();
+    </script>
 
     <style>
     .custom-task-delete {
