@@ -404,7 +404,6 @@ def register_delete_custom_task_route(app):
         c.execute("DELETE FROM custom_tasks WHERE id=?", (task_id,))
         conn.commit()
         conn.close()
-        flash("Mission personnalisée supprimée.", "success")
         return redirect(url_for('tasks.categorie', cat=cat))
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file
 import sqlite3
