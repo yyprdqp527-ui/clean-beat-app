@@ -47,7 +47,12 @@ self.addEventListener('push', function(event) {
             }
 
             // 2. Afficher la notification
-            await self.registration.showNotification(title, options);
+            await self.registration.showNotification(title, {
+                ...options,
+                silent: false,
+                requireInteraction: false,
+                vibrate: [200, 100, 200]
+            });
 
             // 3. Informer les fenêtres ouvertes (rafraîchissement + debug badge)
             const clientList = await self.clients.matchAll({ type: 'window' });
