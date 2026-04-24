@@ -6156,7 +6156,10 @@ function refreshAllBadges() {
             <div style="font-weight:800; font-size:14px; color:#153036;">Active les notifications</div>
             <div style="font-size:11px; color:#2d4a52; font-weight:600; margin-top:2px;">Pour recevoir rappels et messages de tes partenaires</div>
         </div>
-        <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; flex-shrink:0; white-space:nowrap;">Activer</button>
+        <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+            <button id="push-notif-banner-btn" style="background:#153036; color:white; border:none; border-radius:25px; padding:10px 18px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap;">Activer</button>
+            <button id="push-notif-banner-dismiss" style="background:transparent; color:#153036; border:none; padding:2px 8px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; opacity:0.7;">Plus tard</button>
+        </div>
     </div>
 </div>
 <script>
@@ -6166,6 +6169,7 @@ function refreshAllBadges() {
 
         var banner = document.getElementById('push-notif-banner');
         var btn = document.getElementById('push-notif-banner-btn');
+        var dismissBtn = document.getElementById('push-notif-banner-dismiss');
 
         if (!banner) return;
 
@@ -6173,10 +6177,16 @@ function refreshAllBadges() {
         var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         if (!isStandalone) return;
 
-        // Permission déjà accordée → rien à afficher
+        // Permission déjà accordée OU bloquée définitivement → rien à afficher
         if (Notification.permission === 'granted') return;
+        if (Notification.permission === 'denied') return;
 
-        // 'default' ou 'denied' → affiche immédiatement la bannière (pas de dismiss possible)
+        // Dismiss mémorisé (clic "Plus tard") → ne pas réafficher pendant 7 jours
+        var DISMISS_KEY = 'qfq_push_banner_dismissed';
+        var dismissedAt = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+        if (dismissedAt && (Date.now() - dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
+
+        // 'default' → affiche la bannière
         function showPushBanner(){ banner.style.display = 'block'; }
         window.showPushBanner = showPushBanner;
 
@@ -6213,6 +6223,13 @@ function refreshAllBadges() {
                     refusPopup.querySelector('button').onclick = function() { refusPopup.remove(); };
                     document.body.appendChild(refusPopup);
                 }
+            });
+        }
+
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', function() {
+                localStorage.setItem(DISMISS_KEY, String(Date.now()));
+                banner.style.display = 'none';
             });
         }
     });
