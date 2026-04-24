@@ -373,7 +373,7 @@ def register_delete_custom_task_route(app):
     @app.route('/delete_custom_task/<int:task_id>/<cat>', methods=['POST'])
     def delete_custom_task(task_id, cat):
         if 'user' not in session:
-            flash("Connecte-toi pour supprimer une mission.", "warning")
+            flash("🔒 Connecte-toi pour supprimer une mission.", "warning")
             return redirect(url_for('auth.login'))
 
         conn = get_db_connection()
@@ -383,12 +383,12 @@ def register_delete_custom_task_route(app):
         row = c.fetchone()
         if not row:
             conn.close()
-            flash("Tâche personnalisée introuvable.", "danger")
+            flash("❌ Cette mission n'existe plus.", "danger")
             return redirect(url_for('tasks.categorie', cat=cat))
         task_image, created_by = row
         if created_by != session['user']:
             conn.close()
-            flash("Tu ne peux supprimer que tes propres missions.", "danger")
+            flash("🚫 Tu ne peux supprimer que tes propres missions !", "danger")
             return redirect(url_for('tasks.categorie', cat=cat))
 
         # Supprimer l'image si présente
