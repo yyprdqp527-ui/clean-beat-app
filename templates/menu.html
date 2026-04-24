@@ -6647,15 +6647,16 @@ function closeDailyReminder() {
 
 // ⏰ Affichage popup reminder côté serveur au chargement
 {% if show_daily_reminder %}
-(function() {
-  var popup = document.getElementById('dailyReminderPopup');
+document.addEventListener('DOMContentLoaded', function() {
   var txt = document.getElementById('dailyReminderText');
-  if (popup && txt) {
-    _dailyReminderMsgId = {{ daily_reminder_message_id | tojson }};
-    txt.textContent = {{ daily_reminder_message | tojson }};
+  if (txt) {
+    txt.innerHTML = '{{ daily_reminder_message|safe }}';
+  }
+  var popup = document.getElementById('dailyReminderPopup');
+  if (popup) {
     popup.style.display = 'flex';
   }
-})();
+});
 {% endif %}
 
 </script>

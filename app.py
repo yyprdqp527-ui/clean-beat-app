@@ -4040,11 +4040,33 @@ def menu():
             _winner_email = _sorted_weekly[0].get('email', '')
             _has_weekly_winner = True
 
-    # ⏰ Rappel quotidien — popup déclenché UNIQUEMENT via WebSocket à 20h ou clic notif push
-    # (Pas de check au chargement → évite affichage non sollicité)
+    # ⏰ Rappel quotidien — vérifie s'il y a un message reminder non lu
     show_daily_reminder = False
-    daily_reminder_message = None
+    daily_reminder_message = ''
     daily_reminder_message_id = None
+
+    try:
+        c_rem = conn.cursor()
+        c_rem.execute("""
+            SELECT m.id, m.content
+            FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = 'reminder'
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr
+                WHERE mr.message_id = m.id
+                AND mr.user_email = ?
+            )
+            ORDER BY m.created_at DESC
+            LIMIT 1
+        """, (house_id, session['user']))
+        reminder_row = c_rem.fetchone()
+        if reminder_row:
+            show_daily_reminder = True
+            daily_reminder_message_id = reminder_row[0]
+            daily_reminder_message = reminder_row[1]
+    except Exception as e:
+        print(f"❌ Reminder check error: {e}", flush=True)
 
     resp = make_response(render_template(
         'menu.html',
