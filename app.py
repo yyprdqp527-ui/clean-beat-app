@@ -4141,6 +4141,45 @@ def mark_reminder_read():
     return jsonify({'ok': True})
 
 
+@app.route('/api/latest_reminder', methods=['GET'])
+def latest_reminder():
+    """Renvoie le dernier message reminder non lu pour l'utilisateur connecté.
+    Permet à la PWA déjà ouverte d'afficher le popup après clic sur la notif
+    sans recharger la page (le SW envoie un postMessage qui déclenche ce fetch)."""
+    if 'user' not in session:
+        return jsonify({'reminder': None}), 200
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            conn.close()
+            return jsonify({'reminder': None})
+        house_id = row[0]
+        c.execute("""
+            SELECT m.id, m.content
+            FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = 'reminder'
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr
+                WHERE mr.message_id = m.id
+                AND mr.user_email = ?
+            )
+            ORDER BY m.created_at DESC
+            LIMIT 1
+        """, (house_id, session['user']))
+        rem = c.fetchone()
+        conn.close()
+        if rem:
+            return jsonify({'reminder': {'id': rem[0], 'content': rem[1]}})
+        return jsonify({'reminder': None})
+    except Exception as e:
+        _dbg(f'❌ Erreur latest_reminder: {e}')
+        return jsonify({'reminder': None, 'error': str(e)}), 500
+
+
 # ════════════════════════════════════════════════════════════
 # 👤 PAGE PROFIL — Page complète du profil joueur
 # ════════════════════════════════════════════════════════════

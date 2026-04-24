@@ -71,8 +71,10 @@ self.addEventListener('notificationclick', function(event) {
     event.waitUntil(
         clients.matchAll({ type: 'window' }).then(function(clientList) {
             // Demander à toutes les fenêtres de recalculer le badge (via /api/unread_counts)
+            // + vérifier s'il y a un reminder à afficher (popup "Hé, t'es là ?")
             clientList.forEach(function(client) {
                 client.postMessage({ type: 'REFRESH_BADGES' });
+                client.postMessage({ type: 'CHECK_REMINDER' });
             });
             for (const client of clientList) {
                 if (client.url.includes('/menu') && 'focus' in client) {

@@ -5726,6 +5726,12 @@ function refreshAllBadges() {
                             console.log('SW: Rafraîchissement des badges demandé');
                             refreshAllBadges();
                         }
+                        if (event.data && event.data.type === 'CHECK_REMINDER') {
+                            console.log("SW: Vérification reminder (clic notif)");
+                            if (typeof window.checkAndShowReminder === 'function') {
+                                window.checkAndShowReminder();
+                            }
+                        }
                     });
                 }
 
@@ -6662,20 +6668,45 @@ function closeDailyReminder() {
   }
 }
 
+// 🔔 Affiche le popup avec un message reminder donné
+function _showReminderPopup(messageId, content) {
+  _dailyReminderMsgId = messageId;
+  var txt = document.getElementById('dailyReminderText');
+  if (txt) { txt.innerHTML = content; }
+  var popup = document.getElementById('dailyReminderPopup');
+  if (popup) { popup.style.display = 'flex'; }
+}
+
+// 🔄 Vérifie côté serveur s'il existe un reminder non lu et l'affiche
+// Appelé : (a) sur clic notif quand PWA déjà ouverte (postMessage SW)
+//         (b) au retour visibilité de la page (Safari/iOS qui ne recharge pas)
+window.checkAndShowReminder = function() {
+  // Si un popup est déjà ouvert, ne rien faire
+  var popup = document.getElementById('dailyReminderPopup');
+  if (popup && popup.style.display === 'flex') return;
+  fetch('/api/latest_reminder', { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.reminder && data.reminder.id) {
+        _showReminderPopup(data.reminder.id, data.reminder.content || '');
+      }
+    })
+    .catch(function() {});
+};
+
 // ⏰ Affichage popup reminder côté serveur au chargement
 {% if show_daily_reminder %}
 document.addEventListener('DOMContentLoaded', function() {
-  _dailyReminderMsgId = {{ daily_reminder_message_id|tojson }};
-  var txt = document.getElementById('dailyReminderText');
-  if (txt) {
-    txt.innerHTML = '{{ daily_reminder_message|safe }}';
-  }
-  var popup = document.getElementById('dailyReminderPopup');
-  if (popup) {
-    popup.style.display = 'flex';
-  }
+  _showReminderPopup({{ daily_reminder_message_id|tojson }}, {{ daily_reminder_message|tojson|safe }});
 });
 {% endif %}
+
+// 🔁 Au retour de visibilité (PWA en arrière-plan → premier plan), vérifier reminder
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    window.checkAndShowReminder();
+  }
+});
 
 </script>
 
