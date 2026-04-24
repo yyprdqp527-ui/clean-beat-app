@@ -4744,6 +4744,70 @@ def cron_daily_reminder():
     except Exception as e:
         print(f"❌ CRON error: {e}", flush=True)
         return jsonify({'error': str(e)}), 500
+@app.route('/api/cron/debug-reminder', methods=['GET'])
+def cron_debug_reminder():
+    """Debug : montre l'état du dernier reminder pour un email donné.
+    Usage: GET /api/cron/debug-reminder?email=user@x.com  + header X-Cron-Secret"""
+    token = request.headers.get('X-Cron-Secret', '')
+    if token != os.environ.get('CRON_SECRET', ''):
+        return jsonify({'error': 'unauthorized'}), 401
+    email = request.args.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'error': 'missing email param'}), 400
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        # 1. Info user
+        c.execute("SELECT email, name, house_id, points FROM users WHERE LOWER(email)=?", (email,))
+        u = c.fetchone()
+        if not u:
+            return jsonify({'error': f'user {email} not found'}), 404
+        user_info = {'email': u[0], 'name': u[1], 'house_id': u[2], 'points': u[3]}
+        # 2. Tous les reminders récents pour cette house (24h)
+        c.execute("""
+            SELECT m.id, m.recipient_email, m.created_at, m.content,
+                   EXISTS(SELECT 1 FROM message_reads mr WHERE mr.message_id=m.id AND mr.user_email=?) as is_read
+            FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = 'reminder'
+            AND m.created_at >= NOW() - INTERVAL '24 hours'
+            ORDER BY m.created_at DESC
+            LIMIT 20
+        """, (u[0], u[2]))
+        reminders = []
+        for r in c.fetchall():
+            reminders.append({
+                'id': r[0], 'recipient_email': r[1],
+                'created_at': str(r[2]),
+                'content_preview': (r[3] or '')[:80],
+                'is_read_by_this_user': bool(r[4])
+            })
+        # 3. Test exact du SELECT /menu pour ce user
+        c.execute("""
+            SELECT m.id, m.content
+            FROM messages m
+            WHERE m.house_id = ?
+            AND m.message_type = 'reminder'
+            AND (m.recipient_email = ? OR m.recipient_email IS NULL)
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr
+                WHERE mr.message_id = m.id AND mr.user_email = ?
+            )
+            ORDER BY m.created_at DESC LIMIT 1
+        """, (u[2], u[0], u[0]))
+        latest = c.fetchone()
+        conn.close()
+        return jsonify({
+            'user': user_info,
+            'reminders_24h': reminders,
+            'would_show_popup': bool(latest),
+            'latest_unread': {'id': latest[0], 'content_preview': latest[1][:120]} if latest else None
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+
 # 🔐 ========== FIN CRON ENDPOINT ==========
 
 @app.route('/api/cron/list-players', methods=['GET'])
