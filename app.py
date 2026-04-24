@@ -4047,11 +4047,13 @@ def menu():
 
     try:
         c_rem = conn.cursor()
+        # Le reminder cible un user précis (recipient_email) OU est broadcast (NULL = legacy)
         c_rem.execute("""
             SELECT m.id, m.content
             FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = 'reminder'
+            AND (m.recipient_email = ? OR m.recipient_email IS NULL)
             AND NOT EXISTS (
                 SELECT 1 FROM message_reads mr
                 WHERE mr.message_id = m.id
@@ -4059,7 +4061,7 @@ def menu():
             )
             ORDER BY m.created_at DESC
             LIMIT 1
-        """, (house_id, session['user']))
+        """, (house_id, session['user'], session['user']))
         reminder_row = c_rem.fetchone()
         if reminder_row:
             show_daily_reminder = True
@@ -4162,6 +4164,7 @@ def latest_reminder():
             FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = 'reminder'
+            AND (m.recipient_email = ? OR m.recipient_email IS NULL)
             AND NOT EXISTS (
                 SELECT 1 FROM message_reads mr
                 WHERE mr.message_id = m.id
@@ -4169,7 +4172,7 @@ def latest_reminder():
             )
             ORDER BY m.created_at DESC
             LIMIT 1
-        """, (house_id, session['user']))
+        """, (house_id, session['user'], session['user']))
         rem = c.fetchone()
         conn.close()
         if rem:
@@ -4573,21 +4576,14 @@ def _daily_reminder_loop():
                 "effort mérite sa récompense 🏆"
             )
 
-            houses_done = set()
             for player in inactive_players:
                 player_email = player[0]
                 house_id = player[2]
 
-                # Notification push (individuel par joueur)
+                # 1) Push notif (individuel)
                 try:
-                    subs = get_house_push_subscriptions(
-                        house_id,
-                        exclude_email=None
-                    )
-                    player_subs = [
-                        s for s in subs
-                        if s.get('user_email') == player_email
-                    ]
+                    subs = get_house_push_subscriptions(house_id, exclude_email=None)
+                    player_subs = [s for s in subs if s.get('user_email') == player_email]
                     for sub in player_subs:
                         send_push_notification(sub, {
                             'title': "Hé, t'es là ? 👀",
@@ -4598,24 +4594,30 @@ def _daily_reminder_loop():
                 except Exception:
                     pass
 
-                # Message in-app → une seule fois par maison
-                if house_id not in houses_done:
-                    houses_done.add(house_id)
+                # 2) Message in-app CIBLÉ par joueur (recipient_email)
+                msg_id = None
+                try:
+                    conn2 = get_db_connection()
+                    c2 = conn2.cursor()
+                    c2.execute("""
+                        INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, recipient_email)
+                        VALUES (?, NULL, 'house', ?, 'reminder', ?)
+                    """, (house_id, message, player_email))
                     try:
-                        create_system_message(
-                            house_id,
-                            message,
-                            'reminder',
-                            sender_email=None,
-                            send_push=False
-                        )
+                        msg_id = c2.lastrowid
                     except Exception:
-                        pass
+                        msg_id = None
+                    conn2.commit()
+                    conn2.close()
+                except Exception as e:
+                    _dbg(f"❌ Insert reminder msg: {e}")
 
-                # Toast temps réel via WebSocket
+                # 3) WebSocket — emit au user spécifique
                 try:
                     safe_socketio_emit('daily_reminder', {
-                        'message': message
+                        'message': message,
+                        'message_id': msg_id,
+                        'target_email': player_email
                     }, namespace='/', room=f'house_{house_id}', broadcast=True)
                 except Exception:
                     pass
@@ -4673,7 +4675,6 @@ def cron_daily_reminder():
             "effort mérite sa récompense 🏆"
         )
 
-        houses_done = set()
         details = []
         for player in inactive_players:
             player_email = player[0]
@@ -4721,27 +4722,32 @@ def cron_daily_reminder():
                 'push_error': push_error
             })
 
-            if house_id not in houses_done:
-                houses_done.add(house_id)
+            # Message in-app CIBLÉ par joueur + WebSocket individuel
+            msg_id = None
+            try:
+                conn2 = get_db_connection()
+                c2 = conn2.cursor()
+                c2.execute("""
+                    INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, recipient_email)
+                    VALUES (?, NULL, 'house', ?, 'reminder', ?)
+                """, (house_id, message, player_email))
                 try:
-                    create_system_message(
-                        house_id, message, 'reminder',
-                        sender_email=None, send_push=False)
-                except Exception as e:
-                    print(f"❌ Message error: {e}", flush=True)
-
-        # Émet le popup en temps réel pour les joueurs connectés
-        houses_ws = set()
-        for player in inactive_players:
-            house_id = player[2]
-            if house_id not in houses_ws:
-                houses_ws.add(house_id)
-                try:
-                    safe_socketio_emit('daily_reminder', {
-                        'message': message
-                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                    msg_id = c2.lastrowid
                 except Exception:
-                    pass
+                    msg_id = None
+                conn2.commit()
+                conn2.close()
+            except Exception as e:
+                print(f"❌ Insert reminder msg: {e}", flush=True)
+
+            try:
+                safe_socketio_emit('daily_reminder', {
+                    'message': message,
+                    'message_id': msg_id,
+                    'target_email': player_email
+                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+            except Exception:
+                pass
 
         return jsonify({'success': True, 'players_notified': len(inactive_players), 'details': details})
 

@@ -5510,11 +5510,13 @@ function sendMalus(reason, points){
 
                         // ⏰ Rappel quotidien 20h
                         socket.on('daily_reminder', function(data) {
+                            // Filtrer : ne montrer le popup qu'au joueur ciblé
+                            if (data.target_email && data.target_email !== '{{ session.get("user") }}') return;
+                            // Si déjà ouvert, ne pas écraser
                             var popup = document.getElementById('dailyReminderPopup');
-                            var txt = document.getElementById('dailyReminderText');
-                            if (popup && txt) {
-                                txt.textContent = data.message || '';
-                                popup.style.display = 'flex';
+                            if (popup && popup.style.display === 'flex') return;
+                            if (typeof _showReminderPopup === 'function') {
+                                _showReminderPopup(data.message_id || null, (data.message || '').replace(/\n/g, '<br>'));
                             }
                         });
 
