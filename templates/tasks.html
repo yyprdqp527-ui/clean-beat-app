@@ -558,6 +558,10 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
         {% if custom_tasks and custom_tasks|length > 0 %}
             {% for custom_task in custom_tasks %}
             <div class="task-card custom-task" style="position:relative;">
+                <!-- Bouton supprimer (toujours visible, en haut à GAUCHE car la pastille points est à droite) -->
+                <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" class="custom-task-delete" style="position:absolute; top:-10px; left:-10px; z-index:20; margin:0;" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
+                    <button type="submit" title="Supprimer cette mission">×</button>
+                </form>
                 <!-- Lien vers la page de validation -->
                 <a href="{{ url_for('tasks.custom_task_page', task_id=custom_task.id) }}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
                     <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
@@ -568,10 +572,6 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
                         <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
                         {% endif %}
                         <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
-                        <!-- Bande supprimer en bas de l'image -->
-                        <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" style="position:absolute; bottom:0; left:0; right:0; z-index:10;" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
-                            <button type="submit" title="Supprimer cette mission" style="width:100%; background:rgba(220,38,38,0.82); backdrop-filter:blur(4px); border:none; cursor:pointer; color:white; font-size:12px; font-weight:700; padding:7px 4px; border-radius:0 0 10px 10px; letter-spacing:0.3px;">🗑️ Supprimer</button>
-                        </form>
                     </div>
                 </a>
             </div>
@@ -583,8 +583,24 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
         {% endif %}
     </div>
 
-    <!-- Bouton ajouter une mission flottant -->
+    <!-- Bouton ajouter une mission -->
     <a href="{{ url_for('tasks.add_task_page', cat=category) }}" class="add-task-btn">⭐ Ajoute une mission</a>
+
+    <style>
+    .custom-task-delete button {
+        width:38px; height:38px; border-radius:50%;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: 3px solid #fff;
+        cursor:pointer;
+        color:#fff;
+        font-size:22px; font-weight:900;
+        padding:0; line-height:1;
+        box-shadow: 0 4px 14px rgba(220,38,38,0.55);
+        display:flex; align-items:center; justify-content:center;
+        transition: transform .2s ease;
+    }
+    .custom-task-delete button:hover { transform: scale(1.15) rotate(8deg); }
+    </style>
 
 </div>
 
