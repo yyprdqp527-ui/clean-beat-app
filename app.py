@@ -4059,7 +4059,7 @@ def menu():
                 WHERE mr.message_id = m.id
                 AND mr.user_email = ?
             )
-            ORDER BY m.created_at DESC
+            ORDER BY m.timestamp DESC
             LIMIT 1
         """, (house_id, session['user'], session['user']))
         reminder_row = c_rem.fetchone()
@@ -4170,7 +4170,7 @@ def latest_reminder():
                 WHERE mr.message_id = m.id
                 AND mr.user_email = ?
             )
-            ORDER BY m.created_at DESC
+            ORDER BY m.timestamp DESC
             LIMIT 1
         """, (house_id, session['user'], session['user']))
         rem = c.fetchone()
@@ -4765,13 +4765,13 @@ def cron_debug_reminder():
         user_info = {'email': u[0], 'name': u[1], 'house_id': u[2], 'points': u[3]}
         # 2. Tous les reminders récents pour cette house (24h)
         c.execute("""
-            SELECT m.id, m.recipient_email, m.created_at, m.content,
+            SELECT m.id, m.recipient_email, m.timestamp, m.content,
                    EXISTS(SELECT 1 FROM message_reads mr WHERE mr.message_id=m.id AND mr.user_email=?) as is_read
             FROM messages m
             WHERE m.house_id = ?
             AND m.message_type = 'reminder'
-            AND m.created_at >= NOW() - INTERVAL '24 hours'
-            ORDER BY m.created_at DESC
+            AND m.timestamp >= NOW() - INTERVAL '24 hours'
+            ORDER BY m.timestamp DESC
             LIMIT 20
         """, (u[0], u[2]))
         reminders = []
@@ -4793,7 +4793,7 @@ def cron_debug_reminder():
                 SELECT 1 FROM message_reads mr
                 WHERE mr.message_id = m.id AND mr.user_email = ?
             )
-            ORDER BY m.created_at DESC LIMIT 1
+            ORDER BY m.timestamp DESC LIMIT 1
         """, (u[2], u[0], u[0]))
         latest = c.fetchone()
         conn.close()
