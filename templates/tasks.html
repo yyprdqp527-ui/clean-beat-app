@@ -568,9 +568,9 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
                         <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
                         {% endif %}
                         <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
-                        <!-- Petit bouton - discret sur l'image -->
-                        <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" style="position:absolute; bottom:6px; left:6px; z-index:10;" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
-                            <button type="submit" title="Supprimer" style="background:rgba(0,0,0,0.5); border:none; cursor:pointer; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:16px; font-weight:bold; line-height:1;">−</button>
+                        <!-- Bande supprimer en bas de l'image -->
+                        <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" style="position:absolute; bottom:0; left:0; right:0; z-index:10;" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
+                            <button type="submit" title="Supprimer cette mission" style="width:100%; background:rgba(220,38,38,0.82); backdrop-filter:blur(4px); border:none; cursor:pointer; color:white; font-size:12px; font-weight:700; padding:7px 4px; border-radius:0 0 10px 10px; letter-spacing:0.3px;">🗑️ Supprimer</button>
                         </form>
                     </div>
                 </a>
@@ -691,7 +691,7 @@ if (typeof SoundManager !== 'undefined') {
     setTimeout(function() { SoundManager.play('roomFullscreen'); }, 200);
 }
 
-window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); if(typeof window.cbToast==='function'){ window.cbToast('✅ '+msg,'success',2000); } else { toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } } });
+window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); toast.style.display='none'; if(typeof window.cbToast==='function'){ window.cbToast('✅ '+msg,'success',2000); } else { toast.style.display=''; toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } } });
 
 // ==========================================
 // 🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
