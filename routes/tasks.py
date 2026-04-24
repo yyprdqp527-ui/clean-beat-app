@@ -327,19 +327,11 @@ def add_task_page(cat, task_id=None):
                         create_system_message(
                             _house_id, _msg, 'task_added',
                             sender_email=_sender,
-                            related_category=_cat)
+                            related_category=_cat,
+                            push_title=f'⭐ Nouvelle mission')
                     except Exception:
                         pass
-                    # 🔔 Push notification à tous les membres (sauf le créateur)
-                    try:
-                        notify_house_members(_house_id, {
-                            'title': f'⭐ Nouvelle mission',
-                            'body': f"{_creator_name} a ajouté '{_task_name}' dans {_category_name} ({_points} pts)",
-                            'icon': '/static/images/logo.png',
-                            'url': '/menu'
-                        }, exclude_email=_sender)
-                    except Exception as _e_push:
-                        print(f'⚠️ Erreur push task_added: {_e_push}', flush=True)
+                    # ⚠️ Push géré par create_system_message ci-dessus → ne PAS rappeler notify_house_members (doublon)
                 threading.Thread(
                     target=_notif, daemon=True).start()
             except Exception as _e_msg:
