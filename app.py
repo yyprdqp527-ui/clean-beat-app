@@ -4621,9 +4621,12 @@ def _daily_reminder_loop():
             _dbg(f"❌ Erreur daily_reminder_loop: {e}")
             socketio.sleep(3600)
 
-if SOCKETIO_AVAILABLE and socketio:
+# ⚠️ Boucle background désactivée si CRON_SECRET défini (Render utilise cron externe → évite doublons de notif)
+if SOCKETIO_AVAILABLE and socketio and not os.environ.get('CRON_SECRET'):
     socketio.start_background_task(_daily_reminder_loop)
-    _dbg("🏠 Background task daily_reminder enregistrée")
+    _dbg("🏠 Background task daily_reminder enregistrée (mode local)")
+else:
+    _dbg("⏭️ Background daily_reminder désactivée (CRON_SECRET défini → cron externe)")
 # 🏠 ========== FIN BOUCLE RAPPEL QUOTIDIEN / DAILY REMINDER ==========
 
 # 🔐 ========== CRON ENDPOINT EXTERNE / DAILY REMINDER ==========
