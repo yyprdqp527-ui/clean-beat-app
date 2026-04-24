@@ -4610,7 +4610,7 @@ def cron_daily_reminder():
             AND NOT EXISTS (
                 SELECT 1 FROM completed_tasks ct
                 WHERE ct.user_email = u.email
-                AND ct.completed_at::date = ?
+                AND (ct.completed_at AT TIME ZONE 'Europe/Paris')::date = ?
             )
             AND EXISTS (
                 SELECT 1 FROM completed_tasks ct2
@@ -4651,16 +4651,13 @@ def cron_daily_reminder():
                 subs_count = len(player_subs)
                 for sub in player_subs:
                     try:
-                        # ✅ Inclure 'badge': 1 → setAppBadge sur l'icône d'accueil
                         # ⚠️ Utiliser le RETOUR (True/False), send_push_notification ne lève pas
                         ok = send_push_notification(sub, {
                             'title': "Hé, t'es là ? 👀",
                             'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
                             'url': '/menu',
                             'icon': '/static/images/logo.png',
-                            'badge': 1,
-                            'tag': f'reminder-{paris_today}',
-                            'requireInteraction': True
+                            'tag': f'reminder-{paris_today}'
                         })
                         if ok:
                             push_sent += 1

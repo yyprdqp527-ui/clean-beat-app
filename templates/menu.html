@@ -6665,6 +6665,7 @@ function closeDailyReminder() {
 // ⏰ Affichage popup reminder côté serveur au chargement
 {% if show_daily_reminder %}
 document.addEventListener('DOMContentLoaded', function() {
+  _dailyReminderMsgId = {{ daily_reminder_message_id|tojson }};
   var txt = document.getElementById('dailyReminderText');
   if (txt) {
     txt.innerHTML = '{{ daily_reminder_message|safe }}';
