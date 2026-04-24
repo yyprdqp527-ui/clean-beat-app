@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v130';
+const CACHE_NAME = 'cleanbeat-v131';
 const OFFLINE_URL = '/static/manifest.json';
 
 // URLs à purger du cache (anciennes images remplacées)
@@ -110,6 +110,8 @@ self.addEventListener('fetch', (event) => {
         url.pathname === '/manage_players' ||
         url.pathname === '/rewards' ||
         url.pathname.startsWith('/edit_player/') ||
+        url.pathname.startsWith('/categorie/') ||
+        url.pathname.startsWith('/tasks/') ||
         url.pathname === '/') {
         event.respondWith(
             fetch(event.request).catch(() => {
