@@ -4045,30 +4045,49 @@ def menu():
     daily_reminder_message = ''
     daily_reminder_message_id = None
 
-    try:
-        c_rem = conn.cursor()
-        # Le reminder cible un user précis (recipient_email) OU est broadcast (NULL = legacy)
-        c_rem.execute("""
-            SELECT m.id, m.content
-            FROM messages m
-            WHERE m.house_id = ?
-            AND m.message_type = 'reminder'
-            AND (m.recipient_email = ? OR m.recipient_email IS NULL)
-            AND NOT EXISTS (
-                SELECT 1 FROM message_reads mr
-                WHERE mr.message_id = m.id
-                AND mr.user_email = ?
-            )
-            ORDER BY m.timestamp DESC
-            LIMIT 1
-        """, (house_id, session['user'], session['user']))
-        reminder_row = c_rem.fetchone()
-        if reminder_row:
-            show_daily_reminder = True
-            daily_reminder_message_id = reminder_row[0]
-            daily_reminder_message = reminder_row[1]
-    except Exception as e:
-        print(f"❌ Reminder check error: {e}", flush=True)
+    # 🚀 Fast-path : si ?reminder=<id> dans l'URL (clic notif push) → afficher direct
+    forced_reminder_id = request.args.get('reminder')
+    if forced_reminder_id and forced_reminder_id.isdigit():
+        try:
+            c_rem = conn.cursor()
+            c_rem.execute("""
+                SELECT id, content FROM messages
+                WHERE id = ? AND house_id = ? AND message_type = 'reminder'
+                AND (recipient_email = ? OR recipient_email IS NULL)
+            """, (int(forced_reminder_id), house_id, session['user']))
+            row = c_rem.fetchone()
+            if row:
+                show_daily_reminder = True
+                daily_reminder_message_id = row[0]
+                daily_reminder_message = row[1]
+        except Exception as e:
+            print(f"❌ Forced reminder fetch error: {e}", flush=True)
+
+    if not show_daily_reminder:
+        try:
+            c_rem = conn.cursor()
+            # Le reminder cible un user précis (recipient_email) OU est broadcast (NULL = legacy)
+            c_rem.execute("""
+                SELECT m.id, m.content
+                FROM messages m
+                WHERE m.house_id = ?
+                AND m.message_type = 'reminder'
+                AND (m.recipient_email = ? OR m.recipient_email IS NULL)
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id
+                    AND mr.user_email = ?
+                )
+                ORDER BY m.timestamp DESC
+                LIMIT 1
+            """, (house_id, session['user'], session['user']))
+            reminder_row = c_rem.fetchone()
+            if reminder_row:
+                show_daily_reminder = True
+                daily_reminder_message_id = reminder_row[0]
+                daily_reminder_message = reminder_row[1]
+        except Exception as e:
+            print(f"❌ Reminder check error: {e}", flush=True)
 
     resp = make_response(render_template(
         'menu.html',
@@ -4678,6 +4697,27 @@ def cron_daily_reminder():
             push_error = None
             subs_count = 0
 
+            # 📨 INSERT message AVANT le push pour inclure msg_id dans l'URL
+            #    → popup s'affiche instantanément au clic notif (?reminder=<id>)
+            msg_id = None
+            try:
+                conn2 = get_db_connection()
+                c2 = conn2.cursor()
+                c2.execute("""
+                    INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, recipient_email)
+                    VALUES (?, NULL, 'house', ?, 'reminder', ?)
+                """, (house_id, message, player_email))
+                try:
+                    msg_id = c2.lastrowid
+                except Exception:
+                    msg_id = None
+                conn2.commit()
+                conn2.close()
+            except Exception as e:
+                print(f"❌ Insert reminder msg: {e}", flush=True)
+
+            reminder_url = f'/menu?reminder={msg_id}' if msg_id else '/menu'
+
             try:
                 subs = get_house_push_subscriptions(house_id, exclude_email=None)
                 player_subs = [s for s in subs if s.get('user_email') == player_email]
@@ -4688,7 +4728,7 @@ def cron_daily_reminder():
                         ok = send_push_notification(sub, {
                             'title': "Hé, t'es là ? 👀",
                             'body': "Rien de validé aujourd'hui... chaque petit geste compte !",
-                            'url': '/menu',
+                            'url': reminder_url,
                             'icon': '/static/images/logo.png',
                             'tag': f'reminder-{paris_today}'
                         })
@@ -4712,26 +4752,9 @@ def cron_daily_reminder():
                 'subs_count': subs_count,
                 'push_sent': push_sent,
                 'push_failed': push_failed,
-                'push_error': push_error
+                'push_error': push_error,
+                'msg_id': msg_id
             })
-
-            # Message in-app CIBLÉ par joueur + WebSocket individuel
-            msg_id = None
-            try:
-                conn2 = get_db_connection()
-                c2 = conn2.cursor()
-                c2.execute("""
-                    INSERT INTO messages (house_id, sender_email, sender_type, content, message_type, recipient_email)
-                    VALUES (?, NULL, 'house', ?, 'reminder', ?)
-                """, (house_id, message, player_email))
-                try:
-                    msg_id = c2.lastrowid
-                except Exception:
-                    msg_id = None
-                conn2.commit()
-                conn2.close()
-            except Exception as e:
-                print(f"❌ Insert reminder msg: {e}", flush=True)
 
             try:
                 safe_socketio_emit('daily_reminder', {
