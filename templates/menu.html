@@ -3,7 +3,14 @@
 {% set player_colors = ['rgba(120, 180, 230, 0.6)', 'rgba(180, 140, 200, 0.6)', 'rgba(240, 140, 140, 0.6)', 'rgba(250, 180, 100, 0.6)', 'rgba(130, 200, 150, 0.6)', 'rgba(240, 150, 170, 0.6)', 'rgba(120, 210, 200, 0.6)', 'rgba(255, 170, 170, 0.6)', 'rgba(140, 220, 210, 0.6)', 'rgba(255, 200, 120, 0.6)'] %}
 <head>
     <meta charset="utf-8">
-    <script>if(!sessionStorage.getItem('splashDone')){window.location.replace('/splash');}</script>
+    <script>
+      // 🔔 Si arrivée via clic notif push (?reminder=<id>) → skip le splash pour afficher le popup immédiatement
+      if (location.search.indexOf('reminder=') !== -1) {
+        sessionStorage.setItem('splashDone', '1');
+      } else if (!sessionStorage.getItem('splashDone')) {
+        window.location.replace('/splash');
+      }
+    </script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -2634,16 +2641,19 @@
 </head>
 <body>
 
-<div id="dailyReminderPopup" style="display:none" onclick="closeDailyReminder()">
+<div id="dailyReminderPopup" style="display:{% if show_daily_reminder %}flex{% else %}none{% endif %}" onclick="closeDailyReminder()">
   <div class="daily-reminder-card" onclick="event.stopPropagation()">
     <div class="daily-reminder-icon">👀</div>
     <div class="daily-reminder-title">Hé, t'es là ?</div>
-    <div class="daily-reminder-text" id="dailyReminderText"></div>
+    <div class="daily-reminder-text" id="dailyReminderText">{% if show_daily_reminder %}{{ daily_reminder_message }}{% endif %}</div>
     <button class="daily-reminder-btn" onclick="closeDailyReminder()">
       Je vais valider mes tâches ! 💪
     </button>
   </div>
 </div>
+{% if show_daily_reminder %}
+<script>window._dailyReminderMsgId = {{ daily_reminder_message_id|tojson }};</script>
+{% endif %}
 
 
 <script>
@@ -6652,7 +6662,7 @@ function refreshAllBadges() {
 </div>
 
 <script>
-var _dailyReminderMsgId = null;
+var _dailyReminderMsgId = window._dailyReminderMsgId || null;
 function closeDailyReminder() {
   var popup = document.getElementById('dailyReminderPopup');
   if (popup) {
