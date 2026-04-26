@@ -132,10 +132,10 @@
         color: rgba(21,48,54,0.5);
     }
     .reminder-card {
-        cursor: pointer;
+        cursor: default;
     }
 
-    /* Checkbox custom */
+    /* Checkbox custom — seule zone qui valide l'article */
     .reminder-check {
         width: 28px; height: 28px; flex-shrink: 0;
         border-radius: 50%;
@@ -145,6 +145,15 @@
         display: flex; align-items: center; justify-content: center;
         transition: all 0.25s ease;
         font-size: 16px;
+        /* Hit-area généreuse (≈48px) sans grossir le visuel — Apple HIG */
+        position: relative;
+        box-sizing: content-box;
+    }
+    .reminder-check::before {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        border-radius: 50%;
     }
     .reminder-check:hover { border-color: var(--gold); transform: scale(1.1); }
     .reminder-check.checked {
@@ -269,8 +278,8 @@
         {% if reminders %}
         <div class="section-title">À acheter ({{ active_reminders|length }})</div>
         {% for r in reminders %}
-        <div class="reminder-card{% if r.is_done %} done{% endif %}" id="card-{{ r.id }}" onclick="toggleReminder({{ r.id }})">
-            <div class="reminder-check{% if r.is_done %} checked{% endif %}" data-id="{{ r.id }}">✓</div>
+        <div class="reminder-card{% if r.is_done %} done{% endif %}" id="card-{{ r.id }}">
+            <div class="reminder-check{% if r.is_done %} checked{% endif %}" data-id="{{ r.id }}" onclick="toggleReminder({{ r.id }})">✓</div>
             <div class="reminder-body">
                 <div class="reminder-title">{{ r.title }}</div>
                 <div class="reminder-creator">
@@ -382,9 +391,8 @@
                     avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
                 }
 
-                card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
                 card.innerHTML =
-                    '<div class="reminder-check" data-id="' + data.id + '">✓</div>' +
+                    '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">✓</div>' +
                     '<div class="reminder-body">' +
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                         '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
@@ -526,7 +534,6 @@
             var card = document.createElement('div');
             card.className = 'reminder-card';
             card.id = 'card-' + data.id;
-            card.setAttribute('onclick', 'toggleReminder(' + data.id + ')');
 
             // Construire l'avatar HTML comme pour l'ajout local
             var avatarHtml = '';
@@ -541,7 +548,7 @@
             }
 
             card.innerHTML =
-                '<div class="reminder-check" data-id="' + data.id + '">✓</div>' +
+                '<div class="reminder-check" data-id="' + data.id + '" onclick="toggleReminder(' + data.id + ')">✓</div>' +
                 '<div class="reminder-body">' +
                     '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                     '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
