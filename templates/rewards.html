@@ -1127,10 +1127,14 @@
                 <div class="popup-confetti-top">🎊 🎉 🎊</div>
                 <div class="popup-trophy">🏆</div>
                 <div class="popup-title">Champion de la semaine</div>
-                <div class="popup-winner-name">{{ user_name }}</div>
-                <div class="popup-subtitle">Tu as gagné !</div>
+                <div class="popup-winner-name">{{ winner_name or user_name }}</div>
+                <div class="popup-subtitle">{% if opening_for_child %}Ouvre la case mystère à sa place !{% else %}Tu as gagné !{% endif %}</div>
                 <div class="popup-message">
+                    {% if opening_for_child %}
+                    <p>{{ winner_name }} n'a pas de téléphone.<br>Tu peux débloquer <span class="highlight">sa case Mystère</span> à sa place !</p>
+                    {% else %}
                     <p>Tu peux débloquer <span class="highlight">une case Mystère</span><br>et découvrir ta récompense !</p>
+                    {% endif %}
                 </div>
                 <button id="popupCloseBtn" class="popup-btn" type="button">C'est parti !</button>
             </div>

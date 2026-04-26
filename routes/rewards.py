@@ -55,12 +55,12 @@ def rewards():
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     c.execute("""
-        SELECT u.email, u.name, COALESCE(SUM(ct.points), 0) as weekly_points
+        SELECT u.email, u.name, u.is_child_account, COALESCE(SUM(ct.points), 0) as weekly_points
         FROM users u
         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
             AND DATE(ct.completed_at) >= ?
         WHERE u.house_id = ?
-        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
+        GROUP BY u.email, u.name, u.is_child_account, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
         ORDER BY weekly_points DESC
         LIMIT 1
     """, (start_of_week, house_id))
@@ -68,11 +68,26 @@ def rewards():
     winner_row = c.fetchone()
     is_winner = False
     winner_name = ""
+    winner_email = None
+    winner_is_child = False
+    opening_for_child = False
     
     if winner_row:
         winner_email = winner_row[0]
         winner_name = winner_row[1]
-        is_winner = (winner_email == session['user'])
+        winner_is_child = bool(winner_row[2])
+        if winner_email == session['user']:
+            is_winner = True
+        elif winner_is_child:
+            # 🧒 Le gagnant est un enfant (sans téléphone) — n'importe quel adulte de la maison peut ouvrir à sa place
+            try:
+                c.execute("SELECT is_child_account FROM users WHERE email=? AND house_id=?", (session['user'], house_id))
+                me_row = c.fetchone()
+                if me_row and not me_row[0]:
+                    is_winner = True
+                    opening_for_child = True
+            except Exception:
+                pass
     
     # Créer la table si elle n'existe pas avec colonne pour la semaine
     c.execute("""
@@ -116,10 +131,12 @@ def rewards():
         pass
     
     # Vérifier si l'utilisateur a déjà ouvert une case cette semaine
+    # (si c'est un parent qui ouvre pour un enfant gagnant, on regarde sur l'email de l'enfant)
+    _opened_check_email = winner_email if opening_for_child else session['user']
     c.execute("""
         SELECT box_number, reward_text FROM reward_boxes 
         WHERE house_id=? AND opened_by=? AND week_start=?
-    """, (house_id, session['user'], start_of_week))
+    """, (house_id, _opened_check_email, start_of_week))
     user_opened_this_week = c.fetchone()
     already_opened_this_week = user_opened_this_week is not None
     last_reward = user_opened_this_week[1] if user_opened_this_week else ""
@@ -337,6 +354,8 @@ def rewards():
                              house_code=house_code, 
                              is_winner=is_winner,
                              winner_name=winner_name,
+                             winner_is_child=winner_is_child,
+                             opening_for_child=opening_for_child,
                              user_name=user_name,
                              opened_boxes=opened_boxes,
                              can_open=can_open,
@@ -453,19 +472,40 @@ def open_reward_box():
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
     
     # Vérifier que l'utilisateur est le gagnant de la semaine
+    # (ou — cas spécial — un parent ouvrant pour un enfant gagnant sans téléphone)
     c.execute("""
-        SELECT u.email, COALESCE(SUM(ct.points), 0) as weekly_points
+        SELECT u.email, u.is_child_account, COALESCE(SUM(ct.points), 0) as weekly_points
         FROM users u
         LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
             AND DATE(ct.completed_at) >= ?
         WHERE u.house_id = ?
-        GROUP BY u.email, u.name, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
+        GROUP BY u.email, u.name, u.is_child_account, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
         ORDER BY weekly_points DESC
         LIMIT 1
     """, (start_of_week, house_id))
     
     winner_row = c.fetchone()
-    if not winner_row or winner_row[0] != session['user']:
+    if not winner_row:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Aucun gagnant cette semaine'}), 403
+
+    _winner_email = winner_row[0]
+    _winner_is_child = bool(winner_row[1])
+    opening_for_child = False
+
+    if _winner_email == session['user']:
+        # Le user est lui-même le gagnant
+        opener_email = session['user']
+    elif _winner_is_child:
+        # Le gagnant est un enfant : autoriser tout adulte de la maison à ouvrir à sa place
+        c.execute("SELECT is_child_account FROM users WHERE email=? AND house_id=?", (session['user'], house_id))
+        me_row = c.fetchone()
+        if not me_row or me_row[0]:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Seul le gagnant de la semaine peut ouvrir une case'}), 403
+        opener_email = _winner_email  # on enregistre la box au nom de l'enfant
+        opening_for_child = True
+    else:
         conn.close()
         return jsonify({'success': False, 'message': 'Seul le gagnant de la semaine peut ouvrir une case'}), 403
     
@@ -529,10 +569,13 @@ def open_reward_box():
         pass
 
     c.execute("SELECT box_number FROM reward_boxes WHERE house_id=? AND opened_by=? AND week_start=?", 
-              (house_id, session['user'], start_of_week))
+              (house_id, opener_email, start_of_week))
     if c.fetchone():
         conn.close()
-        return jsonify({'success': False, 'message': 'Tu as déjà ouvert ton cadeau mystère cette semaine !'}), 400
+        msg = ('Le cadeau de cette semaine a déjà été ouvert pour cet enfant !'
+               if opening_for_child else
+               'Tu as déjà ouvert ton cadeau mystère cette semaine !')
+        return jsonify({'success': False, 'message': msg}), 400
     
     # === GRILLES DE RÉCOMPENSES PAR TYPE DE FOYER ===
     
@@ -730,14 +773,14 @@ def open_reward_box():
         c.execute("""
             INSERT INTO reward_boxes (house_id, box_number, reward_text, opened_by, week_start)
             VALUES (?, ?, ?, ?, ?)
-        """, (house_id, box_number, reward_text, session['user'], start_of_week))
+        """, (house_id, box_number, reward_text, opener_email, start_of_week))
         
-        # Enregistrer la récompense dans les récompenses du joueur
-        _dbg(f"[DEBUG] Insertion dans mystery_rewards: user={session['user']}, house={house_id}, reward={reward_text}")
+        # Enregistrer la récompense dans les récompenses du joueur (l'enfant si parent ouvre pour lui)
+        _dbg(f"[DEBUG] Insertion dans mystery_rewards: user={opener_email}, house={house_id}, reward={reward_text}, opening_for_child={opening_for_child}")
         c.execute("""
             INSERT INTO mystery_rewards (user_email, house_id, reward_text, won_date, used)
             VALUES (?, ?, ?, date('now'), 0)
-        """, (session['user'], house_id, reward_text))
+        """, (opener_email, house_id, reward_text))
         
         conn.commit()
         _dbg(f"[DEBUG] Récompense enregistrée avec succès!")
