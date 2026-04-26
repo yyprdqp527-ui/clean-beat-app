@@ -4045,16 +4045,22 @@ def menu():
     daily_reminder_message = ''
     daily_reminder_message_id = None
 
-    # 🚀 Fast-path : si ?reminder=<id> dans l'URL (clic notif push) → afficher direct
+    # 🚀 Le popup "Hé t'es là ?" ne s'affiche QUE via clic sur la notif push 20h.
+    # L'URL contient alors ?reminder=<id>. Pas de fallback : sinon un ancien reminder
+    # non lu réapparaît à chaque ouverture du menu (bug "popup n'importe quand").
     forced_reminder_id = request.args.get('reminder')
     if forced_reminder_id and forced_reminder_id.isdigit():
         try:
             c_rem = conn.cursor()
             c_rem.execute("""
-                SELECT id, content FROM messages
-                WHERE id = ? AND house_id = ? AND message_type = 'reminder'
-                AND (recipient_email = ? OR recipient_email IS NULL)
-            """, (int(forced_reminder_id), house_id, session['user']))
+                SELECT m.id, m.content FROM messages m
+                WHERE m.id = ? AND m.house_id = ? AND m.message_type = 'reminder'
+                AND (m.recipient_email = ? OR m.recipient_email IS NULL)
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+            """, (int(forced_reminder_id), house_id, session['user'], session['user']))
             row = c_rem.fetchone()
             if row:
                 show_daily_reminder = True
@@ -4062,32 +4068,6 @@ def menu():
                 daily_reminder_message = row[1]
         except Exception as e:
             print(f"❌ Forced reminder fetch error: {e}", flush=True)
-
-    if not show_daily_reminder:
-        try:
-            c_rem = conn.cursor()
-            # Le reminder cible un user précis (recipient_email) OU est broadcast (NULL = legacy)
-            c_rem.execute("""
-                SELECT m.id, m.content
-                FROM messages m
-                WHERE m.house_id = ?
-                AND m.message_type = 'reminder'
-                AND (m.recipient_email = ? OR m.recipient_email IS NULL)
-                AND NOT EXISTS (
-                    SELECT 1 FROM message_reads mr
-                    WHERE mr.message_id = m.id
-                    AND mr.user_email = ?
-                )
-                ORDER BY m.timestamp DESC
-                LIMIT 1
-            """, (house_id, session['user'], session['user']))
-            reminder_row = c_rem.fetchone()
-            if reminder_row:
-                show_daily_reminder = True
-                daily_reminder_message_id = reminder_row[0]
-                daily_reminder_message = reminder_row[1]
-        except Exception as e:
-            print(f"❌ Reminder check error: {e}", flush=True)
 
     resp = make_response(render_template(
         'menu.html',
