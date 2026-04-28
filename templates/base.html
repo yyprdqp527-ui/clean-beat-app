@@ -1238,8 +1238,36 @@ window.cbToast = function(message, type, duration) {
             if (event.data && event.data.type === 'REFRESH_BADGES') {
                 refreshAppBadge();
             }
+            // 🔔 Push reminder 20h reçu → rediriger vers /menu?reminder=<id>
+            // pour que le popup "Hé, t'es là ?" s'affiche, peu importe la page courante.
+            if (event.data && event.data.type === 'SHOW_REMINDER' && event.data.url) {
+                try { window.location.href = event.data.url; } catch(_) {}
+            }
         });
     }
+
+    // 🔔 Au retour de visibilité (tap icône PWA en arrière-plan, déverrouillage),
+    // vérifier s'il y a un reminder du jour non lu et rediriger vers /menu si c'est le cas.
+    // Couvre le cas iOS où l'icône PWA reprend la dernière page (≠ /menu).
+    var _qfqLastReminderCheck = 0;
+    function _qfqCheckReminderResume() {
+        if (document.visibilityState !== 'visible') return;
+        var now = Date.now();
+        if (now - _qfqLastReminderCheck < 5000) return; // throttle 5s
+        _qfqLastReminderCheck = now;
+        // Inutile de vérifier si on est déjà sur /menu (cette page le fait elle-même)
+        if (location.pathname === '/menu' || location.pathname.indexOf('/menu') === 0) return;
+        fetch('/api/latest_reminder', { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (data && data.reminder && data.reminder.id) {
+                    window.location.href = '/menu?reminder=' + encodeURIComponent(data.reminder.id);
+                }
+            })
+            .catch(function() {});
+    }
+    document.addEventListener('visibilitychange', _qfqCheckReminderResume);
+    window.addEventListener('pageshow', _qfqCheckReminderResume);
 })();
 </script>
 </body>

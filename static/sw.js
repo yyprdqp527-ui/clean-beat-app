@@ -1,4 +1,4 @@
-// Service Worker CleanBeat - Notifications Push v4
+// Service Worker CleanBeat - Notifications Push v5
 
 // Force le nouveau SW à prendre le contrôle immédiatement (sans attendre fermeture des onglets)
 self.addEventListener('install', function(event) {
@@ -56,9 +56,15 @@ self.addEventListener('push', function(event) {
 
             // 3. Informer les fenêtres ouvertes (rafraîchissement + debug badge)
             const clientList = await self.clients.matchAll({ type: 'window' });
+            const isReminder = (data.url || '').indexOf('reminder=') !== -1;
             clientList.forEach(function(client) {
                 client.postMessage({ type: 'REFRESH_BADGES', badge_count: badgeCount });
                 client.postMessage({ type: 'BADGE_DEBUG', ok: badgeOk, error: badgeError, count: badgeCount });
+                // 🔔 Si c'est un reminder 20h, demander à TOUTES les pages
+                // ouvertes d'afficher le popup (peu importe la page courante)
+                if (isReminder) {
+                    client.postMessage({ type: 'SHOW_REMINDER', url: data.url });
+                }
             });
         })()
     );
