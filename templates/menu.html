@@ -54,13 +54,15 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        var PURGE_KEY = 'cb_cache_purged_v1010';
+        var PURGE_KEY = 'cb_cache_purged_v1011';
         if (!localStorage.getItem(PURGE_KEY)) {
-            localStorage.setItem('cb_cache_purged_v1010', '1');
+            localStorage.setItem('cb_cache_purged_v1011', '1');
+            localStorage.removeItem('cb_cache_purged_v1010');
             localStorage.removeItem('cb_cache_purged_v1009');
             localStorage.removeItem('pwa_dismissed_session');
             sessionStorage.removeItem('pwa_dismissed_session');
             sessionStorage.removeItem('pushBannerDismissed');
+            localStorage.removeItem('qfq_push_banner_dismissed');
             localStorage.removeItem('qfq_tips_menu');
             localStorage.removeItem('qfq_tips_tasks');
             localStorage.removeItem('qfq_tips_task');
@@ -6251,7 +6253,7 @@ function refreshAllBadges() {
                     // Souscription manquante → bannière critique, pas de cooldown
                     setTimeout(showPushBanner, 800);
                 }
-            }).catch(function(){});
+            }).catch(function(){ setTimeout(showPushBanner, 800); });
             return;
         }
 
