@@ -6229,9 +6229,7 @@ function refreshAllBadges() {
 
         if (!banner) return;
 
-        // 🔒 Règle bloquante : la bannière push n'apparaît QUE si la PWA est installée (mode standalone)
         var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        if (!isStandalone) return;
 
         // Permission bloquée définitivement → rien à afficher
         if (Notification.permission === 'denied') return;
@@ -6244,18 +6242,21 @@ function refreshAllBadges() {
         window.showPushBanner = showPushBanner;
 
         // Permission déjà accordée → vérifier côté SERVEUR si la souscription existe en DB
-        // (plus fiable que getSubscription() qui peut retourner une sub invalide/expirée)
+        // Si souscription absente : afficher TOUJOURS (ignore standalone + dismiss cooldown)
         if (Notification.permission === 'granted') {
             fetch('/api/push/status').then(function(r){ return r.json(); }).then(function(data) {
                 if (!data.has_subscription) {
-                    // Souscription absente en DB → afficher bannière pour re-souscrire
-                    if (!dismissedAt || (Date.now() - dismissedAt) >= 7 * 24 * 60 * 60 * 1000) {
-                        setTimeout(showPushBanner, 800);
-                    }
+                    // Souscription manquante → bannière critique, pas de cooldown
+                    setTimeout(showPushBanner, 800);
+                    // Souscription manquante → bannière critique, pas de cooldown
+                    setTimeout(showPushBanner, 800);
                 }
             }).catch(function(){});
             return;
         }
+
+        // Mode standalone requis pour proposer l'activation (évite d'afficher en Safari browser)
+        if (!isStandalone) return;
 
         // Dismiss mémorisé (clic "Plus tard") → ne pas réafficher pendant 7 jours
         if (dismissedAt && (Date.now() - dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
