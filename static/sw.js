@@ -76,24 +76,22 @@ self.addEventListener('notificationclick', function(event) {
     
     event.waitUntil(
         clients.matchAll({ type: 'window' }).then(function(clientList) {
+            const isReminder = url.indexOf('reminder=') !== -1;
             // Demander à toutes les fenêtres de recalculer le badge (via /api/unread_counts)
+            // Et envoyer SHOW_REMINDER pour que la page affiche le popup
             clientList.forEach(function(client) {
                 client.postMessage({ type: 'REFRESH_BADGES' });
-            });
-            // 🎯 Si une fenêtre /menu existe déjà, naviguer vers l'URL exacte (avec ?reminder=<id>
-            // si présent) pour que le popup s'affiche au reload.
-            for (const client of clientList) {
-                if (client.url.includes('/menu') && 'focus' in client) {
-                    if ('navigate' in client) {
-                        return client.navigate(url).then(function() { return client.focus(); });
-                    }
-                    return client.focus();
+                if (isReminder) {
+                    // 🔔 Le client va recevoir SHOW_REMINDER et se rediriger vers /menu?reminder=<id>
+                    client.postMessage({ type: 'SHOW_REMINDER', url: url });
                 }
-            }
-            // Si aucune fenêtre menu ouverte, chercher n'importe quelle fenêtre
+            });
+            // 🎯 Essayer client.navigate() (ne fonctionne pas sur iOS mais ok sur Android/desktop)
             for (const client of clientList) {
                 if ('focus' in client) {
-                    client.navigate(url);
+                    if ('navigate' in client) {
+                        return client.navigate(url).then(function() { return client.focus(); }).catch(function() { return client.focus(); });
+                    }
                     return client.focus();
                 }
             }

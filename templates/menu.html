@@ -5719,12 +5719,32 @@ function refreshAllBadges() {
                 // Rafraîchir aussi au DOMContentLoaded (sécurité)
                 document.addEventListener('DOMContentLoaded', function() { refreshAllBadges(); refreshMissionDots(); });
                 
+                // 🔔 Au resume, vérifier s'il y a un reminder du jour non lu à afficher
+                var _menuLastReminderCheck = 0;
+                function _menuCheckReminderResume() {
+                    // Ne pas vérifier si le popup est déjà affiché
+                    var popup = document.getElementById('dailyReminderPopup');
+                    if (popup && popup.style.display !== 'none') return;
+                    var now = Date.now();
+                    if (now - _menuLastReminderCheck < 5000) return;
+                    _menuLastReminderCheck = now;
+                    fetch('/api/latest_reminder', { credentials: 'same-origin' })
+                        .then(function(r) { return r.ok ? r.json() : null; })
+                        .then(function(data) {
+                            if (data && data.reminder && data.reminder.id) {
+                                window.location.href = '/menu?reminder=' + encodeURIComponent(data.reminder.id);
+                            }
+                        })
+                        .catch(function() {});
+                }
+
                 // Rafraîchir au retour via le bouton retour (bfcache ET navigation normale)
                 window.addEventListener('pageshow', function(event) {
                     console.log('🔄 pageshow event, persisted=' + event.persisted);
                     refreshAllBadges();
                     refreshMissionDots();
                     if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
+                    _menuCheckReminderResume();
                 });
                 
                 // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
@@ -5734,6 +5754,7 @@ function refreshAllBadges() {
                         refreshAllBadges();
                         refreshMissionDots();
                         if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
+                        _menuCheckReminderResume();
                     }
                 });
                 // Écouter les messages du Service Worker (ex: REFRESH_BADGES après push)
