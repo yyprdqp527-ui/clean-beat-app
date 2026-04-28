@@ -6273,26 +6273,63 @@ function refreshAllBadges() {
 
         if (btn) {
             btn.addEventListener('click', async function() {
-                if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
-                    await window.cleanBeatPush.requestPermission();
-                } else {
-                    await Notification.requestPermission();
-                }
-                // Si accordé → cache la bannière. Sinon popup refus.
-                if (Notification.permission === 'granted') {
-                    banner.style.display = 'none';
-                } else if (Notification.permission === 'denied') {
-                    banner.style.display = 'none';
-                    var refusPopup = document.createElement('div');
-                    refusPopup.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
-                    refusPopup.innerHTML = '<div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.45);border-radius:24px;color:white;font-family:\'Montserrat\',sans-serif;padding:28px;max-width:320px;text-align:center;">'
-                      + '<p style="font-size:16px;font-weight:700;margin:0 0 12px;">😅 Tu as le droit de refuser !</p>'
-                      + '<p style="font-size:13px;line-height:1.6;margin:0 0 12px;">Mais sache que sans notifications, tu ne pourras pas :<br>- Être prévenu des nouvelles missions<br>- Recevoir les messages de tes partenaires<br>- Partager la liste de courses<br>- Recevoir le rappel quotidien</p>'
-                      + '<p style="font-size:13px;line-height:1.6;margin:0 0 16px;">Pour une meilleure expérience bêta testeur, on te conseille d\'activer les notifications !<br><br>Tu peux les activer plus tard dans<br><strong>Réglages → Safari → QuiFaitQuoi → Notifications</strong></p>'
-                      + '<button style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.5);border-radius:20px;color:white;font-family:\'Montserrat\',sans-serif;font-weight:700;font-size:14px;padding:12px 28px;cursor:pointer;">J\'ai compris 👍</button>'
-                      + '</div>';
-                    refusPopup.querySelector('button').onclick = function() { refusPopup.remove(); };
-                    document.body.appendChild(refusPopup);
+                btn.disabled = true;
+                btn.textContent = '⏳';
+
+                try {
+                    var ok = false;
+
+                    if (Notification.permission === 'granted') {
+                        // Permission déjà accordée → re-souscrire directement (skip requestPermission)
+                        if (window.cleanBeatPush) {
+                            // S'assurer que la clé VAPID est chargée
+                            if (!window.cleanBeatPush.vapidPublicKey) {
+                                await window.cleanBeatPush.fetchVapidKey();
+                            }
+                            // S'assurer que le SW est enregistré
+                            if (!window.cleanBeatPush.registration) {
+                                await window.cleanBeatPush.init();
+                            } else {
+                                // Désouscrire d'abord si sub existante (peut échouer si clé VAPID changée)
+                                try {
+                                    var existing = await window.cleanBeatPush.registration.pushManager.getSubscription();
+                                    if (existing) { await existing.unsubscribe(); }
+                                } catch(e) {}
+                                ok = await window.cleanBeatPush.subscribe();
+                            }
+                        }
+                    } else {
+                        // Permission pas encore accordée → demander (nécessite geste utilisateur)
+                        if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
+                            ok = await window.cleanBeatPush.requestPermission();
+                        } else {
+                            await Notification.requestPermission();
+                        }
+                    }
+
+                    if (Notification.permission === 'granted') {
+                        banner.style.display = 'none';
+                    } else if (Notification.permission === 'denied') {
+                        banner.style.display = 'none';
+                        var refusPopup = document.createElement('div');
+                        refusPopup.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+                        refusPopup.innerHTML = '<div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.45);border-radius:24px;color:white;font-family:\'Montserrat\',sans-serif;padding:28px;max-width:320px;text-align:center;">'
+                          + '<p style="font-size:16px;font-weight:700;margin:0 0 12px;">😅 Tu as le droit de refuser !</p>'
+                          + '<p style="font-size:13px;line-height:1.6;margin:0 0 12px;">Mais sache que sans notifications, tu ne pourras pas :<br>- Être prévenu des nouvelles missions<br>- Recevoir les messages de tes partenaires<br>- Partager la liste de courses<br>- Recevoir le rappel quotidien</p>'
+                          + '<p style="font-size:13px;line-height:1.6;margin:0 0 16px;">Pour une meilleure expérience bêta testeur, on te conseille d\'activer les notifications !<br><br>Tu peux les activer plus tard dans<br><strong>Réglages → Safari → QuiFaitQuoi → Notifications</strong></p>'
+                          + '<button style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.5);border-radius:20px;color:white;font-family:\'Montserrat\',sans-serif;font-weight:700;font-size:14px;padding:12px 28px;cursor:pointer;">J\'ai compris 👍</button>'
+                          + '</div>';
+                        refusPopup.querySelector('button').onclick = function() { refusPopup.remove(); };
+                        document.body.appendChild(refusPopup);
+                    } else {
+                        // Toujours 'default' → réactiver le bouton pour réessayer
+                        btn.disabled = false;
+                        btn.textContent = 'Activer';
+                    }
+                } catch(err) {
+                    console.error('❌ Erreur activation notifications:', err);
+                    btn.disabled = false;
+                    btn.textContent = 'Activer';
                 }
             });
         }
