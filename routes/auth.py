@@ -14,6 +14,39 @@ def welcome():
 @auth_bp.route('/splash')
 def splash():
     session.pop('splash_shown', None)
+    # 🔔 Si un reminder du jour est en attente pour ce user → bypass splash et
+    # rediriger direct vers /menu?reminder=<id> pour afficher le popup
+    # instantanément (clic icône PWA après notif 20h).
+    if 'user' in session:
+        try:
+            from app import get_db_connection, now_paris
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+            row = c.fetchone()
+            if row and row[0]:
+                house_id = row[0]
+                paris_today_str = now_paris().strftime('%Y-%m-%d')
+                c.execute("""
+                    SELECT m.id FROM messages m
+                    WHERE m.house_id = ?
+                      AND m.message_type = 'reminder'
+                      AND (m.recipient_email = ? OR m.recipient_email IS NULL)
+                      AND m.timestamp >= ?
+                      AND NOT EXISTS (
+                          SELECT 1 FROM message_reads mr
+                          WHERE mr.message_id = m.id AND mr.user_email = ?
+                      )
+                    ORDER BY m.timestamp DESC LIMIT 1
+                """, (house_id, session['user'], paris_today_str, session['user']))
+                rem = c.fetchone()
+                conn.close()
+                if rem:
+                    return redirect(f"/menu?reminder={rem[0]}")
+            else:
+                conn.close()
+        except Exception as e:
+            print(f"❌ splash reminder check error: {e}", flush=True)
     return render_template('splash.html')
 
 
