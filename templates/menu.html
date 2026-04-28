@@ -54,9 +54,10 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        var PURGE_KEY = 'cb_cache_purged_v1011';
+        var PURGE_KEY = 'cb_cache_purged_v1012';
         if (!localStorage.getItem(PURGE_KEY)) {
-            localStorage.setItem('cb_cache_purged_v1011', '1');
+            localStorage.setItem('cb_cache_purged_v1012', '1');
+            localStorage.removeItem('cb_cache_purged_v1011');
             localStorage.removeItem('cb_cache_purged_v1010');
             localStorage.removeItem('cb_cache_purged_v1009');
             localStorage.removeItem('pwa_dismissed_session');
@@ -6257,22 +6258,11 @@ function refreshAllBadges() {
             return;
         }
 
-        // Mode standalone requis pour proposer l'activation (évite d'afficher en Safari browser)
-        if (!isStandalone) return;
+        // Dismiss mémorisé (clic "Plus tard") → ne pas réafficher pendant 24h
+        if (dismissedAt && (Date.now() - dismissedAt) < 24 * 60 * 60 * 1000) return;
 
-        // Dismiss mémorisé (clic "Plus tard") → ne pas réafficher pendant 7 jours
-        if (dismissedAt && (Date.now() - dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
-
-        // 'default' → affiche la bannière
-        // Affichage : après les bulles, ou immédiatement si bulles déjà vues
-        var KEY = 'qfq_tips_menu';
-        if (localStorage.getItem(KEY)) {
-            setTimeout(showPushBanner, 800);
-        } else {
-            window.addEventListener('menu_tips_done', function() {
-                setTimeout(showPushBanner, 600);
-            }, {once: true});
-        }
+        // 'default' → affiche la bannière après 1.5s (laisse le temps à la page de se peindre)
+        setTimeout(showPushBanner, 1500);
 
         if (btn) {
             btn.addEventListener('click', async function() {
