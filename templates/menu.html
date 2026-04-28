@@ -6701,6 +6701,18 @@ function refreshAllBadges() {
 
 <script>
 var _dailyReminderMsgId = window._dailyReminderMsgId || null;
+var _dailyReminderShownThisSession = false;
+function _markReminderRead(id) {
+  if (!id) return;
+  try {
+    fetch('/api/mark_reminder_read', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message_id: id}),
+      keepalive: true
+    }).catch(function() {});
+  } catch(_) {}
+}
 function closeDailyReminder() {
   var popup = document.getElementById('dailyReminderPopup');
   if (popup) {
@@ -6708,19 +6720,20 @@ function closeDailyReminder() {
     popup.style.transition = 'opacity 0.3s ease';
     setTimeout(function() { popup.style.display = 'none'; popup.style.opacity = ''; popup.style.transition = ''; popup.dispatchEvent(new Event('qfq_reminder_closed')); }, 300);
   }
+  // mark_reminder_read déjà fait à l'affichage → ici on s'assure juste que c'est fait
   if (_dailyReminderMsgId) {
-    fetch('/api/mark_reminder_read', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message_id: _dailyReminderMsgId})
-    }).catch(function() {});
+    _markReminderRead(_dailyReminderMsgId);
     _dailyReminderMsgId = null;
   }
 }
 
 // 🔔 Affiche le popup avec un message reminder donné
 function _showReminderPopup(messageId, content) {
+  if (_dailyReminderShownThisSession) return; // déjà vu/fermé cette session
+  _dailyReminderShownThisSession = true;
   _dailyReminderMsgId = messageId;
+  // ⚡️ Marquer comme lu DÈS L'AFFICHAGE → le polling ne le ressortira plus
+  _markReminderRead(messageId);
   var txt = document.getElementById('dailyReminderText');
   if (txt) { txt.innerHTML = content; }
   var popup = document.getElementById('dailyReminderPopup');
@@ -6731,7 +6744,11 @@ function _showReminderPopup(messageId, content) {
 // Pas de visibilitychange / pas de polling : sinon le popup réapparaît à chaque retour d'onglet.
 {% if show_daily_reminder %}
 document.addEventListener('DOMContentLoaded', function() {
-  _showReminderPopup({{ daily_reminder_message_id|tojson }}, {{ daily_reminder_message|tojson|safe }});
+  // Popup déjà rendu visible côté serveur. On marque comme vu+lu pour bloquer
+  // toute réapparition via polling /api/latest_reminder.
+  _dailyReminderShownThisSession = true;
+  _dailyReminderMsgId = {{ daily_reminder_message_id|tojson }};
+  _markReminderRead({{ daily_reminder_message_id|tojson }});
 });
 {% endif %}
 
