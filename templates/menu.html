@@ -4,8 +4,13 @@
 <head>
     <meta charset="utf-8">
     <script>
-      // 🔔 Si arrivée via clic notif push (?reminder=<id>) → skip le splash pour afficher le popup immédiatement
-      if (location.search.indexOf('reminder=') !== -1) {
+      // 🔔 Skip le splash dans 2 cas :
+      // 1. Arrivée via clic notif push (?reminder=<id> ou nav=1)
+      // 2. Le serveur a armé le popup "Hé t'es là ?" (reminder du jour non lu)
+      //    → l'utilisateur a cliqué sur l'icône PWA après la notif 20h
+      var _hasReminderParam = location.search.indexOf('reminder=') !== -1 || location.search.indexOf('nav=1') !== -1;
+      var _serverArmedPopup = {% if show_daily_reminder %}true{% else %}false{% endif %};
+      if (_hasReminderParam || _serverArmedPopup) {
         sessionStorage.setItem('splashDone', '1');
       } else if (!sessionStorage.getItem('splashDone')) {
         window.location.replace('/splash');

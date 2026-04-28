@@ -4045,9 +4045,7 @@ def menu():
     daily_reminder_message = ''
     daily_reminder_message_id = None
 
-    # 🚀 Le popup "Hé t'es là ?" ne s'affiche QUE via clic sur la notif push 20h.
-    # L'URL contient alors ?reminder=<id>. Pas de fallback : sinon un ancien reminder
-    # non lu réapparaît à chaque ouverture du menu (bug "popup n'importe quand").
+    # 🚀 Cas 1 : ?reminder=<id> dans l'URL (clic direct sur la notif push)
     forced_reminder_id = request.args.get('reminder')
     if forced_reminder_id and forced_reminder_id.isdigit():
         try:
@@ -4068,6 +4066,34 @@ def menu():
                 daily_reminder_message = row[1]
         except Exception as e:
             print(f"❌ Forced reminder fetch error: {e}", flush=True)
+
+    # 🚀 Cas 2 : ouverture via icône PWA après la notif 20h (URL = /menu sans param)
+    # Fallback DB scopé au reminder du JOUR (Paris) non lu uniquement.
+    # Pas de fallback global : sinon un vieux reminder ressortirait n'importe quand.
+    if not show_daily_reminder:
+        try:
+            paris_today_str = now_paris().strftime('%Y-%m-%d')
+            c_rem = conn.cursor()
+            c_rem.execute("""
+                SELECT m.id, m.content FROM messages m
+                WHERE m.house_id = ?
+                AND m.message_type = 'reminder'
+                AND (m.recipient_email = ? OR m.recipient_email IS NULL)
+                AND m.timestamp >= ?
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id AND mr.user_email = ?
+                )
+                ORDER BY m.timestamp DESC
+                LIMIT 1
+            """, (house_id, session['user'], paris_today_str, session['user']))
+            row = c_rem.fetchone()
+            if row:
+                show_daily_reminder = True
+                daily_reminder_message_id = row[0]
+                daily_reminder_message = row[1]
+        except Exception as e:
+            print(f"❌ Reminder check (today fallback) error: {e}", flush=True)
 
     resp = make_response(render_template(
         'menu.html',
