@@ -1253,11 +1253,11 @@ window.cbToast = function(message, type, duration) {
     function _qfqCheckReminderResume() {
         if (document.visibilityState !== 'visible') return;
         var now = Date.now();
-        if (now - _qfqLastReminderCheck < 5000) return; // throttle 5s
+        if (now - _qfqLastReminderCheck < 4000) return; // throttle 4s
         _qfqLastReminderCheck = now;
-        // Inutile de vérifier si on est déjà sur /menu (cette page le fait elle-même)
+        // Sur /menu, c'est menu.html qui gère (affichage direct du popup)
         if (location.pathname === '/menu' || location.pathname.indexOf('/menu') === 0) return;
-        fetch('/api/latest_reminder', { credentials: 'same-origin' })
+        fetch('/api/latest_reminder', { credentials: 'same-origin', cache: 'no-store' })
             .then(function(r) { return r.ok ? r.json() : null; })
             .then(function(data) {
                 if (data && data.reminder && data.reminder.id) {
@@ -1268,6 +1268,9 @@ window.cbToast = function(message, type, duration) {
     }
     document.addEventListener('visibilitychange', _qfqCheckReminderResume);
     window.addEventListener('pageshow', _qfqCheckReminderResume);
+    window.addEventListener('focus', _qfqCheckReminderResume);
+    // 🛟 Polling de secours : iOS PWA standalone ne déclenche pas toujours les events ci-dessus
+    setInterval(_qfqCheckReminderResume, 20000);
 })();
 </script>
 </body>

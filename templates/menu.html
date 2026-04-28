@@ -5719,24 +5719,33 @@ function refreshAllBadges() {
                 // Rafraîchir aussi au DOMContentLoaded (sécurité)
                 document.addEventListener('DOMContentLoaded', function() { refreshAllBadges(); refreshMissionDots(); });
                 
-                // 🔔 Au resume, vérifier s'il y a un reminder du jour non lu à afficher
+                // 🔔 Au resume (ou polling), vérifier s'il y a un reminder non lu et l'AFFICHER
+                // directement (pas de redirect : iOS PWA standalone gère mal location.href).
                 var _menuLastReminderCheck = 0;
                 function _menuCheckReminderResume() {
-                    // Ne pas vérifier si le popup est déjà affiché
                     var popup = document.getElementById('dailyReminderPopup');
-                    if (popup && popup.style.display !== 'none') return;
+                    if (popup && popup.style.display !== 'none') return; // déjà affiché
                     var now = Date.now();
-                    if (now - _menuLastReminderCheck < 5000) return;
+                    if (now - _menuLastReminderCheck < 4000) return;
                     _menuLastReminderCheck = now;
-                    fetch('/api/latest_reminder', { credentials: 'same-origin' })
+                    fetch('/api/latest_reminder', { credentials: 'same-origin', cache: 'no-store' })
                         .then(function(r) { return r.ok ? r.json() : null; })
                         .then(function(data) {
-                            if (data && data.reminder && data.reminder.id) {
-                                window.location.href = '/menu?reminder=' + encodeURIComponent(data.reminder.id);
+                            if (data && data.reminder && data.reminder.id && typeof _showReminderPopup === 'function') {
+                                _showReminderPopup(data.reminder.id, data.reminder.content || '');
                             }
                         })
                         .catch(function() {});
                 }
+                // 🛟 Filet de sécurité : polling toutes les 20s tant que la page est visible.
+                // Couvre les cas où visibilitychange/pageshow ne se déclenchent pas (iOS PWA).
+                setInterval(function() {
+                    if (document.visibilityState === 'visible') {
+                        _menuCheckReminderResume();
+                    }
+                }, 20000);
+                // Et aussi 1.5s après le chargement initial (au cas où Cas 2 fallback aurait raté)
+                setTimeout(_menuCheckReminderResume, 1500);
 
                 // Rafraîchir au retour via le bouton retour (bfcache ET navigation normale)
                 window.addEventListener('pageshow', function(event) {
