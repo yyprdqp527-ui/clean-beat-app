@@ -6251,8 +6251,6 @@ function refreshAllBadges() {
                 if (!data.has_subscription) {
                     // Souscription manquante → bannière critique, pas de cooldown
                     setTimeout(showPushBanner, 800);
-                    // Souscription manquante → bannière critique, pas de cooldown
-                    setTimeout(showPushBanner, 800);
                 }
             }).catch(function(){ setTimeout(showPushBanner, 800); });
             return;
@@ -6261,8 +6259,17 @@ function refreshAllBadges() {
         // Dismiss mémorisé (clic "Plus tard") → ne pas réafficher pendant 24h
         if (dismissedAt && (Date.now() - dismissedAt) < 24 * 60 * 60 * 1000) return;
 
-        // 'default' → affiche la bannière après 1.5s (laisse le temps à la page de se peindre)
-        setTimeout(showPushBanner, 1500);
+        // 'default' → affiche la bannière APRÈS les bulles d'aide
+        // Si bulles déjà vues (KEY en localStorage) → affiche immédiatement
+        // Sinon → attend l'événement menu_tips_done dispatché par QfqTips.init
+        var TIPS_KEY = 'qfq_tips_menu';
+        if (localStorage.getItem(TIPS_KEY)) {
+            setTimeout(showPushBanner, 800);
+        } else {
+            window.addEventListener('menu_tips_done', function() {
+                setTimeout(showPushBanner, 600);
+            }, {once: true});
+        }
 
         if (btn) {
             btn.addEventListener('click', async function() {
