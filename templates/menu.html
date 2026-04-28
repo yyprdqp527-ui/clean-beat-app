@@ -6239,21 +6239,21 @@ function refreshAllBadges() {
         var DISMISS_KEY = 'qfq_push_banner_dismissed';
         var dismissedAt = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
 
-        // Permission déjà accordée → vérifier si le navigateur a encore une souscription active
-        // (elle peut être absente après un reset DB ou changement de clés VAPID)
+        // Fonction d'affichage — déclarée ici pour être accessible dans les callbacks async
+        function showPushBanner(){ banner.style.display = 'block'; }
+        window.showPushBanner = showPushBanner;
+
+        // Permission déjà accordée → vérifier côté SERVEUR si la souscription existe en DB
+        // (plus fiable que getSubscription() qui peut retourner une sub invalide/expirée)
         if (Notification.permission === 'granted') {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(function(reg) {
-                    reg.pushManager.getSubscription().then(function(sub) {
-                        if (!sub) {
-                            // Permission OK mais pas de souscription → afficher bannière pour re-souscrire
-                            if (!dismissedAt || (Date.now() - dismissedAt) >= 7 * 24 * 60 * 60 * 1000) {
-                                setTimeout(showPushBanner, 800);
-                            }
-                        }
-                    });
-                });
-            }
+            fetch('/api/push/status').then(function(r){ return r.json(); }).then(function(data) {
+                if (!data.has_subscription) {
+                    // Souscription absente en DB → afficher bannière pour re-souscrire
+                    if (!dismissedAt || (Date.now() - dismissedAt) >= 7 * 24 * 60 * 60 * 1000) {
+                        setTimeout(showPushBanner, 800);
+                    }
+                }
+            }).catch(function(){});
             return;
         }
 
@@ -6261,9 +6261,6 @@ function refreshAllBadges() {
         if (dismissedAt && (Date.now() - dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
 
         // 'default' → affiche la bannière
-        function showPushBanner(){ banner.style.display = 'block'; }
-        window.showPushBanner = showPushBanner;
-
         // Affichage : après les bulles, ou immédiatement si bulles déjà vues
         var KEY = 'qfq_tips_menu';
         if (localStorage.getItem(KEY)) {

@@ -123,3 +123,24 @@ def api_push_test():
     except Exception as e:
         _dbg(f"❌ Erreur API push test: {e}")
         return {'success': False, 'error': str(e)}, 500
+
+
+@push_bp.route('/api/push/status')
+def api_push_status():
+    """Indique si l'utilisateur courant a une subscription active en DB."""
+    from app import get_db_connection
+    if 'user' not in session:
+        return {'has_subscription': False}, 200
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute(
+            "SELECT COUNT(*) FROM push_subscriptions WHERE user_email=? AND is_active=1",
+            (session['user'],)
+        )
+        row = c.fetchone()
+        conn.close()
+        count = row[0] if row else 0
+        return {'has_subscription': count > 0}, 200
+    except Exception as e:
+        return {'has_subscription': False, 'error': str(e)}, 200
