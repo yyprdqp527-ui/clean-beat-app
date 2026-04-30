@@ -6297,27 +6297,31 @@ function refreshAllBadges() {
                                 await window.cleanBeatPush.init();
                             }
 
-                            // Désouscrire TOUTES les subscriptions existantes (critical si clé VAPID changée)
-                            try {
-                                var existing = await window.cleanBeatPush.registration.pushManager.getSubscription();
-                                if (existing) {
-                                    console.log('🔄 Désinscription de l\'ancienne subscription...');
-                                    window.cleanBeatPush.subscription = null;
-                                    await existing.unsubscribe();
-                                    // Petite pause pour laisser le navigateur traiter le unsubscribe
-                                    await new Promise(function(r){ setTimeout(r, 300); });
+                            // Subscribe si registration disponible (init vient peut-être juste de le créer)
+                            if (window.cleanBeatPush.registration) {
+                                // Désouscrire l'ancienne subscription (critique si clé VAPID changée)
+                                try {
+                                    var existing = await window.cleanBeatPush.registration.pushManager.getSubscription();
+                                    if (existing) {
+                                        console.log('🔄 Désinscription de l\'ancienne subscription...');
+                                        window.cleanBeatPush.subscription = null;
+                                        await existing.unsubscribe();
+                                        await new Promise(function(r){ setTimeout(r, 300); });
+                                    }
+                                } catch(e) {
+                                    console.warn('⚠️ unsubscribe failed (ignoré):', e);
                                 }
-                            } catch(e) {
-                                console.warn('⚠️ unsubscribe failed (ignoré):', e);
-                            }
 
-                            ok = await window.cleanBeatPush.subscribe();
-
-                            // Si échec (ex: DOMException clé VAPID), réessayer une fois après délai
-                            if (!ok) {
-                                console.log('🔄 Retry subscribe après 500ms...');
-                                await new Promise(function(r){ setTimeout(r, 500); });
                                 ok = await window.cleanBeatPush.subscribe();
+
+                                // Si échec (ex: DOMException clé VAPID), réessayer une fois après délai
+                                if (!ok) {
+                                    console.log('🔄 Retry subscribe après 500ms...');
+                                    await new Promise(function(r){ setTimeout(r, 500); });
+                                    ok = await window.cleanBeatPush.subscribe();
+                                }
+                            } else {
+                                console.error('❌ SW registration toujours null après init()');
                             }
                         }
                     } else {
