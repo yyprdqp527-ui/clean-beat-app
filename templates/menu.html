@@ -6287,41 +6287,22 @@ function refreshAllBadges() {
                     var ok = false;
 
                     if (Notification.permission === 'granted') {
-                        // Permission déjà accordée → forcer une nouvelle subscription (clé VAPID peut avoir changé)
+                        // Permission déjà accordée → re-souscrire directement (skip requestPermission)
                         if (window.cleanBeatPush) {
-                            // Toujours refetch la clé VAPID (au cas où elle a changé sur le serveur)
-                            await window.cleanBeatPush.fetchVapidKey();
-
+                            // S'assurer que la clé VAPID est chargée
+                            if (!window.cleanBeatPush.vapidPublicKey) {
+                                await window.cleanBeatPush.fetchVapidKey();
+                            }
                             // S'assurer que le SW est enregistré
                             if (!window.cleanBeatPush.registration) {
                                 await window.cleanBeatPush.init();
-                            }
-
-                            // Subscribe si registration disponible (init vient peut-être juste de le créer)
-                            if (window.cleanBeatPush.registration) {
-                                // Désouscrire l'ancienne subscription (critique si clé VAPID changée)
+                            } else {
+                                // Désouscrire d'abord si sub existante (peut échouer si clé VAPID changée)
                                 try {
                                     var existing = await window.cleanBeatPush.registration.pushManager.getSubscription();
-                                    if (existing) {
-                                        console.log('🔄 Désinscription de l\'ancienne subscription...');
-                                        window.cleanBeatPush.subscription = null;
-                                        await existing.unsubscribe();
-                                        await new Promise(function(r){ setTimeout(r, 300); });
-                                    }
-                                } catch(e) {
-                                    console.warn('⚠️ unsubscribe failed (ignoré):', e);
-                                }
-
+                                    if (existing) { await existing.unsubscribe(); }
+                                } catch(e) {}
                                 ok = await window.cleanBeatPush.subscribe();
-
-                                // Si échec (ex: DOMException clé VAPID), réessayer une fois après délai
-                                if (!ok) {
-                                    console.log('🔄 Retry subscribe après 500ms...');
-                                    await new Promise(function(r){ setTimeout(r, 500); });
-                                    ok = await window.cleanBeatPush.subscribe();
-                                }
-                            } else {
-                                console.error('❌ SW registration toujours null après init()');
                             }
                         }
                     } else {
@@ -6330,22 +6311,11 @@ function refreshAllBadges() {
                             ok = await window.cleanBeatPush.requestPermission();
                         } else {
                             await Notification.requestPermission();
-                            // Si permission accordée, tenter de souscrire maintenant
-                            if (Notification.permission === 'granted' && window.cleanBeatPush) {
-                                await window.cleanBeatPush.fetchVapidKey();
-                                ok = await window.cleanBeatPush.subscribe();
-                            }
                         }
                     }
 
-                    if (ok && Notification.permission === 'granted') {
-                        // ✅ Succès : subscription créée et enregistrée en DB
+                    if (Notification.permission === 'granted') {
                         banner.style.display = 'none';
-                    } else if (!ok && Notification.permission === 'granted') {
-                        // ❌ Permission ok mais subscribe() a échoué → feedback et réactiver bouton
-                        btn.disabled = false;
-                        btn.textContent = '🔄 Réessayer';
-                        console.error('❌ Subscribe échoué malgré permission granted');
                     } else if (Notification.permission === 'denied') {
                         banner.style.display = 'none';
                         var refusPopup = document.createElement('div');
