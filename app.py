@@ -4049,7 +4049,8 @@ def menu():
     forced_reminder_id = request.args.get('reminder')
     if forced_reminder_id and forced_reminder_id.isdigit():
         try:
-            c_rem = conn.cursor()
+            conn_rem = get_db_connection()
+            c_rem = conn_rem.cursor()
             c_rem.execute("""
                 SELECT m.id, m.content FROM messages m
                 WHERE m.id = ? AND m.house_id = ? AND m.message_type = 'reminder'
@@ -4060,6 +4061,7 @@ def menu():
                 )
             """, (int(forced_reminder_id), house_id, session['user'], session['user']))
             row = c_rem.fetchone()
+            conn_rem.close()
             if row:
                 show_daily_reminder = True
                 daily_reminder_message_id = row[0]
@@ -4073,7 +4075,8 @@ def menu():
     if not show_daily_reminder:
         try:
             paris_today_str = now_paris().strftime('%Y-%m-%d')
-            c_rem = conn.cursor()
+            conn_rem2 = get_db_connection()
+            c_rem = conn_rem2.cursor()
             c_rem.execute("""
                 SELECT m.id, m.content FROM messages m
                 WHERE m.house_id = ?
@@ -4088,6 +4091,7 @@ def menu():
                 LIMIT 1
             """, (house_id, session['user'], paris_today_str, session['user']))
             row = c_rem.fetchone()
+            conn_rem2.close()
             if row:
                 show_daily_reminder = True
                 daily_reminder_message_id = row[0]
