@@ -9,6 +9,13 @@ try:
 except ImportError:
     pass
 
+# Supprime silencieusement les BrokenPipeError quand un client ferme la connexion
+try:
+    from signal import signal, SIGPIPE, SIG_DFL
+    signal(SIGPIPE, SIG_DFL)
+except ImportError:
+    pass  # Windows : SIGPIPE inexistant
+
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
 import re
