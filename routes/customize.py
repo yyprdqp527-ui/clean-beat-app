@@ -1,7 +1,26 @@
+import os
 import time
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+import uuid
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
+from werkzeug.utils import secure_filename
 
 customize_bp = Blueprint('customize', __name__)
+
+# Dossier où sont stockées les illustrations uploadées par l'utilisateur
+ROOM_UPLOAD_SUBDIR = os.path.join('uploads', 'rooms')  # relatif à static/
+ROOM_UPLOAD_PREFIX = 'images/uploads/rooms/'  # impossible vrai chemin URL côté static
+
+def _is_user_uploaded_image(path):
+    """Autorise uniquement les paths static/uploads/rooms/<fichier>."""
+    if not isinstance(path, str):
+        return False
+    if not path.startswith(ROOM_UPLOAD_PREFIX):
+        return False
+    # Pas de remontée de dossier
+    rest = path[len(ROOM_UPLOAD_PREFIX):]
+    if '/' in rest or '\\' in rest or '..' in rest or not rest:
+        return False
+    return True
 
 # Liste blanche des illustrations disponibles pour les pièces personnalisées
 # (uniquement des thumbs isométriques déjà présents dans /static/images/thumbs/)
@@ -22,6 +41,12 @@ AVAILABLE_ROOM_IMAGES = [
     {'file': 'images/thumbs/default.webp',              'label': 'Autre'},
 ]
 _ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
+
+
+def _is_valid_room_image(path):
+    """Une image valide pour une pièce custom est soit dans la liste blanche,
+       soit dans le dossier des uploads utilisateur."""
+    return (path in _ALLOWED_IMAGE_FILES) or _is_user_uploaded_image(path)
 
 
 @customize_bp.route('/set_bg_theme', methods=['POST'])
@@ -194,8 +219,8 @@ def personnaliser_maison():
         if not key.startswith('custom_'):
             continue
         img = cust.get('image') or 'images/thumbs/default.webp'
-        # Sécurité : n'utiliser que des images de la liste blanche
-        if img not in _ALLOWED_IMAGE_FILES:
+        # Sécurité : autoriser uniquement liste blanche OU upload utilisateur
+        if not _is_valid_room_image(img):
             img = 'images/thumbs/default.webp'
         extra_rooms_data.append({
             'key': key,
@@ -247,7 +272,7 @@ def add_custom_room():
         return {'ok': False, 'error': 'nom manquant'}, 400
     if len(name) > 30:
         name = name[:30]
-    if image not in _ALLOWED_IMAGE_FILES:
+    if not _is_valid_room_image(image):
         image = 'images/thumbs/default.webp'
 
     conn = get_db_connection()
@@ -300,6 +325,67 @@ def delete_custom_room():
     finally:
         conn.close()
     return {'ok': True}
+
+
+@customize_bp.route('/upload_room_image', methods=['POST'])
+def upload_room_image():
+    """Upload d'une photo (caméra ou galerie) à utiliser comme illustration de
+       pièce personnalisée. Retourne le chemin relatif (à utiliser ensuite
+       comme valeur du champ `image` dans /add_custom_room)."""
+    if 'user' not in session:
+        return {'ok': False, 'error': 'non connecté'}, 401
+
+    photo = request.files.get('photo')
+    if not photo or not photo.filename:
+        return {'ok': False, 'error': 'aucun fichier'}, 400
+
+    # Limite simple côté serveur (~5 Mo) après lecture
+    try:
+        photo.seek(0, 2)
+        size = photo.tell()
+        photo.seek(0)
+        if size > 5 * 1024 * 1024:
+            return {'ok': False, 'error': 'image trop lourde (max 5 Mo)'}, 400
+    except Exception:
+        pass
+
+    # Préparer le dossier de destination static/uploads/rooms/
+    static_root = os.path.join(current_app.root_path, 'static')
+    dest_dir = os.path.join(static_root, ROOM_UPLOAD_SUBDIR)
+    try:
+        os.makedirs(dest_dir, exist_ok=True)
+    except Exception as e:
+        return {'ok': False, 'error': f'mkdir: {e}'}, 500
+
+    base = secure_filename(photo.filename) or 'room.jpg'
+    ext = os.path.splitext(base)[1].lower()
+    if ext not in ('.jpg', '.jpeg', '.png', '.webp', '.heic'):
+        ext = '.jpg'
+    unique = f"room_{uuid.uuid4().hex[:12]}.jpg"  # toujours sortie en .jpg compressé
+    filepath = os.path.join(dest_dir, unique)
+
+    try:
+        from PIL import Image, ImageOps
+        img = Image.open(photo)
+        img = ImageOps.exif_transpose(img)
+        img = img.convert('RGB')
+        # Crop centré carré, puis resize 256x256 pour matcher les thumbs isométriques
+        w, h = img.size
+        side = min(w, h)
+        left = (w - side) // 2
+        top  = (h - side) // 2
+        img = img.crop((left, top, left + side, top + side))
+        img = img.resize((256, 256), Image.LANCZOS)
+        img.save(filepath, format='JPEG', quality=82, optimize=True)
+    except ImportError:
+        # Pas de Pillow → on enregistre tel quel
+        photo.save(filepath)
+    except Exception as e:
+        return {'ok': False, 'error': f'image: {e}'}, 500
+
+    # Chemin relatif compatible avec url_for('static', filename=...)
+    rel_path = f"{ROOM_UPLOAD_PREFIX}{unique}"
+    return {'ok': True, 'image': rel_path}
 
 
 @customize_bp.route('/settings')

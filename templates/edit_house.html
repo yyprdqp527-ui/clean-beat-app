@@ -314,6 +314,45 @@
         }
         .btn-add-room-cancel:hover { background: rgba(255,255,255,0.95); }
 
+        /* 🆕 Deux boutons toggle (Ajouter / Supprimer) — même style que .add-custom-room-btn */
+        .rooms-actions-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 6px;
+            margin-bottom: 8px;
+        }
+        .rooms-action-btn {
+            display: block;
+            width: 100%;
+            background: rgba(255,255,255,0.55);
+            border: 1.5px dashed rgba(253,174,84,0.55);
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: #4a3428;
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s ease;
+            text-align: center;
+        }
+        .rooms-action-btn:hover {
+            background: rgba(253,174,84,0.15);
+            border-color: #FDAE54;
+        }
+        .rooms-action-btn.is-active {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            border-style: solid;
+            border-color: #FDAE54;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(253,174,84,0.35);
+        }
+        .rooms-panel { margin-top: 12px; }
+        @media (max-width: 480px) {
+            .rooms-actions-row { grid-template-columns: 1fr; }
+        }
+
         </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 </head>
@@ -346,114 +385,143 @@
 
                 <p class="section-label">Pièces</p>
 
-                <div class="rooms-list">
-                    {% for room in rooms %}
-                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
-
-                        <div class="room-thumb">
-                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.default_name }}" loading="lazy">
-                        </div>
-
-                        <div class="room-info">
-                            <div class="room-default-name">Prénom du propriétaire de la chambre</div>
-                            <input
-                                class="room-name-input"
-                                type="text"
-                                name="name_{{ room.key }}"
-                                value="{{ room.current_name }}"
-                                placeholder="Écris ton prénom ici"
-                                maxlength="30"
-                            >
-                        </div>
-
-                        <div class="toggle-wrap">
-                            <span class="toggle-label-txt">Masquer</span>
-                            <label class="toggle">
-                                <input
-                                    type="checkbox"
-                                    name="hidden_{{ room.key }}"
-                                    {% if room.is_hidden %}checked{% endif %}
-                                    onchange="toggleRoom('{{ room.key }}', this)"
-                                >
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-
-                    </div>
-                    {% endfor %}
+                {# 🆕 Deux boutons toggle (Ajouter / Gérer) — un seul panneau ouvert à la fois #}
+                <div class="rooms-actions-row">
+                    <button type="button" class="rooms-action-btn" id="btnPanelAdd"
+                            onclick="togglePanel('add')">
+                        ➕ Ajouter des pièces
+                    </button>
+                    <button type="button" class="rooms-action-btn" id="btnPanelManage"
+                            onclick="togglePanel('manage')">
+                        🗑️ Supprimer des pièces
+                    </button>
                 </div>
 
-                {# 🆕 Pièces personnalisées (en dessous, mêmes classes / même style) #}
-                {% if extra_rooms and extra_rooms|length > 0 %}
-                <p class="section-label" style="margin-top:24px;">Mes pièces personnalisées</p>
-                <div class="rooms-list" id="extra-rooms-list">
-                    {% for room in extra_rooms %}
-                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
-                        <div class="room-thumb">
-                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
-                        </div>
-                        <div class="room-info">
-                            <div class="room-default-name">Pièce personnalisée</div>
-                            <input
-                                class="room-name-input"
-                                type="text"
-                                name="name_{{ room.key }}"
-                                value="{{ room.current_name }}"
-                                placeholder="Nom de la pièce"
-                                maxlength="30"
-                            >
-                        </div>
-                        <div class="toggle-wrap">
-                            <span class="toggle-label-txt">Masquer</span>
-                            <label class="toggle">
+                {# Panneau "Gérer / Supprimer" : liste complète (pièces par défaut + custom) #}
+                <div id="panelManage" class="rooms-panel" style="display:none;">
+
+                    <div class="rooms-list">
+                        {% for room in rooms %}
+                        <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+
+                            <div class="room-thumb">
+                                <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.default_name }}" loading="lazy">
+                            </div>
+
+                            <div class="room-info">
+                                <div class="room-default-name">Prénom du propriétaire de la chambre</div>
                                 <input
-                                    type="checkbox"
-                                    name="hidden_{{ room.key }}"
-                                    {% if room.is_hidden %}checked{% endif %}
-                                    onchange="toggleRoom('{{ room.key }}', this)"
+                                    class="room-name-input"
+                                    type="text"
+                                    name="name_{{ room.key }}"
+                                    value="{{ room.current_name }}"
+                                    placeholder="Écris ton prénom ici"
+                                    maxlength="30"
                                 >
-                                <span class="toggle-slider"></span>
-                            </label>
+                            </div>
+
+                            <div class="toggle-wrap">
+                                <span class="toggle-label-txt">Masquer</span>
+                                <label class="toggle">
+                                    <input
+                                        type="checkbox"
+                                        name="hidden_{{ room.key }}"
+                                        {% if room.is_hidden %}checked{% endif %}
+                                        onchange="toggleRoom('{{ room.key }}', this)"
+                                    >
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
                         </div>
-                        <button type="button"
-                                class="extra-room-delete"
-                                title="Supprimer cette pièce"
-                                onclick="deleteCustomRoom('{{ room.key }}')">×</button>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="rooms-list" id="extra-rooms-list" style="margin-top:24px;"></div>
-                {% endif %}
 
-                {# 🆕 Bouton + formulaire d'ajout de pièce personnalisée #}
-                <button type="button" class="add-custom-room-btn" id="addCustomRoomBtn"
-                        onclick="toggleAddRoomForm()">+ Ajouter une pièce</button>
-
-                <div id="addRoomForm" class="add-room-form" style="display:none;">
-                    <div class="add-room-field">
-                        <label for="newRoomName" class="room-default-name" style="display:block; margin-bottom:6px;">Nom de la pièce</label>
-                        <input id="newRoomName" type="text" class="room-name-input"
-                               placeholder="Ex : Dressing, Bureau, Atelier…"
-                               maxlength="30">
-                    </div>
-                    <div class="add-room-field">
-                        <p class="room-default-name" style="margin-bottom:8px;">Choisis une illustration</p>
-                        <div class="illus-grid" id="illusGrid">
-                            {% for img in available_images %}
+                    {# Pièces personnalisées — bouton supprimer en plus du toggle #}
+                    {% if extra_rooms and extra_rooms|length > 0 %}
+                    <p class="section-label" style="margin-top:24px;">Mes pièces personnalisées</p>
+                    <div class="rooms-list" id="extra-rooms-list">
+                        {% for room in extra_rooms %}
+                        <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                            <div class="room-thumb">
+                                <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
+                            </div>
+                            <div class="room-info">
+                                <div class="room-default-name">Pièce personnalisée</div>
+                                <input
+                                    class="room-name-input"
+                                    type="text"
+                                    name="name_{{ room.key }}"
+                                    value="{{ room.current_name }}"
+                                    placeholder="Nom de la pièce"
+                                    maxlength="30"
+                                >
+                            </div>
+                            <div class="toggle-wrap">
+                                <span class="toggle-label-txt">Masquer</span>
+                                <label class="toggle">
+                                    <input
+                                        type="checkbox"
+                                        name="hidden_{{ room.key }}"
+                                        {% if room.is_hidden %}checked{% endif %}
+                                        onchange="toggleRoom('{{ room.key }}', this)"
+                                    >
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
                             <button type="button"
-                                    class="illus-choice{% if loop.first %} selected{% endif %}"
-                                    data-image="{{ img.file }}"
-                                    title="{{ img.label }}"
-                                    onclick="selectIllus(this)">
-                                <img src="{{ url_for('static', filename=img.file) }}" alt="{{ img.label }}" loading="lazy">
-                            </button>
-                            {% endfor %}
+                                    class="extra-room-delete"
+                                    title="Supprimer cette pièce"
+                                    onclick="deleteCustomRoom('{{ room.key }}')">×</button>
                         </div>
+                        {% endfor %}
                     </div>
-                    <div class="add-room-actions">
-                        <button type="button" class="btn-add-room-confirm" onclick="addCustomRoom()">Ajouter</button>
-                        <button type="button" class="btn-add-room-cancel" onclick="toggleAddRoomForm()">Annuler</button>
+                    {% else %}
+                    <div class="rooms-list" id="extra-rooms-list" style="margin-top:24px;"></div>
+                    {% endif %}
+                </div>
+
+                {# Panneau "Ajouter une pièce" #}
+                <div id="panelAdd" class="rooms-panel" style="display:none;">
+                    <div id="addRoomForm" class="add-room-form" style="display:block; margin-top:0;">
+                        <div class="add-room-field">
+                            <label for="newRoomName" class="room-default-name" style="display:block; margin-bottom:6px;">Nom de la pièce</label>
+                            <input id="newRoomName" type="text" class="room-name-input"
+                                   placeholder="Ex : Dressing, Bureau, Atelier…"
+                                   maxlength="30">
+                        </div>
+                        <div class="add-room-field">
+                            <p class="room-default-name" style="margin-bottom:8px;">Choisis une illustration</p>
+                            <div class="illus-grid" id="illusGrid">
+                                {% for img in available_images %}
+                                <button type="button"
+                                        class="illus-choice{% if loop.first %} selected{% endif %}"
+                                        data-image="{{ img.file }}"
+                                        title="{{ img.label }}"
+                                        onclick="selectIllus(this)">
+                                    <img src="{{ url_for('static', filename=img.file) }}" alt="{{ img.label }}" loading="lazy">
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {# 🆕 Importer une photo (galerie ou caméra) — devient une nouvelle vignette sélectionnée #}
+                        <div class="add-room-field">
+                            <p class="room-default-name" style="margin-bottom:8px;">Ou utilise ta propre photo</p>
+                            <input type="file" id="roomPhotoInput"
+                                   accept="image/*" capture="environment"
+                                   style="display:none;"
+                                   onchange="onRoomPhotoSelected(this)">
+                            <button type="button" class="add-custom-room-btn"
+                                    onclick="document.getElementById('roomPhotoInput').click()">
+                                📷 Prendre / importer une photo
+                            </button>
+                            <p id="roomPhotoStatus" class="room-default-name"
+                               style="display:none; margin-top:6px; text-align:center;"></p>
+                        </div>
+                        <div class="add-room-actions">
+                            <button type="button" class="btn-add-room-confirm" onclick="addCustomRoom()">Ajouter</button>
+                            <button type="button" class="btn-add-room-cancel" onclick="togglePanel('add')">Annuler</button>
+                        </div>
                     </div>
                 </div>
 
@@ -486,13 +554,61 @@ function toggleRoom(roomKey, checkbox) {
 }
 
 // 🆕 Pièces personnalisées
-function toggleAddRoomForm() {
-    var form = document.getElementById('addRoomForm');
-    var btn  = document.getElementById('addCustomRoomBtn');
-    if (!form) return;
-    var visible = form.style.display !== 'none';
-    form.style.display = visible ? 'none' : 'block';
-    if (btn) btn.style.display = visible ? 'block' : 'none';
+function togglePanel(which) {
+    var panels = { add: document.getElementById('panelAdd'), manage: document.getElementById('panelManage') };
+    var btns   = { add: document.getElementById('btnPanelAdd'), manage: document.getElementById('btnPanelManage') };
+    if (!panels[which]) return;
+    var isOpen = panels[which].style.display !== 'none';
+    Object.keys(panels).forEach(function(k) {
+        if (panels[k]) panels[k].style.display = 'none';
+        if (btns[k])   btns[k].classList.remove('is-active');
+    });
+    if (!isOpen) {
+        panels[which].style.display = 'block';
+        if (btns[which]) btns[which].classList.add('is-active');
+    }
+}
+
+// 📷 Sélection d'une photo (galerie ou caméra) → upload + ajoute une vignette sélectionnée
+function onRoomPhotoSelected(input) {
+    var file = input.files && input.files[0];
+    var status = document.getElementById('roomPhotoStatus');
+    if (!file) return;
+    if (status) { status.style.display = 'block'; status.textContent = 'Envoi de la photo…'; }
+    var fd = new FormData();
+    fd.append('photo', file);
+    fetch('/upload_room_image', { method: 'POST', credentials: 'same-origin', body: fd })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.data || !res.data.ok) {
+                if (status) status.textContent = (res.data && res.data.error) || "Échec de l'envoi.";
+                return;
+            }
+            var imgPath = res.data.image;
+            var grid = document.getElementById('illusGrid');
+            if (!grid) return;
+            // Crée (ou remplace si déjà présente) une vignette « ma photo » et la sélectionne
+            var existing = grid.querySelector('.illus-choice[data-user-photo="1"]');
+            if (existing) existing.parentNode.removeChild(existing);
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'illus-choice';
+            btn.setAttribute('data-image', imgPath);
+            btn.setAttribute('data-user-photo', '1');
+            btn.title = 'Ma photo';
+            btn.onclick = function() { selectIllus(btn); };
+            var im = document.createElement('img');
+            im.src = '/static/' + imgPath + '?t=' + Date.now();
+            im.alt = 'Ma photo';
+            im.loading = 'lazy';
+            btn.appendChild(im);
+            grid.insertBefore(btn, grid.firstChild);
+            selectIllus(btn);
+            if (status) status.textContent = '✅ Photo prête, sélectionnée.';
+        })
+        .catch(function() {
+            if (status) status.textContent = "Erreur réseau, réessaye.";
+        });
 }
 
 function selectIllus(btn) {
