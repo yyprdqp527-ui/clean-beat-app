@@ -4872,7 +4872,7 @@ def cron_list_players():
         return jsonify({'error': str(e)}), 500
 
 
-
+if __name__ == '__main__':
     try:
         _dbg('\n--- Flask URL Map ---')
         for rule in app.url_map.iter_rules():
