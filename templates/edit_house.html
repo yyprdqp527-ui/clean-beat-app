@@ -350,151 +350,201 @@
         }
         .house-action-btn:active { transform: scale(0.98); }
         .house-action-btn .btn-icon { font-size: 24px; flex-shrink: 0; }
-        .house-action-btn .btn-label { flex: 1; color: #153036; }
-        .house-action-btn .btn-arrow { font-size: 18px; color: #A6D3DC; transition: transform .2s ease; }
-        .house-action-btn.is-active .btn-arrow { transform: rotate(90deg); }
+        .house-action-btn .btn-label { flex: 1; color: #153036; text-align: center; display: block; width: 100%; }
+        /* 🟧 Boutons d'action carrés style Gameplay (côte à côte, centrés) */
+        .house-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto 24px;
+        }
+        .house-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            aspect-ratio: 1 / 1;
+            padding: 18px 14px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 24px;
+            color: #153036;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .house-action-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            box-shadow: 0 12px 32px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+            border-color: rgba(166,211,220,0.5);
+        }
+        .house-action-btn:active { transform: scale(0.96); }
+        .house-action-btn.is-active {
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.25), 0 8px 24px rgba(89,113,118,0.15);
+        }
+        .house-action-btn .btn-icon { font-size: 38px; line-height: 1; flex: 0 0 auto; }
+        .house-action-btn .btn-label { font-size: 14px; font-weight: 800; color: #153036; line-height: 1.25; text-align: center; display: block; width: 100%; flex: 0 0 auto; }
 
         .rooms-panel { margin-top: 4px; margin-bottom: 18px; }
+
+        /* Carte titre glass dans le panneau Ajouter */
+        .add-title-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(253,174,84,0.3);
+            border-radius: 20px;
+            padding: 18px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(89,113,118,0.12);
+        }
+        .add-title-card .att-icon { font-size: 32px; line-height: 1; display: block; margin-bottom: 6px; }
+        .add-title-card .att-title { font-size: 17px; font-weight: 800; color: #153036; margin: 0 0 4px; }
+        .add-title-card .att-sub   { font-size: 13px; color: rgba(21,48,54,0.7); margin: 0; line-height: 1.4; }
+
+        /* Coche ✅ sur carte emoji déjà ajoutée */
+        .emoji-card-check {
+            position: absolute;
+            top: 6px; right: 8px;
+            font-size: 20px;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity .2s;
+            pointer-events: none;
+        }
+        .emoji-card-added .emoji-card-check { opacity: 1; }
+        .emoji-card-added { border-color: rgba(76,175,80,0.6) !important; }
 
         </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 </head>
 <body>
 
-    <a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
+    <a href="{{ url_for('customize.settings_page') }}" id="backToSettings" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
+    <button type="button" id="backToHome" class="back-btn-glass" aria-label="Retour" style="display:none;" onclick="closePanel()">←</button>
 
     <div class="header-below-zone">
 
-        <div class="room-header">
-            
-            <h1 class="room-name">Ma Maison</h1>
-            <p class="room-subtitle">C'est ta maison, fais-la à ton image !</p>
-            <p class="room-hint">
-                Pas autant de chambres ? <strong>Masque</strong> celles dont tu n’as pas besoin.
-            </p>
+        {# 🆕 Page épurée : seulement les 2 boutons carrés au centre #}
+        <div class="house-actions-grid">
+            <button type="button" class="house-action-btn" id="btnPanelAdd"
+                    onclick="togglePanel('add')"
+                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                <span class="btn-icon" style="display:block;text-align:center;width:100%;">➕</span>
+                <span class="btn-label" style="display:block;text-align:center;width:100%;">Ajouter<br>des pièces</span>
+            </button>
+            <button type="button" class="house-action-btn" id="btnPanelManage"
+                    onclick="togglePanel('manage')"
+                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                <span class="btn-icon" style="display:block;text-align:center;width:100%;">🗑️</span>
+                <span class="btn-label" style="display:block;text-align:center;width:100%;">Supprimer<br>des pièces</span>
+            </button>
         </div>
 
+        {# Form conservé pour les routes existantes (POST personnaliser_maison) — invisible #}
         <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
-            <div class="container-menu">
+            <input type="hidden" name="house_name" value="{{ current_house_name or '' }}">
 
-                <!-- Nom de la maison -->
-                <p class="section-label">Nom de la maison</p>
-                <div style="margin-bottom:20px;">
-                    <input class="room-name-input" type="text" name="house_name"
-                           value="{{ current_house_name or '' }}" maxlength="50"
-                           placeholder="Nom de votre maison"
-                           style="max-width:100%; font-size:1rem; padding:10px 14px;">
+            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
+            {# Panneau "Ajouter des pièces" #}
+            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
+            <div id="panelAdd" class="rooms-panel" style="display:none;">
+
+                {# 1. Carte titre glassmorphism #}
+                <div class="add-title-card">
+                    <span class="att-icon">🏠</span>
+                    <p class="att-title">Ajouter une pièce</p>
+                    <p class="att-sub">Choisis une pièce ci-dessous<br>ou prends une photo de ta pièce</p>
                 </div>
 
-                <p class="section-label">Pièces</p>
+                {# 2. Bouton photo AU DESSUS de la grille #}
+                <input type="file" id="roomPhotoInput"
+                       accept="image/*" capture="environment"
+                       style="display:none;"
+                       onchange="onRoomPhotoSelected(this)">
+                <button type="button" class="add-custom-room-btn"
+                        style="margin-top:0; margin-bottom:14px;"
+                        onclick="document.getElementById('roomPhotoInput').click()">
+                    📷 Prendre une photo / Importer une image
+                </button>
+                <p id="roomPhotoStatus" class="room-default-name"
+                   style="display:none; margin: -6px 0 12px; text-align:center;"></p>
 
-                {# 🆕 Deux boutons d'action style Gameplay (Ajouter / Supprimer) #}
-                <div class="house-actions-row">
-                    <button type="button" class="house-action-btn" id="btnPanelAdd"
-                            onclick="togglePanel('add')">
-                        <span class="btn-icon">➕</span>
-                        <span class="btn-label">Ajouter une pièce</span>
-                        <span class="btn-arrow">›</span>
-                    </button>
-                    <button type="button" class="house-action-btn" id="btnPanelManage"
-                            onclick="togglePanel('manage')">
-                        <span class="btn-icon">🗑️</span>
-                        <span class="btn-label">Supprimer une pièce</span>
-                        <span class="btn-arrow">›</span>
-                    </button>
-                </div>
-
-                {# Panneau "Supprimer" : uniquement les pièces ajoutées par l'utilisateur #}
-                <div id="panelManage" class="rooms-panel" style="display:none;">
-                    {% if extra_rooms and extra_rooms|length > 0 %}
-                    <div class="rooms-list" id="extra-rooms-list">
-                        {% for room in extra_rooms %}
-                        <div class="room-item" id="item-{{ room.key }}">
-                            <div class="room-thumb">
-                                <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
-                            </div>
-                            <div class="room-info">
-                                <div class="room-default-name">Pièce personnalisée</div>
-                                <input
-                                    class="room-name-input"
-                                    type="text"
-                                    name="name_{{ room.key }}"
-                                    value="{{ room.current_name }}"
-                                    placeholder="Nom de la pièce"
-                                    maxlength="30"
-                                    readonly
-                                    style="background:transparent; border:none; cursor:default;"
-                                >
-                            </div>
-                            <button type="button"
-                                    class="extra-room-delete"
-                                    title="Supprimer cette pièce"
-                                    onclick="deleteCustomRoom('{{ room.key }}')">×</button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="room-default-name" style="text-align:center; padding:20px;">
-                        Aucune pièce personnalisée à supprimer.<br>
-                        Utilise « Ajouter une pièce » pour en créer.
-                    </p>
-                    <div class="rooms-list" id="extra-rooms-list" style="display:none;"></div>
-                    {% endif %}
-                </div>
-
-                {# Panneau "Ajouter une pièce" #}
-                <div id="panelAdd" class="rooms-panel" style="display:none;">
-                    <div id="addRoomForm" class="add-room-form" style="display:block; margin-top:0;">
-                        <div class="add-room-field">
-                            <label for="newRoomName" class="room-default-name" style="display:block; margin-bottom:6px;">Nom de la pièce</label>
-                            <input id="newRoomName" type="text" class="room-name-input"
-                                   placeholder="Ex : Dressing, Bureau, Atelier…"
-                                   maxlength="30">
-                        </div>
-                        <div class="add-room-field">
-                            <p class="room-default-name" style="margin-bottom:8px;">Choisis une illustration</p>
-                            <div class="illus-grid" id="illusGrid">
-                                {% for img in available_images %}
-                                <button type="button"
-                                        class="illus-choice{% if loop.first %} selected{% endif %}"
-                                        data-image="{{ img.file }}"
-                                        title="{{ img.label }}"
-                                        onclick="selectIllus(this)">
-                                    <img src="{{ url_for('static', filename=img.file) }}" alt="{{ img.label }}" loading="lazy">
-                                </button>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {# 🆕 Importer une photo (galerie ou caméra) — devient une nouvelle vignette sélectionnée #}
-                        <div class="add-room-field">
-                            <p class="room-default-name" style="margin-bottom:8px;">Ou utilise ta propre photo</p>
-                            <input type="file" id="roomPhotoInput"
-                                   accept="image/*" capture="environment"
-                                   style="display:none;"
-                                   onchange="onRoomPhotoSelected(this)">
-                            <button type="button" class="add-custom-room-btn"
-                                    onclick="document.getElementById('roomPhotoInput').click()">
-                                📷 Prendre / importer une photo
-                            </button>
-                            <p id="roomPhotoStatus" class="room-default-name"
-                               style="display:none; margin-top:6px; text-align:center;"></p>
-                        </div>
-                        <div class="add-room-actions">
-                            <button type="button" class="btn-add-room-confirm" onclick="addCustomRoom()">Ajouter</button>
-                            <button type="button" class="btn-add-room-cancel" onclick="togglePanel('add')">Annuler</button>
-                        </div>
-                    </div>
-                </div>
-
+                {# 3. Grille catalogue d'emojis — clic = ajout direct #}
+                <div id="emojiCatalogueGrid"
+                     style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
+                {# illusGrid invisible : conservé pour compat JS #}
+                <div class="illus-grid" id="illusGrid" style="display:none;"></div>
             </div>
+
+            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
+            {# Panneau "Supprimer des pièces" — TOUTES les pièces, toggles auto-save #}
+            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
+            <div id="panelManage" class="rooms-panel" style="display:none;">
+                <div class="rooms-list" id="rooms-list">
+                    {# Pièces standards : toggle masquer/afficher (auto-save via /toggle_room) #}
+                    {% for room in rooms %}
+                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                        <div class="room-thumb">
+                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
+                        </div>
+                        <div class="room-info">
+                            <div class="room-default-name">{{ room.default_name }}</div>
+                            <div style="font-size:.92rem; font-weight:600; color:#153036; padding:2px 0;">{{ room.current_name }}</div>
+                        </div>
+                        <div class="toggle-wrap">
+                            <span class="toggle-label-txt">Masquer</span>
+                            <label class="toggle">
+                                <input type="checkbox"
+                                       {% if room.is_hidden %}checked{% endif %}
+                                       onchange="toggleRoom('{{ room.key }}', this)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    {# Pièces personnalisées : suppression définitive via ✕ #}
+                    {% for room in extra_rooms %}
+                    <div class="room-item" id="item-{{ room.key }}">
+                        <div class="room-thumb">
+                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
+                        </div>
+                        <div class="room-info">
+                            <div class="room-default-name">Pièce personnalisée</div>
+                            <div style="font-size:.92rem; font-weight:600; color:#153036; padding:2px 0;">{{ room.current_name }}</div>
+                        </div>
+                        <button type="button"
+                                class="extra-room-delete"
+                                title="Supprimer cette pièce"
+                                onclick="deleteCustomRoom('{{ room.key }}')">×</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
         </form>
 
     </div>
 
 <script>
 function toggleRoom(roomKey, checkbox) {
+    _playClick();
     var item = document.getElementById('item-' + roomKey);
-    item.classList.toggle('is-hidden-item', checkbox.checked);
+    if (item) item.classList.toggle('is-hidden-item', checkbox.checked);
     fetch('/toggle_room', {
         method: 'POST',
         credentials: 'same-origin',
@@ -502,142 +552,274 @@ function toggleRoom(roomKey, checkbox) {
         body: JSON.stringify({ room_key: roomKey, is_hidden: checkbox.checked })
     }).then(function(r) {
         if (!r.ok) {
-            // rollback visuel si erreur
             checkbox.checked = !checkbox.checked;
-            item.classList.toggle('is-hidden-item', checkbox.checked);
+            if (item) item.classList.toggle('is-hidden-item', checkbox.checked);
         }
     }).catch(function() {
         checkbox.checked = !checkbox.checked;
-        item.classList.toggle('is-hidden-item', checkbox.checked);
+        if (item) item.classList.toggle('is-hidden-item', checkbox.checked);
     });
 }
 
-// 🆕 Pièces personnalisées
 function _playClick() {
     try { if (window.SoundManager && SoundManager.play) SoundManager.play('buttonClick'); } catch(e) {}
+}
+function _playValid() {
+    try {
+        if (window.SoundManager && SoundManager.play) {
+            // Essaye plusieurs noms de sons existants
+            ['validation','success','taskValidated','correct','buttonClick'].some(function(n){
+                try { SoundManager.play(n); return true; } catch(e){ return false; }
+            });
+        }
+    } catch(e) {}
 }
 
 function togglePanel(which) {
     _playClick();
     var panels = { add: document.getElementById('panelAdd'), manage: document.getElementById('panelManage') };
-    var btns   = { add: document.getElementById('btnPanelAdd'), manage: document.getElementById('btnPanelManage') };
     if (!panels[which]) return;
-    var isOpen = panels[which].style.display !== 'none';
-    Object.keys(panels).forEach(function(k) {
-        if (panels[k]) panels[k].style.display = 'none';
-        if (btns[k])   btns[k].classList.remove('is-active');
-    });
-    if (!isOpen) {
-        panels[which].style.display = 'block';
-        if (btns[which]) btns[which].classList.add('is-active');
-    }
+    // Masque la grille des 2 boutons + le retour vers settings
+    var grid = document.querySelector('.house-actions-grid');
+    if (grid) grid.style.display = 'none';
+    var backS = document.getElementById('backToSettings');
+    if (backS) backS.style.display = 'none';
+    // Cache tous les panneaux puis affiche le bon
+    Object.keys(panels).forEach(function(k) { if (panels[k]) panels[k].style.display = 'none'; });
+    panels[which].style.display = 'block';
+    // Affiche le retour interne
+    var backH = document.getElementById('backToHome');
+    if (backH) backH.style.display = '';
+    window.scrollTo(0, 0);
 }
 
-// 📷 Sélection d'une photo (galerie ou caméra) → upload + ajoute une vignette sélectionnée
+function closePanel() {
+    _playClick();
+    var pa = document.getElementById('panelAdd');     if (pa) pa.style.display = 'none';
+    var pm = document.getElementById('panelManage');  if (pm) pm.style.display = 'none';
+    var backH = document.getElementById('backToHome'); if (backH) backH.style.display = 'none';
+    var grid  = document.querySelector('.house-actions-grid'); if (grid) grid.style.display = '';
+    var backS = document.getElementById('backToSettings'); if (backS) backS.style.display = '';
+    window.scrollTo(0, 0);
+}
+
+// 🎨 Génère un data URL Canvas (losange bleu + emoji centré, 400×400)
+function _emojiToDataURL(emoji) {
+    try {
+        var size = 400;
+        var c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = 'rgba(160, 210, 255, 0.71)';
+        ctx.beginPath();
+        ctx.moveTo(size/2, 4);
+        ctx.lineTo(size-4, size/2);
+        ctx.lineTo(size/2, size-4);
+        ctx.lineTo(4, size/2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.font = (size*0.5) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(emoji, size/2, size/2 + 4);
+        return c.toDataURL('image/png');
+    } catch (e) { return ''; }
+}
+
+// 📷 Sélection d'une photo → upload + ajout DIRECT en base
 function onRoomPhotoSelected(input) {
     var file = input.files && input.files[0];
-    var status = document.getElementById('roomPhotoStatus');
     if (!file) return;
-    if (status) { status.style.display = 'block'; status.textContent = 'Envoi de la photo…'; }
+    if (window.cbToast) window.cbToast('Envoi de la photo…', 'info', 1800);
     var fd = new FormData();
     fd.append('photo', file);
     fetch('/upload_room_image', { method: 'POST', credentials: 'same-origin', body: fd })
         .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
             if (!res.ok || !res.data || !res.data.ok) {
-                if (status) status.textContent = (res.data && res.data.error) || "Échec de l'envoi.";
+                if (window.cbToast) window.cbToast((res.data && res.data.error) || "Échec de l'envoi.", 'danger', 2800);
                 return;
             }
-            var imgPath = res.data.image;
-            var grid = document.getElementById('illusGrid');
-            if (!grid) return;
-            // Crée (ou remplace si déjà présente) une vignette « ma photo » et la sélectionne
-            var existing = grid.querySelector('.illus-choice[data-user-photo="1"]');
-            if (existing) existing.parentNode.removeChild(existing);
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'illus-choice';
-            btn.setAttribute('data-image', imgPath);
-            btn.setAttribute('data-user-photo', '1');
-            btn.title = 'Ma photo';
-            btn.onclick = function() { selectIllus(btn); };
-            var im = document.createElement('img');
-            im.src = '/static/' + imgPath + '?t=' + Date.now();
-            im.alt = 'Ma photo';
-            im.loading = 'lazy';
-            btn.appendChild(im);
-            grid.insertBefore(btn, grid.firstChild);
-            selectIllus(btn);
-            if (status) status.textContent = '✅ Photo prête, sélectionnée.';
+            // Ajoute directement la pièce avec la photo
+            var defaultName = 'Ma pièce';
+            try {
+                var raw = (file.name || '').replace(/\.[^.]+$/, '');
+                if (raw && raw.length <= 30) defaultName = raw;
+            } catch(e) {}
+            return fetch('/add_custom_room', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: defaultName, image: res.data.image, image_data_url: '' })
+            })
+            .then(function(r2) { return r2.json().then(function(d2) { return { ok: r2.ok, data: d2 }; }); })
+            .then(function(res2) {
+                if (!res2.ok || !res2.data || !res2.data.ok) {
+                    if (window.cbToast) window.cbToast((res2.data && res2.data.error) || "Impossible d'ajouter la pièce.", 'danger', 2800);
+                    return;
+                }
+                _playValid();
+                if (window.cbToast) window.cbToast('✅ Pièce ajoutée !', 'success', 1800);
+                setTimeout(function() { window.location.reload(); }, 600);
+            });
         })
         .catch(function() {
-            if (status) status.textContent = "Erreur réseau, réessaye.";
+            if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
         });
+    // Reset input pour autoriser re-sélection du même fichier
+    try { input.value = ''; } catch(e) {}
 }
 
-function selectIllus(btn) {
-    var grid = document.getElementById('illusGrid');
+// Catalogue de pièces prédéfinies — clic = ajout DIRECT
+(function buildEmojiCatalogue() {
+    var CATALOGUE = [
+        { key: 'jardin',       label: 'Jardin',              emoji: '🌿' },
+        { key: 'cave',         label: 'Cave',                emoji: '🍷' },
+        { key: 'animaux',      label: 'Animaux domestiques', emoji: '🐾' },
+        { key: 'bureau',       label: 'Bureau',              emoji: '💻' },
+        { key: 'salle_sport',  label: 'Salle de sport',      emoji: '🏋️' },
+        { key: 'atelier',      label: 'Atelier',             emoji: '🔧' },
+        { key: 'bibliotheque', label: 'Bibliothèque',        emoji: '📚' },
+        { key: 'chambre_amis', label: "Chambre d'amis",      emoji: '🛏️' },
+        { key: 'dressing',     label: 'Dressing',            emoji: '👗' },
+        { key: 'veranda',      label: 'Véranda',             emoji: '☀️' },
+        { key: 'piscine',      label: 'Piscine',             emoji: '🏊' },
+        { key: 'garage',       label: 'Garage',              emoji: '🚗' },
+    ];
+    var grid = document.getElementById('emojiCatalogueGrid');
     if (!grid) return;
-    grid.querySelectorAll('.illus-choice').forEach(function(b) { b.classList.remove('selected'); });
-    btn.classList.add('selected');
-}
+    var BASE = 'position:relative;background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);' +
+               'border:1px solid rgba(255,255,255,0.3);border-radius:16px;' +
+               'box-shadow:0 4px 24px rgba(0,0,0,0.12);padding:18px 12px;' +
+               'text-align:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;user-select:none;';
 
-function _selectedImage() {
-    var sel = document.querySelector('#illusGrid .illus-choice.selected');
-    return sel ? sel.getAttribute('data-image') : '';
-}
+    // Liste des labels déjà ajoutés (pour cocher les cartes correspondantes)
+    var existingNames = [];
+    try {
+        document.querySelectorAll('#panelManage .room-item .room-info > div:nth-child(2)').forEach(function(el) {
+            existingNames.push((el.textContent || '').trim().toLowerCase());
+        });
+    } catch(e) {}
 
-function addCustomRoom() {
-    _playClick();
-    var nameInput = document.getElementById('newRoomName');
-    var name = (nameInput && nameInput.value || '').trim();
-    if (!name) {
-        nameInput && nameInput.focus();
-        return;
-    }
-    var image = _selectedImage();
-    fetch('/add_custom_room', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ name: name, image: image })
-    })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-    .then(function(res) {
-        if (!res.ok || !res.data || !res.data.ok) {
-            alert((res.data && res.data.error) || "Impossible d'ajouter la pièce.");
-            return;
+    CATALOGUE.forEach(function(item) {
+        var card = document.createElement('div');
+        card.style.cssText = BASE;
+        card.dataset.key = item.key;
+        card.dataset.emoji = item.emoji;
+        card.dataset.label = item.label;
+        card.innerHTML = '<span class="emoji-card-check">✅</span>' +
+                         '<div style="font-size:2.5rem;line-height:1.2;">' + item.emoji + '</div>' +
+                         '<div style="margin-top:6px;font-size:13px;font-weight:600;">' + item.label + '</div>';
+
+        // Marque comme déjà ajoutée si label trouvé
+        if (existingNames.indexOf(item.label.toLowerCase()) !== -1) {
+            card.classList.add('emoji-card-added');
         }
-        // ✅ Soumet le formulaire parent pour sauvegarder le nom de la maison
-        // (le clic « Ajouter » fait office d'enregistrement global) puis recharge.
-        var form = document.querySelector('form[action*="personnaliser_maison"]');
-        if (form) {
-            form.submit();
-        } else {
-            window.location.reload();
-        }
-    })
-    .catch(function() { alert("Erreur réseau, réessaye."); });
-}
+
+        card.addEventListener('mouseenter', function() {
+            if (card.classList.contains('is-busy')) return;
+            card.style.transform = 'translateY(-4px)';
+            card.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
+        });
+        card.addEventListener('mouseleave', function() {
+            card.style.transform = '';
+            card.style.boxShadow = '0 4px 24px rgba(0,0,0,0.12)';
+        });
+        card.addEventListener('click', function() {
+            if (card.classList.contains('is-busy')) return;
+            card.classList.add('is-busy');
+            card.style.opacity = '0.6';
+            _playClick();
+            var image_data_url = _emojiToDataURL(item.emoji);
+            fetch('/add_custom_room', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: item.label, image: '', image_data_url: image_data_url })
+            })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+                if (!res.ok || !res.data || !res.data.ok) {
+                    if (window.cbToast) window.cbToast((res.data && res.data.error) || "Impossible d'ajouter la pièce.", 'danger', 2800);
+                    card.classList.remove('is-busy');
+                    card.style.opacity = '';
+                    return;
+                }
+                _playValid();
+                if (window.cbToast) window.cbToast('✅ ' + item.label + ' ajoutée !', 'success', 1800);
+                card.classList.add('emoji-card-added');
+                card.style.opacity = '';
+                card.classList.remove('is-busy');
+                // Rafraîchir la liste du panneau Supprimer après un court délai
+                setTimeout(function() { window.location.reload(); }, 500);
+            })
+            .catch(function() {
+                if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
+                card.classList.remove('is-busy');
+                card.style.opacity = '';
+            });
+        });
+        grid.appendChild(card);
+    });
+}());
 
 function deleteCustomRoom(roomKey) {
-    if (!confirm("Supprimer cette pièce personnalisée ?")) return;
-    fetch('/delete_custom_room', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ room_key: roomKey })
-    })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-    .then(function(res) {
-        if (!res.ok || !res.data || !res.data.ok) {
-            alert((res.data && res.data.error) || "Suppression impossible.");
-            return;
-        }
-        var item = document.getElementById('item-' + roomKey);
-        if (item && item.parentNode) item.parentNode.removeChild(item);
-    })
-    .catch(function() { alert("Erreur réseau, réessaye."); });
+    _cbConfirm("Supprimer cette pièce personnalisée ?", function() {
+        fetch('/delete_custom_room', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ room_key: roomKey })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.data || !res.data.ok) {
+                if (window.cbToast) window.cbToast((res.data && res.data.error) || "Suppression impossible.", 'danger', 2800);
+                return;
+            }
+            if (window.cbToast) window.cbToast('🗑 Pièce supprimée', 'success', 1600);
+            var item = document.getElementById('item-' + roomKey);
+            if (item && item.parentNode) item.parentNode.removeChild(item);
+        })
+        .catch(function() { if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800); });
+    });
+}
+
+// 🪟 Confirm glassmorphisme inline (réutilise le style visuel de cbToast — gradients/blur/border)
+function _cbConfirm(message, onYes) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText =
+        'position:fixed;inset:0;background:rgba(21,48,54,.35);backdrop-filter:blur(4px);' +
+        '-webkit-backdrop-filter:blur(4px);z-index:99998;display:flex;align-items:center;justify-content:center;' +
+        'opacity:0;transition:opacity .25s;';
+    var box = document.createElement('div');
+    box.style.cssText =
+        'background:linear-gradient(135deg,rgba(255,255,255,.92) 0%,rgba(255,215,0,.28) 50%,rgba(253,174,84,.38) 100%);' +
+        'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);' +
+        'border:1px solid rgba(255,255,255,.4);border-radius:24px;padding:22px 22px 16px;' +
+        'max-width:320px;width:88%;text-align:center;font-family:Montserrat,sans-serif;color:#153036;' +
+        'box-shadow:0 12px 40px rgba(21,48,54,.3),0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.6);' +
+        'transform:scale(.9);transition:transform .25s cubic-bezier(.34,1.56,.64,1);';
+    box.innerHTML =
+        '<div style="font-size:15px;font-weight:700;margin-bottom:18px;line-height:1.4;">' + message + '</div>' +
+        '<div style="display:flex;gap:10px;justify-content:center;">' +
+          '<button type="button" data-act="no" style="flex:1;padding:11px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.4);' +
+            'background:rgba(255,255,255,.5);font-weight:700;font-family:inherit;color:#153036;cursor:pointer;">Annuler</button>' +
+          '<button type="button" data-act="yes" style="flex:1;padding:11px 14px;border-radius:18px;border:1px solid rgba(231,76,60,.4);' +
+            'background:linear-gradient(135deg,rgba(255,107,107,.4),rgba(231,76,60,.5));font-weight:800;font-family:inherit;color:#fff;cursor:pointer;">Supprimer</button>' +
+        '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
+        overlay.style.opacity = '1'; box.style.transform = 'scale(1)';
+    }); });
+    function close() {
+        overlay.style.opacity = '0'; box.style.transform = 'scale(.9)';
+        setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
+    }
+    box.querySelector('[data-act="no"]').addEventListener('click', function() { _playClick(); close(); });
+    box.querySelector('[data-act="yes"]').addEventListener('click', function() { _playClick(); close(); try { onYes(); } catch(e) {} });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
 }
 </script>
 

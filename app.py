@@ -3904,7 +3904,7 @@ def menu():
                     _dbg(f"⚠️ rooms_with_new_missions error: {_e_nm}")
 
         finally:
-            conn.close()
+            pass
 
     # 🏠 Construire la liste des pièces avec personnalisations
     custom_rooms_data = []
@@ -3948,6 +3948,19 @@ def menu():
             # N'ajouter que les pièces non masquées
             if not room_data.get('is_hidden'):
                 custom_rooms_data.append(room_data)
+
+    # Pièces créées par l'utilisateur (room_key commence par custom_)
+    if house_id:
+        for key, custom in custom_rooms_db.items():
+            if key.startswith('custom_') and not custom.get('is_hidden'):
+                custom_rooms_data.append({
+                    'key': key,
+                    'name': custom.get('name') or 'Pièce personnalisée',
+                    'image': custom.get('image') or 'images/thumbs/default.webp',
+                    'category': key,
+                    'fixed': False,
+                    'is_hidden': False,
+                })
     else:
         # Pas de maison : afficher toutes les pièces par défaut
         for room in ALL_DEFAULT_ROOMS:
@@ -4104,6 +4117,7 @@ def menu():
         except Exception as e:
             print(f"❌ Reminder check (today fallback) error: {e}", flush=True)
 
+    conn.close()
     resp = make_response(render_template(
         'menu.html',
         players=players,

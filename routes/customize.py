@@ -8,7 +8,7 @@ customize_bp = Blueprint('customize', __name__)
 
 # Dossier où sont stockées les illustrations uploadées par l'utilisateur
 ROOM_UPLOAD_SUBDIR = os.path.join('uploads', 'rooms')  # relatif à static/
-ROOM_UPLOAD_PREFIX = 'images/uploads/rooms/'  # impossible vrai chemin URL côté static
+ROOM_UPLOAD_PREFIX = 'uploads/rooms/'  # relatif à static/ → /static/uploads/rooms/
 
 def _is_user_uploaded_image(path):
     """Autorise uniquement les paths static/uploads/rooms/<fichier>."""
@@ -169,8 +169,15 @@ def personnaliser_maison():
             except Exception:
                 extra_keys = []
             for key in extra_keys:
-                custom_name = request.form.get(f'name_{key}', '').strip() or None
-                is_hidden = 1 if request.form.get(f'hidden_{key}') else 0
+                # ⚠️ Si la pièce vient d'être ajoutée par AJAX juste avant le submit,
+                # le formulaire HTML ne contient PAS encore les champs name_/hidden_
+                # pour cette clé. On skip pour éviter d'écraser custom_name avec NULL.
+                raw_name = request.form.get(f'name_{key}', None)
+                raw_hidden = request.form.get(f'hidden_{key}', None)
+                if raw_name is None and raw_hidden is None:
+                    continue
+                custom_name = (raw_name or '').strip() or None
+                is_hidden = 1 if raw_hidden else 0
                 c.execute("""
                     UPDATE custom_rooms
                     SET custom_name = ?, is_hidden = ?
@@ -259,21 +266,89 @@ def personnaliser_maison():
                            current_house_name=current_house_name)
 
 
+def _save_emoji_dataurl(data_url, app, size=400):
+    """Décode un data URL (image PNG/WEBP générée côté navigateur via Canvas),
+    applique un masque losange net, sauvegarde en WEBP. Retourne le chemin relatif
+    static/ ou None en cas d'échec.
+    Le rendu de l'emoji est fait par le navigateur (qui sait toujours afficher
+    les emojis couleur) — PIL ne sert qu'à appliquer le masque + sauvegarder."""
+    try:
+        if not isinstance(data_url, str):
+            return None
+        import re, base64
+        m = re.match(r'^data:image/(?:png|webp);base64,(.+)$', data_url)
+        if not m:
+            return None
+        b64 = m.group(1)
+        # Limite anti-DoS : ~500 KB max (~375 KB raw)
+        if len(b64) > 500_000:
+            return None
+        raw = base64.b64decode(b64, validate=True)
+        from io import BytesIO
+        from PIL import Image, ImageDraw
+        img = Image.open(BytesIO(raw)).convert('RGBA')
+        if img.size != (size, size):
+            img = img.resize((size, size), Image.LANCZOS)
+
+        # Masque losange : coords EXACTEMENT identiques au Canvas JS (inset 4px)
+        # ⚠️ Ne pas utiliser putalpha() : les pixels canvas hors-losange ont RGB=(0,0,0)
+        # et seraient forcés opaques noirs. On utilise paste() qui préserve l'alpha original.
+        mask_l = Image.new('L', (size, size), 0)
+        ImageDraw.Draw(mask_l).polygon(
+            [(size // 2, 4), (size - 4, size // 2), (size // 2, size - 4), (4, size // 2)],
+            fill=255
+        )
+        clipped = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        clipped.paste(img, mask=mask_l)
+        img = clipped
+
+        # Overlay glassmorphism : contour blanc + reflet haut (effet verre)
+        overlay = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        draw_o = ImageDraw.Draw(overlay)
+        draw_o.polygon([
+            (size // 2, 8),
+            (size - 8, size // 2),
+            (size // 2, size - 8),
+            (8, size // 2),
+        ], outline=(255, 255, 255, 160), width=4)
+        draw_o.polygon([
+            (size // 2, 10),
+            (size - 22, size // 2 - 18),
+            (size // 2, size // 2 - 8),
+            (22, size // 2 - 18),
+        ], fill=(255, 255, 255, 40))
+        img = Image.alpha_composite(img, overlay)
+
+        dest_dir = os.path.join(app.static_folder, ROOM_UPLOAD_SUBDIR)
+        os.makedirs(dest_dir, exist_ok=True)
+        filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
+        filepath = os.path.join(dest_dir, filename)
+        img.save(filepath, 'WEBP', quality=88, method=6)
+        return f"{ROOM_UPLOAD_PREFIX}{filename}"
+    except Exception as e:
+        print(f"⚠️ _save_emoji_dataurl error: {e}", flush=True)
+        return None
+
+
 @customize_bp.route('/add_custom_room', methods=['POST'])
 def add_custom_room():
-    """Ajoute une pièce personnalisée à la maison de l'utilisateur."""
     from app import get_db_connection, _invalidate_house_cache
     if 'user' not in session:
         return {'ok': False, 'error': 'non connecté'}, 401
     data = request.get_json(silent=True) or {}
     name  = (data.get('name') or '').strip()
     image = (data.get('image') or '').strip()
+    image_data_url = data.get('image_data_url') or ''
     if not name:
         return {'ok': False, 'error': 'nom manquant'}, 400
     if len(name) > 30:
         name = name[:30]
     if not _is_valid_room_image(image):
-        image = 'images/thumbs/default.webp'
+        # Tenter de sauver l'image emoji rendue côté navigateur
+        if image_data_url:
+            image = _save_emoji_dataurl(image_data_url, current_app._get_current_object()) or 'images/thumbs/default.webp'
+        else:
+            image = 'images/thumbs/default.webp'
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -361,22 +436,36 @@ def upload_room_image():
     ext = os.path.splitext(base)[1].lower()
     if ext not in ('.jpg', '.jpeg', '.png', '.webp', '.heic'):
         ext = '.jpg'
-    unique = f"room_{uuid.uuid4().hex[:12]}.jpg"  # toujours sortie en .jpg compressé
+    unique = f"room_{uuid.uuid4().hex[:12]}.webp"  # WEBP transparent (match thumbs isométriques)
     filepath = os.path.join(dest_dir, unique)
 
     try:
-        from PIL import Image, ImageOps
+        from PIL import Image, ImageOps, ImageDraw
         img = Image.open(photo)
         img = ImageOps.exif_transpose(img)
-        img = img.convert('RGB')
+        img = img.convert('RGBA')
         # Crop centré carré, puis resize 256x256 pour matcher les thumbs isométriques
         w, h = img.size
         side = min(w, h)
         left = (w - side) // 2
         top  = (h - side) // 2
         img = img.crop((left, top, left + side, top + side))
-        img = img.resize((256, 256), Image.LANCZOS)
-        img.save(filepath, format='JPEG', quality=82, optimize=True)
+        img = img.resize((400, 400), Image.LANCZOS)
+        # Masque losange net (bords francs, pas de dégradé) — même forme que les illustrations
+        mask = Image.new('1', (400, 400), 0)
+        ImageDraw.Draw(mask).polygon([(200, 0), (400, 200), (200, 400), (0, 200)], fill=1)
+        img.putalpha(mask.convert('L'))
+
+        # Overlay glassmorphism : contour blanc + reflet haut (effet verre, harmonisé avec emoji)
+        overlay = Image.new('RGBA', (400, 400), (0, 0, 0, 0))
+        draw_o = ImageDraw.Draw(overlay)
+        draw_o.polygon([(200, 6), (394, 200), (200, 394), (6, 200)],
+                       outline=(255, 255, 255, 160), width=4)
+        draw_o.polygon([(200, 8), (372, 170), (200, 185), (28, 170)],
+                       fill=(255, 255, 255, 40))
+        img = Image.alpha_composite(img, overlay)
+
+        img.save(filepath, format='WEBP', quality=88, method=6)
     except ImportError:
         # Pas de Pillow → on enregistre tel quel
         photo.save(filepath)
