@@ -9,12 +9,7 @@ try:
 except ImportError:
     pass
 
-# Supprime silencieusement les BrokenPipeError quand un client ferme la connexion
-try:
-    from signal import signal, SIGPIPE, SIG_DFL
-    signal(SIGPIPE, SIG_DFL)
-except ImportError:
-    pass  # Windows : SIGPIPE inexistant
+import errno
 
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, jsonify, make_response, has_request_context
 import sqlite3
@@ -457,6 +452,13 @@ def handle_500(e):
     print(f"❌ ERREUR 500: {e}", flush=True)
     traceback.print_exc()
     return str(e), 500
+
+@app.errorhandler(Exception)
+def handle_broken_pipe(e):
+    # Ignorer silencieusement les BrokenPipeError (client déconnecté avant fin de réponse)
+    if isinstance(e, OSError) and e.errno == errno.EPIPE:
+        return '', 200
+    raise e
 app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
 # 🔧 ProxyFix : indispensable sur Render (reverse proxy HTTPS)
