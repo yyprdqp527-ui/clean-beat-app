@@ -242,10 +242,10 @@
                            style="max-width:100%; font-size:1rem; padding:10px 14px;">
                 </div>
 
-                <p class="section-label">Chambres</p>
+                <p class="section-label">Pièces</p>
 
                 <div class="rooms-list">
-                    {% for room in rooms if not room.fixed %}
+                    {% for room in rooms %}
                     <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
 
                         <div class="room-thumb">

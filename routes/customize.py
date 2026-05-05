@@ -83,11 +83,11 @@ def personnaliser_maison():
         {'key': 'chambre_garcon',    'default_name': 'Chambre 4',     'image': 'images/thumbs/chambre_garçon3.webp',         'fixed': False},
         {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/thumbs/chambre_enfant_4.webp',        'fixed': False},
         {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/thumbs/chambre_bébé4_.webp',          'fixed': False},
-        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/thumbs/salonorange.webp',             'fixed': True},
-        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/thumbs/cuisinewoop.webp',             'fixed': True},
-        {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/thumbs/sdbwoop.webp',                'fixed': True},
-        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/thumbs/Wc2.webp',                    'fixed': True},
-        {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/thumbs/buanderie5.webp',              'fixed': True},
+        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/thumbs/salonorange.webp',             'fixed': False},
+        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/thumbs/cuisinewoop.webp',             'fixed': False},
+        {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/thumbs/sdbwoop.webp',                'fixed': False},
+        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/thumbs/Wc2.webp',                    'fixed': False},
+        {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/thumbs/buanderie5.webp',              'fixed': False},
         {'key': 'garage',            'default_name': 'Garage',        'image': 'images/thumbs/Garage2.webp',                'fixed': False},
     ]
 
