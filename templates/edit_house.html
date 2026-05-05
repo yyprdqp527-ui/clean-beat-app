@@ -314,44 +314,47 @@
         }
         .btn-add-room-cancel:hover { background: rgba(255,255,255,0.95); }
 
-        /* 🆕 Deux boutons toggle (Ajouter / Supprimer) — même style que .add-custom-room-btn */
-        .rooms-actions-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 6px;
-            margin-bottom: 8px;
+        /* � Boutons d'action style Gameplay (.gameplay-action-btn copié 1:1) */
+        .house-actions-row {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 8px 0 18px;
         }
-        .rooms-action-btn {
-            display: block;
-            width: 100%;
-            background: rgba(255,255,255,0.55);
-            border: 1.5px dashed rgba(253,174,84,0.55);
-            border-radius: 14px;
-            padding: 12px 14px;
-            color: #4a3428;
+        .house-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            color: #153036;
+            font-size: 15px;
             font-weight: 700;
-            font-size: .95rem;
+            text-align: left;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
             cursor: pointer;
+            transition: all 0.2s ease;
             font-family: inherit;
-            transition: all .2s ease;
-            text-align: center;
+            width: 100%;
         }
-        .rooms-action-btn:hover {
-            background: rgba(253,174,84,0.15);
-            border-color: #FDAE54;
+        .house-action-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            box-shadow: 0 12px 32px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+            border-color: rgba(166,211,220,0.5);
         }
-        .rooms-action-btn.is-active {
-            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
-            border-style: solid;
-            border-color: #FDAE54;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(253,174,84,0.35);
-        }
-        .rooms-panel { margin-top: 12px; }
-        @media (max-width: 480px) {
-            .rooms-actions-row { grid-template-columns: 1fr; }
-        }
+        .house-action-btn:active { transform: scale(0.98); }
+        .house-action-btn .btn-icon { font-size: 24px; flex-shrink: 0; }
+        .house-action-btn .btn-label { flex: 1; color: #153036; }
+        .house-action-btn .btn-arrow { font-size: 18px; color: #A6D3DC; transition: transform .2s ease; }
+        .house-action-btn.is-active .btn-arrow { transform: rotate(90deg); }
+
+        .rooms-panel { margin-top: 4px; margin-bottom: 18px; }
 
         </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
@@ -385,64 +388,28 @@
 
                 <p class="section-label">Pièces</p>
 
-                {# 🆕 Deux boutons toggle (Ajouter / Gérer) — un seul panneau ouvert à la fois #}
-                <div class="rooms-actions-row">
-                    <button type="button" class="rooms-action-btn" id="btnPanelAdd"
+                {# 🆕 Deux boutons d'action style Gameplay (Ajouter / Supprimer) #}
+                <div class="house-actions-row">
+                    <button type="button" class="house-action-btn" id="btnPanelAdd"
                             onclick="togglePanel('add')">
-                        ➕ Ajouter des pièces
+                        <span class="btn-icon">➕</span>
+                        <span class="btn-label">Ajouter une pièce</span>
+                        <span class="btn-arrow">›</span>
                     </button>
-                    <button type="button" class="rooms-action-btn" id="btnPanelManage"
+                    <button type="button" class="house-action-btn" id="btnPanelManage"
                             onclick="togglePanel('manage')">
-                        🗑️ Supprimer des pièces
+                        <span class="btn-icon">🗑️</span>
+                        <span class="btn-label">Supprimer une pièce</span>
+                        <span class="btn-arrow">›</span>
                     </button>
                 </div>
 
-                {# Panneau "Gérer / Supprimer" : liste complète (pièces par défaut + custom) #}
+                {# Panneau "Supprimer" : uniquement les pièces ajoutées par l'utilisateur #}
                 <div id="panelManage" class="rooms-panel" style="display:none;">
-
-                    <div class="rooms-list">
-                        {% for room in rooms %}
-                        <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
-
-                            <div class="room-thumb">
-                                <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.default_name }}" loading="lazy">
-                            </div>
-
-                            <div class="room-info">
-                                <div class="room-default-name">Prénom du propriétaire de la chambre</div>
-                                <input
-                                    class="room-name-input"
-                                    type="text"
-                                    name="name_{{ room.key }}"
-                                    value="{{ room.current_name }}"
-                                    placeholder="Écris ton prénom ici"
-                                    maxlength="30"
-                                >
-                            </div>
-
-                            <div class="toggle-wrap">
-                                <span class="toggle-label-txt">Masquer</span>
-                                <label class="toggle">
-                                    <input
-                                        type="checkbox"
-                                        name="hidden_{{ room.key }}"
-                                        {% if room.is_hidden %}checked{% endif %}
-                                        onchange="toggleRoom('{{ room.key }}', this)"
-                                    >
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    {# Pièces personnalisées — bouton supprimer en plus du toggle #}
                     {% if extra_rooms and extra_rooms|length > 0 %}
-                    <p class="section-label" style="margin-top:24px;">Mes pièces personnalisées</p>
                     <div class="rooms-list" id="extra-rooms-list">
                         {% for room in extra_rooms %}
-                        <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                        <div class="room-item" id="item-{{ room.key }}">
                             <div class="room-thumb">
                                 <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
                             </div>
@@ -455,19 +422,9 @@
                                     value="{{ room.current_name }}"
                                     placeholder="Nom de la pièce"
                                     maxlength="30"
+                                    readonly
+                                    style="background:transparent; border:none; cursor:default;"
                                 >
-                            </div>
-                            <div class="toggle-wrap">
-                                <span class="toggle-label-txt">Masquer</span>
-                                <label class="toggle">
-                                    <input
-                                        type="checkbox"
-                                        name="hidden_{{ room.key }}"
-                                        {% if room.is_hidden %}checked{% endif %}
-                                        onchange="toggleRoom('{{ room.key }}', this)"
-                                    >
-                                    <span class="toggle-slider"></span>
-                                </label>
                             </div>
                             <button type="button"
                                     class="extra-room-delete"
@@ -477,7 +434,11 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="rooms-list" id="extra-rooms-list" style="margin-top:24px;"></div>
+                    <p class="room-default-name" style="text-align:center; padding:20px;">
+                        Aucune pièce personnalisée à supprimer.<br>
+                        Utilise « Ajouter une pièce » pour en créer.
+                    </p>
+                    <div class="rooms-list" id="extra-rooms-list" style="display:none;"></div>
                     {% endif %}
                 </div>
 
@@ -525,8 +486,6 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-save">Enregistrer</button>
-
             </div>
         </form>
 
@@ -554,7 +513,12 @@ function toggleRoom(roomKey, checkbox) {
 }
 
 // 🆕 Pièces personnalisées
+function _playClick() {
+    try { if (window.SoundManager && SoundManager.play) SoundManager.play('buttonClick'); } catch(e) {}
+}
+
 function togglePanel(which) {
+    _playClick();
     var panels = { add: document.getElementById('panelAdd'), manage: document.getElementById('panelManage') };
     var btns   = { add: document.getElementById('btnPanelAdd'), manage: document.getElementById('btnPanelManage') };
     if (!panels[which]) return;
@@ -624,6 +588,7 @@ function _selectedImage() {
 }
 
 function addCustomRoom() {
+    _playClick();
     var nameInput = document.getElementById('newRoomName');
     var name = (nameInput && nameInput.value || '').trim();
     if (!name) {
@@ -643,8 +608,14 @@ function addCustomRoom() {
             alert((res.data && res.data.error) || "Impossible d'ajouter la pièce.");
             return;
         }
-        // Recharge la page pour rendre la nouvelle pièce avec exactement le même rendu serveur
-        window.location.reload();
+        // ✅ Soumet le formulaire parent pour sauvegarder le nom de la maison
+        // (le clic « Ajouter » fait office d'enregistrement global) puis recharge.
+        var form = document.querySelector('form[action*="personnaliser_maison"]');
+        if (form) {
+            form.submit();
+        } else {
+            window.location.reload();
+        }
     })
     .catch(function() { alert("Erreur réseau, réessaye."); });
 }
@@ -668,6 +639,21 @@ function deleteCustomRoom(roomKey) {
     })
     .catch(function() { alert("Erreur réseau, réessaye."); });
 }
+</script>
+
+<!-- 🔊 Howler.js + SoundManager (chargé localement car page autonome) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
+<script>
+(function(){
+    function unlockAudio(){
+        try { if (window.SoundManager) SoundManager.unlock(); } catch(e) {}
+        document.removeEventListener('touchstart', unlockAudio, true);
+        document.removeEventListener('click', unlockAudio, true);
+    }
+    document.addEventListener('touchstart', unlockAudio, true);
+    document.addEventListener('click', unlockAudio, true);
+})();
 </script>
 
 </body>
