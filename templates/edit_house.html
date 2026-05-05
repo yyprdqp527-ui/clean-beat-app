@@ -212,6 +212,108 @@
         .bg-theme-btn--light { color: #153036 !important; text-shadow: none !important; }
         .bg-theme-btn--light.active { border-color: #597176; box-shadow: 0 0 0 3px rgba(89,113,118,0.4); }
 
+        /* 🆕 Pièces personnalisées — bouton + formulaire d'ajout (mêmes variables / classes) */
+        .extra-room-delete {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(220,80,80,0.45);
+            background: rgba(255,255,255,0.7);
+            color: rgba(220,80,80,0.85);
+            font-size: 18px; font-weight: 800;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .2s ease;
+            font-family: inherit;
+            margin-left: 4px;
+        }
+        .extra-room-delete:hover {
+            background: rgba(220,80,80,0.15);
+            transform: scale(1.08);
+        }
+
+        .add-custom-room-btn {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            background: rgba(255,255,255,0.55);
+            border: 1.5px dashed rgba(253,174,84,0.55);
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: #4a3428;
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s ease;
+        }
+        .add-custom-room-btn:hover {
+            background: rgba(253,174,84,0.15);
+            border-color: #FDAE54;
+        }
+
+        .add-room-form {
+            margin-top: 14px;
+            padding: 16px 14px;
+            background: rgba(255,255,255,0.55);
+            border: 1.5px solid rgba(255,255,255,0.70);
+            border-radius: 14px;
+        }
+        .add-room-field { margin-bottom: 14px; }
+        .add-room-field:last-of-type { margin-bottom: 12px; }
+
+        .illus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+            gap: 8px;
+        }
+        .illus-choice {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(166,211,220,0.3);
+            border: 2px solid rgba(255,255,255,0.70);
+            padding: 0;
+            cursor: pointer;
+            transition: all .2s ease;
+            font-family: inherit;
+        }
+        .illus-choice img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .illus-choice:hover { transform: translateY(-2px); }
+        .illus-choice.selected {
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.30);
+        }
+
+        .add-room-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+        }
+        .btn-add-room-confirm,
+        .btn-add-room-cancel {
+            border-radius: 50px;
+            padding: 10px 22px;
+            font-weight: 700;
+            font-size: .9rem;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s ease;
+        }
+        .btn-add-room-confirm {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(253,174,84,0.35);
+        }
+        .btn-add-room-confirm:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(253,174,84,0.5); }
+        .btn-add-room-cancel {
+            background: rgba(255,255,255,0.7);
+            color: #4a3428;
+            border: 1.5px solid rgba(255,255,255,0.70);
+        }
+        .btn-add-room-cancel:hover { background: rgba(255,255,255,0.95); }
+
         </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 </head>
@@ -281,6 +383,80 @@
                     {% endfor %}
                 </div>
 
+                {# 🆕 Pièces personnalisées (en dessous, mêmes classes / même style) #}
+                {% if extra_rooms and extra_rooms|length > 0 %}
+                <p class="section-label" style="margin-top:24px;">Mes pièces personnalisées</p>
+                <div class="rooms-list" id="extra-rooms-list">
+                    {% for room in extra_rooms %}
+                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                        <div class="room-thumb">
+                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
+                        </div>
+                        <div class="room-info">
+                            <div class="room-default-name">Pièce personnalisée</div>
+                            <input
+                                class="room-name-input"
+                                type="text"
+                                name="name_{{ room.key }}"
+                                value="{{ room.current_name }}"
+                                placeholder="Nom de la pièce"
+                                maxlength="30"
+                            >
+                        </div>
+                        <div class="toggle-wrap">
+                            <span class="toggle-label-txt">Masquer</span>
+                            <label class="toggle">
+                                <input
+                                    type="checkbox"
+                                    name="hidden_{{ room.key }}"
+                                    {% if room.is_hidden %}checked{% endif %}
+                                    onchange="toggleRoom('{{ room.key }}', this)"
+                                >
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <button type="button"
+                                class="extra-room-delete"
+                                title="Supprimer cette pièce"
+                                onclick="deleteCustomRoom('{{ room.key }}')">×</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="rooms-list" id="extra-rooms-list" style="margin-top:24px;"></div>
+                {% endif %}
+
+                {# 🆕 Bouton + formulaire d'ajout de pièce personnalisée #}
+                <button type="button" class="add-custom-room-btn" id="addCustomRoomBtn"
+                        onclick="toggleAddRoomForm()">+ Ajouter une pièce</button>
+
+                <div id="addRoomForm" class="add-room-form" style="display:none;">
+                    <div class="add-room-field">
+                        <label for="newRoomName" class="room-default-name" style="display:block; margin-bottom:6px;">Nom de la pièce</label>
+                        <input id="newRoomName" type="text" class="room-name-input"
+                               placeholder="Ex : Dressing, Bureau, Atelier…"
+                               maxlength="30">
+                    </div>
+                    <div class="add-room-field">
+                        <p class="room-default-name" style="margin-bottom:8px;">Choisis une illustration</p>
+                        <div class="illus-grid" id="illusGrid">
+                            {% for img in available_images %}
+                            <button type="button"
+                                    class="illus-choice{% if loop.first %} selected{% endif %}"
+                                    data-image="{{ img.file }}"
+                                    title="{{ img.label }}"
+                                    onclick="selectIllus(this)">
+                                <img src="{{ url_for('static', filename=img.file) }}" alt="{{ img.label }}" loading="lazy">
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="add-room-actions">
+                        <button type="button" class="btn-add-room-confirm" onclick="addCustomRoom()">Ajouter</button>
+                        <button type="button" class="btn-add-room-cancel" onclick="toggleAddRoomForm()">Annuler</button>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn-save">Enregistrer</button>
 
             </div>
@@ -307,6 +483,74 @@ function toggleRoom(roomKey, checkbox) {
         checkbox.checked = !checkbox.checked;
         item.classList.toggle('is-hidden-item', checkbox.checked);
     });
+}
+
+// 🆕 Pièces personnalisées
+function toggleAddRoomForm() {
+    var form = document.getElementById('addRoomForm');
+    var btn  = document.getElementById('addCustomRoomBtn');
+    if (!form) return;
+    var visible = form.style.display !== 'none';
+    form.style.display = visible ? 'none' : 'block';
+    if (btn) btn.style.display = visible ? 'block' : 'none';
+}
+
+function selectIllus(btn) {
+    var grid = document.getElementById('illusGrid');
+    if (!grid) return;
+    grid.querySelectorAll('.illus-choice').forEach(function(b) { b.classList.remove('selected'); });
+    btn.classList.add('selected');
+}
+
+function _selectedImage() {
+    var sel = document.querySelector('#illusGrid .illus-choice.selected');
+    return sel ? sel.getAttribute('data-image') : '';
+}
+
+function addCustomRoom() {
+    var nameInput = document.getElementById('newRoomName');
+    var name = (nameInput && nameInput.value || '').trim();
+    if (!name) {
+        nameInput && nameInput.focus();
+        return;
+    }
+    var image = _selectedImage();
+    fetch('/add_custom_room', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name: name, image: image })
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+        if (!res.ok || !res.data || !res.data.ok) {
+            alert((res.data && res.data.error) || "Impossible d'ajouter la pièce.");
+            return;
+        }
+        // Recharge la page pour rendre la nouvelle pièce avec exactement le même rendu serveur
+        window.location.reload();
+    })
+    .catch(function() { alert("Erreur réseau, réessaye."); });
+}
+
+function deleteCustomRoom(roomKey) {
+    if (!confirm("Supprimer cette pièce personnalisée ?")) return;
+    fetch('/delete_custom_room', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ room_key: roomKey })
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+        if (!res.ok || !res.data || !res.data.ok) {
+            alert((res.data && res.data.error) || "Suppression impossible.");
+            return;
+        }
+        var item = document.getElementById('item-' + roomKey);
+        if (item && item.parentNode) item.parentNode.removeChild(item);
+    })
+    .catch(function() { alert("Erreur réseau, réessaye."); });
 }
 </script>
 

@@ -1,6 +1,27 @@
+import time
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 
 customize_bp = Blueprint('customize', __name__)
+
+# Liste blanche des illustrations disponibles pour les pièces personnalisées
+# (uniquement des thumbs isométriques déjà présents dans /static/images/thumbs/)
+AVAILABLE_ROOM_IMAGES = [
+    {'file': 'images/thumbs/salonorange.webp',          'label': 'Salon'},
+    {'file': 'images/thumbs/cuisinewoop.webp',          'label': 'Cuisine'},
+    {'file': 'images/thumbs/sdbwoop.webp',              'label': 'Salle de bain'},
+    {'file': 'images/thumbs/Wc2.webp',                  'label': 'Toilettes'},
+    {'file': 'images/thumbs/buanderie5.webp',           'label': 'Buanderie'},
+    {'file': 'images/thumbs/Garage2.webp',              'label': 'Garage'},
+    {'file': 'images/thumbs/bureau.webp',               'label': 'Bureau'},
+    {'file': 'images/thumbs/chambreparentale_marron.webp','label': 'Chambre'},
+    {'file': 'images/thumbs/chambre1.webp',             'label': 'Chambre 2'},
+    {'file': 'images/thumbs/chambre2.webp',             'label': 'Chambre 3'},
+    {'file': 'images/thumbs/chambre_garçon3.webp',      'label': 'Chambre garçon'},
+    {'file': 'images/thumbs/chambre_enfant_4.webp',     'label': 'Chambre enfant'},
+    {'file': 'images/thumbs/chambre_bébé4_.webp',       'label': 'Chambre bébé'},
+    {'file': 'images/thumbs/default.webp',              'label': 'Autre'},
+]
+_ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
 
 
 @customize_bp.route('/set_bg_theme', methods=['POST'])
@@ -111,6 +132,25 @@ def personnaliser_maison():
                         custom_name = excluded.custom_name,
                         is_hidden   = excluded.is_hidden
                 """, (house_id, key, custom_name, is_hidden))
+
+            # 🆕 Pièces personnalisées (room_key commence par 'custom_')
+            #    Récupère la liste actuelle pour mettre à jour leur nom + état masqué.
+            try:
+                c.execute(
+                    "SELECT room_key FROM custom_rooms WHERE house_id=? AND room_key LIKE 'custom_%'",
+                    (house_id,)
+                )
+                extra_keys = [r[0] for r in c.fetchall()]
+            except Exception:
+                extra_keys = []
+            for key in extra_keys:
+                custom_name = request.form.get(f'name_{key}', '').strip() or None
+                is_hidden = 1 if request.form.get(f'hidden_{key}') else 0
+                c.execute("""
+                    UPDATE custom_rooms
+                    SET custom_name = ?, is_hidden = ?
+                    WHERE house_id = ? AND room_key = ?
+                """, (custom_name, is_hidden, house_id, key))
             conn.commit()
             # 🔌 WEBSOCKET: Notifier les autres joueurs du changement de pièces/nom maison
             if SOCKETIO_AVAILABLE and socketio:
@@ -133,8 +173,8 @@ def personnaliser_maison():
     conn = get_db_connection()
     c = conn.cursor()
     try:
-        c.execute("SELECT room_key, custom_name, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
-        custom_db = {row[0]: {'name': row[1], 'is_hidden': bool(row[2])} for row in c.fetchall()}
+        c.execute("SELECT room_key, custom_name, custom_image, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
+        custom_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3])} for row in c.fetchall()}
     except Exception:
         custom_db = {}
     finally:
@@ -147,6 +187,23 @@ def personnaliser_maison():
         r['current_name'] = cust.get('name') or room['default_name']
         r['is_hidden']    = False if room['fixed'] else cust.get('is_hidden', False)
         rooms_data.append(r)
+
+    # 🆕 Pièces personnalisées (room_key commence par 'custom_')
+    extra_rooms_data = []
+    for key, cust in custom_db.items():
+        if not key.startswith('custom_'):
+            continue
+        img = cust.get('image') or 'images/thumbs/default.webp'
+        # Sécurité : n'utiliser que des images de la liste blanche
+        if img not in _ALLOWED_IMAGE_FILES:
+            img = 'images/thumbs/default.webp'
+        extra_rooms_data.append({
+            'key': key,
+            'image': img,
+            'current_name': cust.get('name') or 'Pièce personnalisée',
+            'is_hidden': cust.get('is_hidden', False),
+        })
+    extra_rooms_data.sort(key=lambda r: r['key'])
 
     house_members = []
     try:
@@ -171,8 +228,78 @@ def personnaliser_maison():
         pass
 
     return render_template('edit_house.html', rooms=rooms_data,
+                           extra_rooms=extra_rooms_data,
+                           available_images=AVAILABLE_ROOM_IMAGES,
                            house_members=house_members,
                            current_house_name=current_house_name)
+
+
+@customize_bp.route('/add_custom_room', methods=['POST'])
+def add_custom_room():
+    """Ajoute une pièce personnalisée à la maison de l'utilisateur."""
+    from app import get_db_connection, _invalidate_house_cache
+    if 'user' not in session:
+        return {'ok': False, 'error': 'non connecté'}, 401
+    data = request.get_json(silent=True) or {}
+    name  = (data.get('name') or '').strip()
+    image = (data.get('image') or '').strip()
+    if not name:
+        return {'ok': False, 'error': 'nom manquant'}, 400
+    if len(name) > 30:
+        name = name[:30]
+    if image not in _ALLOWED_IMAGE_FILES:
+        image = 'images/thumbs/default.webp'
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return {'ok': False, 'error': 'pas de maison'}, 403
+        house_id = row[0]
+        # Génère une clé unique : custom_<timestamp_ms>
+        room_key = f"custom_{int(time.time() * 1000)}"
+        c.execute("""
+            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden)
+            VALUES (?, ?, ?, ?, 0)
+        """, (house_id, room_key, name, image))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return {'ok': False, 'error': str(e)}, 500
+    finally:
+        conn.close()
+    return {'ok': True, 'room_key': room_key, 'name': name, 'image': image}
+
+
+@customize_bp.route('/delete_custom_room', methods=['POST'])
+def delete_custom_room():
+    """Supprime une pièce personnalisée (uniquement les room_key 'custom_*')."""
+    from app import get_db_connection
+    if 'user' not in session:
+        return {'ok': False, 'error': 'non connecté'}, 401
+    data = request.get_json(silent=True) or {}
+    room_key = (data.get('room_key') or '').strip()
+    if not room_key.startswith('custom_'):
+        return {'ok': False, 'error': 'clé invalide'}, 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return {'ok': False, 'error': 'pas de maison'}, 403
+        house_id = row[0]
+        c.execute("DELETE FROM custom_rooms WHERE house_id=? AND room_key=?", (house_id, room_key))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return {'ok': False, 'error': str(e)}, 500
+    finally:
+        conn.close()
+    return {'ok': True}
 
 
 @customize_bp.route('/settings')
