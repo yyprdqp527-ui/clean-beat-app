@@ -6214,7 +6214,12 @@ function refreshAllBadges() {
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
     window._pwaCanInstall = false;
-    function showInstallBanner(){banner.style.display='block';} window.showInstallBanner = showInstallBanner;
+    function showInstallBanner(){
+        if(window.matchMedia('(display-mode: standalone)').matches)return;
+        if(window.navigator.standalone===true)return;
+        if(localStorage.getItem('pwa_installed')==='1')return;
+        banner.style.display='block';
+    } window.showInstallBanner = showInstallBanner;
     window.addEventListener('beforeinstallprompt',function(e){
         e.preventDefault();deferred=e;
         window._pwaCanInstall = true;
@@ -6241,8 +6246,8 @@ function refreshAllBadges() {
         window._pwaCanInstall = true;
         document.getElementById('pwa-ios-msg').style.display='block';
     }
-    // Pas de dismiss : la bannière reste visible jusqu'à installation confirmée (mode standalone)
-    window.dismissPwaBanner=function(){};
+    // Dismiss sans écrire dans localStorage : la bannière revient à la prochaine visite
+    window.dismissPwaBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';};
 })();
 </script>
 
