@@ -87,9 +87,6 @@
             }
         }
     })();
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(function(err){ console.error('SW sw.js error:', err); });
-    }
     </script>
     <!-- Préchargement des images des pièces (critical path) -->
     {% for room in custom_rooms %}
