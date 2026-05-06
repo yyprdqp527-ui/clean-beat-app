@@ -2411,6 +2411,14 @@ CREATE TABLE IF NOT EXISTS users (
         c.execute("ALTER TABLE custom_rooms ADD COLUMN is_hidden INTEGER DEFAULT 0")
     except Exception:
         pass
+    try:
+        c.execute("ALTER TABLE custom_rooms ADD COLUMN emoji TEXT")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE custom_rooms ADD COLUMN image_data TEXT")
+    except Exception:
+        pass
 
     # Table pour les tokens de réinitialisation de mot de passe
     c.execute("""

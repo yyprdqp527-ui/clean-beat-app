@@ -5,6 +5,21 @@ import threading
 
 tasks_bp = Blueprint('tasks', __name__)
 
+ROOM_EMOJIS = {
+    "jardin":       "🌿",
+    "cave":         "🍷",
+    "animaux":      "🐾",
+    "bureau":       "💻",
+    "salle_sport":  "🏋️",
+    "atelier":      "🔧",
+    "bibliotheque": "📚",
+    "chambre_amis": "🛏️",
+    "dressing":     "👗",
+    "veranda":      "☀️",
+    "piscine":      "🏊",
+    "garage":       "🚗",
+}
+
 CATEGORY_NAMES = {
     'salon': ('Salon', '🛋️'),
     'cuisine': ('Cuisine', '🍳'),
@@ -52,10 +67,18 @@ def categorie(cat):
             house_id = row[0]
             # Si pièce custom, récupérer le vrai nom depuis custom_rooms
             if cat.startswith('custom_'):
-                c.execute("SELECT custom_name FROM custom_rooms WHERE room_key=? AND house_id=?", (cat, house_id))
+                c.execute("SELECT custom_name, emoji FROM custom_rooms WHERE room_key=? AND house_id=?", (cat, house_id))
                 r_cname = c.fetchone()
                 category_name = r_cname[0] if r_cname and r_cname[0] else 'Ma pièce'
-                category_icon = '🏠'
+                category_icon = (r_cname[1] if r_cname and r_cname[1] else None)
+                if not category_icon:
+                    name_lower = (category_name or '').lower()
+                    for keyword, _emoji in ROOM_EMOJIS.items():
+                        if keyword in name_lower:
+                            category_icon = _emoji
+                            break
+                if not category_icon:
+                    category_icon = '🏠'
             # joueurs de la maison
             players = get_house_players_points(house_id)
             # récupérer overrides de points pour cette maison et catégorie
@@ -762,10 +785,18 @@ def custom_task_page(task_id):
     # GET -> afficher la page améliorée (réutiliser le template task_page_enhanced)
     norm_cat_custom = normalize_category(category)
     if category.startswith('custom_') and task_house_id:
-        c.execute("SELECT custom_name FROM custom_rooms WHERE room_key=? AND house_id=?", (category, task_house_id))
+        c.execute("SELECT custom_name, emoji FROM custom_rooms WHERE room_key=? AND house_id=?", (category, task_house_id))
         r_cname = c.fetchone()
         cat_name_custom = r_cname[0] if r_cname and r_cname[0] else 'Ma pièce'
-        cat_icon_custom = '🏠'
+        cat_icon_custom = (r_cname[1] if r_cname and r_cname[1] else None)
+        if not cat_icon_custom:
+            name_lower = (cat_name_custom or '').lower()
+            for keyword, _emoji in ROOM_EMOJIS.items():
+                if keyword in name_lower:
+                    cat_icon_custom = _emoji
+                    break
+        if not cat_icon_custom:
+            cat_icon_custom = '🏠'
     else:
         cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), '🏠'))
     conn.close()
