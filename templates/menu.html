@@ -1301,6 +1301,22 @@
             padding: 6px 0 0 6px;
         }
 
+        /* ─── Pièces catalogue : losange emoji rendu en CSS pur (instantané) ─── */
+        .emoji-losange {
+            width: 100%;
+            aspect-ratio: 400 / 462;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            background: linear-gradient(135deg, rgba(160,210,255,0.85), rgba(100,160,230,0.85));
+        }
+        .emoji-icon {
+            font-size: 3rem;
+            line-height: 1;
+            transform: translateY(-8%);
+        }
+
         .room-card-visual img {
             display: block;
             width: 100%;
@@ -4543,16 +4559,16 @@ function sendMalus(reason, points){
                                 {% for room in custom_rooms %}
                                 <a href="{{ url_for('tasks.categorie', cat=room.category) }}" class="room-card has-img" data-room="{{ room.key }}" style="text-decoration: none;">
                                     <div class="room-card-title">{{ room.name }}</div>
-                                    <div class="room-card-visual" data-category="{{ room.category }}">
+                                    <div class="room-card-visual{% if room.emoji and not room.image %} emoji-room{% endif %}" data-category="{{ room.category }}">
+                                        {% if room.emoji and not room.image %}
+                                        <div class="emoji-losange">
+                                            <span class="emoji-icon">{{ room.emoji }}</span>
+                                        </div>
+                                        {% else %}
                                         <picture>
-                                            {% if room.emoji and not room.image %}
-                                            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='462'%3E%3Crect width='400' height='462' fill='%23deeeff'/%3E%3Ctext x='200' y='231' font-size='180' text-anchor='middle' dominant-baseline='middle'%3E{{ room.emoji }}%3C/text%3E%3C/svg%3E" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
-                                            {% elif room.image and room.image.startswith('data:') %}
-                                            <img src="{{ room.image }}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
-                                            {% elif room.image %}
-                                            <img src="{{ url_for('static', filename=room.image) }}?v=121" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
-                                            {% endif %}
+                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=121{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
                                         </picture>
+                                        {% endif %}
                                         <span class="room-mission-dot"
                                               title="Mission(s) en attente"
                                               {% if room.category not in rooms_with_new_missions %}style="display:none"{% endif %}>
