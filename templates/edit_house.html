@@ -785,6 +785,8 @@ function deleteCustomRoom(roomKey) {
             if (window.cbToast) window.cbToast('🗑 Pièce supprimée', 'success', 1600);
             var item = document.getElementById('item-' + roomKey);
             if (item && item.parentNode) item.parentNode.removeChild(item);
+            var addedCard = document.querySelector('[data-key="' + roomKey + '"]');
+            if (addedCard) addedCard.classList.remove('emoji-card-added');
         })
         .catch(function() { if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800); });
     });
