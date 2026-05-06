@@ -2420,6 +2420,29 @@ CREATE TABLE IF NOT EXISTS users (
     except Exception:
         pass
 
+    # Backfill emoji pour pièces custom existantes dont emoji est NULL
+    _ROOM_EMOJIS_MAP = {
+        "jardin": "🌿", "cave": "🍷", "animaux": "🐾", "bureau": "💻",
+        "salle_sport": "🏋️", "atelier": "🔧", "bibliotheque": "📚",
+        "chambre_amis": "🛏️", "dressing": "👗", "veranda": "☀️",
+        "piscine": "🏊", "garage": "🚗",
+    }
+    try:
+        c.execute("SELECT id, custom_name FROM custom_rooms WHERE room_key LIKE 'custom_%' AND (emoji IS NULL OR emoji = '')")
+        _bfrows = c.fetchall()
+        for _bfrow_id, _bfrow_name in _bfrows:
+            _name_lower = (_bfrow_name or '').lower()
+            _emoji_found = '🏠'
+            for _kw, _em in _ROOM_EMOJIS_MAP.items():
+                if _kw in _name_lower:
+                    _emoji_found = _em
+                    break
+            c.execute("UPDATE custom_rooms SET emoji = ? WHERE id = ?", (_emoji_found, _bfrow_id))
+        if _bfrows:
+            print(f"✅ Emojis mis à jour: {len(_bfrows)} pièces", flush=True)
+    except Exception as _bf_err:
+        print(f"⚠️ Backfill emoji: {_bf_err}", flush=True)
+
     # Table pour les tokens de réinitialisation de mot de passe
     c.execute("""
         CREATE TABLE IF NOT EXISTS password_reset_tokens (

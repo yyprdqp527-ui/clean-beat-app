@@ -368,10 +368,11 @@ def add_custom_room():
         house_id = row[0]
         # Génère une clé unique : custom_<timestamp_ms>
         room_key = f"custom_{int(time.time() * 1000)}"
+        emoji = (data.get('emoji') or '').strip()
         c.execute("""
-            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden)
-            VALUES (?, ?, ?, ?, 0)
-        """, (house_id, room_key, name, image))
+            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, emoji)
+            VALUES (?, ?, ?, ?, 0, ?)
+        """, (house_id, room_key, name, image, emoji))
         conn.commit()
     except Exception as e:
         conn.rollback()
