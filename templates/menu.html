@@ -6350,6 +6350,13 @@ function refreshAllBadges() {
                             ok = await window.cleanBeatPush.requestPermission();
                         } else {
                             await Notification.requestPermission();
+                            if (Notification.permission === 'granted') {
+                                if (window.cleanBeatPush && typeof window.cleanBeatPush.subscribe === 'function') {
+                                    ok = await window.cleanBeatPush.subscribe();
+                                } else {
+                                    showToast('Notifications autorisées mais le gestionnaire est indisponible. Rechargez la page.', '#e74c3c');
+                                }
+                            }
                         }
                     }
 
