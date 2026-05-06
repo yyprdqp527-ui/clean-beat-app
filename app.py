@@ -1098,7 +1098,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire le café',
             'image': 'cuisine/cafe.png',
-            'description': 'les premiers points de la journée !',
+            'description': 'Les premiers points de la journée !',
             'points': 3,
             'fun_text': 'Allez, un petit café… sinon je me rendors pour la journée !',
             'ad_text': 'Le secret d\'un bon café ? Une machine bien entretenue et des grains frais !',
@@ -1107,7 +1107,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire les courses',
             'image': 'cuisine/faire_course.png',
-            'description': 'choisir la bonne file d\'attente, le secret des courses !',
+            'description': 'Choisir la bonne file d\'attente, le secret des courses !',
             'points': 8,
             'fun_text': '🛒 Caddie en main, liste en tête... C\'est parti pour l\'aventure !',
             'ad_text': 'Astuce budget : fais ta liste par rayon pour éviter les achats impulsifs !',
@@ -1125,7 +1125,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre la table',
             'image': 'cuisine/mettre la table.webp',
-            'description': 'fourchette à gauche, couteau à droite on est pas a Buckingham, tu peux faire simple',
+            'description': 'Fourchette à gauche, couteau à droite on est pas a Buckingham, tu peux faire simple',
             'points': 3,
             'fun_text': '🍽️ Assiettes, couverts, serviettes... On met les petits plats dans les grands !',
             'ad_text': 'Astuce déco : un set de table coloré et des serviettes assorties, ça change tout !',
@@ -1143,7 +1143,7 @@ TASKS_CONFIG = {
         {
             'name': 'Passer l\'éponge',
             'image': 'cuisine/passer l\'eponge.webp',
-            'description': 'ca ira pour cette fois !',
+            'description': 'Ca ira pour cette fois !',
             'points': 4,
             'fun_text': '🧽 Frotte, frotte ! On efface les traces du festin !',
             'ad_text': 'Change ton éponge toutes les semaines pour éviter les bactéries !',
@@ -1369,7 +1369,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger le désordre',
             'image': 'salon/Ranger le desordre du salon.webp',
-            'description': 'pour avoir le plaisir de le remettre après…',
+            'description': 'Pour avoir le plaisir de le remettre après…',
             'points': 4,
             'fun_text': '🧹 Un salon rangé, c\'est un salon où on respire !',
             'ad_text': 'Paniers et boîtes de rangement !',
@@ -1378,7 +1378,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire la poussière',
             'image': 'salon/faire la poussière.webp',
-            'description': 'curieuse expression française qui ne signifie',
+            'description': 'Curieuse expression française qui ne signifie',
             'points': 3,
             'fun_text': '✨ Adieu la poussière, bonjour la propreté !',
             'ad_text': 'Chiffons microfibres magiques !',
@@ -1425,7 +1425,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire son lit',
             'image': 'chambre parent/faire le lit.webp',
-            'description': 'et au carré s\'il vous plait !',
+            'description': 'Et au carré s\'il vous plait !',
             'points': 3,
             'fun_text': '🛏️ Un lit au carré pour bien démarrer la journée !',
             'ad_text': 'Linge de lit de qualité !',
@@ -1434,7 +1434,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer les draps',
             'image': 'chambre parent/changer les draps du lit.webp',
-            'description': 'toutes les semaines, tous les ans …personne ne sait vraiment !',
+            'description': 'Toutes les semaines, tous les ans …personne ne sait vraiment !',
             'points': 4,
             'fun_text': '🧺 Des draps frais pour de beaux rêves !',
             'ad_text': 'Draps confortables en promo !',
@@ -1443,7 +1443,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger ses vêtements',
             'image': 'chambre parent/ranger ses vetements.webp',
-            'description': 'mets au moins sur une chaise comme tout le monde !',
+            'description': 'Mets au moins sur une chaise comme tout le monde !',
             'points': 3,
             'fun_text': '👔 Une armoire bien organisée !',
             'ad_text': 'Organisateurs de placard !',
