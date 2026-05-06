@@ -2865,7 +2865,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 
                 # Titre personnalisé selon le type de notification
                 notification_titles = {
-                    'task_completed': '✅ CleanBeat',
+                    'task_completed': '✅ QuiFaitQuoi',
                     'task_added': '⭐ Nouvelle mission !',
                     'courses_added': '🛒 Liste de courses',
                     'baby_tracking': '👶 Suivi bébé',
@@ -2877,7 +2877,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 elif message_type in notification_titles:
                     title = notification_titles[message_type]
                 else:
-                    title = f'{icon_emoji} CleanBeat'
+                    title = f'{icon_emoji} QuiFaitQuoi'
                 
                 notification_data = {
                     'title': title,
