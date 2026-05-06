@@ -2562,6 +2562,49 @@ except Exception as _init_db_err:
     print(f'❌ ERREUR CRITIQUE init_db(): {_init_db_err}', flush=True)
     traceback.print_exc()
 
+# 🖼 Migration unique : redimensionne toutes les images custom existantes
+# en 400×462 pour matcher les thumbs de pièces standards.
+# Garde-fou : fichier sentinelle .migrated_v1 dans le dossier upload.
+def _migrate_custom_room_thumbs():
+    try:
+        rooms_dir = os.path.join(app.static_folder, 'uploads', 'rooms')
+        if not os.path.isdir(rooms_dir):
+            return
+        sentinel = os.path.join(rooms_dir, '.migrated_v1')
+        if os.path.exists(sentinel):
+            return
+        from PIL import Image
+        TARGET_W, TARGET_H = 400, 462
+        migrated = 0
+        for fn in os.listdir(rooms_dir):
+            if not fn.lower().endswith(('.webp', '.png')):
+                continue
+            fp = os.path.join(rooms_dir, fn)
+            try:
+                im = Image.open(fp).convert('RGBA')
+                if im.size == (TARGET_W, TARGET_H):
+                    continue
+                w, h = im.size
+                if w != TARGET_W:
+                    new_h = max(1, int(round(h * TARGET_W / w)))
+                    im = im.resize((TARGET_W, new_h), Image.LANCZOS)
+                canvas = Image.new('RGBA', (TARGET_W, TARGET_H), (0, 0, 0, 0))
+                offset_y = max(0, (TARGET_H - im.size[1]) // 2)
+                canvas.paste(im, (0, offset_y), im)
+                canvas.save(fp, 'WEBP', quality=88, method=6)
+                migrated += 1
+                print(f'🖼 Migrated thumb: {fn} → 400×462', flush=True)
+            except Exception as _e:
+                print(f'⚠️ Skip thumb {fn}: {_e}', flush=True)
+        with open(sentinel, 'w') as _s:
+            _s.write('ok')
+        if migrated:
+            print(f'✅ Migration thumbs custom: {migrated} fichier(s) redimensionné(s)', flush=True)
+    except Exception as _e:
+        print(f'⚠️ _migrate_custom_room_thumbs: {_e}', flush=True)
+
+_migrate_custom_room_thumbs()
+
 # === CONFIGURATION DU CACHE POUR LES FICHIERS STATIQUES ===
 @app.after_request
 def add_cache_headers(response):

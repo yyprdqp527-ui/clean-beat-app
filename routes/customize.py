@@ -9,6 +9,9 @@ customize_bp = Blueprint('customize', __name__)
 # Dossier où sont stockées les illustrations uploadées par l'utilisateur
 ROOM_UPLOAD_SUBDIR = os.path.join('uploads', 'rooms')  # relatif à static/
 ROOM_UPLOAD_PREFIX = 'uploads/rooms/'  # relatif à static/ → /static/uploads/rooms/
+# Dimensions cibles des thumbs de pièces (matche static/images/thumbs/*.webp = 400×462)
+ROOM_THUMB_W = 400
+ROOM_THUMB_H = 462
 
 def _is_user_uploaded_image(path):
     """Autorise uniquement les paths static/uploads/rooms/<fichier>."""
@@ -319,6 +322,11 @@ def _save_emoji_dataurl(data_url, app, size=400):
         ], fill=(255, 255, 255, 40))
         img = Image.alpha_composite(img, overlay)
 
+        # Embed dans toile 400×462 (matche les thumbs existants) — losange centré verticalement
+        canvas = Image.new('RGBA', (ROOM_THUMB_W, ROOM_THUMB_H), (0, 0, 0, 0))
+        canvas.paste(img, (0, (ROOM_THUMB_H - size) // 2), img)
+        img = canvas
+
         dest_dir = os.path.join(app.static_folder, ROOM_UPLOAD_SUBDIR)
         os.makedirs(dest_dir, exist_ok=True)
         filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
@@ -464,6 +472,11 @@ def upload_room_image():
         draw_o.polygon([(200, 8), (372, 170), (200, 185), (28, 170)],
                        fill=(255, 255, 255, 40))
         img = Image.alpha_composite(img, overlay)
+
+        # Embed dans toile 400×462 (matche les thumbs existants)
+        canvas = Image.new('RGBA', (ROOM_THUMB_W, ROOM_THUMB_H), (0, 0, 0, 0))
+        canvas.paste(img, (0, (ROOM_THUMB_H - 400) // 2), img)
+        img = canvas
 
         img.save(filepath, format='WEBP', quality=88, method=6)
     except ImportError:

@@ -50,6 +50,12 @@ def categorie(cat):
         row = c.fetchone()
         if row and row[0]:
             house_id = row[0]
+            # Si pièce custom, récupérer le vrai nom depuis custom_rooms
+            if cat.startswith('custom_'):
+                c.execute("SELECT custom_name FROM custom_rooms WHERE room_key=? AND house_id=?", (cat, house_id))
+                r_cname = c.fetchone()
+                category_name = r_cname[0] if r_cname and r_cname[0] else 'Ma pièce'
+                category_icon = '🏠'
             # joueurs de la maison
             players = get_house_players_points(house_id)
             # récupérer overrides de points pour cette maison et catégorie
@@ -753,11 +759,16 @@ def custom_task_page(task_id):
         # Passer le bénéficiaire pour animer le bon avatar dans le menu (email + nom pour fallback)
         return redirect(url_for('menu', ts=int(time.time()), pts=task_points, who=player_email, whon=player_name))
     
-    conn.close()
-    
     # GET -> afficher la page améliorée (réutiliser le template task_page_enhanced)
     norm_cat_custom = normalize_category(category)
-    cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), '🏠'))
+    if category.startswith('custom_') and task_house_id:
+        c.execute("SELECT custom_name FROM custom_rooms WHERE room_key=? AND house_id=?", (category, task_house_id))
+        r_cname = c.fetchone()
+        cat_name_custom = r_cname[0] if r_cname and r_cname[0] else 'Ma pièce'
+        cat_icon_custom = '🏠'
+    else:
+        cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), '🏠'))
+    conn.close()
     return render_template('task_page_enhanced.html', 
                           task_name=task_name, 
                           task_image=task_image, 
