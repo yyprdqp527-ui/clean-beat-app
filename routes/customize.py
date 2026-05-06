@@ -415,21 +415,12 @@ def _save_emoji_dataurl(data_url, app, size=400):
         ], fill=(255, 255, 255, 40))
         img = Image.alpha_composite(img, overlay)
 
-        # Embed dans toile 400×462 (matche les thumbs existants) — losange centré verticalement
-        canvas = Image.new('RGBA', (ROOM_THUMB_W, ROOM_THUMB_H), (0, 0, 0, 0))
-        canvas.paste(img, (0, (ROOM_THUMB_H - size) // 2), img)
-        img = canvas
-
         dest_dir = os.path.join(app.static_folder, ROOM_UPLOAD_SUBDIR)
         os.makedirs(dest_dir, exist_ok=True)
         filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
         filepath = os.path.join(dest_dir, filename)
         img.save(filepath, 'WEBP', quality=88, method=6)
-        buf = BytesIO()
-        img.save(buf, 'WEBP', quality=88, method=6)
-        buf.seek(0)
-        img_b64 = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
-        return f"{ROOM_UPLOAD_PREFIX}{filename}", img_b64
+        return f"{ROOM_UPLOAD_PREFIX}{filename}"
     except Exception as e:
         print(f"⚠️ _save_emoji_dataurl error: {e}", flush=True)
         return None
@@ -444,23 +435,14 @@ def add_custom_room():
     name  = (data.get('name') or '').strip()
     image = (data.get('image') or '').strip()
     image_data_url = data.get('image_data_url') or ''
-    image_b64 = (data.get('image_b64') or '').strip()
-    catalogue_key = (data.get('catalogue_key') or '').strip()
+    image_b64 = ''
     if not name:
         return {'ok': False, 'error': 'nom manquant'}, 400
     if len(name) > 30:
         name = name[:30]
     if not _is_valid_room_image(image):
-        # Pièce du catalogue : aucun traitement image — l'emoji est rendu en CSS
-        if catalogue_key:
-            image, image_b64 = '', ''
-        elif image_data_url:
-            # Cas legacy (devrait disparaître) : photo encodée en data URL
-            _result = _save_emoji_dataurl(image_data_url, current_app._get_current_object())
-            if _result:
-                image, image_b64 = _result
-            else:
-                image, image_b64 = 'images/thumbs/default.webp', ''
+        if image_data_url:
+            image = _save_emoji_dataurl(image_data_url, current_app._get_current_object()) or 'images/thumbs/default.webp'
         else:
             image = ''
 
