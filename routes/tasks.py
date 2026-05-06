@@ -526,7 +526,7 @@ def custom_task_page(task_id):
     task_description = row[2] or ""
     task_points = row[3] if row[3] is not None else 0
     category = row[4] or "autre"
-    task_image = row[5] or "default.png"
+    task_image = row[5] or None
     created_by = row[6]
     task_house_id = row[7]
     
