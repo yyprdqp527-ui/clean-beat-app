@@ -6219,6 +6219,12 @@ function refreshAllBadges() {
           showInstallBanner();
         }
         // Sinon le callback QfqTips.init() s'en charge
+        // Fallback : si les bulles d'aide n'ont pas déclenché l'affichage après 3s, forcer
+        setTimeout(function() {
+            if (deferred && !localStorage.getItem('pwa_install_dismissed') && banner.style.display === '') {
+                showInstallBanner();
+            }
+        }, 3000);
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
         if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
