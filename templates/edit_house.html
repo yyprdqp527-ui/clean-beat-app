@@ -475,6 +475,10 @@
                        accept="image/*" capture="environment"
                        style="display:none;"
                        onchange="onRoomPhotoSelected(this)">
+                <input type="text" id="photoRoomName"
+                       placeholder="Nom de la pièce (ex: Salle de jeux)"
+                       maxlength="30"
+                       style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.15);color:inherit;font-size:15px;margin-bottom:10px;outline:none;">
                 <button type="button" class="add-custom-room-btn"
                         style="margin-top:0; margin-bottom:14px;"
                         onclick="document.getElementById('roomPhotoInput').click()">
@@ -626,13 +630,24 @@ function _emojiToDataURL(emoji) {
     } catch (e) { return ''; }
 }
 
-// 📷 Sélection d'une photo → upload + ajout DIRECT en base
+// 📷 Sélection d'une photo → upload + création pièce en une seule requête
 function onRoomPhotoSelected(input) {
     var file = input.files && input.files[0];
     if (!file) return;
+    // Valider le nom avant d'envoyer
+    var roomName = '';
+    var nameInput = document.getElementById('photoRoomName');
+    if (nameInput) roomName = nameInput.value.trim();
+    if (!roomName) {
+        if (window.cbToast) window.cbToast('Veuillez saisir le nom de la pièce', 'danger', 2800);
+        try { input.value = ''; } catch(e) {}
+        return;
+    }
     if (window.cbToast) window.cbToast('Envoi de la photo…', 'info', 1800);
     var fd = new FormData();
     fd.append('photo', file);
+    fd.append('room_name', roomName);
+    fd.append('custom_name', roomName);
     fetch('/upload_room_image', { method: 'POST', credentials: 'same-origin', body: fd })
         .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
@@ -640,33 +655,13 @@ function onRoomPhotoSelected(input) {
                 if (window.cbToast) window.cbToast((res.data && res.data.error) || "Échec de l'envoi.", 'danger', 2800);
                 return;
             }
-            // Ajoute directement la pièce avec la photo
-            var defaultName = 'Ma pièce';
-            try {
-                var raw = (file.name || '').replace(/\.[^.]+$/, '');
-                if (raw && raw.length <= 30) defaultName = raw;
-            } catch(e) {}
-            return fetch('/add_custom_room', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: defaultName, image: res.data.image, image_data_url: '', image_b64: res.data.image_b64 || '' })
-            })
-            .then(function(r2) { return r2.json().then(function(d2) { return { ok: r2.ok, data: d2 }; }); })
-            .then(function(res2) {
-                if (!res2.ok || !res2.data || !res2.data.ok) {
-                    if (window.cbToast) window.cbToast((res2.data && res2.data.error) || "Impossible d'ajouter la pièce.", 'danger', 2800);
-                    return;
-                }
-                _playValid();
-                if (window.cbToast) window.cbToast('✅ Pièce ajoutée !', 'success', 1800);
-                setTimeout(function() { window.location.reload(); }, 600);
-            });
+            _playValid();
+            if (window.cbToast) window.cbToast('✅ Pièce ajoutée !', 'success', 1800);
+            setTimeout(function() { window.location.reload(); }, 600);
         })
         .catch(function() {
             if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
         });
-    // Reset input pour autoriser re-sélection du même fichier
     try { input.value = ''; } catch(e) {}
 }
 
@@ -676,7 +671,6 @@ function onRoomPhotoSelected(input) {
         { key: 'jardin',       label: 'Jardin',              emoji: '🌿' },
         { key: 'cave',         label: 'Cave',                emoji: '🍷' },
         { key: 'animaux',      label: 'Animaux domestiques', emoji: '🐾' },
-        { key: 'bureau',       label: 'Bureau',              emoji: '💻' },
         { key: 'salle_sport',  label: 'Salle de sport',      emoji: '🏋️' },
         { key: 'atelier',      label: 'Atelier',             emoji: '🔧' },
         { key: 'bibliotheque', label: 'Bibliothèque',        emoji: '📚' },
@@ -684,7 +678,6 @@ function onRoomPhotoSelected(input) {
         { key: 'dressing',     label: 'Dressing',            emoji: '👗' },
         { key: 'veranda',      label: 'Véranda',             emoji: '☀️' },
         { key: 'piscine',      label: 'Piscine',             emoji: '🏊' },
-        { key: 'garage',       label: 'Garage',              emoji: '🚗' },
     ];
     var grid = document.getElementById('emojiCatalogueGrid');
     if (!grid) return;

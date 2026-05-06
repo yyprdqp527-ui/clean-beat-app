@@ -501,7 +501,49 @@ def upload_room_image():
         return {'ok': False, 'error': f'image: {e}'}, 500
 
     rel_path = f"{ROOM_UPLOAD_PREFIX}{unique}"
-    return {'ok': True, 'image': rel_path, 'image_b64': img_b64}
+
+    # Lire le nom de pièce (envoyé dans le FormData avec la photo)
+    custom_name = (request.form.get('room_name') or request.form.get('custom_name') or '').strip()
+    if not custom_name:
+        return {'ok': False, 'error': 'Nom de pièce manquant'}, 400
+    if len(custom_name) > 30:
+        custom_name = custom_name[:30]
+
+    # Créer la pièce directement en DB
+    room_key = None
+    try:
+        from app import get_db_connection as _get_db, _invalidate_house_cache as _inval
+        _conn = _get_db()
+        _c = _conn.cursor()
+        _c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        _urow = _c.fetchone()
+        if not _urow or not _urow[0]:
+            _conn.close()
+            return {'ok': False, 'error': 'pas de maison'}, 403
+        room_key = f"custom_{int(time.time() * 1000)}"
+        _c.execute("""
+            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, image_data)
+            VALUES (?, ?, ?, ?, 0, ?)
+        """, (_urow[0], room_key, custom_name, rel_path, img_b64))
+        _conn.commit()
+        try:
+            _inval(_urow[0])
+        except Exception:
+            pass
+    except Exception as _db_err:
+        print(f"⚠️ upload_room_image DB error: {_db_err}", flush=True)
+        try:
+            _conn.rollback()
+        except Exception:
+            pass
+        return {'ok': False, 'error': 'Erreur base de données'}, 500
+    finally:
+        try:
+            _conn.close()
+        except Exception:
+            pass
+
+    return {'ok': True, 'image': rel_path, 'image_b64': img_b64, 'room_key': room_key, 'name': custom_name}
 
 
 @customize_bp.route('/settings')
