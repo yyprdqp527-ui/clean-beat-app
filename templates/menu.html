@@ -4543,7 +4543,7 @@ function sendMalus(reason, points){
                                     <div class="room-card-title">{{ room.name }}</div>
                                     <div class="room-card-visual" data-category="{{ room.category }}">
                                         <picture>
-                                            <img src="{{ url_for('static', filename=room.image) }}?v=121" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
+                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=121{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
                                         </picture>
                                         <span class="room-mission-dot"
                                               title="Mission(s) en attente"
