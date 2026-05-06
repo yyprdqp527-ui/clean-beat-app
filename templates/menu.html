@@ -6275,6 +6275,7 @@ function refreshAllBadges() {
         // Permission déjà accordée → vérifier côté SERVEUR si la souscription existe en DB
         // Si souscription absente : afficher TOUJOURS (ignore standalone + dismiss cooldown)
         if (Notification.permission === 'granted') {
+            if (isStandalone) return;
             fetch('/api/push/status').then(function(r){ return r.json(); }).then(function(data) {
                 if (!data.has_subscription) {
                     // Souscription manquante → bannière critique, pas de cooldown
