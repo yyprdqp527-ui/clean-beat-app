@@ -230,57 +230,31 @@
 </head>
 <body>
 
-<div class="logo">QuiFaitQuoi</div>
-
 <div class="invitation-card">
     <div class="invite-icon">🎮</div>
     
     <h1 class="invite-title">
         Toi aussi t'as un logement ?<br>
-        Occupe-t'en, marque des points et gagne !
+        Occupe-t'en, marque des points et gagne ! 🎮
     </h1>
     
     <p class="invite-subtitle">
         <span class="inviter-name">{{ inviter_name }}</span>
-        t'invite à rejoindre
-        <strong>« {{ house_name or 'son foyer' }} »</strong>
-        sur <span class="qfq-bubble">QuiFaitQuoi</span><br>
-        <span style="font-size:13px;opacity:0.75;">
-          dans la baraque
+        t'invite à te rejoindre sur<br>
+        <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:900;font-size:32px;letter-spacing:1px;color:white;">
+            QuiFaitQuoi
+        </span><br>
+        <span style="font-size:13px;opacity:0.75;font-weight:600;">
+            dans la baraque
         </span>
     </p>
-
-    {% if house_type %}
-    <div class="house-info">
-        <div class="house-info-label">Type de foyer</div>
-        <div class="house-info-value">
-            {% if house_type == 'couple' %}
-                💑 En couple
-            {% elif house_type == 'coloc' %}
-                👥 En colocation
-            {% elif house_type == 'family' %}
-                👨‍👩‍👧‍👦 En famille
-            {% else %}
-                🏠 Foyer partagé
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 
     <div class="buttons-container">
         <a href="{{ url_for('auth.signup_email', code=house_code) }}" class="btn btn-primary">
             Créer un compte
         </a>
-        
-        <a href="{{ url_for('auth.login') }}?next_code={{ house_code }}" class="btn btn-secondary">
-            J'ai déjà un compte
-        </a>
     </div>
 </div>
-
-<p class="footer-text">
-    Corvées, points, victoires — bienvenue chez toi 🏆
-</p>
 
 </body>
 </html>
