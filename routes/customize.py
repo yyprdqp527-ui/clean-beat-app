@@ -420,12 +420,18 @@ def _save_emoji_dataurl(data_url, app, size=400):
         canvas.paste(img, (0, (ROOM_THUMB_H - size) // 2), img)
         img = canvas
 
-        dest_dir = os.path.join(app.static_folder, ROOM_UPLOAD_SUBDIR)
-        os.makedirs(dest_dir, exist_ok=True)
-        filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
-        filepath = os.path.join(dest_dir, filename)
-        img.save(filepath, 'WEBP', quality=88, method=6)
-        return f"{ROOM_UPLOAD_PREFIX}{filename}"
+        # Retourner le data:URL base64 WEBP (compatible Render — filesystem éphémère)
+        buf = BytesIO()
+        img.save(buf, 'WEBP', quality=88, method=6)
+        b64_out = base64.b64encode(buf.getvalue()).decode('ascii')
+        return f"data:image/webp;base64,{b64_out}"
+        # # Sauvegarde sur disque (désactivée — fichiers perdus à chaque redéploiement sur Render)
+        # dest_dir = os.path.join(app.static_folder, ROOM_UPLOAD_SUBDIR)
+        # os.makedirs(dest_dir, exist_ok=True)
+        # filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
+        # filepath = os.path.join(dest_dir, filename)
+        # img.save(filepath, 'WEBP', quality=88, method=6)
+        # return f"{ROOM_UPLOAD_PREFIX}{filename}"
     except Exception as e:
         print(f"⚠️ _save_emoji_dataurl error: {e}", flush=True)
         return None
@@ -447,7 +453,13 @@ def add_custom_room():
         name = name[:30]
     if not _is_valid_room_image(image):
         if image_data_url:
-            image = _save_emoji_dataurl(image_data_url, current_app._get_current_object()) or 'images/thumbs/default.webp'
+            saved = _save_emoji_dataurl(image_data_url, current_app._get_current_object())
+            if saved and saved.startswith('data:'):
+                # Stocker le data:URL dans image_data (persiste en DB, pas sur disque)
+                image_b64 = saved
+                image = ''
+            else:
+                image = saved or 'images/thumbs/default.webp'
         else:
             image = ''
 
