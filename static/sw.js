@@ -11,7 +11,12 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('push', function(event) {
     if (!event.data) return;
     
-    const data = event.data.json();
+    let data;
+    try {
+        data = event.data.json();
+    } catch (e) {
+        data = { title: 'QuiFaitQuoi', body: event.data.text() };
+    }
     const title = data.title || 'QuiFaitQuoi';
     const badgeCount = (data.badge !== undefined && data.badge !== null) ? parseInt(data.badge, 10) : 1;
     const options = {
