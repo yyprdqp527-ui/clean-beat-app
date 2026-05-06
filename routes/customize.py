@@ -13,6 +13,99 @@ ROOM_UPLOAD_PREFIX = 'uploads/rooms/'  # relatif à static/ → /static/uploads/
 ROOM_THUMB_W = 400
 ROOM_THUMB_H = 462
 
+# ─── Catalogue pièces personnalisées (emoji rendu en CSS côté client) ────────
+# Plus aucune génération d'image serveur pour ces pièces : le menu les rend
+# directement via .emoji-losange + emoji unicode (instantané).
+ROOM_CATALOGUE = [
+    {"key": "jardin",       "emoji": "🌿", "label": "Jardin"},
+    {"key": "cave",         "emoji": "🍷", "label": "Cave"},
+    {"key": "animaux",      "emoji": "🐾", "label": "Animaux domestiques"},
+    {"key": "salle_sport",  "emoji": "🏋️", "label": "Salle de sport"},
+    {"key": "atelier",      "emoji": "🔧", "label": "Atelier"},
+    {"key": "bibliotheque", "emoji": "📚", "label": "Bibliothèque"},
+    {"key": "chambre_amis", "emoji": "🛏️", "label": "Chambre d'amis"},
+    {"key": "dressing",     "emoji": "👗", "label": "Dressing"},
+    {"key": "veranda",      "emoji": "☀️", "label": "Véranda"},
+    {"key": "piscine",      "emoji": "🏊", "label": "Piscine"},
+]
+
+
+def _legacy_emoji_to_image_b64_unused(emoji: str, size: int = 400) -> str:
+    """Génère côté serveur (PIL) une image losange avec l'emoji.
+    Compatible macOS (Apple Color Emoji) et Linux (NotoColorEmoji si installé).
+    Utilisé par pregenerate_emoji_cache() au démarrage."""
+    import base64
+    from io import BytesIO
+    from PIL import Image, ImageDraw, ImageFont
+
+    img = Image.new('RGBA', (size, size), (255, 255, 255, 255))
+    draw = ImageDraw.Draw(img)
+
+    # Tenter de charger une police emoji couleur (macOS / Linux)
+    font = None
+    for fp in [
+        '/System/Library/Fonts/Apple Color Emoji.ttc',           # macOS
+        '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf',      # Debian/Ubuntu
+        '/usr/share/fonts/noto-emoji/NotoColorEmoji.ttf',         # Red Hat
+    ]:
+        if os.path.exists(fp):
+            try:
+                font = ImageFont.truetype(fp, size=int(size * 0.55))
+                break
+            except Exception:
+                pass
+
+    if font:
+        try:
+            bbox = draw.textbbox((0, 0), emoji, font=font, embedded_color=True)
+            x = (size - (bbox[2] - bbox[0])) // 2 - bbox[0]
+            y = (size - (bbox[3] - bbox[1])) // 2 - bbox[1]
+            draw.text((x, y), emoji, font=font, embedded_color=True)
+        except Exception:
+            pass  # police présente mais rendu impossible → fond blanc conservé
+
+    # Masque losange (identique à _save_emoji_dataurl)
+    mask_l = Image.new('L', (size, size), 0)
+    ImageDraw.Draw(mask_l).polygon(
+        [(size // 2, 4), (size - 4, size // 2), (size // 2, size - 4), (4, size // 2)],
+        fill=255
+    )
+    clipped = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    clipped.paste(img, mask=mask_l)
+    img = clipped
+
+    # Overlay glassmorphism (identique à _save_emoji_dataurl)
+    overlay = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw_o = ImageDraw.Draw(overlay)
+    draw_o.polygon(
+        [(size // 2, 8), (size - 8, size // 2), (size // 2, size - 8), (8, size // 2)],
+        outline=(255, 255, 255, 160), width=4
+    )
+    draw_o.polygon(
+        [(size // 2, 10), (size - 22, size // 2 - 18), (size // 2, size // 2 - 8), (22, size // 2 - 18)],
+        fill=(255, 255, 255, 40)
+    )
+    img = Image.alpha_composite(img, overlay)
+
+    # Toile 400×462 (matche les thumbs existants)
+    canvas = Image.new('RGBA', (ROOM_THUMB_W, ROOM_THUMB_H), (0, 0, 0, 0))
+    canvas.paste(img, (0, (ROOM_THUMB_H - size) // 2), img)
+    img = canvas
+
+    buf = BytesIO()
+    img.save(buf, 'WEBP', quality=88, method=6)
+    buf.seek(0)
+    return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+
+
+def pregenerate_emoji_cache():
+    """No-op conservé pour compatibilité d'import.
+    Le rendu emoji est désormais fait en CSS côté client — aucune génération
+    d'image serveur n'est nécessaire.
+    """
+    pass
+
+
 def _is_user_uploaded_image(path):
     """Autorise uniquement les paths static/uploads/rooms/<fichier>."""
     if not isinstance(path, str):
@@ -352,19 +445,24 @@ def add_custom_room():
     image = (data.get('image') or '').strip()
     image_data_url = data.get('image_data_url') or ''
     image_b64 = (data.get('image_b64') or '').strip()
+    catalogue_key = (data.get('catalogue_key') or '').strip()
     if not name:
         return {'ok': False, 'error': 'nom manquant'}, 400
     if len(name) > 30:
         name = name[:30]
     if not _is_valid_room_image(image):
-        if image_data_url:
+        # Pièce du catalogue : aucun traitement image — l'emoji est rendu en CSS
+        if catalogue_key:
+            image, image_b64 = '', ''
+        elif image_data_url:
+            # Cas legacy (devrait disparaître) : photo encodée en data URL
             _result = _save_emoji_dataurl(image_data_url, current_app._get_current_object())
             if _result:
                 image, image_b64 = _result
             else:
                 image, image_b64 = 'images/thumbs/default.webp', ''
         else:
-            image = 'images/thumbs/default.webp'
+            image = ''
 
     conn = get_db_connection()
     c = conn.cursor()

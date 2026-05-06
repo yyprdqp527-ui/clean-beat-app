@@ -723,15 +723,18 @@ function onRoomPhotoSelected(input) {
             card.classList.add('is-busy');
             card.style.opacity = '0.6';
             _playClick();
-            var image_data_url = _emojiToDataURL(item.emoji);
+            // Désactivation des autres cartes pendant l'enregistrement
+            grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = 'none'; });
+            // Plus aucune génération d'image — l'emoji est rendu en CSS dans le menu
             fetch('/add_custom_room', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: item.label, image: '', image_data_url: image_data_url, emoji: item.emoji })
+                body: JSON.stringify({ name: item.label, emoji: item.emoji, catalogue_key: item.key })
             })
             .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
             .then(function(res) {
+                grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
                 if (!res.ok || !res.data || !res.data.ok) {
                     if (window.cbToast) window.cbToast((res.data && res.data.error) || "Impossible d'ajouter la pièce.", 'danger', 2800);
                     card.classList.remove('is-busy');
@@ -747,6 +750,7 @@ function onRoomPhotoSelected(input) {
                 setTimeout(function() { window.location.reload(); }, 500);
             })
             .catch(function() {
+                grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
                 if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
                 card.classList.remove('is-busy');
                 card.style.opacity = '';

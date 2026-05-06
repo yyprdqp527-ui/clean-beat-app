@@ -4069,7 +4069,8 @@ def menu():
                 custom_rooms_data.append({
                     'key': key,
                     'name': custom.get('name') or 'Pièce personnalisée',
-                    'image': (custom.get('image_data') or custom.get('image') or 'images/thumbs/default.webp'),
+                    'image': (custom.get('image_data') or custom.get('image') or ''),
+                    'emoji': custom.get('emoji') or '',
                     'category': key,
                     'fixed': False,
                     'is_hidden': False,
