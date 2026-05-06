@@ -728,6 +728,7 @@ function onRoomPhotoSelected(input) {
             if (card.classList.contains('is-busy')) return;
             card.classList.add('is-busy');
             card.style.opacity = '0.6';
+            card.classList.add('emoji-card-added');
             _playClick();
             // Désactivation des autres cartes pendant l'enregistrement
             grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = 'none'; });
@@ -743,13 +744,13 @@ function onRoomPhotoSelected(input) {
                 grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
                 if (!res.ok || !res.data || !res.data.ok) {
                     if (window.cbToast) window.cbToast((res.data && res.data.error) || "Impossible d'ajouter la pièce.", 'danger', 2800);
+                    card.classList.remove('emoji-card-added');
                     card.classList.remove('is-busy');
-                    card.style.opacity = '';
+                    card.style.opacity = '1';
                     return;
                 }
                 _playValid();
                 if (window.cbToast) window.cbToast('✅ ' + item.label + ' ajoutée !', 'success', 1800);
-                card.classList.add('emoji-card-added');
                 card.style.opacity = '';
                 card.classList.remove('is-busy');
                 // Rafraîchir la liste du panneau Supprimer après un court délai
@@ -758,8 +759,9 @@ function onRoomPhotoSelected(input) {
             .catch(function() {
                 grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
                 if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
+                card.classList.remove('emoji-card-added');
                 card.classList.remove('is-busy');
-                card.style.opacity = '';
+                card.style.opacity = '1';
             });
         });
         grid.appendChild(card);
