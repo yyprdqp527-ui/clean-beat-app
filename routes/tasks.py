@@ -253,6 +253,21 @@ def add_task_page(cat, task_id=None):
         return redirect(url_for('menu') + '?nav=1')
     house_id = row[0]
 
+    # Pièce personnalisée : récupérer le vrai nom depuis la DB
+    if normalized_cat.startswith('custom_'):
+        c.execute("SELECT custom_name, emoji FROM custom_rooms WHERE room_key=? AND house_id=?", (normalized_cat, house_id))
+        r_cname = c.fetchone()
+        category_name = r_cname[0] if r_cname and r_cname[0] else 'Ma pièce'
+        category_icon = (r_cname[1] if r_cname and r_cname[1] else None)
+        if not category_icon:
+            name_lower = (category_name or '').lower()
+            for keyword, _emoji in ROOM_EMOJIS.items():
+                if keyword in name_lower:
+                    category_icon = _emoji
+                    break
+        if not category_icon:
+            category_icon = '🏠'
+
     # Si édition, charger la tâche existante
     existing_task = None
     if task_id:
