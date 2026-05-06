@@ -20,6 +20,11 @@ def api_push_subscribe():
         if not subscription_data or 'endpoint' not in subscription_data:
             return {'success': False, 'error': 'Données invalides'}, 400
 
+        p256dh = subscription_data.get('keys', {}).get('p256dh', '')
+        auth   = subscription_data.get('keys', {}).get('auth', '')
+        if not p256dh or not auth:
+            return {'success': False, 'error': 'Clés de chiffrement manquantes'}, 400
+
         # Ajouter user agent pour debug
         subscription_data['userAgent'] = request.headers.get('User-Agent', '')
 
