@@ -525,7 +525,13 @@
                     {% for room in extra_rooms %}
                     <div class="room-item" id="item-{{ room.key }}">
                         <div class="room-thumb">
-                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
+                            {% if room.emoji %}
+                            <span style="font-size:2rem">{{ room.emoji }}</span>
+                            {% elif room.image_data %}
+                            <img src="{{ room.image_data }}" style="width:50px"/>
+                            {% else %}
+                            <img src="{{ url_for('static', filename=room.image) }}" style="width:50px"/>
+                            {% endif %}
                         </div>
                         <div class="room-info">
                             <div class="room-default-name">Pièce personnalisée</div>
