@@ -63,7 +63,9 @@
             sessionStorage.removeItem('pwa_dismissed_session');
             sessionStorage.removeItem('pushBannerDismissed');
             localStorage.removeItem('qfq_push_banner_dismissed');
+            var _pwaInstalled = localStorage.getItem('pwa_installed');
             localStorage.removeItem('qfq_tips_menu');
+            if (_pwaInstalled) localStorage.setItem('pwa_installed', _pwaInstalled);
             localStorage.removeItem('qfq_tips_tasks');
             localStorage.removeItem('qfq_tips_task');
             localStorage.removeItem('qfq_tips_seen_v2');
