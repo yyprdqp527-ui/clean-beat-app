@@ -2398,6 +2398,20 @@ CREATE TABLE IF NOT EXISTS users (
     )
     """)
 
+    # Migrations défensives custom_rooms (colonnes ajoutées après déploiement initial sur Render)
+    try:
+        c.execute("ALTER TABLE custom_rooms ADD COLUMN custom_name TEXT")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE custom_rooms ADD COLUMN custom_image TEXT")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE custom_rooms ADD COLUMN is_hidden INTEGER DEFAULT 0")
+    except Exception:
+        pass
+
     # Table pour les tokens de réinitialisation de mot de passe
     c.execute("""
         CREATE TABLE IF NOT EXISTS password_reset_tokens (
