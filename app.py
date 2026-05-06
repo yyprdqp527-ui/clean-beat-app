@@ -2510,6 +2510,12 @@ CREATE TABLE IF NOT EXISTS users (
         autres_commentaires TEXT
     )
     """)
+    # Migration défensive : colonnes démographiques feedback
+    for _col, _ctype in [('age', 'TEXT'), ('situation_familiale', 'TEXT'), ('ages_enfants', 'TEXT'), ('profession', 'TEXT')]:
+        try:
+            c.execute(f'ALTER TABLE beta_feedback ADD COLUMN {_col} {_ctype}')
+        except Exception:
+            pass
 
     # Table pour les rappels personnels des joueurs (mini agenda / to-do list)
     c.execute("""

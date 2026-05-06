@@ -31,6 +31,10 @@ def feedback():
             recommande_raw = request.form.get('recommande', '')
             recommande = int(recommande_raw) if recommande_raw.strip() in ('0', '1') else None
             autres_commentaires = request.form.get('autres_commentaires', '').strip() or None
+            age = request.form.get('age', '').strip() or None
+            situation_familiale = request.form.get('situation_familiale', '').strip() or None
+            ages_enfants = request.form.get('ages_enfants', '').strip() or None
+            profession = request.form.get('profession', '').strip() or None
 
             conn = get_db_connection()
             c = conn.cursor()
@@ -38,15 +42,17 @@ def feedback():
                 INSERT INTO beta_feedback
                     (user_email, user_name, note_globale, note_facilite, note_design,
                      ce_qui_plait, ce_qui_deplait, ameliorations,
-                     pret_a_payer, prix_acceptable, recommande, autres_commentaires)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     pret_a_payer, prix_acceptable, recommande, autres_commentaires,
+                     age, situation_familiale, ages_enfants, profession)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_email, user_name,
                 int(note_globale) if note_globale else None,
                 int(note_facilite) if note_facilite else None,
                 int(note_design) if note_design else None,
                 ce_qui_plait, ce_qui_deplait, ameliorations,
-                pret_a_payer, prix_acceptable, recommande, autres_commentaires
+                pret_a_payer, prix_acceptable, recommande, autres_commentaires,
+                age, situation_familiale, ages_enfants, profession
             ))
             conn.commit()
             conn.close()

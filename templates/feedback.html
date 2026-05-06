@@ -343,7 +343,51 @@
                 </div>
             </div>
 
-            <!-- ─── Section 5 : Commentaires libres ─── -->
+            <!-- ─── Section 5 : Profil ─── -->
+            <div class="section-card">
+                <div class="section-title"><span>👤</span> Un peu sur toi</div>
+
+                <label class="field-label">Votre âge</label>
+                <select name="age">
+                    <option value="">— Sélectionne —</option>
+                    <option value="Moins de 18 ans">Moins de 18 ans</option>
+                    <option value="18-24 ans">18-24 ans</option>
+                    <option value="25-34 ans">25-34 ans</option>
+                    <option value="35-44 ans">35-44 ans</option>
+                    <option value="45-54 ans">45-54 ans</option>
+                    <option value="55-64 ans">55-64 ans</option>
+                    <option value="65 ans et plus">65 ans et plus</option>
+                </select>
+
+                <label class="field-label">Votre situation familiale</label>
+                <select name="situation_familiale" id="situationSelect" onchange="toggleAgesEnfants()">
+                    <option value="">— Sélectionne —</option>
+                    <option value="En couple">En couple</option>
+                    <option value="En famille">En famille</option>
+                    <option value="En colocation">En colocation</option>
+                    <option value="Seul(e)">Seul(e)</option>
+                    <option value="Autre">Autre</option>
+                </select>
+
+                <div id="agesEnfantsField" style="display:none;">
+                    <label class="field-label">Âge des enfants</label>
+                    <input type="text" name="ages_enfants" placeholder="Ex : 3 ans, 7 ans, 12 ans">
+                </div>
+
+                <label class="field-label">Votre profession</label>
+                <select name="profession">
+                    <option value="">— Sélectionne —</option>
+                    <option value="Étudiant(e)">Étudiant(e)</option>
+                    <option value="Salarié(e)">Salarié(e)</option>
+                    <option value="Indépendant(e) / Freelance">Indépendant(e) / Freelance</option>
+                    <option value="Fonctionnaire">Fonctionnaire</option>
+                    <option value="Sans emploi">Sans emploi</option>
+                    <option value="Retraité(e)">Retraité(e)</option>
+                    <option value="Autre">Autre</option>
+                </select>
+            </div>
+
+            <!-- ─── Section 6 : Commentaires libres ─── -->
             <div class="section-card">
                 <div class="section-title"><span>✏️</span> Autre chose à dire ?</div>
                 <textarea name="autres_commentaires" placeholder="Un message libre, une anecdote, un rêve pour l'appli…" rows="4"></textarea>
@@ -396,6 +440,12 @@
                 non.classList.add('selected-no');
                 oui.classList.remove('selected-yes');
             }
+        }
+
+        function toggleAgesEnfants() {
+            var sel = document.getElementById('situationSelect');
+            var field = document.getElementById('agesEnfantsField');
+            field.style.display = (sel.value === 'En famille') ? 'block' : 'none';
         }
     </script>
 </body>
