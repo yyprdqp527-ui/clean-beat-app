@@ -54,7 +54,7 @@
             text-align: center;
             border: 2px solid rgba(253,174,84,0.3);
             box-shadow: 0 12px 40px rgba(89,113,118,0.2);
-            max-width: 480px;
+            max-width: 540px;
             width: 100%;
             animation: slideUp 0.8s ease-out;
         }
@@ -234,20 +234,26 @@
     <div class="invite-icon">🎮</div>
     
     <h1 class="invite-title">
-        Toi aussi t'as un logement ?<br>
-        Occupe-t'en, marque des points et gagne !
+        Toi aussi t'as un logement ? Tu t'en occupes, tu marques des points, tu gagnes !
     </h1>
     
     <p class="invite-subtitle">
-        <span style="font-size:20px;font-weight:800;color:#153036;">
-            {{ inviter_name }} t'invite à le rejoindre sur
-        </span><br>
-        <span style="font-family:'Bubblegum Sans',cursive;font-size:52px;color:#7BC8F6;line-height:0.95;">
-            QuiFaitQuoi
-        </span><br>
-        <span style="font-family:'Bubblegum Sans',cursive;font-size:26px;color:#153036;line-height:1.3;">
-            dans la baraque
+        <span style="font-size:18px;font-weight:800;color:#153036;">
+            {{ inviter_name }} t'invite à rejoindre
         </span>
+    </p>
+
+    <div style="margin:0 0 24px;">
+        <div style="font-family:'Bubblegum Sans',cursive;font-size:54px;color:white;line-height:0.95;text-shadow:0 3px 16px rgba(0,0,0,0.25);text-transform:uppercase;">
+            QuiFaitQuoi
+        </div>
+        <div style="font-family:'Bubblegum Sans',cursive;font-size:28px;color:#7BC8F6;line-height:1.3;margin-top:4px;text-transform:uppercase;">
+            dans la baraque
+        </div>
+    </div>
+
+    <p style="font-size:17px;font-weight:700;color:#597176;margin-bottom:28px;">
+        Montre enfin à {{ inviter_name }} ce que tu fais !
     </p>
 
     <div class="buttons-container">
