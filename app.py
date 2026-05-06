@@ -1116,7 +1116,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire à manger',
             'image': 'cuisine/faire à manger.webp',
-            'description': 'besoin d\'une recette ? Clique sur astuce de pro',
+            'description': 'Besoin d\'une recette ? Clique sur astuce de pro',
             'points': 10,
             'fun_text': '👨‍🍳 Aux fourneaux chef ! La brigade attend son repas !',
             'ad_text': 'Batch cooking : cuisine tes repas de la semaine le dimanche, tu gagnes 1h par jour !',
@@ -1134,7 +1134,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre dans le lave-vaisselle',
             'image': 'cuisine/lave vaiselle.webp',
-            'description': 'si tu l\'a fait a la main tu as le droit d\'augmenter les points',
+            'description': 'Si tu l\'a fait a la main tu as le droit d\'augmenter les points',
             'points': 4,
             'fun_text': '🍽️ Tetris version vaisselle : optimise l\'espace !',
             'ad_text': 'Lance ton lave-vaisselle le soir en heures creuses, tu économises jusqu\'à 30% !',
@@ -1152,7 +1152,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer le plan de travail',
             'image': 'cuisine/nettoyer le plan de travil.webp',
-            'description': 'c\'est comme le lit, il faut le faire à chaque fois !',
+            'description': 'C\'est comme le lit, il faut le faire à chaque fois !',
             'points': 4,
             'fun_text': '✨ Un plan de travail nickel, c\'est la base d\'une cuisine pro !',
             'ad_text': 'Bicarbonate + citron = le combo magique pour dégraisser sans produits chimiques !',
