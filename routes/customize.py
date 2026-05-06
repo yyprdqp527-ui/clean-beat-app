@@ -415,6 +415,11 @@ def _save_emoji_dataurl(data_url, app, size=400):
         ], fill=(255, 255, 255, 40))
         img = Image.alpha_composite(img, overlay)
 
+        # Expansion à 400×462 pour correspondre aux dimensions des thumbs par défaut
+        canvas = Image.new('RGBA', (ROOM_THUMB_W, ROOM_THUMB_H), (0, 0, 0, 0))
+        canvas.paste(img, (0, (ROOM_THUMB_H - size) // 2), img)
+        img = canvas
+
         dest_dir = os.path.join(app.static_folder, ROOM_UPLOAD_SUBDIR)
         os.makedirs(dest_dir, exist_ok=True)
         filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
