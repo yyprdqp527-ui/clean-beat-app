@@ -5,13 +5,14 @@
     <title>Invitation - QuiFaitQuoi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Rejoins ma maison sur QuiFaitQuoi 🏠">
-    <meta property="og:description" content="Marre que les corvées prennent la tête ? Teste QuiFaitQuoi avec moi !">
+    <meta property="og:title" content="Toi aussi t'as un logement ? Rejoins-moi sur QuiFaitQuoi 🏠">
+    <meta property="og:description" content="Occupe-toi de ta baraque, marque des points et gagne !">
     <meta property="og:image" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
     <meta property="og:image:width" content="512">
     <meta property="og:image:height" content="512">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:image" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
+    <link href="https://fonts.googleapis.com/css2?family=Boogaloo&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -192,6 +193,12 @@
             }
         }
 
+        .qfq-bubble {
+            font-family: 'Boogaloo', 'Nunito', sans-serif;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
         @media (max-width: 480px) {
             .logo {
                 font-size: 2.8em;
@@ -229,12 +236,18 @@
     <div class="invite-icon">🎮</div>
     
     <h1 class="invite-title">
-        <span class="inviter-name">{{ inviter_name }}</span> t'invite à rejoindre<br>
-        <span class="house-name">{{ house_name or 'son foyer' }}</span> !
+        Toi aussi t'as un logement ?<br>
+        Occupe-t'en, marque des points et gagne !
     </h1>
     
     <p class="invite-subtitle">
-        {{ inviter_name }} t'invite à rejoindre QuiFaitQuoi — le jeu qui rend le ménage fun et équitable ! 🏆
+        <span class="inviter-name">{{ inviter_name }}</span>
+        t'invite à rejoindre
+        <strong>« {{ house_name or 'son foyer' }} »</strong>
+        sur <span class="qfq-bubble">QuiFaitQuoi</span><br>
+        <span style="font-size:13px;opacity:0.75;">
+          dans la baraque
+        </span>
     </p>
 
     {% if house_type %}
@@ -256,17 +269,17 @@
 
     <div class="buttons-container">
         <a href="{{ url_for('auth.signup_email', code=house_code) }}" class="btn btn-primary">
-            🚀 Créer mon compte
+            Créer un compte
         </a>
         
         <a href="{{ url_for('auth.login') }}?next_code={{ house_code }}" class="btn btn-secondary">
-            🔐 J'ai déjà un compte
+            J'ai déjà un compte
         </a>
     </div>
 </div>
 
 <p class="footer-text">
-    Share. Compete. Live together. ✨
+    Corvées, points, victoires — bienvenue chez toi 🏆
 </p>
 
 </body>
