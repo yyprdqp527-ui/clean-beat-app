@@ -2443,6 +2443,33 @@ CREATE TABLE IF NOT EXISTS users (
     except Exception as _bf_err:
         print(f"⚠️ Backfill emoji: {_bf_err}", flush=True)
 
+    # Backfill image_data (base64) pour pièces custom dont image_data est NULL
+    try:
+        from PIL import Image as _PILImage
+        import base64 as _base64_bf
+        from io import BytesIO as _BytesIO_bf
+        c.execute("""
+            SELECT id, custom_image FROM custom_rooms
+            WHERE room_key LIKE 'custom_%'
+            AND (image_data IS NULL OR image_data = '')
+            AND custom_image IS NOT NULL AND custom_image != ''
+        """)
+        _imgrows = c.fetchall()
+        _img_migrated = 0
+        for _imgrow_id, _imgrow_path in _imgrows:
+            _filepath = os.path.join('static', (_imgrow_path or '').lstrip('/'))
+            if os.path.exists(_filepath):
+                _buf = _BytesIO_bf()
+                _PILImage.open(_filepath).save(_buf, format='WEBP')
+                _buf.seek(0)
+                _b64 = "data:image/webp;base64," + _base64_bf.b64encode(_buf.getvalue()).decode('utf-8')
+                c.execute("UPDATE custom_rooms SET image_data = ? WHERE id = ?", (_b64, _imgrow_id))
+                _img_migrated += 1
+        if _imgrows:
+            print(f"✅ {_img_migrated}/{len(_imgrows)} images migrées en base64", flush=True)
+    except Exception as _img_err:
+        print(f"⚠️ Migration base64 images: {_img_err}", flush=True)
+
     # Table pour les tokens de réinitialisation de mot de passe
     c.execute("""
         CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -3965,8 +3992,8 @@ def menu():
             custom_rooms_db = {}
             if house_id:
                 try:
-                    c.execute("SELECT room_key, custom_name, custom_image, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
-                    custom_rooms_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': row[3]} for row in c.fetchall()}
+                    c.execute("SELECT room_key, custom_name, custom_image, is_hidden, image_data, emoji FROM custom_rooms WHERE house_id=?", (house_id,))
+                    custom_rooms_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': row[3], 'image_data': row[4], 'emoji': row[5]} for row in c.fetchall()}
                 except Exception as e:
                     _dbg(f"⚠️ Erreur récupération custom_rooms: {e}")
                     custom_rooms_db = {}
@@ -4023,7 +4050,9 @@ def menu():
                 custom = custom_rooms_db[room['key']]
                 if custom['name']:
                     room_data['name'] = custom['name']
-                if custom['image']:
+                if custom.get('image_data'):
+                    room_data['image'] = custom['image_data']
+                elif custom.get('image'):
                     room_data['image'] = custom['image']
                 room_data['is_hidden'] = bool(custom['is_hidden'])
             else:
@@ -4040,7 +4069,7 @@ def menu():
                 custom_rooms_data.append({
                     'key': key,
                     'name': custom.get('name') or 'Pièce personnalisée',
-                    'image': custom.get('image') or 'images/thumbs/default.webp',
+                    'image': (custom.get('image_data') or custom.get('image') or 'images/thumbs/default.webp'),
                     'category': key,
                     'fixed': False,
                     'is_hidden': False,

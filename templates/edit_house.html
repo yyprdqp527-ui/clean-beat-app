@@ -650,7 +650,7 @@ function onRoomPhotoSelected(input) {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: defaultName, image: res.data.image, image_data_url: '' })
+                body: JSON.stringify({ name: defaultName, image: res.data.image, image_data_url: '', image_b64: res.data.image_b64 || '' })
             })
             .then(function(r2) { return r2.json().then(function(d2) { return { ok: r2.ok, data: d2 }; }); })
             .then(function(res2) {

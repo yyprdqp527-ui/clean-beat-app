@@ -332,7 +332,11 @@ def _save_emoji_dataurl(data_url, app, size=400):
         filename = f"emoji_{uuid.uuid4().hex[:12]}.webp"
         filepath = os.path.join(dest_dir, filename)
         img.save(filepath, 'WEBP', quality=88, method=6)
-        return f"{ROOM_UPLOAD_PREFIX}{filename}"
+        buf = BytesIO()
+        img.save(buf, 'WEBP', quality=88, method=6)
+        buf.seek(0)
+        img_b64 = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        return f"{ROOM_UPLOAD_PREFIX}{filename}", img_b64
     except Exception as e:
         print(f"⚠️ _save_emoji_dataurl error: {e}", flush=True)
         return None
@@ -347,14 +351,18 @@ def add_custom_room():
     name  = (data.get('name') or '').strip()
     image = (data.get('image') or '').strip()
     image_data_url = data.get('image_data_url') or ''
+    image_b64 = (data.get('image_b64') or '').strip()
     if not name:
         return {'ok': False, 'error': 'nom manquant'}, 400
     if len(name) > 30:
         name = name[:30]
     if not _is_valid_room_image(image):
-        # Tenter de sauver l'image emoji rendue côté navigateur
         if image_data_url:
-            image = _save_emoji_dataurl(image_data_url, current_app._get_current_object()) or 'images/thumbs/default.webp'
+            _result = _save_emoji_dataurl(image_data_url, current_app._get_current_object())
+            if _result:
+                image, image_b64 = _result
+            else:
+                image, image_b64 = 'images/thumbs/default.webp', ''
         else:
             image = 'images/thumbs/default.webp'
 
@@ -370,9 +378,9 @@ def add_custom_room():
         room_key = f"custom_{int(time.time() * 1000)}"
         emoji = (data.get('emoji') or '').strip()
         c.execute("""
-            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, emoji)
-            VALUES (?, ?, ?, ?, 0, ?)
-        """, (house_id, room_key, name, image, emoji))
+            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, emoji, image_data)
+            VALUES (?, ?, ?, ?, 0, ?, ?)
+        """, (house_id, room_key, name, image, emoji, image_b64))
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -480,15 +488,20 @@ def upload_room_image():
         img = canvas
 
         img.save(filepath, format='WEBP', quality=88, method=6)
+        from io import BytesIO as _BytesIO
+        import base64 as _base64
+        _buf = _BytesIO()
+        img.save(_buf, format='WEBP', quality=88, method=6)
+        _buf.seek(0)
+        img_b64 = "data:image/webp;base64," + _base64.b64encode(_buf.getvalue()).decode('utf-8')
     except ImportError:
-        # Pas de Pillow → on enregistre tel quel
         photo.save(filepath)
+        img_b64 = ''
     except Exception as e:
         return {'ok': False, 'error': f'image: {e}'}, 500
 
-    # Chemin relatif compatible avec url_for('static', filename=...)
     rel_path = f"{ROOM_UPLOAD_PREFIX}{unique}"
-    return {'ok': True, 'image': rel_path}
+    return {'ok': True, 'image': rel_path, 'image_b64': img_b64}
 
 
 @customize_bp.route('/settings')
