@@ -3998,10 +3998,6 @@ def menu():
             else:
                 room_data['is_hidden'] = False
             
-            # Les pièces fixes ne sont jamais masquées
-            if room['fixed']:
-                room_data['is_hidden'] = False
-            
             # N'ajouter que les pièces non masquées
             if not room_data.get('is_hidden'):
                 custom_rooms_data.append(room_data)

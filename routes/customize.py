@@ -150,7 +150,7 @@ def personnaliser_maison():
             for room in ALL_ROOMS:
                 key = room['key']
                 custom_name = request.form.get(f'name_{key}', '').strip()
-                is_hidden = 0 if room['fixed'] else (1 if request.form.get(f'hidden_{key}') else 0)
+                is_hidden = 1 if request.form.get(f'hidden_{key}') else 0
                 if not custom_name or custom_name == room['default_name']:
                     custom_name = None
                 c.execute("""
@@ -220,7 +220,7 @@ def personnaliser_maison():
         r = room.copy()
         cust = custom_db.get(room['key'], {})
         r['current_name'] = cust.get('name') or room['default_name']
-        r['is_hidden']    = False if room['fixed'] else cust.get('is_hidden', False)
+        r['is_hidden']    = cust.get('is_hidden', False)
         rooms_data.append(r)
 
     # 🆕 Pièces personnalisées (room_key commence par 'custom_')
