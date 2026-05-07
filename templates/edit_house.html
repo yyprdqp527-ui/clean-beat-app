@@ -377,11 +377,17 @@
         /* 🟧 Boutons d'action carrés style Gameplay (côte à côte, centrés) */
         .house-actions-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            max-width: 480px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 560px;
             width: 100%;
             margin: 0 auto 24px;
+        }
+        @media (max-width: 480px) {
+            .house-actions-grid { gap: 10px; }
+            .house-action-btn { padding: 14px 8px; }
+            .house-action-btn .btn-icon { font-size: 30px; }
+            .house-action-btn .btn-label { font-size: 12px; }
         }
         .house-action-btn {
             display: flex;
@@ -475,11 +481,41 @@
                 <span class="btn-icon" style="display:block;text-align:center;width:100%;">🗑️</span>
                 <span class="btn-label" style="display:block;text-align:center;width:100%;">Supprimer<br>des pièces</span>
             </button>
+            <button type="button" class="house-action-btn" id="btnPanelRename"
+                    onclick="togglePanel('rename')"
+                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                <span class="btn-icon" style="display:block;text-align:center;width:100%;">✏️</span>
+                <span class="btn-label" style="display:block;text-align:center;width:100%;">Renommer<br>la maison</span>
+            </button>
         </div>
 
         {# Form conservé pour les routes existantes (POST personnaliser_maison) — invisible #}
         <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
             <input type="hidden" name="house_name" value="{{ current_house_name or '' }}">
+
+            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
+            {# Panneau "Renommer la maison" #}
+            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
+            <div id="panelRename" class="rooms-panel" style="display:none;">
+                <div class="add-title-card">
+                    <span class="att-icon">🏠</span>
+                    <p class="att-title">Renommer la maison</p>
+                    <p class="att-sub">Le nouveau nom sera visible<br>partout dans l'application</p>
+                </div>
+                <input type="text" id="renameHouseInput"
+                       value="{{ current_house_name or '' }}"
+                       placeholder="Nom de la maison"
+                       maxlength="50"
+                       style="width:100%;box-sizing:border-box;padding:12px 16px;border-radius:14px;border:2px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.85);color:#153036;font-size:16px;font-weight:600;text-align:center;outline:none;margin-bottom:12px;font-family:inherit;"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();saveHouseName();}">
+                <button type="button" class="add-custom-room-btn" id="btnSaveHouseName"
+                        style="margin-top:0;"
+                        onclick="saveHouseName()">
+                    💾 Enregistrer
+                </button>
+                <p id="renameHouseStatus" class="room-default-name"
+                   style="display:none; margin: 10px 0 0; text-align:center;"></p>
+            </div>
 
             {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
             {# Panneau "Ajouter des pièces" #}
@@ -606,6 +642,64 @@ function toggleRoom(roomKey, checkbox) {
     });
 }
 
+function saveHouseName() {
+    var input = document.getElementById('renameHouseInput');
+    var btn = document.getElementById('btnSaveHouseName');
+    var status = document.getElementById('renameHouseStatus');
+    if (!input) return;
+    var newName = (input.value || '').trim();
+    if (!newName) {
+        if (status) {
+            status.textContent = 'Le nom ne peut pas être vide';
+            status.style.color = '#c62828';
+            status.style.display = 'block';
+        }
+        return;
+    }
+    _playClick();
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    if (status) { status.style.display = 'none'; }
+    var fd = new FormData();
+    fd.append('house_name', newName);
+    fetch('/update_house_name', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: fd
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        if (data && data.success) {
+            _playValid();
+            if (status) {
+                status.textContent = '✅ ' + (data.message || 'Nom mis à jour !');
+                status.style.color = '#2e7d32';
+                status.style.display = 'block';
+            }
+            if (window.cbToast) window.cbToast(data.message || 'Nom de la maison mis à jour !', 'success', 2200);
+            // Mettre à jour le champ caché du form (pour cohérence)
+            var hidden = document.querySelector('input[type=hidden][name=house_name]');
+            if (hidden) hidden.value = newName;
+            setTimeout(function() {
+                if (status) status.style.display = 'none';
+            }, 2500);
+        } else {
+            var msg = (data && data.error) || "Impossible de renommer la maison.";
+            if (status) {
+                status.textContent = '⚠️ ' + msg;
+                status.style.color = '#c62828';
+                status.style.display = 'block';
+            }
+            if (window.cbToast) window.cbToast(msg, 'danger', 2800);
+        }
+    }).catch(function() {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        if (status) {
+            status.textContent = '⚠️ Erreur réseau';
+            status.style.color = '#c62828';
+            status.style.display = 'block';
+        }
+    });
+}
+
 function renameRoom(input) {
     var roomKey = input.dataset.roomKey;
     var defaultName = input.dataset.default || '';
@@ -656,7 +750,11 @@ function _playValid() {
 
 function togglePanel(which) {
     _playClick();
-    var panels = { add: document.getElementById('panelAdd'), manage: document.getElementById('panelManage') };
+    var panels = {
+        add: document.getElementById('panelAdd'),
+        manage: document.getElementById('panelManage'),
+        rename: document.getElementById('panelRename')
+    };
     if (!panels[which]) return;
     // Masque la grille des 2 boutons + le retour vers settings
     var grid = document.querySelector('.house-actions-grid');
@@ -676,6 +774,7 @@ function closePanel() {
     _playClick();
     var pa = document.getElementById('panelAdd');     if (pa) pa.style.display = 'none';
     var pm = document.getElementById('panelManage');  if (pm) pm.style.display = 'none';
+    var pr = document.getElementById('panelRename');  if (pr) pr.style.display = 'none';
     var backH = document.getElementById('backToHome'); if (backH) backH.style.display = 'none';
     var grid  = document.querySelector('.house-actions-grid'); if (grid) grid.style.display = '';
     var backS = document.getElementById('backToSettings'); if (backS) backS.style.display = '';
