@@ -851,6 +851,11 @@ body {
     background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(253,174,84,0.12) 100%);
 }
 .minigame-btn.mg-suspicion .mg-label { color: #96621C; }
+.minigame-btn.mg-coming {
+    border-color: rgba(148,164,255,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(148,164,255,0.12) 100%);
+}
+.minigame-btn.mg-coming .mg-label { color: #3D4DA8; }
 
 @media (max-width: 480px) {
     .minigame-grid { gap: 10px; padding: 16px 12px 6px; }
@@ -1008,6 +1013,10 @@ body {
             <div class="mg-icon">🕵️</div>
             <div class="mg-label">Entourloupe</div>
         </div>
+        <div class="minigame-btn mg-coming" onclick="openSection('coming')">
+            <div class="mg-icon">🚀</div>
+            <div class="mg-label">Mini-jeux à venir</div>
+        </div>
     </div>
 
     <!-- ====== CONTAINER 1 : MALUS & BONUS ====== -->
@@ -1137,6 +1146,44 @@ body {
 
         </div><!-- /feature-body suspicion -->
     </div><!-- /feature-container suspicion -->
+
+    <!-- ====== CONTAINER 4 : MINI-JEUX À VENIR ====== -->
+    <div class="feature-container" id="section-coming">
+        <div class="section-back-btn" onclick="closeSection()">‹ Retour</div>
+        <div class="feature-header">
+            <div class="feature-header-icon">🚀</div>
+            <div class="feature-header-text">
+                <div class="feature-title">Bientôt disponible 🚀</div>
+                <div class="feature-subtitle">De nouveaux mini-jeux arrivent bientôt. Reste connecté !</div>
+            </div>
+        </div>
+        <div class="feature-body">
+            <div class="house-action-btn" style="display:flex;align-items:center;gap:12px;margin:0 0 12px;">
+                <span style="font-size:28px;">🎲</span>
+                <div style="flex:1;">
+                    <div style="font-weight:800;font-size:14px;color:#153036;">Jeu mystère #1</div>
+                    <div class="feature-subtitle" style="margin-top:2px;">En cours de développement</div>
+                </div>
+                <span class="gameplay-subtitle" style="font-size:11px;white-space:nowrap;">Disponible prochainement</span>
+            </div>
+            <div class="house-action-btn" style="display:flex;align-items:center;gap:12px;margin:0 0 12px;">
+                <span style="font-size:28px;">🃏</span>
+                <div style="flex:1;">
+                    <div style="font-weight:800;font-size:14px;color:#153036;">Jeu mystère #2</div>
+                    <div class="feature-subtitle" style="margin-top:2px;">En cours de développement</div>
+                </div>
+                <span class="gameplay-subtitle" style="font-size:11px;white-space:nowrap;">Disponible prochainement</span>
+            </div>
+            <div class="house-action-btn" style="display:flex;align-items:center;gap:12px;margin:0 0 12px;">
+                <span style="font-size:28px;">🎯</span>
+                <div style="flex:1;">
+                    <div style="font-weight:800;font-size:14px;color:#153036;">Jeu mystère #3</div>
+                    <div class="feature-subtitle" style="margin-top:2px;">En cours de développement</div>
+                </div>
+                <span class="gameplay-subtitle" style="font-size:11px;white-space:nowrap;">Disponible prochainement</span>
+            </div>
+        </div><!-- /feature-body coming -->
+    </div><!-- /feature-container coming -->
 
 </div>
 
