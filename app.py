@@ -1118,7 +1118,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire à manger',
             'image': 'cuisine/faire à manger.webp',
-            'description': 'besoin d\'une recette ? clique sur astuce de pro',
+            'description': 'besoin d’une recette ? Clique sur « Astuce de pro » !',
             'points': 10,
             'fun_text': '👨‍🍳 Aux fourneaux chef ! La brigade attend son repas !',
             'ad_text': 'Batch cooking : cuisine tes repas de la semaine le dimanche, tu gagnes 1h par jour !',
@@ -1127,7 +1127,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre la table',
             'image': 'cuisine/mettre la table.webp',
-            'description': 'fourchette à gauche, couteau à droite, on est pas à Buckingham, tu peux faire simple',
+            'description': 'on est pas à Buckingham, fait simple… fourchette à gauche, couteau à droite.',
             'points': 3,
             'fun_text': '🍽️ Assiettes, couverts, serviettes... On met les petits plats dans les grands !',
             'ad_text': 'Astuce déco : un set de table coloré et des serviettes assorties, ça change tout !',
@@ -1136,7 +1136,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre dans le lave-vaisselle',
             'image': 'cuisine/lave vaiselle.webp',
-            'description': 'si tu l\'as fait à la main, tu as le droit d\'augmenter les points',
+            'description': 'vaisselle faite à la main vaut plus de points !',
             'points': 4,
             'fun_text': '🍽️ Tetris version vaisselle : optimise l\'espace !',
             'ad_text': 'Lance ton lave-vaisselle le soir en heures creuses, tu économises jusqu\'à 30% !',
@@ -1230,7 +1230,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer le rouleau de papier toilette',
             'image': 'wc/jeter_rouleaux.png',
-            'description': 'garde les rouleaux vides en faisant des ronds de serviettes !',
+            'description': 'les rouleaux finis ? Fais-en de magnifiques ronds de serviette !',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
@@ -1380,7 +1380,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire la poussière',
             'image': 'salon/faire la poussière.webp',
-            'description': '…sous le tapis c\'est pas sa place !',
+            'description': 'sous le tapis, c’est pas sa place !',
             'points': 3,
             'fun_text': '✨ Adieu la poussière, bonjour la propreté !',
             'ad_text': 'Chiffons microfibres magiques !',
@@ -1407,7 +1407,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver les vitres',
             'image': 'salon/laver les vitres.webp',
-            'description': 'c\'est chouette le pshit pshit !',
+            'description': 'c’est chouette, le « pshit-pshit »',
             'points': 5,
             'fun_text': '🪟 La vue sera encore plus belle !',
             'ad_text': 'Produits vitres sans traces !',
@@ -1474,7 +1474,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer ses cheveux',
             'image': 'salle de bain/nettoyer les cheveux.webp',
-            'description': 'sinon boule à zéro !',
+            'description': 'sinon, boule à zéro !',
             'points': 2,
             'fun_text': '💇 Plus de cheveux dans le lavabo !',
             'ad_text': 'Accessoires salle de bain !',
@@ -1492,7 +1492,7 @@ TASKS_CONFIG = {
         {
             'name': 'Jeter les bouteilles vides',
             'image': 'salle de bain/jeter les bouteilles de savon vide. wepb.webp',
-            'description': 'sauf en cas de collection',
+            'description': 'sauf si tu te lances dans une collection',
             'points': 2,
             'fun_text': '♻️ Faire de la place pour les nouvelles !',
             'ad_text': 'Organisateurs salle de bain !',
@@ -1501,7 +1501,7 @@ TASKS_CONFIG = {
         {
             'name': 'Éponger l\'eau par terre',
             'image': 'salle de bain/éponger le sol.webp',
-            'description': 'et, ta serviette n\'est pas une serpillière !',
+            'description': '…et ta serviette n’est pas une serpillière',
             'points': 3,
             'fun_text': '💦 Plus de flaques pour éviter de glisser !',
             'ad_text': 'Tapis de bain absorbants !',
@@ -1718,7 +1718,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer le rouleau de papier toilette',
             'image': 'wc/jeter_rouleaux.png',
-            'description': 'garde les rouleaux vides en faisant des ronds de serviettes !',
+            'description': 'les rouleaux finis ? Fais-en de magnifiques ronds de serviette !',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
