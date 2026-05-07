@@ -194,6 +194,10 @@ body {
     color: var(--teal-dark);
     margin-top: 6px;
 }
+.form-group label.label-centered {
+    justify-content: center;
+    text-align: center;
+}
 
 /* ---------- PRESETS RAPIDES ---------- */
 .points-presets {
@@ -515,7 +519,7 @@ body {
                 {% if mission_images %}
                 <!-- GALERIE D'IMAGES PRÉCHARGÉES -->
                 <div class="gallery-section">
-                    <p class="gallery-title">✨ Ou choisis une image préparée :</p>
+                    <p class="gallery-title">✨ Ou choisis une image :</p>
                     <div class="gallery-grid">
                         {% for img in mission_images %}
                         <button type="button" class="gallery-item{% if task and task.image == img.path %} selected{% endif %}"
@@ -532,7 +536,7 @@ body {
 
             <!-- POINTS — saisie libre simplifiée -->
             <div class="form-group">
-                <label for="pointsDisplay"><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
+                <label for="pointsDisplay" class="label-centered"><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
                 <input type="number" class="points-input-field" id="pointsDisplay" name="points"
                        value="{{ task.points if task else 10 }}" min="1" max="999" required>
                 <div class="points-label-below">points attribués au joueur qui réalise la mission</div>
