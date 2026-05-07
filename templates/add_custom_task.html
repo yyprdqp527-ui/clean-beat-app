@@ -197,6 +197,13 @@ body {
 .form-group label.label-centered {
     justify-content: center;
     text-align: center;
+    color: var(--dark);
+}
+.points-input-field.points-centered {
+    display: block;
+    margin: 0 auto;
+    max-width: 180px;
+    width: 100%;
 }
 
 /* ---------- PRESETS RAPIDES ---------- */
@@ -537,9 +544,8 @@ body {
             <!-- POINTS — saisie libre simplifiée -->
             <div class="form-group">
                 <label for="pointsDisplay" class="label-centered"><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
-                <input type="number" class="points-input-field" id="pointsDisplay" name="points"
+                <input type="number" class="points-input-field points-centered" id="pointsDisplay" name="points"
                        value="{{ task.points if task else 10 }}" min="1" max="999" required>
-                <div class="points-label-below">points attribués au joueur qui réalise la mission</div>
             </div>
 
             <!-- BOUTON CRÉER / ENREGISTRER -->
