@@ -1109,7 +1109,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire les courses',
             'image': 'cuisine/faire_course.png',
-            'description': 'choisir la bonne file d\'attente, le secret des courses réussies !',
+            'description': '…et espérer tomber sur la caisse la plus rapide.',
             'points': 8,
             'fun_text': '🛒 Caddie en main, liste en tête... C\'est parti pour l\'aventure !',
             'ad_text': 'Astuce budget : fais ta liste par rayon pour éviter les achats impulsifs !',
@@ -1118,7 +1118,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire à manger',
             'image': 'cuisine/faire à manger.webp',
-            'description': 'besoin d’une recette ? Clique sur « Astuce de pro » !',
+            'description': 'besoin d’une recette ? Clique sur Astuce de pro !',
             'points': 10,
             'fun_text': '👨‍🍳 Aux fourneaux chef ! La brigade attend son repas !',
             'ad_text': 'Batch cooking : cuisine tes repas de la semaine le dimanche, tu gagnes 1h par jour !',
@@ -1136,7 +1136,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre dans le lave-vaisselle',
             'image': 'cuisine/lave vaiselle.webp',
-            'description': 'vaisselle faite à la main vaut plus de points !',
+            'description': 'vaisselle faite à la main rapporte plus de points !',
             'points': 4,
             'fun_text': '🍽️ Tetris version vaisselle : optimise l\'espace !',
             'ad_text': 'Lance ton lave-vaisselle le soir en heures creuses, tu économises jusqu\'à 30% !',
@@ -1221,7 +1221,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer les toilettes',
             'image': 'wc/laver_toillettes.webp',
-            'description': 'nettoyer des toilettes ça vaut des points, personne n\'aime le faire',
+            'description': 'ça vaut des points, personne n\'aime le faire !',
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
@@ -1602,7 +1602,7 @@ TASKS_CONFIG = {
             'ad_link': 'https://www.youtube.com/results?search_query=bien+aerer+sa+chambre+conseils'
         },
         {
-            'name': 'Mettre les vêtements dans le panier',
+            'name': 'Mettre ses vêtements dans le panier',
             'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
             'description': 'un panier à trois points !',
             'points': 3,
@@ -1622,7 +1622,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire ses devoirs',
             'image': 'chambre ados/Faire ses devoirs.webp',
-            'description': 'et oui, allez, courage !',
+            'description': 'Eh oui… allez, courage !',
             'points': 5,
             'fun_text': '📚 Les devoirs d\'abord, les jeux ensuite !',
             'ad_text': 'Fournitures scolaires et bureaux enfants !',
@@ -1689,7 +1689,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider la poubelle',
             'image': 'chambre bébé/vider la poubelle.webp',
-            'description': 'aucun intérêt de les stocker !',
+            'description': 'aucun intérêt de stocker des couches !',
             'points': 3,
             'fun_text': '🗑️ Une chambre sans odeurs !',
             'ad_text': 'Poubelles à couches anti-odeurs !',
@@ -1700,7 +1700,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer les toilettes',
             'image': 'wc/laver_toillettes.webp',
-            'description': 'nettoyer des toilettes ça vaut des points, personne n\'aime le faire',
+            'description': 'ça vaut des points, personne n\'aime le faire !',
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
@@ -1747,7 +1747,7 @@ TASKS_CONFIG = {
         {
             'name': 'Prendre de l\'essence',
             'image': 'garage/Prendre de l\'essence.webp',
-            'description': 'faire le plein de carburant ou recharge ta voiture !',
+            'description': 'faire le plein de carburant ou d\'électricité',
             'points': 3,
             'fun_text': '⛽ Le plein d\'énergie !',
             'ad_text': 'Carte carburant pour économiser !',
