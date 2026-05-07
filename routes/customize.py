@@ -344,8 +344,8 @@ def personnaliser_maison():
     conn = get_db_connection()
     c = conn.cursor()
     try:
-        c.execute("SELECT room_key, custom_name, custom_image, is_hidden FROM custom_rooms WHERE house_id=?", (house_id,))
-        custom_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3])} for row in c.fetchall()}
+        c.execute("SELECT room_key, custom_name, custom_image, is_hidden, emoji, image_data FROM custom_rooms WHERE house_id=?", (house_id,))
+        custom_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3]), 'emoji': row[4], 'image_data': row[5]} for row in c.fetchall()}
     except Exception:
         custom_db = {}
     finally:
@@ -364,13 +364,19 @@ def personnaliser_maison():
     for key, cust in custom_db.items():
         if not key.startswith('custom_'):
             continue
-        img = cust.get('image') or 'images/thumbs/default.webp'
+        emoji = cust.get('emoji') or None
+        image_data = cust.get('image_data') or None
+        img = cust.get('image') or ''
         # Sécurité : autoriser uniquement liste blanche OU upload utilisateur
-        if not _is_valid_room_image(img):
+        if img and not _is_valid_room_image(img):
+            img = 'images/thumbs/default.webp'
+        if not emoji and not image_data and not img:
             img = 'images/thumbs/default.webp'
         extra_rooms_data.append({
             'key': key,
             'image': img,
+            'emoji': emoji,
+            'image_data': image_data,
             'current_name': cust.get('name') or 'Pièce personnalisée',
             'is_hidden': cust.get('is_hidden', False),
         })
