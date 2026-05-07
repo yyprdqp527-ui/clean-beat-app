@@ -1755,7 +1755,7 @@ TASKS_CONFIG = {
         },
         {
             'name': 'Contrôle technique',
-            'image': 'garage/contrôle technique.webp',
+            'image': 'garage/contrôle technique .webp',
             'description': 'parce qu\'elle le vaut bien !',
             'points': 6,
             'fun_text': '🔧 Sécurité avant tout !',
