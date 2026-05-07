@@ -384,10 +384,14 @@
             margin: 0 auto 24px;
         }
         @media (max-width: 480px) {
-            .house-actions-grid { gap: 10px; }
-            .house-action-btn { padding: 14px 8px; }
-            .house-action-btn .btn-icon { font-size: 30px; }
-            .house-action-btn .btn-label { font-size: 12px; }
+            .house-actions-grid { gap: 8px; max-width: 100%; }
+            .house-action-btn {
+                padding: 10px 4px;
+                gap: 4px;
+                border-radius: 18px;
+            }
+            .house-action-btn .btn-icon { font-size: 24px; }
+            .house-action-btn .btn-label { font-size: 11px; line-height: 1.15; }
         }
         .house-action-btn {
             display: flex;
@@ -396,6 +400,8 @@
             justify-content: center;
             gap: 10px;
             aspect-ratio: 1 / 1;
+            min-width: 0;
+            overflow: hidden;
             padding: 18px 14px;
             background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
             backdrop-filter: blur(20px);
@@ -473,19 +479,19 @@
                     onclick="togglePanel('add')"
                     style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
                 <span class="btn-icon" style="display:block;text-align:center;width:100%;">➕</span>
-                <span class="btn-label" style="display:block;text-align:center;width:100%;">Ajouter<br>des pièces</span>
+                <span class="btn-label" style="display:block;text-align:center;width:100%;">Ajouter une<br>pièce</span>
             </button>
             <button type="button" class="house-action-btn" id="btnPanelManage"
                     onclick="togglePanel('manage')"
                     style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
                 <span class="btn-icon" style="display:block;text-align:center;width:100%;">🗑️</span>
-                <span class="btn-label" style="display:block;text-align:center;width:100%;">Supprimer<br>des pièces</span>
+                <span class="btn-label" style="display:block;text-align:center;width:100%;">Supprimer une<br>pièce</span>
             </button>
             <button type="button" class="house-action-btn" id="btnPanelRename"
                     onclick="togglePanel('rename')"
                     style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
                 <span class="btn-icon" style="display:block;text-align:center;width:100%;">✏️</span>
-                <span class="btn-label" style="display:block;text-align:center;width:100%;">Renommer<br>la maison</span>
+                <span class="btn-label" style="display:block;text-align:center;width:100%;">Renommer la<br>maison</span>
             </button>
         </div>
 
@@ -748,7 +754,6 @@ function _playValid() {
 }
 
 function togglePanel(which) {
-    _playClick();
     var panels = {
         add: document.getElementById('panelAdd'),
         manage: document.getElementById('panelManage'),
@@ -766,18 +771,20 @@ function togglePanel(which) {
     // Affiche le retour interne
     var backH = document.getElementById('backToHome');
     if (backH) backH.style.display = '';
-    window.scrollTo(0, 0);
+    if (window.scrollY > 0) window.scrollTo(0, 0);
+    // Son joué après le changement visuel pour ne pas retarder le rendu
+    requestAnimationFrame(function(){ _playClick(); });
 }
 
 function closePanel() {
-    _playClick();
     var pa = document.getElementById('panelAdd');     if (pa) pa.style.display = 'none';
     var pm = document.getElementById('panelManage');  if (pm) pm.style.display = 'none';
     var pr = document.getElementById('panelRename');  if (pr) pr.style.display = 'none';
     var backH = document.getElementById('backToHome'); if (backH) backH.style.display = 'none';
     var grid  = document.querySelector('.house-actions-grid'); if (grid) grid.style.display = '';
     var backS = document.getElementById('backToSettings'); if (backS) backS.style.display = '';
-    window.scrollTo(0, 0);
+    if (window.scrollY > 0) window.scrollTo(0, 0);
+    requestAnimationFrame(function(){ _playClick(); });
 }
 
 // 🎨 Génère un data URL Canvas (losange bleu + emoji centré, 400×400)
@@ -998,17 +1005,22 @@ function _cbConfirm(message, onYes) {
 </script>
 
 <!-- 🔊 Howler.js + SoundManager (chargé localement car page autonome) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
-<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous" defer></script>
+<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004" defer></script>
 <script>
 (function(){
     function unlockAudio(){
-        try { if (window.SoundManager) SoundManager.unlock(); } catch(e) {}
-        document.removeEventListener('touchstart', unlockAudio, true);
-        document.removeEventListener('click', unlockAudio, true);
+        // Diff\u00e8re l'unlock audio pour ne pas bloquer le 1er clic
+        var run = function(){
+            try { if (window.SoundManager) SoundManager.unlock(); } catch(e) {}
+        };
+        if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 500 });
+        else setTimeout(run, 0);
+        document.removeEventListener('touchstart', unlockAudio, false);
+        document.removeEventListener('click', unlockAudio, false);
     }
-    document.addEventListener('touchstart', unlockAudio, true);
-    document.addEventListener('click', unlockAudio, true);
+    document.addEventListener('touchstart', unlockAudio, false);
+    document.addEventListener('click', unlockAudio, false);
 })();
 </script>
 
