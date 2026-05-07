@@ -22,6 +22,8 @@ import os
 import string
 import base64
 import uuid
+import threading
+_cron_lock = threading.Lock()
 import json
 import requests
 import time
@@ -4804,6 +4806,9 @@ def cron_daily_reminder():
     if token != os.environ.get('CRON_SECRET', ''):
         return jsonify({'error': 'unauthorized'}), 401
 
+    if not _cron_lock.acquire(blocking=False):
+        return jsonify({'status': 'already_running'}), 200
+
     try:
         paris_today = now_paris().strftime('%Y-%m-%d')
         conn = get_db_connection()
@@ -4919,6 +4924,10 @@ def cron_daily_reminder():
     except Exception as e:
         print(f"❌ CRON error: {e}", flush=True)
         return jsonify({'error': str(e)}), 500
+
+    finally:
+        _cron_lock.release()
+
 @app.route('/api/cron/debug-reminder', methods=['GET'])
 def cron_debug_reminder():
     """Debug : montre l'état du dernier reminder pour un email donné.
