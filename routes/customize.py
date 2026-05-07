@@ -164,6 +164,49 @@ def set_bg_theme():
         return {'ok': False, 'error': str(e)}, 500
 
 
+@customize_bp.route('/rename_room', methods=['POST'])
+def rename_room():
+    """Renomme une pièce (standard ou custom). Si new_name vide, retire le nom personnalisé."""
+    from app import get_db_connection, safe_socketio_emit, SOCKETIO_AVAILABLE, socketio, _dbg
+    if 'user' not in session:
+        return {'ok': False}, 401
+    data = request.get_json(force=True)
+    room_key = (data.get('room_key') or '').strip()
+    new_name = (data.get('new_name') or '').strip()
+    if not room_key:
+        return {'ok': False, 'error': 'room_key manquant'}, 400
+    # Limite de longueur raisonnable
+    new_name = new_name[:60]
+    custom_name = new_name or None
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row:
+            return {'ok': False}, 403
+        house_id = row[0]
+        c.execute("""
+            INSERT INTO custom_rooms (house_id, room_key, custom_name)
+            VALUES (?, ?, ?)
+            ON CONFLICT(house_id, room_key) DO UPDATE SET custom_name = excluded.custom_name
+        """, (house_id, room_key, custom_name))
+        conn.commit()
+        # WebSocket : notifier les autres joueurs
+        if SOCKETIO_AVAILABLE and socketio:
+            try:
+                safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                                   namespace='/', room=f'house_{house_id}', broadcast=True)
+            except Exception as ws_err:
+                _dbg(f"⚠️ Erreur WebSocket rename_room: {ws_err}")
+    except Exception as e:
+        conn.rollback()
+        return {'ok': False, 'error': str(e)}, 500
+    finally:
+        conn.close()
+    return {'ok': True, 'custom_name': custom_name}
+
+
 @customize_bp.route('/toggle_room', methods=['POST'])
 def toggle_room():
     from app import get_db_connection, _invalidate_house_cache

@@ -105,6 +105,29 @@
         .room-info { flex: 1; min-width: 0; }
         .room-default-name { font-size: .68rem; color: rgba(21,48,54,0.5); margin-bottom: 5px; }
 
+        .room-rename-input {
+            width: 100%;
+            background: rgba(255,255,255,0.9);
+            border: 1.5px solid rgba(166,211,220,0.5);
+            border-radius: 9px;
+            color: #153036;
+            font-size: .92rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .room-rename-input:focus {
+            outline: none;
+            border-color: #fdae54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.18);
+            background: #fff;
+        }
+        .room-rename-input.is-saving { opacity: 0.6; }
+        .room-rename-input.is-saved { border-color: #4caf50; background: rgba(76,175,80,0.08); }
+        .room-rename-input.is-error { border-color: #e74c3c; background: rgba(231,76,60,0.08); }
+
         .room-name-input {
             width: 100%;
             background: rgba(255,255,255,0.9);
@@ -507,7 +530,13 @@
                         </div>
                         <div class="room-info">
                             <div class="room-default-name">{{ room.default_name }}</div>
-                            <div style="font-size:.92rem; font-weight:600; color:#153036; padding:2px 0;">{{ room.current_name }}</div>
+                            <input type="text" class="room-rename-input"
+                                   value="{{ room.current_name }}"
+                                   data-default="{{ room.default_name }}"
+                                   data-room-key="{{ room.key }}"
+                                   maxlength="60"
+                                   onblur="renameRoom(this)"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
                         </div>
                         <div class="toggle-wrap">
                             <span class="toggle-label-txt">Masquer</span>
@@ -535,7 +564,13 @@
                         </div>
                         <div class="room-info">
                             <div class="room-default-name">Pièce personnalisée</div>
-                            <div style="font-size:.92rem; font-weight:600; color:#153036; padding:2px 0;">{{ room.current_name }}</div>
+                            <input type="text" class="room-rename-input"
+                                   value="{{ room.current_name }}"
+                                   data-default="Pièce personnalisée"
+                                   data-room-key="{{ room.key }}"
+                                   maxlength="60"
+                                   onblur="renameRoom(this)"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
                         </div>
                         <button type="button"
                                 class="extra-room-delete"
@@ -568,6 +603,40 @@ function toggleRoom(roomKey, checkbox) {
     }).catch(function() {
         checkbox.checked = !checkbox.checked;
         if (item) item.classList.toggle('is-hidden-item', checkbox.checked);
+    });
+}
+
+function renameRoom(input) {
+    var roomKey = input.dataset.roomKey;
+    var defaultName = input.dataset.default || '';
+    var newName = (input.value || '').trim();
+    var previous = input.dataset.previous != null ? input.dataset.previous : input.defaultValue;
+    if (newName === previous) return;
+    // Si vide, on revient au nom par défaut visuellement (et on efface le custom_name en DB)
+    var displayName = newName || defaultName;
+    input.value = displayName;
+    input.classList.add('is-saving');
+    fetch('/rename_room', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ room_key: roomKey, new_name: newName })
+    }).then(function(r) {
+        input.classList.remove('is-saving');
+        if (r.ok) {
+            input.dataset.previous = displayName;
+            input.classList.add('is-saved');
+            setTimeout(function() { input.classList.remove('is-saved'); }, 1200);
+        } else {
+            input.value = previous;
+            input.classList.add('is-error');
+            setTimeout(function() { input.classList.remove('is-error'); }, 1500);
+        }
+    }).catch(function() {
+        input.classList.remove('is-saving');
+        input.value = previous;
+        input.classList.add('is-error');
+        setTimeout(function() { input.classList.remove('is-error'); }, 1500);
     });
 }
 
@@ -695,8 +764,8 @@ function onRoomPhotoSelected(input) {
     // Liste des labels déjà ajoutés (pour cocher les cartes correspondantes)
     var existingNames = [];
     try {
-        document.querySelectorAll('#panelManage .room-item .room-info > div:nth-child(2)').forEach(function(el) {
-            existingNames.push((el.textContent || '').trim().toLowerCase());
+        document.querySelectorAll('#panelManage .room-item .room-info .room-rename-input').forEach(function(el) {
+            existingNames.push((el.value || '').trim().toLowerCase());
         });
     } catch(e) {}
 
