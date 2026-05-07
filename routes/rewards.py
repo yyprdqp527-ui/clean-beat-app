@@ -956,37 +956,44 @@ def buy_reward(reward_id):
     # Fonctionnalité temporairement désactivée
     return redirect(url_for('menu') + '?nav=1')
     
-    if 'user' not in session:
-        flash("Connecte-toi pour acheter une récompense", "warning")
-        return redirect(url_for('auth.login'))
+    conn = None
+    try:
+        if 'user' not in session:
+            flash("Connecte-toi pour acheter une récompense", "warning")
+            return redirect(url_for('auth.login'))
 
-    conn = get_db_connection()
-    c = conn.cursor()
+        conn = get_db_connection()
+        c = conn.cursor()
 
-    # Vérifier les points et si l'utilisateur a déjà acheté la récompense aujourd'hui
-    c.execute("SELECT points FROM users WHERE email=?", (session['user'],))
-    points = c.fetchone()[0]
+        # Vérifier les points et si l'utilisateur a déjà acheté la récompense aujourd'hui
+        c.execute("SELECT points FROM users WHERE email=?", (session['user'],))
+        points = c.fetchone()[0]
 
-    c.execute("SELECT cost FROM rewards WHERE id=?", (reward_id,))
-    cost = c.fetchone()[0]
+        c.execute("SELECT cost FROM rewards WHERE id=?", (reward_id,))
+        cost = c.fetchone()[0]
 
-    today = now_paris().date().isoformat()
-    c.execute("SELECT * FROM user_rewards WHERE user_email=? AND reward_id=? AND purchased_date=?", (session['user'], reward_id, today))
-    already_bought_today = c.fetchone()
+        today = now_paris().date().isoformat()
+        c.execute("SELECT * FROM user_rewards WHERE user_email=? AND reward_id=? AND purchased_date=?", (session['user'], reward_id, today))
+        already_bought_today = c.fetchone()
 
-    if already_bought_today:
-        flash("Tu as déjà obtenu cette récompense aujourd'hui. Reviens demain !", "info")
-    elif points < cost:
-        flash("Pas assez de points pour acheter cette récompense.", "danger")
-    else:
-        # Déduire les points et ajouter la récompense avec la date d'aujourd'hui
-        c.execute("UPDATE users SET points = points - ? WHERE email=?", (cost, session['user']))
-        c.execute("INSERT INTO user_rewards (user_email, reward_id, purchased_date) VALUES (?, ?, ?)", (session['user'], reward_id, today))
-        conn.commit()
-        flash("Récompense achetée !", "success")
+        if already_bought_today:
+            flash("Tu as déjà obtenu cette récompense aujourd'hui. Reviens demain !", "info")
+        elif points < cost:
+            flash("Pas assez de points pour acheter cette récompense.", "danger")
+        else:
+            # Déduire les points et ajouter la récompense avec la date d'aujourd'hui
+            c.execute("UPDATE users SET points = points - ? WHERE email=?", (cost, session['user']))
+            c.execute("INSERT INTO user_rewards (user_email, reward_id, purchased_date) VALUES (?, ?, ?)", (session['user'], reward_id, today))
+            conn.commit()
+            flash("Récompense achetée !", "success")
 
-    conn.close()
-    return redirect(url_for('rewards.rewards'))
+        conn.close()
+        return redirect(url_for('rewards.rewards'))
+    except Exception as e:
+        if conn:
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': 'Une erreur est survenue, réessaie.'}), 500
 
 
 # ===============================
