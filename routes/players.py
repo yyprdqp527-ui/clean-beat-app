@@ -16,65 +16,72 @@ def manage_players():
         flash("Connectez-vous d'abord", "warning")
         return redirect(url_for('auth.login'))
     
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    # Récupérer la maison de l'utilisateur actuel
-    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-    user_house = c.fetchone()
-    
-    if not user_house or not user_house[0]:
+    conn = None
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Récupérer la maison de l'utilisateur actuel
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        user_house = c.fetchone()
+        
+        if not user_house or not user_house[0]:
+            conn.close()
+            flash("Vous devez d'abord rejoindre une maison", "warning")
+            return redirect(url_for('menu') + '?nav=1')
+        
+        house_id = user_house[0]
+        
+        # Récupérer le nom de la maison
+        c.execute("SELECT name FROM houses WHERE id=?", (house_id,))
+        house_row = c.fetchone()
+        house_name = house_row[0] if house_row else ""
+        
+        # Récupérer tous les joueurs de cette maison (inclut avatar_style pour DiceBear)
+        c.execute("""
+            SELECT email, name, avatar, avatar_file, avatar_url, player_color, avatar_style
+            FROM users
+            WHERE house_id=?
+            ORDER BY name
+        """, (house_id,))
+        
+        players = []
+        for row in c.fetchall():
+            email, name, avatar, avatar_file, avatar_url, player_color, avatar_style = row
+            
+            # Assigner une couleur si le joueur n'en a pas encore
+            if not player_color:
+                player_color = assign_player_color(email, house_id)
+            
+            # Convertir v8 → v7 et supprimer backgroundColor (fond coloré indésirable)
+            import re as _re_mp
+            if avatar_url and 'dicebear.com/8.x' in avatar_url:
+                avatar_url = avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
+            if avatar_url and 'backgroundColor' in avatar_url:
+                avatar_url = _re_mp.sub(r'[&?]backgroundColor=[^&]*', '', avatar_url).rstrip('?&')
+            players.append({
+                'email': email,
+                'name': name,
+                'avatar': avatar,
+                'avatar_file': validate_avatar_file(avatar_file),
+                'avatar_url': avatar_url,
+                'avatar_style': avatar_style if avatar_style else 'adventurer',
+                'color': player_color
+            })
+        
         conn.close()
-        flash("Vous devez d'abord rejoindre une maison", "warning")
-        return redirect(url_for('menu') + '?nav=1')
-    
-    house_id = user_house[0]
-    
-    # Récupérer le nom de la maison
-    c.execute("SELECT name FROM houses WHERE id=?", (house_id,))
-    house_row = c.fetchone()
-    house_name = house_row[0] if house_row else ""
-    
-    # Récupérer tous les joueurs de cette maison (inclut avatar_style pour DiceBear)
-    c.execute("""
-        SELECT email, name, avatar, avatar_file, avatar_url, player_color, avatar_style
-        FROM users
-        WHERE house_id=?
-        ORDER BY name
-    """, (house_id,))
-    
-    players = []
-    for row in c.fetchall():
-        email, name, avatar, avatar_file, avatar_url, player_color, avatar_style = row
         
-        # Assigner une couleur si le joueur n'en a pas encore
-        if not player_color:
-            player_color = assign_player_color(email, house_id)
-        
-        # Convertir v8 → v7 et supprimer backgroundColor (fond coloré indésirable)
-        import re as _re_mp
-        if avatar_url and 'dicebear.com/8.x' in avatar_url:
-            avatar_url = avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
-        if avatar_url and 'backgroundColor' in avatar_url:
-            avatar_url = _re_mp.sub(r'[&?]backgroundColor=[^&]*', '', avatar_url).rstrip('?&')
-        players.append({
-            'email': email,
-            'name': name,
-            'avatar': avatar,
-            'avatar_file': validate_avatar_file(avatar_file),
-            'avatar_url': avatar_url,
-            'avatar_style': avatar_style if avatar_style else 'adventurer',
-            'color': player_color
-        })
-    
-    conn.close()
-    
-    print(f'🏠 MANAGE_PLAYERS players={[(p["email"],p["name"],p["avatar"],p["avatar_url"]) for p in players]}', flush=True)
-    return render_template('manage_players.html', 
-                         players=players, 
-                         house_name=house_name,
-                         house_id=house_id,
-                         hide_header=True)
+        print(f'🏠 MANAGE_PLAYERS players={[(p["email"],p["name"],p["avatar"],p["avatar_url"]) for p in players]}', flush=True)
+        return render_template('manage_players.html', 
+                             players=players, 
+                             house_name=house_name,
+                             house_id=house_id,
+                             hide_header=True)
+    except Exception as e:
+        if conn:
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': 'Une erreur est survenue, réessaie.'}), 500
 
 
 @players_bp.route('/edit_player/<path:email>')

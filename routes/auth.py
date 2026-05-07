@@ -295,42 +295,49 @@ def forgot_password():
 @auth_bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     from app import get_db_connection, now_paris
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT email, expires_at, used FROM password_reset_tokens WHERE token=?", (token,))
-    row = c.fetchone()
+    conn = None
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT email, expires_at, used FROM password_reset_tokens WHERE token=?", (token,))
+        row = c.fetchone()
 
-    if not row:
-        conn.close()
-        flash("Lien invalide ou expiré.", "danger")
-        return redirect(url_for('auth.login'))
-
-    email, expires_at, used = row
-    if used:
-        conn.close()
-        flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
-        return redirect(url_for('auth.forgot_password'))
-
-    if now_paris() > datetime.fromisoformat(expires_at):
-        conn.close()
-        flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
-        return redirect(url_for('auth.forgot_password'))
-
-    if request.method == 'POST':
-        new_password = request.form.get('password', '').strip()
-        if len(new_password) < 8:
+        if not row:
             conn.close()
-            flash("Le mot de passe doit contenir au moins 8 caractères.", "danger")
-            return render_template('reset_password.html', token=token)
-        # Mettre à jour le mot de passe
-        hashed = generate_password_hash(new_password)
-        c.execute("UPDATE users SET password=? WHERE email=?", (hashed, email))
-        # Invalider le token
-        c.execute("UPDATE password_reset_tokens SET used=1 WHERE token=?", (token,))
-        conn.commit()
-        conn.close()
-        flash("✅ Mot de passe mis à jour ! Tu peux te connecter.", "success")
-        return redirect(url_for('auth.login'))
+            flash("Lien invalide ou expiré.", "danger")
+            return redirect(url_for('auth.login'))
 
-    conn.close()
-    return render_template('reset_password.html', token=token, email=email)
+        email, expires_at, used = row
+        if used:
+            conn.close()
+            flash("Ce lien a déjà été utilisé. Fais une nouvelle demande.", "warning")
+            return redirect(url_for('auth.forgot_password'))
+
+        if now_paris() > datetime.fromisoformat(expires_at):
+            conn.close()
+            flash("Ce lien a expiré (valable 1h). Fais une nouvelle demande.", "warning")
+            return redirect(url_for('auth.forgot_password'))
+
+        if request.method == 'POST':
+            new_password = request.form.get('password', '').strip()
+            if len(new_password) < 8:
+                conn.close()
+                flash("Le mot de passe doit contenir au moins 8 caractères.", "danger")
+                return render_template('reset_password.html', token=token)
+            # Mettre à jour le mot de passe
+            hashed = generate_password_hash(new_password)
+            c.execute("UPDATE users SET password=? WHERE email=?", (hashed, email))
+            # Invalider le token
+            c.execute("UPDATE password_reset_tokens SET used=1 WHERE token=?", (token,))
+            conn.commit()
+            conn.close()
+            flash("✅ Mot de passe mis à jour ! Tu peux te connecter.", "success")
+            return redirect(url_for('auth.login'))
+
+        conn.close()
+        return render_template('reset_password.html', token=token, email=email)
+    except Exception as e:
+        if conn:
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': 'Une erreur est survenue, réessaie.'}), 500

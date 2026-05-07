@@ -909,38 +909,45 @@ def use_reward(reward_id):
     
     _dbg(f"[DEBUG use_reward] reward_id={reward_id}, user={session['user']}")
     
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    # Vérifier que la récompense appartient à l'utilisateur
-    c.execute("""
-        SELECT id FROM mystery_rewards
-        WHERE id=? AND user_email=? AND used=0
-    """, (reward_id, session['user']))
-    
-    reward_row = c.fetchone()
-    _dbg(f"[DEBUG] Récompense trouvée: {reward_row is not None}")
-    
-    if not reward_row:
+    conn = None
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Vérifier que la récompense appartient à l'utilisateur
+        c.execute("""
+            SELECT id FROM mystery_rewards
+            WHERE id=? AND user_email=? AND used=0
+        """, (reward_id, session['user']))
+        
+        reward_row = c.fetchone()
+        _dbg(f"[DEBUG] Récompense trouvée: {reward_row is not None}")
+        
+        if not reward_row:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Récompense non trouvée'}), 404
+        
+        # Marquer comme utilisée
+        c.execute("""
+            UPDATE mystery_rewards
+            SET used=1, used_date=date('now')
+            WHERE id=?
+        """, (reward_id,))
+        
+        rows_affected = c.rowcount
+        _dbg(f"[DEBUG] Lignes modifiées: {rows_affected}")
+        
+        conn.commit()
         conn.close()
-        return jsonify({'success': False, 'message': 'Récompense non trouvée'}), 404
-    
-    # Marquer comme utilisée
-    c.execute("""
-        UPDATE mystery_rewards
-        SET used=1, used_date=date('now')
-        WHERE id=?
-    """, (reward_id,))
-    
-    rows_affected = c.rowcount
-    _dbg(f"[DEBUG] Lignes modifiées: {rows_affected}")
-    
-    conn.commit()
-    conn.close()
-    
-    _dbg(f"[DEBUG] Récompense {reward_id} marquée comme utilisée avec succès")
-    
-    return jsonify({'success': True})
+        
+        _dbg(f"[DEBUG] Récompense {reward_id} marquée comme utilisée avec succès")
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': 'Une erreur est survenue, réessaie.'}), 500
 
 
 @rewards_bp.route('/buy_reward/<int:reward_id>')
