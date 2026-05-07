@@ -1100,7 +1100,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire le café',
             'image': 'cuisine/cafe.png',
-            'description': 'Les premiers points de la journée !',
+            'description': 'les premiers points de la journée !',
             'points': 3,
             'fun_text': 'Allez, un petit café… sinon je me rendors pour la journée !',
             'ad_text': 'Le secret d\'un bon café ? Une machine bien entretenue et des grains frais !',
@@ -1109,7 +1109,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire les courses',
             'image': 'cuisine/faire_course.png',
-            'description': 'Choisir la bonne file d\'attente, le secret des courses !',
+            'description': 'choisir la bonne file d\'attente, le secret des courses réussies !',
             'points': 8,
             'fun_text': '🛒 Caddie en main, liste en tête... C\'est parti pour l\'aventure !',
             'ad_text': 'Astuce budget : fais ta liste par rayon pour éviter les achats impulsifs !',
@@ -1118,7 +1118,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire à manger',
             'image': 'cuisine/faire à manger.webp',
-            'description': 'Besoin d\'une recette ? Clique sur astuce de pro',
+            'description': 'besoin d\'une recette ? clique sur astuce de pro',
             'points': 10,
             'fun_text': '👨‍🍳 Aux fourneaux chef ! La brigade attend son repas !',
             'ad_text': 'Batch cooking : cuisine tes repas de la semaine le dimanche, tu gagnes 1h par jour !',
@@ -1127,7 +1127,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre la table',
             'image': 'cuisine/mettre la table.webp',
-            'description': 'Fourchette à gauche, couteau à droite on est pas a Buckingham, tu peux faire simple',
+            'description': 'fourchette à gauche, couteau à droite, on est pas à Buckingham, tu peux faire simple',
             'points': 3,
             'fun_text': '🍽️ Assiettes, couverts, serviettes... On met les petits plats dans les grands !',
             'ad_text': 'Astuce déco : un set de table coloré et des serviettes assorties, ça change tout !',
@@ -1136,7 +1136,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre dans le lave-vaisselle',
             'image': 'cuisine/lave vaiselle.webp',
-            'description': 'Si tu l\'a fait a la main tu as le droit d\'augmenter les points',
+            'description': 'si tu l\'as fait à la main, tu as le droit d\'augmenter les points',
             'points': 4,
             'fun_text': '🍽️ Tetris version vaisselle : optimise l\'espace !',
             'ad_text': 'Lance ton lave-vaisselle le soir en heures creuses, tu économises jusqu\'à 30% !',
@@ -1145,7 +1145,7 @@ TASKS_CONFIG = {
         {
             'name': 'Passer l\'éponge',
             'image': 'cuisine/passer l\'eponge.webp',
-            'description': 'Ca ira pour cette fois !',
+            'description': 'ça ira pour cette fois !',
             'points': 4,
             'fun_text': '🧽 Frotte, frotte ! On efface les traces du festin !',
             'ad_text': 'Change ton éponge toutes les semaines pour éviter les bactéries !',
@@ -1154,7 +1154,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer le plan de travail',
             'image': 'cuisine/nettoyer le plan de travil.webp',
-            'description': 'C\'est comme le lit, il faut le faire à chaque fois !',
+            'description': 'c\'est comme le lit, il faut le faire à chaque fois !',
             'points': 4,
             'fun_text': '✨ Un plan de travail nickel, c\'est la base d\'une cuisine pro !',
             'ad_text': 'Bicarbonate + citron = le combo magique pour dégraisser sans produits chimiques !',
@@ -1163,7 +1163,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger la vaisselle',
             'image': 'cuisine/ranger la vaiselle.webp',
-            'description': 'Le lave-vaisselle n\'est pas un placard !',
+            'description': 'le lave-vaisselle n\'est pas un placard !',
             'points': 4,
             'fun_text': '📦 Chaque chose à sa place, et une place pour chaque chose !',
             'ad_text': 'Organise tes placards par zone d\'usage : gain de temps assuré !',
@@ -1172,7 +1172,7 @@ TASKS_CONFIG = {
         {
             'name': 'Livraison',
             'image': 'cuisine/livraisonUber.webp',
-            'description': 'Ca arrive meme au meilleurs !',
+            'description': 'ça arrive même aux meilleurs !',
             'points': -3,
             'fun_text': '🚴 Ding dong ! Le resto vient à toi ce soir !',
             'ad_text': 'Astuce budget : compare les prix entre Uber Eats, Deliveroo et Just Eat !',
@@ -1183,7 +1183,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver son linge',
             'image': 'buanderie/machine.jpg',
-            'description': 'Lancer une machine de linge',
+            'description': 't\'as regardé dans les poches de ton pantalon ?',
             'points': 4,
             'fun_text': '🧺 Trie bien tes couleurs, sinon gare aux chaussettes roses !',
             'ad_text': '30° suffisent pour 90% du linge ! Tu économises de l\'énergie et tes vêtements durent plus longtemps.',
@@ -1192,7 +1192,7 @@ TASKS_CONFIG = {
         {
             'name': 'Sécher son linge',
             'image': 'buanderie/linge etendu.webp',
-            'description': 'Étendre ou sécher le linge',
+            'description': 't\'es pas obligé d\'attendre devant !',
             'points': 3,
             'fun_text': '🌞 Le soleil est le meilleur sèche-linge !',
             'ad_text': 'Le séchage à l\'air libre préserve tes vêtements et économise de l\'énergie.',
@@ -1201,7 +1201,7 @@ TASKS_CONFIG = {
         {
             'name': 'Plier son linge',
             'image': 'buanderie/linge plié.webp',
-            'description': 'Plier le linge propre',
+            'description': 'c\'est la pire tâche !',
             'points': 4,
             'fun_text': '👕 Marie Kondo serait fière de toi !',
             'ad_text': 'La méthode KonMari : plie tes t-shirts en rectangle et range-les à la verticale. Tu verras tout d\'un coup d\'œil !',
@@ -1210,7 +1210,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger ses vêtements',
             'image': 'buanderie/ranger ses vetements.webp',
-            'description': 'Ranger les vêtements dans l\'armoire',
+            'description': 'le dernier effort !',
             'points': 3,
             'fun_text': '🗄️ Une place pour chaque chose, chaque chose à sa place !',
             'ad_text': 'Organisateurs de tiroirs : trouve ce que tu cherches en 2 secondes !',
@@ -1221,7 +1221,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer les toilettes',
             'image': 'wc/laver_toillettes.webp',
-            'description': '🚽 Nettoyer des toilettes ça vaut des points, personne n\'aime laver les chiottes… 😉 !',
+            'description': 'nettoyer des toilettes ça vaut des points, personne n\'aime le faire',
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
@@ -1230,7 +1230,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer le rouleau de papier toilette',
             'image': 'wc/jeter_rouleaux.png',
-            'description': '🧻 Tu peux jeter les rouleaux ou en faire des ronds de serviettes ! 😄',
+            'description': 'garde les rouleaux vides en faisant des ronds de serviettes !',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
@@ -1239,7 +1239,7 @@ TASKS_CONFIG = {
         {
             'name': 'Relever la cuvette',
             'image': 'wc/relever la cuvette.Webp',
-            'description': '🎯 Relève la lunette des toilettes… Bien viser ; essaye un peu pour voir ! 😉',
+            'description': 'ou, encore plus simple, fais pipi assis !',
             'points': 1,
             'fun_text': '🚽 Un petit geste, un grand respect !',
             'ad_text': 'Astuce : un abattant WC à fermeture ralentie évite les claquements !',
@@ -1248,7 +1248,7 @@ TASKS_CONFIG = {
         {
             'name': 'Séjourner aux toilettes',
             'image': 'wc/séjourner aux toilettes.webp',
-            'description': '📱 Eh oui, c\'est tentant de passer sa vie aux toilettes pour échapper aux corvées ! 😂',
+            'description': 'faut reconnaître, c\'est le meilleur endroit pour échapper aux corvées !',
             'points': -3,
             'fun_text': '📱 La bibliothèque préférée de la maison !',
             'ad_text': 'Un repose-pieds physiologique améliore le confort et la santé intestinale !',
@@ -1371,7 +1371,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger le désordre',
             'image': 'salon/Ranger le desordre du salon.webp',
-            'description': 'Pour avoir le plaisir de le remettre après…',
+            'description': 'pour avoir le plaisir de le remettre après…',
             'points': 4,
             'fun_text': '🧹 Un salon rangé, c\'est un salon où on respire !',
             'ad_text': 'Paniers et boîtes de rangement !',
@@ -1380,7 +1380,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire la poussière',
             'image': 'salon/faire la poussière.webp',
-            'description': 'Curieuse expression française qui ne signifie',
+            'description': '…sous le tapis c\'est pas sa place !',
             'points': 3,
             'fun_text': '✨ Adieu la poussière, bonjour la propreté !',
             'ad_text': 'Chiffons microfibres magiques !',
@@ -1389,7 +1389,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver les sols',
             'image': 'salon/laver les sols.webp',
-            'description': 'Avec de la musique évidemment !',
+            'description': 'en musique évidemment !',
             'points': 5,
             'fun_text': '🧼 Des sols qui brillent de mille feux !',
             'ad_text': 'Serpillières et produits sols !',
@@ -1398,7 +1398,7 @@ TASKS_CONFIG = {
         {
             'name': 'Passer l\'aspirateur',
             'image': 'salon/Passer l\'aspirateur.webp',
-            'description': 'Avec un podcast sur les oreilles ça passe mieux !',
+            'description': 'avec un podcast sur les oreilles, ça passe mieux !',
             'points': 5,
             'fun_text': '🌪️ La tornade du ménage passe par ici !',
             'ad_text': 'Aspirateurs performants en promo !',
@@ -1407,7 +1407,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver les vitres',
             'image': 'salon/laver les vitres.webp',
-            'description': 'C\'est chouette le pshit pshit !',
+            'description': 'c\'est chouette le pshit pshit !',
             'points': 5,
             'fun_text': '🪟 La vue sera encore plus belle !',
             'ad_text': 'Produits vitres sans traces !',
@@ -1416,7 +1416,7 @@ TASKS_CONFIG = {
         {
             'name': 'Arroser les plantes',
             'image': 'salon/arroser les plantes.webp',
-            'description': 'Et leur parler avec amour !',
+            'description': 'et leur parler avec amour !',
             'points': 2,
             'fun_text': '🌱 Un peu d\'eau pour la jungle urbaine !',
             'ad_text': 'Arrosoirs design et pratiques !',
@@ -1427,7 +1427,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire son lit',
             'image': 'chambre parent/faire le lit.webp',
-            'description': 'Et au carré s\'il vous plait !',
+            'description': 'et au carré s\'il vous plait !',
             'points': 3,
             'fun_text': '🛏️ Un lit au carré pour bien démarrer la journée !',
             'ad_text': 'Linge de lit de qualité !',
@@ -1436,7 +1436,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer les draps',
             'image': 'chambre parent/changer les draps du lit.webp',
-            'description': 'Toutes les semaines, tous les ans …personne ne sait vraiment !',
+            'description': 'toutes les semaines, tous les ans… personne ne sait vraiment !',
             'points': 4,
             'fun_text': '🧺 Des draps frais pour de beaux rêves !',
             'ad_text': 'Draps confortables en promo !',
@@ -1445,7 +1445,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger ses vêtements',
             'image': 'chambre parent/ranger ses vetements.webp',
-            'description': 'Mets au moins sur une chaise comme tout le monde !',
+            'description': 'mets au moins sur une chaise, comme tout le monde !',
             'points': 3,
             'fun_text': '👔 Une armoire bien organisée !',
             'ad_text': 'Organisateurs de placard !',
@@ -1456,7 +1456,7 @@ TASKS_CONFIG = {
         {
             'name': 'Se laver les dents',
             'image': 'salle de bain/se laver es dents.webp',
-            'description': 'Un sourire éclatant',
+            'description': '3 minutes, 3 minutes… 30 secondes c\'est déjà bien !',
             'points': 1,
             'fun_text': '🦷 Un sourire éclatant pour bien commencer la journée !',
             'ad_text': 'Brosses à dents électriques !',
@@ -1465,7 +1465,7 @@ TASKS_CONFIG = {
         {
             'name': 'Reboucher le dentifrice',
             'image': 'salle de bain/reboucher le dentifrice.webp',
-            'description': 'Le dentifrice bien fermé',
+            'description': 'c\'est pourtant pas compliqué !',
             'points': 1,
             'fun_text': '🧴 Un tube bien fermé pour éviter le gaspillage !',
             'ad_text': 'Dentifrices pour toute la famille !',
@@ -1474,7 +1474,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer ses cheveux',
             'image': 'salle de bain/nettoyer les cheveux.webp',
-            'description': 'Enlever les cheveux du lavabo',
+            'description': 'sinon boule à zéro !',
             'points': 2,
             'fun_text': '💇 Plus de cheveux dans le lavabo !',
             'ad_text': 'Accessoires salle de bain !',
@@ -1483,7 +1483,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer ses poils de barbe',
             'image': 'salle de bain/nettoyer les poils de barbe.webp',
-            'description': 'Nettoyer les poils de barbe du lavabo',
+            'description': 'ça t\'évitera des réflexions !',
             'points': 2,
             'fun_text': '🪒 La barbe de trois jours se range !',
             'ad_text': 'Rasoirs et accessoires !',
@@ -1492,7 +1492,7 @@ TASKS_CONFIG = {
         {
             'name': 'Jeter les bouteilles vides',
             'image': 'salle de bain/jeter les bouteilles de savon vide. wepb.webp',
-            'description': 'Vider les bouteilles vides',
+            'description': 'sauf en cas de collection',
             'points': 2,
             'fun_text': '♻️ Faire de la place pour les nouvelles !',
             'ad_text': 'Organisateurs salle de bain !',
@@ -1501,7 +1501,7 @@ TASKS_CONFIG = {
         {
             'name': 'Éponger l\'eau par terre',
             'image': 'salle de bain/éponger le sol.webp',
-            'description': 'Sécher l\'eau au sol',
+            'description': 'et, ta serviette n\'est pas une serpillière !',
             'points': 3,
             'fun_text': '💦 Plus de flaques pour éviter de glisser !',
             'ad_text': 'Tapis de bain absorbants !',
@@ -1709,7 +1709,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer les toilettes',
             'image': 'wc/laver_toillettes.webp',
-            'description': '🚽 Nettoyer des toilettes ça vaut des points, personne n\'aime laver les chiottes… 😉 !',
+            'description': 'nettoyer des toilettes ça vaut des points, personne n\'aime le faire',
             'points': 6,
             'fun_text': '🚽 Le trône mérite un peu d\'attention royale !',
             'ad_text': 'Verse un verre de coca dans la cuvette, laisse agir 1h : détartrage express et naturel !',
@@ -1718,7 +1718,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer le rouleau de papier toilette',
             'image': 'wc/jeter_rouleaux.png',
-            'description': '🧻 Tu peux jeter les rouleaux ou en faire des ronds de serviettes ! 😄',
+            'description': 'garde les rouleaux vides en faisant des ronds de serviettes !',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
@@ -1727,7 +1727,7 @@ TASKS_CONFIG = {
         {
             'name': 'Relever la cuvette',
             'image': 'wc/relever la cuvette.Webp',
-            'description': '🎯 Relève la lunette des toilettes… Bien viser ; essaye un peu pour voir ! 😉',
+            'description': 'ou, encore plus simple, fais pipi assis !',
             'points': 1,
             'fun_text': '🚽 Un petit geste, un grand respect !',
             'ad_text': 'Astuce : un abattant WC à fermeture ralentie évite les claquements !',
@@ -1736,7 +1736,7 @@ TASKS_CONFIG = {
         {
             'name': 'Séjourner aux toilettes',
             'image': 'wc/séjourner aux toilettes.webp',
-            'description': '📱 Eh oui, c\'est tentant de passer sa vie aux toilettes pour échapper aux corvées ! 😂',
+            'description': 'faut reconnaître, c\'est le meilleur endroit pour échapper aux corvées !',
             'points': -3,
             'fun_text': '📱 La bibliothèque préférée de la maison !',
             'ad_text': 'Un repose-pieds physiologique améliore le confort et la santé intestinale !',
