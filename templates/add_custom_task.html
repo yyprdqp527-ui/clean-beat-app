@@ -276,7 +276,73 @@ body {
 }
 .photo-upload-placeholder .upload-hint {
     font-size: 12px;
-    color: var(--teal-medium);
+    color: var(--dark);
+    font-weight: 600;
+}
+
+/* ---------- GRILLE D'IMAGES PRÉCHARGÉES ---------- */
+.gallery-section {
+    margin-top: 18px;
+}
+.gallery-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+@media (max-width: 380px) {
+    .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.gallery-item {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid rgba(166,211,220,0.4);
+    background: rgba(255,255,255,0.7);
+    transition: all 0.2s ease;
+    padding: 0;
+    font-family: inherit;
+}
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.gallery-item:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(253,174,84,0.25);
+}
+.gallery-item.selected {
+    border-color: var(--gold);
+    border-width: 3px;
+    box-shadow: 0 6px 20px rgba(253,174,84,0.5);
+}
+.gallery-item.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: white;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .image-preview-container {
     text-align: center;
@@ -445,26 +511,31 @@ body {
                         <button type="button" class="remove-photo-btn" onclick="removePhoto(event)">✕</button>
                     </div>
                 </div>
+
+                {% if mission_images %}
+                <!-- GALERIE D'IMAGES PRÉCHARGÉES -->
+                <div class="gallery-section">
+                    <p class="gallery-title">✨ Ou choisis une image préparée :</p>
+                    <div class="gallery-grid">
+                        {% for img in mission_images %}
+                        <button type="button" class="gallery-item{% if task and task.image == img.path %} selected{% endif %}"
+                                data-path="{{ img.path }}"
+                                onclick="selectGalleryImage(this)"
+                                title="{{ img.label }}">
+                            <img src="{{ url_for('static', filename='images/' ~ img.path) }}" alt="{{ img.label }}" loading="lazy">
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
-            <!-- POINTS — saisie libre -->
+            <!-- POINTS — saisie libre simplifiée -->
             <div class="form-group">
-                <label><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
-                <input type="hidden" id="points" name="points" value="{{ task.points if task else 10 }}">
-                <div class="points-input-wrapper">
-                    <button type="button" class="pts-minus" onclick="changePoints(-5)">−</button>
-                    <input type="number" class="points-input-field" id="pointsDisplay"
-                           value="{{ task.points if task else 10 }}" min="1" max="999"
-                           oninput="syncPoints(this.value)">
-                    <button type="button" class="pts-plus" onclick="changePoints(+5)">+</button>
-                </div>
+                <label for="pointsDisplay"><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
+                <input type="number" class="points-input-field" id="pointsDisplay" name="points"
+                       value="{{ task.points if task else 10 }}" min="1" max="999" required>
                 <div class="points-label-below">points attribués au joueur qui réalise la mission</div>
-                <div class="points-presets">
-                    <button type="button" class="preset-chip" onclick="setPoints(5)">😌 5 pts</button>
-                    <button type="button" class="preset-chip" onclick="setPoints(10)">💪 10 pts</button>
-                    <button type="button" class="preset-chip" onclick="setPoints(20)">🔥 20 pts</button>
-                    <button type="button" class="preset-chip" onclick="setPoints(50)">🏆 50 pts</button>
-                </div>
             </div>
 
             <!-- BOUTON CRÉER / ENREGISTRER -->
@@ -491,39 +562,26 @@ body {
 </div>
 
 <script>
-/* === POINTS === */
-function syncPoints(val) {
-    val = parseInt(val) || 1;
-    if (val < 1) val = 1;
-    if (val > 999) val = 999;
-    document.getElementById('points').value = val;
-    document.getElementById('pointsDisplay').value = val;
-    highlightPresets(val);
+/* === GALERIE D'IMAGES === */
+function selectGalleryImage(btn) {
+    var path = btn.getAttribute('data-path');
+    document.getElementById('taskImageSelect').value = path;
+    // Vider le file input pour ne pas envoyer en double
+    var fileInput = document.getElementById('task_image');
+    fileInput.value = '';
+    // Highlight visuel
+    document.querySelectorAll('.gallery-item').forEach(function(it) { it.classList.remove('selected'); });
+    btn.classList.add('selected');
+    // Afficher l'image dans la zone de prévisualisation
+    var preview = document.getElementById('imagePreview');
+    var container = document.getElementById('previewContainer');
+    var placeholder = document.getElementById('uploadPlaceholder');
+    var zone = document.getElementById('photoZone');
+    preview.src = btn.querySelector('img').src;
+    container.style.display = 'block';
+    placeholder.style.display = 'none';
+    zone.classList.add('has-photo');
 }
-
-function changePoints(delta) {
-    const cur = parseInt(document.getElementById('pointsDisplay').value) || 10;
-    let next = cur + delta;
-    if (next < 1) next = 1;
-    if (next > 999) next = 999;
-    syncPoints(next);
-}
-
-function setPoints(val) {
-    syncPoints(val);
-}
-
-function highlightPresets(val) {
-    document.querySelectorAll('.preset-chip').forEach(chip => {
-        const chipVal = parseInt(chip.textContent.match(/\d+/));
-        chip.classList.toggle('active', chipVal === val);
-    });
-}
-
-/* Init presets on load */
-document.addEventListener('DOMContentLoaded', function() {
-    highlightPresets(parseInt(document.getElementById('points').value) || 10);
-});
 
 /* === PHOTO === */
 function compressImage(file, maxW, maxH, quality, callback) {
@@ -569,6 +627,8 @@ function previewImage(event) {
             placeholder.style.display = 'none';
             zone.classList.add('has-photo');
             document.getElementById('taskImageSelect').value = '';
+            // Désélectionner la galerie
+            document.querySelectorAll('.gallery-item').forEach(function(it) { it.classList.remove('selected'); });
         };
         reader.readAsDataURL(input.files[0]);
     }
@@ -589,6 +649,8 @@ function removePhoto(e) {
     zone.classList.remove('has-photo');
     fileInput.value = '';
     document.getElementById('taskImageSelect').value = '';
+    // Désélectionner la galerie
+    document.querySelectorAll('.gallery-item').forEach(function(it) { it.classList.remove('selected'); });
 }
 
 function confirmDelete() {

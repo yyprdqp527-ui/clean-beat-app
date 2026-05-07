@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, jsonify, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, jsonify, flash, current_app
 import os
 import sys
 import threading
@@ -396,12 +396,26 @@ def add_task_page(cat, task_id=None):
         return redirect(url_for('tasks.categorie', cat=cat))
 
     conn.close()
+    # Charger la galerie d'images préchargées (dossier static/images/ajout_mission/)
+    import os as _os
+    mission_images = []
+    _gallery_dir = _os.path.join(current_app.static_folder, 'images', 'ajout_mission')
+    if _os.path.isdir(_gallery_dir):
+        for _f in sorted(_os.listdir(_gallery_dir)):
+            if _f.lower().endswith(('.webp', '.jpg', '.jpeg', '.png')) and not _f.startswith('.'):
+                # label = nom de fichier sans extension, underscores -> espaces
+                _label = _os.path.splitext(_f)[0].replace('_', ' ').capitalize()
+                mission_images.append({
+                    'path': f'ajout_mission/{_f}',
+                    'label': _label
+                })
     # Afficher le formulaire
     return render_template('add_custom_task.html', 
                            category=cat, 
                            category_name=category_name,
                            category_icon=category_icon,
                            task=existing_task,
+                           mission_images=mission_images,
                            hide_header=True)
 
 # Mettre à jour les points d'une tâche prédéfinie (override par maison)

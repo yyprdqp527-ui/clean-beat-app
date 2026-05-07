@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Designs icônes – QuiFaitQuoi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f172a;
+    font-family: -apple-system, sans-serif;
+    padding: 36px 16px 80px;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  p.subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 40px;
+  }
+  .section-title {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 40px 0 20px;
+  }
+
+  /* ── Grille ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 20px;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  .proposal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .icon-wrap {
+    width: 110px;
+    height: 110px;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .icon-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 25px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .icon-wrap svg { width: 110px; height: 110px; display: block; }
+  .label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #cbd5e1;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+  .sublabel {
+    font-size: 10px;
+    color: #475569;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* ── Écran accueil ── */
+  .homescreen {
+    max-width: 340px;
+    margin: 16px auto 0;
+    background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 38px;
+    padding: 48px 24px 40px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .homescreen-date {
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    font-size: 42px;
+    font-weight: 200;
+    margin-bottom: 4px;
+  }
+  .homescreen-day {
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    align-items: start;
+    justify-items: center;
+  }
+  .app-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .sm-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 13px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .sm-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.18) 0%, transparent 50%);
+  }
+  .sm-wrap svg { width: 56px; height: 56px; display: block; }
+  .app-name {
+    font-size: 9px;
+    color: rgba(255,255,255,0.8);
+    text-align: center;
+    max-width: 58px;
+    line-height: 1.2;
+  }
+  .sys-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Nouvelles propositions</h1>
+<p class="subtitle">Bubblegum Sans · Dégradé bleu · 8 designs</p>
+
+<!-- ══════════════════════ GRILLE ══════════════════════ -->
+<div class="grid">
+
+  <!-- ① Grand Q central -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="A" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#60a5fa"/>
+            <stop offset="100%" stop-color="#1e3a8a"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#A)"/>
+        <!-- Grand Q décoratif -->
+        <text x="256" y="310" font-family="'Bubblegum Sans',cursive" font-size="320"
+              text-anchor="middle" fill="rgba(255,255,255,0.12)">Q</text>
+        <!-- Texte principal centré -->
+        <text x="256" y="210" font-family="'Bubblegum Sans',cursive" font-size="110"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="330" font-family="'Bubblegum Sans',cursive" font-size="110"
+              text-anchor="middle" fill="white">FAIT</text>
+        <text x="256" y="450" font-family="'Bubblegum Sans',cursive" font-size="110"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">① Filigrane Q</div>
+    <div class="sublabel">Grand Q semi-transparent en fond</div>
+  </div>
+
+  <!-- ② Initiales QFQ + point coloré -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="B" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0ea5e9"/>
+            <stop offset="100%" stop-color="#1e40af"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#B)"/>
+        <!-- Cercle déco -->
+        <circle cx="256" cy="256" r="200" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+        <!-- Initiales -->
+        <text x="256" y="190" font-family="'Bubblegum Sans',cursive" font-size="100"
+              text-anchor="middle" fill="white" letter-spacing="4">QFQ</text>
+        <!-- Ligne séparatrice -->
+        <rect x="96" y="222" width="320" height="3" rx="2" fill="rgba(255,255,255,0.3)"/>
+        <!-- Sous-titre -->
+        <text x="256" y="310" font-family="'Bubblegum Sans',cursive" font-size="56"
+              text-anchor="middle" fill="rgba(255,255,255,0.9)">Qui Fait</text>
+        <text x="256" y="390" font-family="'Bubblegum Sans',cursive" font-size="56"
+              text-anchor="middle" fill="rgba(255,255,255,0.9)">Quoi ?</text>
+        <!-- Point accent -->
+        <circle cx="420" cy="110" r="28" fill="#fbbf24"/>
+      </svg>
+    </div>
+    <div class="label">② Monogramme QFQ</div>
+    <div class="sublabel">Initiales + cercle + point doré</div>
+  </div>
+
+  <!-- ③ Maison intégrée -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="C" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="50%" stop-color="#2563eb"/>
+            <stop offset="100%" stop-color="#1e1b4b"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#C)"/>
+        <!-- Toit maison (triangle) -->
+        <polygon points="256,52 430,200 82,200" fill="rgba(255,255,255,0.25)"/>
+        <!-- Corps maison -->
+        <rect x="130" y="195" width="252" height="145" rx="8" fill="rgba(255,255,255,0.15)"/>
+        <!-- Porte -->
+        <rect x="216" y="260" width="80" height="80" rx="8" fill="rgba(255,255,255,0.3)"/>
+        <!-- Texte en dessous -->
+        <text x="256" y="430" font-family="'Bubblegum Sans',cursive" font-size="88"
+              text-anchor="middle" fill="white">QUOI?</text>
+      </svg>
+    </div>
+    <div class="label">③ La Maison</div>
+    <div class="sublabel">Icône maison + texte</div>
+  </div>
+
+  <!-- ④ Dégradé horizontal + lettres empilées grosses -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="D" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#93c5fd"/>
+            <stop offset="50%" stop-color="#1d4ed8"/>
+            <stop offset="100%" stop-color="#0c0a3e"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#D)"/>
+        <!-- Bandes horizontales légères -->
+        <rect x="0" y="165" width="512" height="2" fill="rgba(255,255,255,0.15)" rx="1"/>
+        <rect x="0" y="332" width="512" height="2" fill="rgba(255,255,255,0.15)" rx="1"/>
+        <!-- Texte -->
+        <text x="256" y="155" font-family="'Bubblegum Sans',cursive" font-size="155"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="315" font-family="'Bubblegum Sans',cursive" font-size="155"
+              text-anchor="middle" fill="white">FAIT</text>
+        <text x="256" y="475" font-family="'Bubblegum Sans',cursive" font-size="155"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">④ Dégradé vertical</div>
+    <div class="sublabel">Clair → sombre de haut en bas</div>
+  </div>
+
+  <!-- ⑤ Bulles de chat -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="E" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1d4ed8"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#E)"/>
+        <!-- Bulle gauche -->
+        <rect x="40" y="80" width="310" height="110" rx="55" fill="rgba(255,255,255,0.20)"/>
+        <polygon points="90,190 60,240 130,190" fill="rgba(255,255,255,0.20)"/>
+        <text x="195" y="152" font-family="'Bubblegum Sans',cursive" font-size="82"
+              text-anchor="middle" fill="white">QUI ?</text>
+        <!-- Bulle droite -->
+        <rect x="162" y="240" width="310" height="110" rx="55" fill="rgba(99,179,237,0.35)"/>
+        <polygon points="420,350 450,400 380,350" fill="rgba(99,179,237,0.35)"/>
+        <text x="317" y="310" font-family="'Bubblegum Sans',cursive" font-size="62"
+              text-anchor="middle" fill="white">MOI !</text>
+        <!-- Bas -->
+        <text x="256" y="470" font-family="'Bubblegum Sans',cursive" font-size="62"
+              text-anchor="middle" fill="rgba(255,255,255,0.6)">QuiFaitQuoi</text>
+      </svg>
+    </div>
+    <div class="label">⑤ Bulles de chat</div>
+    <div class="sublabel">"QUI ?" / "MOI !" — idée jeu</div>
+  </div>
+
+  <!-- ⑥ Cercle intérieur -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="F" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#bfdbfe"/>
+            <stop offset="100%" stop-color="#1e3a8a"/>
+          </linearGradient>
+          <radialGradient id="FR" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#1e1b4b"/>
+          </radialGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#FR)"/>
+        <!-- Cercle blanc intérieur -->
+        <circle cx="256" cy="220" r="175" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
+        <!-- Q grand -->
+        <text x="256" y="280" font-family="'Bubblegum Sans',cursive" font-size="240"
+              text-anchor="middle" fill="white">Q</text>
+        <!-- Texte bas -->
+        <text x="256" y="430" font-family="'Bubblegum Sans',cursive" font-size="70"
+              text-anchor="middle" fill="rgba(255,255,255,0.9)">QuiFaitQuoi</text>
+      </svg>
+    </div>
+    <div class="label">⑥ Grand Q radial</div>
+    <div class="sublabel">Dégradé radial + Q monumental</div>
+  </div>
+
+  <!-- ⑦ Étoiles + confettis -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="G" x1="20%" y1="0%" x2="80%" y2="100%">
+            <stop offset="0%" stop-color="#60a5fa"/>
+            <stop offset="40%" stop-color="#2563eb"/>
+            <stop offset="100%" stop-color="#1e1b4b"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#G)"/>
+        <!-- Confettis / points déco -->
+        <circle cx="80"  cy="90"  r="14" fill="#fbbf24" opacity="0.9"/>
+        <circle cx="430" cy="80"  r="10" fill="#f472b6" opacity="0.9"/>
+        <circle cx="60"  cy="380" r="10" fill="#34d399" opacity="0.9"/>
+        <circle cx="440" cy="410" r="14" fill="#fbbf24" opacity="0.9"/>
+        <circle cx="390" cy="170" r="8"  fill="#f472b6" opacity="0.8"/>
+        <circle cx="120" cy="240" r="8"  fill="#34d399" opacity="0.8"/>
+        <!-- Étoile -->
+        <text x="420" y="280" font-family="sans-serif" font-size="40" fill="rgba(255,255,255,0.3)">★</text>
+        <text x="70"  y="160" font-family="sans-serif" font-size="30" fill="rgba(255,255,255,0.25)">★</text>
+        <!-- Texte principal -->
+        <text x="256" y="190" font-family="'Bubblegum Sans',cursive" font-size="148"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="330" font-family="'Bubblegum Sans',cursive" font-size="148"
+              text-anchor="middle" fill="white">FAIT</text>
+        <text x="256" y="470" font-family="'Bubblegum Sans',cursive" font-size="148"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">⑦ Confettis</div>
+    <div class="sublabel">Points colorés décoratifs (fête)</div>
+  </div>
+
+  <!-- ⑧ Split diagonal -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="H1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#93c5fd"/>
+            <stop offset="100%" stop-color="#1d4ed8"/>
+          </linearGradient>
+          <linearGradient id="H2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e3a8a"/>
+            <stop offset="100%" stop-color="#0c0a3e"/>
+          </linearGradient>
+          <clipPath id="tri-top">
+            <polygon points="0,0 512,0 512,512 0,0"/>
+          </clipPath>
+          <clipPath id="tri-bot">
+            <polygon points="0,0 512,512 0,512"/>
+          </clipPath>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#H2)"/>
+        <rect width="512" height="512" rx="118" fill="url(#H1)" clip-path="url(#tri-top)"/>
+        <!-- Ligne diagonale -->
+        <line x1="0" y1="0" x2="512" y2="512" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
+        <!-- Texte -->
+        <text x="340" y="190" font-family="'Bubblegum Sans',cursive" font-size="110"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="310" font-family="'Bubblegum Sans',cursive" font-size="110"
+              text-anchor="middle" fill="rgba(255,255,255,0.9)">FAIT</text>
+        <text x="180" y="430" font-family="'Bubblegum Sans',cursive" font-size="110"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">⑧ Split diagonal</div>
+    <div class="sublabel">Deux tons, texte en cascade</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════ SIMULATION ÉCRAN ══════════════════════ -->
+<p class="section-title" style="margin-top:56px;">Sur votre écran d'accueil</p>
+
+<div class="homescreen">
+  <div class="homescreen-date">19</div>
+  <div class="homescreen-day">Dimanche · avril</div>
+
+  <div class="app-grid">
+    <!-- 8 variantes en petit -->
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="a1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a1)"/>
+          <text x="256" y="310" font-family="'Bubblegum Sans',cursive" font-size="320" text-anchor="middle" fill="rgba(255,255,255,0.12)">Q</text>
+          <text x="256" y="210" font-family="'Bubblegum Sans',cursive" font-size="110" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="330" font-family="'Bubblegum Sans',cursive" font-size="110" text-anchor="middle" fill="white">FAIT</text>
+          <text x="256" y="450" font-family="'Bubblegum Sans',cursive" font-size="110" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">① Filigrane</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="a2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#1e40af"/></linearGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a2)"/>
+          <circle cx="256" cy="256" r="200" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+          <text x="256" y="190" font-family="'Bubblegum Sans',cursive" font-size="100" text-anchor="middle" fill="white" letter-spacing="4">QFQ</text>
+          <rect x="96" y="222" width="320" height="3" rx="2" fill="rgba(255,255,255,0.3)"/>
+          <text x="256" y="310" font-family="'Bubblegum Sans',cursive" font-size="56" text-anchor="middle" fill="rgba(255,255,255,0.9)">Qui Fait</text>
+          <text x="256" y="390" font-family="'Bubblegum Sans',cursive" font-size="56" text-anchor="middle" fill="rgba(255,255,255,0.9)">Quoi ?</text>
+          <circle cx="420" cy="110" r="28" fill="#fbbf24"/>
+        </svg>
+      </div>
+      <div class="app-name">② Mono</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="a3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="50%" stop-color="#2563eb"/><stop offset="100%" stop-color="#1e1b4b"/></linearGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a3)"/>
+          <polygon points="256,52 430,200 82,200" fill="rgba(255,255,255,0.25)"/>
+          <rect x="130" y="195" width="252" height="145" rx="8" fill="rgba(255,255,255,0.15)"/>
+          <rect x="216" y="260" width="80" height="80" rx="8" fill="rgba(255,255,255,0.3)"/>
+          <text x="256" y="430" font-family="'Bubblegum Sans',cursive" font-size="88" text-anchor="middle" fill="white">QUOI?</text>
+        </svg>
+      </div>
+      <div class="app-name">③ Maison</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="a4" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#93c5fd"/><stop offset="50%" stop-color="#1d4ed8"/><stop offset="100%" stop-color="#0c0a3e"/></linearGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a4)"/>
+          <rect x="0" y="165" width="512" height="2" fill="rgba(255,255,255,0.15)" rx="1"/>
+          <rect x="0" y="332" width="512" height="2" fill="rgba(255,255,255,0.15)" rx="1"/>
+          <text x="256" y="155" font-family="'Bubblegum Sans',cursive" font-size="155" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="315" font-family="'Bubblegum Sans',cursive" font-size="155" text-anchor="middle" fill="white">FAIT</text>
+          <text x="256" y="475" font-family="'Bubblegum Sans',cursive" font-size="155" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">④ Vertical</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="a5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1d4ed8"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a5)"/>
+          <rect x="40" y="80" width="310" height="110" rx="55" fill="rgba(255,255,255,0.20)"/>
+          <polygon points="90,190 60,240 130,190" fill="rgba(255,255,255,0.20)"/>
+          <text x="195" y="152" font-family="'Bubblegum Sans',cursive" font-size="82" text-anchor="middle" fill="white">QUI ?</text>
+          <rect x="162" y="240" width="310" height="110" rx="55" fill="rgba(99,179,237,0.35)"/>
+          <polygon points="420,350 450,400 380,350" fill="rgba(99,179,237,0.35)"/>
+          <text x="317" y="310" font-family="'Bubblegum Sans',cursive" font-size="62" text-anchor="middle" fill="white">MOI !</text>
+          <text x="256" y="470" font-family="'Bubblegum Sans',cursive" font-size="62" text-anchor="middle" fill="rgba(255,255,255,0.6)">QuiFaitQuoi</text>
+        </svg>
+      </div>
+      <div class="app-name">⑤ Bulles</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><radialGradient id="a6r" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a6r)"/>
+          <circle cx="256" cy="220" r="175" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
+          <text x="256" y="280" font-family="'Bubblegum Sans',cursive" font-size="240" text-anchor="middle" fill="white">Q</text>
+          <text x="256" y="430" font-family="'Bubblegum Sans',cursive" font-size="70" text-anchor="middle" fill="rgba(255,255,255,0.9)">QuiFaitQuoi</text>
+        </svg>
+      </div>
+      <div class="app-name">⑥ Grand Q</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="a7" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="40%" stop-color="#2563eb"/><stop offset="100%" stop-color="#1e1b4b"/></linearGradient></defs>
+          <rect width="512" height="512" rx="118" fill="url(#a7)"/>
+          <circle cx="80" cy="90" r="14" fill="#fbbf24" opacity="0.9"/>
+          <circle cx="430" cy="80" r="10" fill="#f472b6" opacity="0.9"/>
+          <circle cx="60" cy="380" r="10" fill="#34d399" opacity="0.9"/>
+          <circle cx="440" cy="410" r="14" fill="#fbbf24" opacity="0.9"/>
+          <text x="256" y="190" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="330" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">FAIT</text>
+          <text x="256" y="470" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">⑦ Confettis</div>
+    </div>
+
+    <div class="app-item">
+      <div class="sm-wrap">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ah1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#93c5fd"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient>
+            <linearGradient id="ah2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#0c0a3e"/></linearGradient>
+            <clipPath id="ct"><polygon points="0,0 512,0 512,512 0,0"/></clipPath>
+            <clipPath id="cb"><polygon points="0,0 512,512 0,512"/></clipPath>
+          </defs>
+          <rect width="512" height="512" rx="118" fill="url(#ah2)"/>
+          <rect width="512" height="512" rx="118" fill="url(#ah1)" clip-path="url(#ct)"/>
+          <text x="340" y="190" font-family="'Bubblegum Sans',cursive" font-size="110" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="310" font-family="'Bubblegum Sans',cursive" font-size="110" text-anchor="middle" fill="rgba(255,255,255,0.9)">FAIT</text>
+          <text x="180" y="430" font-family="'Bubblegum Sans',cursive" font-size="110" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">⑧ Split</div>
+    </div>
+
+  </div>
+</div>
+
+<p style="text-align:center;font-size:11px;color:#475569;margin-top:28px;">
+  Dites-moi votre favori (① à ⑧) — je génère les PNG + pousse sur GitHub
+</p>
+
+</body>
+</html>
