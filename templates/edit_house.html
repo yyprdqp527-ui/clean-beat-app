@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -111,7 +111,7 @@
             border: 1.5px solid rgba(166,211,220,0.5);
             border-radius: 9px;
             color: #153036;
-            font-size: .92rem;
+            font-size: 16px;
             font-weight: 600;
             padding: 6px 10px;
             box-sizing: border-box;
@@ -432,7 +432,7 @@
         .house-action-btn .btn-icon { font-size: 38px; line-height: 1; flex: 0 0 auto; }
         .house-action-btn .btn-label { font-size: 14px; font-weight: 800; color: #153036; line-height: 1.25; text-align: center; display: block; width: 100%; flex: 0 0 auto; }
 
-        .rooms-panel { margin-top: 4px; margin-bottom: 18px; }
+        .rooms-panel { margin-top: 4px; margin-bottom: 18px; min-height: 60vh; }
 
         /* Carte titre glass dans le panneau Ajouter */
         .add-title-card {
@@ -542,7 +542,7 @@
                 <input type="text" id="photoRoomName"
                        placeholder="Nom de la pièce (ex: Salle de jeux)"
                        maxlength="30"
-                       style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.15);color:inherit;font-size:15px;margin-bottom:10px;outline:none;">
+                       style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.15);color:inherit;font-size:16px;margin-bottom:10px;outline:none;">
                 <button type="button" class="add-custom-room-btn"
                         style="margin-top:0; margin-bottom:14px;"
                         onclick="document.getElementById('roomPhotoInput').click()">
@@ -562,6 +562,15 @@
             {# Panneau "Supprimer des pièces" — TOUTES les pièces, toggles auto-save #}
             {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
             <div id="panelManage" class="rooms-panel" style="display:none;">
+
+                <div class="add-title-card">
+                    <span class="att-icon">🗑️</span>
+                    <p class="att-title">Gérer mes pièces</p>
+                    <p class="att-sub">Masque les pièces que tu n'utilises pas pour garder un espace épuré.<br>
+                    <strong>Conserve les pièces essentielles</strong> (cuisine, salle de bain…) pour ne pas perdre leurs tâches associées.<br><br>
+                    Tu peux aussi <strong>renommer n'importe quelle pièce</strong> en tapant directement dans son champ de texte.</p>
+                </div>
+
                 <div class="rooms-list" id="rooms-list">
                     {# Pièces standards : toggle masquer/afficher (auto-save via /toggle_room) #}
                     {% for room in rooms %}
