@@ -343,7 +343,7 @@ body {
 .feature-subtitle {
     font-size: 12px;
     font-weight: 500;
-    color: #597176 !important;
+    color: #153036 !important;
     line-height: 1.5;
     margin: 0;
 }
@@ -732,7 +732,7 @@ body {
 .wheel-task-card .wtc-pts {
     font-size: 13px;
     font-weight: 900;
-    color: #FDAE54 !important;
+    color: #153036 !important;
 }
 .wheel-validate-btn {
     width: 100%;
@@ -766,7 +766,7 @@ body {
     color: #597176 !important;
 }
 .wheel-pts-counter strong {
-    color: #FDAE54 !important;
+    color: #153036 !important;
     font-size: 20px;
     font-weight: 900;
 }
@@ -1059,7 +1059,7 @@ body {
             <div class="feature-header-icon">🎡</div>
             <div class="feature-header-text">
                 <div class="feature-title">Roue des Trucs Chiants</div>
-                <div class="feature-subtitle">🔥 Alors {% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.name|e }}{% endif %}{% endfor %}, tu es à la traîne ? Rattrape le retard ! <span style="color: #FDAE54;">Plus c'est horrible, plus tu gagnes de points !</span> 😈</div>
+                <div class="feature-subtitle">🔥 Alors {% for p in sorted_by_week %}{% if p.is_current_user %}{{ p.name|e }}{% endif %}{% endfor %}, tu es à la traîne ? Rattrape le retard ! <span style="color: #153036;">Plus c'est horrible, plus tu gagnes de points !</span> 😈</div>
             </div>
         </div>
         <div class="feature-body">
@@ -1082,7 +1082,7 @@ body {
     <!-- Liste des corvées obtenues — remplie par JS -->
     <div id="wheelTaskList" class="wheel-task-list"></div>
 
-    <div style="padding: 0 20px 20px; color: #597176; font-size: 11px; text-align: center; font-style: italic;">
+    <div style="padding: 0 20px 20px; color: #153036; font-size: 11px; text-align: center; font-style: italic;">
         ⚡ Allez champion, montre-leur de quoi tu es capable ! ⚡
     </div>
 
@@ -2121,7 +2121,9 @@ function drawWheel() {
         ctx.translate(centerX, centerY);
         ctx.rotate(startAngle + sliceAngle / 2);
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#fff';
+        // Texte foncé sur segments clairs (#FFD93D, #A8E6CF…)
+        const lightColors = ['#FFD93D', '#A8E6CF'];
+        ctx.fillStyle = lightColors.includes(item.color) ? '#153036' : '#fff';
         ctx.font = 'bold 18px Montserrat';
         ctx.shadowColor = 'rgba(0,0,0,0.5)';
         ctx.shadowBlur = 4;
