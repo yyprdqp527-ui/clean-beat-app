@@ -1127,7 +1127,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre la table',
             'image': 'cuisine/mettre la table.webp',
-            'description': 'on est pas à Buckingham, fait simple… fourchette à gauche, couteau à droite.',
+            'description': 'on est pas à Buckingham, fais simple… fourchette à gauche, couteau à droite',
             'points': 3,
             'fun_text': '🍽️ Assiettes, couverts, serviettes... On met les petits plats dans les grands !',
             'ad_text': 'Astuce déco : un set de table coloré et des serviettes assorties, ça change tout !',
@@ -1230,7 +1230,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer le rouleau de papier toilette',
             'image': 'wc/jeter_rouleaux.png',
-            'description': 'les rouleaux finis ? Fais-en de magnifiques ronds de serviette !',
+            'description': 'les rouleaux finis ? Fais-en de magnifiques ronds de serviette.',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
@@ -1407,7 +1407,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver les vitres',
             'image': 'salon/laver les vitres.webp',
-            'description': 'c’est chouette, le « pshit-pshit »',
+            'description': 'c\'est chouette le « pshit-pshit » !',
             'points': 5,
             'fun_text': '🪟 La vue sera encore plus belle !',
             'ad_text': 'Produits vitres sans traces !',
@@ -1445,7 +1445,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger ses vêtements',
             'image': 'chambre parent/ranger ses vetements.webp',
-            'description': 'mets au moins sur une chaise, comme tout le monde !',
+            'description': 'mets-les au moins sur une chaise, comme tout le monde',
             'points': 3,
             'fun_text': '👔 Une armoire bien organisée !',
             'ad_text': 'Organisateurs de placard !',
@@ -1483,7 +1483,7 @@ TASKS_CONFIG = {
         {
             'name': 'Nettoyer ses poils de barbe',
             'image': 'salle de bain/nettoyer les poils de barbe.webp',
-            'description': 'ça t\'évitera des réflexions !',
+            'description': 'franchement, ça t\'évitera des réflexions !',
             'points': 2,
             'fun_text': '🪒 La barbe de trois jours se range !',
             'ad_text': 'Rasoirs et accessoires !',
@@ -1492,7 +1492,7 @@ TASKS_CONFIG = {
         {
             'name': 'Jeter les bouteilles vides',
             'image': 'salle de bain/jeter les bouteilles de savon vide. wepb.webp',
-            'description': 'sauf si tu te lances dans une collection',
+            'description': 'sauf si tu te lances dans une collection.',
             'points': 2,
             'fun_text': '♻️ Faire de la place pour les nouvelles !',
             'ad_text': 'Organisateurs salle de bain !',
@@ -1501,7 +1501,7 @@ TASKS_CONFIG = {
         {
             'name': 'Éponger l\'eau par terre',
             'image': 'salle de bain/éponger le sol.webp',
-            'description': '…et ta serviette n’est pas une serpillière',
+            'description': '…et ta serviette n\'est pas une serpillière.',
             'points': 3,
             'fun_text': '💦 Plus de flaques pour éviter de glisser !',
             'ad_text': 'Tapis de bain absorbants !',
@@ -1577,7 +1577,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire son lit',
             'image': 'chambre ados/faire son lit.webp',
-            'description': 'bien faire son lit le matin',
+            'description': 'tire ta couette et gagne 3 points !',
             'points': 3,
             'fun_text': '🛏️ Un lit bien fait, une journée bien partie !',
             'ad_text': 'Parures de lit pour chambre enfant !',
@@ -1586,7 +1586,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger sa chambre',
             'image': 'chambre ados/Ranger sa chambre.webp',
-            'description': 'remettre de l\'ordre dans la chambre',
+            'description': 'tu retrouveras LE truc que t\'as perdu !',
             'points': 4,
             'fun_text': '✨ Une chambre rangée c\'est une chambre heureuse !',
             'ad_text': 'Rangements pratiques pour chambre enfant !',
@@ -1595,7 +1595,7 @@ TASKS_CONFIG = {
         {
             'name': 'Aérer sa chambre',
             'image': 'chambre ados/aérer sa chambre.webp',
-            'description': 'ouvrir la fenêtre pour renouveler l\'air',
+            'description': 'pour avoir l\'air frais !',
             'points': 2,
             'fun_text': '💨 Un air frais pour bien dormir !',
             'ad_text': 'Purificateurs d\'air pour chambre !',
@@ -1604,7 +1604,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre les vêtements dans le panier',
             'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
-            'description': 'trier les vêtements sales',
+            'description': 'un panier à trois points !',
             'points': 3,
             'fun_text': '👕 Droit au but, dans le panier !',
             'ad_text': 'Paniers à linge design !',
@@ -1613,7 +1613,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider sa corbeille',
             'image': 'chambre ados/vider sa corbeille à papier.webp',
-            'description': 'vider la corbeille à papier',
+            'description': 'avant qu\'elle déborde !',
             'points': 2,
             'fun_text': '🗑️ Poubelle vide, esprit clair !',
             'ad_text': 'Jolies corbeilles pour chambre !',
@@ -1622,7 +1622,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire ses devoirs',
             'image': 'chambre ados/Faire ses devoirs.webp',
-            'description': 'faire les devoirs du soir',
+            'description': 'et oui, allez, courage !',
             'points': 5,
             'fun_text': '📚 Les devoirs d\'abord, les jeux ensuite !',
             'ad_text': 'Fournitures scolaires et bureaux enfants !',
@@ -1633,7 +1633,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger ses jouets',
             'image': 'chambre enfant/ranger ses jouets.webp',
-            'description': 'remettre de l\'ordre dans la chambre',
+            'description': 'eux aussi ont besoin de repos !',
             'points': 4,
             'fun_text': '🧸 Une chambre bien rangée pour mieux jouer !',
             'ad_text': 'Boîtes de rangement pour enfants !',
@@ -1642,7 +1642,7 @@ TASKS_CONFIG = {
         {
             'name': 'Lire 10 minutes par jour',
             'image': 'chambre enfant/lire dix minutes par jour.webp',
-            'description': 'un moment de lecture quotidien',
+            'description': 'ça t\'empêchera pas de jouer à la console après !',
             'points': 3,
             'fun_text': '📚 Lire c\'est grandir !',
             'ad_text': 'Livres pour enfants !',
@@ -1653,7 +1653,7 @@ TASKS_CONFIG = {
         {
             'name': 'Donner le biberon',
             'image': 'chambre bébé/donner le biberon.webp',
-            'description': 'nourrir bébé avec amour !',
+            'description': 'au sein ça compte aussi !',
             'points': 5,
             'fun_text': '🍼 L\'heure du biberon !',
             'ad_text': 'Les meilleurs biberons anti-coliques pour bébé !',
@@ -1662,7 +1662,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer les couches',
             'image': 'chambre bébé/changer les couches.webp',
-            'description': 'un bébé propre et confortable !',
+            'description': 'c\'est parti pour 3 ans !',
             'points': 4,
             'fun_text': '👶 Change moi vite !',
             'ad_text': 'Couches douces et absorbantes pour bébé !',
@@ -1671,7 +1671,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire dormir le bébé',
             'image': 'chambre bébé/endormir le bébé.webp',
-            'description': 'un dodo paisible pour bébé !',
+            'description': 'Bon courage !',
             'points': 6,
             'fun_text': '😴 Dodo, l\'enfant do !',
             'ad_text': 'Veilleuses et musiques douces pour endormir bébé !',
@@ -1680,7 +1680,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver les vêtements',
             'image': 'chambre bébé/laver les vêtements.webp',
-            'description': 'des petits habits tout propres !',
+            'description': 'il peut pas encore le faire !',
             'points': 4,
             'fun_text': '👕 Lessive spéciale bébé !',
             'ad_text': 'Lessives hypoallergéniques pour la peau de bébé !',
@@ -1689,7 +1689,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider la poubelle',
             'image': 'chambre bébé/vider la poubelle.webp',
-            'description': 'vider la poubelle à couches !',
+            'description': 'aucun intérêt de les stocker !',
             'points': 3,
             'fun_text': '🗑️ Une chambre sans odeurs !',
             'ad_text': 'Poubelles à couches anti-odeurs !',
@@ -1709,7 +1709,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer le rouleau de papier toilette',
             'image': 'wc/jeter_rouleaux.png',
-            'description': 'les rouleaux finis ? Fais-en de magnifiques ronds de serviette !',
+            'description': 'les rouleaux finis ? Fais-en de magnifiques ronds de serviette.',
             'points': 2,
             'fun_text': '🧻 Le héros silencieux de la maison !',
             'ad_text': 'Le saviez-vous ? Le papier recyclé est tout aussi doux et préserve 70% d\'eau à la fabrication.',
@@ -1738,7 +1738,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver la voiture',
             'image': 'garage/carwash.webp',
-            'description': 'une voiture propre et brillante !',
+            'description': 'c\'est quand même un peu kiffant',
             'points': 5,
             'fun_text': '🚗 Ça brille de mille feux !',
             'ad_text': 'Produits pour un lavage auto impeccable !',
@@ -1747,7 +1747,7 @@ TASKS_CONFIG = {
         {
             'name': 'Prendre de l\'essence',
             'image': 'garage/Prendre de l\'essence.webp',
-            'description': 'faire le plein de carburant',
+            'description': 'faire le plein de carburant ou recharge ta voiture !',
             'points': 3,
             'fun_text': '⛽ Le plein d\'énergie !',
             'ad_text': 'Carte carburant pour économiser !',
@@ -1755,8 +1755,8 @@ TASKS_CONFIG = {
         },
         {
             'name': 'Contrôle technique',
-            'image': 'garage/contrôle technique .webp',
-            'description': 'passer le contrôle technique du véhicule',
+            'image': 'garage/contrôle technique.webp',
+            'description': 'parce qu\'elle le vaut bien !',
             'points': 6,
             'fun_text': '🔧 Sécurité avant tout !',
             'ad_text': 'Kit d\'entretien auto !',
