@@ -2079,6 +2079,7 @@ const wheelTasks = [
 
 let isSpinning = false;
 let currentRotation = 0;
+let hasPendingTask = false;
 
 // Dessiner la roue au chargement
 window.addEventListener('load', function() {
@@ -2139,8 +2140,29 @@ function drawWheel() {
     ctx.stroke();
 }
 
+function _showWheelSheet(titleEmoji, title, body) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(89,113,118,0.5);backdrop-filter:blur(6px);display:flex;align-items:flex-end;';
+    overlay.setAttribute('data-overlay','1');
+    const sheet = document.createElement('div');
+    sheet.style.cssText = 'width:100%;background:rgba(255,255,255,0.96);backdrop-filter:saturate(180%) blur(30px);border-radius:24px 24px 0 0;border-top:1px solid rgba(255,255,255,0.8);box-shadow:0 -20px 60px rgba(21,48,54,0.2);padding:28px 24px 40px;text-align:center;';
+    sheet.innerHTML = `
+        <div style="font-size:32px;margin-bottom:12px;">${titleEmoji}</div>
+        <div style="font-size:17px;font-weight:800;color:#153036;margin-bottom:8px;">${title}</div>
+        <div style="font-size:14px;color:#597176;margin-bottom:20px;line-height:1.5;">${body}</div>
+        <button style="width:100%;padding:14px;background:linear-gradient(135deg,#FDAE54,#F4C68D);border:none;border-radius:16px;font-size:15px;font-weight:800;color:#153036;cursor:pointer;box-shadow:0 4px 15px rgba(253,174,84,0.35);" onclick="this.closest('[data-overlay]').remove()">OK, je la fais 💪</button>
+    `;
+    overlay.appendChild(sheet);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+
 function spinWheel() {
     if (isSpinning) return;
+    if (hasPendingTask) {
+        _showWheelSheet('🫵', 'Termine d\'abord ta tâche !', 'Valide ta corvée en cours avant<br>de retourner la roue.');
+        return;
+    }
     isSpinning = true;
     SoundManager.play('wheelSpin');
     const spinBtn = document.getElementById('spinBtn');
@@ -2161,6 +2183,7 @@ function spinWheel() {
     currentRotation = (currentRotation + totalRotation) % 360;
     setTimeout(() => {
         addWheelTaskCard(selectedTask);
+        hasPendingTask = true;
         isSpinning = false;
         spinBtn.disabled = false;
         spinBtn.textContent = '🎯 FAIRE TOURNER LA ROUE !';
@@ -2206,6 +2229,7 @@ function validateWheelTask(btn, taskName, points) {
         if (data.success) {
             btn.classList.add('done');
             btn.textContent = '🏆 Corvée validée !';
+            hasPendingTask = false;
             playRewardSound();
             floatPoints('+' + points + ' pts', btn);
             const counter = document.getElementById('myWheelPts');
@@ -2229,7 +2253,7 @@ function validateWheelTask(btn, taskName, points) {
     .catch(() => {
         btn.disabled = false;
         btn.textContent = '\u2705 J\'ai fait la corv\xe9e !';
-        alert('Erreur r\xe9seau, r\xe9essaie !');
+        _showWheelSheet('😕', 'Erreur réseau', 'Réessaie dans quelques secondes.');
     });
 }
 
