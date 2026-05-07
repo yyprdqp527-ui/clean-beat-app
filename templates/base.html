@@ -1159,8 +1159,7 @@ window.showGlassPopup = function(message, category = 'info', duration = 3000) {
         document.removeEventListener('touchstart', unlockAudio);
         document.removeEventListener('click', unlockAudio);
         var run = function(){ if(window.SoundManager) try{ SoundManager.unlock(); }catch(_){} };
-        if (window.requestIdleCallback) requestIdleCallback(run, {timeout: 500});
-        else setTimeout(run, 0);
+        run();
     }
     document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
     document.addEventListener('click', unlockAudio, { passive: true, once: true });

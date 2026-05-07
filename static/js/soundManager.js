@@ -359,11 +359,14 @@
                 // Contexte déjà actif : jouer immédiatement
                 try { synth[eventName](); } catch (e) { /* ignore */ }
             } else if (ctx) {
-                // iOS Safari : le contexte est encore suspendu
-                // resume() pendant un geste utilisateur le débloque
-                ctx.resume().then(function () {
-                    try { synth[eventName](); } catch (e) { /* ignore */ }
-                });
+                // Contexte suspendu — appeler resume() synchroniquement dans le geste utilisateur,
+                // puis jouer avec un court délai (~20 ms) : évite la race condition iOS/Android
+                // où .then() s'exécute hors geste et est silencieusement ignoré.
+                ctx.resume();
+                var _ev = eventName;
+                setTimeout(function () {
+                    try { synth[_ev](); } catch (e) { /* ignore */ }
+                }, 20);
             }
             return;
         }

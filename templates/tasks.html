@@ -758,10 +758,10 @@ function toggleFullHistory() {
 
 {% block extra_scripts %}
 <script>
-// Son d'entrée dans la pièce (plein écran)
-if (typeof SoundManager !== 'undefined') {
-    setTimeout(function() { SoundManager.play('roomFullscreen'); }, 200);
-}
+// Son d'entrée dans la pièce (scripts defer chargés après parsing)
+window.addEventListener('load', function() {
+    if (window.SoundManager) { setTimeout(function() { SoundManager.play('roomFullscreen'); }, 200); }
+});
 
 window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); toast.style.display='none'; if(typeof window.cbToast==='function'){ window.cbToast('✅ '+msg,'success',2000); } else { toast.style.display=''; toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } } });
 
