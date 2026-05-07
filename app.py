@@ -1259,7 +1259,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire son lit',
             'image': 'chambre ados/faire son lit.webp',
-            'description': 'Fait un lit propre et bien rangé !',
+            'description': 'fait un lit propre et bien rangé !',
             'points': 3,
             'fun_text': '🛏️ Un lit fait = une journée bien commencée !',
             'ad_text': 'Astuce hôtel : tire d\'abord le drap du dessous bien tendu, puis borde les côtés. Résultat pro en 2 min !',
@@ -1268,7 +1268,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger sa chambre',
             'image': 'chambre ados/ranger sa chambre.webp',
-            'description': 'Une chambre bien rangée pour mieux dormir !',
+            'description': 'une chambre bien rangée pour mieux dormir !',
             'points': 5,
             'fun_text': '✨ Une chambre rangée, c\'est un esprit apaisé !',
             'ad_text': 'La règle des 3 piles : à garder, à donner, à laver. En 10 min, ta chambre respire !',
@@ -1277,7 +1277,7 @@ TASKS_CONFIG = {
         {
             'name': 'Aérer sa chambre',
             'image': 'chambre ados/aérer sa chambre.webp',
-            'description': 'Ouvre la fenêtre pour renouveler l\'air !',
+            'description': 'ouvre la fenêtre pour renouveler l\'air !',
             'points': 2,
             'fun_text': '💨 Un peu d\'air frais, ça fait du bien !',
             'ad_text': 'Aérer 10 minutes par jour réduit l\'humidité et améliore la qualité de ton sommeil !',
@@ -1286,7 +1286,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre ses vêtements dans la corbeille',
             'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
-            'description': 'Ne laisse pas traîner tes vêtements sales !',
+            'description': 'ne laisse pas traîner tes vêtements sales !',
             'points': 2,
             'fun_text': '👕 Direction le panier à linge !',
             'ad_text': 'Un panier à linge bien placé = moins de vêtements par terre !',
@@ -1295,7 +1295,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider sa corbeille',
             'image': 'chambre ados/vider sa corbeille à papier.webp',
-            'description': 'Vide ta poubelle pour garder une chambre propre !',
+            'description': 'vide ta poubelle pour garder une chambre propre !',
             'points': 2,
             'fun_text': '🗑️ Hop, à la poubelle !',
             'ad_text': 'Une poubelle vide tous les 2-3 jours évite les mauvaises odeurs !',
@@ -1304,7 +1304,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire ses devoirs',
             'image': 'chambre ados/Faire ses devoirs.webp',
-            'description': 'Travaille sérieusement pour réussir !',
+            'description': 'travaille sérieusement pour réussir !',
             'points': 8,
             'fun_text': '📚 Le savoir, c\'est le pouvoir !',
             'ad_text': 'La technique Pomodoro : 25 min de travail, 5 min de pause. Efficacité maximale !',
@@ -1315,7 +1315,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger sa chambre',
             'image': 'chambre ados/Ranger sa chambre.webp',
-            'description': 'Une chambre bien rangée pour mieux dormir !',
+            'description': 'une chambre bien rangée pour mieux dormir !',
             'points': 5,
             'fun_text': '✨ Une chambre rangée, c\'est un esprit apaisé !',
             'ad_text': 'La règle des 3 piles : à garder, à donner, à laver. En 10 min, ta chambre respire !',
@@ -1324,7 +1324,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire son lit',
             'image': 'chambre ados/faire son lit.webp',
-            'description': 'Fait un lit propre et bien rangé !',
+            'description': 'fait un lit propre et bien rangé !',
             'points': 3,
             'fun_text': '🛏️ Un lit fait = une journée bien commencée !',
             'ad_text': 'Astuce hôtel : tire d\'abord le drap du dessous bien tendu, puis borde les côtés. Résultat pro en 2 min !',
@@ -1333,7 +1333,7 @@ TASKS_CONFIG = {
         {
             'name': 'Aérer sa chambre',
             'image': 'chambre ados/aérer sa chambre.webp',
-            'description': 'Ouvre la fenêtre pour renouveler l\'air !',
+            'description': 'ouvre la fenêtre pour renouveler l\'air !',
             'points': 2,
             'fun_text': '💨 Un peu d\'air frais, ça fait du bien !',
             'ad_text': 'Aérer 10 minutes par jour réduit l\'humidité et améliore la qualité de ton sommeil !',
@@ -1342,7 +1342,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre ses vêtements dans la corbeille',
             'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
-            'description': 'Ne laisse pas traîner tes vêtements sales !',
+            'description': 'ne laisse pas traîner tes vêtements sales !',
             'points': 2,
             'fun_text': '👕 Direction le panier à linge !',
             'ad_text': 'Un panier à linge bien placé = moins de vêtements par terre !',
@@ -1351,7 +1351,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider sa corbeille',
             'image': 'chambre ados/vider sa corbeille à papier.webp',
-            'description': 'Vide ta poubelle pour garder une chambre propre !',
+            'description': 'vide ta poubelle pour garder une chambre propre !',
             'points': 2,
             'fun_text': '🗑️ Hop, à la poubelle !',
             'ad_text': 'Une poubelle vide tous les 2-3 jours évite les mauvaises odeurs !',
@@ -1360,7 +1360,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire ses devoirs',
             'image': 'chambre ados/Faire ses devoirs.webp',
-            'description': 'Travaille sérieusement pour réussir !',
+            'description': 'travaille sérieusement pour réussir !',
             'points': 8,
             'fun_text': '📚 Le savoir, c\'est le pouvoir !',
             'ad_text': 'La technique Pomodoro : 25 min de travail, 5 min de pause. Efficacité maximale !',
@@ -1512,7 +1512,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger les outils',
             'image': 'salon/Passer l\'aspirateur.webp',
-            'description': 'Un garage bien organisé !',
+            'description': 'un garage bien organisé !',
             'points': 5,
             'ad_text': 'Solutions de rangement garage !',
             'ad_link': 'https://www.youtube.com/results?search_query=astuce+rangement+garage+atelier'
@@ -1520,7 +1520,7 @@ TASKS_CONFIG = {
         {
             'name': 'Balayer le garage',
             'image': 'salon/Passer l\'aspirateur.webp',
-            'description': 'Un garage propre !',
+            'description': 'un garage propre !',
             'points': 4,
             'ad_text': 'Matériel de nettoyage !',
             'ad_link': 'https://www.youtube.com/results?search_query=astuce+nettoyer+garage+rapidement'
@@ -1530,7 +1530,7 @@ TASKS_CONFIG = {
         {
             'name': 'Penser au goûter',
             'image': 'bonus/penser au gouter.webp',
-            'description': 'Préparer le goûter des enfants',
+            'description': 'préparer le goûter des enfants',
             'points': 2,
             'fun_text': '🍪 Le goûter c\'est important !',
             'ad_text': 'Boîtes à goûter !',
@@ -1539,7 +1539,7 @@ TASKS_CONFIG = {
         {
             'name': 'Signer les mots',
             'image': 'bonus/signer les mots.webp',
-            'description': 'Signer les mots de l\'école',
+            'description': 'signer les mots de l\'école',
             'points': 2,
             'fun_text': '✍️ Les devoirs administratifs !',
             'ad_text': 'Fournitures scolaires !',
@@ -1548,7 +1548,7 @@ TASKS_CONFIG = {
         {
             'name': 'Aller aux réunions d\'école',
             'image': 'bonus/aller aux reunions d\'ecole.webp',
-            'description': 'Participer aux réunions scolaires',
+            'description': 'participer aux réunions scolaires',
             'points': 5,
             'fun_text': '🏫 Le suivi scolaire c\'est essentiel !',
             'ad_text': 'Agendas pour parents !',
@@ -1557,7 +1557,7 @@ TASKS_CONFIG = {
         {
             'name': 'Prendre les RDV médicaux',
             'image': 'bonus/prendre les rdv médicaux.webp',
-            'description': 'Gérer les rendez-vous médicaux',
+            'description': 'gérer les rendez-vous médicaux',
             'points': 3,
             'fun_text': '🏥 La santé avant tout !',
             'ad_text': 'Applications de santé !',
@@ -1566,7 +1566,7 @@ TASKS_CONFIG = {
         {
             'name': 'Organiser les anniversaires',
             'image': 'bonus/organiser les anniversaire.webp',
-            'description': 'Préparer les fêtes d\'anniversaire',
+            'description': 'préparer les fêtes d\'anniversaire',
             'points': 5,
             'fun_text': '🎉 Les anniversaires c\'est la fête !',
             'ad_text': 'Décorations d\'anniversaire !',
@@ -1575,7 +1575,7 @@ TASKS_CONFIG = {
         {
             'name': 'Déclarer les impôts',
             'image': 'bonus/déclarer les impôts.webp',
-            'description': 'Gérer les déclarations fiscales',
+            'description': 'gérer les déclarations fiscales',
             'points': 6,
             'fun_text': '💰 Les devoirs citoyens !',
             'ad_text': 'Solutions de gestion administrative !',
@@ -1586,7 +1586,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire son lit',
             'image': 'chambre ados/faire son lit.webp',
-            'description': 'Bien faire son lit le matin',
+            'description': 'bien faire son lit le matin',
             'points': 3,
             'fun_text': '🛏️ Un lit bien fait, une journée bien partie !',
             'ad_text': 'Parures de lit pour chambre enfant !',
@@ -1595,7 +1595,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger sa chambre',
             'image': 'chambre ados/Ranger sa chambre.webp',
-            'description': 'Remettre de l\'ordre dans la chambre',
+            'description': 'remettre de l\'ordre dans la chambre',
             'points': 4,
             'fun_text': '✨ Une chambre rangée c\'est une chambre heureuse !',
             'ad_text': 'Rangements pratiques pour chambre enfant !',
@@ -1604,7 +1604,7 @@ TASKS_CONFIG = {
         {
             'name': 'Aérer sa chambre',
             'image': 'chambre ados/aérer sa chambre.webp',
-            'description': 'Ouvrir la fenêtre pour renouveler l\'air',
+            'description': 'ouvrir la fenêtre pour renouveler l\'air',
             'points': 2,
             'fun_text': '💨 Un air frais pour bien dormir !',
             'ad_text': 'Purificateurs d\'air pour chambre !',
@@ -1613,7 +1613,7 @@ TASKS_CONFIG = {
         {
             'name': 'Mettre les vêtements dans le panier',
             'image': 'chambre ados/mettre ses vetements dans le panier à linge.webp',
-            'description': 'Trier les vêtements sales',
+            'description': 'trier les vêtements sales',
             'points': 3,
             'fun_text': '👕 Droit au but, dans le panier !',
             'ad_text': 'Paniers à linge design !',
@@ -1622,7 +1622,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider sa corbeille',
             'image': 'chambre ados/vider sa corbeille à papier.webp',
-            'description': 'Vider la corbeille à papier',
+            'description': 'vider la corbeille à papier',
             'points': 2,
             'fun_text': '🗑️ Poubelle vide, esprit clair !',
             'ad_text': 'Jolies corbeilles pour chambre !',
@@ -1631,7 +1631,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire ses devoirs',
             'image': 'chambre ados/Faire ses devoirs.webp',
-            'description': 'Faire les devoirs du soir',
+            'description': 'faire les devoirs du soir',
             'points': 5,
             'fun_text': '📚 Les devoirs d\'abord, les jeux ensuite !',
             'ad_text': 'Fournitures scolaires et bureaux enfants !',
@@ -1642,7 +1642,7 @@ TASKS_CONFIG = {
         {
             'name': 'Ranger ses jouets',
             'image': 'chambre enfant/ranger ses jouets.webp',
-            'description': 'Remettre de l\'ordre dans la chambre',
+            'description': 'remettre de l\'ordre dans la chambre',
             'points': 4,
             'fun_text': '🧸 Une chambre bien rangée pour mieux jouer !',
             'ad_text': 'Boîtes de rangement pour enfants !',
@@ -1651,7 +1651,7 @@ TASKS_CONFIG = {
         {
             'name': 'Lire 10 minutes par jour',
             'image': 'chambre enfant/lire dix minutes par jour.webp',
-            'description': 'Un moment de lecture quotidien',
+            'description': 'un moment de lecture quotidien',
             'points': 3,
             'fun_text': '📚 Lire c\'est grandir !',
             'ad_text': 'Livres pour enfants !',
@@ -1662,7 +1662,7 @@ TASKS_CONFIG = {
         {
             'name': 'Donner le biberon',
             'image': 'chambre bébé/donner le biberon.webp',
-            'description': 'Nourrir bébé avec amour !',
+            'description': 'nourrir bébé avec amour !',
             'points': 5,
             'fun_text': '🍼 L\'heure du biberon !',
             'ad_text': 'Les meilleurs biberons anti-coliques pour bébé !',
@@ -1671,7 +1671,7 @@ TASKS_CONFIG = {
         {
             'name': 'Changer les couches',
             'image': 'chambre bébé/changer les couches.webp',
-            'description': 'Un bébé propre et confortable !',
+            'description': 'un bébé propre et confortable !',
             'points': 4,
             'fun_text': '👶 Change moi vite !',
             'ad_text': 'Couches douces et absorbantes pour bébé !',
@@ -1680,7 +1680,7 @@ TASKS_CONFIG = {
         {
             'name': 'Faire dormir le bébé',
             'image': 'chambre bébé/endormir le bébé.webp',
-            'description': 'Un dodo paisible pour bébé !',
+            'description': 'un dodo paisible pour bébé !',
             'points': 6,
             'fun_text': '😴 Dodo, l\'enfant do !',
             'ad_text': 'Veilleuses et musiques douces pour endormir bébé !',
@@ -1689,7 +1689,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver les vêtements',
             'image': 'chambre bébé/laver les vêtements.webp',
-            'description': 'Des petits habits tout propres !',
+            'description': 'des petits habits tout propres !',
             'points': 4,
             'fun_text': '👕 Lessive spéciale bébé !',
             'ad_text': 'Lessives hypoallergéniques pour la peau de bébé !',
@@ -1698,7 +1698,7 @@ TASKS_CONFIG = {
         {
             'name': 'Vider la poubelle',
             'image': 'chambre bébé/vider la poubelle.webp',
-            'description': 'Vider la poubelle à couches !',
+            'description': 'vider la poubelle à couches !',
             'points': 3,
             'fun_text': '🗑️ Une chambre sans odeurs !',
             'ad_text': 'Poubelles à couches anti-odeurs !',
@@ -1747,7 +1747,7 @@ TASKS_CONFIG = {
         {
             'name': 'Laver la voiture',
             'image': 'garage/carwash.webp',
-            'description': 'Une voiture propre et brillante !',
+            'description': 'une voiture propre et brillante !',
             'points': 5,
             'fun_text': '🚗 Ça brille de mille feux !',
             'ad_text': 'Produits pour un lavage auto impeccable !',
@@ -1756,7 +1756,7 @@ TASKS_CONFIG = {
         {
             'name': 'Prendre de l\'essence',
             'image': 'garage/Prendre de l\'essence.webp',
-            'description': 'Faire le plein de carburant',
+            'description': 'faire le plein de carburant',
             'points': 3,
             'fun_text': '⛽ Le plein d\'énergie !',
             'ad_text': 'Carte carburant pour économiser !',
@@ -1765,7 +1765,7 @@ TASKS_CONFIG = {
         {
             'name': 'Contrôle technique',
             'image': 'garage/contrôle technique .webp',
-            'description': 'Passer le contrôle technique du véhicule',
+            'description': 'passer le contrôle technique du véhicule',
             'points': 6,
             'fun_text': '🔧 Sécurité avant tout !',
             'ad_text': 'Kit d\'entretien auto !',
