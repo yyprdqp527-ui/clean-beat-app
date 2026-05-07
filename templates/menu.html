@@ -35,19 +35,23 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement -->
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
-    <!-- 🔊 Howler.js + SoundManager centralisé -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
-    <!-- 🔓 Déverrouillage audio mobile (iOS/Android) au premier toucher -->
+    <!-- 🔊 Howler.js + SoundManager centralisé (defer pour ne pas bloquer le parsing HTML) -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
+    <script defer src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
+    <!-- 🔓 Déverrouillage audio mobile (iOS/Android) au premier toucher
+         - bubbling phase + passive: true + once: true → n'intercepte plus les clics
+         - SoundManager.unlock() reporté en requestIdleCallback pour ne pas bloquer le 1er tap -->
     <script>
     (function(){
         function unlockAudio(){
-            if(window.SoundManager) SoundManager.unlock();
-            document.removeEventListener('touchstart', unlockAudio, true);
-            document.removeEventListener('click', unlockAudio, true);
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('click', unlockAudio);
+            var run = function(){ if(window.SoundManager) try{ SoundManager.unlock(); }catch(_){} };
+            if (window.requestIdleCallback) requestIdleCallback(run, {timeout: 500});
+            else setTimeout(run, 0);
         }
-        document.addEventListener('touchstart', unlockAudio, true);
-        document.addEventListener('click', unlockAudio, true);
+        document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
+        document.addEventListener('click', unlockAudio, { passive: true, once: true });
     })();
     </script>
     <!-- 📱 Cache purge + Service Worker -->
@@ -5774,33 +5778,38 @@ function refreshAllBadges() {
                         })
                         .catch(function() {});
                 }
-                // 🛟 Filet de sécurité : polling toutes les 20s tant que la page est visible.
-                // Couvre les cas où visibilitychange/pageshow ne se déclenchent pas (iOS PWA).
+                // 🛟 Filet de sécurité : polling toutes les 60s tant que la page est visible.
+                // (60s au lieu de 20s : 3× moins de fetches, suffisant pour un reminder du jour)
                 setInterval(function() {
                     if (document.visibilityState === 'visible') {
                         _menuCheckReminderResume();
                     }
-                }, 20000);
+                }, 60000);
                 // Et aussi 1.5s après le chargement initial (au cas où Cas 2 fallback aurait raté)
                 setTimeout(_menuCheckReminderResume, 1500);
 
                 // Rafraîchir au retour via le bouton retour (bfcache ET navigation normale)
-                window.addEventListener('pageshow', function(event) {
-                    console.log('🔄 pageshow event, persisted=' + event.persisted);
-                    refreshAllBadges();
-                    refreshMissionDots();
-                    if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
-                    _menuCheckReminderResume();
-                });
-                
-                // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
-                document.addEventListener('visibilitychange', function() {
-                    if (document.visibilityState === 'visible') {
-                        console.log('🔄 Page redevenue visible');
+                // Différé en idle pour ne pas bloquer le thread au retour de focus.
+                function _menuOnResume() {
+                    var run = function() {
                         refreshAllBadges();
                         refreshMissionDots();
                         if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                         _menuCheckReminderResume();
+                    };
+                    if (window.requestIdleCallback) requestIdleCallback(run, {timeout: 1000});
+                    else setTimeout(run, 0);
+                }
+                window.addEventListener('pageshow', function(event) {
+                    console.log('🔄 pageshow event, persisted=' + event.persisted);
+                    _menuOnResume();
+                });
+
+                // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible') {
+                        console.log('🔄 Page redevenue visible');
+                        _menuOnResume();
                     }
                 });
                 // Écouter les messages du Service Worker (ex: REFRESH_BADGES après push)

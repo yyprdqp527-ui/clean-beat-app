@@ -1528,15 +1528,6 @@ TASKS_CONFIG = {
     ],
     'piece_bonus': [
         {
-            'name': 'Penser au goûter',
-            'image': 'bonus/penser au gouter.webp',
-            'description': 'préparer le goûter des enfants',
-            'points': 2,
-            'fun_text': '🍪 Le goûter c\'est important !',
-            'ad_text': 'Boîtes à goûter !',
-            'ad_link': 'https://www.youtube.com/results?search_query=idees+gouter+sain+enfant'
-        },
-        {
             'name': 'Signer les mots',
             'image': 'bonus/signer les mots.webp',
             'description': 'signer les mots de l\'école',

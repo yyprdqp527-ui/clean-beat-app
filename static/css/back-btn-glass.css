@@ -24,7 +24,8 @@
     text-decoration: none !important;
     cursor: pointer;
     box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    transition: all 0.3s ease;
+    /* ⚡ transitions ciblées (pas 'all') pour ne pas re-déclencher le filtre backdrop-filter à chaque tap iOS */
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
     -webkit-tap-highlight-color: transparent;
     line-height: 1;
 }
