@@ -992,10 +992,10 @@ body {
 
     <!-- Titre dans un cadre -->
     <div class="gameplay-title-card">
-        <h1><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-gamecontroller"/></svg> Mini-jeux</h1>
+        <h1>🎮 Mini-jeux</h1>
         <div class="gameplay-subtitle">Fonctionnalités de jeu</div>
         {% if house_name %}
-        <div class="gameplay-house-badge"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-house"/></svg> {{ house_name }}</div>
+        <div class="gameplay-house-badge">🏡 {{ house_name }}</div>
         {% endif %}
     </div>
 
@@ -1014,7 +1014,7 @@ body {
             <div class="mg-label">Entourloupe</div>
         </div>
         <div class="minigame-btn mg-coming" onclick="openSection('coming')">
-            <div class="mg-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" style="font-size:36px;"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-rocket"/></svg></div>
+            <div class="mg-icon">🚀</div>
             <div class="mg-label">Mini-jeux à venir</div>
         </div>
     </div>
@@ -1111,7 +1111,7 @@ body {
         <div class="feature-body">
 
     <!-- Liste joueurs avec tâches + bouton loupe (sans le joueur principal) -->
-    <div class="gameplay-section-title"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-doc-text"/></svg> Tâches du jour</div>
+    <div class="gameplay-section-title">📋 Tâches du jour</div>
     <div class="gameplay-players-wrap" id="entourloupe-players-wrap">
         {% for p in sorted_by_week %}{% if not p.is_current_user %}
         {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
@@ -1129,7 +1129,7 @@ body {
                 <div class="gw-pts-row">
                     <div class="gw-name">{{ p.name|e }}</div>
                     <div class="gw-pts">{{ p.daily_points|default(0) }} pts</div>
-                    {% if p.suspicion_active|default(false) %}<span class="gw-suspicion"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-search"/></svg></span>{% endif %}
+                    {% if p.suspicion_active|default(false) %}<span class="gw-suspicion">🔍</span>{% endif %}
                 </div>
                 <div class="gw-bar-wrap"><div class="gw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else '' }}" style="width:0%;"></div></div>
             </div>
@@ -1139,7 +1139,7 @@ body {
     </div>
 
     <!-- Liste des suspicions en cours -->
-    <div class="gameplay-section-title"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-search"/></svg> Suspicions en cours</div>
+    <div class="gameplay-section-title">🔍 Suspicions en cours</div>
     <div id="suspicionsList" style="padding: 0 14px; margin-bottom: 20px;">
         <!-- Rempli dynamiquement par JavaScript -->
     </div>
@@ -1215,7 +1215,7 @@ function closeSection() {
 <!-- Popup résultat roue -->
 <div class="wheel-result-overlay" id="wheelResultOverlay" onclick="if(event.target===this)closeWheelResult()">
     <div class="wheel-result-card">
-        <div class="wheel-result-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" style="font-size:48px;"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-party"/></svg></div>
+        <div class="wheel-result-icon">🎉</div>
         <div class="wheel-result-title">Félicitations !</div>
         <div class="wheel-result-task" id="wheelResultTask">Nettoyer le four</div>
         <div class="wheel-result-points" id="wheelResultPoints">+50 points</div>
@@ -1296,7 +1296,7 @@ function closeSection() {
 <!-- Popup : Picker de tâches à contester -->
 <div class="malus-overlay" id="suspicionPickerOverlay" onclick="if(event.target===this)closeSuspicionPicker()">
     <div class="malus-sheet">
-        <div class="malus-sheet-title"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-search"/></svg> Quelle tâche contester ?</div>
+        <div class="malus-sheet-title">🔍 Quelle tâche contester ?</div>
         <div style="font-size: 12px; color: #597176; text-align: center; margin-bottom: 12px;">
             Tâches des 7 derniers jours
         </div>
@@ -1310,7 +1310,7 @@ function closeSection() {
 <!-- Popup : Upload de preuve photo -->
 <div class="malus-overlay" id="uploadProofOverlay" onclick="if(event.target===this)closeUploadProof()">
     <div class="malus-sheet">
-        <div class="malus-sheet-title"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-camera"/></svg> Envoyer une preuve</div>
+        <div class="malus-sheet-title">📸 Envoyer une preuve</div>
         <div style="font-size: 13px; color: #597176; text-align: center; margin: 10px 0;">
             <strong id="uploadProofTaskName">Tâche</strong>
         </div>
@@ -1320,7 +1320,7 @@ function closeSection() {
         <input type="file" id="proofPhotoInput" accept="image/*" capture="environment" 
                style="display: block; margin: 20px auto; padding: 10px; border: 2px dashed rgba(21,48,54,0.2); border-radius: 12px; width: 90%;">
         <button onclick="submitProof()" class="gameplay-action-btn" style="margin: 10px 0; width: 100%;">
-            <div class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-upload"/></svg></div>
+            <div class="btn-icon">📤</div>
             <div class="btn-label">Envoyer la preuve</div>
         </button>
         <button class="malus-cancel" onclick="closeUploadProof()">Annuler</button>
@@ -1344,11 +1344,11 @@ function closeSection() {
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button onclick="rejectProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(212,133,106,0.1); border-color: #D4856A;">
-                <div class="malus-option-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" style="color:#D4856A;"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-x-circle"/></svg></div>
+                <div class="malus-option-icon">❌</div>
                 <div class="malus-option-label" style="font-weight: 800;">Rejeter<br><small style="font-size: 11px; color: #D4856A;">Il perd 20 pts</small></div>
             </button>
             <button onclick="validateProof()" class="malus-option" style="flex: 1; justify-content: center; background: rgba(122,186,197,0.1); border-color: #7ABAC5;">
-                <div class="malus-option-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" style="color:#7ABAC5;"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-check-circle"/></svg></div>
+                <div class="malus-option-icon">✅</div>
                 <div class="malus-option-label" style="font-weight: 800;">Valider<br><small style="font-size: 11px; color: #7ABAC5;">Je perds 10 pts</small></div>
             </button>
         </div>
