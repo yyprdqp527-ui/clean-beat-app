@@ -561,6 +561,7 @@
             .week-bar-days { padding: 0 4px; }
             .gameplay-btn-wrapper { right: 8px; }
             .gameplay-btn { width: 42px; height: 42px; font-size: 20px; }
+            .week-gift-icon { font-size: 22px; }
         }
           .header-left, .header-right { position: relative; z-index: 2001; display:flex; align-items:center; gap:12px; flex:0 0 auto; }
           /* petits ajustements : donner un petit espacement entre les deux groupes d'avatars
@@ -828,26 +829,26 @@
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 8px rgba(0,0,0,0.18), 0 0 6px rgba(255,255,255,0.3);
         }
         .week-gift-icon {
-            font-size: 18px;
+            font-size: 26px;
             width: 1em;
             height: 1em;
             position: fixed;
-            right: 19px;
+            right: 26px;
             z-index: 9998;
             cursor: pointer;
             transition: font-size 0.3s ease, transform 0.3s ease;
-            transform: translateY(-50%);
+            transform: none;
             color: #FDAE54;
             stroke: currentColor;
             fill: none;
-            stroke-width: 1.8;
+            stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
             animation: trophyGlow 2.4s ease-in-out infinite;
             display: inline-block;
             overflow: visible;
         }
-        .week-gift-icon:hover { transform: translateY(-50%) scale(1.15); }
+        .week-gift-icon:hover { transform: scale(1.15); }
         .week-gift-star {
             position: fixed;
             right: 2px;
@@ -3118,11 +3119,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         if(h && s){ s.style.height = Math.max(0, h.offsetHeight - 30) + 'px'; }
                     }
                     function positionGift(){
-                        var bar = document.getElementById('weekProgressBar');
+                        var btnWrapper = document.querySelector('.gameplay-btn-wrapper');
                         var gift = document.getElementById('weekGiftIcon');
-                        if(bar && gift){
-                            var rect = bar.getBoundingClientRect();
-                            gift.style.top = (rect.top + rect.height / 2) + 'px';
+                        if(btnWrapper && gift){
+                            var rect = btnWrapper.getBoundingClientRect();
+                            // Aligner verticalement : juste sous le bouton
+                            gift.style.top = (rect.bottom + 10) + 'px';
+                            // Centrer horizontalement sur le centre du bouton
+                            var giftW = gift.offsetWidth || parseFloat(getComputedStyle(gift).fontSize) || 26;
+                            var btnCenterX = rect.left + rect.width / 2;
+                            gift.style.left = (btnCenterX - giftW / 2) + 'px';
+                            gift.style.right = 'auto';
                             var star = document.getElementById('weekGiftStar');
                             if(star) star.style.top = gift.style.top;
                         }
@@ -3760,7 +3767,7 @@ body { padding-bottom: 84px !important; }
             cursor.style.background = cursorColor;
         }
         // Cadeau : grossit au fil des jours (0=Lun 14px … 6=Dim 24px)
-        var giftSizes = [14, 15, 16, 17, 18, 20, 24];
+        var giftSizes = [20, 22, 24, 25, 26, 28, 32];
         var giftEl = document.getElementById('weekGiftIcon');
         if(giftEl){
             giftEl.style.fontSize = (giftSizes[pos] || 18) + 'px';
