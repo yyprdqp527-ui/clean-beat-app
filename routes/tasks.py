@@ -402,6 +402,7 @@ def add_task_page(cat, task_id=None):
         'passer_le_balai.webp',
         'laver_les_sols.webp',
         'passer_laspirateur.webp',
+        'laver_les_vitres.webp',
         'trier_les_poubelles.webp',
         'sortir_les_poubelles.webp',
         'ranger_les_cables.webp',
