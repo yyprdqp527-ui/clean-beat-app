@@ -375,7 +375,7 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
 
     <!-- Titre simplifié -->
     <div class="classement-title-card">
-        <span class="title-icon">🏆</span>
+        <span class="title-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-trophy"/></svg></span>
         <h1>Classement</h1>
         <p class="classement-subtitle">Qui sera le champion du ménage ?</p>
     </div>
@@ -383,15 +383,15 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     <!-- Boutons filtre -->
     <div class="classement-btn-grid">
         <div class="filter-btn cl-jour active" data-tab="tab-today">
-            <div class="fb-icon">📋</div>
+            <div class="fb-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-doc-text"/></svg></div>
             <div class="fb-label">Jour</div>
         </div>
         <div class="filter-btn cl-semaine" data-tab="tab-week">
-            <div class="fb-icon">📊</div>
+            <div class="fb-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-chart-bar"/></svg></div>
             <div class="fb-label">Semaine</div>
         </div>
         <div class="filter-btn cl-mois" data-tab="tab-month">
-            <div class="fb-icon">📆</div>
+            <div class="fb-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-calendar"/></svg></div>
             <div class="fb-label">Mois</div>
         </div>
     </div>
