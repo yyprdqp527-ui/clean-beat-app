@@ -753,7 +753,7 @@
             {% if task_image and task_image.startswith('data:') %}
                 <img src="{{ task_image }}" alt="{{ task_name }}" class="task-image" loading="lazy">
             {% elif task_image %}
-                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" class="task-image" loading="lazy">
+                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" class="task-image" loading="lazy" onerror="this.src='/static/images/{{ task_image }}';this.onerror=null;">
             {% else %}
                 <img src="{{ url_for('static', filename='qfq-icon-192-v2.png') }}" alt="{{ task_name }}" class="task-image">
             {% endif %}

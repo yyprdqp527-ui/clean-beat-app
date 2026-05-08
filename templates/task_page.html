@@ -460,7 +460,7 @@
     <div class="task-card">
         <div class="task-image-container">
             {% if task_image %}
-                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" loading="lazy">
+                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" loading="lazy" onerror="this.src='/static/images/{{ task_image }}';this.onerror=null;">
             {% else %}
                 <img src="{{ url_for('static', filename='qfq-icon-192-v2.png') }}" alt="{{ task_name }}">
             {% endif %}

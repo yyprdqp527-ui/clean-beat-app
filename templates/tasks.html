@@ -548,7 +548,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
                 <a href="{{ url_for('tasks.task_enhanced', cat=category, task_id=loop.index0) }}" class="task-card{% if task_points < 0 %} negative-task{% endif %}">
                     <p class="task-name">{{ task_name or 'Tâche sans nom' }}</p>
                     <div class="task-image-container">
-                        <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb if task_image else 'default.webp')) }}" alt="{{ task_name or 'Tâche' }}" loading="lazy">
+                        <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb if task_image else 'default.webp')) }}" alt="{{ task_name or 'Tâche' }}" loading="lazy"{% if task_image %} onerror="this.src='/static/images/{{ task_image }}';this.onerror=null;"{% endif %}>
                         <span class="points-badge{% if task_points < 0 %} negative{% endif %}" aria-label="{{ task_points }} points">{{ task_points }}</span>
                     </div>
                 </a>
