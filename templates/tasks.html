@@ -569,7 +569,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
                         {% if custom_task.image and custom_task.image.startswith('data:') %}
                         <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
                         {% else %}
-                        <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
+                        <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy"{% if custom_task.image %} onerror="this.src='/static/images/{{ custom_task.image }}';this.onerror=null;"{% endif %}>
                         {% endif %}
                         <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
                     </div>
