@@ -557,23 +557,23 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
 
         {% if custom_tasks and custom_tasks|length > 0 %}
             {% for custom_task in custom_tasks %}
-            <div class="task-card custom-task" style="position:relative;">
-                <!-- Bouton supprimer (haut GAUCHE, à l'intérieur car .task-card a overflow:hidden) -->
-                <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" class="custom-task-delete" data-task-name="{{ custom_task.name or 'cette mission' }}" onclick="event.preventDefault(); event.stopPropagation(); confirmDeleteMission(this);">
-                    <button type="submit" title="Supprimer cette mission" aria-label="Supprimer cette mission">×</button>
-                </form>
-                <!-- Lien vers la page de validation -->
-                <a href="{{ url_for('tasks.custom_task_page', task_id=custom_task.id) }}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
-                    <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
-                    <div class="task-image-container">
-                        {% if custom_task.image and custom_task.image.startswith('data:') %}
-                        <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
-                        {% else %}
-                        <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy"{% if custom_task.image %} onerror="this.src='/static/images/{{ custom_task.image }}';this.onerror=null;"{% endif %}>
-                        {% endif %}
-                        <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
-                    </div>
-                </a>
+            <div class="custom-task-wrapper">
+                <div class="task-card custom-task">
+                    <!-- Formulaire caché pour la suppression (soumis par confirmDeleteMission) -->
+                    <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" class="custom-task-delete-form" data-task-name="{{ custom_task.name or 'cette mission' }}" style="display:none;"></form>
+                    <!-- Lien vers la page de validation -->
+                    <a href="{{ url_for('tasks.custom_task_page', task_id=custom_task.id) }}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
+                        <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
+                        <div class="task-image-container">
+                            {% if custom_task.image and custom_task.image.startswith('data:') %}
+                            <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy"{% if custom_task.image %} onerror="this.src='/static/images/{{ custom_task.image }}';this.onerror=null;"{% endif %}>
+                            {% endif %}
+                            <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
+                        </div>
+                    </a>
+                </div>
             </div>
             {% endfor %}
         {% endif %}
@@ -629,41 +629,94 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             close();
         });
     })();
+
+    /* === APPUI LONG → SUPPRIMER MISSION CUSTOM === */
+    (function(){
+        var activeBtn = null;
+
+        function hideActiveBtn() {
+            if (activeBtn) { activeBtn.remove(); activeBtn = null; }
+        }
+
+        // Clic en dehors du bouton → ferme le bouton
+        document.addEventListener('click', function(e) {
+            if (activeBtn && e.target !== activeBtn) hideActiveBtn();
+        });
+
+        document.querySelectorAll('.custom-task-wrapper').forEach(function(wrapper) {
+            var card = wrapper.querySelector('.task-card.custom-task');
+            var form = wrapper.querySelector('.custom-task-delete-form');
+            if (!card || !form) return;
+
+            var pressTimer = null;
+            var wasLongPress = false;
+
+            function showDeleteBtn() {
+                hideActiveBtn();
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'qfq-delete-btn';
+                btn.textContent = 'Supprimer';
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    hideActiveBtn();
+                    confirmDeleteMission(form);
+                });
+                wrapper.appendChild(btn);
+                activeBtn = btn;
+            }
+
+            function startPress() {
+                clearTimeout(pressTimer);
+                wasLongPress = false;
+                pressTimer = setTimeout(function() {
+                    wasLongPress = true;
+                    showDeleteBtn();
+                }, 600);
+            }
+
+            function cancelPress() {
+                clearTimeout(pressTimer);
+            }
+
+            // ─ Touch (mobile) ─
+            card.addEventListener('touchstart', startPress, { passive: true });
+            card.addEventListener('touchend', cancelPress);
+            card.addEventListener('touchmove', cancelPress, { passive: true });
+
+            // Bloquer la navigation si c'était un appui long
+            card.addEventListener('click', function(e) {
+                if (wasLongPress) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    wasLongPress = false;
+                }
+            }, true);
+
+            // ─ Mouse (desktop) ─
+            card.addEventListener('mousedown', startPress);
+            card.addEventListener('mouseup', cancelPress);
+            card.addEventListener('mouseleave', cancelPress);
+        });
+    })();
     </script>
 
     <style>
-    .custom-task-delete {
-        position:absolute;
-        top:6px; left:6px;
-        z-index:20;
-        margin:0;
-        line-height:0;
+    .custom-task-wrapper {
+        display: flex;
+        flex-direction: column;
     }
-    .custom-task-delete button {
-        width:30px; height:30px; border-radius:50%;
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        border: 2px solid #fff;
-        cursor:pointer;
-        color:#fff;
-        font-size:18px; font-weight:900;
-        padding:0; line-height:1;
-        box-shadow: 0 3px 10px rgba(220,38,38,0.55);
-        display:flex; align-items:center; justify-content:center;
-        transition: transform .2s ease;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    .custom-task-delete button:hover,
-    .custom-task-delete button:active {
-        transform: scale(1.15) rotate(8deg);
-    }
-    /* Mobile : un peu plus petit pour ne pas empiéter sur le titre */
-    @media (max-width: 600px) {
-        .custom-task-delete { top:4px; left:4px; }
-        .custom-task-delete button { width:26px; height:26px; font-size:16px; border-width:2px; }
-    }
-    @media (min-width: 1024px) {
-        .custom-task-delete { top:8px; left:8px; }
-        .custom-task-delete button { width:34px; height:34px; font-size:20px; }
+    .qfq-delete-btn {
+        color: #E24B4A;
+        font-weight: 700;
+        font-size: 14px;
+        background: transparent;
+        border: none;
+        padding: 8px 0;
+        width: 100%;
+        text-align: center;
+        cursor: pointer;
+        font-family: inherit;
     }
     </style>
 
