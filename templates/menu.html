@@ -829,14 +829,25 @@
         }
         .week-gift-icon {
             font-size: 18px;
+            width: 1em;
+            height: 1em;
             position: fixed;
             right: 19px;
             z-index: 9998;
             cursor: pointer;
-            transition: font-size 0.3s ease;
-            animation: giftPulse 1.5s ease-in-out infinite;
+            transition: font-size 0.3s ease, transform 0.3s ease;
+            transform: translateY(-50%);
+            color: #FDAE54;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: trophyGlow 2.4s ease-in-out infinite;
+            display: inline-block;
+            overflow: visible;
         }
-        .week-gift-icon:hover { transform: translateY(-50%) scale(1.2); }
+        .week-gift-icon:hover { transform: translateY(-50%) scale(1.15); }
         .week-gift-star {
             position: fixed;
             right: 2px;
@@ -845,9 +856,15 @@
             transform: translateY(-50%);
             pointer-events: none;
         }
-        @keyframes giftPulse {
-          0%, 100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0px transparent); }
-          50%       { transform: translateY(-50%) scale(1.2) rotate(5deg); filter: drop-shadow(0 0 8px rgba(253,174,84,0.8)); }
+        @keyframes trophyGlow {
+          0%, 100% {
+            opacity: 0.85;
+            filter: drop-shadow(0 0 0 transparent);
+          }
+          50% {
+            opacity: 1;
+            filter: drop-shadow(0 0 6px rgba(253,174,84,0.65));
+          }
         }
         /* Thème clair barre */
         .week-progress-wrap.mode-bar.theme-light .week-bar-track {
@@ -3083,7 +3100,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                                 <div class="week-bar-cursor" id="weekBarCursor"></div>
                             </div>
-                            <span class="week-gift-icon" id="weekGiftIcon">🎁</span>
+                            <svg class="week-gift-icon" id="weekGiftIcon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-trophy"/></svg>
                             <span class="week-gift-star" id="weekGiftStar"></span>
                         </div>
                     </div>

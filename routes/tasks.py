@@ -21,19 +21,19 @@ ROOM_EMOJIS = {
 }
 
 CATEGORY_NAMES = {
-    'salon': ('Salon', '🛋️'),
-    'cuisine': ('Cuisine', '🍳'),
-    'buanderie': ('Buanderie', '👕'),
-    'toilettes': ('Toilettes', '🚽'),
-    'chambre': ('Chambre', '🛏️'),
-    'chambre_parentale': ('Chambre', '🛏️'),
-    'salle_bain': ('Salle de bain', '🛁'),
-    'chambre_enfant': ('Chambre Enfant', '🧸'),
-    'chambre_garcon': ('Chambre Enfant', '🧸'),
-    'chambre_bebe': ('Chambre Bébé', '👶'),
-    'chambre_ado': ('Zone Ados', '🎮'),
-    'piece_bonus': ('Bureau', '🖥️'),
-    'garage': ('Garage', '🚗'),
+    'salon': ('Salon', ''),
+    'cuisine': ('Cuisine', ''),
+    'buanderie': ('Buanderie', ''),
+    'toilettes': ('Toilettes', ''),
+    'chambre': ('Chambre', ''),
+    'chambre_parentale': ('Chambre', ''),
+    'salle_bain': ('Salle de bain', ''),
+    'chambre_enfant': ('Chambre Enfant', ''),
+    'chambre_garcon': ('Chambre Enfant', ''),
+    'chambre_bebe': ('Chambre Bébé', ''),
+    'chambre_ado': ('Zone Ados', ''),
+    'piece_bonus': ('Bureau', ''),
+    'garage': ('Garage', ''),
 }
 
 @tasks_bp.route('/categorie/<cat>')
@@ -43,7 +43,7 @@ def categorie(cat):
     normalized_cat = normalize_category(cat)
     
     # Récupérer le nom et l'icône de la catégorie
-    category_name, category_icon = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
+    category_name, category_icon = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), ''))
     
     # Préparer la liste des tâches prédéfinies pour la catégorie
     tasks_with_images = []
@@ -78,7 +78,7 @@ def categorie(cat):
                             category_icon = _emoji
                             break
                 if not category_icon:
-                    category_icon = '🏠'
+                    category_icon = ''
             # joueurs de la maison
             players = get_house_players_points(house_id)
             # récupérer overrides de points pour cette maison et catégorie
@@ -240,7 +240,7 @@ def add_task_page(cat, task_id=None):
     normalized_cat = normalize_category(cat)
 
     # Nom et icône de la catégorie
-    category_name, category_icon = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
+    category_name, category_icon = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), ''))
 
     # Récupérer la maison de l'utilisateur
     conn = get_db_connection()
@@ -266,7 +266,7 @@ def add_task_page(cat, task_id=None):
                     category_icon = _emoji
                     break
         if not category_icon:
-            category_icon = '🏠'
+            category_icon = ''
 
     # Si édition, charger la tâche existante
     existing_task = None
@@ -852,9 +852,9 @@ def custom_task_page(task_id):
                     cat_icon_custom = _emoji
                     break
         if not cat_icon_custom:
-            cat_icon_custom = '🏠'
+            cat_icon_custom = ''
     else:
-        cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), '🏠'))
+        cat_name_custom, cat_icon_custom = CATEGORY_NAMES.get(norm_cat_custom, (category.replace('_', ' ').title(), ''))
     conn.close()
     return render_template('task_page_enhanced.html', 
                           task_name=task_name, 
@@ -1241,7 +1241,7 @@ def task_enhanced(cat, task_id):
     _dbg(f"🔧 [TASK_ENHANCED] task_name: {task_name}")
     _dbg(f"🔧 [TASK_ENHANCED] category: {cat}")
     
-    category_name_display, category_icon_display = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), '🏠'))
+    category_name_display, category_icon_display = CATEGORY_NAMES.get(normalized_cat, (cat.replace('_', ' ').title(), ''))
     return render_template('task_page_enhanced.html', task_name=task_name, task_image=task_image, task_points=task_points, task_description=task_description, fun_text=fun_text, ad_text=ad_text, ad_link=ad_link, players=players, daily_points=daily_points, daily_tasks=daily_tasks, total_points=total_points, category=cat, task_id=task_id, current_task_id=task_id, hide_header=True, category_name=category_name_display, category_icon=category_icon_display)
 
 

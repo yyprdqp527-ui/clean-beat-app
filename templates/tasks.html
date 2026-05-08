@@ -532,7 +532,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
 <div class="header-below-zone">
 <!-- Header de la pièce -->
 <div class="room-header" style="max-width:900px; width:100%; margin:0 auto 20px;">
-    <span class="room-icon">{{ category_icon|default('🏠') }}</span>
+{% if category_icon %}<span class="room-icon">{{ category_icon }}</span>{% endif %}
     <h1 class="room-name">{{ category_name|default(category|replace('_', ' ')|capitalize) }}</h1>
     <p class="room-subtitle">Sélectionne une tâche à accomplir</p>
 </div>

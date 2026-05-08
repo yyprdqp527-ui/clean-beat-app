@@ -233,7 +233,7 @@
 <body>
 {% include '_flash_popup.html' %}
 
-<h1>🔐 Connexion</h1>
+<h1>Connexion</h1>
 
 <form method="post" action="{{ url_for('auth.login') }}" autocomplete="on">
     {% if request.args.get('next_code') %}
