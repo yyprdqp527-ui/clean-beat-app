@@ -718,7 +718,34 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
         cursor: pointer;
         font-family: inherit;
     }
+    @keyframes qfq-wiggle {
+        0%   { transform: rotate(0deg); }
+        20%  { transform: rotate(-3deg); }
+        40%  { transform: rotate(3deg); }
+        60%  { transform: rotate(-2deg); }
+        80%  { transform: rotate(2deg); }
+        100% { transform: rotate(0deg); }
+    }
+    .qfq-wiggle {
+        animation: qfq-wiggle 0.5s ease-in-out;
+    }
     </style>
+
+    <script>
+    /* === WIGGLE AU PREMIER CHARGEMENT === */
+    if (!sessionStorage.getItem('qfq_custom_task_wiggle_seen')) {
+        var cards = document.querySelectorAll('.task-card.custom-task');
+        cards.forEach(function(card, i) {
+            setTimeout(function() {
+                card.classList.add('qfq-wiggle');
+                card.addEventListener('animationend', function() {
+                    card.classList.remove('qfq-wiggle');
+                }, { once: true });
+            }, 800 + i * 150);
+        });
+        sessionStorage.setItem('qfq_custom_task_wiggle_seen', '1');
+    }
+    </script>
 
 </div>
 
