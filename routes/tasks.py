@@ -411,7 +411,7 @@ def add_task_page(cat, task_id=None):
         'mettre_ses_chaussons.webp',
         'ranger_ses_cles.webp',
         'changer_la_litiere_du_chat.webp',
-        'sortir_le_chien.webp',
+        'promener_le_chien.webp',
         'soccuper_du_potager.webp',
         'passer_la_tondeuse.webp',
         'soccuper_de_la_piscine.webp',
