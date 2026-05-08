@@ -680,7 +680,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             }
 
             // ─ Touch (mobile) ─
-            card.addEventListener('touchstart', startPress, { passive: true });
+            card.addEventListener('touchstart', function(e) { e.preventDefault(); startPress(e); }, { passive: false });
             card.addEventListener('touchend', cancelPress);
             card.addEventListener('touchmove', cancelPress, { passive: true });
 
@@ -705,6 +705,15 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
     .custom-task-wrapper {
         display: flex;
         flex-direction: column;
+    }
+    .task-card.custom-task {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .task-card.custom-task img {
+        -webkit-touch-callout: none;
+        pointer-events: none;
     }
     .qfq-delete-btn {
         color: #E24B4A;
