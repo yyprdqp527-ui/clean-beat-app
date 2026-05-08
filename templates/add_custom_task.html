@@ -482,7 +482,7 @@ body {
 
     <!-- FORMULAIRE -->
     <div class="add-task-card">
-        <form method="POST" enctype="multipart/form-data">
+        <form id="missionForm" method="POST" enctype="multipart/form-data">
             {% if task %}
             <input type="hidden" name="task_id" value="{{ task.id }}">
             {% endif %}
@@ -533,7 +533,7 @@ body {
                                 data-path="{{ img.path }}"
                                 onclick="selectGalleryImage(this)"
                                 title="{{ img.label }}">
-                            <img src="{{ url_for('static', filename='images/' ~ img.path) }}" alt="{{ img.label }}" loading="lazy">
+                            <img src="{{ url_for('static', filename='images/' ~ img.path) }}?v=2" alt="{{ img.label }}" loading="lazy">
                         </button>
                         {% endfor %}
                     </div>
@@ -572,6 +572,20 @@ body {
 </div>
 
 <script>
+/* === ANTI DOUBLE SUBMIT === */
+(function() {
+    var form = document.getElementById('missionForm');
+    if (!form) return;
+    form.addEventListener('submit', function() {
+        var btn = form.querySelector('button[type="submit"]');
+        if (!btn || btn.disabled) return;
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.pointerEvents = 'none';
+        btn.textContent = '⏳ En cours...';
+    });
+})();
+
 /* === GALERIE D'IMAGES === */
 function selectGalleryImage(btn) {
     var path = btn.getAttribute('data-path');

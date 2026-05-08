@@ -343,7 +343,17 @@ def add_task_page(cat, task_id=None):
             conn.commit()
             conn.close()
         else:
-            # Mode création - INSERT
+            # Mode création - vérifier doublon avant INSERT
+            c.execute(
+                "SELECT id FROM custom_tasks WHERE house_id=? AND category=? AND LOWER(task_name)=LOWER(?)",
+                (house_id, normalized_cat, task_name)
+            )
+            if c.fetchone():
+                conn.close()
+                flash(f"Une mission « {task_name} » existe déjà dans cette pièce.", "warning")
+                return redirect(url_for('tasks.add_task_page', cat=cat))
+
+            # INSERT
             c.execute("""
                 INSERT INTO custom_tasks (house_id, task_name, task_description, category, task_image, points, created_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
