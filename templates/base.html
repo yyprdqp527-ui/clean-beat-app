@@ -776,6 +776,73 @@
         }
 
         
+    /* =============================================
+       📱 TAB BAR FLOTTANTE iOS — qfq-tabbar
+       ============================================= */
+    body { padding-bottom: 80px; }
+    .qfq-tabbar {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        z-index: 9000;
+        background: linear-gradient(135deg,
+            rgba(255,255,255,0.95) 0%,
+            rgba(253,174,84,0.15) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(253,174,84,0.3);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.15),
+            inset 0 1px 0 rgba(255,255,255,0.6);
+        padding: 10px 8px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    .qfq-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 5px 10px;
+        border-radius: 16px;
+        flex: 1;
+        text-decoration: none;
+        position: relative;
+        transition: background 0.15s ease;
+    }
+    .qfq-tab.active {
+        background: rgba(21,48,54,0.09);
+    }
+    .qfq-tab svg {
+        display: block;
+        width: 22px;
+        height: 22px;
+    }
+    .qfq-tab-label {
+        font-size: 10px;
+        font-weight: 500;
+        color: #597176;
+        letter-spacing: 0.01em;
+    }
+    .qfq-tab.active .qfq-tab-label {
+        color: #153036;
+        font-weight: 700;
+    }
+    .qfq-tab.active svg {
+        stroke: #153036;
+    }
+    .qfq-tab-dot {
+        position: absolute;
+        top: 3px;
+        right: 8px;
+        width: 7px;
+        height: 7px;
+        background: #FDAE54;
+        border-radius: 50%;
+        border: 1.5px solid rgba(255,255,255,0.9);
+    }
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
@@ -790,6 +857,45 @@
 <!-- Bouton retour vers le menu (affiché sur toutes les pages sauf le menu) -->
 
 {% block content %}{% endblock %}
+
+<!-- 📱 Tab bar flottante iOS -->
+<nav class="qfq-tabbar" id="qfqTabbar">
+  <a href="/classement" class="qfq-tab" id="qfqTabClassement">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    <span class="qfq-tab-label">Classement</span>
+  </a>
+  <a href="/sats" class="qfq-tab" id="qfqTabStats">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+    <span class="qfq-tab-label">Stats</span>
+  </a>
+  <a href="/comments" class="qfq-tab" id="qfqTabMessages">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span class="qfq-tab-label">Messages</span>
+  </a>
+  <a href="/reminders" class="qfq-tab" id="qfqTabCourses">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 01-8 0"/>
+    </svg>
+    <span class="qfq-tab-label">Courses</span>
+  </a>
+  <a href="/settings" class="qfq-tab" id="qfqTabSettings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
+    </svg>
+    <span class="qfq-tab-label">Réglages</span>
+  </a>
+</nav>
 
 <!-- 🎭 Popup flash glassmorphisme universel (toutes pages héritant de base.html) -->
 {% include '_flash_popup.html' %}
@@ -1277,6 +1383,48 @@ window.cbToast = function(message, type, duration) {
     // 🛟 Polling de secours : iOS PWA standalone ne déclenche pas toujours les events ci-dessus.
     // 60s au lieu de 20s : suffisant pour un reminder du jour, et 3× moins de fetches.
     setInterval(_qfqCheckReminderResume, 60000);
+})();
+</script>
+
+<script>
+// 📱 Tab bar — onglet actif + pastille Messages
+(function() {
+    var path = window.location.pathname;
+    var tabMap = {
+        'qfqTabClassement': ['/classement'],
+        'qfqTabStats':      ['/sats', '/stats_graphique'],
+        'qfqTabMessages':   ['/comments', '/baby_messages', '/mission_messages'],
+        'qfqTabCourses':    ['/reminders'],
+        'qfqTabSettings':   ['/settings', '/settings/theme', '/personnaliser_maison', '/profil', '/edit_player']
+    };
+    for (var id in tabMap) {
+        var paths = tabMap[id];
+        for (var i = 0; i < paths.length; i++) {
+            if (path === paths[i] || path.indexOf(paths[i] + '/') === 0) {
+                var el = document.getElementById(id);
+                if (el) { el.classList.add('active'); }
+                break;
+            }
+        }
+    }
+    // Pastille orange sur Messages si non-lus
+    fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(counts) {
+            if (!counts) return;
+            var unread = (counts.unread_received || 0)
+                       + (counts.unread_task_added || 0)
+                       + (counts.unread_baby || 0);
+            if (unread > 0) {
+                var tab = document.getElementById('qfqTabMessages');
+                if (tab && !tab.querySelector('.qfq-tab-dot')) {
+                    var dot = document.createElement('span');
+                    dot.className = 'qfq-tab-dot';
+                    tab.appendChild(dot);
+                }
+            }
+        })
+        .catch(function() {});
 })();
 </script>
 </body>
