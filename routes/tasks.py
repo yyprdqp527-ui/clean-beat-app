@@ -398,12 +398,28 @@ def add_task_page(cat, task_id=None):
     conn.close()
     # Charger la galerie d'images préchargées (dossier static/images/ajout_mission/)
     import os as _os
+    _GALLERY_ORDER = [
+        'passer_le_balai.webp',
+        'laver_les_sols.webp',
+        'passer_laspirateur.webp',
+        'trier_les_poubelles.webp',
+        'sortir_les_poubelles.webp',
+        'ranger_les_cables.webp',
+        'rendre_le_chargeur.webp',
+        'penser_au_gouter.webp',
+        'mettre_ses_chaussons.webp',
+        'ranger_ses_cles.webp',
+        'changer_la_litiere.webp',
+        'sortir_le_chien.webp',
+        'soccuper_du_potager.webp',
+        'passer_la_tondeuse.webp',
+        'soccuper_de_la_piscine.webp',
+    ]
     mission_images = []
     _gallery_dir = _os.path.join(current_app.static_folder, 'images', 'ajout_mission')
     if _os.path.isdir(_gallery_dir):
-        for _f in sorted(_os.listdir(_gallery_dir)):
-            if _f.lower().endswith(('.webp', '.jpg', '.jpeg', '.png')) and not _f.startswith('.'):
-                # label = nom de fichier sans extension, underscores -> espaces
+        for _f in _GALLERY_ORDER:
+            if _os.path.isfile(_os.path.join(_gallery_dir, _f)):
                 _label = _os.path.splitext(_f)[0].replace('_', ' ').capitalize()
                 mission_images.append({
                     'path': f'ajout_mission/{_f}',
