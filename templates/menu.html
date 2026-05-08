@@ -3446,41 +3446,6 @@ body { padding-bottom: 84px !important; }
 {% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
 {% set sorted_by_week = players|selectattr('email', 'defined')|list|sort(attribute='daily_points', reverse=True) %}
 <div class="cw-wrap" id="cwWrap">
-    <!-- ── Barre de navigation fixe — 4 onglets ── -->
-    <div class="cw-tabs">
-        <!-- 1. Classement (toggle panel) -->
-        <a href="/classement" class="cw-tab" id="cwTabScore">
-            <span class="cw-tab-icon">🏆</span>
-            <span class="cw-tab-label">Classement</span>
-        </a>
-        <!-- 2. Statistiques -->
-        <a href="/sats" class="cw-tab">
-            <span class="cw-tab-icon">📈</span>
-            <span class="cw-tab-label">Stats</span>
-        </a>
-        <!-- 3. Messagerie -->
-        <a href="{{ url_for('messages.comments') }}" class="cw-tab">
-            <span class="cw-tab-icon" style="position:relative;">
-                💬
-                <span class="cw-tab-badge" id="messages-nav-badge" {% if not unread_messages_count or unread_messages_count <= 0 %}style="display:none;"{% endif %}>{{ unread_messages_count if unread_messages_count and unread_messages_count < 100 else '99+' }}</span>
-            </span>
-            <span class="cw-tab-label">Messagerie</span>
-        </a>
-        <!-- 4. Courses -->
-        <a href="{{ url_for('reminders.reminders') }}" class="cw-tab" id="cwTabCourses">
-            <span class="cw-tab-icon" style="position:relative;">
-                🛒
-                <span class="cw-tab-badge" id="courses-nav-badge" {% if not courses_pending_count or courses_pending_count <= 0 %}style="display:none;"{% endif %}>{{ courses_pending_count|default(0) if courses_pending_count|default(0) < 100 else '99+' }}</span>
-            </span>
-            <span class="cw-tab-label">Courses</span>
-        </a>
-        <!-- 5. Setting (regroupe Joueurs + Maison) -->
-        <a href="{{ url_for('customize.settings_page') }}" class="cw-tab">
-            <span class="cw-tab-icon">⚙️</span>
-            <span class="cw-tab-label">Setting</span>
-        </a>
-    </div>
-
     <!-- Corps expansible -->
     <div class="cw-body" id="cwBody">
     <div class="cw-head"><div class="cw-title">🏆 Classement du jour</div><a href="/classement" style="color:rgba(255,255,255,0.7);font-size:18px;font-weight:900;text-decoration:none;padding:0 2px;" title="Voir en plein écran">↗</a></div>
