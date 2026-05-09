@@ -5730,8 +5730,11 @@ function refreshAllBadges() {
                             }
                             console.log('Compteurs reçus de l\'API:', counts);
                             if (counts.unread_received !== undefined) {
-                                console.log('Mise à jour badge avec count:', counts.unread_received);
-                                updateUnreadBadge(counts.unread_received);
+                                var totalUnread = (counts.unread_received || 0)
+                                    + (counts.unread_task_added || 0)
+                                    + (counts.unread_baby || 0);
+                                console.log('Mise à jour badge avec count:', totalUnread);
+                                updateUnreadBadge(totalUnread);
                             }
                             // Pastilles avatars (deprecated unread_by_sender/sent_to → toujours vides)
                             updateUnreadBySender({});
