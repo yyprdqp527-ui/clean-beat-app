@@ -2981,7 +2981,6 @@
                             <svg class="week-gift-icon" id="weekGiftIcon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-trophy"/></svg>
                         </div>
                     </div>
-                    <div class="house-name" style="text-align:center;margin-top:4px;">{{ house_name if house_name else 'Ma Maison' }}</div>
                 </div>
 
             </div>
@@ -6664,7 +6663,7 @@ if (localStorage.getItem('qfq_play_solo')) {
 body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 .qfq-tabbar {
     position: fixed;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
     left: 16px;
     right: 16px;
     z-index: 9000;
@@ -6681,8 +6680,6 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
     display: flex;
     justify-content: space-around;
     align-items: center;
-    transform: translateY(calc(100% + 20px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .qfq-tab {
     display: flex;
@@ -6802,37 +6799,6 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
             badge.style.display = 'none';
         }
     }
-})();
-</script>
-<script>
-(function() {
-  const bar = document.querySelector('.qfq-tabbar');
-  if (!bar) return;
-  bar.style.transform = 'translateY(0)';
-  let hideTimer = setTimeout(() => {
-    bar.style.transform = 'translateY(calc(100% + 20px))';
-  }, 2000);
-  document.addEventListener('touchstart', function(e) {
-    const touch = e.touches[0];
-    const threshold = window.innerHeight * 0.80;
-    clearTimeout(hideTimer);
-    if (touch.clientY > threshold) {
-      bar.style.transform = 'translateY(0)';
-      hideTimer = setTimeout(() => {
-        bar.style.transform = 'translateY(calc(100% + 20px))';
-      }, 3000);
-    }
-  }, { passive: true });
-  document.addEventListener('mousemove', function(e) {
-    const threshold = window.innerHeight * 0.85;
-    clearTimeout(hideTimer);
-    if (e.clientY > threshold) {
-      bar.style.transform = 'translateY(0)';
-      hideTimer = setTimeout(() => {
-        bar.style.transform = 'translateY(calc(100% + 20px))';
-      }, 3000);
-    }
-  });
 })();
 </script>
 

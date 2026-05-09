@@ -782,7 +782,7 @@
     body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
     .qfq-tabbar {
         position: fixed;
-        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
         left: 16px;
         right: 16px;
         z-index: 9000;
@@ -799,8 +799,6 @@
         display: flex;
         justify-content: space-around;
         align-items: center;
-        transform: translateY(calc(100% + 20px));
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .qfq-tab {
         display: flex;
@@ -863,15 +861,6 @@
         box-sizing: border-box;
     }
 
-    /* Masquer la tabbar sur les pages sans navigation */
-    body.page-comments .qfq-tabbar,
-    body.page-task-enhanced .qfq-tabbar,
-    body.page-gameplay .qfq-tabbar,
-    body.page-classement .qfq-tabbar,
-    body.page-stats .qfq-tabbar,
-    body.page-courses .qfq-tabbar {
-        display: none !important;
-    }
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
@@ -1517,43 +1506,6 @@ window.cbToast = function(message, type, duration) {
         // Réessayer une fois après chargement complet (Socket.IO peut être chargé en defer)
         window.addEventListener('load', function() { setTimeout(bindWS, 300); });
     }
-})();
-</script>
-<script>
-(function() {
-  const bar = document.querySelector('.qfq-tabbar');
-  if (!bar) return;
-
-  // Affiche la barre au chargement pendant 2s
-  bar.style.transform = 'translateY(0)';
-  let hideTimer = setTimeout(() => {
-    bar.style.transform = 'translateY(calc(100% + 20px))';
-  }, 2000);
-
-  // Réapparaît quand on touche le bas de l'écran (20% inférieur)
-  document.addEventListener('touchstart', function(e) {
-    const touch = e.touches[0];
-    const threshold = window.innerHeight * 0.80;
-    clearTimeout(hideTimer);
-    if (touch.clientY > threshold) {
-      bar.style.transform = 'translateY(0)';
-      hideTimer = setTimeout(() => {
-        bar.style.transform = 'translateY(calc(100% + 20px))';
-      }, 3000);
-    }
-  }, { passive: true });
-
-  // Sur desktop : réapparaît quand souris en bas de l'écran
-  document.addEventListener('mousemove', function(e) {
-    const threshold = window.innerHeight * 0.85;
-    clearTimeout(hideTimer);
-    if (e.clientY > threshold) {
-      bar.style.transform = 'translateY(0)';
-      hideTimer = setTimeout(() => {
-        bar.style.transform = 'translateY(calc(100% + 20px))';
-      }, 3000);
-    }
-  });
 })();
 </script>
 </body>
