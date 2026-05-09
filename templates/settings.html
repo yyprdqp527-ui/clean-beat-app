@@ -115,6 +115,11 @@
         background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(130,100,220,0.12) 100%);
     }
     .settings-btn.sg-edit .sg-label { color: #5A3D94; }
+    .settings-btn.sg-rewards {
+        border-color: rgba(253,174,84,0.35);
+        background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(253,174,84,0.18) 100%);
+    }
+    .settings-btn.sg-rewards .sg-label { color: #96621C; }
 
     @media (max-width: 520px) {
         .settings-container { padding-top: 90px; }
@@ -166,6 +171,12 @@
         <a href="{{ url_for('players.manage_players') }}" class="settings-btn sg-edit">
 
             <span class="sg-label">Modifier profils</span>
+        </a>
+
+        <!-- 5. Personnaliser les récompenses -->
+        <a href="{{ url_for('rewards.settings_rewards') }}" class="settings-btn sg-rewards">
+
+            <span class="sg-label">Mes récompenses</span>
         </a>
     </div>
 </div>
