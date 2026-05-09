@@ -3473,7 +3473,11 @@ body { padding-bottom: 84px !important; }
         }
     }
     updateCWInfoBar();
-    setInterval(updateCWInfoBar, 60000);
+    var _cwInfoBarItv = setInterval(updateCWInfoBar, 60000);
+    document.addEventListener('visibilitychange', function(){
+        if (document.hidden) { if (_cwInfoBarItv) { clearInterval(_cwInfoBarItv); _cwInfoBarItv = null; } }
+        else { if (!_cwInfoBarItv) { updateCWInfoBar(); _cwInfoBarItv = setInterval(updateCWInfoBar, 60000); } }
+    });
 
     /* ── Progression semaine : BARRE HORIZONTALE ── */
     function updateWeekProgressBar(){
@@ -3586,7 +3590,11 @@ body { padding-bottom: 84px !important; }
     var WEEK_LEADER_PTS  = {{ sorted_by_week[0].weekly_points | default(0) if sorted_by_week else 0 }};
 
     updateWeekProgressBar();
-    setInterval(updateWeekProgressBar, 60000);
+    var _weekBarItv = setInterval(updateWeekProgressBar, 60000);
+    document.addEventListener('visibilitychange', function(){
+        if (document.hidden) { if (_weekBarItv) { clearInterval(_weekBarItv); _weekBarItv = null; } }
+        else { if (!_weekBarItv) { updateWeekProgressBar(); _weekBarItv = setInterval(updateWeekProgressBar, 60000); } }
+    });
 
     // Desactive: le bouton reste toujours 'Malus' avec le skull
     /*
@@ -4411,7 +4419,7 @@ function sendMalus(reason, points){
                                         </div>
                                         {% else %}
                                         <picture>
-                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=121{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
+                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=121{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="async" loading="eager">
                                         </picture>
                                         {% endif %}
                                         <span class="room-mission-dot"
