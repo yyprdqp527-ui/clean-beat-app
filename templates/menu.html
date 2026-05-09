@@ -7134,6 +7134,7 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
     <span class="qfq-tab-label">Messages</span>
+    <span class="qfq-tab-count" id="messages-nav-badge" style="display:none;">0</span>
   </a>
   <a href="/reminders" class="qfq-tab" id="qfqTabCourses">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -7154,17 +7155,16 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 </nav>
 
 <script>
-// Tab bar menu.html — onglet actif + pastille Messages
+// Tab bar menu.html — pastille Messages (pill numérotée, idem base.html)
 (function() {
-    // Sur /menu, aucun onglet actif (page d'accueil)
-    // Pastille orange si messages non lus
     var unreadCount = {{ unread_messages_count|default(0)|int }};
-    if (unreadCount > 0) {
-        var tab = document.getElementById('qfqTabMessages');
-        if (tab) {
-            var dot = document.createElement('span');
-            dot.className = 'qfq-tab-dot';
-            tab.appendChild(dot);
+    var badge = document.getElementById('messages-nav-badge');
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount < 100 ? unreadCount : '99+';
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
         }
     }
 })();
