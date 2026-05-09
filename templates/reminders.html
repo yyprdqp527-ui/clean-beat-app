@@ -491,7 +491,7 @@
 
     // ─── Synchro temps réel — écouter les toggles des autres joueurs ─────────
     if (typeof io !== 'undefined') {
-        var _socket = io();
+        const _socket = window.socket;
         _socket.on('reminder_toggle', function(data) {
             var card = document.getElementById('card-' + data.id);
             if (!card) return;
