@@ -6841,26 +6841,28 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 
 <style>
 @keyframes qfq-avatar-pulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(253,174,84,0); }
-  50%      { box-shadow: 0 0 0 4px rgba(253,174,84,0.6); }
+  0%   { box-shadow: 0 0 0 0 rgba(253,174,84,0.85); transform: scale(1); }
+  60%  { box-shadow: 0 0 0 16px rgba(253,174,84,0); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 rgba(253,174,84,0); transform: scale(1); }
 }
 .qfq-avatar-pulse {
-  border-radius: inherit;
-  animation: qfq-avatar-pulse 1.8s ease-in-out 3;
+  animation: qfq-avatar-pulse 0.75s ease-out 3;
 }
 </style>
 <script>
 (function() {
-  var PULSE_KEY = 'qfq_avatar_pulse_seen';
+  var PULSE_KEY = 'qfq_pulse_v3';
   if (!sessionStorage.getItem(PULSE_KEY)) {
-    var myAvatar = document.getElementById('current-player-avatar');
-    if (myAvatar) {
-      myAvatar.classList.add('qfq-avatar-pulse');
-      myAvatar.addEventListener('animationend', function() {
-        myAvatar.classList.remove('qfq-avatar-pulse');
-      }, { once: true });
-    }
     sessionStorage.setItem(PULSE_KEY, '1');
+    setTimeout(function() {
+      var myAvatar = document.getElementById('current-player-avatar');
+      if (myAvatar) {
+        myAvatar.classList.add('qfq-avatar-pulse');
+        myAvatar.addEventListener('animationend', function() {
+          myAvatar.classList.remove('qfq-avatar-pulse');
+        }, { once: true });
+      }
+    }, 600);
   }
 })();
 </script>
