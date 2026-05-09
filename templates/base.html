@@ -862,11 +862,21 @@
         border: 1.5px solid rgba(255,255,255,0.9);
         box-sizing: border-box;
     }
+
+    /* Masquer la tabbar sur les pages sans navigation */
+    body.page-comments .qfq-tabbar,
+    body.page-task-enhanced .qfq-tabbar,
+    body.page-gameplay .qfq-tabbar,
+    body.page-classement .qfq-tabbar,
+    body.page-stats .qfq-tabbar,
+    body.page-courses .qfq-tabbar {
+        display: none !important;
+    }
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 {% if menu_page %}
   {% include '_game_header.html' %}
 {% elif not hide_header %}
