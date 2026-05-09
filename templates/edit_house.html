@@ -919,7 +919,7 @@ function onRoomPhotoSelected(input) {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: item.label, image: '', image_data_url: image_data_url })
+                body: JSON.stringify({ name: item.label, image: '', emoji: item.emoji })
             })
             .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
             .then(function(res) {
