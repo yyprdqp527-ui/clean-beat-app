@@ -16,7 +16,7 @@ def classement_stats():
     """Page intermédiaire qui propose deux liens : Classement et Stats."""
     if 'user' not in session:
         return redirect(url_for('auth.signup_email'))
-    return render_template('classement_stats.html', menu_page=True)
+    return render_template('classement_stats.html')
 
 
 # ════════════════════════════════════════════════════════════
