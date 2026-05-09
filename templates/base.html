@@ -896,6 +896,7 @@
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
     <span class="qfq-tab-label">Messages</span>
+    <span class="qfq-tab-count" id="messages-nav-badge" style="display:none;">0</span>
   </a>
   <a href="/reminders" class="qfq-tab" id="qfqTabCourses">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1429,19 +1430,15 @@ window.cbToast = function(message, type, duration) {
         }
     }
 
-    // 🔧 Setter idempotent : ajoute OU retire le dot Messages selon le compteur
+    // 🔧 Setter Messages — même pattern que Courses (.qfq-tab-count + chiffre)
     function setMessagesDot(unread) {
-        var tab = document.getElementById('qfqTabMessages');
-        if (!tab) return;
-        var dot = tab.querySelector('.qfq-tab-dot');
+        var badge = document.getElementById('messages-nav-badge');
+        if (!badge) return;
         if (unread > 0) {
-            if (!dot) {
-                dot = document.createElement('span');
-                dot.className = 'qfq-tab-dot';
-                tab.appendChild(dot);
-            }
-        } else if (dot) {
-            dot.parentNode.removeChild(dot);
+            badge.textContent = unread < 100 ? unread : '99+';
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
         }
     }
 
