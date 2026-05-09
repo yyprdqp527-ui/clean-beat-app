@@ -16,9 +16,9 @@
         window.location.replace('/splash');
       }
     </script>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <- tasks.html: .container-menu h1 utilise bfcache friendly: no-store retire pour navigation back instantanee -->
+    
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -34,7 +34,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement -->
-    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
     <!-- 🔊 Howler.js + SoundManager centralisé (defer pour ne pas bloquer le parsing HTML) -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
     <script defer src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
