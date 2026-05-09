@@ -2788,10 +2788,9 @@ document.addEventListener('DOMContentLoaded', function() {
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <!-- Bouton bêta testeur à gauche -->
-                
+                <!-- Bouton bêta testeur / burger -->
+                <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger" style="position:absolute;top:12px;right:12px;"></div>
                 <!-- Bouton Gameplay déplacé dans la barre flottante (onglet Mini-jeux) -->
-                <!-- burger déplacé dans house-info -->
 
                 <div class="header-inner">
                         <script>
@@ -3040,6 +3039,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="week-gift-star" id="weekGiftStar"></span>
                         </div>
                     </div>
+                    <div class="house-name" style="text-align:center;margin-top:4px;">{{ house_name if house_name else 'Ma Maison' }}</div>
                 </div>
 
             </div>
@@ -4547,15 +4547,6 @@ function sendMalus(reason, points){
                                     3. Changez data-room, href et les textes
                                  ═══════════════════════════════════════════════ -->
                             <!-- Informations de la maison : nom + barre de progression -->
-                            <div class="house-info" style="margin-bottom:4px;">
-                                <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
-                                    <div class="house-name">{{ house_name if house_name else 'Ma Maison' }}</div>
-                                </div>
-                                <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px;">
-                                    <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.5px;">✨ Version bêta</div>
-                                    <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger"></div>
-                                </div>
-                            </div>
 
                             <!-- Bulle de dialogue de la maison -->
                             <div id="house-speech-bubble" class="house-speech-bubble" style="display:none;">
