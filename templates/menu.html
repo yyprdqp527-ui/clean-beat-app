@@ -5426,10 +5426,14 @@ function refreshAllBadges() {
                 });
 
                 // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
-                document.addEventListener('visibilitychange', function() {
+                document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible') {
-                        console.log('🔄 Page redevenue visible');
-                        _menuOnResume();
+                        requestIdleCallback(() => {
+                            refreshAllBadges();
+                            refreshMissionDots();
+                            updatePlayersPointsMenu();
+                            _menuCheckReminderResume();
+                        });
                     }
                 });
                 // Écouter les messages du Service Worker (ex: REFRESH_BADGES après push)
