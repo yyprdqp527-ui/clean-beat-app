@@ -650,7 +650,7 @@ function loadCWTasks(tabId){
                 return '<div class="cw-task-item">'
                      + '<div class="cw-task-dot"></div>'
                      + '<span class="cw-task-name">'+enc(t.task_name)+'</span>'
-                     + '<span class="cw-task-pts">+'+t.points+' pts</span>'
+                     + '<span class="cw-task-pts">'+(t.points >= 0 ? '+' : '')+t.points+' pts</span>'
                      + (t.time ? '<span class="cw-task-time">'+enc(t.time)+'</span>' : '')
                      + '</div>';
             }).join('');

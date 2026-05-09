@@ -827,7 +827,6 @@ def api_weekly_tasks():
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
               AND CAST(ct.completed_at AS TEXT) >= ?
-              AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY ct.completed_at DESC
         """, (house_id, house_id, monday))
         rows = c.fetchall()
@@ -875,7 +874,6 @@ def api_monthly_tasks():
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
               AND CAST(ct.completed_at AS TEXT) >= ?
-              AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY ct.completed_at DESC
         """, (house_id, house_id, thirty_days_ago))
         rows = c.fetchall()

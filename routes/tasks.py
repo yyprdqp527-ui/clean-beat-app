@@ -1710,7 +1710,6 @@ def api_daily_tasks():
             INNER JOIN users u ON ct.user_email = u.email
             WHERE ct.house_id = ? AND u.house_id = ?
               AND CAST(ct.completed_at AS TEXT) LIKE ?
-              AND (ct.category IS NULL OR ct.category NOT IN ('bonus', 'malus'))
             ORDER BY ct.completed_at DESC
         """, (house_id, house_id, today + '%'))
         
