@@ -460,6 +460,10 @@ def handle_broken_pipe(e):
     # Ignorer silencieusement les BrokenPipeError (client déconnecté avant fin de réponse)
     if isinstance(e, OSError) and e.errno == errno.EPIPE:
         return '', 200
+    # Laisser Flask gérer normalement les erreurs HTTP (404, 405, etc.)
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
     raise e
 app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
 
