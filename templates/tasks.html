@@ -683,7 +683,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             }
 
             // ─ Touch (mobile) ─
-            card.addEventListener('touchstart', function(e) { e.preventDefault(); startPress(e); }, { passive: false });
+            card.addEventListener('touchstart', function(e) { startPress(e); }, { passive: true });
             card.addEventListener('touchend', cancelPress);
             card.addEventListener('touchmove', cancelPress, { passive: true });
 
@@ -691,10 +691,9 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             card.addEventListener('click', function(e) {
                 if (wasLongPress) {
                     e.preventDefault();
-                    e.stopPropagation();
                     wasLongPress = false;
                 }
-            }, true);
+            });
 
             // ─ Mouse (desktop) ─
             card.addEventListener('mousedown', startPress);
