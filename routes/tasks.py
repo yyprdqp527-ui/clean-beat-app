@@ -836,9 +836,8 @@ def custom_task_page(task_id):
         finally:
             conn.close()
         
-        import time
-        # Passer le bénéficiaire pour animer le bon avatar dans le menu (email + nom pour fallback)
-        return redirect(url_for('menu', ts=int(time.time()), pts=task_points, who=player_email, whon=player_name))
+        # Retourner sur la page de la pièce pour enchaîner les tâches
+        return redirect(url_for('tasks.categorie', cat=category))
     
     # GET -> afficher la page améliorée (réutiliser le template task_page_enhanced)
     norm_cat_custom = normalize_category(category)
@@ -1227,10 +1226,8 @@ def task_enhanced(cat, task_id):
         finally:
             conn.close()
 
-        # Après validation, retourner au menu avec paramètres pour animation
-        import time
-        # Passer le bénéficiaire pour animer le bon avatar dans le menu (email + nom pour fallback)
-        return redirect(url_for('menu', ts=int(time.time()), pts=final_task_points, who=player_email, whon=player_name))
+        # Retourner sur la page de la pièce pour enchaîner les tâches
+        return redirect(url_for('tasks.categorie', cat=cat))
 
     # GET -> afficher la page améliorée
     # 🎨 DEBUG: Afficher les couleurs des joueurs

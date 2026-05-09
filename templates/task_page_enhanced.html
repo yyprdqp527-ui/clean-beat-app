@@ -945,6 +945,7 @@
 {% block extra_scripts %}
 <script>
 // ========== FONCTIONS GLOBALES ==========
+window.TASK_CATEGORY = {{ category|default('')|tojson }};
 
 //  Validation AJAX de la tâche - VERSION OPTIMISÉE PERFORMANCE
 function validateTaskAjax(playerEmail) {
@@ -1018,8 +1019,9 @@ function validateTaskAjax(playerEmail) {
                 setTimeout(function() { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 1300);
             }
 
-            // Redirection avec paramètres pour l'animation de l'avatar sur /menu
-            var redirectUrl = '/menu?success=1&pts=' + (data.points || 0) + 
+            // Redirection vers la pièce pour enchaîner les tâches
+            var redirectUrl = (window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu') +
+                '?success=1&pts=' + (data.points || 0) + 
                 '&ts=' + (data.timestamp || Date.now()) + 
                 '&who=' + encodeURIComponent(data.player_email || '') + 
                 '&whon=' + encodeURIComponent(data.player_name || '');
@@ -1231,7 +1233,7 @@ function showAlreadyDoneByOtherPopup(message, playerName) {
 
     document.getElementById('keep-mission-btn').addEventListener('click', function() {
         overlay.remove();
-        window.location.href = '/menu';
+        window.location.href = window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu';
     });
 
     document.getElementById('delete-mission-btn').addEventListener('click', function() {
@@ -1244,22 +1246,23 @@ function showAlreadyDoneByOtherPopup(message, playerName) {
     });
 
     overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) { overlay.remove(); window.location.href = '/menu'; }
+        if (e.target === overlay) { overlay.remove(); window.location.href = window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu'; }
     });
 }
 
 // 🔄 Popup pour les doublons - Utilise showGlassPopup universel
 function showDuplicatePopup(message) {
+    var dest = window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu';
     // Utiliser la fonction universelle de base.html
     if (typeof showGlassPopup === 'function') {
         showGlassPopup(message, 'warning', 2800);
         setTimeout(function() {
-            window.location.href = '/menu';
+            window.location.href = dest;
         }, 2800);
     } else {
         // Fallback si showGlassPopup n'est pas disponible
         alert(message);
-        window.location.href = '/menu';
+        window.location.href = dest;
     }
 }
 
