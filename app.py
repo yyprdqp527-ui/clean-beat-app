@@ -2759,8 +2759,10 @@ def add_cache_headers(response):
         else:
             response.headers['Cache-Control'] = 'public, max-age=3600'  # 1h par défaut pour le reste
     else:
-        # Pas de cache pour les pages HTML dynamiques
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        # PERF bfcache: pas de no-store (qui empeche le back/forward instantane).
+        # private + no-cache => le navigateur peut servir depuis le bfcache
+        # lors d'un retour, et revalide quand l'utilisateur recharge la page.
+        response.headers['Cache-Control'] = 'private, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
     return response
