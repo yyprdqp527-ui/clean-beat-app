@@ -27,6 +27,8 @@
     /* ⚡ transitions ciblées (pas 'all') pour ne pas re-déclencher le filtre backdrop-filter à chaque tap iOS */
     transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    will-change: transform;
     line-height: 1;
 }
 

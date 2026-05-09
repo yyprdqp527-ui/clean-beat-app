@@ -1226,13 +1226,33 @@ window.cbToast = function(message, type, duration) {
 <!-- 🔔 Script Push Notifications - chargé à la fin pour éviter les erreurs de timing -->
 <script src="{{ url_for('static', filename='push-notifications.js') }}"></script>
 
+<!-- Cache court /api/unread_counts : évite les appels dupliqués au chargement -->
+<script>
+(function() {
+    var _unreadCountsCache = null;
+    var _unreadCountsTs = 0;
+    window.fetchUnreadCounts = async function() {
+        var now = Date.now();
+        if (_unreadCountsCache && now - _unreadCountsTs < 2000) {
+            return _unreadCountsCache;
+        }
+        try {
+            var r = await fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' });
+            if (!r.ok) return null;
+            _unreadCountsCache = await r.json();
+            _unreadCountsTs = Date.now();
+            return _unreadCountsCache;
+        } catch(e) { return null; }
+    };
+})();
+</script>
+
 <!-- Badge icone accueil : recalcule a chaque chargement de page -->
 <script>
 (function() {
     function refreshAppBadge() {
         if (!('setAppBadge' in navigator)) return;
-        fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
-            .then(function(r) { return r.ok ? r.json() : null; })
+        fetchUnreadCounts()
             .then(function(counts) {
                 if (!counts) return;
                 var total = (counts.unread_received || 0)
@@ -1350,8 +1370,7 @@ window.cbToast = function(message, type, duration) {
         var now = Date.now();
         if (now - _qfqLastRefresh < 400) return; // throttle 400ms
         _qfqLastRefresh = now;
-        fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
-            .then(function(r) { return r.ok ? r.json() : null; })
+        fetchUnreadCounts()
             .then(function(counts) {
                 if (!counts) return;
                 // Pastille Messages = UNIQUEMENT messages privés reçus non lus

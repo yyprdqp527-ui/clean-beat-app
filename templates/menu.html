@@ -5061,8 +5061,7 @@ function sendMalus(reason, points){
                             //  Si quelqu'un a marqué un message comme lu ET que c'est MOI
                             if (data.action === 'message_read' && data.reader_email === userEmail) {
                                 console.log('J\'AI MARQUÉ UN MESSAGE COMME LU → Recharger MES badges via API');
-                                fetch('/api/unread_counts', { cache: 'no-store' })
-                                    .then(response => response.json())
+                                fetchUnreadCounts()
                                     .then(counts => {
                                         console.log('Compteurs API reçus:', counts);
                                         if (counts.unread_received !== undefined) {
@@ -5297,14 +5296,7 @@ function refreshAllBadges() {
                     if (_refreshBadgesTimer) clearTimeout(_refreshBadgesTimer);
                     _refreshBadgesTimer = setTimeout(function() {
                     console.log('🔄 Rafraîchissement des badges...');
-                    fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
-                        .then(response => {
-                            if (!response.ok) {
-                                console.warn('⚠️ API unread_counts HTTP', response.status, '— badges Jinja conservés');
-                                return null;
-                            }
-                            return response.json();
-                        })
+                    fetchUnreadCounts()
                         .then(counts => {
                             if (!counts || counts.error) {
                                 console.warn('⚠️ API unread_counts erreur:', counts);
