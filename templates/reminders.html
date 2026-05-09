@@ -330,8 +330,11 @@
     // ─── Ajout (optimistic update) ─────────────────────────────────────────
     document.getElementById('addForm').addEventListener('submit', function(e){
         e.preventDefault();
+        var _addBtn = e.target.querySelector('button[type="submit"]');
+        if (_addBtn && _addBtn.disabled) return;
         const title = document.getElementById('title').value.trim();
         if (!title) return;
+        if (_addBtn) { _addBtn.disabled = true; setTimeout(function(){ if(_addBtn) _addBtn.disabled = false; }, 800); }
 
         // 1. Optimistic update — carte temporaire immédiate
         var tmpId = 'card-tmp-' + Date.now();
@@ -418,7 +421,11 @@
     });
 
     // ─── Toggle ───────────────────────────────────────────────────────────────
+    var _toggleLock = {};
     window.toggleReminder = function(id) {
+        if (_toggleLock[id]) return;
+        _toggleLock[id] = true;
+        setTimeout(function(){ delete _toggleLock[id]; }, 800);
         var checkEl = document.querySelector('#card-' + id + ' .reminder-check');
         var card = document.getElementById('card-' + id);
         var alreadyDone = card && card.classList.contains('done');
@@ -459,7 +466,12 @@
     };
 
     // ─── Suppression ──────────────────────────────────────────────────────────
+    var _deleteLock = {};
     window.deleteReminder = function(id) {
+        if (_deleteLock[id]) return;
+        _deleteLock[id] = true;
+        var _delBtn = document.querySelector('#card-' + id + ' .btn-delete');
+        if (_delBtn) _delBtn.disabled = true;
         fetch('/reminders/delete/' + id, { method: 'POST' })
             .then(function(r){ return r.json(); })
             .then(function(data){

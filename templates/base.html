@@ -76,6 +76,18 @@
             color: #597176 !important;
         }
 
+        /* ── Fix iOS tap — réaction instantanée, pas de flash bleu/gris ── */
+        button, a, [onclick], input[type="submit"], input[type="button"],
+        label, .btn, .malus-option, .settings-btn, .back-btn-glass {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+        button, [onclick], .malus-option {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         /* ── Base harmonisée avec système de thèmes personnalisés ── */
         body {
             background: {{ bg_gradient }};

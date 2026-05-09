@@ -1339,6 +1339,8 @@
                     }
                     messageForm.addEventListener('submit', function(e) {
                         e.preventDefault();
+                        const sendBtn = messageForm.querySelector('.send-btn');
+                        if (sendBtn && sendBtn.disabled && sendBtn.dataset.sending === '1') return;
                         const content = ta ? ta.value.trim() : '';
                         const recipientRadio = messageForm.querySelector('input[name="recipient"]:checked');
                         if (!content || !recipientRadio) {
@@ -1348,6 +1350,7 @@
                         const recipientEmail = recipientRadio.value;
                         const recipientLabel = recipientRadio.closest('label');
                         const recipientName = recipientLabel ? ((recipientLabel.querySelector('.avatar-name') || {}).textContent || '').trim() : '';
+                        if (sendBtn) { sendBtn.disabled = true; sendBtn.dataset.sending = '1'; }
                         if (window.SoundManager) SoundManager.play('sendMessage');
                         const msgList = document.querySelector('.messages-list');
                         const optimEl = _buildOptimisticMsg(content, recipientName);
@@ -1375,6 +1378,9 @@
                         .catch(function() {
                             if (optimEl) optimEl.remove();
                             _toastMsg('❌ Erreur réseau', true);
+                        })
+                        .finally(function() {
+                            if (sendBtn) { sendBtn.dataset.sending = '0'; /* le bouton reste disabled tant que le textarea est vide, géré par l'input listener */ }
                         });
                     });
                 }

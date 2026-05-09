@@ -615,6 +615,7 @@
 
         document.getElementById('confirmBtn').addEventListener('click', function() {
             if (!currentRewardId) return;
+            this.disabled = true;
 
             console.log('[DEBUG] Utilisation récompense ID:', currentRewardId);
             
@@ -636,11 +637,13 @@
                         window.location.reload();
                     }, 1500);
                 } else {
+                    document.getElementById('confirmBtn').disabled = false;
                     alert(data.message || 'Erreur');
                 }
             })
             .catch(error => {
                 console.error('[DEBUG] Erreur:', error);
+                document.getElementById('confirmBtn').disabled = false;
                 alert('Une erreur est survenue');
             });
         });

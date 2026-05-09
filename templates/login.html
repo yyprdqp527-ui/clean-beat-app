@@ -235,7 +235,7 @@
 
 <h1>Connexion</h1>
 
-<form method="post" action="{{ url_for('auth.login') }}" autocomplete="on">
+<form method="post" action="{{ url_for('auth.login') }}" autocomplete="on" onsubmit="var b=this.querySelector('button[type=submit]'); if(b){ if(b.disabled) return false; b.disabled=true; b.dataset.origText=b.textContent; b.textContent='Connexion…'; setTimeout(function(){ if(b){b.disabled=false; if(b.dataset.origText) b.textContent=b.dataset.origText;} }, 8000); }">
     {% if request.args.get('next_code') %}
     <input type="hidden" name="next_code" value="{{ request.args.get('next_code') }}">
     {% endif %}

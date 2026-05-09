@@ -347,6 +347,15 @@
             // Remettre en type=password avant soumission
             // (obligatoire pour que le trousseau macOS/Safari enregistre le credential)
             pwdInput.type = 'password';
+            // Protection double-clic
+            var _sb = e.target.querySelector('.submit-btn');
+            if (_sb) {
+                if (_sb.disabled) { e.preventDefault(); return; }
+                _sb.disabled = true;
+                _sb.dataset.origText = _sb.textContent;
+                _sb.textContent = 'Création…';
+                setTimeout(function(){ if(_sb){_sb.disabled=false; if(_sb.dataset.origText) _sb.textContent=_sb.dataset.origText;} }, 10000);
+            }
         });
     </script>
 

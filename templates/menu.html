@@ -1325,7 +1325,7 @@
         /* Image dans cadre glassmorphisme qui déborde */
         .room-card-visual {
             width: 100%;
-            overflow: hidden;
+            overflow: visible;
             position: relative;
             aspect-ratio: 400 / 462;
             background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
@@ -3264,52 +3264,7 @@ body { padding-bottom: 84px !important; }
     .header-action-pill { width: 28px; height: 28px; font-size: 15px; }
 }
 
-/* ══ Onglets de navigation en bas ══ */
-.cw-tabs {
-    display: flex; width: 100%;
-    border-bottom: 1px solid rgba(21,48,54,0.06);
-    background: transparent;
-}
-.cw-tab {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 4px;
-    padding: 10px 4px 12px 4px;
-    background: none; border: none; cursor: pointer;
-    position: relative; -webkit-tap-highlight-color: transparent;
-    font-family: 'Montserrat', sans-serif;
-    transition: background 0.2s;
-    text-decoration: none;
-}
-.cw-tab:active { background: rgba(253,174,84,0.10); }
-.cw-tab + .cw-tab { border-left: 1px solid rgba(21,48,54,0.06); }
-/* Icônes : petits carrés arrondis colorés */
-.cw-tab-icon {
-    font-size: 20px; line-height: 1;
-    width: 34px; height: 34px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform 0.15s ease;
-}
-.cw-tab:active .cw-tab-icon { transform: scale(0.88); }
-/* Couleur de chaque onglet */
-.cw-tab:nth-child(1) .cw-tab-icon { background: rgba(253,174,84,0.25); box-shadow: 0 2px 6px rgba(253,174,84,0.2); }
-.cw-tab:nth-child(2) .cw-tab-icon { background: rgba(231,76,60,0.13); box-shadow: 0 2px 6px rgba(231,76,60,0.15); }
-.cw-tab:nth-child(3) .cw-tab-icon { background: rgba(46,180,120,0.18); box-shadow: 0 2px 6px rgba(46,180,120,0.18); }
-.cw-tab:nth-child(4) .cw-tab-icon { background: rgba(52,152,219,0.18); box-shadow: 0 2px 6px rgba(52,152,219,0.18); }
-.cw-tab:nth-child(5) .cw-tab-icon { background: rgba(130,100,220,0.15); box-shadow: 0 2px 6px rgba(130,100,220,0.15); }
-/* Onglet actif (classement ouvert) */
-.cw-tab.cw-tab--active .cw-tab-icon { box-shadow: 0 0 0 2px rgba(253,174,84,0.55); }
-.cw-tab.cw-tab--active .cw-tab-label { color: #153036; font-weight: 800; }
-.cw-tab-label {
-    font-size: 10px; font-weight: 700; color: #597176;
-    letter-spacing: 0.4px; text-transform: uppercase; line-height: 1;
-}
-.cw-tab-badge {
-    position: absolute; top: 5px; right: calc(50% - 14px);
-    background: #e74c3c; color: white; font-size: 9px; font-weight: 800;
-    min-width: 14px; height: 14px; border-radius: 99px;
-    display: flex; align-items: center; justify-content: center;
-    padding: 0 3px; line-height: 1;
-}
+/* ══ Anciens onglets .cw-tabs supprimés (remplacés par .qfq-tabbar) ══ */
 .cw-tab-arrow {
     font-size: 10px; font-weight: 700; color: #597176;
     transition: transform 0.3s ease; display: inline-block;
@@ -3816,15 +3771,19 @@ function closeBonus() {
     var ctx = document.getElementById('bonusTaskContext');
     if (ctx) { ctx.style.display = 'none'; }
 }
+var _bonusPending = false;
 function sendBonus(reason, points){
     if(!_bonusEmail) return;
+    if(_bonusPending) return;
+    _bonusPending = true;
     var targetEmail = _bonusEmail;
+    closeBonus();
     fetch('/api/send_bonus',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({target_email:targetEmail, reason:reason, points:points})
     }).then(function(r){return r.json();}).then(function(data){
-        closeBonus();
+        _bonusPending = false;
         if(data.success){
             // Tracking local : afficher le coeur immédiatement
             if(!window._localBonusMap) window._localBonusMap = {};
@@ -3832,9 +3791,10 @@ function sendBonus(reason, points){
             if(typeof window.loadActiveBonuses === 'function') window.loadActiveBonuses();
             setTimeout(function(){ sessionStorage.setItem('internalNav','1'); window.location.reload(); }, 1800);
         } else {
+            _bonusPending = false;
             alert(data.error || 'Erreur');
         }
-    }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
+    }).catch(function(){ _bonusPending = false; alert('Erreur réseau'); });
 }
 function showToast(msg, bg){
     var isError = bg && bg.indexOf('e74c3c') !== -1;
@@ -3896,16 +3856,20 @@ function openTaskBonus(email, name, taskName){
     if (ctx && tn) { tn.textContent = taskName; ctx.style.display = 'block'; }
     document.getElementById('bonusOverlay').classList.add('open');
 }
+var _malusPending = false;
 function sendMalus(reason, points){
     if(!_malusEmail) return;
+    if(_malusPending) return;
+    _malusPending = true;
     var savedEmail = _malusEmail;
     var targetName = document.getElementById('malusTargetName').textContent;
+    closeMalus();
     fetch('/api/send_malus',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({target_email:savedEmail, reason:reason, points:points})
     }).then(function(r){return r.json();}).then(function(data){
-        closeMalus();
+        _malusPending = false;
         if(data.success){
             var msg = data.message || 'Malus envoy\u00e9 !';
             if(window.showSuccessPopup){ window.showSuccessPopup(msg,'\uD83D\uDC80'); }
@@ -3921,9 +3885,10 @@ function sendMalus(reason, points){
                 sessionStorage.setItem('internalNav', '1'); window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(savedEmail) + '&whon=' + encodeURIComponent(targetName);
             }, 2000);
         } else {
+            _malusPending = false;
             alert(data.error || 'Erreur');
         }
-    }).catch(function(){ closeMalus(); alert('Erreur r\u00e9seau'); });
+    }).catch(function(){ _malusPending = false; alert('Erreur r\u00e9seau'); });
 }
 </script>
 <!-- FIN WIDGET COMPETITION -->
@@ -6778,6 +6743,17 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
             badge.style.display = '';
         } else {
             badge.style.display = 'none';
+        }
+    }
+    // Seed initial du badge Courses (évite l'attente du debounce 500 ms de refreshAllBadges)
+    var coursesPending = {{ courses_pending_count|default(0)|int }};
+    var cBadge = document.getElementById('courses-nav-badge');
+    if (cBadge) {
+        if (coursesPending > 0) {
+            cBadge.textContent = coursesPending < 100 ? coursesPending : '99+';
+            cBadge.style.display = '';
+        } else {
+            cBadge.style.display = 'none';
         }
     }
 })();

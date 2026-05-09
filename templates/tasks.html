@@ -625,7 +625,10 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
         modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
         document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex') close(); });
         btnConfirm.addEventListener('click', function(){
-            if(pendingForm){ pendingForm.submit(); }
+            if(pendingForm){
+                btnConfirm.disabled = true;
+                pendingForm.submit();
+            }
             close();
         });
     })();

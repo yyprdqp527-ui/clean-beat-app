@@ -1466,14 +1466,18 @@ var _bonusEmail = null;
 function openBonus(email, name){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; document.getElementById('bonusOverlay').classList.add('open'); }
 function closeBonus(){ document.getElementById('bonusOverlay').classList.remove('open'); _bonusEmail=null; var ctx=document.getElementById('bonusTaskContext'); if(ctx){ ctx.style.display='none'; } }
 function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
+var _bonusPending = false;
 function sendBonus(reason, points){
     if(!_bonusEmail) return;
+    if(_bonusPending) return;
+    _bonusPending = true;
     var targetEmail = _bonusEmail;
     var targetName = document.getElementById('bonusTargetName').textContent;
     var taskCtx = ''; var tn=document.getElementById('bonusTaskName'); if(tn && tn.textContent) taskCtx=tn.textContent;
+    closeBonus();
     fetch('/api/send_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points,task:taskCtx})})
         .then(function(r){return r.json();}).then(function(data){
-            closeBonus();
+            _bonusPending = false;
             if(data.success){
                 showPointsAnimation(points, true);
                 // Animation célébration sur l'avatar cible
@@ -1495,8 +1499,8 @@ function sendBonus(reason, points){
                     window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(targetEmail) + '&whon=' + encodeURIComponent(targetName);
                 }, 1800);
             }
-            else { alert(data.error||'Erreur'); }
-        }).catch(function(){ closeBonus(); alert('Erreur réseau'); });
+            else { _bonusPending = false; alert(data.error||'Erreur'); }
+        }).catch(function(){ _bonusPending = false; alert('Erreur réseau'); });
 }
 
 var _malusEmail = null;
@@ -1504,14 +1508,18 @@ function openMalus(email, name){ _malusEmail=email; document.getElementById('mal
 function closeMalus(){ document.getElementById('malusOverlay').classList.remove('open'); _malusEmail=null; var ctx=document.getElementById('malusTaskContext'); if(ctx){ ctx.style.display='none'; } }
 function openTaskMalus(email, name, taskName){ _malusEmail=email; document.getElementById('malusTargetName').textContent=name; var ctx=document.getElementById('malusTaskContext'); var tn=document.getElementById('malusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('malusOverlay').classList.add('open'); }
 function openTaskBonus(email, name, taskName){ _bonusEmail=email; document.getElementById('bonusTargetName').textContent=name; var ctx=document.getElementById('bonusTaskContext'); var tn=document.getElementById('bonusTaskName'); if(ctx&&tn){ tn.textContent=taskName; ctx.style.display='block'; } document.getElementById('bonusOverlay').classList.add('open'); }
+var _malusPending = false;
 function sendMalus(reason, points){
     if(!_malusEmail) return;
+    if(_malusPending) return;
+    _malusPending = true;
     var targetEmail = _malusEmail;
     var targetName = document.getElementById('malusTargetName').textContent;
     var taskCtx = ''; var tn=document.getElementById('malusTaskName'); if(tn && tn.textContent) taskCtx=tn.textContent;
+    closeMalus();
     fetch('/api/send_malus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_email:targetEmail,reason:reason,points:points,task:taskCtx})})
         .then(function(r){return r.json();}).then(function(data){
-            closeMalus();
+            _malusPending = false;
             if(data.success){
                 SoundManager.play('malusImpact');
                 showPointsAnimation(points, true);
@@ -1527,8 +1535,8 @@ function sendMalus(reason, points){
                     window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(targetEmail) + '&whon=' + encodeURIComponent(targetName);
                 }, 2000);
             }
-            else { alert(data.error||'Erreur'); }
-        }).catch(function(){ closeMalus(); alert('Erreur réseau'); });
+            else { _malusPending = false; alert(data.error||'Erreur'); }
+        }).catch(function(){ _malusPending = false; alert('Erreur réseau'); });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
