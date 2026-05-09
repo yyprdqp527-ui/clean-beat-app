@@ -4959,9 +4959,9 @@ function sendMalus(reason, points){
                                 console.log('Lecture du son de réception...');
                                 if (window.SoundManager) SoundManager.play('receiveMessage');
                                 
-                                // ✅ Une seule mise à jour : refreshAllBadges calcule le total
-                                // (private + task_added + baby) et appelle updateUnreadBadge avec
-                                // la bonne valeur. Évite le flash visuel d'un double-update.
+                                // ✅ Une seule mise à jour : refreshAllBadges met à jour les badges séparés
+                                // (Messages = private uniquement, Courses, pastille bébé, mission dots).
+                                // Évite le flash visuel d'un double-update.
                                 refreshAllBadges();
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
@@ -5311,12 +5311,10 @@ function refreshAllBadges() {
                                 return;
                             }
                             console.log('Compteurs reçus de l\'API:', counts);
+                            // Pastille Messages = UNIQUEMENT messages privés reçus non lus
+                            // (task_added a sa propre pastille .room-mission-dot, baby_tracking a #room-baby-dot)
                             if (counts.unread_received !== undefined) {
-                                var totalUnread = (counts.unread_received || 0)
-                                    + (counts.unread_task_added || 0)
-                                    + (counts.unread_baby || 0);
-                                console.log('Mise à jour badge avec count:', totalUnread);
-                                updateUnreadBadge(totalUnread);
+                                updateUnreadBadge(counts.unread_received || 0);
                             }
                             // Pastilles avatars (deprecated unread_by_sender/sent_to → toujours vides)
                             updateUnreadBySender({});

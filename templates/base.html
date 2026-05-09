@@ -1354,10 +1354,9 @@ window.cbToast = function(message, type, duration) {
             .then(function(r) { return r.ok ? r.json() : null; })
             .then(function(counts) {
                 if (!counts) return;
-                var unread = (counts.unread_received || 0)
-                           + (counts.unread_task_added || 0)
-                           + (counts.unread_baby || 0);
-                setMessagesDot(unread);
+                // Pastille Messages = UNIQUEMENT messages privés reçus non lus
+                // (task_added a sa propre pastille mission, baby_tracking a sa pastille bébé)
+                setMessagesDot(counts.unread_received || 0);
                 setCoursesCount(counts.courses_pending_count || 0);
             })
             .catch(function() {});
