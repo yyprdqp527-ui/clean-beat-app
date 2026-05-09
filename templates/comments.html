@@ -1127,14 +1127,25 @@
             btn.disabled = true;
             btn.textContent = '⏳ Validation...';
             
-            fetch('{{ url_for("messages.mark_all_messages_read") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
+            Promise.all([
+                fetch('{{ url_for("messages.mark_all_messages_read") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(r => r.json()),
+                fetch('/api/mark_type_read', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'task_added' })
+                }),
+                fetch('/api/mark_type_read', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'baby_tracking' })
+                })
+            ])
+            .then(([data]) => {
                 if (data.success) {
                     btn.textContent = '✓ Tout validé !';
                     btn.classList.add('success');
