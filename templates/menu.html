@@ -7003,10 +7003,10 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
     right: 16px;
     z-index: 9000;
     background: linear-gradient(135deg,
-        rgba(255,255,255,0.95) 0%,
-        rgba(253,174,84,0.15) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+        rgba(255,255,255,0.55) 0%,
+        rgba(253,174,84,0.08) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 24px;
     border: 1px solid rgba(253,174,84,0.3);
     box-shadow: 0 8px 32px rgba(89,113,118,0.15),
@@ -7015,6 +7015,8 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
     display: flex;
     justify-content: space-around;
     align-items: center;
+    transform: translateY(calc(100% + 20px));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .qfq-tab {
     display: flex;
@@ -7134,6 +7136,37 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
             badge.style.display = 'none';
         }
     }
+})();
+</script>
+<script>
+(function() {
+  const bar = document.querySelector('.qfq-tabbar');
+  if (!bar) return;
+  bar.style.transform = 'translateY(0)';
+  let hideTimer = setTimeout(() => {
+    bar.style.transform = 'translateY(calc(100% + 20px))';
+  }, 2000);
+  document.addEventListener('touchstart', function(e) {
+    const touch = e.touches[0];
+    const threshold = window.innerHeight * 0.80;
+    clearTimeout(hideTimer);
+    if (touch.clientY > threshold) {
+      bar.style.transform = 'translateY(0)';
+      hideTimer = setTimeout(() => {
+        bar.style.transform = 'translateY(calc(100% + 20px))';
+      }, 3000);
+    }
+  }, { passive: true });
+  document.addEventListener('mousemove', function(e) {
+    const threshold = window.innerHeight * 0.85;
+    clearTimeout(hideTimer);
+    if (e.clientY > threshold) {
+      bar.style.transform = 'translateY(0)';
+      hideTimer = setTimeout(() => {
+        bar.style.transform = 'translateY(calc(100% + 20px))';
+      }, 3000);
+    }
+  });
 })();
 </script>
 
