@@ -3886,12 +3886,12 @@ function loadCWWeekStats() {
 }
 
 function toggleCW(){
-    var btn = document.getElementById('cwTabScore');
+    var btn = document.getElementById('qfqTabClassement');
     var wraps = document.querySelectorAll('.cw-wrap');
     var mainWrap = wraps[wraps.length - 1];
     mainWrap.classList.toggle('expanded');
     var expanding = mainWrap.classList.contains('expanded');
-    if (btn) btn.classList.toggle('cw-tab--active', expanding);
+    if (btn) btn.classList.toggle('active', expanding);
     wraps.forEach(function(w){ w.classList.toggle('expanded', expanding); });
     if(expanding && !_cwAnimated){
         _cwAnimated = true;
@@ -4945,36 +4945,11 @@ function sendMalus(reason, points){
                         }
                     });
                     
-                    // 💬 Mettre à jour le badge du bouton Messages dans le menu de navigation fixe en bas
-                    const bottomNavBadge = document.getElementById('bottomNavMessagesBadge');
-                    console.log('📍 Bottom nav badge trouvé:', bottomNavBadge);
-                    if (bottomNavBadge) {
-                        if (count > 0) {
-                            bottomNavBadge.textContent = count < 100 ? count : '99+';
-                            bottomNavBadge.style.display = 'flex';
-                        } else {
-                            bottomNavBadge.style.display = 'none';
-                        }
-                    }
-                    // Onglet Messagerie dans la nav du bas (legacy — orphelin depuis qfq-tabbar)
+                    // 💬 Pastille Messages de la tabbar flottante (qfq-tab-count avec chiffre)
                     var _msgB = document.getElementById('messages-nav-badge');
                     if (_msgB) {
                         if (count > 0) { _msgB.textContent = count < 100 ? count : '99+'; _msgB.style.display = ''; }
                         else { _msgB.style.display = 'none'; }
-                    }
-                    // 🔧 Pastille .qfq-tab-dot sur l'onglet Messages de la nouvelle tabbar (ajout ET retrait)
-                    var _qfqMsgTab = document.getElementById('qfqTabMessages');
-                    if (_qfqMsgTab) {
-                        var _qfqDot = _qfqMsgTab.querySelector('.qfq-tab-dot');
-                        if (count > 0) {
-                            if (!_qfqDot) {
-                                _qfqDot = document.createElement('span');
-                                _qfqDot.className = 'qfq-tab-dot';
-                                _qfqMsgTab.appendChild(_qfqDot);
-                            }
-                        } else if (_qfqDot) {
-                            _qfqDot.parentNode.removeChild(_qfqDot);
-                        }
                     }
                 }
                 // Fonctions utilitaires badges (pastilles avatars)
@@ -6953,7 +6928,7 @@ document.addEventListener('DOMContentLoaded', function() {
       position: 'bottom'
     },
     {
-      target: '#cwTabCourses',
+      target: '#qfqTabCourses',
       text: '🛒 Liste de courses partagée. Chaque article acheté = 1 point !',
       position: 'top'
     }
