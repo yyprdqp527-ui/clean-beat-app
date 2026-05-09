@@ -966,6 +966,9 @@ body {
 .sus-status-pill {
     text-align: center; margin-top: 12px; padding: 10px 16px;
     border-radius: 14px; font-size: 12px; font-weight: 700;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(21,48,54,0.12);
 }
 .sus-status-pill.sus-pill-wait { background: rgba(253,174,84,0.1); border: 1px solid rgba(253,174,84,0.25); color: #B07528; }
 .sus-status-pill.sus-pill-ok { background: rgba(166,211,220,0.15); border: 1px solid rgba(166,211,220,0.3); color: #3D7A84; }
@@ -978,6 +981,15 @@ body {
     font-size: 13px; font-weight: 600;
 }
 .sus-empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
+
+@keyframes qfqFadeIn {
+  from { opacity:0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes qfqFadeOut {
+  from { opacity:1; }
+  to   { opacity:0; }
+}
 
 </style>
 {% endblock %}
@@ -1499,8 +1511,8 @@ function sendBonus(reason, points){
                     window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(targetEmail) + '&whon=' + encodeURIComponent(targetName);
                 }, 1800);
             }
-            else { _bonusPending = false; alert(data.error||'Erreur'); }
-        }).catch(function(){ _bonusPending = false; alert('Erreur réseau'); });
+            else { _bonusPending = false; qfqToast(data.error||'Erreur', 'error'); }
+        }).catch(function(){ _bonusPending = false; qfqToast('Erreur réseau', 'error'); });
 }
 
 var _malusEmail = null;
@@ -1535,8 +1547,8 @@ function sendMalus(reason, points){
                     window.location.href = '/menu?pts=' + points + '&ts=' + Date.now() + '&who=' + encodeURIComponent(targetEmail) + '&whon=' + encodeURIComponent(targetName);
                 }, 2000);
             }
-            else { _malusPending = false; alert(data.error||'Erreur'); }
-        }).catch(function(){ _malusPending = false; alert('Erreur réseau'); });
+            else { _malusPending = false; qfqToast(data.error||'Erreur', 'error'); }
+        }).catch(function(){ _malusPending = false; qfqToast('Erreur réseau', 'error'); });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1716,7 +1728,7 @@ function openSuspicionPicker() {
         })
         .catch(err => {
             console.error('Erreur chargement tâches:', err);
-            alert('Erreur lors du chargement des tâches');
+            qfqToast('Erreur lors du chargement des tâches', 'error');
         });
 }
 
@@ -1837,91 +1849,87 @@ function uploadProofInline(suspicionId) {
 
 // ====== VALIDER PREUVE INLINE ======
 function validateProofInline(suspicionId, taskPoints, playerName) {
-    if (!confirm(`😊 Désolé de t'avoir soupçonné, ${playerName} !\n\n✅ ${playerName} récupère +${taskPoints} points\n❌ Vous perdez 10 points pour vous être trompé`)) {
-        return;
-    }
-    
-    fetch('/api/validate_proof', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            suspicion_id: suspicionId,
-            is_valid: true
+    qfqConfirm('😊 Désolé de t\'avoir soupçonné, ' + playerName + ' !<br><br>✅ ' + playerName + ' récupère +' + taskPoints + ' points<br>❌ Vous perdez 10 points pour vous être trompé', function() {
+        fetch('/api/validate_proof', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suspicion_id: suspicionId,
+                is_valid: true
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            // Animation 1: Vous perdez des points
-            showPointsAnimation(-10);
-            
-            // Animation 2: L'autre joueur gagne des points (décalée)
-            setTimeout(() => {
-                const gainDiv = document.createElement('div');
-                gainDiv.className = 'points-animation';
-                gainDiv.textContent = `${playerName} +${taskPoints} pts!`;
-                gainDiv.style.color = '#7ABAC5';
-                gainDiv.style.top = '40%';
-                document.body.appendChild(gainDiv);
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Animation 1: Vous perdez des points
+                showPointsAnimation(-10);
+                
+                // Animation 2: L'autre joueur gagne des points (décalée)
+                setTimeout(() => {
+                    const gainDiv = document.createElement('div');
+                    gainDiv.className = 'points-animation';
+                    gainDiv.textContent = `${playerName} +${taskPoints} pts!`;
+                    gainDiv.style.color = '#7ABAC5';
+                    gainDiv.style.top = '40%';
+                    document.body.appendChild(gainDiv);
+                    
+                    setTimeout(() => {
+                        try { document.body.removeChild(gainDiv); } catch(e) {}
+                    }, 2000);
+                }, 300);
                 
                 setTimeout(() => {
-                    try { document.body.removeChild(gainDiv); } catch(e) {}
-                }, 2000);
-            }, 300);
-            
-            setTimeout(() => {
-                loadMySuspicions();
-                location.reload();
-            }, 2500);
-        } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-        }
-    })
-    .catch(err => {
-        console.error('Erreur validation:', err);
-        alert('Erreur lors de la validation');
+                    loadMySuspicions();
+                    location.reload();
+                }, 2500);
+            } else {
+                qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erreur validation:', err);
+            qfqToast('Erreur lors de la validation', 'error');
+        });
     });
 }
 
 // ====== REJETER PREUVE INLINE ======
 function rejectProofInline(suspicionId, playerName) {
-    if (!confirm(`💪 La prochaine fois ${playerName} !\n\nCette preuve n'est pas convaincante.\n${playerName} perd 20 points.`)) {
-        return;
-    }
-    
-    fetch('/api/validate_proof', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            suspicion_id: suspicionId,
-            is_valid: false
+    qfqConfirm('💪 La prochaine fois ' + playerName + ' !<br><br>Cette preuve n\'est pas convaincante.<br>' + playerName + ' perd 20 points.', function() {
+        fetch('/api/validate_proof', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suspicion_id: suspicionId,
+                is_valid: false
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            // Animation de points (pas de changement pour le suspecteur, mais on peut afficher un message de succès)
-            const successDiv = document.createElement('div');
-            successDiv.className = 'points-animation';
-            successDiv.textContent = '� Recommence !';
-            successDiv.style.color = '#FDAE54';
-            document.body.appendChild(successDiv);
-            
-            // Son
-            SoundManager.play('losePoints');
-            
-            setTimeout(() => {
-                document.body.removeChild(successDiv);
-                loadMySuspicions();
-                location.reload();
-            }, 2000);
-        } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-        }
-    })
-    .catch(err => {
-        console.error('Erreur rejet:', err);
-        alert('Erreur lors du rejet');
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Animation de points (pas de changement pour le suspecteur, mais on peut afficher un message de succès)
+                const successDiv = document.createElement('div');
+                successDiv.className = 'points-animation';
+                successDiv.textContent = '� Recommence !';
+                successDiv.style.color = '#FDAE54';
+                document.body.appendChild(successDiv);
+                
+                // Son
+                SoundManager.play('losePoints');
+                
+                setTimeout(() => {
+                    document.body.removeChild(successDiv);
+                    loadMySuspicions();
+                    location.reload();
+                }, 2000);
+            } else {
+                qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erreur rejet:', err);
+            qfqToast('Erreur lors du rejet', 'error');
+        });
     });
 }
 
@@ -1931,65 +1939,61 @@ function closeSuspicionPicker() {
 
 // ====== ÉMETTRE UNE SUSPICION DIRECTEMENT DEPUIS UNE TÂCHE ======
 function emitSuspicionFromTask(email, name, taskName, points, taskId) {
-    if (!confirm(`🔍 Émettre une suspicion sur ${name} ?\n\nTâche: ${taskName}\nRisque: 10 pts si la preuve est acceptée`)) {
-        return;
-    }
-    
-    fetch('/api/emit_suspicion', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            suspected_email: email,
-            task_name: taskName,
-            task_points: points,
-            completed_task_id: taskId
+    qfqConfirm('🔍 Émettre une suspicion sur ' + name + ' ?<br><br>Tâche : ' + taskName + '<br>Risque : 10 pts si la preuve est acceptée', function() {
+        fetch('/api/emit_suspicion', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suspected_email: email,
+                task_name: taskName,
+                task_points: points,
+                completed_task_id: taskId
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert('🔍 ' + data.message);
-            loadMySuspicions();
-        } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-        }
-    })
-    .catch(err => {
-        console.error('Erreur émission suspicion:', err);
-        alert('Erreur lors de l\'émission de la suspicion');
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                qfqToast('🔍 ' + data.message, 'success');
+                loadMySuspicions();
+            } else {
+                qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erreur émission suspicion:', err);
+            qfqToast('Erreur lors de l\'émission de la suspicion', 'error');
+        });
     });
 }
 
 // ====== ÉMETTRE UNE SUSPICION ======
 function emitSuspicion(email, name, taskName, points, taskId) {
-    if (!confirm(`🔍 Émettre une suspicion sur ${name} ?\n\nTâche: ${taskName}\nRisque: 10 pts si tu as tort`)) {
-        return;
-    }
-    
-    fetch('/api/emit_suspicion', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            suspected_email: email,
-            task_name: taskName,
-            task_points: points,
-            completed_task_id: taskId
+    qfqConfirm('🔍 Émettre une suspicion sur ' + name + ' ?<br><br>Tâche : ' + taskName + '<br>Risque : 10 pts si tu as tort', function() {
+        fetch('/api/emit_suspicion', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suspected_email: email,
+                task_name: taskName,
+                task_points: points,
+                completed_task_id: taskId
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            SoundManager.play('suspicionEmit');
-            alert(data.message);
-            closeSuspicionPicker();
-            loadMySuspicions();
-        } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-        }
-    })
-    .catch(err => {
-        console.error('Erreur émission suspicion:', err);
-        alert('Erreur lors de l\'émission de la suspicion');
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                SoundManager.play('suspicionEmit');
+                qfqToast(data.message, 'success');
+                closeSuspicionPicker();
+                loadMySuspicions();
+            } else {
+                qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erreur émission suspicion:', err);
+            qfqToast('Erreur lors de l\'émission de la suspicion', 'error');
+        });
     });
 }
 
@@ -2011,7 +2015,7 @@ function submitProof() {
     
     const fileInput = document.getElementById('proofPhotoInput');
     if (!fileInput.files || !fileInput.files[0]) {
-        alert('Veuillez sélectionner une photo');
+        qfqToast('Veuillez sélectionner une photo', 'warning');
         return;
     }
     
@@ -2026,16 +2030,16 @@ function submitProof() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            qfqToast(data.message, 'success');
             closeUploadProof();
             loadMySuspicions();
         } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
         }
     })
     .catch(err => {
         console.error('Erreur upload preuve:', err);
-        alert('Erreur lors de l\'envoi de la preuve');
+        qfqToast('Erreur lors de l\'envoi de la preuve', 'error');
     });
 }
 
@@ -2056,61 +2060,61 @@ function closeValidateProof() {
 function validateProof() {
     if (!currentSuspicionToValidate) return;
     
-    if (!confirm('✅ Accepter cette preuve ?\nVous perdrez 10 points.')) return;
-    
-    fetch('/api/validate_proof', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            suspicion_id: currentSuspicionToValidate,
-            is_valid: true
+    qfqConfirm('✅ Accepter cette preuve ?<br>Vous perdrez 10 points.', function() {
+        fetch('/api/validate_proof', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suspicion_id: currentSuspicionToValidate,
+                is_valid: true
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            SoundManager.play('losePoints');
-            showPointsAnimation(-10, true);
-            alert(data.message);
-            closeValidateProof();
-            loadMySuspicions();
-        } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-        }
-    })
-    .catch(err => {
-        console.error('Erreur validation:', err);
-        alert('Erreur lors de la validation');
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                SoundManager.play('losePoints');
+                showPointsAnimation(-10, true);
+                qfqToast(data.message, 'success');
+                closeValidateProof();
+                loadMySuspicions();
+            } else {
+                qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erreur validation:', err);
+            qfqToast('Erreur lors de la validation', 'error');
+        });
     });
 }
 
 function rejectProof() {
     if (!currentSuspicionToValidate) return;
     
-    if (!confirm('❌ Rejeter cette preuve ?\nLe joueur perdra 20 points.')) return;
-    
-    fetch('/api/validate_proof', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            suspicion_id: currentSuspicionToValidate,
-            is_valid: false
+    qfqConfirm('❌ Rejeter cette preuve ?<br>Le joueur perdra 20 points.', function() {
+        fetch('/api/validate_proof', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                suspicion_id: currentSuspicionToValidate,
+                is_valid: false
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            SoundManager.play('malusImpact');
-            alert(data.message);
-            closeValidateProof();
-            loadMySuspicions();
-        } else {
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-        }
-    })
-    .catch(err => {
-        console.error('Erreur rejet:', err);
-        alert('Erreur lors du rejet');
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                SoundManager.play('malusImpact');
+                qfqToast(data.message, 'success');
+                closeValidateProof();
+                loadMySuspicions();
+            } else {
+                qfqToast('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erreur rejet:', err);
+            qfqToast('Erreur lors du rejet', 'error');
+        });
     });
 }
 
@@ -2301,7 +2305,7 @@ function validateWheelTask(btn, taskName, points) {
         } else {
             btn.disabled = false;
             btn.textContent = '\u2705 J\'ai fait la corv\xe9e !';
-            alert(data.error || 'Erreur lors de la validation');
+            qfqToast(data.error || 'Erreur lors de la validation', 'error');
         }
     })
     .catch(() => {
@@ -2355,6 +2359,35 @@ function floatPoints(text, anchorEl) {
 
 function closeWheelResult() {
     document.getElementById('wheelResultOverlay').classList.remove('open');
+}
+
+function qfqToast(message, type, duration) {
+    if (type === undefined) type = 'info';
+    if (duration === undefined) duration = 3500;
+    const existing = document.getElementById('qfq-toast');
+    if (existing) existing.remove();
+    const colors = { success: '#97C459', error: '#E24B4A', info: '#FDAE54', warning: '#EF9F27' };
+    const t = document.createElement('div');
+    t.id = 'qfq-toast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;min-width:260px;max-width:320px;padding:14px 20px;background:rgba(255,255,255,0.96);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);border-radius:16px;border:1px solid rgba(255,255,255,0.8);box-shadow:0 8px 32px rgba(21,48,54,0.18);font-size:14px;font-weight:600;color:#153036;text-align:center;border-left:4px solid ' + (colors[type] || colors.info) + ';animation:qfqFadeIn 0.2s ease;';
+    t.textContent = message;
+    document.body.appendChild(t);
+    setTimeout(function() {
+        t.style.animation = 'qfqFadeOut 0.2s ease';
+        setTimeout(function() { t.remove(); }, 200);
+    }, duration);
+}
+
+function qfqConfirm(message, onConfirm, onCancel) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(89,113,118,0.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:flex-end;';
+    const sheet = document.createElement('div');
+    sheet.style.cssText = 'width:100%;background:rgba(255,255,255,0.96);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);border-radius:24px 24px 0 0;border-top:1px solid rgba(255,255,255,0.8);box-shadow:0 -20px 60px rgba(21,48,54,0.2);padding:28px 24px 40px;text-align:center;';
+    sheet.innerHTML = '<div style="font-size:15px;font-weight:700;color:#153036;margin-bottom:20px;line-height:1.5;">' + message + '</div><div style="display:flex;gap:12px;"><button id="qfq-cancel" style="flex:1;padding:14px;background:rgba(21,48,54,0.08);border:none;border-radius:14px;font-size:15px;font-weight:700;color:#597176;cursor:pointer;">Annuler</button><button id="qfq-ok" style="flex:1;padding:14px;background:linear-gradient(135deg,#FDAE54,#F4C68D);border:none;border-radius:14px;font-size:15px;font-weight:700;color:#153036;cursor:pointer;">Confirmer</button></div>';
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+    sheet.querySelector('#qfq-ok').onclick = function() { overlay.remove(); if (onConfirm) onConfirm(); };
+    sheet.querySelector('#qfq-cancel').onclick = function() { overlay.remove(); if (onCancel) onCancel(); };
 }
 
 </script>
