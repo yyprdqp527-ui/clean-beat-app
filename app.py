@@ -4333,10 +4333,10 @@ def menu():
         daily_reminder_message=daily_reminder_message,
         daily_reminder_message_id=daily_reminder_message_id,
     ))
-    # Désactiver le cache pour éviter d'afficher d'anciennes valeurs de daily_points
-    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-    resp.headers['Pragma'] = 'no-cache'
-    resp.headers['Expires'] = '0'
+    # private,no-cache : revalide avant affichage (donnees fraiches) SANS bloquer le bfcache
+    # no-store bloquait la navigation back/forward instantanee -> retire
+    resp.headers['Cache-Control'] = 'private, no-cache, max-age=0'
+    resp.headers['Vary'] = 'Cookie'
     return resp
 
 
