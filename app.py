@@ -2649,6 +2649,11 @@ CREATE TABLE IF NOT EXISTS users (
         "CREATE INDEX IF NOT EXISTS idx_message_reads_msg ON message_reads(message_id)",
         "CREATE INDEX IF NOT EXISTS idx_custom_rooms_house ON custom_rooms(house_id)",
         "CREATE INDEX IF NOT EXISTS idx_player_reminders_user ON player_reminders(user_email)",
+        # Index perf: requetes frequentes sans index composite
+        "CREATE INDEX IF NOT EXISTS idx_custom_tasks_house ON custom_tasks(house_id)",
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_house_cat ON completed_tasks(house_id, category, completed_at)",
+        "CREATE INDEX IF NOT EXISTS idx_messages_house_type_recipient ON messages(house_id, message_type, recipient_email)",
+        "CREATE INDEX IF NOT EXISTS idx_message_reads_composite ON message_reads(message_id, user_email)",
     ]
     for _idx_sql in _indexes:
         try:
@@ -4505,12 +4510,12 @@ def api_unread_counts():
         
         house_id = user_row[0]
         
-        # Récupérer les compteurs
-        unread_received = get_unread_message_count(session['user'], house_id)
-        children_unread = get_children_unread_counts(house_id)
-        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', include_own=False)
-        unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', include_own=True)
-        unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added', include_own=True)
+        # Partage la meme connexion pour toutes les fonctions (evite 6 open/close)
+        unread_received = get_unread_message_count(session['user'], house_id, existing_conn=conn)
+        children_unread = get_children_unread_counts(house_id, existing_conn=conn)
+        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=False)
+        unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn, include_own=True)
+        unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added', existing_conn=conn, include_own=True)
 
         # 🛒 Articles non cochés dans la liste de courses
         courses_pending_count = _get_house_courses_pending(house_id)
