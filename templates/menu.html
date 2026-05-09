@@ -4415,25 +4415,9 @@ function sendMalus(reason, points){
                                             <span class="emoji-icon">{{ room.emoji }}</span>
                                         </div>
                                         {% else %}
-                                        {# TEST TWEMOJI — pour annuler : décommenter le bloc <picture> ci-dessous et supprimer le bloc emoji-square #}
-                                        <div class="emoji-square">
-                                          <span class="emoji-icon">
-                                            {% if room.category == 'salon' %}🛋️
-                                            {% elif room.category == 'cuisine' %}🍳
-                                            {% elif room.category in ('chambre_parentale', 'chambre_garcon', 'chambre_enfant') %}🛏️
-                                            {% elif room.category == 'salle_bain' %}🛁
-                                            {% elif room.category == 'wc' %}🚽
-                                            {% elif room.category == 'garage' %}🚗
-                                            {% elif room.category == 'piece_bonus' %}💻
-                                            {% elif room.category == 'buanderie' %}🧺
-                                            {% elif room.category == 'chambre_bebe' %}🍼
-                                            {% else %}🏠
-                                            {% endif %}
-                                          </span>
-                                        </div>
-                                        {# <picture>
+                                        <picture>
                                             <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=121{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="sync" loading="eager">
-                                        </picture> #}
+                                        </picture>
                                         {% endif %}
                                         <span class="room-mission-dot"
                                               title="Mission(s) en attente"
