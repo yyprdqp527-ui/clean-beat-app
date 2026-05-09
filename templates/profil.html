@@ -424,6 +424,25 @@ body { min-height: 100vh; }
     </div>
     {% endif %}{# is_own_profile #}
 
+    {% if is_own_profile %}
+    <!-- Section bêta testeur -->
+    <div class="profil-section-title">Version bêta</div>
+    <div class="profil-reminders">
+        <div class="profil-reminder-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="font-size:13px;font-weight:800;color:#153036;">🧡 Merci d'être bêta testeur !</div>
+            <div style="font-size:12px;color:rgba(21,48,54,0.7);line-height:1.5;">Tu fais partie des premiers à tester QuiFaitQuoi. Les images utilisées sont temporaires — nous cherchons d'ailleurs un illustrateur (si tu en connais un, fais-le nous savoir !). Certaines fonctionnalités sont encore en cours de polissage et il peut y avoir des bugs — c'est normal pour une version bêta ! Ton avis compte énormément. 💙</div>
+        </div>
+        <span class="profil-reminder-item" onclick="document.getElementById('install-guide-modal').style.display='flex'" style="cursor:pointer;">
+            <span style="font-size:22px;">📱</span>
+            <span style="font-size:14px;font-weight:700;color:#153036;">Installer l'appli</span>
+        </span>
+        <a href="{{ url_for('admin.feedback') }}" class="profil-reminder-item">
+            <span style="font-size:22px;">✉️</span>
+            <span style="font-size:14px;font-weight:700;color:#153036;">Donner mon avis</span>
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Boutons d'action -->
     <div class="profil-actions">
         {% if is_own_profile %}

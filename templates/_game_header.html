@@ -22,6 +22,7 @@
           <div class="avatar-name" style="font-weight:700;">{{ player.name }}</div>
           <div class="avatar-row" style="gap:6px; align-items:center;">
             <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+              {% if player.email == session.user %}<a href="{{ url_for('players.profil') }}" style="text-decoration:none;display:block;">{% endif %}
               <div class="avatar-square-wrapper" title="{{ player.name }}">
                 {% set border_color = (player.player_color_hex if player and player.player_color_hex else color) %}
                 <div class="avatar-square" style="--avatar-accent: {{ border_color }}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
@@ -40,6 +41,7 @@
                   <div class="vbar-fill" style="height: {{ fill }}%; background: linear-gradient(180deg, {{ color }} 0%, {{ color }}DD 100%);"></div>
                 </div>
               </div>
+              {% if player.email == session.user %}</a>{% endif %}
               {# Barre horizontale pour mobile #}
               <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points }}" data-fill="{{ fill }}">
                 <div class="vbar-fill" style="width: {{ fill }}%; background: linear-gradient(90deg, {{ color }} 0%, {{ color }}DD 100%);"></div>

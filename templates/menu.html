@@ -2721,61 +2721,6 @@
 {% endif %}
 
 
-<script>
-//  MENU BURGER - Définition globale immédiate
-window.openBurgerMenu = function() {
-    console.log('openBurgerMenu appelee');
-    var overlay = document.getElementById('burgerOverlay');
-    if (overlay) {
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    } else {
-        console.error('burgerOverlay not found!');
-    }
-};
-
-window.closeBurgerMenu = function() {
-    console.log('closeBurgerMenu appelee');
-    var overlay = document.getElementById('burgerOverlay');
-    if (overlay) {
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-};
-
-// Attendre que le DOM soit chargé pour ajouter les event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Fonctions burger definies');
-    
-    // Bouton close (croix)
-    var closeBtn = document.getElementById('burgerClose');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', window.closeBurgerMenu);
-        console.log('Event listener ajoute au bouton close');
-    }
-    
-    // Clic sur l'overlay (ferme si on clique en dehors)
-    var overlay = document.getElementById('burgerOverlay');
-    if (overlay) {
-        overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) {
-                window.closeBurgerMenu();
-            }
-        });
-        console.log('Event listener ajoute a overlay');
-    }
-    
-    // Touche Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            var overlay = document.getElementById('burgerOverlay');
-            if (overlay && overlay.classList.contains('active')) {
-                window.closeBurgerMenu();
-            }
-        }
-    });
-});
-</script>
 
     <script>
         // Badge de debug retiré
@@ -2788,8 +2733,6 @@ document.addEventListener('DOMContentLoaded', function() {
             {% elif total <= 6 %}{% set avatar_size = 52 %}
             {% else %}{% set avatar_size = 44 %}{% endif %}
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
-                <!-- Bouton bêta testeur / burger -->
-                <div class="beta-dot" id="burgerBtn" onclick="window.openBurgerMenu()" role="button" tabindex="0" aria-label="Ouvrir le menu" title="Menu burger" style="position:absolute;top:12px;right:12px;"></div>
                 <!-- Bouton Gameplay déplacé dans la barre flottante (onglet Mini-jeux) -->
 
                 <div class="header-inner">
@@ -3303,51 +3246,6 @@ body { padding-bottom: 84px !important; }
     position: fixed; right: 14px; top: calc(10px + env(safe-area-inset-top, 0px));
     z-index: 10001; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.beta-dot {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, rgba(253,174,84,0.25) 0%, rgba(244,198,141,0.35) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1.5px solid rgba(253,174,84,0.55);
-    cursor: pointer;
-    flex-shrink: 0;
-    z-index: 1;
-    box-shadow: 0 4px 12px rgba(253,174,84,0.25);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: beta-pulse 2s ease-in-out infinite;
-}
-.beta-dot::before {
-    content: '💡';
-    font-size: 16px;
-    pointer-events: none;
-    line-height: 1;
-}
-.beta-dot:hover {
-    animation: none;
-    transform: translateY(-1px) scale(1.1);
-    box-shadow: 0 6px 20px rgba(253,174,84,0.5);
-    border-color: rgba(253,174,84,0.8);
-    background: linear-gradient(135deg, rgba(253,174,84,0.4) 0%, rgba(244,198,141,0.45) 100%);
-}
-.beta-dot:active {
-    transform: scale(0.92);
-}
-@keyframes beta-pulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 4px 12px rgba(253,174,84,0.25), 0 0 0 0 rgba(253,174,84,0.5);
-    }
-    50% {
-        transform: scale(1.1);
-        box-shadow: 0 4px 18px rgba(253,174,84,0.45), 0 0 0 7px rgba(253,174,84,0);
-    }
-}
-
 .header-action-pill {
     width: 34px; height: 34px;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -4589,237 +4487,8 @@ function sendMalus(reason, points){
                     <!-- Zone compte-rendu quotidien des tâches supprimée pour refonte -->
                 </div>
 
-            <!-- Menu burger en overlay -->
-            <div class="burger-overlay" id="burgerOverlay">
-                <div class="burger-nav">
-                    <button class="burger-close" id="burgerClose" aria-label="Fermer le menu">&times;</button>
-                    <nav class="burger-nav-items">
-                        <!-- 👤 MON PROFIL — item en haut du menu -->
-
-                        <!-- Séparateur version bêta EN BAS -->
-                        <div class="burger-nav-divider">Version bêta</div>
-
-                        <!-- 🧡 REMERCIEMENT BÊTA TESTEURS -->
-                        <div style="margin: 4px 0 8px; padding: 14px 16px; background: linear-gradient(135deg, rgba(253,174,84,0.18), rgba(244,198,141,0.12)); border-radius: 16px; border: 1.5px solid rgba(253,174,84,0.35);">
-                            <div style="font-size: 13px; font-weight: 800; color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %}; margin-bottom: 4px;">🧡 Merci d'être bêta testeur !</div>
-                            <div style="font-size: 12px; color: {% if bg_theme_light %}rgba(21,48,54,0.7){% else %}rgba(255,255,255,0.8){% endif %}; line-height: 1.5;">Tu fais partie des premiers à tester QuiFaitQuoi. Les images utilisées sont temporaires — nous cherchons d'ailleurs un illustrateur (si tu en connais un, fais-le nous savoir !). Certaines fonctionnalités sont encore en cours de polissage et il peut y avoir des bugs — c'est normal pour une version bêta ! Ton avis compte énormément. 💙</div>
-                        </div>
-
-                        <!-- GUIDE AJOUT ÉCRAN ACCUEIL -->
-                        <span class="burger-nav-item" onclick="document.getElementById('install-guide-modal').style.display='flex'" style="cursor:pointer; background: linear-gradient(135deg, rgba(166,211,220,0.2), rgba(166,211,220,0.1)); border-color: rgba(166,211,220,0.45);">
-                            <span class="burger-nav-icon" style="color:#A6D3DC;"><svg class="ui-icon" aria-hidden="true" focusable="false" style="font-size:22px;"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-phone"/></svg></span>
-                            <span class="burger-nav-text" style="color:#153036;">Installer l'appli</span>
-                        </span>
-
-                        <!-- FEEDBACK TESTEURS -->
-                        <a href="{{ url_for('admin.feedback') }}" class="burger-nav-item" style="background: linear-gradient(135deg, rgba(253,174,84,0.25), rgba(244,198,141,0.18)); border-color: rgba(253,174,84,0.45);">
-                            <span class="burger-nav-icon" style="color:#FDAE54;"><svg class="ui-icon" aria-hidden="true" focusable="false" style="font-size:22px;"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-envelope"/></svg></span>
-                            <span class="burger-nav-text" style="color:#153036;">Donner mon avis</span>
-                        </a>
-                        
-                    </nav>
-
-                    <!-- ══════════════════════════════════════════════
-                         🧑 PANNEAU MON PROFIL
-                    ══════════════════════════════════════════════ -->
-                    {% set cp = players|selectattr('email', 'equalto', current_user_name)|first %}
-                    <div class="profile-panel" id="profilePanel" role="dialog" aria-label="Mon Profil">
-
-                        <!-- Bouton retour -->
-                        <button class="profile-panel-back" id="profilePanelBack" onclick="closeProfilePanel()">
-                            <span class="profile-panel-back-arrow">‹</span>
-                            Retour au menu
-                        </button>
-
-                        <!-- Zone héro : avatar + nom + maison -->
-                        <div class="profile-hero">
-                            <div class="profile-avatar-ring">
-                                <div class="profile-avatar-inner">
-                                    {% if player1_avatar_file %}
-                                        <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}"
-                                             alt="{{ player1_name or 'Avatar' }}"
-                                             onerror="this.onerror=null;this.innerHTML='👤';">
-                                    {% elif player1_avatar_url %}
-                                        <img src="{{ player1_avatar_url }}"
-                                             alt="{{ player1_name or 'Avatar' }}"
-                                             onerror="this.onerror=null;this.innerHTML='👤';">
-                                    {% elif player1_avatar and player1_avatar|length <= 4 %}
-                                        <span class="profile-avatar-emoji">{{ player1_avatar }}</span>
-                                    {% elif player1_avatar and '.' not in player1_avatar %}
-                                        <img src="/api/avatar_proxy?style={{ player1_avatar_style or 'adventurer' }}&seed={{ player1_avatar }}"
-                                             alt="{{ player1_name or 'Avatar' }}"
-                                             onerror="this.onerror=null;this.innerHTML='👤';">
-                                    {% else %}
-                                        <img src="/api/avatar_proxy?style=adventurer&seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}"
-                                             alt="{{ player1_name or 'Avatar' }}">
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="profile-name">{{ player1_name or 'Joueur' }}</div>
-
-                            {% if current_user_name %}
-                            <div class="profile-email-text">{{ current_user_name }}</div>
-                            {% endif %}
-
-                            {% if house_name %}
-                            <div class="profile-house-badge">
-                                🏡 {{ house_name }}
-                            </div>
-                            {% endif %}
-
-                            {% if cp %}
-                            {% set total_pts = cp.total_points|default(0) %}
-                            {% if total_pts >= 1000 %}
-                            <div class="profile-rank-badge">🏆 Légende</div>
-                            {% elif total_pts >= 500 %}
-                            <div class="profile-rank-badge">⭐ Expert</div>
-                            {% elif total_pts >= 200 %}
-                            <div class="profile-rank-badge">✨ Confirmé</div>
-                            {% elif total_pts >= 50 %}
-                            <div class="profile-rank-badge">🌱 Apprenti</div>
-                            {% else %}
-                            <div class="profile-rank-badge">🐣 Débutant</div>
-                            {% endif %}
-                            {% endif %}
-                        </div>
-
-                        <!-- Grille de stats -->
-                        <div class="profile-section-title">Mes statistiques</div>
-                        <div class="profile-stats-grid">
-                            <div class="profile-stat-item">
-                                {% set today_tasks = daily_report|selectattr('email', 'equalto', current_user_name)|list|length %}
-                                <div class="profile-stat-value">{{ today_tasks }}</div>
-                                <div class="profile-stat-label">Tâches</div>
-                            </div>
-                            <div class="profile-stat-item">
-                                <div class="profile-stat-value">{{ player1_points or 0 }}</div>
-                                <div class="profile-stat-label">Aujourd'hui</div>
-                            </div>
-                            <div class="profile-stat-item">
-                                <div class="profile-stat-value">{{ cp.weekly_points|default(0) if cp else 0 }}</div>
-                                <div class="profile-stat-label">Cette semaine</div>
-                            </div>
-                            <div class="profile-stat-item">
-                                {% set total_rappels = (unread_baby_tracking|default(0)) %}
-                                <div class="profile-stat-value">{{ total_rappels }}</div>
-                                <div class="profile-stat-label">Rappels</div>
-                            </div>
-                        </div>
-
-                        <!-- Mes rappels -->
-                        <div class="profile-section-title">Mes rappels</div>
-                        <div class="profile-reminders">
-                        </div>
-
-                        <!-- Classement dans la maison -->
-                        {% if players|length > 1 %}
-                        <div class="profile-section-title">Classement de la maison</div>
-                        <div style="padding: 0 16px 16px;">
-                            {% set sorted_players = players|sort(attribute='total_points', reverse=True) %}
-                            {% for p in sorted_players %}
-                            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:8px;
-                                        background:rgba(255,255,255,{% if p.email == current_user_name %}0.15{% else %}0.06{% endif %});
-                                        border:1.5px solid rgba(255,255,255,{% if p.email == current_user_name %}0.25{% else %}0.1{% endif %});
-                                        border-radius:12px;transition:all 0.2s;">
-                                <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,{% if loop.index==1 %}0.9{% else %}0.5{% endif %});width:24px;text-align:center;">
-                                    {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
-                                </div>
-                                <div style="width:30px;height:30px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                    {% if p.avatar_file %}
-                                        <img src="{{ url_for('static', filename='avatars/' + p.avatar_file) }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
-                                    {% elif p.avatar_url %}
-                                        <img src="{{ p.avatar_url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.onerror=null;this.outerHTML='<span style=\'font-size:16px\'>👤</span>'">
-                                    {% elif p.avatar and p.avatar|length <= 4 %}
-                                        <span style="font-size:16px;">{{ p.avatar }}</span>
-                                    {% else %}
-                                        <span style="font-size:16px;">👤</span>
-                                    {% endif %}
-                                </div>
-                                <div style="flex:1;min-width:0;">
-                                    <div style="font-size:13px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                                        {{ p.name }}{% if p.email == current_user_name %} <span style="font-size:10px;opacity:0.7;">(moi)</span>{% endif %}
-                                    </div>
-                                </div>
-                                <div style="font-size:14px;font-weight:800;color:rgba(253,174,84,0.9);">
-                                    {{ p.total_points|default(0) }} pts
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        <!-- Boutons d'action -->
-                        <div class="profile-actions">
-                            <a href="{{ url_for('players.edit_player', email=current_user_name) }}" class="profile-action-btn profile-action-edit">
-                                ✏️&nbsp; Modifier mon profil
-                            </a>
-                            <a href="{{ url_for('auth.logout') }}" class="profile-action-btn profile-action-logout">
-                                👋&nbsp; Se déconnecter
-                            </a>
-                        </div>
-
-                    </div><!-- /profile-panel -->
-
-                </div>
-            </div>
 
             <script>
-                //  GESTION DU MENU BURGER
-                // Fonction globale pour ouvrir depuis la barre du bas
-                window.openBurgerMenu = function() {
-                    console.log('openBurgerMenu appelee');
-                    document.getElementById('burgerOverlay').classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                };
-                console.log('openBurgerMenu définie:', typeof window.openBurgerMenu);
-                window.closeBurgerMenu = function() {
-                    document.getElementById('burgerOverlay').classList.remove('active');
-                    if(typeof closeProfilePanel === 'function') closeProfilePanel();
-                    document.body.style.overflow = '';
-                };
-                (function() {
-                    const burgerBtn = document.getElementById('burgerBtn');
-                    const burgerOverlay = document.getElementById('burgerOverlay');
-                    const burgerClose = document.getElementById('burgerClose');
-
-                    if(burgerBtn) burgerBtn.addEventListener('click', openBurgerMenu);
-
-                    burgerClose.addEventListener('click', closeBurgerMenu);
-
-                    burgerOverlay.addEventListener('click', (e) => {
-                        if (e.target === burgerOverlay) {
-                            closeBurgerMenu();
-                        }
-                    });
-
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape' && burgerOverlay.classList.contains('active')) {
-                            const panel = document.getElementById('profilePanel');
-                            if (panel && panel.classList.contains('active')) {
-                                closeProfilePanel();
-                            } else {
-                                closeBurgerMenu();
-                            }
-                        }
-                    });
-                })();
-
-                // 🧑 PANNEAU PROFIL
-                function openProfilePanel(e) {
-                    if (e) e.preventDefault();
-                    const panel = document.getElementById('profilePanel');
-                    if (panel) {
-                        panel.classList.add('active');
-                        // Scroll en haut du panneau
-                        panel.scrollTop = 0;
-                    }
-                }
-                function closeProfilePanel() {
-                    const panel = document.getElementById('profilePanel');
-                    if (panel) panel.classList.remove('active');
-                }
-                
                 //  GESTION DES LUMIÈRES PERSISTANTES
                 (function() {
                     const roomGroups = document.querySelectorAll('.room-group');
@@ -7167,6 +6836,32 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
       }, 3000);
     }
   });
+})();
+</script>
+
+<style>
+@keyframes qfq-avatar-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(253,174,84,0); }
+  50%      { box-shadow: 0 0 0 4px rgba(253,174,84,0.6); }
+}
+.qfq-avatar-pulse {
+  border-radius: inherit;
+  animation: qfq-avatar-pulse 1.8s ease-in-out 3;
+}
+</style>
+<script>
+(function() {
+  var PULSE_KEY = 'qfq_avatar_pulse_seen';
+  if (!sessionStorage.getItem(PULSE_KEY)) {
+    var myAvatar = document.querySelector('.avatar-square-wrapper a .avatar-square');
+    if (myAvatar) {
+      myAvatar.classList.add('qfq-avatar-pulse');
+      myAvatar.addEventListener('animationend', function() {
+        myAvatar.classList.remove('qfq-avatar-pulse');
+      }, { once: true });
+    }
+    sessionStorage.setItem(PULSE_KEY, '1');
+  }
 })();
 </script>
 
