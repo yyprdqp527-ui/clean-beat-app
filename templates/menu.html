@@ -6750,23 +6750,23 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   style="position:fixed;
     bottom: calc(83px + env(safe-area-inset-bottom, 0px));
     left: 50%;
-    transform: translateX(-50%) translateY(calc(100% + 20px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(-50%);
     background: linear-gradient(135deg,
-      rgba(255,255,255,0.75),
-      rgba(253,174,84,0.15));
+      rgba(255,255,255,0.82),
+      rgba(253,174,84,0.22));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 10px 10px 0 0;
-    padding: 5px 20px 3px;
-    border: 1px solid rgba(255,255,255,0.5);
+    padding: 5px 22px 4px;
+    border: 1px solid rgba(253,174,84,0.35);
     border-bottom: none;
-    font-size: 10px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 800;
     color: #153036;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
     z-index: 8999;
-    pointer-events: none;">
+    pointer-events: none;
+    white-space: nowrap;">
   MENU
 </div>
 
@@ -6836,11 +6836,9 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 
   function show() {
     bar.style.transform = 'translateY(0)';
-    if (handle) handle.style.transform = 'translateX(-50%) translateY(0)';
   }
   function hide() {
     bar.style.transform = 'translateY(calc(100% + 20px))';
-    if (handle) handle.style.transform = 'translateX(-50%) translateY(calc(100% + 20px))';
   }
 
   show();
