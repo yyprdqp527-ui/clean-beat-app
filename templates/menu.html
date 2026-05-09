@@ -4956,11 +4956,25 @@ function sendMalus(reason, points){
                             bottomNavBadge.style.display = 'none';
                         }
                     }
-                    // Onglet Messagerie dans la nav du bas
+                    // Onglet Messagerie dans la nav du bas (legacy — orphelin depuis qfq-tabbar)
                     var _msgB = document.getElementById('messages-nav-badge');
                     if (_msgB) {
                         if (count > 0) { _msgB.textContent = count < 100 ? count : '99+'; _msgB.style.display = ''; }
                         else { _msgB.style.display = 'none'; }
+                    }
+                    // 🔧 Pastille .qfq-tab-dot sur l'onglet Messages de la nouvelle tabbar (ajout ET retrait)
+                    var _qfqMsgTab = document.getElementById('qfqTabMessages');
+                    if (_qfqMsgTab) {
+                        var _qfqDot = _qfqMsgTab.querySelector('.qfq-tab-dot');
+                        if (count > 0) {
+                            if (!_qfqDot) {
+                                _qfqDot = document.createElement('span');
+                                _qfqDot.className = 'qfq-tab-dot';
+                                _qfqMsgTab.appendChild(_qfqDot);
+                            }
+                        } else if (_qfqDot) {
+                            _qfqDot.parentNode.removeChild(_qfqDot);
+                        }
                     }
                 }
                 // Fonctions utilitaires badges (pastilles avatars)

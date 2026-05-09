@@ -1368,8 +1368,12 @@
                     }
                 });
                 
-                // 🔄 Helper : mise à jour immédiate du badge #messages-nav-badge depuis /api/unread_counts
+                // 🔄 Helper : mise à jour immédiate du badge depuis /api/unread_counts
                 function _refreshNavBadgeFromApi() {
+                    // Délègue à la source unique exposée par base.html (qfq-tabbar)
+                    if (typeof window._qfqRefreshTabBadges === 'function') {
+                        try { window._qfqRefreshTabBadges(); } catch(_) {}
+                    }
                     fetch('/api/unread_counts', { cache: 'no-store' })
                         .then(function(r) { return r.json(); })
                         .then(function(c) {

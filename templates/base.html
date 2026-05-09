@@ -1405,7 +1405,10 @@ window.cbToast = function(message, type, duration) {
 </script>
 
 <script>
-// 📱 Tab bar — onglet actif + pastille Messages
+// 📱 Tab bar — onglet actif + pastilles (Messages dot + Courses count)
+// 🔧 Source unique de vérité front pour les badges nav, valable sur TOUTES les pages
+//    héritant de base.html. Ré-exécutée à chaque visibilitychange/pageshow et sur
+//    chaque event WebSocket pertinent (reminder_*, all_messages_read, new_message_notification).
 (function() {
     var path = window.location.pathname;
     var tabMap = {
@@ -1425,24 +1428,80 @@ window.cbToast = function(message, type, duration) {
             }
         }
     }
-    // Pastille orange sur Messages si non-lus
-    fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
-        .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(counts) {
-            if (!counts) return;
-            var unread = (counts.unread_received || 0)
-                       + (counts.unread_task_added || 0)
-                       + (counts.unread_baby || 0);
-            if (unread > 0) {
-                var tab = document.getElementById('qfqTabMessages');
-                if (tab && !tab.querySelector('.qfq-tab-dot')) {
-                    var dot = document.createElement('span');
-                    dot.className = 'qfq-tab-dot';
-                    tab.appendChild(dot);
-                }
+
+    // 🔧 Setter idempotent : ajoute OU retire le dot Messages selon le compteur
+    function setMessagesDot(unread) {
+        var tab = document.getElementById('qfqTabMessages');
+        if (!tab) return;
+        var dot = tab.querySelector('.qfq-tab-dot');
+        if (unread > 0) {
+            if (!dot) {
+                dot = document.createElement('span');
+                dot.className = 'qfq-tab-dot';
+                tab.appendChild(dot);
             }
-        })
-        .catch(function() {});
+        } else if (dot) {
+            dot.parentNode.removeChild(dot);
+        }
+    }
+
+    // 🔧 Setter compteur Courses (idempotent)
+    function setCoursesCount(cnt) {
+        var b = document.getElementById('courses-nav-badge');
+        if (!b) return;
+        if (cnt > 0) {
+            b.textContent = cnt < 100 ? cnt : '99+';
+            b.style.display = '';
+        } else {
+            b.style.display = 'none';
+        }
+    }
+
+    var _qfqLastRefresh = 0;
+    function refreshTabBadges() {
+        var now = Date.now();
+        if (now - _qfqLastRefresh < 400) return; // throttle 400ms
+        _qfqLastRefresh = now;
+        fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(counts) {
+                if (!counts) return;
+                var unread = (counts.unread_received || 0)
+                           + (counts.unread_task_added || 0)
+                           + (counts.unread_baby || 0);
+                setMessagesDot(unread);
+                setCoursesCount(counts.courses_pending_count || 0);
+            })
+            .catch(function() {});
+    }
+    // Exposer pour réutilisation (ex: comments.html)
+    window._qfqRefreshTabBadges = refreshTabBadges;
+
+    // Refresh initial
+    refreshTabBadges();
+
+    // Refresh sur retour de visibilité (PWA iOS, retour d'onglet)
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') refreshTabBadges();
+    });
+    window.addEventListener('pageshow', refreshTabBadges);
+
+    // 🔌 Brancher Socket.IO si chargé sur la page courante (ne casse pas si absent)
+    function bindWS() {
+        if (typeof io === 'undefined') return false;
+        try {
+            var s = (window.socket && window.socket.on) ? window.socket : io();
+            window.socket = s;
+            ['reminder_added','reminder_toggle','reminder_deleted',
+             'all_messages_read','new_message_notification','system_message','message_read']
+             .forEach(function(ev) { s.on(ev, refreshTabBadges); });
+            return true;
+        } catch(_) { return false; }
+    }
+    if (!bindWS()) {
+        // Réessayer une fois après chargement complet (Socket.IO peut être chargé en defer)
+        window.addEventListener('load', function() { setTimeout(bindWS, 300); });
+    }
 })();
 </script>
 </body>
