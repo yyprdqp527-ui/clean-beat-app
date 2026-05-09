@@ -6853,7 +6853,7 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 (function() {
   var PULSE_KEY = 'qfq_avatar_pulse_seen';
   if (!sessionStorage.getItem(PULSE_KEY)) {
-    var myAvatar = document.querySelector('.avatar-square-wrapper a .avatar-square');
+    var myAvatar = document.getElementById('current-player-avatar');
     if (myAvatar) {
       myAvatar.classList.add('qfq-avatar-pulse');
       myAvatar.addEventListener('animationend', function() {
