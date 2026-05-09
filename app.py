@@ -449,6 +449,21 @@ except ImportError:
 
 app = Flask(__name__)
 
+# Cache long sur /static/ pour reduire la charge reseau (avatars, JS, CSS, sons)
+@app.after_request
+def _add_static_cache_headers(response):
+    try:
+        from flask import request
+        path = request.path or ''
+        if path.startswith("/static/"):
+            if path.endswith("/service-worker.js"):
+                response.headers["Cache-Control"] = "no-cache"
+            else:
+                response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+    except Exception:
+        pass
+    return response
+
 def jinja2_index(lst, item):
     try:
         return lst.index(item)

@@ -588,9 +588,9 @@
             setTimeout(() => bubble.remove(), 2000);
         }
         
-        // ⚡ Vérifier toutes les 3 secondes pour synchronisation quasi-instantanée
-        const updateInterval = setInterval(updatePlayersPoints, 3000);
-        console.log('✅ Polling points: toutes les 3 secondes');
+        // ⚡ Vérification points : 15s (Socket.IO push gere le temps reel)
+        const updateInterval = setInterval(updatePlayersPoints, 15000);
+        console.log('✅ Polling points: toutes les 15 secondes');
         
         // Première mise à jour après 1 seconde
         setTimeout(updatePlayersPoints, 1000);
@@ -606,7 +606,7 @@
                 lastPoints[index] = currentPoints;
             });
         }
-        setInterval(checkPointsChanges, 2000);
+        setInterval(checkPointsChanges, 10000);
 
         // Animation des barres de progression verticales (au chargement)
         function animatePlayerProgressBars() {
