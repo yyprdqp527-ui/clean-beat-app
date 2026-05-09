@@ -2790,12 +2790,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="header-menu" aria-label="Header principal" style="--avatar-size: {{ avatar_size }}px;">
                 <!-- Bouton bêta testeur à gauche -->
                 
-                <!-- Bouton Gameplay (position fixed à droite) -->
-                <div class="gameplay-btn-wrapper">
-                    <a href="{{ url_for('gameplay_bp.gameplay') }}" class="gameplay-btn" title="Mini-jeux" aria-label="Mini-jeux">
-                        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-gamecontroller"/></svg>
-                    </a>
-                </div>
+                <!-- Bouton Gameplay déplacé dans la barre flottante (onglet Mini-jeux) -->
                 <!-- burger déplacé dans house-info -->
 
                 <div class="header-inner">
@@ -7093,19 +7088,13 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 </style>
 
 <nav class="qfq-tabbar" id="qfqTabbar">
-  <a href="/classement" class="qfq-tab" id="qfqTabClassement">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-    </svg>
-    <span class="qfq-tab-label">Classement</span>
-  </a>
-  <a href="/sats" class="qfq-tab" id="qfqTabStats">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <a href="/classement-stats" class="qfq-tab" id="qfqTabClassement">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"/>
       <line x1="12" y1="20" x2="12" y2="4"/>
       <line x1="6" y1="20" x2="6" y2="14"/>
     </svg>
-    <span class="qfq-tab-label">Stats</span>
+    <span class="qfq-tab-label">Classement</span>
   </a>
   <a href="/comments" class="qfq-tab" id="qfqTabMessages">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -7113,6 +7102,15 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
     </svg>
     <span class="qfq-tab-label">Messages</span>
     <span class="qfq-tab-count" id="messages-nav-badge" style="display:none;">0</span>
+  </a>
+  <a href="{{ url_for('gameplay_bp.gameplay') }}" class="qfq-tab" id="qfqTabMinijeux">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="6" width="20" height="12" rx="3" ry="3"/>
+      <path d="M6 12h4M8 10v4"/>
+      <circle cx="16" cy="11" r="1" fill="currentColor"/>
+      <circle cx="18" cy="13" r="1" fill="currentColor"/>
+    </svg>
+    <span class="qfq-tab-label">Mini-jeux</span>
   </a>
   <a href="/reminders" class="qfq-tab" id="qfqTabCourses">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

@@ -8,6 +8,18 @@ stats_bp = Blueprint('stats', __name__)
 
 
 # ════════════════════════════════════════════════════════════
+# 🏆📈 PAGE INTERMÉDIAIRE — Classement & Stats (/classement-stats)
+# ════════════════════════════════════════════════════════════
+
+@stats_bp.route('/classement-stats')
+def classement_stats():
+    """Page intermédiaire qui propose deux liens : Classement et Stats."""
+    if 'user' not in session:
+        return redirect(url_for('auth.signup_email'))
+    return render_template('classement_stats.html', menu_page=True)
+
+
+# ════════════════════════════════════════════════════════════
 # 📊 STATS — Page principale (/sats)
 # ════════════════════════════════════════════════════════════
 
