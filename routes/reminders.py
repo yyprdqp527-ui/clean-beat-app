@@ -144,8 +144,11 @@ def add_reminder():
         else:
             creator_name = session['user'].split('@')[0]
         message_content = f"🛒 {creator_name} a ajouté \"{title}\" à la liste de courses"
-        import threading as _t
-        _t.Thread(target=create_system_message, args=(house_id, message_content, 'courses_added'), kwargs={'sender_email': session['user']}, daemon=True).start()
+        # ✅ Synchrone : évite la race condition entre WebSocket et /api/unread_counts
+        try:
+            create_system_message(house_id, message_content, 'courses_added', sender_email=session['user'])
+        except Exception:
+            pass
     except Exception:
         if not creator_name:
             creator_name = session['user'].split('@')[0]

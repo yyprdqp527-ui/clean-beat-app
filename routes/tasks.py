@@ -120,7 +120,7 @@ def categorie(cat):
                 c3.execute("""
                     SELECT m.id FROM messages m
                     WHERE m.house_id = ? AND m.message_type = 'task_added'
-                    AND (m.related_category = ? OR m.related_category IS NULL)
+                    AND m.related_category = ?
                     AND NOT EXISTS (
                         SELECT 1 FROM message_reads mr
                         WHERE mr.message_id = m.id AND mr.user_email = ?
@@ -376,6 +376,12 @@ def add_task_page(cat, task_id=None):
                 _task_name = task_name
                 _points = points
                 _creator_name = creator_name
+                _ws_payload = {
+                    'category': normalized_cat,
+                    'task_name': task_name,
+                    'creator': session['user']
+                }
+                _house_room = f'house_{house_id}'
                 def _notif():
                     try:
                         create_system_message(
@@ -385,21 +391,17 @@ def add_task_page(cat, task_id=None):
                             push_title=f'⭐ Nouvelle mission')
                     except Exception:
                         pass
-                    # ⚠️ Push géré par create_system_message ci-dessus → ne PAS rappeler notify_house_members (doublon)
+                    # 🔌 WebSocket APRÈS l'INSERT pour éviter une race condition
+                    # (le client appelle /api/unread_counts qui DOIT voir le message en DB)
+                    try:
+                        safe_socketio_emit('task_added_notification', _ws_payload,
+                                           namespace='/', room=_house_room, broadcast=True)
+                    except Exception:
+                        pass
                 threading.Thread(
                     target=_notif, daemon=True).start()
             except Exception as _e_msg:
                 print(f'⚠️ Erreur création message task_added: {_e_msg}', flush=True)
-
-            # 🔌 WebSocket : notifier tous les joueurs de la maison en temps réel
-            try:
-                safe_socketio_emit('task_added_notification', {
-                    'category': normalized_cat,
-                    'task_name': task_name,
-                    'creator': session['user']
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
-            except Exception as _ws_err:
-                _dbg(f'⚠️ Erreur WebSocket task_added: {_ws_err}')
 
             conn.close()
         
@@ -704,7 +706,7 @@ def custom_task_page(task_id):
                 c_tr.execute("""
                     SELECT m.id FROM messages m
                     WHERE m.house_id = ? AND m.message_type = 'task_added'
-                    AND (m.related_category = ? OR m.related_category IS NULL)
+                    AND m.related_category = ?
                     AND NOT EXISTS (
                         SELECT 1 FROM message_reads mr
                         WHERE mr.message_id = m.id AND mr.user_email = ?
@@ -1095,7 +1097,7 @@ def task_enhanced(cat, task_id):
                 c_tr2.execute("""
                     SELECT m.id FROM messages m
                     WHERE m.house_id = ? AND m.message_type = 'task_added'
-                    AND (m.related_category = ? OR m.related_category IS NULL)
+                    AND m.related_category = ?
                     AND NOT EXISTS (
                         SELECT 1 FROM message_reads mr
                         WHERE mr.message_id = m.id AND mr.user_email = ?

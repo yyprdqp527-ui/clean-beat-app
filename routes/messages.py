@@ -68,37 +68,45 @@ def _comments_inner():
                     INSERT INTO messages (house_id, sender_email, recipient_email, content, timestamp, sender_type, message_type)
                     VALUES (?, ?, ?, ?, ?, 'user', 'private')
                 """, (house_id, session['user'], recipient_email, content, timestamp))
+                message_id = c.lastrowid
                 conn.commit()
                 
                 _dbg(f"💬 Message envoyé: {session['user']} → {recipient_email}: {content[:50]}")
                 
-                # Vérifier si le destinataire est un enfant
-                c.execute("SELECT COALESCE(is_child_account, 0) FROM users WHERE email=?", 
+                # Vérifier si le destinataire est un enfant + récupérer son nom
+                c.execute("SELECT COALESCE(is_child_account, 0), name FROM users WHERE email=?", 
                          (recipient_email,))
                 recipient_data = c.fetchone()
                 is_recipient_child = recipient_data and recipient_data[0] == 1
-                
+                recipient_display_name = recipient_data[1] if recipient_data and recipient_data[1] else recipient_email.split('@')[0]
+
+                # Avatar de l'expéditeur (pour insertion DOM côté client sans rechargement)
+                c.execute("SELECT avatar, avatar_file, avatar_url FROM users WHERE email=?", (session['user'],))
+                sender_av = c.fetchone()
+                if sender_av:
+                    if sender_av[1]:
+                        sender_avatar = f"/static/avatars/{sender_av[1]}"
+                    elif sender_av[2]:
+                        sender_avatar = sender_av[2]
+                    else:
+                        sender_avatar = sender_av[0] or '👤'
+                else:
+                    sender_avatar = '👤'
+
                 # ✅ Compteurs simplifiés
                 recipient_unread_count = get_unread_message_count(recipient_email, house_id)
                 children_unread = get_children_unread_counts(house_id)
-                
-                _dbg(f"📊 Message envoyé de {session['user']} à {recipient_email}")
-                _dbg(f"👶 Destinataire est enfant: {is_recipient_child}")
-                _dbg(f"📊 Compteur DESTINATAIRE {recipient_email} après envoi: {recipient_unread_count}")
-                _dbg(f"🎯 Données à envoyer via WebSocket:")
-                _dbg(f"   - sender: {current_user_name}")
-                _dbg(f"   - sender_email: {session['user']}")
-                _dbg(f"   - recipient_email: {recipient_email}")
-                _dbg(f"   - recipient_is_child: {is_recipient_child}")
-                _dbg(f"   - recipient_unread_count: {recipient_unread_count}")
-                _dbg(f"   - children_unread: {children_unread}")
-                
-                # ✅ Émettre l'événement WebSocket SIMPLIFIÉ avec protection contre sessions invalides
+
+                # ✅ Émettre l'événement WebSocket — payload enrichi pour insertion DOM directe
                 safe_socketio_emit('new_message_notification', {
+                    'message_id': message_id,
                     'sender': current_user_name,
                     'sender_email': session['user'],
-                    'content': content[:50] + ('...' if len(content) > 50 else ''),
+                    'sender_avatar': sender_avatar,
+                    'content': content,  # contenu COMPLET (le menu n'utilise pas ce champ pour le badge)
+                    'timestamp': timestamp,
                     'recipient_email': recipient_email,
+                    'recipient_name': recipient_display_name,
                     'recipient_is_child': is_recipient_child,
                     'recipient_unread_count': recipient_unread_count,
                     'children_unread': children_unread
@@ -314,17 +322,31 @@ def _comments_inner():
         })
     
     # ✅ Auto-marquer comme lu à l'ouverture (comportement WhatsApp : ouvrir = lire)
+    _did_mark_any = False
     for msg in messages_data:
         if msg['message_type'] == 'private':
             # Messages reçus directement par moi
             if msg['is_received_by_me'] and not msg['is_me'] and not msg['is_read_by_me']:
                 mark_message_as_read(msg['id'], session['user'])
                 msg['is_read_by_me'] = True
+                _did_mark_any = True
             # Messages pour un enfant : le parent lit au nom de l'enfant
             # (l'enfant n'a pas de téléphone, il consulte sur le téléphone du parent)
             if msg['recipient_is_child'] and not msg['is_read_by_recipient']:
                 mark_message_as_read(msg['id'], msg['recipient_email'])
                 msg['is_read_by_recipient'] = True
+                _did_mark_any = True
+
+    # 🔌 Si on a marqué des messages comme lus, prévenir TOUS les clients
+    # (l'expéditeur voit son badge "lu", le destinataire voit sa pastille s'éteindre)
+    if _did_mark_any:
+        try:
+            safe_socketio_emit('all_messages_read', {
+                'reader_email': session['user'],
+                'house_id': house_id
+            }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception:
+            pass
 
     # Récupérer tous les joueurs de la maison (sauf l'utilisateur actuel pour le sélecteur)
     _dbg(f"[DEBUG COMMENTS] house_id={house_id}, current_user={session['user']}")

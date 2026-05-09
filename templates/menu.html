@@ -5347,10 +5347,10 @@ function sendMalus(reason, points){
                                 console.log('Lecture du son de réception...');
                                 if (window.SoundManager) SoundManager.play('receiveMessage');
                                 
-                                // Badge messages + badge PWA global
-                                console.log('Mise à jour de mon badge...');
-                                updateUnreadBadge(data.recipient_unread_count);
-                                refreshAllBadges(); // recalcule le total PWA (messages+baby+missions+courses)
+                                // ✅ Une seule mise à jour : refreshAllBadges calcule le total
+                                // (private + task_added + baby) et appelle updateUnreadBadge avec
+                                // la bonne valeur. Évite le flash visuel d'un double-update.
+                                refreshAllBadges();
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
