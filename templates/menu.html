@@ -5949,6 +5949,7 @@ function refreshAllBadges() {
                             // S'assurer que le SW est enregistré
                             if (!window.cleanBeatPush.registration) {
                                 await window.cleanBeatPush.init();
+                                ok = true;
                             } else {
                                 // Désouscrire d'abord si sub existante (peut échouer si clé VAPID changée)
                                 try {
@@ -5967,6 +5968,8 @@ function refreshAllBadges() {
                             if (Notification.permission === 'granted') {
                                 if (window.cleanBeatPush && typeof window.cleanBeatPush.subscribe === 'function') {
                                     ok = await window.cleanBeatPush.subscribe();
+                                    if (ok === false) { /* subscribe a échoué */ }
+                                    else { ok = true; }
                                 } else {
                                     showToast('Notifications autorisées mais le gestionnaire est indisponible. Rechargez la page.', '#e74c3c');
                                 }
@@ -5975,7 +5978,7 @@ function refreshAllBadges() {
                     }
 
                     if (Notification.permission === 'granted') {
-                        if (!ok) {
+                        if (ok === false) {
                             // Souscription serveur échouée → bannière conservée, erreur visible
                             showToast('L\'abonnement aux notifications a échoué. Rechargez la page pour réessayer.', '#e74c3c');
                             btn.disabled = false;
