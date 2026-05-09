@@ -613,25 +613,16 @@ def upload_room_image():
         left = (w - side) // 2
         top  = (h - side) // 2
         img = img.crop((left, top, left + side, top + side))
-        img = img.resize((400, 400), Image.LANCZOS)
-        # Masque losange net (bords francs, pas de dégradé) — même forme que les illustrations
-        mask = Image.new('1', (400, 400), 0)
-        ImageDraw.Draw(mask).polygon([(200, 0), (400, 200), (200, 400), (0, 200)], fill=1)
-        img.putalpha(mask.convert('L'))
-
-        # Overlay glassmorphism : contour blanc + reflet haut (effet verre, harmonisé avec emoji)
-        overlay = Image.new('RGBA', (400, 400), (0, 0, 0, 0))
-        draw_o = ImageDraw.Draw(overlay)
-        draw_o.polygon([(200, 6), (394, 200), (200, 394), (6, 200)],
-                       outline=(255, 255, 255, 160), width=4)
-        draw_o.polygon([(200, 8), (372, 170), (200, 185), (28, 170)],
-                       fill=(255, 255, 255, 40))
-        img = Image.alpha_composite(img, overlay)
-
-        # Embed dans toile 400×462 (matche les thumbs existants)
-        canvas = Image.new('RGBA', (ROOM_THUMB_W, ROOM_THUMB_H), (0, 0, 0, 0))
-        canvas.paste(img, (0, (ROOM_THUMB_H - 400) // 2), img)
-        img = canvas
+        # Crop cover centré sur 400×462 (remplit le cadre entier)
+        target_w, target_h = ROOM_THUMB_W, ROOM_THUMB_H
+        ratio = max(target_w / w, target_h / h)
+        new_w = int(w * ratio)
+        new_h = int(h * ratio)
+        img = img.resize((new_w, new_h), Image.LANCZOS)
+        left2 = (new_w - target_w) // 2
+        top2  = (new_h - target_h) // 2
+        img = img.crop((left2, top2, left2 + target_w, top2 + target_h))
+        img = img.convert('RGB')
 
         img.save(filepath, format='WEBP', quality=88, method=6)
         from io import BytesIO as _BytesIO
