@@ -6660,23 +6660,23 @@ if (localStorage.getItem('qfq_play_solo')) {
 
 <!-- 📱 Tab bar flottante iOS -->
 <style>
-body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
 .qfq-tabbar {
     position: fixed;
-    bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
-    left: 16px;
-    right: 16px;
+    bottom: env(safe-area-inset-bottom, 8px);
+    left: 12px;
+    right: 12px;
     z-index: 9000;
     background: linear-gradient(135deg,
         rgba(255,255,255,0.55) 0%,
         rgba(253,174,84,0.08) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 24px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
     border: 1px solid rgba(253,174,84,0.3);
-    box-shadow: 0 8px 32px rgba(89,113,118,0.15),
+    box-shadow: 0 4px 20px rgba(89,113,118,0.18),
         inset 0 1px 0 rgba(255,255,255,0.6);
-    padding: 10px 8px;
+    padding: 5px 4px;
     display: flex;
     justify-content: space-around;
     align-items: center;

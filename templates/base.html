@@ -779,23 +779,23 @@
     /* =============================================
        📱 TAB BAR FLOTTANTE iOS — qfq-tabbar
        ============================================= */
-    body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+    body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     .qfq-tabbar {
         position: fixed;
-        bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
-        left: 16px;
-        right: 16px;
+        bottom: env(safe-area-inset-bottom, 8px);
+        left: 12px;
+        right: 12px;
         z-index: 9000;
         background: linear-gradient(135deg,
             rgba(255,255,255,0.55) 0%,
             rgba(253,174,84,0.08) 100%);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 24px;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 18px;
         border: 1px solid rgba(253,174,84,0.3);
-        box-shadow: 0 8px 32px rgba(89,113,118,0.15),
+        box-shadow: 0 4px 20px rgba(89,113,118,0.18),
             inset 0 1px 0 rgba(255,255,255,0.6);
-        padding: 10px 8px;
+        padding: 5px 4px;
         display: flex;
         justify-content: space-around;
         align-items: center;
@@ -804,9 +804,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 3px;
-        padding: 5px 10px;
-        border-radius: 16px;
+        padding: 4px 8px;
+        border-radius: 10px;
         flex: 1;
         text-decoration: none;
         position: relative;
@@ -817,18 +816,11 @@
     }
     .qfq-tab svg {
         display: block;
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
     }
     .qfq-tab-label {
-        font-size: 10px;
-        font-weight: 500;
-        color: #597176;
-        letter-spacing: 0.01em;
-    }
-    .qfq-tab.active .qfq-tab-label {
-        color: #153036;
-        font-weight: 700;
+        display: none;
     }
     .qfq-tab.active svg {
         stroke: #153036;
@@ -890,7 +882,6 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
-    <span class="qfq-tab-label">Messages</span>
     <span class="qfq-tab-count" id="messages-nav-badge" style="display:none;">0</span>
   </a>
   <a href="{{ url_for('gameplay_bp.gameplay') }}" class="qfq-tab" id="qfqTabMinijeux">
@@ -900,7 +891,6 @@
       <circle cx="16" cy="11" r="1" fill="currentColor"/>
       <circle cx="18" cy="13" r="1" fill="currentColor"/>
     </svg>
-    <span class="qfq-tab-label">Mini-jeux</span>
   </a>
   <a href="/reminders" class="qfq-tab" id="qfqTabCourses">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -908,7 +898,6 @@
       <line x1="3" y1="6" x2="21" y2="6"/>
       <path d="M16 10a4 4 0 01-8 0"/>
     </svg>
-    <span class="qfq-tab-label">Courses</span>
     <span class="qfq-tab-count" id="courses-nav-badge" style="display:none;">0</span>
   </a>
   <a href="/settings" class="qfq-tab" id="qfqTabSettings">
@@ -916,7 +905,6 @@
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
     </svg>
-    <span class="qfq-tab-label">Réglages</span>
   </a>
 </nav>
 
