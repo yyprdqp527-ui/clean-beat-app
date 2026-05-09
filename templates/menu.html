@@ -6746,6 +6746,29 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 }
 </style>
 
+<div id="qfq-menu-handle"
+  style="position:fixed;
+    bottom: calc(83px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg,
+      rgba(255,255,255,0.75),
+      rgba(253,174,84,0.15));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 10px 10px 0 0;
+    padding: 5px 20px 3px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-bottom: none;
+    font-size: 10px;
+    font-weight: 700;
+    color: #153036;
+    letter-spacing: 0.08em;
+    z-index: 8999;
+    pointer-events: none;">
+  MENU
+</div>
+
 <nav class="qfq-tabbar" id="qfqTabbar">
   <a href="/classement-stats" class="qfq-tab" id="qfqTabClassement">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
