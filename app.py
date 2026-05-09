@@ -370,6 +370,14 @@ except ImportError:
     TWILIO_AVAILABLE = False
     print("Twilio non installé. Installation: pip install twilio")
 
+# Pour l'envoi d'emails (SendGrid)
+try:
+    import sendgrid
+    from sendgrid.helpers.mail import Mail
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SENDGRID_AVAILABLE = False
+
 # ...existing code...
 
 # Route pour supprimer une tâche personnalisée (à placer après la création de l'objet app)
@@ -1093,6 +1101,40 @@ def send_sms_invitation(phone_number, user_name, house_code=None):
     except Exception as e:
         _dbg(f"Erreur envoi SMS: {e}")
         return False
+
+
+def send_email_invitation(to_email, user_name, house_code, join_url=None):
+    """Envoie un email d'invitation via SendGrid."""
+    base_url = os.environ.get('RENDER_EXTERNAL_URL', 'https://clean-beat-app.onrender.com').rstrip('/')
+    if not join_url:
+        join_url = f"{base_url}/invite/{house_code}"
+    api_key = os.environ.get('SENDGRID_API_KEY', '')
+    from_email = os.environ.get('MAIL_FROM', 'noreply@cleanbeat.app')
+    if not SENDGRID_AVAILABLE or not api_key:
+        _dbg(f"[EMAIL simulé] → {to_email}: {user_name} t'invite via {join_url}")
+        return False, 'sendgrid_not_configured'
+    try:
+        html_body = f"""<html><body style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;">
+<h2 style="color:#153036;">🏠 {user_name} t'invite sur QuiFaitQuoi !</h2>
+<p style="color:#444;line-height:1.6;">Rejoins la maison et joue ensemble pour répartir les tâches ménagères de façon fun.</p>
+<a href="{join_url}" style="display:inline-block;margin:20px 0;padding:14px 28px;background:#FDAE54;color:#153036;font-weight:800;border-radius:14px;text-decoration:none;font-size:16px;">Rejoindre la maison →</a>
+<p style="color:#888;font-size:13px;">Code d'accès : <strong>{house_code}</strong></p>
+<p style="color:#bbb;font-size:11px;">Tu reçois cet email car {user_name} t'a invité(e).</p>
+</body></html>"""
+        message = Mail(
+            from_email=from_email,
+            to_emails=to_email,
+            subject=f"🏠 {user_name} t'invite sur QuiFaitQuoi !",
+            html_content=html_body
+        )
+        sg = sendgrid.SendGridAPIClient(api_key=api_key)
+        response = sg.send(message)
+        ok = response.status_code in (200, 202)
+        _dbg(f"Email invitation → {to_email}: status {response.status_code}")
+        return ok, None
+    except Exception as e:
+        _dbg(f"Erreur envoi email invitation: {e}")
+        return False, str(e)
 
 # ===============================
 # CONFIGURATION DES TÂCHES

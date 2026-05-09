@@ -783,6 +783,38 @@ def invite_partner():
                            from_registration=from_registration)
 
 
+@house_bp.route('/send_invite_email', methods=['POST'])
+def send_invite_email():
+    """Envoie une invitation par email à l'adresse fournie."""
+    from app import get_db_connection, _dbg, send_email_invitation
+    if 'user' not in session:
+        return jsonify({'ok': False, 'error': 'non connecté'}), 401
+    data = request.get_json(silent=True) or {}
+    to_email = (data.get('email') or '').strip().lower()
+    import re as _re
+    if not to_email or not _re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', to_email):
+        return jsonify({'ok': False, 'error': 'email invalide'}), 400
+    # Récupérer house_code et user_name
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT u.name, h.code FROM users u JOIN houses h ON h.id=u.house_id WHERE u.email=?", (session['user'],))
+    row = c.fetchone()
+    conn.close()
+    if not row or not row[1]:
+        return jsonify({'ok': False, 'error': 'maison introuvable'}), 400
+    user_name = row[0] or session['user']
+    house_code = row[1]
+    import os as _os
+    public_base = _os.environ.get('RENDER_EXTERNAL_URL', 'https://clean-beat-app.onrender.com').rstrip('/')
+    join_url = f"{public_base}/invite/{house_code}"
+    ok, err = send_email_invitation(to_email, user_name, house_code, join_url)
+    if ok:
+        return jsonify({'ok': True})
+    if err == 'sendgrid_not_configured':
+        return jsonify({'ok': False, 'error': 'service email non configuré'}), 503
+    return jsonify({'ok': False, 'error': 'échec envoi email'}), 500
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # DIVERS
 # ══════════════════════════════════════════════════════════════════════════

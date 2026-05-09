@@ -902,8 +902,25 @@ body {
             </p>
             <button type="button" class="share-invite-btn" onclick="shareInvitation()">
                 <span class="share-invite-icon">📤</span>
-                <span class="share-invite-text">Envoyer l'invitation</span>
+                <span class="share-invite-text">Envoyer par SMS / partager</span>
             </button>
+        </div>
+
+        <!-- Inviter par email -->
+        <div class="glass-card" style="margin-bottom:20px;">
+            <div class="card-title"><span class="card-title-icon">✉️</span> Inviter par email</div>
+            <p style="font-size:13px;color:#888;margin-bottom:14px;">
+                Saisis l'adresse email de la personne à inviter.
+            </p>
+            <div style="display:flex;gap:8px;">
+                <input type="email" id="inviteEmailInput" placeholder="prenom@example.com"
+                    style="flex:1;padding:12px 14px;border:1.5px solid rgba(21,48,54,0.15);border-radius:12px;font-size:14px;font-family:inherit;outline:none;background:rgba(255,255,255,0.85);">
+                <button type="button" onclick="sendEmailInvite()"
+                    style="padding:12px 18px;background:linear-gradient(135deg,#FDAE54,#F4C68D);border:none;border-radius:12px;font-size:14px;font-weight:800;color:#153036;cursor:pointer;white-space:nowrap;">
+                    Envoyer
+                </button>
+            </div>
+            <div id="emailInviteResult" style="margin-top:10px;font-size:13px;font-weight:600;display:none;"></div>
         </div>
 
         <!-- Enfants -->
@@ -1091,6 +1108,43 @@ async function shareInvitation() {
     var enc = encodeURIComponent(inviteMessage);
     var ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
     window.location.href = ios ? 'sms:&body=' + enc : 'sms:?body=' + enc;
+}
+
+async function sendEmailInvite() {
+    var input = document.getElementById('inviteEmailInput');
+    var result = document.getElementById('emailInviteResult');
+    var email = (input.value || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        result.style.display = 'block';
+        result.style.color = '#e74c3c';
+        result.textContent = 'Saisis une adresse email valide.';
+        return;
+    }
+    result.style.display = 'block';
+    result.style.color = '#888';
+    result.textContent = 'Envoi en cours…';
+    try {
+        var resp = await fetch('/send_invite_email', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email})
+        });
+        var data = await resp.json();
+        if (data.ok) {
+            result.style.color = '#27ae60';
+            result.textContent = '✓ Invitation envoyée à ' + email + ' !';
+            input.value = '';
+        } else if (data.error === 'service email non configuré') {
+            result.style.color = '#e67e22';
+            result.textContent = 'Service email non configuré. Utilise le partage SMS.';
+        } else {
+            result.style.color = '#e74c3c';
+            result.textContent = 'Erreur lors de l\'envoi. Réessaie.';
+        }
+    } catch(e) {
+        result.style.color = '#e74c3c';
+        result.textContent = 'Erreur réseau. Réessaie.';
+    }
 }
 
 var childCount = 0;
