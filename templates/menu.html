@@ -6750,7 +6750,8 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   style="position:fixed;
     bottom: calc(83px + env(safe-area-inset-bottom, 0px));
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(calc(100% + 20px));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(135deg,
       rgba(255,255,255,0.75),
       rgba(253,174,84,0.15));
@@ -6830,30 +6831,36 @@ body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 <script>
 (function() {
   const bar = document.querySelector('.qfq-tabbar');
+  const handle = document.getElementById('qfq-menu-handle');
   if (!bar) return;
-  bar.style.transform = 'translateY(0)';
-  let hideTimer = setTimeout(() => {
+
+  function show() {
+    bar.style.transform = 'translateY(0)';
+    if (handle) handle.style.transform = 'translateX(-50%) translateY(0)';
+  }
+  function hide() {
     bar.style.transform = 'translateY(calc(100% + 20px))';
-  }, 2000);
+    if (handle) handle.style.transform = 'translateX(-50%) translateY(calc(100% + 20px))';
+  }
+
+  show();
+  let hideTimer = setTimeout(hide, 2000);
+
   document.addEventListener('touchstart', function(e) {
     const touch = e.touches[0];
     const threshold = window.innerHeight * 0.80;
     clearTimeout(hideTimer);
     if (touch.clientY > threshold) {
-      bar.style.transform = 'translateY(0)';
-      hideTimer = setTimeout(() => {
-        bar.style.transform = 'translateY(calc(100% + 20px))';
-      }, 3000);
+      show();
+      hideTimer = setTimeout(hide, 3000);
     }
   }, { passive: true });
   document.addEventListener('mousemove', function(e) {
     const threshold = window.innerHeight * 0.85;
     clearTimeout(hideTimer);
     if (e.clientY > threshold) {
-      bar.style.transform = 'translateY(0)';
-      hideTimer = setTimeout(() => {
-        bar.style.transform = 'translateY(calc(100% + 20px))';
-      }, 3000);
+      show();
+      hideTimer = setTimeout(hide, 3000);
     }
   });
 })();
