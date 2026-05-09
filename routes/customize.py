@@ -19,11 +19,10 @@ ROOM_THUMB_H = 462
 ROOM_CATALOGUE = [
     {"key": "jardin",       "emoji": "🌿", "label": "Jardin"},
     {"key": "cave",         "emoji": "🍷", "label": "Cave"},
-    {"key": "animaux",      "emoji": "🐾", "label": "Animaux domestiques"},
+    {"key": "animaux",      "emoji": "🐾", "label": "Animaux"},
     {"key": "salle_sport",  "emoji": "🏋️", "label": "Salle de sport"},
     {"key": "atelier",      "emoji": "🔧", "label": "Atelier"},
     {"key": "bibliotheque", "emoji": "📚", "label": "Bibliothèque"},
-    {"key": "chambre_amis", "emoji": "🛏️", "label": "Chambre d'amis"},
     {"key": "dressing",     "emoji": "👗", "label": "Dressing"},
     {"key": "veranda",      "emoji": "☀️", "label": "Véranda"},
     {"key": "piscine",      "emoji": "🏊", "label": "Piscine"},
