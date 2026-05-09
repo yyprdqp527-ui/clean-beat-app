@@ -5816,6 +5816,9 @@ function refreshAllBadges() {
     <div id="pwa-android-btn-wrap" style="display:none;max-width:500px;margin:12px auto 0;">
         <button id="pwa-install-btn" style="width:100%;padding:12px;background:#FDAE54;color:#153036;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;">➕ Ajouter à l'écran d'accueil</button>
     </div>
+    <div style="max-width:500px;margin:12px auto 0;">
+        <button onclick="dismissInstallBanner()" style="width:100%;margin-top:0;padding:12px;background:linear-gradient(135deg,#FDAE54,#F4C68D);border:none;border-radius:14px;font-size:15px;font-weight:800;color:#153036;cursor:pointer;box-shadow:0 4px 15px rgba(253,174,84,0.35);">C'est fait, l'appli est installée ✓</button>
+    </div>
 </div>
 <script>
 (function(){
@@ -5861,6 +5864,8 @@ function refreshAllBadges() {
     }
     // Dismiss sans écrire dans localStorage : la bannière revient à la prochaine visite
     window.dismissPwaBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';};
+    // Dismiss définitif : la bannière ne réapparaît plus jamais
+    window.dismissInstallBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem('pwa_installed','1');};
 })();
 </script>
 
