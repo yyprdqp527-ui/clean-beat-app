@@ -1366,6 +1366,9 @@ window.cbToast = function(message, type, duration) {
         navigator.serviceWorker.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'REFRESH_BADGES') {
                 refreshAppBadge();
+                if (typeof refreshTabBadges === 'function') {
+                    refreshTabBadges();
+                }
             }
             // 🔔 Push reminder 20h reçu → rediriger vers /menu?reminder=<id>
             // pour que le popup "Hé, t'es là ?" s'affiche, peu importe la page courante.
