@@ -6697,7 +6697,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
     <span class="qfq-tab-label">Messages</span>
-    <span class="qfq-tab-count" id="messages-nav-badge" style="display:none;">0</span>
+    <span class="qfq-tab-count" id="messages-nav-badge" style="{% if unread_messages_count > 0 %}display:inline-flex;{% else %}display:none;{% endif %}">{{ unread_messages_count or '' }}</span>
   </a>
   <a href="{{ url_for('gameplay_bp.gameplay') }}" class="qfq-tab" id="qfqTabMinijeux">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -6715,7 +6715,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
       <path d="M16 10a4 4 0 01-8 0"/>
     </svg>
     <span class="qfq-tab-label">Courses</span>
-    <span class="qfq-tab-count" id="courses-nav-badge" style="display:none;">0</span>
+    <span class="qfq-tab-count" id="courses-nav-badge" style="{% if courses_pending_count > 0 %}display:inline-flex;{% else %}display:none;{% endif %}">{{ courses_pending_count or '' }}</span>
   </a>
   <a href="/settings" class="qfq-tab" id="qfqTabSettings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
