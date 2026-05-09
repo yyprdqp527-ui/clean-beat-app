@@ -343,66 +343,6 @@
             50% { transform: scale(1.15); }
         }
 
-        /* Pastilles d'alerte sous le burger */
-        .burger-alerts {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        .burger-alert-pill {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            border-radius: 10px;
-            padding: 2px 6px 2px 4px;
-            font-size: 9px;
-            font-weight: 700;
-            color: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-            white-space: nowrap;
-            border: 1px solid rgba(255,255,255,0.4);
-            cursor: pointer;
-            transition: opacity 0.2s ease;
-        }
-
-        .burger-alert-pill:hover {
-            opacity: 0.85;
-        }
-
-        
-        .burger-alert-pill.mission {
-            background: #FB923C;
-        }
-
-        .burger-alert-pill.courses {
-            background: #92400E;
-        }
-
-        .burger-alert-pill .pill-icon {
-            font-size: 10px;
-            line-height: 1;
-        }
-
-        .burger-alert-pill .pill-count {
-            font-size: 9px;
-            font-weight: 800;
-            min-width: 12px;
-            text-align: center;
-        }
-
-        /* Wrapper pour le burger + alertes */
-        .burger-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            z-index: 2001;
-            order: 2;
-            flex-shrink: 0;
-        }
         /* === Helper icônes SVG (sprite) === */
         .ui-icon {
           width: 1em; height: 1em;
@@ -7077,10 +7017,10 @@ if (localStorage.getItem('qfq_play_solo')) {
 
 <!-- 📱 Tab bar flottante iOS -->
 <style>
-body { padding-bottom: 80px; }
+body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 .qfq-tabbar {
     position: fixed;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     left: 16px;
     right: 16px;
     z-index: 9000;
@@ -7141,6 +7081,23 @@ body { padding-bottom: 80px; }
     border-radius: 50%;
     border: 1.5px solid rgba(255,255,255,0.9);
 }
+.qfq-tab-count {
+    position: absolute;
+    top: 0px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #FDAE54;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.9);
+    box-sizing: border-box;
+}
 </style>
 
 <nav class="qfq-tabbar" id="qfqTabbar">
@@ -7171,6 +7128,7 @@ body { padding-bottom: 80px; }
       <path d="M16 10a4 4 0 01-8 0"/>
     </svg>
     <span class="qfq-tab-label">Courses</span>
+    <span class="qfq-tab-count" id="courses-nav-badge" style="display:none;">0</span>
   </a>
   <a href="/settings" class="qfq-tab" id="qfqTabSettings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
