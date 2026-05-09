@@ -776,89 +776,6 @@
         }
 
         
-    /* =============================================
-       📱 TAB BAR FLOTTANTE iOS — qfq-tabbar
-       ============================================= */
-    body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
-    .qfq-tabbar {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 8px) - 33px);
-        left: 12px;
-        right: 12px;
-        z-index: 9000;
-        background: linear-gradient(135deg,
-            rgba(255,255,255,0.55) 0%,
-            rgba(253,174,84,0.08) 100%);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-radius: 18px;
-        border: 1px solid rgba(253,174,84,0.3);
-        box-shadow: 0 4px 20px rgba(89,113,118,0.18),
-            inset 0 1px 0 rgba(255,255,255,0.6);
-        padding: 5px 4px;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-    }
-    .qfq-tab {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 10px;
-        flex: 1;
-        text-decoration: none;
-        position: relative;
-        transition: background 0.15s ease;
-    }
-    .qfq-tab.active {
-        background: rgba(21,48,54,0.09);
-    }
-    .qfq-tab svg {
-        display: block;
-        width: 20px;
-        height: 20px;
-    }
-    .qfq-tab-label {
-        display: block;
-        font-size: 9px;
-        font-weight: 600;
-        color: #153036;
-        text-align: center;
-        letter-spacing: 0.01em;
-        margin-top: 2px;
-    }
-    .qfq-tab.active svg {
-        stroke: #153036;
-    }
-    .qfq-tab-dot {
-        position: absolute;
-        top: 3px;
-        right: 8px;
-        width: 7px;
-        height: 7px;
-        background: #FDAE54;
-        border-radius: 50%;
-        border: 1.5px solid rgba(255,255,255,0.9);
-    }
-    .qfq-tab-count {
-        position: absolute;
-        top: 0px;
-        right: 4px;
-        min-width: 16px;
-        height: 16px;
-        padding: 0 4px;
-        background: #FDAE54;
-        color: #fff;
-        font-size: 9px;
-        font-weight: 800;
-        line-height: 16px;
-        text-align: center;
-        border-radius: 8px;
-        border: 1.5px solid rgba(255,255,255,0.9);
-        box-sizing: border-box;
-    }
-
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
@@ -874,46 +791,6 @@
 
 {% block content %}{% endblock %}
 
-<!-- 📱 Tab bar flottante iOS -->
-<nav class="qfq-tabbar" id="qfqTabbar">
-  <a href="/classement-stats" class="qfq-tab" id="qfqTabClassement">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10"/>
-      <line x1="12" y1="20" x2="12" y2="4"/>
-      <line x1="6" y1="20" x2="6" y2="14"/>
-    </svg>
-    <span class="qfq-tab-label">Classement</span>
-  </a>
-  <a href="/comments" class="qfq-tab" id="qfqTabMessages">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-    <span class="qfq-tab-count" id="messages-nav-badge" style="display:none;">0</span>
-  </a>
-  <a href="{{ url_for('gameplay_bp.gameplay') }}" class="qfq-tab" id="qfqTabMinijeux">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21.3 10.6C20.5 7 17.2 4 12 4S3.5 7 2.7 10.6L2 17c-.3 1.7 1 3 2.5 3 .8 0 1.6-.4 2.1-1l1.5-2h7.8l1.5 2c.5.6 1.3 1 2.1 1 1.5 0 2.8-1.3 2.5-3l-.7-6.4z"/>
-      <path d="M6 11h4M8 9v4"/>
-      <circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/>
-      <circle cx="17" cy="13" r="1" fill="currentColor" stroke="none"/>
-    </svg>
-    <span class="qfq-tab-label">Mini-jeux</span>
-  </a>
-  <a href="/reminders" class="qfq-tab" id="qfqTabCourses">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <path d="M16 10a4 4 0 01-8 0"/>
-    </svg>
-    <span class="qfq-tab-count" id="courses-nav-badge" style="display:none;">0</span>
-  </a>
-  <a href="/settings" class="qfq-tab" id="qfqTabSettings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
-    </svg>
-  </a>
-</nav>
 
 <!-- 🎭 Popup flash glassmorphisme universel (toutes pages héritant de base.html) -->
 {% include '_flash_popup.html' %}
