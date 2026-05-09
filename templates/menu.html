@@ -2979,7 +2979,6 @@
                                 <div class="week-bar-cursor" id="weekBarCursor"></div>
                             </div>
                             <svg class="week-gift-icon" id="weekGiftIcon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-trophy"/></svg>
-                            <span class="week-gift-star" id="weekGiftStar"></span>
                         </div>
                     </div>
                     <div class="house-name" style="text-align:center;margin-top:4px;">{{ house_name if house_name else 'Ma Maison' }}</div>
@@ -3008,8 +3007,7 @@
                             var btnCenterX = rect.left + rect.width / 2;
                             gift.style.left = (btnCenterX - giftW / 2) + 'px';
                             gift.style.right = 'auto';
-                            var star = document.getElementById('weekGiftStar');
-                            if(star) star.style.top = gift.style.top;
+
                         }
                     }
                     function updateAll(){ updateSpacer(); positionGift(); }
@@ -3608,8 +3606,7 @@ body { padding-bottom: 84px !important; }
             giftEl.style.filter = '';
             giftEl.style.animationDuration = isRewardDay ? '0.8s' : '1.5s';
             giftEl.title = isRewardDay ? 'GO ! Ouvre ta récompense 🎁' : '';
-            var starEl = document.getElementById('weekGiftStar');
-            if(starEl){ starEl.textContent = isRewardDay ? '✨' : ''; }
+
             // Attacher le clic une seule fois
             if(!giftEl._clickBound){
                 giftEl._clickBound = true;
