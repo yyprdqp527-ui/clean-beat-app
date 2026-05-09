@@ -514,7 +514,7 @@
     }
     
     .message-item.message-task-added .message-bubble::before {
-        content: '✨';
+        content: '';
         position: absolute;
         left: -8px;
         top: 50%;
@@ -588,7 +588,7 @@
     }
     
     .message-item.message-baby-tracking .message-bubble::before {
-        content: '👶';
+        content: '';
         position: absolute;
         left: -8px;
         top: 50%;
@@ -875,7 +875,6 @@
     <div class="messages-container">
         <!-- En-tête -->
         <div class="messages-header">
-            <span class="title-icon">💬</span>
             <h1>Messagerie</h1>
             <div class="house-name">{{ house_name }}</div>
         </div>
@@ -887,7 +886,7 @@
                 <!-- Sélecteur de destinataire avec avatars -->
                 <div style="margin-bottom: 12px; position: relative;">
                     <label style="font-weight: 700; color: var(--dark); margin-bottom: 8px; display: block; font-size: 14px;">
-                        📩 Envoyer un message privé à :
+                        Envoyer un message privé à :
                     </label>
                     <div class="recipients-strip" style="position: relative;">
                         {% for player in available_players %}
@@ -920,7 +919,7 @@
             </form>
             {% else %}
             <div style="background: rgba(255,243,205,0.95); border: 2px solid rgba(255,234,167,0.8); border-radius: 16px; padding: 20px; text-align: center; color: #856404;">
-                <div style="font-size: 32px; margin-bottom: 10px;">👥</div>
+
                 <div style="font-weight: 700; margin-bottom: 8px;">Aucun partenaire disponible</div>
                 <div style="font-size: 14px;">Invitez d'autres joueurs pour échanger des messages privés.</div>
             </div>
@@ -941,7 +940,7 @@
                                 {% endif %}
                             </div>
                         {% elif msg.sender_type == 'house' %}
-                            <div class="message-avatar" style="font-size: 50px;">
+                            <div class="message-avatar">
                                 🏠
                             </div>
                         {% endif %}
@@ -978,7 +977,7 @@
             </div>
         {% else %}
             <div class="empty-state">
-                <div class="empty-state-icon">💬</div>
+
                 <h3>Aucun message pour le moment</h3>
                 <p>Commence la conversation avec ta maison !</p>
             </div>

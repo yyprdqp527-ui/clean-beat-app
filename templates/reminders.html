@@ -253,7 +253,6 @@
 
     <!-- EN-TÊTE -->
     <div class="reminders-header">
-        <span class="header-icon">🛒</span>
         <h1>Liste de courses</h1>
 
     </div>
@@ -291,17 +290,16 @@
                     {% elif r.creator_avatar %}
                         <div class="reminder-creator-emoji">{{ r.creator_avatar }}</div>
                     {% else %}
-                        <div class="reminder-creator-emoji">👤</div>
+                        <div class="reminder-creator-emoji">?</div>
                     {% endif %}
                     <span class="reminder-creator-name">{{ r.creator_name }}</span>
                 </div>
             </div>
-            <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">🗑</button>
+            <button class="btn-delete" onclick="event.stopPropagation(); deleteReminder({{ r.id }})" title="Supprimer">×</button>
         </div>
         {% endfor %}
         {% else %}
         <div class="empty-state" id="emptyState">
-            <span class="empty-icon">🛒</span>
             La liste est vide !<br>Ajoute ton premier article.
         </div>
         {% endif %}
@@ -320,7 +318,7 @@
         var rect = checkEl.getBoundingClientRect();
         var popup = document.createElement('div');
         popup.className = 'pts-popup';
-        popup.textContent = '+1 ⭐';
+        popup.textContent = '+1';
         popup.style.left = (rect.left + rect.width / 2 - 20) + 'px';
         popup.style.top  = (rect.top + window.scrollY - 10) + 'px';
         document.body.appendChild(popup);
@@ -353,7 +351,7 @@
             '<div class="reminder-check">✓</div>' +
             '<div class="reminder-body">' +
                 '<div class="reminder-title">' + escHtml(title) + '</div>' +
-                '<div class="reminder-creator"><div class="reminder-creator-emoji">⏳</div><span class="reminder-creator-name">Ajout en cours…</span></div>' +
+                '<div class="reminder-creator"><div class="reminder-creator-emoji">…</div><span class="reminder-creator-name">Ajout en cours…</span></div>' +
             '</div>';
 
         _insertBeforeDone(list, tmpCard);
@@ -374,7 +372,7 @@
                     // 4. Échec → supprimer la carte temporaire
                     if (oldCard) oldCard.remove();
                     _updateSectionTitle();
-                    showToast('❌ Erreur');
+                    showToast('Erreur');
                     return;
                 }
 
@@ -392,7 +390,7 @@
                 } else if (data.creator_avatar) {
                     avatarHtml = '<div class="reminder-creator-emoji">' + escHtml(data.creator_avatar) + '</div>';
                 } else {
-                    avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
+                    avatarHtml = '<div class="reminder-creator-emoji">?</div>';
                 }
 
                 card.innerHTML =
@@ -401,7 +399,7 @@
                         '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                         '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
                     '</div>' +
-                    '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
+                    '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">×</button>';
 
                 // Remplacer la carte temporaire par la vraie
                 if (oldCard) {
@@ -416,7 +414,7 @@
                 var oldCard = document.getElementById(tmpId);
                 if (oldCard) oldCard.remove();
                 _updateSectionTitle();
-                showToast('❌ Erreur réseau');
+                showToast('Erreur réseau');
             });
     });
 
@@ -485,11 +483,11 @@
                     const remaining = document.querySelectorAll('.reminder-card').length;
                     if (remaining === 0) {
                         const list = document.getElementById('remindersList');
-                        list.innerHTML = '<div class="empty-state" id="emptyState"><span class="empty-icon">🛒</span>La liste est vide !<br>Ajoute ton premier article.</div>';
+                        list.innerHTML = '<div class="empty-state" id="emptyState">La liste est vide !<br>Ajoute ton premier article.</div>';
                     }
                     _updateSectionTitle();
                 }, 300);
-                showToast('🗑 Article supprimé');
+                showToast('Article supprimé');
                 // Mettre à jour le badge icône app
                 fetch('/api/unread_counts', {cache: 'no-store'})
                     .then(function(r){ return r.json(); })
@@ -557,7 +555,7 @@
             } else if (data.creator_avatar) {
                 avatarHtml = '<div class="reminder-creator-emoji">' + escHtml(data.creator_avatar) + '</div>';
             } else {
-                avatarHtml = '<div class="reminder-creator-emoji">👤</div>';
+                avatarHtml = '<div class="reminder-creator-emoji">?</div>';
             }
 
             card.innerHTML =
@@ -566,7 +564,7 @@
                     '<div class="reminder-title">' + escHtml(data.title) + '</div>' +
                     '<div class="reminder-creator">' + avatarHtml + '<span class="reminder-creator-name">' + escHtml(data.creator_name || 'Inconnu') + '</span></div>' +
                 '</div>' +
-                '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">🗑</button>';
+                '<button class="btn-delete" onclick="event.stopPropagation(); deleteReminder(' + data.id + ')" title="Supprimer">×</button>';
 
             // Insérer avant les articles cochés
             _insertBeforeDone(list, card);
