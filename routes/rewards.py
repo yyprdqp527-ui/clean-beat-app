@@ -557,6 +557,151 @@ def update_rewards():
         return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
 
 
+# ── Helpers et nouvelle route "ajouter une recompense custom" ──────────────
+def _get_default_rewards(house_type):
+    """Renvoie la liste de 40 recompenses par defaut pour un type de foyer."""
+    family = [
+        'Choisir le menu du dîner', 'Veiller plus tard le soir',
+        "Quelqu'un sort les poubelles à ta place", 'Choisir le film du soir',
+        'Avoir le droit de sauter le bain', 'Manger son dessert préféré',
+        "Choisir l'activité du week-end", 'Recevoir un petit jouet/livre surprise',
+        "Avoir du temps d'écran bonus", 'Apéro en extérieur à deux',
+        'Faire une petite marche nocturne avant de dormir à deux', 'Soirée jeu de société',
+        'Lire une histoire de plus au coucher', 'Faire des origami avec les parents',
+        'Aller au parc/aire de jeux', 'Choisir la musique en voiture',
+        'Faire des crêpes/gaufres ensemble', 'Dîner au restaurant à deux',
+        'Pique-niquer dans le salon', 'Massage complet',
+        'Passer son tour pour ranger sa chambre', 'Choisir ses vêtements (même bizarres)',
+        'Ne pas faire la vaisselle', 'Ne pas finir ses légumes',
+        'Pique-niquer à deux', 'Grasse matinée sans réveil',
+        'Manger le petit-déjeuner au lit', 'Soirée cinéma à deux',
+        'Avoir un goûter spécial', 'Choisir son petit-déjeuner',
+        'Être dispensé de cuisine', 'Être le chef de famille pour la journée',
+        'Commander le repas du soir', 'Soirée gaming',
+        'Avoir un jour oui (parents disent oui à tout le raisonnable)',
+        'Avoir du temps solo tranquille', 'Préparer un gâteau avec maman/papa',
+        'Avoir des fleurs', 'Avoir une journée sans corvées', 'Soirée pizza',
+    ]
+    couple = [
+        'Massage complet', "Petit-déjeuner au lit préparé par l'autre",
+        'Faire une petite balade nocturne', 'Commander le repas du soir',
+        'Être dispensé de cuisine', 'Dîner aux chandelles maison', 'Soirée cinéma',
+        'Grasse matinée sans réveil', 'Avoir la salle de bain en premier',
+        'Soirée gaming', "Date night planifiée et payée par l'autre", 'Sortie resto',
+        'Soirée jeux à deux', 'Promenade main dans la main', 'Laisser du temps solo tranquille',
+        'Passe retard : pas de reproche si tâche faite plus tard', 'Avoir des fleurs',
+        'Regarder le lever/coucher de soleil ensemble', 'Pique-niquer à deux',
+        'Sortie shopping', 'Choisir le film/série du soir',
+        'Contrôle total de la télécommande', 'Avoir le côté du lit préféré',
+        'Ne pas faire la vaisselle', 'Être servi son café/thé au réveil',
+        'Choisir la musique dans la voiture', 'Cuisiner ensemble',
+        'Dormir sans être réveillé', 'Journée chic sans pression', 'Sieste',
+        'Commander à manger', 'Massage sensuel aux huiles', 'Ne pas cuisiner',
+        'Jeu de vérité ou action', 'Gaming night',
+        'Soirée dégustation (vin, fromage, chocolat)', "Qu'on te prépare ton repas préféré",
+        'Être dispensé de vaisselle', 'Ne pas sortir les poubelles',
+        "Nuit d'hôtel ou escapade surprise",
+    ]
+    coloc = [
+        'Passer son tour de ménage', "Choisir la température de l'appart",
+        'Avoir la salle de bain en premier', 'Utiliser la machine à laver en priorité',
+        'Dispense de sortir les poubelles', 'Échanger une corvée',
+        'Ne pas sortir les poubelles', 'Être dispensé de vaisselle',
+        'Avoir la télécommande TV', 'Choisir le parfum des produits ménagers',
+        'Les autres préparent ton plat préféré', "Choisir le fond d'écran de la TV du salon",
+        'Se faire livrer un resto aux frais des autres',
+        "Avoir l'étagère du frigo la plus accessible", 'Choisir les courses',
+        'Passe retard : pas de reproche si tâche faite plus tard', 'Ne pas cuisiner',
+        'Avoir le droit aux meilleurs snacks', 'Organiser un apéro payé par les colocs',
+        'Choisir le resto pour la prochaine sortie groupe',
+        'Monopoliser le salon pour une soirée', 'Mettre sa musique à fond',
+        'Organiser une soirée avec ses amis', 'Avoir la paix absolue',
+        'Voter pour le prochain achat commun', "Utiliser l'espace commun pour son hobby",
+        'Avoir le meilleur siège du salon', 'Soirée pizza',
+        'Occuper la cuisine pour un projet culinaire',
+        'Repas à thème (mexicain, italien…)', 'Obliger les colocs à faire une soirée jeux',
+        'Tournoi jeu de cartes', 'Choisir le film de la soirée coloc',
+        'Gaming night', 'Temps solo dans les espaces communs', 'Journée full chill',
+        'Les colocs doivent porter un accessoire ridicule toute la soirée',
+        'Accès prioritaire aux équipements (TV, console…)',
+        'Tes colocs organisent un brunch', "Quelqu'un sort les poubelles à ta place",
+    ]
+    return {'family': family, 'couple': couple, 'coloc': coloc}.get(house_type, family)
+
+
+@rewards_bp.route('/api/add_custom_reward', methods=['POST'])
+def add_custom_reward():
+    """Ajoute une recompense custom en remplacant aleatoirement une case
+    parmi les 40 de la grille du house courant."""
+    from app import get_db_connection, _dbg
+    if 'user' not in session:
+        return jsonify({'error': 'Non connecté'}), 401
+
+    data = request.get_json(silent=True) or {}
+    new_reward = (data.get('reward') or '').strip()
+    if not new_reward:
+        return jsonify({'error': 'Récompense vide'}), 400
+    if len(new_reward) > 200:
+        new_reward = new_reward[:200]
+
+    email = session['user']
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT house_id FROM users WHERE email=?", (email,))
+        row = c.fetchone()
+        if not row or not row[0]:
+            return jsonify({'error': 'Pas de maison'}), 400
+        house_id = row[0]
+
+        c.execute("SELECT house_type FROM houses WHERE id=?", (house_id,))
+        ht_row = c.fetchone()
+        house_type = (ht_row[0] if ht_row and ht_row[0] else 'family') or 'family'
+
+        c.execute(
+            "SELECT rewards_json FROM custom_rewards WHERE house_id=? AND house_type=?",
+            (house_id, house_type),
+        )
+        row_custom = c.fetchone()
+        defaults = _get_default_rewards(house_type)
+        if row_custom:
+            try:
+                rewards = json.loads(row_custom[0])
+            except Exception:
+                rewards = list(defaults)
+        else:
+            rewards = list(defaults)
+
+        # Garantir 40 entrees
+        if len(rewards) < 40:
+            rewards = rewards + defaults[len(rewards):]
+        rewards = rewards[:40]
+
+        # Remplace une case aleatoire
+        idx = random.randint(0, 39)
+        rewards[idx] = new_reward
+
+        rewards_json = json.dumps(rewards, ensure_ascii=False)
+        c.execute(
+            """
+            INSERT INTO custom_rewards (house_id, house_type, rewards_json, updated_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(house_id, house_type)
+            DO UPDATE SET rewards_json=excluded.rewards_json,
+                          updated_at=CURRENT_TIMESTAMP
+            """,
+            (house_id, house_type, rewards_json),
+        )
+        conn.commit()
+        return jsonify({'ok': True, 'index': idx + 1})
+    except Exception as e:
+        try: _dbg(f"❌ add_custom_reward: {e}")
+        except Exception: pass
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @rewards_bp.route('/open_reward_box', methods=['POST'])
 def open_reward_box():
     from app import get_db_connection, now_paris, _dbg

@@ -141,6 +141,99 @@
         .sr-input { padding: 8px 10px; font-size: 13px; }
         .sr-save-btn { padding: 8px 10px; font-size: 12px; }
     }
+
+    /* ── Onglets iOS-style ─────────────────────────────────── */
+    .sr-tabs {
+        display: flex;
+        background: rgba(21,48,54,0.08);
+        border-radius: 14px;
+        padding: 3px;
+        margin-bottom: 24px;
+        gap: 3px;
+    }
+    .sr-tab {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 11px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: transparent;
+        color: #597176;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+    .sr-tab.active {
+        background: rgba(255,255,255,0.95);
+        color: #153036;
+        box-shadow: 0 2px 8px rgba(21,48,54,0.12);
+    }
+    .sr-panel { display: none; }
+    .sr-panel.active { display: block; }
+
+    .sr-add-card {
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.6);
+        box-shadow: 0 8px 32px rgba(21,48,54,0.1);
+        padding: 24px 20px;
+        margin-bottom: 16px;
+    }
+    .sr-add-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #597176;
+        margin-bottom: 10px;
+        letter-spacing: 0.03em;
+    }
+    .sr-add-input {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1.5px solid rgba(253,174,84,0.4);
+        background: rgba(255,255,255,0.9);
+        font-size: 16px;
+        color: #153036;
+        font-weight: 500;
+        box-sizing: border-box;
+        margin-bottom: 14px;
+        outline: none;
+        font-family: inherit;
+        resize: vertical;
+    }
+    .sr-add-input:focus {
+        border-color: #FDAE54;
+        box-shadow: 0 0 0 3px rgba(253,174,84,0.15);
+    }
+    .sr-add-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #FDAE54, #F4C68D);
+        border: none;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        color: #153036;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(253,174,84,0.35);
+        font-family: inherit;
+    }
+    .sr-add-btn:disabled { opacity: 0.7; cursor: default; }
+    .sr-confirm {
+        background: rgba(46,213,115,0.12);
+        border: 1px solid rgba(46,213,115,0.3);
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1B6B4A;
+        text-align: center;
+        display: none;
+        margin-top: 12px;
+    }
 </style>
 
 <a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour">←</a>
@@ -151,28 +244,89 @@
         <p class="subtitle">Personnalise les 40 cases de la grille</p>
     </div>
 
-    <div class="sr-info">
-        Les récompenses sont mélangées <strong>aléatoirement</strong> dans la grille du dimanche.
-        Modifie chaque case et clique sur <strong>Enregistrer</strong>.
+    <div class="sr-tabs">
+        <button type="button" class="sr-tab active" onclick="switchTab('add')">Ajouter</button>
+        <button type="button" class="sr-tab" onclick="switchTab('edit')">Modifier la grille</button>
     </div>
 
-    <div class="sr-list" id="sr-list">
-        {% for reward in rewards_list %}
-        <div class="sr-item">
-            <div class="sr-num">{{ loop.index }}</div>
-            <input type="text" class="sr-input"
-                   data-index="{{ loop.index0 }}"
-                   value="{{ reward }}"
-                   maxlength="200">
-            <button class="sr-save-btn" data-index="{{ loop.index0 }}">Enregistrer</button>
+    <!-- ONGLET 1 : Ajouter -->
+    <div class="sr-panel active" id="panel-add">
+        <div class="sr-add-card">
+            <div class="sr-add-label">Ta nouvelle récompense</div>
+            <textarea class="sr-add-input" id="new-reward-input" rows="3"
+                      placeholder="Ex : Soirée cinéma à deux..." maxlength="200"></textarea>
+            <button class="sr-add-btn" onclick="addCustomReward()">Ajouter dans la grille</button>
+            <div class="sr-confirm" id="add-confirm">
+                🎉 Ta récompense sera placée aléatoirement dans la grille — visible par tous les joueurs de la maison !
+            </div>
         </div>
-        {% endfor %}
+    </div>
+
+    <!-- ONGLET 2 : Modifier -->
+    <div class="sr-panel" id="panel-edit">
+        <div class="sr-info">
+            Les récompenses sont mélangées <strong>aléatoirement</strong> dans la grille du dimanche.
+            Modifie chaque case et clique sur <strong>Enregistrer</strong>.
+        </div>
+
+        <div class="sr-list" id="sr-list">
+            {% for reward in rewards_list %}
+            <div class="sr-item">
+                <div class="sr-num">{{ loop.index }}</div>
+                <input type="text" class="sr-input"
+                       data-index="{{ loop.index0 }}"
+                       value="{{ reward }}"
+                       maxlength="200">
+                <button class="sr-save-btn" data-index="{{ loop.index0 }}">Enregistrer</button>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 
 <div class="sr-toast" id="sr-toast"></div>
 
 <script>
+function switchTab(tab) {
+    document.querySelectorAll('.sr-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === (tab === 'add' ? 0 : 1));
+    });
+    document.getElementById('panel-add').classList.toggle('active', tab === 'add');
+    document.getElementById('panel-edit').classList.toggle('active', tab === 'edit');
+}
+
+async function addCustomReward() {
+    const input = document.getElementById('new-reward-input');
+    const val = input.value.trim();
+    if (!val) { input.focus(); return; }
+    const btn = document.querySelector('.sr-add-btn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ En cours...';
+    try {
+        const r = await fetch('/api/add_custom_reward', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reward: val })
+        });
+        const data = await r.json();
+        if (r.ok && data.ok) {
+            input.value = '';
+            const confirm = document.getElementById('add-confirm');
+            confirm.style.display = 'block';
+            setTimeout(() => { confirm.style.display = 'none'; }, 4000);
+        } else {
+            alert(data.error || 'Erreur, réessaie.');
+        }
+    } catch(e) {
+        alert('Erreur réseau, réessaie.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+</script>
 (function(){
     var HOUSE_TYPE = {{ house_type|tojson }};
     var listEl = document.getElementById('sr-list');
