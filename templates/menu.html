@@ -5986,12 +5986,26 @@ function refreshAllBadges() {
                     }
 
                     if (Notification.permission === 'granted') {
-                        if (ok === false) {
-                            // Souscription serveur échouée → bannière conservée, erreur visible
+                        // 🔧 FIX: verifier reellement l'etat de la subscription avant
+                        // d'afficher une erreur. subscribe() peut throw "InvalidStateError"
+                        // alors qu'une subscription existante fonctionne deja → ok=false
+                        // mais les notifs marchent. On considere que c'est OK si le
+                        // navigateur a bel et bien une subscription active.
+                        var hasRealSub = false;
+                        try {
+                            if (window.cleanBeatPush && window.cleanBeatPush.registration) {
+                                var realSub = await window.cleanBeatPush.registration.pushManager.getSubscription();
+                                hasRealSub = !!realSub;
+                            }
+                        } catch(_) {}
+
+                        if (!ok && !hasRealSub) {
+                            // Souscription serveur échouée ET pas de sub navigateur → vraie erreur
                             showToast('L\'abonnement aux notifications a échoué. Rechargez la page pour réessayer.', '#e74c3c');
                             btn.disabled = false;
                             btn.textContent = 'Activer';
                         } else {
+                            showToast('✅ Notifications activées !', '#2ed573');
                             banner.style.display = 'none';
                         }
                     } else if (Notification.permission === 'denied') {

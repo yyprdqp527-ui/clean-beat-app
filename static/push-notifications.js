@@ -130,6 +130,31 @@ class PushNotificationManager {
             // Convertir la clé VAPID en Uint8Array
             const convertedVapidKey = this.urlBase64ToUint8Array(this.vapidPublicKey);
 
+            // 🔧 FIX: si une subscription existe deja (clé VAPID precedente, ou
+            // resouscription apres clear permissions), pushManager.subscribe()
+            // throw "InvalidStateError". On reutilise la sub existante si la cle
+            // matche, sinon on l'unsubscribe avant d'en creer une nouvelle.
+            let existing = null;
+            try { existing = await this.registration.pushManager.getSubscription(); } catch(_) {}
+            if (existing) {
+                const existingKey = existing.options && existing.options.applicationServerKey;
+                let sameKey = false;
+                if (existingKey) {
+                    try {
+                        const a = new Uint8Array(existingKey);
+                        sameKey = a.length === convertedVapidKey.length &&
+                                  a.every((v, i) => v === convertedVapidKey[i]);
+                    } catch(_) {}
+                }
+                if (sameKey) {
+                    console.log('✅ Subscription existante reutilisee');
+                    this.subscription = existing;
+                    return await this.sendSubscriptionToServer(existing);
+                }
+                console.log('🔄 Subscription existante avec cle differente, unsubscribe...');
+                try { await existing.unsubscribe(); } catch(_) {}
+            }
+
             // S'abonner
             this.subscription = await this.registration.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -143,6 +168,15 @@ class PushNotificationManager {
 
         } catch (error) {
             console.error('❌ Erreur souscription push:', error);
+            // 🔧 Fallback: si une sub existe quand meme apres l'erreur, la reutiliser
+            try {
+                const fallback = await this.registration.pushManager.getSubscription();
+                if (fallback) {
+                    console.log('🔁 Recuperation subscription existante apres erreur');
+                    this.subscription = fallback;
+                    return await this.sendSubscriptionToServer(fallback);
+                }
+            } catch(_) {}
             return false;
         }
     }
