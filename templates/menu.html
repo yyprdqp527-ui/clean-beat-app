@@ -5927,6 +5927,20 @@ function refreshAllBadges() {
         // Dismiss mémorisé (clic "Plus tard") → ne pas réafficher pendant 24h
         if (dismissedAt && (Date.now() - dismissedAt) < 24 * 60 * 60 * 1000) return;
 
+        // 🔧 FIX UX: ne pas proposer "Activer notifs" tant que l'appli n'est pas
+        // installee (PWA). Sinon les 2 bannieres se superposent au boot et la
+        // notif sans PWA installee n'a pas de sens (pas d'icone home, etc.).
+        // Conditions OK pour proposer notifs :
+        //   - mode standalone (PWA active sur Android/iOS)
+        //   - OU localStorage pwa_installed === '1'
+        //     (user a clique "C'est fait, l'appli est installee")
+        var pwaInstalled = isStandalone || localStorage.getItem('pwa_installed') === '1';
+        if (!pwaInstalled) {
+            // Pas installe → on attend. La bannière reapparaitra a la prochaine
+            // visite OU quand pwa_installed sera ecrit (re-check leger ci-dessous).
+            return;
+        }
+
         // 'default' → affiche la bannière APRÈS les bulles d'aide
         // Si bulles déjà vues (KEY en localStorage) → affiche immédiatement
         // Sinon → attend l'événement menu_tips_done dispatché par QfqTips.init
