@@ -582,7 +582,7 @@
                                    value="{{ room.current_name }}"
                                    data-default="{{ room.default_name }}"
                                    data-room-key="{{ room.key }}"
-                                   maxlength="60"
+                                   maxlength="30"
                                    onblur="renameRoom(this)"
                                    onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
                         </div>
@@ -616,7 +616,7 @@
                                    value="{{ room.current_name }}"
                                    data-default="Pièce personnalisée"
                                    data-room-key="{{ room.key }}"
-                                   maxlength="60"
+                                   maxlength="30"
                                    onblur="renameRoom(this)"
                                    onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
                         </div>
