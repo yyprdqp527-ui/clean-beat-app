@@ -1826,6 +1826,10 @@ TASKS_CONFIG = {
     ]
 }
 
+# Chambre 2 et Chambre 3 partagent les taches predefinies de Chambre 1
+TASKS_CONFIG['chambre1'] = TASKS_CONFIG['chambre_parentale']
+TASKS_CONFIG['chambre2'] = TASKS_CONFIG['chambre_parentale']
+
 # ===============================
 # FONCTION DE NORMALISATION DES CATÉGORIES
 # ===============================
@@ -4094,8 +4098,8 @@ def menu():
     ALL_DEFAULT_ROOMS = [
         # Chambres (optionnelles – peuvent être masquées et renommées)
         {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/thumbs/chambreparentale_marron.webp', 'category': 'chambre_parentale', 'fixed': False},
-        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/thumbs/chambre1.webp',                'category': 'chambre_parentale',  'fixed': False},
-        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/thumbs/chambre2.webp',                'category': 'chambre_parentale',  'fixed': False},
+        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/thumbs/chambre1.webp',                'category': 'chambre1',           'fixed': False},
+        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/thumbs/chambre2.webp',                'category': 'chambre2',           'fixed': False},
         {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/thumbs/chambre_garçon3.webp',        'category': 'chambre_garcon',     'fixed': False},
         {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/thumbs/chambre_enfant_4.webp',       'category': 'chambre_enfant',     'fixed': False},
         {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/thumbs/chambre_bébé4_.webp',         'category': 'chambre_bebe',       'fixed': False},
