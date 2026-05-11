@@ -3430,20 +3430,23 @@ def deactivate_push_subscription(endpoint):
         return False
 
 
-def _get_house_courses_pending(house_id):
+def _get_house_courses_pending(house_id, existing_conn=None):
     """Compteur 'rappels courses non faits' partagé pour toute la maison."""
+    _should_close = existing_conn is None
+    _conn = existing_conn or get_db_connection()
     try:
-        _conn = get_db_connection()
         _c = _conn.cursor()
         _c.execute(
             "SELECT COUNT(*) FROM player_reminders WHERE house_id=? AND is_done=0",
             (house_id,)
         )
         n = _c.fetchone()[0] or 0
-        _conn.close()
         return n
     except Exception:
         return 0
+    finally:
+        if _should_close:
+            _conn.close()
 
 
 def compute_user_total_badge(user_email, house_id, courses_pending=None):
@@ -4050,7 +4053,7 @@ def menu():
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
             # 🛒 Articles non cochés dans la liste de courses (badge onglet navigation)
-            courses_pending_count = _get_house_courses_pending(house_id)
+            courses_pending_count = _get_house_courses_pending(house_id, existing_conn=conn)
 
             # 🍼 Vérifier si la maison utilise le tracking bébé
             try:
