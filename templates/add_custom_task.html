@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 {% set hide_header = true %}
 
 {% block title %}{% if task %}Modifier{% else %}Créer{% endif %} une mission - {{ category_name }}{% endblock %}

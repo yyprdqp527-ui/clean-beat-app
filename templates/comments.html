@@ -6,6 +6,7 @@
 {% block body_class %}page-comments{% endblock %}
 
 {% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 <!-- Socket.IO - hébergé localement -->
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 {% endblock %}

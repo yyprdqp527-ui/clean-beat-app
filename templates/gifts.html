@@ -1,5 +1,6 @@
 
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 
 {% block title %}🎁 Grille de Cadeaux - {{ house_name }}{% endblock %}
 

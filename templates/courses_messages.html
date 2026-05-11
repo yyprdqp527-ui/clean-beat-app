@@ -4,6 +4,7 @@
 {% block title %}Liste de Courses 🛒 - {{ house_name }}{% endblock %}
 
 {% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 {% endblock %}
 
