@@ -3,6 +3,10 @@
 # ⚡ MONKEY PATCH EN TOUT PREMIER - avant même l'import de app
 from gevent import monkey
 monkey.patch_all()
+try:
+    from psycogreen.gevent import patch_psycopg; patch_psycopg()
+except ImportError:
+    pass
 
 import multiprocessing
 import os

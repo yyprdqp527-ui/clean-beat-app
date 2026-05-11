@@ -76,16 +76,14 @@ if _PG_URL.startswith('postgres://'):
     _PG_URL = _PG_URL.replace('postgres://', 'postgresql://', 1)
 _USE_PG = bool(_PG_URL)
 
+_db_pool = None  # Pool PostgreSQL (initialisé au premier appel)
+
 if _USE_PG:
     try:
         import psycopg2
-        # psycopg2.pool N'EST PLUS UTILISÉ (incompatible avec gevent/eventlet)
+        from psycopg2 import pool as pg_pool
     except ImportError:
         _USE_PG = False
-
-# ⚠️ POOL DÉSACTIVÉ : Les pools psycopg2 ne sont pas compatibles avec gevent/eventlet
-# Les connexions directes sont plus stables, même si légèrement plus lentes
-# (alternative: utiliser psycogreen avec gevent, mais ajoute une dépendance)
 
 _RE_INSERT = re.compile(r'^\s*INSERT\s+', re.IGNORECASE)
 _RE_ALTER_ADD = re.compile(
@@ -921,28 +919,45 @@ MAX_PLAYERS = None
 # CONNEXION SQLITE OPTIMISÉE
 # ===============================
 
+def _get_db_pool():
+    """Initialise le pool PostgreSQL au premier appel (lazy, thread-safe avec psycogreen)."""
+    global _db_pool
+    if _db_pool is None:
+        _db_pool = pg_pool.ThreadedConnectionPool(minconn=2, maxconn=10, dsn=_PG_URL)
+    return _db_pool
+
+def release_db_connection(conn):
+    """Restitue une connexion PostgreSQL au pool (appeler à la place de conn.close() en mode PG)."""
+    if not _USE_PG or _db_pool is None:
+        try: conn.close()
+        except Exception: pass
+        return
+    try:
+        raw = conn._conn if hasattr(conn, '_conn') else conn
+        _get_db_pool().putconn(raw)
+    except Exception:
+        try: conn.close()
+        except Exception: pass
+
 def get_db_connection(timeout=30.0):
     """
     Connexion DB unifiée : SQLite en local, PostgreSQL sur Render.
-    Retourne un _CompatConn compatible avec l'API sqlite3.
-    ⚠️ Connexions directes PostgreSQL (pas de pool pour compatibilité gevent/eventlet)
+    PostgreSQL : connexion tirée du pool (compatible gevent via psycogreen).
+    SQLite : connexion directe avec optimisations WAL.
     """
     if _USE_PG:
-        # Connexion directe PostgreSQL (compatible gevent/eventlet)
-        for attempt in range(3):
-            try:
-                conn = psycopg2.connect(_PG_URL, connect_timeout=10,
-                                        options="-c timezone=Europe/Paris")
-                conn.autocommit = False
-                return _CompatConn(conn, is_pg=True)
-            except Exception as e:
-                if attempt < 2:
-                    import time; time.sleep(0.5)
-                else:
-                    raise
+        try:
+            raw = _get_db_pool().getconn()
+            raw.autocommit = False
+            return _CompatConn(raw, is_pg=True)
+        except Exception:
+            # Fallback connexion directe si pool épuisé
+            conn = psycopg2.connect(_PG_URL, connect_timeout=10,
+                                    options="-c timezone=Europe/Paris")
+            conn.autocommit = False
+            return _CompatConn(conn, is_pg=True)
     else:
         raw = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
-        # Optimisations SQLite
         raw.execute('PRAGMA journal_mode=WAL')
         raw.execute('PRAGMA synchronous=NORMAL')
         raw.execute('PRAGMA cache_size=2000')
