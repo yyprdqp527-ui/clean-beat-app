@@ -1732,13 +1732,12 @@
             document.addEventListener('touchstart', function(e) {
                 var box = e.target.closest('.mystery-box');
                 if (box && !box.classList.contains('opened') && !box.classList.contains('loading')) {
-                    e.preventDefault();
                     var boxNumber = parseInt(box.getAttribute('data-box'));
                     if (boxNumber) {
                         openBox(boxNumber);
                     }
                 }
-            }, {passive: false});
+            }, {passive: true});
         })();
 
         // Fermer le popup festif du gagnant et aller vers la grille
