@@ -5370,11 +5370,7 @@ function refreshAllBadges() {
                 
                 console.log('Pour tester le badge manuellement, tapez dans la console: testMessageBadge(5)');
                 
-                //  Appel IMMÉDIAT (avant même DOMContentLoaded) pour corriger les badges ASAP
-                refreshAllBadges();
-                refreshMissionDots();
-                
-                // Rafraîchir aussi au DOMContentLoaded (sécurité)
+                // Rafraîchir au DOMContentLoaded
                 document.addEventListener('DOMContentLoaded', function() { refreshAllBadges(); refreshMissionDots(); });
                 
                 // 🔔 Au resume (ou polling), vérifier s'il y a un reminder non lu et l'AFFICHER
@@ -6266,7 +6262,7 @@ function refreshAllBadges() {
     <div class="ob-slide active" id="ob-slide-1">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide 1.webp" class="ob-phone-img" alt="Choisis une pièce">
+          <img src="/static/images/slide 1.webp" class="ob-phone-img" alt="Choisis une pièce" loading="lazy">
           <div class="ob-ring" style="width:30%;height:14%;border-radius:50%;top:32%;left:35%;"></div>
         </div>
       </div>
@@ -6281,7 +6277,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-2">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide2.webp" class="ob-phone-img" alt="Sélectionne une tâche">
+          <img src="/static/images/slide2.webp" class="ob-phone-img" alt="Sélectionne une tâche" loading="lazy">
           <div class="ob-ring" style="width:70%;height:10%;border-radius:8px;top:42%;left:15%;"></div>
         </div>
       </div>
@@ -6296,7 +6292,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-3">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide3.webp" class="ob-phone-img" alt="Valide la tâche">
+          <img src="/static/images/slide3.webp" class="ob-phone-img" alt="Valide la tâche" loading="lazy">
           <div class="ob-ring" style="width:28%;height:13%;border-radius:50%;top:68%;left:24%;"></div>
         </div>
       </div>
@@ -6311,7 +6307,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-4">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide4.webp" class="ob-phone-img" alt="Gagne des points">
+          <img src="/static/images/slide4.webp" class="ob-phone-img" alt="Gagne des points" loading="lazy">
           <div class="ob-ring" style="width:32%;height:15%;border-radius:50%;top:14%;left:68%;"></div>
         </div>
       </div>
@@ -6326,7 +6322,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-5">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide4b.webp" class="ob-phone-img" alt="Ajout de mission">
+          <img src="/static/images/slide4b.webp" class="ob-phone-img" alt="Ajout de mission" loading="lazy">
           <div class="ob-ring" style="width:26%;height:12%;border-radius:50%;bottom:8%;left:8%;top:auto;"></div>
         </div>
       </div>
@@ -6341,7 +6337,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-6">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide5.webp" class="ob-phone-img" alt="Courses partagées">
+          <img src="/static/images/slide5.webp" class="ob-phone-img" alt="Courses partagées" loading="lazy">
           <div class="ob-ring" style="width:70%;height:9%;border-radius:8px;top:34%;left:15%;"></div>
         </div>
       </div>
@@ -6356,7 +6352,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-7">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide5b.webp" class="ob-phone-img" alt="Tracking bébé">
+          <img src="/static/images/slide5b.webp" class="ob-phone-img" alt="Tracking bébé" loading="lazy">
         </div>
       </div>
       <div class="ob-caption-glass">
@@ -6370,7 +6366,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-8">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame" style="position:relative;">
-          <img src="/static/images/slide6.webp" class="ob-phone-img" alt="Mini-jeux">
+          <img src="/static/images/slide6.webp" class="ob-phone-img" alt="Mini-jeux" loading="lazy">
           <!-- Flèches vers le haut sous les icônes de jeux -->
           <div style="position:absolute;top:58%;left:0;right:0;display:flex;justify-content:space-around;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FDAE54" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
@@ -6390,7 +6386,7 @@ function refreshAllBadges() {
     <div class="ob-slide" id="ob-slide-9">
       <div class="ob-screen-wrap">
         <div class="ob-phone-frame">
-          <img src="/static/images/slide7.webp" class="ob-phone-img" alt="Personnalisation">
+          <img src="/static/images/slide7.webp" class="ob-phone-img" alt="Personnalisation" loading="lazy">
           <div class="ob-ring" style="width:22%;height:10%;border-radius:50%;top:44%;left:12%;"></div>
         </div>
       </div>
