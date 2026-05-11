@@ -6686,6 +6686,9 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     text-decoration: none;
     position: relative;
     transition: background 0.15s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
 }
 .qfq-tab.active {
     background: rgba(21,48,54,0.09);

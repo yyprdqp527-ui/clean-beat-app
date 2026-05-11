@@ -77,10 +77,12 @@
         }
 
         /* ── Fix iOS tap — réaction instantanée, pas de flash bleu/gris ── */
-        button, a, [onclick], input[type="submit"], input[type="button"],
-        label, .btn, .malus-option, .settings-btn, .back-btn-glass {
-            -webkit-tap-highlight-color: transparent;
+        *, *::before, *::after {
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, a, [onclick], input[type="submit"],
+        input[type="button"], label, .btn {
             cursor: pointer;
         }
         button, [onclick], .malus-option {
