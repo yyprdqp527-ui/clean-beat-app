@@ -2073,8 +2073,8 @@ function sendMalus(reason, points){
                                 upgrade: true,
                                 reconnection: true,
                                 reconnectionDelay: 1000,
-                                reconnectionDelayMax: 8000,
-                                reconnectionAttempts: Infinity,
+                                reconnectionDelayMax: 5000,
+                                reconnectionAttempts: 10,
                                 timeout: 20000
                             });
                         }
@@ -2113,6 +2113,13 @@ function sendMalus(reason, points){
                                 refreshAllBadges();
                                 if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                             }, 600);
+                        });
+
+                        socket.on('reconnect_failed', function() {
+                            console.warn('⚠️ WebSocket: 10 tentatives échouées, abandon');
+                            if (typeof cbToast === 'function') {
+                                cbToast('Connexion perdue — rechargez la page', 'warning', 8000);
+                            }
                         });
                         
                         // Écouter les mises à jour de points en temps réel avec données complètes
