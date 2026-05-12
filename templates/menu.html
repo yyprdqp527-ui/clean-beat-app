@@ -131,6 +131,9 @@
             border: 1.5px solid {% if bg_theme_light %}rgba(21,48,54,0.08){% else %}rgba(255,255,255,0.15){% endif %};
         }
         .burger-nav-text { color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %}; }
+        .room-zoom-overlay { background: {{ bg_gradient }}; }
+        .room-zoom-title { color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %}; }
+        .room-zoom-overlay.dissolving { background: {{ bg_gradient }} !important; }
 
         #dailyReminderPopup { background: {{ bg_gradient }}; }
         {% if bg_theme_light %}
@@ -2916,33 +2919,109 @@ function refreshAllBadges() {
 
        
 
-            <!-- Navigation avec zoom accéléré sur les cartes pièces -->
+            <!-- ✨ SCRIPT ANIMATION ZOOM PIÈCES - VERSION REFAITE ✨ -->
             <script>
-                document.querySelectorAll('.room-card').forEach(function(card) {
-                    card.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        var targetUrl = this.getAttribute('href') || this.dataset.url;
-                        if (!targetUrl) return;
-                        if (window.SoundManager) SoundManager.play('selectRoom');
-
-                        // Animation zoom rapide (400ms total) avec fallback immédiat
-                        var el = this;
-                        try {
-                            el.style.transition = 'transform 200ms cubic-bezier(.36,.07,.19,.97), opacity 200ms ease';
-                            el.style.transform = 'scale(1.08)';
-                            el.style.opacity = '0.85';
-                            setTimeout(function() {
-                                el.style.transform = 'scale(0.92)';
-                                el.style.opacity = '0';
-                            }, 100);
-                            setTimeout(function() {
-                                window.location.href = targetUrl;
-                            }, 400);
-                        } catch(err) {
-                            window.location.href = targetUrl;
-                        }
-                    });
-                });
+                (function() {
+                    'use strict';
+                    
+                    // Créer les éléments d'animation
+                    const overlay = document.createElement('div');
+                    overlay.className = 'room-zoom-overlay';
+                    
+                    const container = document.createElement('div');
+                    container.className = 'room-zoom-container';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'room-zoom-title';
+                    
+                    const image = document.createElement('img');
+                    image.className = 'room-zoom-image';
+                    
+                    container.appendChild(title);
+                    container.appendChild(image);
+                    
+                    // Attendre que le DOM soit prêt
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', init);
+                    } else {
+                        init();
+                    }
+                    
+                    function init() {
+                        document.body.appendChild(overlay);
+                        document.body.appendChild(container);
+                        
+                        // Écouter les clics sur les cartes de pièces
+                        const roomCards = document.querySelectorAll('.room-card');
+                        
+                        roomCards.forEach(function(card) {
+                            card.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                // 🎵 Son au clic sur l'image isométrique
+                                if (window.SoundManager) SoundManager.play('selectRoom');
+                                
+                                // Récupérer les infos de la carte
+                                const targetUrl = card.getAttribute('href');
+                                if (!targetUrl || targetUrl === '#') {
+                                    console.error('❌ Pas d\'URL valide');
+                                    return;
+                                }
+                                
+                                const imgElement = card.querySelector('.room-card-visual img');
+                                const titleElement = card.querySelector('.room-card-title');
+                                
+                                if (!imgElement) {
+                                    sessionStorage.setItem('internalNav', '1');
+                                    window.location.href = targetUrl;
+                                    return;
+                                }
+                                if (!titleElement) {
+                                    console.error('❌ Titre manquant dans la carte');
+                                    return;
+                                }
+                                
+                                // Bloquer les clics multiples
+                                if (container.classList.contains('animating')) return;
+                                
+                                console.log('🎬 Démarrage animation pour:', titleElement.textContent);
+                                
+                                // Configurer l'image et le titre
+                                image.src = imgElement.src;
+                                image.alt = imgElement.alt || '';
+                                title.textContent = titleElement.textContent;
+                                
+                                // Reset des styles
+                                container.classList.remove('dissolving');
+                                overlay.classList.remove('dissolving');
+                                
+                                // Activer l'overlay
+                                overlay.classList.add('active');
+                                
+                                // Démarrer l'animation après un petit délai
+                                setTimeout(function() {
+                                    container.classList.add('animating');
+                                    
+                                    // 🎵 Son harmonieux pendant l'animation de zoom
+                                    if (window.SoundManager) SoundManager.play('roomFullscreen');
+                                }, 50);
+                                
+                                // Timing optimisé (500ms total)
+                                setTimeout(function() {
+                                    console.log('💨 Dissolution et navigation immédiate');
+                                    container.classList.add('dissolving');
+                                    overlay.classList.add('dissolving');
+                                    
+                                    // Navigation IMMÉDIATE au début de la dissolution
+                                    console.log('Navigation vers:', targetUrl);
+                                    sessionStorage.setItem('internalNav', '1');
+                                    window.location.href = targetUrl;
+                                }, 500);
+                            });
+                        });
+                    }
+                })();
             
             // ═══════════════════════════════════════════════════════════
             // 💀 SYSTÈME DE MALUS — Afficher skull sur avatars (1 heure)
@@ -4045,10 +4124,10 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     right: 0;
     z-index: 9000;
     background: linear-gradient(135deg,
-        rgba(255,255,255,0.55) 0%,
-        rgba(253,174,84,0.08) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+        rgba(255,255,255,0.92) 0%,
+        rgba(253,174,84,0.15) 100%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     will-change: transform;
     -webkit-transform: translateZ(0);
     border-radius: 20px 20px 0 0;
