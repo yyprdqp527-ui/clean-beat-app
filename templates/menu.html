@@ -2687,6 +2687,18 @@ function sendMalus(reason, points){
                             if (typeof loadActiveSuspicions === 'function') loadActiveSuspicions();
                         });
 
+                        // 💀 Malus envoyé — rafraîchir les crânes sur les avatars
+                        socket.on('malus_update', function(data) {
+                            console.log('💀 WebSocket: malus_update reçu', data);
+                            if (typeof loadActiveMalus === 'function') loadActiveMalus();
+                        });
+
+                        // ❤️ Bonus envoyé — rafraîchir les cœurs sur les avatars
+                        socket.on('bonus_update', function(data) {
+                            console.log('❤️ WebSocket: bonus_update reçu', data);
+                            if (typeof loadActiveBonuses === 'function') loadActiveBonuses();
+                        });
+
                         // 🏠 Toast sermon / congratulation → bulle de dialogue sous le nom de la maison
                         socket.on('house_toast', function(data) {
                             console.log('🏠 WebSocket: house_toast reçu', data);
@@ -3087,8 +3099,7 @@ function refreshAllBadges() {
                 
                 // Charger les malus au démarrage
                 loadActiveMalus();
-                // Rafraîchir toutes les 60 secondes
-                setInterval(loadActiveMalus, 60000);
+                // Pas de polling — socket.on('malus_update') assure le temps réel
                 console.log('Système malus initialisé');
             })();
 
@@ -3156,7 +3167,7 @@ function refreshAllBadges() {
                 }
 
                 loadActiveBonuses();
-                setInterval(loadActiveBonuses, 60000);
+                // Pas de polling — socket.on('bonus_update') assure le temps réel
                 console.log('\u2705 Syst\u00e8me bonus coeur initialis\u00e9');
             })();
 
