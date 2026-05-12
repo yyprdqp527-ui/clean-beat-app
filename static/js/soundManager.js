@@ -622,7 +622,7 @@
             if (link && link.href && !link.href.startsWith('javascript')) {
                 e.preventDefault();
                 var href = link.href;
-                setTimeout(function () { window.location.href = href; }, 180);
+                window.location.href = href;
             }
             return;
         }
