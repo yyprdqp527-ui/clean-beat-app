@@ -3912,6 +3912,7 @@ def menu():
     custom_rooms_db = {}
 
     # 🚀 OPTIMISATION: Une seule connexion DB pour toute la route /menu
+    conn = None
     if 'user' in session:
         conn = get_db_connection()
         c = conn.cursor()
@@ -4385,7 +4386,8 @@ def menu():
         except Exception as e:
             print(f"❌ Reminder check (today fallback) error: {e}", flush=True)
 
-    conn.close()
+    if conn:
+        conn.close()
     resp = make_response(render_template(
         'menu.html',
         players=players,
