@@ -642,12 +642,13 @@
     pointer-events: auto;
 }
 #roomPreviewSheet {
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: saturate(180%) blur(30px);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: 24px 24px 0 0;
-    border-top: 1px solid rgba(255,255,255,0.8);
-    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
+    border: 2px solid rgba(253,174,84,0.3);
+    border-bottom: none;
+    box-shadow: 0 -8px 32px rgba(89,113,118,0.15);
     padding: 28px 24px 40px;
     width: 100%;
 }
