@@ -3457,7 +3457,8 @@ function refreshAllBadges() {
                     } else {
                         // Permission pas encore accordée → demander (nécessite geste utilisateur)
                         if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
-                            ok = await window.cleanBeatPush.requestPermission();
+                            const permResult = await window.cleanBeatPush.requestPermission();
+                            ok = (permResult === true || permResult === 'granted');
                         } else {
                             await Notification.requestPermission();
                             if (Notification.permission === 'granted') {
@@ -3486,7 +3487,7 @@ function refreshAllBadges() {
                             }
                         } catch(_) {}
 
-                        if (!ok && !hasRealSub) {
+                        if (ok === false && !hasRealSub) {
                             // Souscription serveur échouée ET pas de sub navigateur → vraie erreur
                             showToast('L\'abonnement aux notifications a échoué. Rechargez la page pour réessayer.', '#e74c3c');
                             btn.disabled = false;
