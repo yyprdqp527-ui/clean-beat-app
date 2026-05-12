@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 <!-- CACHE BUSTER: 2026-02-07-NO-POPUP-WEBSOCKET-SYNC-v7 -->
 <!-- DEBUG: current_task_id={{ current_task_id }}, task_id={{ task_id }} -->
 {% set player_colors = ['rgba(74, 144, 226, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(39, 174, 96, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(231, 76, 60, 0.4)', 'rgba(26, 188, 156, 0.4)', 'rgba(243, 156, 18, 0.4)', 'rgba(52, 152, 219, 0.4)'] %}
@@ -733,7 +734,7 @@
 </style>
 
 <!-- Bouton retour vers la catégorie -->
-<a href="{{ url_for('tasks.categorie', cat=category) }}" style="position:fixed;top:24px;left:24px;z-index:2001;width:56px;height:56px;background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.5);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#153036;font-size:28px;font-weight:bold;text-decoration:none;box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);transition:all 0.3s ease;" aria-label="Retour à la catégorie">←</a>
+<a href="{{ url_for('tasks.categorie', cat=category) }}" class="back-btn-glass" aria-label="Retour à la catégorie">←</a>
 
 <div class="task-main-container">
 
