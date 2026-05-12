@@ -2970,8 +2970,13 @@ function refreshAllBadges() {
                                 const imgElement = card.querySelector('.room-card-visual img');
                                 const titleElement = card.querySelector('.room-card-title');
                                 
-                                if (!imgElement || !titleElement) {
-                                    console.error('❌ Éléments manquants dans la carte');
+                                if (!imgElement) {
+                                    sessionStorage.setItem('internalNav', '1');
+                                    window.location.href = targetUrl;
+                                    return;
+                                }
+                                if (!titleElement) {
+                                    console.error('❌ Titre manquant dans la carte');
                                     return;
                                 }
                                 
