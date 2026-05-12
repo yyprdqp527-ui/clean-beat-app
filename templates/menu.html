@@ -2916,14 +2916,31 @@ function refreshAllBadges() {
 
        
 
-            <!-- Navigation instantanée sur les cartes pièces -->
+            <!-- Navigation avec zoom accéléré sur les cartes pièces -->
             <script>
                 document.querySelectorAll('.room-card').forEach(function(card) {
                     card.addEventListener('click', function(e) {
+                        e.preventDefault();
                         var targetUrl = this.getAttribute('href') || this.dataset.url;
                         if (!targetUrl) return;
                         if (window.SoundManager) SoundManager.play('selectRoom');
-                        window.location.href = targetUrl;
+
+                        // Animation zoom rapide (400ms total) avec fallback immédiat
+                        var el = this;
+                        try {
+                            el.style.transition = 'transform 200ms cubic-bezier(.36,.07,.19,.97), opacity 200ms ease';
+                            el.style.transform = 'scale(1.08)';
+                            el.style.opacity = '0.85';
+                            setTimeout(function() {
+                                el.style.transform = 'scale(0.92)';
+                                el.style.opacity = '0';
+                            }, 100);
+                            setTimeout(function() {
+                                window.location.href = targetUrl;
+                            }, 400);
+                        } catch(err) {
+                            window.location.href = targetUrl;
+                        }
                     });
                 });
             
