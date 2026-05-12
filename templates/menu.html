@@ -449,7 +449,11 @@
                     }
                     function updateAll(){ updateSpacer(); positionGift(); }
                     document.addEventListener('DOMContentLoaded', updateAll);
-                    window.addEventListener('resize', updateAll);
+                    var _resizeTimer = null;
+                    window.addEventListener('resize', function() {
+                        clearTimeout(_resizeTimer);
+                        _resizeTimer = setTimeout(updateAll, 150);
+                    });
                     setTimeout(updateAll, 200);
                     setTimeout(positionGift, 600);
                 })();
