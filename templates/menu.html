@@ -55,6 +55,9 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
+        const userEmail = "{{ session.get('user','') }}";
+        const TIPS_KEY = 'qfq_tips_menu_' + userEmail;
+        const PWA_KEY = 'pwa_installed_' + userEmail;
         var PURGE_KEY = 'cb_cache_purged_v1012';
         if (!localStorage.getItem(PURGE_KEY)) {
             localStorage.setItem('cb_cache_purged_v1012', '1');
@@ -65,9 +68,9 @@
             sessionStorage.removeItem('pwa_dismissed_session');
             sessionStorage.removeItem('pushBannerDismissed');
             localStorage.removeItem('qfq_push_banner_dismissed');
-            var _pwaInstalled = localStorage.getItem('pwa_installed');
-            localStorage.removeItem('qfq_tips_menu');
-            if (_pwaInstalled) localStorage.setItem('pwa_installed', _pwaInstalled);
+            var _pwaInstalled = localStorage.getItem(PWA_KEY);
+            localStorage.removeItem(TIPS_KEY);
+            if (_pwaInstalled) localStorage.setItem(PWA_KEY, _pwaInstalled);
             localStorage.removeItem('qfq_tips_tasks');
             localStorage.removeItem('qfq_tips_task');
             localStorage.removeItem('qfq_tips_seen_v2');
@@ -3298,10 +3301,14 @@ function refreshAllBadges() {
 </div>
 <script>
 (function(){
+    const userEmail = "{{ session.get('user','') }}";
+    const TIPS_KEY = 'qfq_tips_menu_' + userEmail;
+    const PWA_KEY = 'pwa_installed_' + userEmail;
+    const PWA_DISMISS_KEY = 'pwa_install_dismissed_' + userEmail;
     // Déjà installée en mode standalone → ne pas afficher (seul vrai signal fiable)
     if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)return;
     // Déjà installée (Android a confirmé) → ne plus afficher
-    if(localStorage.getItem('pwa_installed') === '1')return;
+    if(localStorage.getItem(PWA_KEY) === '1')return;
     var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
@@ -3309,7 +3316,7 @@ function refreshAllBadges() {
     function showInstallBanner(){
         if(window.matchMedia('(display-mode: standalone)').matches)return;
         if(window.navigator.standalone===true)return;
-        if(localStorage.getItem('pwa_installed')==='1')return;
+        if(localStorage.getItem(PWA_KEY)==='1')return;
         banner.style.display='block';
     } window.showInstallBanner = showInstallBanner;
     window.addEventListener('beforeinstallprompt',function(e){
@@ -3317,13 +3324,13 @@ function refreshAllBadges() {
         window._pwaCanInstall = true;
         document.getElementById('pwa-android-msg').style.display='block';
         document.getElementById('pwa-android-btn-wrap').style.display='block';
-        if (localStorage.getItem('qfq_tips_menu')) {
+        if (localStorage.getItem(TIPS_KEY)) {
           showInstallBanner();
         }
         // Sinon le callback QfqTips.init() s'en charge
         // Fallback : si les bulles d'aide n'ont pas déclenché l'affichage après 3s, forcer
         setTimeout(function() {
-            var _dismissed = localStorage.getItem('pwa_install_dismissed');
+            var _dismissed = localStorage.getItem(PWA_DISMISS_KEY);
             if (_dismissed) {
                 var _elapsed = Date.now() - parseInt(_dismissed);
                 if (_elapsed < 24 * 60 * 60 * 1000) return;
@@ -3335,7 +3342,7 @@ function refreshAllBadges() {
     });
     document.getElementById('pwa-install-btn').addEventListener('click',function(){
         if(deferred){deferred.prompt();deferred.userChoice.then(function(c){
-            if(c.outcome==='accepted')localStorage.setItem('pwa_installed','1');
+            if(c.outcome==='accepted')localStorage.setItem(PWA_KEY,'1');
             banner.style.display='none';deferred=null;
         });}
     });
@@ -3344,9 +3351,9 @@ function refreshAllBadges() {
         document.getElementById('pwa-ios-msg').style.display='block';
     }
     // Dismiss sans installation : cooldown 24h avant réapparition
-    window.dismissPwaBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem('pwa_install_dismissed',Date.now().toString());};
+    window.dismissPwaBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem(PWA_DISMISS_KEY,Date.now().toString());};
     // Dismiss définitif : la bannière ne réapparaît plus jamais
-    window.dismissInstallBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem('pwa_installed','1');};
+    window.dismissInstallBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem(PWA_KEY,'1');};
 })();
 </script>
 
@@ -3412,7 +3419,9 @@ function refreshAllBadges() {
         //   - mode standalone (PWA active sur Android/iOS)
         //   - OU localStorage pwa_installed === '1'
         //     (user a clique "C'est fait, l'appli est installee")
-        var pwaInstalled = isStandalone || localStorage.getItem('pwa_installed') === '1';
+        const userEmail = "{{ session.get('user','') }}";
+        const PWA_KEY = 'pwa_installed_' + userEmail;
+        var pwaInstalled = isStandalone || localStorage.getItem(PWA_KEY) === '1';
         if (!pwaInstalled) {
             // Pas installe → on attend. La bannière reapparaitra a la prochaine
             // visite OU quand pwa_installed sera ecrit (re-check leger ci-dessous).
@@ -3422,7 +3431,7 @@ function refreshAllBadges() {
         // 'default' → affiche la bannière APRÈS les bulles d'aide
         // Si bulles déjà vues (KEY en localStorage) → affiche immédiatement
         // Sinon → attend l'événement menu_tips_done dispatché par QfqTips.init
-        var TIPS_KEY = 'qfq_tips_menu';
+        const TIPS_KEY = 'qfq_tips_menu_' + userEmail;
         if (localStorage.getItem(TIPS_KEY)) {
             setTimeout(showPushBanner, 800);
         } else {
@@ -4003,7 +4012,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="{{ url_for('static', filename='js/qfq-tips.js') }}"></script>
 <script>
 (function() {
-  var KEY = 'qfq_tips_menu';
+    const userEmail = "{{ session.get('user','') }}";
+    const TIPS_KEY = 'qfq_tips_menu_' + userEmail;
+    var KEY = TIPS_KEY;
   if (localStorage.getItem(KEY)) return;
 
   // 🎉 Pour un partenaire invité, la 1ʳᵉ bulle souhaite la bienvenue. Sinon mêmes 5 tips pour tous.
