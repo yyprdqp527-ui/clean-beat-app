@@ -3240,8 +3240,7 @@ function refreshAllBadges() {
                 
                 // Charger les suspicions au démarrage
                 loadActiveSuspicions();
-                // Rafraîchir toutes les 60 secondes
-                setInterval(loadActiveSuspicions, 60000);
+                // Pas de polling — socket.on('suspicion_update') assure le temps réel
                 console.log('✅ Système suspicion loupe initialisé');
             })();
 
