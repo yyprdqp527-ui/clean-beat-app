@@ -1786,10 +1786,7 @@ function sendMalus(reason, points){
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
 
-                    // Polling toutes les 30 secondes (pause si onglet masqué) — WebSocket assure le temps réel
-                    const menuUpdateInterval = setInterval(function() {
-                        if (!document.hidden) updatePlayersPointsMenu();
-                    }, 30000);
+                    // Pas de polling — WebSocket (players_points_update) et visibilitychange assurent les mises à jour
                     // Premier appel après 500ms
                     setTimeout(updatePlayersPointsMenu, 500);
                 </script>
@@ -2896,13 +2893,7 @@ function refreshAllBadges() {
                     });
                 }
 
-                // 🔄 Polling de secours — rattrape les événements WebSocket manqués (Safari, onglet en veille, etc.)
-                var _badgePollInterval = setInterval(function() {
-                    if (document.visibilityState === 'visible') {
-                        refreshAllBadges();
-                        refreshMissionDots();
-                    }
-                }, 30000);
+                // Pas de polling badges — WebSocket (badge_update, players_points_update, etc.) et visibilitychange assurent les mises à jour
             </script>
 
        
