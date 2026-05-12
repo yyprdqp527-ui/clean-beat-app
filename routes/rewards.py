@@ -1051,6 +1051,24 @@ def open_reward_box():
         
         conn.commit()
         _dbg(f"[DEBUG] Récompense enregistrée avec succès!")
+
+        # 🏆 Réclamation du gagnant : marquer comme claimed + remise à zéro semaine en cours
+        try:
+            c.execute("UPDATE houses SET weekly_winner_claimed=1, weekly_winner_email=NULL WHERE id=?", (house_id,))
+            _today_d = now_paris().date()
+            _wk_start = (_today_d - timedelta(days=_today_d.weekday())).isoformat()
+            c.execute("DELETE FROM completed_tasks WHERE house_id=? AND DATE(completed_at) >= ?",
+                      (house_id, _wk_start))
+            c.execute("UPDATE houses SET last_weekly_reset_date=? WHERE id=?",
+                      (_today_d.isoformat(), house_id))
+            conn.commit()
+            try:
+                from app import safe_socketio_emit
+                safe_socketio_emit('weekly_reset', {'house_id': house_id}, room=f'house_{house_id}')
+            except Exception as _e:
+                _dbg(f"⚠️ WS weekly_reset: {_e}")
+        except Exception as _e:
+            _dbg(f"⚠️ reset post-claim: {_e}")
     except Exception as e:
         conn.close()
         _dbg(f"[ERROR] Erreur lors de l'insertion: {str(e)}")

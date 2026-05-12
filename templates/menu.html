@@ -2679,6 +2679,32 @@ function sendMalus(reason, points){
                             window.location.reload();
                         });
 
+                        // 🏆 Annonce gagnant hebdomadaire (cron samedi 23:59)
+                        socket.on('weekly_winner', function(data) {
+                            try {
+                                var key = 'qfq_winner_' + (userEmail || '');
+                                var seenKey = 'qfq_winner_seen_' + (userEmail || '');
+                                localStorage.setItem(key, JSON.stringify({
+                                    winner_name: data.winner_name,
+                                    winner_email: data.winner_email,
+                                    points: data.points,
+                                    ts: Date.now()
+                                }));
+                                localStorage.removeItem(seenKey);
+                            } catch(e) {}
+                            if (typeof showWinnerScreen === 'function') showWinnerScreen(data);
+                        });
+
+                        // 🔄 Reset hebdo après ouverture du cadeau
+                        socket.on('weekly_reset', function() {
+                            try {
+                                localStorage.removeItem('qfq_winner_' + (userEmail || ''));
+                                localStorage.removeItem('qfq_winner_seen_' + (userEmail || ''));
+                            } catch(e) {}
+                            var ov = document.getElementById('winnerOverlay');
+                            if (ov) ov.style.display = 'none';
+                        });
+
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
                     console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
@@ -4190,6 +4216,76 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
       }
     }, 800);
   }
+})();
+</script>
+
+<!-- 🏆 ====== Overlay plein écran : Gagnant de la semaine ====== -->
+<div id="winnerOverlay" style="display:none;position:fixed;inset:0;z-index:99999;
+     background:radial-gradient(ellipse at center, rgba(20,10,40,0.96), rgba(0,0,0,0.99));
+     -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+     align-items:center;justify-content:center;flex-direction:column;
+     padding:24px;text-align:center;color:#fff;animation:winnerFadeIn .5s ease;">
+  <div style="font-size:120px;line-height:1;animation:winnerCrownPulse 1.5s ease-in-out infinite;">🏆</div>
+  <div style="font-size:18px;font-weight:800;letter-spacing:3px;color:#FDAE54;
+       text-transform:uppercase;margin:18px 0 12px;">Gagnant de la semaine</div>
+  <div id="winnerName" style="font-size:42px;font-weight:900;margin-bottom:8px;
+       text-shadow:0 4px 24px rgba(253,174,84,0.55);"></div>
+  <div id="winnerPoints" style="font-size:24px;color:#fff;opacity:0.9;margin-bottom:32px;
+       font-weight:700;"></div>
+  <button id="winnerClaimBtn" type="button" style="padding:18px 38px;font-size:17px;font-weight:800;
+          background:linear-gradient(135deg,#FDAE54,#f09030);border:none;border-radius:30px;
+          color:#fff;cursor:pointer;box-shadow:0 8px 30px rgba(253,174,84,0.5);
+          letter-spacing:1px;">🎁 Ouvrir mon cadeau</button>
+  <button id="winnerCloseBtn" type="button" style="margin-top:18px;background:transparent;border:none;
+          color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;text-decoration:underline;">
+    Fermer</button>
+</div>
+<style>
+@keyframes winnerFadeIn { from{opacity:0} to{opacity:1} }
+@keyframes winnerCrownPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+</style>
+<script>
+(function(){
+  // userEmail est défini plus haut dans menu.html
+  var _ue = (typeof userEmail !== 'undefined') ? userEmail : '';
+  var winnerKey     = 'qfq_winner_' + _ue;
+  var winnerSeenKey = 'qfq_winner_seen_' + _ue;
+
+  window.showWinnerScreen = function(data){
+    var ov  = document.getElementById('winnerOverlay');
+    var nm  = document.getElementById('winnerName');
+    var pts = document.getElementById('winnerPoints');
+    var btn = document.getElementById('winnerClaimBtn');
+    var cls = document.getElementById('winnerCloseBtn');
+    if(!ov || !nm || !pts || !btn || !cls) return;
+    nm.textContent  = data.winner_name || data.name || 'Champion';
+    pts.textContent = (data.points || 0) + ' points';
+    var isWinner = (data.winner_email || data.email) === _ue;
+    btn.textContent = isWinner ? '🎁 Ouvrir mon cadeau' : '👀 Voir la grille';
+    ov.style.display = 'flex';
+    try { localStorage.setItem(winnerSeenKey, '1'); } catch(e){}
+    btn.onclick = function(){
+      try { sessionStorage.setItem('internalNav','1'); } catch(e){}
+      window.location.href = '/rewards';
+    };
+    cls.onclick = function(){ ov.style.display = 'none'; };
+  };
+
+  // Au chargement : afficher si annonce non vue et < 7 jours
+  document.addEventListener('DOMContentLoaded', function(){
+    try {
+      var stored = localStorage.getItem(winnerKey);
+      if (!stored) return;
+      if (localStorage.getItem(winnerSeenKey)) return;
+      var w = JSON.parse(stored);
+      if (!w || !w.ts) return;
+      if (Date.now() - w.ts > 7*24*60*60*1000) {
+        localStorage.removeItem(winnerKey);
+        return;
+      }
+      window.showWinnerScreen(w);
+    } catch(e){}
+  });
 })();
 </script>
 

@@ -2274,6 +2274,20 @@ CREATE TABLE IF NOT EXISTS users (
     except Exception:
         pass
 
+    # 🏆 Gagnant hebdomadaire (cron samedi 23:59 Paris)
+    try:
+        c.execute("ALTER TABLE houses ADD COLUMN weekly_winner_email TEXT DEFAULT NULL")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE houses ADD COLUMN weekly_winner_announced_at TIMESTAMP DEFAULT NULL")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE houses ADD COLUMN weekly_winner_claimed INTEGER DEFAULT 0")
+    except Exception:
+        pass
+
     # Table pour les tâches personnalisées
     c.execute("""
         CREATE TABLE IF NOT EXISTS custom_tasks (
@@ -5035,6 +5049,110 @@ def cron_daily_reminder():
 
     finally:
         _cron_lock.release()
+
+
+# 🏆 ========== CRON ENDPOINT GAGNANT HEBDOMADAIRE (samedi 23:59 Paris) ==========
+@app.route('/api/cron/weekly-winner', methods=['GET', 'POST'])
+def cron_weekly_winner():
+    """Désigne le gagnant de la semaine pour chaque maison.
+    Schedule Render conseillé: TZ=Europe/Paris + 59 23 * * 6
+    """
+    token = request.headers.get('X-Cron-Secret', '')
+    if token != os.environ.get('CRON_SECRET', ''):
+        return jsonify({'error': 'unauthorized'}), 401
+
+    if not _cron_lock.acquire(blocking=False):
+        return jsonify({'status': 'already_running'}), 200
+
+    try:
+        today = now_paris().date()
+        start_of_week = (today - timedelta(days=today.weekday())).isoformat()
+        conn = get_db_connection()
+        c = conn.cursor()
+
+        c.execute("SELECT id FROM houses")
+        houses = [r[0] for r in c.fetchall()]
+
+        results = []
+        for house_id in houses:
+            try:
+                c.execute("""
+                    SELECT u.email, u.name,
+                           COALESCE(SUM(ct.points), 0) AS weekly_points
+                    FROM users u
+                    LEFT JOIN completed_tasks ct
+                        ON ct.user_email = u.email
+                       AND DATE(ct.completed_at) >= ?
+                    WHERE u.house_id = ?
+                    GROUP BY u.email, u.name
+                    HAVING COALESCE(SUM(ct.points), 0) > 0
+                    ORDER BY weekly_points DESC
+                    LIMIT 1
+                """, (start_of_week, house_id))
+                winner = c.fetchone()
+            except Exception as _e:
+                print(f"❌ weekly_winner SQL house={house_id}: {_e}", flush=True)
+                continue
+
+            if not winner:
+                results.append({'house_id': house_id, 'winner': None})
+                continue
+
+            winner_email = winner[0]
+            winner_name  = winner[1] or 'Champion'
+            winner_pts   = int(winner[2] or 0)
+
+            try:
+                c.execute("""
+                    UPDATE houses
+                    SET weekly_winner_email = ?,
+                        weekly_winner_announced_at = CURRENT_TIMESTAMP,
+                        weekly_winner_claimed = 0
+                    WHERE id = ?
+                """, (winner_email, house_id))
+                conn.commit()
+            except Exception as _e:
+                print(f"❌ weekly_winner UPDATE house={house_id}: {_e}", flush=True)
+                continue
+
+            # Push notif à tous les membres
+            try:
+                notify_house_members(house_id, {
+                    'title': "🏆 Gagnant de la semaine !",
+                    'body': f"{winner_name} a gagné avec {winner_pts} pts !",
+                    'url': '/menu',
+                    'icon': '/static/images/logo.png',
+                    'tag': f'weekly-winner-{house_id}'
+                }, exclude_email=None)
+            except Exception as _e:
+                print(f"❌ weekly_winner push house={house_id}: {_e}", flush=True)
+
+            # Diffusion WebSocket → menu.html ouvre l'overlay plein écran
+            try:
+                safe_socketio_emit('weekly_winner', {
+                    'winner_name': winner_name,
+                    'winner_email': winner_email,
+                    'points': winner_pts,
+                    'house_id': house_id
+                }, room=f'house_{house_id}')
+            except Exception as _e:
+                print(f"❌ weekly_winner WS house={house_id}: {_e}", flush=True)
+
+            results.append({
+                'house_id': house_id,
+                'winner': {'email': winner_email, 'name': winner_name, 'points': winner_pts}
+            })
+
+        conn.close()
+        print(f"🏆 cron_weekly_winner: {len(results)} maison(s) traitée(s)", flush=True)
+        return jsonify({'ok': True, 'count': len(results), 'results': results})
+    except Exception as e:
+        print(f"❌ CRON weekly_winner error: {e}", flush=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        _cron_lock.release()
+# 🏆 ========== FIN CRON GAGNANT HEBDOMADAIRE ==========
+
 
 @app.route('/api/cron/debug-reminder', methods=['GET'])
 def cron_debug_reminder():
