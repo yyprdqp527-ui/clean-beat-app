@@ -447,6 +447,15 @@ except ImportError:
 
 app = Flask(__name__)
 
+# 🔒 Rate limiting — protège /login contre le brute force
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=[]
+)
+
 # Cache long sur /static/ pour reduire la charge reseau (avatars, JS, CSS, sons)
 @app.after_request
 def _add_static_cache_headers(response):
@@ -4831,6 +4840,8 @@ app.register_blueprint(baby_bp)
 
 from routes.auth import auth_bp
 app.register_blueprint(auth_bp)
+# 🔒 10 tentatives de login max par minute par IP
+limiter.limit("10 per minute")(app.view_functions['login'])
 
 from routes.admin import admin_bp
 app.register_blueprint(admin_bp)
