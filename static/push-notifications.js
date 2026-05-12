@@ -88,7 +88,31 @@ class PushNotificationManager {
      */
     async requestPermission() {
         if (!this.isSupported) {
-            alert('❌ Votre navigateur ne supporte pas les notifications push');
+            const t = document.createElement('div');
+            t.style.cssText = `
+              position:fixed; bottom:90px;
+              left:50%; transform:translateX(-50%);
+              z-index:9999; min-width:260px;
+              max-width:320px; padding:14px 20px;
+              background:rgba(255,255,255,0.96);
+              backdrop-filter:saturate(180%) blur(30px);
+              -webkit-backdrop-filter:saturate(180%) blur(30px);
+              border-radius:16px;
+              border:1px solid rgba(255,255,255,0.8);
+              box-shadow:0 8px 32px rgba(21,48,54,0.18);
+              font-size:14px; font-weight:600;
+              color:#153036; text-align:center;
+              border-left:4px solid #FDAE54;
+            `;
+            t.innerHTML = `
+              📱 Pour recevoir les notifications,<br>
+              <strong>installe l'appli sur ton écran d'accueil</strong> puis active-les.<br>
+              <span style="font-size:12px;color:#597176;margin-top:4px;display:block;">
+                Sans notifications, tu rateras les alertes de tes coéquipiers !
+              </span>
+            `;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 6000);
             return false;
         }
 
