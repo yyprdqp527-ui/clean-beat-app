@@ -136,10 +136,10 @@ def api_send_malus():
         if count_today >= 3:
             return jsonify({'success': False, 'error': f'Tu as déjà envoyé 3 malus à {target_name} aujourd\'hui !'}), 200
 
-        # Max 1 sanction (bonus/malus/suspicion) par heure vers la même cible
+        # Max 1 malus par heure vers la même cible (le bonus reste possible)
         c.execute("""
             SELECT COUNT(*) FROM completed_tasks
-            WHERE user_email=? AND category IN ('malus','bonus')
+            WHERE user_email=? AND category = 'malus'
             AND task_name LIKE ? AND completed_at >= datetime('now', '-1 hour')
         """, (target_email, f'%{sender_name}%'))
         recent_ct = c.fetchone()[0]
@@ -150,7 +150,7 @@ def api_send_malus():
         """, (sender_email, target_email))
         recent_susp = c.fetchone()[0]
         if recent_ct + recent_susp >= 1:
-            return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
+            return jsonify({'success': False, 'error': f'Tu as déjà envoyé un malus à {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
         # Insérer le malus comme tâche avec points négatifs
         task_context = str(data.get('task', '')).strip()[:100]
@@ -254,21 +254,15 @@ def api_send_bonus():
             return jsonify({'success': False, 'error': 'Cible introuvable dans cette maison'}), 400
         target_name = target_row[1] or target_email.split('@')[0]
 
-        # Max 1 sanction (toutes catégories) par heure vers la même cible
+        # Max 1 bonus par heure vers la même cible (le malus reste possible)
         c.execute("""
             SELECT COUNT(*) FROM completed_tasks
-            WHERE user_email=? AND category IN ('malus','bonus')
+            WHERE user_email=? AND category = 'bonus'
             AND task_name LIKE ? AND completed_at >= datetime('now', '-1 hour')
         """, (target_email, f'%{sender_name}%'))
         recent_ct = c.fetchone()[0]
-        c.execute("""
-            SELECT COUNT(*) FROM suspicions
-            WHERE suspecting_player_email=? AND suspected_player_email=?
-            AND created_at >= datetime('now', '-1 hour')
-        """, (sender_email, target_email))
-        recent_susp = c.fetchone()[0]
-        if recent_ct + recent_susp >= 1:
-            return jsonify({'success': False, 'error': f'Tu as déjà sanctionné {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
+        if recent_ct >= 1:
+            return jsonify({'success': False, 'error': f'Tu as déjà envoyé un bonus à {target_name} dans la dernière heure. La prochaine sanction devra attendre !'}), 200
 
         task_context = str(data.get('task', '')).strip()[:100]
         task_name = f'Bonus de {sender_name} : {reason_label}'

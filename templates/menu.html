@@ -2474,20 +2474,6 @@ function sendMalus(reason, points){
                             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                         });
                         
-                        // Écouter les mises à jour des badges sur les avatars
-                        socket.on('unread_by_sender_update', function(data) {
-                            console.log('💬 WebSocket: unread_by_sender_update reçu', data);
-                            console.log('💬 user_email:', data.user_email, '/ userEmail:', userEmail);
-                            
-                            // Mettre à jour uniquement si c'est pour MOI
-                            if (data.user_email === userEmail && data.unread_by_sender) {
-                                console.log('Mise à jour MY badges avatars');
-                                updateUnreadBySender(data.unread_by_sender);
-                            } else {
-                                console.log('⏭️ Badges avatars pas pour moi');
-                            }
-                        });
-                        
                         // Écouter les mises à jour du compteur de messages non lus
                         socket.on('unread_count_update', function(data) {
                             console.log('💬 WebSocket: unread_count_update reçu', data);
@@ -2641,18 +2627,6 @@ function sendMalus(reason, points){
                             _forceRepaint();
                         });
 
-                        // ⏰ Rappel quotidien 20h
-                        socket.on('daily_reminder', function(data) {
-                            // Filtrer : ne montrer le popup qu'au joueur ciblé
-                            if (data.target_email && data.target_email !== '{{ session.get("user") }}') return;
-                            // Si déjà ouvert, ne pas écraser
-                            var popup = document.getElementById('dailyReminderPopup');
-                            if (popup && popup.style.display === 'flex') return;
-                            if (typeof _showReminderPopup === 'function') {
-                                _showReminderPopup(data.message_id || null, (data.message || '').replace(/\n/g, '<br>'));
-                            }
-                        });
-
                         // 👶 Suivi bébé — la pastille disparaît pour TOUS quand quelqu'un visite la page
                         socket.on('baby_badge_update', function(data) {
                             console.log('👶 WebSocket: baby_badge_update reçu', data);
@@ -2702,13 +2676,11 @@ function sendMalus(reason, points){
                             if (typeof loadActiveBonuses === 'function') loadActiveBonuses();
                         });
 
-                        // 🏠 Toast sermon / congratulation → bulle de dialogue sous le nom de la maison
-                        socket.on('house_toast', function(data) {
-                            console.log('🏠 WebSocket: house_toast reçu', data);
-                            showHouseSpeechBubble(data.message, data.toast_type);
-                            if (window.SoundManager) SoundManager.play('receiveMessage');
+                        // 🏠 Config pièces modifiée — recharger le menu
+                        socket.on('house_rooms_updated', function() {
+                            window.location.reload();
                         });
-                        
+
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
                     console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
