@@ -900,6 +900,11 @@ except ImportError:
 
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 # Route d'accueil
 @app.route('/')
 def index():

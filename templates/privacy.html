@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set hide_header = true %}
+
+{% block title %}Politique de confidentialité - QuiFaitQuoi{% endblock %}
+
+{% block page_styles %}
+<style>
+    .privacy-container {
+        max-width: 680px;
+        margin: 60px auto 40px;
+        padding: 32px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        color: rgba(255, 255, 255, 0.92);
+    }
+
+    .privacy-container h1 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 28px;
+        color: #fff;
+    }
+
+    .privacy-container h2 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 24px 0 8px;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .privacy-container p,
+    .privacy-container li {
+        font-size: 14px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .privacy-container ul {
+        padding-left: 20px;
+        margin-top: 4px;
+    }
+
+    .privacy-container a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: underline;
+    }
+
+    .privacy-date {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 32px;
+        text-align: right;
+    }
+
+    .privacy-back {
+        display: inline-block;
+        margin: 20px 0 0 0;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <div class="privacy-container">
+        <h1>Politique de confidentialité</h1>
+
+        <h2>1. Qui sommes-nous ?</h2>
+        <p>QuiFaitQuoi est une application de gestion du foyer.<br>
+        Contact : <a href="https://quifaitquoi.com">quifaitquoi.com</a></p>
+
+        <h2>2. Données collectées</h2>
+        <ul>
+            <li>Adresse email (authentification)</li>
+            <li>Prénom et avatar (profil joueur)</li>
+            <li>Historique des tâches effectuées</li>
+            <li>Points et récompenses</li>
+            <li>Données de la maison partagée</li>
+        </ul>
+
+        <h2>3. Finalité</h2>
+        <p>Ces données sont utilisées uniquement pour le fonctionnement de l'application.
+        Elles ne sont jamais vendues ni partagées avec des tiers.</p>
+
+        <h2>4. Durée de conservation</h2>
+        <p>Les données sont conservées pendant toute la durée d'utilisation du compte.</p>
+
+        <h2>5. Vos droits (RGPD)</h2>
+        <p>Vous pouvez demander la suppression de votre compte et de vos données
+        en nous contactant via <a href="https://quifaitquoi.com">quifaitquoi.com</a>.
+        Délai de traitement : 30 jours maximum.</p>
+
+        <h2>6. Hébergement</h2>
+        <p>L'application est hébergée par Render (San Francisco, USA) qui dispose de
+        garanties conformes au RGPD via les clauses contractuelles types (CCT).</p>
+
+        <h2>7. Cookies</h2>
+        <p>L'application utilise uniquement des cookies de session nécessaires au
+        fonctionnement. Aucun cookie publicitaire.</p>
+
+        <p class="privacy-date">Date de mise à jour : Mai 2026</p>
+    </div>
+</div>
+{% endblock %}
