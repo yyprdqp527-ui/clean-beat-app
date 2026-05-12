@@ -345,14 +345,14 @@
                 display: none !important;
             }
             
-            /* Noms joueurs sur 1 ligne max avec ellipsis */
+            /* Permettre noms longs sur mobile avec retour ligne */
             .avatar-name { 
-                white-space: nowrap; 
-                overflow: hidden; 
-                text-overflow: ellipsis; 
+                white-space: normal; 
                 max-width: 70px; 
                 line-height: 1.1; 
                 font-size: 9px; 
+                word-wrap: break-word; 
+                overflow-wrap: break-word; 
                 text-align: center;
                 margin-bottom: 2px;
             }
@@ -385,7 +385,7 @@
           .header-right { margin-left: 8px; }
         .avatar-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:0 0 var(--avatar-size); max-width: var(--avatar-size); width: var(--avatar-size); box-sizing: border-box; }
         .avatar-row { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
-        .avatar-name { text-align:center; color:#153036; max-width: calc(var(--avatar-size) * 2.2); font-size:15px; font-weight:600; line-height:1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-wrap: break-word; overflow-wrap: break-word; text-shadow: 0 1px 0 rgba(255,255,255,0.7); letter-spacing: -0.01em; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+        .avatar-name { text-align:center; color:#153036; max-width: calc(var(--avatar-size) * 2.2); font-size:15px; font-weight:600; line-height:1.2; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; text-shadow: 0 1px 0 rgba(255,255,255,0.7); letter-spacing: -0.01em; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
         .others-avatar-size { --avatar-size: 56px; }
         .avatar-square { 
             position: relative; 
@@ -1258,16 +1258,15 @@
             background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%) !important;
             border-radius: 8px !important;
             text-align: center !important;
-            white-space: nowrap;
+            white-space: normal;
             word-break: break-word;
             overflow-wrap: break-word;
             box-sizing: border-box !important;
             line-height: 1.2;
             display: -webkit-box;
-            -webkit-line-clamp: 1;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
             box-shadow: 0 2px 8px rgba(21, 48, 54, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.6);
         }
@@ -1576,9 +1575,8 @@
             .avatar-name {
                 font-size: 13px !important;
                 max-width: 90px !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
             }
             
             .avatar-points {
@@ -1775,9 +1773,8 @@
             .avatar-name {
                 font-size: 12px !important;
                 max-width: 75px !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
             }
             
             .avatar-points {
@@ -1848,9 +1845,8 @@
             .avatar-name {
                 font-size: 10px !important;
                 max-width: 50px !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
             }
             
             .avatar-points {
