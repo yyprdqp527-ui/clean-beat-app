@@ -962,12 +962,23 @@ def get_db_connection(timeout=30.0):
     SQLite : connexion directe avec optimisations WAL.
     """
     if _USE_PG:
+        raw = None
         try:
             raw = _get_db_pool().getconn()
+            # Valider avant usage : session SSL potentiellement morte apres idle
+            if getattr(raw, 'closed', 1) != 0:
+                raise psycopg2.OperationalError('connection closed')
+            raw.reset()  # envoie RESET ALL - echoue si SSL mort -> exception capturee
             raw.autocommit = False
             return _CompatConn(raw, is_pg=True)
         except Exception:
-            # Fallback connexion directe si pool épuisé
+            # Connexion defectueuse (SSL morte, closed, reset echoue) -> discarter du pool
+            if raw is not None:
+                try: raw.close()
+                except Exception: pass
+                try: _get_db_pool().putconn(raw, close=True)
+                except Exception: pass
+            # Connexion directe fraiche (hors pool)
             conn = psycopg2.connect(_PG_URL, connect_timeout=10,
                                     options="-c timezone=Europe/Paris")
             conn.autocommit = False
