@@ -624,6 +624,33 @@
     from { transform: translateY(100%); }
     to   { transform: translateY(0); }
 }
+#roomPreviewOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    background: rgba(89,113,118,0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+#roomPreviewOverlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+#roomPreviewSheet {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.8);
+    box-shadow: 0 -20px 60px rgba(21,48,54,0.2);
+    padding: 28px 24px 40px;
+    width: 100%;
+}
 .malus-sheet-title {
     font-size: 16px; font-weight: 800; color: #153036;
     text-align: center; margin-bottom: 16px;
@@ -2922,7 +2949,7 @@ function refreshAllBadges() {
                     'use strict';
 
                     function closeRoomPreview() {
-                        document.getElementById('roomPreviewOverlay').classList.remove('open');
+                        document.getElementById('roomPreviewOverlay').classList.remove('active');
                     }
                     window.closeRoomPreview = closeRoomPreview;
 
@@ -2938,7 +2965,7 @@ function refreshAllBadges() {
 
                                 const preview = document.getElementById('roomPreviewImg');
                                 if (imgEl) {
-                                    preview.innerHTML = '<img src="' + imgEl.src + '" style="width:100%;height:100%;object-fit:cover;border-radius:16px">';
+                                    preview.innerHTML = '<img src="' + imgEl.src + '" style="width:100%;height:100%;object-fit:contain;border-radius:16px">';
                                 } else if (emojiEl) {
                                     preview.innerHTML = '<span style="font-size:80px">' + emojiEl.textContent + '</span>';
                                 } else {
@@ -2953,7 +2980,7 @@ function refreshAllBadges() {
                                 };
 
                                 if (window.SoundManager) SoundManager.play('selectRoom');
-                                document.getElementById('roomPreviewOverlay').classList.add('open');
+                                document.getElementById('roomPreviewOverlay').classList.add('active');
                             });
                         });
                     }
@@ -4343,10 +4370,10 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
 </script>
 
 <!-- Sheet aperçu pièce -->
-<div class="malus-overlay" id="roomPreviewOverlay" onclick="if(event.target===this)closeRoomPreview()">
-  <div class="malus-sheet" id="roomPreviewSheet">
+<div id="roomPreviewOverlay" onclick="if(event.target===this)closeRoomPreview()">
+  <div id="roomPreviewSheet">
     <div id="roomPreviewImg"
-      style="width:100%;height:200px;
+      style="width:100%;height:220px;
       background:linear-gradient(160deg,#c8e8f0,#a8d4e0);
       border-radius:16px;
       display:flex;align-items:center;
