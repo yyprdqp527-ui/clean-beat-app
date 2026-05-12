@@ -1258,15 +1258,11 @@
             background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%) !important;
             border-radius: 8px !important;
             text-align: center !important;
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: break-word;
+            white-space: nowrap;
             box-sizing: border-box !important;
             line-height: 1.2;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
             overflow: hidden;
+            text-overflow: ellipsis;
             box-shadow: 0 2px 8px rgba(21, 48, 54, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.6);
         }
