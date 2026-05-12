@@ -4841,7 +4841,7 @@ app.register_blueprint(baby_bp)
 from routes.auth import auth_bp
 app.register_blueprint(auth_bp)
 # 🔒 10 tentatives de login max par minute par IP
-limiter.limit("10 per minute")(app.view_functions['login'])
+limiter.limit("10 per minute")(app.view_functions['auth.login'])
 
 from routes.admin import admin_bp
 app.register_blueprint(admin_bp)
