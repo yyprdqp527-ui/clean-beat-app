@@ -934,6 +934,22 @@ def release_db_connection(conn):
         return
     try:
         raw = conn._conn if hasattr(conn, '_conn') else conn
+        # Vérifier que la connexion est saine avant de la remettre dans le pool.
+        # Une connexion fermée/corrompue (ex: SSL error) a closed != 0.
+        if getattr(raw, 'closed', 1) != 0:
+            try: raw.close()
+            except Exception: pass
+            _get_db_pool().putconn(raw, close=True)
+            return
+        # reset() annule toute transaction ouverte et libère les ressources serveur.
+        try:
+            raw.reset()
+        except Exception:
+            # Connexion irrécupérable → la fermer et la retirer du pool
+            try: raw.close()
+            except Exception: pass
+            _get_db_pool().putconn(raw, close=True)
+            return
         _get_db_pool().putconn(raw)
     except Exception:
         try: conn.close()
