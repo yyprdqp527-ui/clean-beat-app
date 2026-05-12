@@ -792,6 +792,9 @@
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
+    <link rel="prefetch" href="/menu">
+    <link rel="prefetch" href="/classement">
+    <link rel="prefetch" href="/reminders">
 </head>
 <body class="{% block body_class %}{% endblock %}">
 {% if menu_page %}
