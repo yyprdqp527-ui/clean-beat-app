@@ -3301,7 +3301,7 @@ function refreshAllBadges() {
     // Déjà installée en mode standalone → ne pas afficher (seul vrai signal fiable)
     if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)return;
     // Déjà installée (Android a confirmé) → ne plus afficher
-    if(localStorage.getItem('pwa_installed'))return;
+    if(localStorage.getItem('pwa_installed') === '1')return;
     var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     var banner=document.getElementById('pwa-install-banner');
     var deferred=null;
@@ -3323,7 +3323,12 @@ function refreshAllBadges() {
         // Sinon le callback QfqTips.init() s'en charge
         // Fallback : si les bulles d'aide n'ont pas déclenché l'affichage après 3s, forcer
         setTimeout(function() {
-            if (deferred && !localStorage.getItem('pwa_install_dismissed') && banner.style.display === '') {
+            var _dismissed = localStorage.getItem('pwa_install_dismissed');
+            if (_dismissed) {
+                var _elapsed = Date.now() - parseInt(_dismissed);
+                if (_elapsed < 24 * 60 * 60 * 1000) return;
+            }
+            if (deferred && banner.style.display === '') {
                 showInstallBanner();
             }
         }, 3000);
@@ -3338,8 +3343,8 @@ function refreshAllBadges() {
         window._pwaCanInstall = true;
         document.getElementById('pwa-ios-msg').style.display='block';
     }
-    // Dismiss sans écrire dans localStorage : la bannière revient à la prochaine visite
-    window.dismissPwaBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';};
+    // Dismiss sans installation : cooldown 24h avant réapparition
+    window.dismissPwaBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem('pwa_install_dismissed',Date.now().toString());};
     // Dismiss définitif : la bannière ne réapparaît plus jamais
     window.dismissInstallBanner=function(){var b=document.getElementById('pwa-install-banner');if(b)b.style.display='none';localStorage.setItem('pwa_installed','1');};
 })();
