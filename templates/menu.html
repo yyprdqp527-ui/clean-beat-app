@@ -2063,15 +2063,21 @@ function sendMalus(reason, points){
 
                 // Protection: si socket.io n'est pas chargé, les badges restent fonctionnels
                 try {
-                        const socket = io({
-                            transports: ['websocket', 'polling'],
-                            upgrade: true,
-                            reconnection: true,
-                            reconnectionDelay: 1000,
-                            reconnectionDelayMax: 8000,
-                            reconnectionAttempts: Infinity,
-                            timeout: 20000
-                        });
+                        // Réutiliser window.socket s'il existe déjà (créé par base.html),
+                        // sinon le créer ici avec la config complète.
+                        // → une seule connexion Socket.IO par page.
+                        if (!window.socket) {
+                            window.socket = io({
+                                transports: ['websocket', 'polling'],
+                                upgrade: true,
+                                reconnection: true,
+                                reconnectionDelay: 1000,
+                                reconnectionDelayMax: 8000,
+                                reconnectionAttempts: Infinity,
+                                timeout: 20000
+                            });
+                        }
+                        const socket = window.socket;
                         const userEmail = "{{ session.get('user', '') }}";
                         
                         if (!userEmail) {
