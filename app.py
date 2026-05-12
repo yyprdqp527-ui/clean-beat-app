@@ -4295,16 +4295,38 @@ def menu():
         if _sorted_daily and _sorted_daily[0].get('daily_points', 0) > 0:
             _daily_leader_email = _sorted_daily[0].get('email', '')
 
-    # Gagnant de la semaine = celui avec le plus de weekly_points (couronne dimanche uniquement)
+    # Gagnant de la semaine : lu depuis houses (weekly_winner_email, claimed)
+    # Sans condition sur le jour — valable du samedi soir jusqu'au claim
     _winner_name = ''
     _winner_email = ''
+    _winner_points = 0
+    _winner_announced_at = None
     _has_weekly_winner = False
-    if _is_sunday and players:
-        _sorted_weekly = sorted(players, key=lambda x: x.get('weekly_points', 0), reverse=True)
-        if _sorted_weekly and _sorted_weekly[0].get('weekly_points', 0) > 0:
-            _winner_name = _sorted_weekly[0].get('name', '')
-            _winner_email = _sorted_weekly[0].get('email', '')
+    try:
+        _wrow = conn.execute(
+            "SELECT weekly_winner_email, weekly_winner_announced_at, weekly_winner_claimed FROM houses WHERE id=?",
+            (house_id,)
+        ).fetchone()
+        if _wrow and _wrow[0] and not _wrow[2]:
+            _winner_email = _wrow[0]
+            _winner_announced_at = _wrow[1]
             _has_weekly_winner = True
+            # Nom du gagnant depuis users
+            _wname_row = conn.execute(
+                "SELECT name FROM users WHERE email=?", (_winner_email,)
+            ).fetchone()
+            _winner_name = _wname_row[0] if _wname_row and _wname_row[0] else _winner_email
+            # Points hebdo du gagnant (SUM cette semaine)
+            from datetime import date as _date, timedelta as _td
+            _today_w = now_paris().date()
+            _wk_start_w = (_today_w - _td(days=_today_w.weekday())).isoformat()
+            _wpts_row = conn.execute(
+                "SELECT COALESCE(SUM(points),0) FROM completed_tasks WHERE user_email=? AND DATE(completed_at)>=?",
+                (_winner_email, _wk_start_w)
+            ).fetchone()
+            _winner_points = int(_wpts_row[0]) if _wpts_row else 0
+    except Exception as _we:
+        print(f"⚠️ weekly_winner read: {_we}", flush=True)
 
     # ⏰ Rappel quotidien — vérifie s'il y a un message reminder non lu
     show_daily_reminder = False
@@ -4398,6 +4420,8 @@ def menu():
         has_weekly_winner=_has_weekly_winner,
         winner_name=_winner_name,
         winner_email=_winner_email,
+        winner_points=_winner_points,
+        weekly_winner_announced_at=_winner_announced_at,
         daily_leader_email=_daily_leader_email,
         show_daily_reminder=show_daily_reminder,
         daily_reminder_message=daily_reminder_message,

@@ -4271,12 +4271,27 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     cls.onclick = function(){ ov.style.display = 'none'; };
   };
 
-  // Au chargement : afficher si annonce non vue et < 7 jours
+  // Au chargement : afficher l'overlay si gagnant non encore vu
+  // Priorité 1 : données serveur fraîches (Jinja) — indépendant du jour
+  // Priorité 2 : fallback localStorage (si rechargement offline ou délai WS)
   document.addEventListener('DOMContentLoaded', function(){
     try {
+      if (localStorage.getItem(winnerSeenKey)) return;
+
+      // Priorité 1 : données injectées par Jinja (toujours fraîches)
+      var hasWinner = {{ has_weekly_winner|tojson }};
+      if (hasWinner) {
+        window.showWinnerScreen({
+          winner_name:  {{ winner_name|tojson }},
+          winner_email: {{ winner_email|tojson }},
+          points:       {{ winner_points|default(0)|int }}
+        });
+        return;
+      }
+
+      // Priorité 2 : localStorage (WS reçu avant ou pendant navigation)
       var stored = localStorage.getItem(winnerKey);
       if (!stored) return;
-      if (localStorage.getItem(winnerSeenKey)) return;
       var w = JSON.parse(stored);
       if (!w || !w.ts) return;
       if (Date.now() - w.ts > 7*24*60*60*1000) {
