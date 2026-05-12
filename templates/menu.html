@@ -3446,7 +3446,7 @@ function refreshAllBadges() {
                 btn.textContent = '⏳';
 
                 try {
-                    var ok = false;
+                    var ok = true;
 
                     if (Notification.permission === 'granted') {
                         // Permission déjà accordée → re-souscrire directement (skip requestPermission)
@@ -3458,28 +3458,25 @@ function refreshAllBadges() {
                             // S'assurer que le SW est enregistré
                             if (!window.cleanBeatPush.registration) {
                                 await window.cleanBeatPush.init();
-                                ok = true;
                             } else {
                                 // Désouscrire d'abord si sub existante (peut échouer si clé VAPID changée)
                                 try {
                                     var existing = await window.cleanBeatPush.registration.pushManager.getSubscription();
                                     if (existing) { await existing.unsubscribe(); }
                                 } catch(e) {}
-                                ok = await window.cleanBeatPush.subscribe();
+                                await window.cleanBeatPush.subscribe();
                             }
                         }
                     } else {
                         // Permission pas encore accordée → demander (nécessite geste utilisateur)
                         if (window.cleanBeatPush && typeof window.cleanBeatPush.requestPermission === 'function') {
                             const permResult = await window.cleanBeatPush.requestPermission();
-                            ok = (permResult === true || permResult === 'granted');
+                            if (permResult !== true && permResult !== 'granted') { ok = false; }
                         } else {
                             await Notification.requestPermission();
                             if (Notification.permission === 'granted') {
                                 if (window.cleanBeatPush && typeof window.cleanBeatPush.subscribe === 'function') {
-                                    ok = await window.cleanBeatPush.subscribe();
-                                    if (ok === false) { /* subscribe a échoué */ }
-                                    else { ok = true; }
+                                    await window.cleanBeatPush.subscribe();
                                 } else {
                                     showToast('Notifications autorisées mais le gestionnaire est indisponible. Rechargez la page.', '#e74c3c');
                                 }
