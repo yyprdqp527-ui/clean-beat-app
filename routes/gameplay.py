@@ -4,6 +4,16 @@ from datetime import timedelta
 gameplay_bp = Blueprint('gameplay_bp', __name__)
 
 
+def _ensure_custom_tasks_wheel_columns(conn):
+    c = conn.cursor()
+    c.execute("PRAGMA table_info(custom_tasks)")
+    cols = {row[1] for row in c.fetchall()}
+    if 'is_wheel_task' not in cols:
+        c.execute("ALTER TABLE custom_tasks ADD COLUMN is_wheel_task INTEGER DEFAULT 0")
+    if 'completed' not in cols:
+        c.execute("ALTER TABLE custom_tasks ADD COLUMN completed INTEGER DEFAULT 0")
+
+
 # ════════════════════════════════════════════════════════════
 # 🎮 GAMEPLAY — Page de fonctionnalités de jeu (malus/bonus)
 # ════════════════════════════════════════════════════════════
@@ -353,6 +363,7 @@ def api_spin_wheel():
     conn = get_db_connection()
     c = conn.cursor()
     try:
+        _ensure_custom_tasks_wheel_columns(conn)
         c.execute("SELECT house_id, name FROM users WHERE email=?", (user_email,))
         user_row = c.fetchone()
         if not user_row:
@@ -362,21 +373,58 @@ def api_spin_wheel():
 
         # Ajouter la tâche comme custom_task dans la catégorie 'wheel' (pour la tracer)
         c.execute("""
-            INSERT INTO custom_tasks (house_id, user_email, category, task_name, points, created_at)
-            VALUES (?, ?, 'wheel', ?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO custom_tasks (house_id, user_email, category, task_name, points, created_at, is_wheel_task, completed)
+            VALUES (?, ?, 'wheel', ?, ?, CURRENT_TIMESTAMP, 1, 0)
         """, (house_id, user_email, task_name, points))
+        task_id = c.lastrowid
         conn.commit()
 
         _dbg(f"🎡 Roue de la chance : {user_name} a obtenu '{task_name}' (+{points} pts)")
 
         return jsonify({
             'success': True,
+            'task_id': task_id,
             'message': f'🎉 Tâche ajoutée : {task_name} (+{points} pts)'
         })
     except Exception as e:
         conn.rollback()
         _dbg(f"ERREUR api_spin_wheel: {e}")
         return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
+    finally:
+        conn.close()
+
+
+@gameplay_bp.route('/api/wheel_active_task')
+def wheel_active_task():
+    from app import get_db_connection
+    if 'user' not in session:
+        return jsonify({'task': None}), 401
+
+    user_email = session['user']
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        _ensure_custom_tasks_wheel_columns(conn)
+        c.execute("""
+            SELECT id, task_name, points
+            FROM custom_tasks
+            WHERE user_email = ?
+              AND is_wheel_task = 1
+              AND completed = 0
+            ORDER BY id DESC
+            LIMIT 1
+        """, (user_email,))
+        row = c.fetchone()
+        if not row:
+            return jsonify({'task': None})
+        return jsonify({
+            'task': True,
+            'task_id': row[0],
+            'task_name': row[1],
+            'points': row[2]
+        })
+    except Exception:
+        return jsonify({'task': None}), 500
     finally:
         conn.close()
 
@@ -394,6 +442,7 @@ def api_complete_wheel_task():
 
     task_name = str(data.get('task_name', '')).strip()
     points = int(data.get('points', 40))
+    task_id = data.get('task_id')
     user_email = session['user']
 
     if not task_name:
@@ -406,6 +455,7 @@ def api_complete_wheel_task():
     conn = get_db_connection()
     c = conn.cursor()
     try:
+        _ensure_custom_tasks_wheel_columns(conn)
         c.execute("SELECT house_id FROM users WHERE email=?", (user_email,))
         row = c.fetchone()
         if not row:
@@ -416,6 +466,15 @@ def api_complete_wheel_task():
             INSERT INTO completed_tasks (user_email, task_name, category, points, house_id, completed_at)
             VALUES (?, ?, 'wheel', ?, ?, CURRENT_TIMESTAMP)
         """, (user_email, task_name, points, house_id))
+
+        if task_id is not None:
+            c.execute("""
+                UPDATE custom_tasks
+                SET completed = 1
+                WHERE id = ?
+                  AND user_email = ?
+                  AND is_wheel_task = 1
+            """, (task_id, user_email))
         conn.commit()
 
         from datetime import date as _d

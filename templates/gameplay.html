@@ -2139,10 +2139,24 @@ const wheelTasks = [
 let isSpinning = false;
 let currentRotation = 0;
 let hasPendingTask = false;
+window._wheelTaskId = null;
 
 // Dessiner la roue au chargement
 window.addEventListener('load', function() {
     drawWheel();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/wheel_active_task')
+    .then(r => r.json())
+    .then(data => {
+        if (data && data.task) {
+            window._wheelTaskId = data.task_id || null;
+            hasPendingTask = true;
+            addWheelTaskCard({ task: data.task_name, points: data.points });
+        }
+    })
+    .catch(() => {});
 });
 
 function drawWheel() {
@@ -2243,6 +2257,21 @@ function spinWheel() {
     setTimeout(() => {
         addWheelTaskCard(selectedTask);
         hasPendingTask = true;
+        fetch('/api/spin_wheel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                task_name: selectedTask.task,
+                points: selectedTask.points
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.task_id) {
+                window._wheelTaskId = data.task_id;
+            }
+        })
+        .catch(() => {});
         isSpinning = false;
         spinBtn.disabled = false;
         spinBtn.textContent = '🎯 FAIRE TOURNER LA ROUE !';
@@ -2281,7 +2310,7 @@ function validateWheelTask(btn, taskName, points) {
     fetch('/api/complete_wheel_task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task_name: taskName, points: points })
+        body: JSON.stringify({ task_name: taskName, points: points, task_id: window._wheelTaskId || null })
     })
     .then(r => r.json())
     .then(data => {
@@ -2289,6 +2318,7 @@ function validateWheelTask(btn, taskName, points) {
             btn.classList.add('done');
             btn.textContent = '🏆 Corvée validée !';
             hasPendingTask = false;
+            window._wheelTaskId = null;
             playRewardSound();
             floatPoints('+' + points + ' pts', btn);
             const counter = document.getElementById('myWheelPts');
