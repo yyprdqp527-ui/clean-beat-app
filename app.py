@@ -1190,7 +1190,7 @@ def send_email_invitation(to_email, user_name, house_code, join_url=None):
         _dbg(f"Email invitation → {to_email}: status {response.status_code}")
         return ok, None
     except Exception as e:
-        _dbg(f"Erreur envoi email invitation: {e}")
+        print(f"❌ Erreur envoi email invitation: {e}", flush=True)
         return False, str(e)
 
 # ===============================
