@@ -1258,7 +1258,7 @@
             background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%) !important;
             border-radius: 8px !important;
             text-align: center !important;
-            white-space: nowrap;
+            white-space: nowrap !important;
             box-sizing: border-box !important;
             line-height: 1.2;
             overflow: hidden;
@@ -1310,6 +1310,7 @@
                 margin-bottom: 5px !important;
                 font-weight: 800 !important;
                 width: 100% !important;
+                white-space: nowrap !important;
             }
         }
         
@@ -1954,6 +1955,7 @@
                 line-height: 1.2 !important;
                 font-weight: 800 !important;
                 width: 100% !important;
+                white-space: nowrap !important;
             }
         }
         @media (max-width: 360px) {
@@ -1969,6 +1971,7 @@
                 margin-bottom: 4px !important;
                 font-weight: 800 !important;
                 width: 100% !important;
+                white-space: nowrap !important;
             }
             .room-card-visual {
                 border-radius: 12px !important;
