@@ -5,7 +5,13 @@ from werkzeug.security import generate_password_hash
 admin_bp = Blueprint('admin', __name__)
 
 # Clé secrète admin — accessible via /admin_feedback?key=CETTE_CLE
-ADMIN_FEEDBACK_KEY = os.environ.get("ADMIN_FEEDBACK_KEY", "cleanbeat_admin_2026")
+ADMIN_FEEDBACK_KEY = os.environ.get('ADMIN_FEEDBACK_KEY')
+if not ADMIN_FEEDBACK_KEY:
+    raise RuntimeError('ADMIN_FEEDBACK_KEY manquante en production')
+
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+if not ADMIN_PASSWORD:
+    raise RuntimeError('ADMIN_PASSWORD manquante en production')
 
 
 @admin_bp.route('/feedback', methods=['GET', 'POST'])
@@ -130,7 +136,7 @@ def admin_clean_users():
     """Route debug — gestion des comptes utilisateurs"""
     from app import get_db_connection
     key = request.args.get('key', '')
-    if key != 'dust2026admin':
+    if key != ADMIN_PASSWORD:
         return "Accès refusé", 403
     action = request.args.get('action', '')
     email_keep = request.args.get('email', '').strip().lower()
@@ -162,12 +168,12 @@ def admin_clean_users():
     html += "<tr><th>ID</th><th>Email</th><th>Nom</th><th>Step</th><th>House</th><th>Actions</th></tr>"
     for r in rows:
         html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[4]}</td>"
-        html += f"<td><a href='?key=dust2026admin&action=delete&email={r[1]}' onclick=\"return confirm('Supprimer ?')\">🗑️ Supprimer</a></td></tr>"
+        html += f"<td><a href='?key={ADMIN_PASSWORD}&action=delete&email={r[1]}' onclick=\"return confirm('Supprimer ?')\">🗑️ Supprimer</a></td></tr>"
     html += "</table>"
     html += "<br><b>⭐ Garder uniquement un compte (supprimer tous les autres) :</b><br>"
-    html += "<form method=get>Email à garder: <input name=email style='width:250px'> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=keeponly> <input type=submit value='Garder uniquement cet email' onclick=\"return confirm('Supprimer TOUS les autres comptes adultes ?')\"></form>"
+    html += "<form method=get>Email à garder: <input name=email style='width:250px'> <input type=hidden name=key value='{ADMIN_PASSWORD}'> <input type=hidden name=action value=keeponly> <input type=submit value='Garder uniquement cet email' onclick=\"return confirm('Supprimer TOUS les autres comptes adultes ?')\"></form>"
     html += "<br><b>Réinitialiser un mot de passe :</b><br>"
-    html += "<form method=get>Email: <input name=email style='width:250px'> Nouveau pwd: <input name=pwd> <input type=hidden name=key value=dust2026admin> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
+    html += "<form method=get>Email: <input name=email style='width:250px'> Nouveau pwd: <input name=pwd> <input type=hidden name=key value='{ADMIN_PASSWORD}'> <input type=hidden name=action value=resetpwd> <input type=submit value='Réinitialiser'></form>"
     return html
 
 
@@ -176,7 +182,7 @@ def admin_beta():
     """Dashboard bêta-testeurs"""
     from app import get_db_connection
     key = request.args.get('key', '')
-    if key != 'dust2026admin':
+    if key != ADMIN_PASSWORD:
         return "Accès refusé", 403
 
     conn = get_db_connection()

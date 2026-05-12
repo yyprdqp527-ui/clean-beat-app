@@ -486,7 +486,9 @@ def handle_broken_pipe(e):
     if isinstance(e, HTTPException):
         return e
     raise e
-app.secret_key = os.environ.get('SECRET_KEY', '2b7e4f8c-9a1d-4e2a-8c3e-7f5d1a2b9c4e-2025')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise RuntimeError('SECRET_KEY manquante en production')
 
 # 🔧 ProxyFix : indispensable sur Render (reverse proxy HTTPS)
 # Sans ça, Flask génère des URLs http:// au lieu de https:// → cookies cassés, redirections folles
