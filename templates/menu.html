@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
     <!-- Socket.IO - hébergé localement -->
-    <script defer src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
     <!-- 🔊 Howler.js + SoundManager centralisé (defer pour ne pas bloquer le parsing HTML) -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
     <script defer src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
