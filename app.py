@@ -4121,7 +4121,7 @@ def menu():
             unread_sent_to = {}    # Non utilisé dans nouvelle logique
             
             # ✅ Messages baby_tracking et task_added : compteur pour badges burger
-            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=False)
+            unread_baby_tracking = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=True)
             unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn, include_own=True)
             _dbg(f"🔔 DEBUG menu - {session['user']}: unread_messages_count={unread_messages_count}, baby={unread_baby_tracking}, task_added={unread_task_added}, children_unread={children_unread}")
 
@@ -4620,7 +4620,7 @@ def api_unread_counts():
         # Partage la meme connexion pour toutes les fonctions (evite 6 open/close)
         unread_received = get_unread_message_count(session['user'], house_id, existing_conn=conn)
         children_unread = get_children_unread_counts(house_id, existing_conn=conn)
-        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=False)
+        unread_baby = get_unread_count_by_type(session['user'], house_id, 'baby_tracking', existing_conn=conn, include_own=True)
         unread_task_added = get_unread_count_by_type(session['user'], house_id, 'task_added', existing_conn=conn, include_own=True)
         unread_courses_added = get_unread_count_by_type(session['user'], house_id, 'courses_added', existing_conn=conn, include_own=True)
 
