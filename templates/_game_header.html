@@ -27,9 +27,9 @@
                 {% set border_color = (player.player_color_hex if player and player.player_color_hex else color) %}
                 <div class="avatar-square" style="--avatar-accent: {{ border_color }}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
                   {% if player.avatar_file %}
-                      <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar {{ player.name }}">
+                      <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar {{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
                   {% elif player.avatar_url %}
-                      <img src="{{ player.avatar_url }}" alt="Avatar {{ player.name }}">
+                      <img src="{{ player.avatar_url }}" alt="Avatar {{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
                   {% elif player.avatar and player.avatar|length <= 4 %}
                       <span style="font-size: {{ (avatar_size * 0.6)|int }}px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ player.avatar }}</span>
                   {% else %}

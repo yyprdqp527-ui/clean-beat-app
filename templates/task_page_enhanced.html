@@ -835,11 +835,11 @@
                         <div style="position:relative;display:flex;align-items:center;justify-content:center;">
                             {% if player.avatar_file %}
                                 <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %};">
-                                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}">
+                                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
                                 </div>
                             {% elif player.avatar_url %}
                                 <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %};">
-                                    <img src="{{ player.avatar_url }}" alt="{{ player.name }}">
+                                    <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
                                 </div>
                             {% elif player.avatar and player.avatar|length <= 4 %}
                                 <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %}; font-size:32px; color: #153036; display:flex; align-items:center; justify-content:center;">{{ player.avatar }}</div>

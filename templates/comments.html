@@ -896,10 +896,14 @@
                             <div class="avatar-col">
                                 <div class="avatar-name" style="font-weight: 700;">{{ player.name }}</div>
                                 <div class="avatar-square" style="border-color: {{ player.color }}80;">
-                                    {% if player.avatar.startswith('/static') or player.avatar.startswith('http') %}
-                                        <img src="{{ player.avatar }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                    {% else %}
+                                    {% if player.avatar_url %}
+                                        <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.style.display='none';">
+                                    {% elif player.avatar_file %}
+                                        <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.style.display='none';">
+                                    {% elif player.avatar and player.avatar|length <= 4 %}
                                         <span style="font-size: 28px;">{{ player.avatar }}</span>
+                                    {% else %}
+                                        <span style="font-size: 28px;">👤</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -934,10 +938,10 @@
                     <div class="message-item {{ 'message-me' if msg.is_me else '' }} {{ 'message-system' if msg.sender_type in ['system', 'house'] else '' }} {{ 'message-task-added' if msg.message_type == 'task_added' else '' }} {{ 'message-baby-tracking' if msg.message_type == 'baby_tracking' else '' }}" style="--message-color: {{ msg.color }}; --message-bg-color: {{ msg.bg_color }};" data-message-id="{{ msg.id }}">
                         {% if msg.sender_type not in ['system', 'house'] or msg.message_type == 'baby_tracking' %}
                             <div class="message-avatar" style="border-color: {{ msg.color }}80;">
-                                {% if msg.sender_avatar.startswith('/static') or msg.sender_avatar.startswith('http') %}
-                                    <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}">
+                                {% if msg.sender_avatar and (msg.sender_avatar.startswith('/static') or msg.sender_avatar.startswith('http') or msg.sender_avatar.startswith('data:')) %}
+                                    <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
                                 {% else %}
-                                    {{ msg.sender_avatar }}
+                                    {{ msg.sender_avatar or '👤' }}
                                 {% endif %}
                             </div>
                         {% elif msg.sender_type == 'house' %}
