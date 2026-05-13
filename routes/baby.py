@@ -161,20 +161,13 @@ def save_baby_tracking():
             _push_title = '😴 Bébé dort !'
         else:
             _push_title = '👶 Suivi bébé'
-        _house_id = house_id
-        _msg = message_text
-        _sender = session['user']
-        _title = _push_title
-        def _notif():
-            try:
-                create_system_message(
-                    _house_id, _msg,
-                    'baby_tracking',
-                    sender_email=_sender,
-                    push_title=_title)
-            except Exception:
-                pass
-        threading.Thread(target=_notif, daemon=True).start()
+        # ✅ Appel SYNCHRONE : message inséré en base AVANT le redirect
+        # (thread daemon non fiable sur Gunicorn/Render — message jamais créé)
+        create_system_message(
+            house_id, message_text,
+            'baby_tracking',
+            sender_email=session['user'],
+            push_title=_push_title)
     except Exception as e:
         _dbg(f"❌ Erreur create_system_message baby: {e}")
 
