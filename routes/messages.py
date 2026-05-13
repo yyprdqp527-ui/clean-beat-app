@@ -364,36 +364,39 @@ def _comments_inner():
         player_email, player_name, player_avatar, player_avatar_file, player_avatar_url, player_color = player_row
         _dbg(f"[DEBUG COMMENTS] Joueur: {player_name} ({player_email})")
         
-        # Préparer l'avatar
-        display_avatar = None
+        # Préparer les 3 champs avatar séparément (compatibles avec le template comments.html)
+        _av_url = None
+        _av_file = None
+        _av_emoji = None
         if player_avatar_file:
-            display_avatar = f"/static/avatars/{player_avatar_file}"
+            _av_file = player_avatar_file
         elif player_avatar_url:
             # Convertir v8 → v7 (fond transparent par défaut)
             if 'dicebear.com/8.x' in player_avatar_url:
                 player_avatar_url = player_avatar_url.replace('dicebear.com/8.x', 'dicebear.com/7.x')
-            display_avatar = player_avatar_url
+            _av_url = player_avatar_url
         elif player_avatar and len(str(player_avatar)) <= 4:
-            display_avatar = player_avatar
+            _av_emoji = player_avatar
         elif player_avatar:
             # C'est un seed DiceBear - construire l'URL
-            # Récupérer le style de l'avatar
             try:
                 c.execute("SELECT avatar_style FROM users WHERE email=?", (player_email,))
                 style_row = c.fetchone()
                 player_style = style_row[0] if style_row and style_row[0] else 'adventurer'
             except:
                 player_style = 'adventurer'
-            display_avatar = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}&backgroundColor=transparent"
+            _av_url = f"https://api.dicebear.com/7.x/{player_style}/svg?seed={player_avatar}&backgroundColor=transparent"
         else:
             # Aucun avatar - générer un DiceBear par défaut
             seed = player_email.split('@')[0] if player_email else 'default'
-            display_avatar = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}&backgroundColor=transparent"
-        
+            _av_url = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}&backgroundColor=transparent"
+
         available_players.append({
             'email': player_email,
             'name': player_name if player_name else player_email.split('@')[0],
-            'avatar': display_avatar,
+            'avatar_url': _av_url,
+            'avatar_file': _av_file,
+            'avatar': _av_emoji,
             'color': player_color if player_color else '#4A90E2'
         })
     

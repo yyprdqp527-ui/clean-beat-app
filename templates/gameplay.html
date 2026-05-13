@@ -1272,7 +1272,7 @@ function closeSection() {
         <div class="malus-sheet-title" id="playerPickerTitle">Pour qui ?</div>
         {% if players %}{% for p in players %}{% if not p.is_current_user %}
         <div class="malus-option" onclick="selectPlayer('{{ p.email|e }}','{{ p.name|e }}')">
-            <div class="malus-option-icon">{% if p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
+            <div class="malus-option-icon">{% if p.avatar_file %}<img src="/static/avatars/{{ p.avatar_file }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.onerror=null;this.style.display='none';">{% elif p.avatar_url %}<img src="{{ p.avatar_url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.onerror=null;this.style.display='none';">{% elif p.avatar and p.avatar|length <= 4 %}{{ p.avatar }}{% else %}👤{% endif %}</div>
             <div class="malus-option-label">{{ p.name|e }}</div>
             <div class="gw-pts">{{ p.daily_points|default(0) }} pts</div>
         </div>
