@@ -4279,7 +4279,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     if (badge) {
         if (unreadCount > 0) {
             badge.textContent = unreadCount < 100 ? unreadCount : '99+';
-            badge.style.display = '';
+            badge.style.display = 'inline-flex';
         } else {
             badge.style.display = 'none';
         }
@@ -4290,7 +4290,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     if (cBadge) {
         if (coursesPending > 0) {
             cBadge.textContent = coursesPending < 100 ? coursesPending : '99+';
-            cBadge.style.display = '';
+            cBadge.style.display = 'inline-flex';
         } else {
             cBadge.style.display = 'none';
         }

@@ -1,7 +1,7 @@
 import os
 import time
 import uuid
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app, jsonify
 from werkzeug.utils import secure_filename
 
 customize_bp = Blueprint('customize', __name__)
@@ -554,6 +554,20 @@ def delete_custom_room():
         if not row or not row[0]:
             return {'ok': False, 'error': 'pas de maison'}, 403
         house_id = row[0]
+        # Bloquer si des tâches non validées existent pour cette pièce
+        c.execute("""
+            SELECT COUNT(*) FROM custom_tasks ct
+            WHERE ct.house_id = ? AND ct.category = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM completed_tasks ctd
+                WHERE ctd.house_id = ct.house_id
+                AND ctd.category = ct.category
+                AND ctd.task_name = ct.task_name
+            )
+        """, (house_id, room_key))
+        pending = c.fetchone()[0]
+        if pending > 0:
+            return jsonify({'ok': False, 'error': 'pending_tasks', 'count': pending}), 400
         c.execute("DELETE FROM custom_rooms WHERE house_id=? AND room_key=?", (house_id, room_key))
         conn.commit()
     except Exception as e:
