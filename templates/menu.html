@@ -3443,6 +3443,15 @@ function refreshAllBadges() {
                 btn.disabled = true;
                 btn.textContent = '⏳';
 
+                // Attend que registration soit prête
+                let waited = 0;
+                while (window.cleanBeatPush &&
+                  !window.cleanBeatPush.registration &&
+                  waited < 3000) {
+                  await new Promise(r => setTimeout(r, 100));
+                  waited += 100;
+                }
+
                 try {
                     var ok = true;
 
@@ -3471,13 +3480,10 @@ function refreshAllBadges() {
                             const permResult = await window.cleanBeatPush.requestPermission();
                             if (permResult !== true && permResult !== 'granted') { ok = false; }
                         } else {
-                            await Notification.requestPermission();
-                            if (Notification.permission === 'granted') {
-                                if (window.cleanBeatPush && typeof window.cleanBeatPush.subscribe === 'function') {
-                                    await window.cleanBeatPush.subscribe();
-                                } else {
-                                    showToast('Notifications autorisées mais le gestionnaire est indisponible. Rechargez la page.', '#e74c3c');
-                                }
+                            if (!window.cleanBeatPush) {
+                                // cleanBeatPush pas encore chargé → tente quand même la permission native
+                                Notification.requestPermission();
+                                return;
                             }
                         }
                     }
@@ -4438,6 +4444,12 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     </button>
   </div>
 </div>
+
+<script src="{{ url_for('static', filename='push-notifications.js') }}"></script>
+<script>
+window.cleanBeatPush = new PushNotificationManager();
+window.cleanBeatPush.init();
+</script>
 
 </body>
 </html>
