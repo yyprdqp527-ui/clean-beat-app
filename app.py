@@ -730,37 +730,20 @@ BAR_COLORS = {
     'cuivre':     '#33a5b8',      # bleu cyan
 }
 
-# Cache du thème de fond par utilisateur (évite 1 requête DB / requête HTTP)
-_bg_theme_cache = {}
-
 @app.context_processor
 def inject_bg_theme():
     bg = BG_THEMES['ocean']
     theme_name = 'ocean'
     try:
         if 'user' in session:
-            email = session['user']
-            now = time.time()
-            cached = _bg_theme_cache.get(email)
-            # Cache valide 2 minutes (le thème ne change quasiment jamais)
-            if cached and (now - cached['ts']) < 120:
-                theme_name = cached['theme']
-                bg = BG_THEMES.get(theme_name, BG_THEMES['ocean'])
-            else:
-                conn = get_db_connection()
-                c = conn.cursor()
-                c.execute("SELECT bg_theme FROM users WHERE email=?", (email,))
-                row = c.fetchone()
-                conn.close()
-                if row and row[0] and row[0] != 'bleu' and row[0] in BG_THEMES:
-                    theme_name = row[0]
-                    bg = BG_THEMES[theme_name]
-                _bg_theme_cache[email] = {'theme': theme_name, 'ts': now}
-                # Purge entrées expirées (>10 min)
-                if len(_bg_theme_cache) > 200:
-                    expired = [k for k, v in _bg_theme_cache.items() if now - v['ts'] > 600]
-                    for k in expired:
-                        del _bg_theme_cache[k]
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("SELECT bg_theme FROM users WHERE email=?", (session['user'],))
+            row = c.fetchone()
+            conn.close()
+            if row and row[0] and row[0] != 'bleu' and row[0] in BG_THEMES:
+                theme_name = row[0]
+                bg = BG_THEMES[theme_name]
     except Exception:
         pass
     is_light = theme_name in LIGHT_THEMES
