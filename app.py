@@ -287,9 +287,12 @@ class _CompatConn:
 
     def close(self):
         try:
-            self._conn.close()
+            release_db_connection(self._conn)
         except Exception:
-            pass
+            try:
+                self._conn.close()
+            except Exception:
+                pass
 
     def __enter__(self):
         return self
