@@ -653,7 +653,7 @@
             cursor: pointer;
             transition: font-size 0.3s ease, transform 0.3s ease;
             transform: none;
-            color: #FDAE54;
+            /* color: #FDAE54; — géré par .theme-dark/.theme-light .week-gift-icon */
             stroke: currentColor;
             fill: none;
             stroke-width: 2;
@@ -662,6 +662,12 @@
             animation: trophyGlow 2.4s ease-in-out infinite;
             display: inline-block;
             overflow: visible;
+        }
+        .theme-dark .week-gift-icon {
+          color: #FDAE54 !important;
+        }
+        .theme-light .week-gift-icon {
+          color: #1B3A6B !important;
         }
         .week-gift-icon:hover { transform: scale(1.15); }
         .week-gift-star {
