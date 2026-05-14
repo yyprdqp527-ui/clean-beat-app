@@ -257,6 +257,13 @@ body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padd
     pointer-events: none;
 }
 .filter-btn:active { transform: translateY(0) scale(0.97); box-shadow: 0 4px 16px rgba(89,113,118,0.12); }
+.filter-btn:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 16px 36px rgba(89,113,118,0.18);
+}
+.filter-btn:active {
+    transform: scale(0.97);
+}
 .filter-btn .fb-icon {
     font-size: 38px;
     filter: drop-shadow(0 3px 8px rgba(0,0,0,0.25));
