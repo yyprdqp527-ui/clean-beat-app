@@ -740,24 +740,24 @@ def open_reward_box():
     
     # Vérifier que l'utilisateur est le gagnant de la semaine
     # (ou — cas spécial — un parent ouvrant pour un enfant gagnant sans téléphone)
-    c.execute("""
-        SELECT u.email, u.is_child_account, COALESCE(SUM(ct.points), 0) as weekly_points
-        FROM users u
-        LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-            AND DATE(ct.completed_at) >= ?
-        WHERE u.house_id = ?
-        GROUP BY u.email, u.name, u.is_child_account, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
-        ORDER BY weekly_points DESC
-        LIMIT 1
-    """, (start_of_week, house_id))
-    
-    winner_row = c.fetchone()
-    if not winner_row:
+    # BUG FIX: lecture directe depuis houses.weekly_winner_email (désigné par le cron)
+    # au lieu de recalculer depuis completed_tasks (qui peut avoir changé)
+    _wrow = c.execute(
+        "SELECT weekly_winner_email FROM houses WHERE id = ?",
+        (house_id,)
+    ).fetchone()
+    _winner_email = _wrow[0] if _wrow and _wrow[0] else None
+
+    if not _winner_email:
         conn.close()
         return jsonify({'success': False, 'message': 'Aucun gagnant cette semaine'}), 403
 
-    _winner_email = winner_row[0]
-    _winner_is_child = bool(winner_row[1])
+    # Récupérer is_child_account du gagnant désigné
+    _urow = c.execute(
+        "SELECT is_child_account FROM users WHERE email = ?",
+        (_winner_email,)
+    ).fetchone()
+    _winner_is_child = bool(_urow[0]) if _urow and _urow[0] is not None else False
     opening_for_child = False
 
     if _winner_email == session['user']:
@@ -1030,12 +1030,6 @@ def open_reward_box():
     """)
     
     # Enregistrer la case ouverte avec la semaine
-    # MODE TEST: On supprime d'abord l'ancienne entrée si elle existe
-    try:
-        c.execute("DELETE FROM reward_boxes WHERE house_id=? AND box_number=?", (house_id, box_number))
-    except:
-        pass
-    
     try:
         c.execute("""
             INSERT INTO reward_boxes (house_id, box_number, reward_text, opened_by, week_start)
@@ -1044,6 +1038,14 @@ def open_reward_box():
         
         # Enregistrer la récompense dans les récompenses du joueur (l'enfant si parent ouvre pour lui)
         _dbg(f"[DEBUG] Insertion dans mystery_rewards: user={opener_email}, house={house_id}, reward={reward_text}, opening_for_child={opening_for_child}")
+        # BUG FIX: garde-fou anti-double-claim (protection contre double-clic ou race condition)
+        _already = c.execute(
+            "SELECT id FROM mystery_rewards WHERE user_email = ? AND house_id = ? AND won_date = date('now')",
+            (opener_email, house_id)
+        ).fetchone()
+        if _already:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Tu as déjà réclamé ta récompense cette semaine !'}), 409
         c.execute("""
             INSERT INTO mystery_rewards (user_email, house_id, reward_text, won_date, used)
             VALUES (?, ?, ?, date('now'), 0)
