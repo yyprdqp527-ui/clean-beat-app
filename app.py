@@ -3548,7 +3548,7 @@ def compute_user_total_badge(user_email, house_id, courses_pending=None):
     try:
         return (
             get_unread_message_count(user_email, house_id) +
-            get_unread_count_by_type(user_email, house_id, 'baby_tracking') +
+            get_unread_count_by_type(user_email, house_id, 'baby_tracking', include_own=True) +
             get_unread_count_by_type(user_email, house_id, 'task_added', include_own=True) +
             courses_pending
         )
