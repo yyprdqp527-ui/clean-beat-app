@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}">
     <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nav-feedback.css') }}">
     <!-- Google Fonts Montserrat - chargement non-bloquant -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1401,6 +1402,7 @@ window.cbToast = function(message, type, duration) {
     Politique de confidentialité
   </a>
 </footer>
+<script src="{{ url_for('static', filename='js/nav-feedback.js') }}"></script>
 </body>
 </html>
 

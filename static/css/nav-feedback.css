@@ -1,0 +1,55 @@
+/* ══════════════════════════════════════════════════════════════
+   nav-feedback.css — feedback visuel immédiat sur les boutons
+   de navigation lents (flèche retour + barre menu qfq-tab)
+   Aucune dépendance, pas de modification des styles existants.
+   ══════════════════════════════════════════════════════════════ */
+
+/* État "navigation en cours" : appliqué par nav-feedback.js */
+.nav-loading {
+    pointer-events: none !important;
+    opacity: 0.6 !important;
+    transform: scale(0.94) !important;
+    transition: opacity .12s ease, transform .12s ease !important;
+    position: relative;
+}
+
+/* Mini-spinner qui apparaît au bout de 250 ms si la page n'a pas
+   encore commencé à naviguer (perception "ça travaille") */
+.nav-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin: -9px 0 0 -9px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: rgba(21,48,54,0.9);
+    border-radius: 50%;
+    opacity: 0;
+    animation: nav-spin 0.7s linear infinite;
+    /* délai 250 ms : si la page navigue avant, le spinner ne s'affiche jamais */
+    animation-delay: 0s;
+    transition: opacity .15s ease;
+    pointer-events: none;
+}
+
+.nav-loading.nav-loading-show-spinner::after {
+    opacity: 1;
+}
+
+@keyframes nav-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Variante pour les boutons de la barre tabbar (icônes plus petites,
+   spinner plus discret) */
+.qfq-tab.nav-loading::after {
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-width: 1.5px;
+    border-top-color: rgba(255,255,255,0.95);
+    border-color: rgba(255,255,255,0.25);
+    border-top-color: rgba(255,255,255,0.95);
+}

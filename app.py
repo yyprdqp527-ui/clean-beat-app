@@ -1003,8 +1003,8 @@ def get_db_connection(timeout=30.0):
         raw = sqlite3.connect(DB, timeout=timeout, check_same_thread=False)
         raw.execute('PRAGMA journal_mode=WAL')
         raw.execute('PRAGMA synchronous=NORMAL')
-        raw.execute('PRAGMA cache_size=2000')
-        raw.execute('PRAGMA temp_store=FILE')
+        raw.execute('PRAGMA cache_size=10000')
+        raw.execute('PRAGMA temp_store=MEMORY')
         return _CompatConn(raw, is_pg=False)
 
 # ===============================
@@ -2730,6 +2730,10 @@ CREATE TABLE IF NOT EXISTS users (
         "CREATE INDEX IF NOT EXISTS idx_completed_tasks_house_cat ON completed_tasks(house_id, category, completed_at)",
         "CREATE INDEX IF NOT EXISTS idx_messages_house_type_recipient ON messages(house_id, message_type, recipient_email)",
         "CREATE INDEX IF NOT EXISTS idx_message_reads_composite ON message_reads(message_id, user_email)",
+        # Index perf supplementaires (route /menu : rooms_with_new_missions, daily/weekly batches)
+        "CREATE INDEX IF NOT EXISTS idx_custom_tasks_house_cat_name ON custom_tasks(house_id, category, task_name)",
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_house_cat_name ON completed_tasks(house_id, category, task_name, completed_at)",
+        "CREATE INDEX IF NOT EXISTS idx_completed_tasks_house_user_date ON completed_tasks(house_id, user_email, completed_at)",
     ]
     for _idx_sql in _indexes:
         try:
