@@ -727,20 +727,37 @@ BAR_COLORS = {
     'cuivre':     '#33a5b8',      # bleu cyan
 }
 
+# Cache du thème de fond par utilisateur (évite 1 requête DB / requête HTTP)
+_bg_theme_cache = {}
+
 @app.context_processor
 def inject_bg_theme():
     bg = BG_THEMES['ocean']
     theme_name = 'ocean'
     try:
         if 'user' in session:
-            conn = get_db_connection()
-            c = conn.cursor()
-            c.execute("SELECT bg_theme FROM users WHERE email=?", (session['user'],))
-            row = c.fetchone()
-            conn.close()
-            if row and row[0] and row[0] != 'bleu' and row[0] in BG_THEMES:
-                theme_name = row[0]
-                bg = BG_THEMES[theme_name]
+            email = session['user']
+            now = time.time()
+            cached = _bg_theme_cache.get(email)
+            # Cache valide 2 minutes (le thème ne change quasiment jamais)
+            if cached and (now - cached['ts']) < 120:
+                theme_name = cached['theme']
+                bg = BG_THEMES.get(theme_name, BG_THEMES['ocean'])
+            else:
+                conn = get_db_connection()
+                c = conn.cursor()
+                c.execute("SELECT bg_theme FROM users WHERE email=?", (email,))
+                row = c.fetchone()
+                conn.close()
+                if row and row[0] and row[0] != 'bleu' and row[0] in BG_THEMES:
+                    theme_name = row[0]
+                    bg = BG_THEMES[theme_name]
+                _bg_theme_cache[email] = {'theme': theme_name, 'ts': now}
+                # Purge entrées expirées (>10 min)
+                if len(_bg_theme_cache) > 200:
+                    expired = [k for k, v in _bg_theme_cache.items() if now - v['ts'] > 600]
+                    for k in expired:
+                        del _bg_theme_cache[k]
     except Exception:
         pass
     is_light = theme_name in LIGHT_THEMES
@@ -939,7 +956,8 @@ def _get_db_pool():
     """Initialise le pool PostgreSQL au premier appel (lazy, thread-safe avec psycogreen)."""
     global _db_pool
     if _db_pool is None:
-        _db_pool = pg_pool.ThreadedConnectionPool(minconn=2, maxconn=10, dsn=_PG_URL)
+        # PERF: maxconn relevé pour absorber les pics (2 workers gunicorn × ~10 connexions actives possibles)
+        _db_pool = pg_pool.ThreadedConnectionPool(minconn=2, maxconn=25, dsn=_PG_URL)
     return _db_pool
 
 def release_db_connection(conn):
