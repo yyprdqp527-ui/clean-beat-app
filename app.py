@@ -4046,12 +4046,6 @@ def menu():
             players = get_house_players_points(house_id, existing_conn=conn)
             _dbg(f"🎯🎯🎯 MENU: {len(players)} joueurs chargés pour house_id={house_id}")
 
-            # Ajouter les streaks pour chaque joueur
-            try:
-                for p in players:
-                    p['streak'] = compute_daily_streak(conn, p.get('email'))
-            except Exception:
-                pass
 
             # 🚀 daily_points déjà calculés dans get_house_players_points → pas de recalcul
 
