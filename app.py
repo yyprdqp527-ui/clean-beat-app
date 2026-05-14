@@ -960,7 +960,15 @@ def _get_db_pool():
     global _db_pool
     if _db_pool is None:
         # PERF: maxconn relevé pour absorber les pics (2 workers gunicorn × ~10 connexions actives possibles)
-        _db_pool = pg_pool.ThreadedConnectionPool(minconn=2, maxconn=25, dsn=_PG_URL)
+        _db_pool = pg_pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=25,
+            dsn=_PG_URL,
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=3
+        )
     return _db_pool
 
 def release_db_connection(conn):
