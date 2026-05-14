@@ -146,7 +146,7 @@ def _is_valid_room_image(path):
 
 @customize_bp.route('/set_bg_theme', methods=['POST'])
 def set_bg_theme():
-    from app import get_db_connection, BG_THEMES
+    from app import get_db_connection, BG_THEMES, _bg_theme_cache
     if 'user' not in session:
         return {'ok': False, 'error': 'non connecté'}, 401
     theme = request.json.get('theme', 'bleu')
@@ -158,6 +158,8 @@ def set_bg_theme():
         c.execute("UPDATE users SET bg_theme=? WHERE email=?", (theme, session['user']))
         conn.commit()
         conn.close()
+        # Invalide le cache pour que la prochaine requête relise la DB
+        _bg_theme_cache.pop(session['user'], None)
         return {'ok': True}
     except Exception as e:
         return {'ok': False, 'error': str(e)}, 500
