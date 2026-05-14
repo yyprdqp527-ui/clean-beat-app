@@ -422,7 +422,7 @@ def delete_player():
         
         # Émettre l'événement WebSocket
         _dbg(f"🔌 WebSocket: Joueur '{player_name}' supprimé (room: house_{house_id})")
-        socketio.emit('players_list_update', {
+        safe_socketio_emit('players_list_update', {
             'players': players_data,
             'deleted_player': player_name,
             'action': 'player_deleted'

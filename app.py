@@ -4687,6 +4687,12 @@ if SOCKETIO_AVAILABLE:
     def handle_disconnect():
         """Déconnexion d'un client WebSocket"""
         _dbg(f'❌ Client déconnecté: {request.sid}')
+        try:
+            from flask_socketio import rooms, leave_room
+            for room in rooms():
+                leave_room(room)
+        except Exception:
+            pass
     
     @socketio.on('join_house')
     def handle_join_house(data):
