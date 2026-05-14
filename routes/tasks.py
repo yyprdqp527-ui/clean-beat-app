@@ -80,7 +80,7 @@ def categorie(cat):
                 if not category_icon:
                     category_icon = ''
             # joueurs de la maison
-            players = get_house_players_points(house_id)
+            players = get_house_players_points(house_id, existing_conn=conn)
             # récupérer overrides de points pour cette maison et catégorie
             try:
                 c.execute("SELECT task_index, points FROM task_points_overrides WHERE house_id=? AND category=?", (house_id, normalized_cat))
@@ -922,7 +922,7 @@ def task_enhanced(cat, task_id):
         row = c.fetchone()
         if row and row[0]:
             house_id = row[0]
-            players = get_house_players_points(house_id)
+            players = get_house_players_points(house_id, existing_conn=conn)
             # Override des points si défini pour cette maison/catégorie/tâche
             try:
                 c.execute("SELECT points FROM task_points_overrides WHERE house_id=? AND category=? AND task_index=?", (house_id, normalized_cat, task_id))

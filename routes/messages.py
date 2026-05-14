@@ -403,7 +403,7 @@ def _comments_inner():
     _dbg(f"[DEBUG COMMENTS] available_players count: {len(available_players)}")
     
     # Récupérer tous les joueurs pour l'affichage
-    players = get_house_players_points(house_id)
+    players = get_house_players_points(house_id, existing_conn=conn)
     
     # Associer une couleur unique à chaque joueur (mêmes couleurs que task_page_enhanced)
     player_colors = [
@@ -607,7 +607,7 @@ def baby_messages():
             msg['is_read_by_me'] = True
 
     # Récupérer tous les joueurs pour l'affichage
-    players = get_house_players_points(house_id)
+    players = get_house_players_points(house_id, existing_conn=conn)
     
     conn.close()
 
