@@ -668,8 +668,8 @@ def custom_task_page(task_id):
         
         # Insérer la tâche complétée
         try:
-            c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", 
-                     (player_email, user_house_id, category, task_name, task_points))
+            c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at, custom_task_id) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)", 
+                     (player_email, user_house_id, category, task_name, task_points, task_id))
             c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
             
             # Augmenter la santé de la maison
@@ -1453,8 +1453,9 @@ def api_validate_task():
                 }), 200
 
         # Insérer la tâche complétée
-        c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", 
-                 (player_email, user_house_id, category, task_name, task_points))
+        _custom_task_id = task_id if task_type == 'custom' else None
+        c.execute("INSERT INTO completed_tasks (user_email, house_id, category, task_name, points, completed_at, custom_task_id) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)", 
+                 (player_email, user_house_id, category, task_name, task_points, _custom_task_id))
         c.execute("UPDATE users SET points = COALESCE(points,0) + ? WHERE email=?", (task_points, player_email))
 
         # ✅ COMMIT IMMÉDIAT — sécuriser l'INSERT + UPDATE avant toute opération optionnelle
@@ -1772,7 +1773,11 @@ def api_rooms_with_missions():
                 SELECT 1 FROM completed_tasks ctd
                 WHERE ctd.house_id = ct.house_id
                 AND ctd.category = ct.category
-                AND ctd.task_name = ct.task_name
+                AND (
+                    (ctd.custom_task_id IS NOT NULL AND ctd.custom_task_id = ct.id)
+                    OR
+                    (ctd.custom_task_id IS NULL AND ctd.task_name = ct.task_name)
+                )
                 AND ctd.completed_at >= ct.created_at
             )
             GROUP BY ct.category

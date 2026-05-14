@@ -2459,7 +2459,8 @@ CREATE TABLE IF NOT EXISTS users (
         needed = {
             'user_email': "TEXT",
             'category': "TEXT",
-            'completed_at': "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+            'completed_at': "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            'custom_task_id': "INTEGER"
         }
         for col, col_def in needed.items():
             if col not in existing_cols:
@@ -4166,7 +4167,11 @@ def menu():
                             SELECT 1 FROM completed_tasks ctd
                             WHERE ctd.house_id = ct.house_id
                             AND ctd.category = ct.category
-                            AND ctd.task_name = ct.task_name
+                            AND (
+                            (ctd.custom_task_id IS NOT NULL AND ctd.custom_task_id = ct.id)
+                            OR
+                            (ctd.custom_task_id IS NULL AND ctd.task_name = ct.task_name)
+                        )
                             AND ctd.completed_at >= ct.created_at
                         )
                         GROUP BY ct.category
