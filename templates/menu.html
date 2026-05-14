@@ -818,6 +818,13 @@ body { padding-bottom: 84px !important; }
     0%,100% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.18); opacity: 0.75; }
 }
+.room-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.room-card:active {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
 </style>
 
 {% if players %}
@@ -2964,61 +2971,7 @@ function refreshAllBadges() {
 
        
 
-            <!-- ✨ SHEET APERÇU PIÈCE ✨ -->
             <script>
-                (function() {
-                    'use strict';
-
-                    function closeRoomPreview() {
-                        document.getElementById('roomPreviewOverlay').classList.remove('active');
-                    }
-                    window.closeRoomPreview = closeRoomPreview;
-
-                    function init() {
-                        const cards = document.querySelectorAll('.room-card');
-                        cards.forEach(function(card) {
-                            card.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                const targetUrl = this.getAttribute('href');
-                                const title = (this.querySelector('.room-card-title') || {}).textContent || '';
-                                const imgEl   = this.querySelector('.room-card-visual img');
-                                const emojiEl = this.querySelector('.emoji-icon');
-
-                                const preview = document.getElementById('roomPreviewImg');
-                                const wrap    = document.getElementById('roomPreviewImgWrap');
-                                if (imgEl) {
-                                    preview.innerHTML = '<img src="' + imgEl.src + '" style="width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(21,48,54,0.18));">';
-                                    wrap.style.background = 'linear-gradient(145deg,#f0f8fb 0%,#ddf0f5 100%)';
-                                } else if (emojiEl) {
-                                    preview.innerHTML = '<span style="font-size:88px;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12))">' + emojiEl.textContent + '</span>';
-                                    wrap.style.background = 'linear-gradient(145deg,#fff8f0 0%,#fdecd4 100%)';
-                                } else {
-                                    preview.innerHTML = '';
-                                    wrap.style.background = 'linear-gradient(145deg,#f0f8fb 0%,#ddf0f5 100%)';
-                                }
-
-                                document.getElementById('roomPreviewTitle').textContent = title.trim();
-                                const sub = document.getElementById('roomPreviewSub');
-                                const badge = card.querySelector('.room-badge');
-                                sub.textContent = badge ? badge.textContent.trim() : 'Toutes les tâches';
-                                document.getElementById('roomPreviewBtn').onclick = function() {
-                                    closeRoomPreview();
-                                    sessionStorage.setItem('internalNav', '1');
-                                    window.location.href = targetUrl;
-                                };
-
-                                if (window.SoundManager) SoundManager.play('selectRoom');
-                                document.getElementById('roomPreviewOverlay').classList.add('active');
-                            });
-                        });
-                    }
-
-                    if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', init);
-                    } else {
-                        init();
-                    }
-                })();
             
             // ═══════════════════════════════════════════════════════════
             // 💀 SYSTÈME DE MALUS — Afficher skull sur avatars (1 heure)
@@ -4403,39 +4356,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
 })();
 </script>
 
-<!-- Sheet aperçu pièce -->
-<div id="roomPreviewOverlay" onclick="if(event.target===this)closeRoomPreview()">
-  <div id="roomPreviewSheet">
-    <div id="roomPreviewImgWrap">
-      <div id="roomPreviewImg"></div>
-    </div>
-    <div id="roomPreviewTitle"
-      style="font-size:22px;font-weight:800;
-      color:#153036;margin-bottom:8px;
-      text-align:center;
-      font-family:-apple-system,'Montserrat',sans-serif;
-      letter-spacing:-0.3px;">
-    </div>
-    <div id="roomPreviewSub"
-      style="font-size:13px;color:rgba(89,113,118,0.7);
-      text-align:center;margin-bottom:22px;
-      font-family:-apple-system,sans-serif;">
-    </div>
-    <button id="roomPreviewBtn"
-      style="width:100%;padding:16px;
-      background:linear-gradient(135deg,#FDAE54 0%,#f49a28 100%);
-      border:none;border-radius:16px;
-      font-size:17px;font-weight:700;
-      color:#fff;cursor:pointer;
-      font-family:-apple-system,'Montserrat',sans-serif;
-      letter-spacing:-0.2px;
-      box-shadow:0 6px 20px rgba(253,174,84,0.45);
-      active-transform:scale(0.97);
-      transition:transform 0.12s,box-shadow 0.12s;">
-      Voir les tâches
-    </button>
-  </div>
-</div>
+
 
 <script src="{{ url_for('static', filename='push-notifications.js') }}"></script>
 <script>
