@@ -373,7 +373,7 @@ def api_spin_wheel():
 
         # Ajouter la tâche comme custom_task dans la catégorie 'wheel' (pour la tracer)
         c.execute("""
-            INSERT INTO custom_tasks (house_id, user_email, category, task_name, points, created_at, is_wheel_task, completed)
+            INSERT INTO custom_tasks (house_id, created_by, category, task_name, points, created_at, is_wheel_task, completed)
             VALUES (?, ?, 'wheel', ?, ?, CURRENT_TIMESTAMP, 1, 0)
         """, (house_id, user_email, task_name, points))
         task_id = c.lastrowid
@@ -408,7 +408,7 @@ def wheel_active_task():
         c.execute("""
             SELECT id, task_name, points
             FROM custom_tasks
-            WHERE user_email = ?
+            WHERE created_by = ?
               AND is_wheel_task = 1
               AND completed = 0
             ORDER BY id DESC
@@ -472,7 +472,7 @@ def api_complete_wheel_task():
                 UPDATE custom_tasks
                 SET completed = 1
                 WHERE id = ?
-                  AND user_email = ?
+                  AND created_by = ?
                   AND is_wheel_task = 1
             """, (task_id, user_email))
         conn.commit()
