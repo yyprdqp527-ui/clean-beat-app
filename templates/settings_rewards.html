@@ -154,22 +154,28 @@
     .sr-toast {
         position: fixed;
         top: 20px; right: 20px;
-        background: linear-gradient(135deg, #2ed573 0%, #1eae5b 100%);
-        color: white;
+        background: linear-gradient(135deg, rgba(46,213,115,0.92) 0%, rgba(30,174,91,0.85) 100%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1.5px solid rgba(255,255,255,0.55);
+        color: #fff;
         padding: 14px 22px;
-        border-radius: 14px;
-        font-weight: 800;
+        border-radius: 16px;
+        font-weight: 700;
         font-size: 14px;
         z-index: 9999;
-        box-shadow: 0 8px 24px rgba(46,213,115,0.4);
+        box-shadow: 0 8px 28px rgba(46,213,115,0.25), 0 2px 8px rgba(89,113,118,0.10);
         opacity: 0; transform: translateX(20px);
         transition: all 0.3s ease;
         pointer-events: none;
+        max-width: 280px;
+        line-height: 1.4;
     }
     .sr-toast.show { opacity: 1; transform: translateX(0); }
     .sr-toast.error {
-        background: linear-gradient(135deg, #ff4757 0%, #d83545 100%);
-        box-shadow: 0 8px 24px rgba(255,71,87,0.4);
+        background: linear-gradient(135deg, rgba(255,71,87,0.92) 0%, rgba(216,53,69,0.85) 100%);
+        border-color: rgba(255,255,255,0.45);
+        box-shadow: 0 8px 28px rgba(255,71,87,0.25), 0 2px 8px rgba(89,113,118,0.10);
     }
     @media (max-width: 520px) {
         .sr-container { padding-top: 90px; }
