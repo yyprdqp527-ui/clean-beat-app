@@ -50,36 +50,35 @@ def rewards():
     is_sunday = now.weekday() == 6  # 6 = dimanche
     can_open = is_sunday
     
-    # Déterminer le gagnant de la semaine (celui avec le plus de points cette semaine)
+    # Déterminer le gagnant désigné par le cron — lu depuis houses.weekly_winner_email
+    # (identique à open_reward_box pour garantir la cohérence même après reset completed_tasks)
     today = now_paris()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
-    
-    c.execute("""
-        SELECT u.email, u.name, u.is_child_account, COALESCE(SUM(ct.points), 0) as weekly_points
-        FROM users u
-        LEFT JOIN completed_tasks ct ON u.email = ct.user_email 
-            AND DATE(ct.completed_at) >= ?
-        WHERE u.house_id = ?
-        GROUP BY u.email, u.name, u.is_child_account, u.avatar, u.avatar_file, u.avatar_url, u.avatar_style
-        ORDER BY weekly_points DESC
-        LIMIT 1
-    """, (start_of_week, house_id))
-    
-    winner_row = c.fetchone()
+
+    _wrow = c.execute(
+        "SELECT weekly_winner_email, weekly_winner_claimed FROM houses WHERE id=?",
+        (house_id,)
+    ).fetchone()
+    _winner_email_db = _wrow[0] if _wrow and _wrow[0] else None
+
     is_winner = False
     winner_name = ""
-    winner_email = None
+    winner_email = _winner_email_db
     winner_is_child = False
     opening_for_child = False
-    
-    if winner_row:
-        winner_email = winner_row[0]
-        winner_name = winner_row[1]
-        winner_is_child = bool(winner_row[2])
-        if winner_email == session['user']:
+
+    if _winner_email_db:
+        _urow = c.execute(
+            "SELECT name, is_child_account FROM users WHERE email=?",
+            (_winner_email_db,)
+        ).fetchone()
+        if _urow:
+            winner_name    = _urow[0] or 'Champion'
+            winner_is_child = bool(_urow[1])
+        if _winner_email_db == session['user']:
             is_winner = True
         elif winner_is_child:
-            # 🧒 Le gagnant est un enfant (sans téléphone) — n'importe quel adulte de la maison peut ouvrir à sa place
+            # 🧒 Le gagnant est un enfant — n'importe quel adulte de la maison peut ouvrir
             try:
                 c.execute("SELECT is_child_account FROM users WHERE email=? AND house_id=?", (session['user'], house_id))
                 me_row = c.fetchone()
@@ -141,11 +140,9 @@ def rewards():
     already_opened_this_week = user_opened_this_week is not None
     last_reward = user_opened_this_week[1] if user_opened_this_week else ""
     
-    # Récupérer toutes les cases ouvertes pour cette maison (historique)
-    # TEMPORAIREMENT DÉSACTIVÉ POUR TEST - on renvoie une liste vide
-    # c.execute("SELECT box_number FROM reward_boxes WHERE house_id=?", (house_id,))
-    # opened_boxes = [row[0] for row in c.fetchall()]
-    opened_boxes = []  # Mode test - toutes les cases apparaissent comme non ouvertes
+    # Cases ouvertes cette semaine pour cette maison (pour griser visuellement les cases déjà prises)
+    c.execute("SELECT box_number FROM reward_boxes WHERE house_id=? AND week_start=?", (house_id, start_of_week))
+    opened_boxes = [row[0] for row in c.fetchall()]
     
     # Récupérer le type de foyer (avec gestion d'erreur si la colonne n'existe pas)
     try:
