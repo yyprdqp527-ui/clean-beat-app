@@ -667,10 +667,10 @@
           color: #FDAE54 !important;
         }
         .theme-light .week-gift-icon {
-          color: #153036 !important;
+          color: LinkText !important;
         }
-        .trophy-warm {
-          color: #153036 !important;
+        .theme-dark .week-gift-icon.trophy-warm {
+          color: LinkText !important;
         }
         .week-gift-icon:hover { transform: scale(1.15); }
         .week-gift-star {
