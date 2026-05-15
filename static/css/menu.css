@@ -669,6 +669,9 @@
         .theme-light .week-gift-icon {
           color: #153036 !important;
         }
+        .trophy-warm {
+          color: #153036 !important;
+        }
         .week-gift-icon:hover { transform: scale(1.15); }
         .week-gift-star {
             position: fixed;

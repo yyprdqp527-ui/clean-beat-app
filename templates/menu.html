@@ -413,7 +413,7 @@
                                 </div>
                                 <div class="week-bar-cursor" id="weekBarCursor"></div>
                             </div>
-                            <svg class="week-gift-icon" id="weekGiftIcon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-trophy"/></svg>
+                            <svg class="week-gift-icon{% if bg_theme_name in ['caramel', 'cuivre'] %} trophy-warm{% endif %}" id="weekGiftIcon" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/icons.svg') }}#icon-trophy"/></svg>
                         </div>
                     </div>
                 </div>
