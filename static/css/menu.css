@@ -667,7 +667,8 @@
           color: #FDAE54 !important;
         }
         .theme-light .week-gift-icon {
-          color: LinkText !important;
+          color: #0066EE !important;
+          stroke: #0066EE !important;
         }
         .theme-dark .week-gift-icon.trophy-warm {
           color: #0066EE !important;
