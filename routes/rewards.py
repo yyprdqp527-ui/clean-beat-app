@@ -18,6 +18,8 @@ def rewards():
     if 'user' not in session:
         flash("Connecte-toi pour accéder aux récompenses", "warning")
         return redirect(url_for('auth.login'))
+    if session.get('is_child_account'):
+        return redirect(url_for('menu'))
 
     try:
         conn = get_db_connection()
@@ -1190,6 +1192,8 @@ def use_reward(reward_id):
     from app import get_db_connection, _dbg
     if 'user' not in session:
         return jsonify({'success': False, 'message': 'Non connecté'}), 401
+    if session.get('is_child_account'):
+        return jsonify({'error': 'Non autorisé'}), 403
     
     _dbg(f"[DEBUG use_reward] reward_id={reward_id}, user={session['user']}")
     

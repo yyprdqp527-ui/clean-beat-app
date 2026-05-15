@@ -203,7 +203,7 @@ def login():
         next_code = request.form.get('next_code', '').strip().upper() or request.args.get('next_code', '').strip().upper()
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT password, registration_step, avatar, avatar_file FROM users WHERE email=?", (email,))
+        c.execute("SELECT password, registration_step, avatar, avatar_file, is_child_account FROM users WHERE email=?", (email,))
         user = c.fetchone()
         # Vérification robuste du mot de passe :
         # 1) check_password_hash (cas normal)
@@ -223,6 +223,7 @@ def login():
         if user and _pwd_ok:
             session.permanent = True
             session['user'] = email
+            session['is_child_account'] = bool(user[4]) if len(user) > 4 and user[4] else False
             _log_login(email)
 
             # Si le joueur a un code d'invitation, le rattacher à la maison
