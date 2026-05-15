@@ -908,6 +908,13 @@ def privacy():
     return render_template('privacy.html')
 
 
+@app.route('/robots.txt')
+def robots_txt():
+    from flask import Response
+    content = "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\n"
+    return Response(content, mimetype='text/plain')
+
+
 # Route d'accueil
 @app.route('/')
 def index():
