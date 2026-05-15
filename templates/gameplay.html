@@ -1205,6 +1205,7 @@ body {
 <script>
 function openSection(name) {
     SoundManager.play('navigate');
+    document.querySelector('.back-btn-glass').style.display = 'none';
     document.getElementById('minigameGrid').classList.add('hidden');
     var sec = document.getElementById('section-' + name);
     if (sec) { sec.classList.add('visible'); }
@@ -1212,6 +1213,7 @@ function openSection(name) {
 }
 function closeSection() {
     SoundManager.play('buttonClick');
+    document.querySelector('.back-btn-glass').style.display = '';
     document.querySelectorAll('.feature-container.visible').forEach(function(el) {
         el.classList.remove('visible');
     });
