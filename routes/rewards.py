@@ -540,7 +540,18 @@ def update_rewards():
         return jsonify({'success': False, 'message': 'Pas de maison'}), 400
     
     house_id = user_row[0]
-    
+
+    # Bloquer la modification si le cron a déjà désigné un gagnant cette semaine
+    winner_row = c.execute(
+        "SELECT weekly_winner_email FROM houses WHERE id=?", (house_id,)
+    ).fetchone()
+    if winner_row and winner_row[0]:
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': 'La liste est figée jusqu\'à l\'ouverture du cadeau du dimanche 🎁'
+        }), 403
+
     # Sauvegarder les récompenses personnalisées (pool de 40 = 20 × 2)
     rewards_json = json.dumps(rewards_final, ensure_ascii=False)
     
