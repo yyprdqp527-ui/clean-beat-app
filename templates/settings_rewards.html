@@ -146,16 +146,9 @@
     .sr-hint {
         text-align: center;
         font-size: 13px;
-        color: #153036;
+        color: {% if bg_theme_light %}#153036{% else %}rgba(255,255,255,0.85){% endif %};
         margin-top: 16px;
         line-height: 1.5;
-        background: linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.70) 100%);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1.5px solid rgba(255,255,255,0.55);
-        border-radius: 14px;
-        padding: 10px 18px;
-        box-shadow: 0 2px 10px rgba(89,113,118,0.10);
     }
     /* ── Toast ── */
     .sr-toast {
