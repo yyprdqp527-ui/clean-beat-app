@@ -6,74 +6,196 @@
 {% block content %}
 <a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour">←</a>
 
-<div class="rewards-settings-wrap">
+<div class="sr-container">
 
-  <!-- En-tête motivant -->
-  <div class="rewards-header">
-    <h2>🎁 Tes récompenses personnelles</h2>
-    <p class="rewards-intro">
-      La grille du dimanche est remplie de récompenses par défaut —
-      mais c'est <strong>toi qui décides ce qui te ferait vraiment plaisir</strong>.
-      Remplis ces 20 cases avec tes envies : une sortie, un massage,
-      une soirée canapé… Chaque récompense que tu écris a
-      <strong>deux fois plus de chances</strong> d'apparaître dans la grille ! 🌟
+  <!-- En-tête -->
+  <div class="sr-header">
+    <h1>🎁 Mes récompenses</h1>
+    <p class="sr-subtitle">
+      Personnalise les 20 récompenses de ta grille du dimanche.
+      Laisse vide pour garder les valeurs par défaut.
     </p>
   </div>
 
   <!-- Grille 20 inputs -->
   <form id="rewards-form">
-    <div class="rewards-grid-20">
+    <div class="sr-grid">
       {% for i in range(20) %}
-      <div class="reward-slot">
-        <span class="reward-num">{{ i + 1 }}</span>
+      <div class="sr-slot">
+        <span class="sr-num">{{ i + 1 }}</span>
         <input
           type="text"
-          class="reward-input"
+          class="sr-input"
           name="reward_{{ i }}"
           value="{{ rewards_list[i] if rewards_list and i < rewards_list|length else '' }}"
-          placeholder="{{ default_rewards[i] if default_rewards and i < default_rewards|length else 'Écris ce qui te ferait plaisir…' }}"
+          placeholder="{{ default_rewards[i] if default_rewards and i < default_rewards|length else 'Récompense…' }}"
           maxlength="60"
+          autocomplete="off"
         >
       </div>
       {% endfor %}
     </div>
 
-    <button type="button" class="save-btn" onclick="saveRewards()">
+    <button type="button" class="sr-save-btn" id="sr-save-btn" onclick="saveRewards()">
       ✅ Enregistrer mes récompenses
     </button>
   </form>
 
-  <p class="rewards-hint">
+  <p class="sr-hint">
     💡 Les cases vides seront remplacées par des récompenses par défaut.
-    Tes récompenses personnelles apparaîtront <strong>2 fois</strong> dans la grille du dimanche.
   </p>
 
 </div>
 
+<div class="sr-toast" id="sr-toast"></div>
+
 <style>
-.rewards-settings-wrap { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
-.rewards-header { text-align: center; margin-bottom: 24px; }
-.rewards-header h2 { font-size: 22px; font-weight: 500; margin-bottom: 8px; }
-.rewards-intro { font-size: 15px; color: var(--color-text-secondary); line-height: 1.6; }
-.rewards-grid-20 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-.reward-slot { display: flex; align-items: center; gap: 8px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
-.reward-num { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); min-width: 20px; }
-.reward-input { flex: 1; border: none; background: transparent; font-size: 14px; color: var(--color-text-primary); outline: none; }
-.reward-input::placeholder { color: var(--color-text-secondary); opacity: 0.6; }
-.save-btn { width: 100%; padding: 14px; border-radius: var(--border-radius-lg); background: var(--color-background-secondary); border: 1px solid var(--color-border-secondary); font-size: 16px; font-weight: 500; cursor: pointer; color: var(--color-text-primary); }
-.rewards-hint { text-align: center; font-size: 13px; color: var(--color-text-secondary); margin-top: 16px; line-height: 1.5; }
-@media (max-width: 420px) {
-  .rewards-grid-20 { grid-template-columns: 1fr; }
-  .rewards-settings-wrap { padding-top: 80px; }
-}
+    .sr-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 40px 20px 60px;
+    }
+    /* ── En-tête ── */
+    .sr-header {
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.18) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 24px 20px;
+        margin-bottom: 24px;
+        text-align: center;
+        border: 2px solid rgba(253,174,84,0.3);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+    }
+    .sr-header h1 {
+        font-size: 22px; font-weight: 800; color: #153036; margin: 0 0 6px;
+    }
+    .sr-subtitle {
+        font-size: 14px; color: #597176; font-weight: 500; line-height: 1.5; margin: 0;
+    }
+    /* ── Grille ── */
+    .sr-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .sr-slot {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.70) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255,255,255,0.55);
+        border-radius: 16px;
+        padding: 10px 12px;
+        box-shadow: 0 4px 14px rgba(89,113,118,0.1);
+    }
+    .sr-num {
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+        color: white;
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .sr-input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        font-weight: 600;
+        color: #153036;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        outline: none;
+    }
+    .sr-input::placeholder {
+        color: #8fa9ad;
+        font-weight: 400;
+    }
+    /* ── Bouton save ── */
+    .sr-save-btn {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #2ed573 0%, #1eae5b 100%);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(46,213,115,0.35);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        transition: all 0.2s;
+    }
+    .sr-save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(46,213,115,0.45); }
+    .sr-save-btn:active { transform: scale(0.98); }
+    .sr-save-btn:disabled {
+        background: linear-gradient(135deg, #b0b0b0 0%, #999 100%);
+        cursor: default;
+        box-shadow: none;
+        transform: none;
+    }
+    /* ── Hint ── */
+    .sr-hint {
+        text-align: center;
+        font-size: 13px;
+        color: #597176;
+        margin-top: 16px;
+        line-height: 1.5;
+    }
+    /* ── Toast ── */
+    .sr-toast {
+        position: fixed;
+        top: 20px; right: 20px;
+        background: linear-gradient(135deg, #2ed573 0%, #1eae5b 100%);
+        color: white;
+        padding: 14px 22px;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 14px;
+        z-index: 9999;
+        box-shadow: 0 8px 24px rgba(46,213,115,0.4);
+        opacity: 0; transform: translateX(20px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+    .sr-toast.show { opacity: 1; transform: translateX(0); }
+    .sr-toast.error {
+        background: linear-gradient(135deg, #ff4757 0%, #d83545 100%);
+        box-shadow: 0 8px 24px rgba(255,71,87,0.4);
+    }
+    @media (max-width: 520px) {
+        .sr-container { padding-top: 90px; }
+    }
 </style>
 
 <script>
 function saveRewards() {
-  const inputs = document.querySelectorAll('.reward-input');
-  const rewards = Array.from(inputs).map(function(i) { return i.value.trim(); });
-  const btn = document.querySelector('.save-btn');
+  var inputs = document.querySelectorAll('.sr-input');
+  var rewards = Array.from(inputs).map(function(i) { return i.value.trim(); });
+  var btn = document.getElementById('sr-save-btn');
+  var toast = document.getElementById('sr-toast');
+  var toastTimer;
+
+  function showToast(msg, isError) {
+    toast.textContent = msg;
+    toast.classList.toggle('error', !!isError);
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
+  }
+
   btn.disabled = true;
+  btn.textContent = '⏳ Enregistrement…';
+
   fetch('/update_rewards', {
     method: 'POST',
     credentials: 'same-origin',
@@ -83,18 +205,21 @@ function saveRewards() {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     if (data.success) {
+      showToast('✅ Récompenses enregistrées !');
       btn.textContent = '✅ Enregistré !';
       setTimeout(function() {
         btn.textContent = '✅ Enregistrer mes récompenses';
         btn.disabled = false;
       }, 2000);
     } else {
-      alert(data.message || 'Erreur, réessaie.');
+      showToast(data.message || 'Erreur, réessaie.', true);
+      btn.textContent = '✅ Enregistrer mes récompenses';
       btn.disabled = false;
     }
   })
   .catch(function() {
-    alert('Erreur réseau, réessaie.');
+    showToast('Erreur réseau, réessaie.', true);
+    btn.textContent = '✅ Enregistrer mes récompenses';
     btn.disabled = false;
   });
 }
