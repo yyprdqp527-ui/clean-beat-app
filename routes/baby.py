@@ -45,14 +45,16 @@ def baby_tracking(cat, task_id):
     history = []
     if house_id:
         c.execute("""
-            SELECT user_email, tracking_time, bottle_ml, observations,
-                   datetime(created_at, 'localtime') as created_at
-            FROM baby_tracking
-            WHERE house_id=? AND task_type=?
-            ORDER BY created_at DESC
+            SELECT bt.user_email, bt.tracking_time, bt.bottle_ml, bt.observations,
+                   datetime(bt.created_at, 'localtime') as created_at,
+                   u.avatar_url, u.avatar_file, u.avatar
+            FROM baby_tracking bt
+            LEFT JOIN users u ON bt.user_email = u.email
+            WHERE bt.house_id=? AND bt.task_type=?
+            ORDER BY bt.created_at DESC
             LIMIT 5
         """, (house_id, task_type))
-        history = [dict(zip(['user_email', 'tracking_time', 'bottle_ml', 'observations', 'created_at'], row))
+        history = [dict(zip(['user_email', 'tracking_time', 'bottle_ml', 'observations', 'created_at', 'avatar_url', 'avatar_file', 'avatar'], row))
                    for row in c.fetchall()]
 
     conn.close()

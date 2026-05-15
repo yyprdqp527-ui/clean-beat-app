@@ -81,7 +81,18 @@
                             {% if entry.observations %}
                             <p class="mb-1 baby-history-obs">{{ entry.observations }}</p>
                             {% endif %}
-                            <small class="baby-history-author">Par {{ entry.user_email.split('@')[0] }}</small>
+                            <small class="baby-history-author d-flex align-items-center gap-1">
+                                {% if entry.avatar_file %}
+                                    <img src="{{ url_for('static', filename='avatars/' + entry.avatar_file) }}" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                                {% elif entry.avatar_url %}
+                                    <img src="{{ entry.avatar_url }}" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                                {% elif entry.avatar and entry.avatar|length <= 4 %}
+                                    <span style="font-size:16px;">{{ entry.avatar }}</span>
+                                {% else %}
+                                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ entry.user_email|urlencode }}" alt="" style="width:22px;height:22px;border-radius:50%;">
+                                {% endif %}
+                                Par {{ entry.user_email.split('@')[0] }}
+                            </small>
                         </div>
                         <small class="baby-history-author">{{ entry.created_at }}</small>
                     </div>
