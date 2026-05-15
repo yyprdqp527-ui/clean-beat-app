@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Connexion - Clean Beat</title>
+    <meta name="description" content="Connectez-vous à Clean Beat pour gérer vos tâches ménagères en duo.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
@@ -232,7 +233,7 @@
 </head>
 <body>
 {% include '_flash_popup.html' %}
-
+<main>
 <h1>Connexion</h1>
 
 <form method="post" action="{{ url_for('auth.login') }}" autocomplete="on" onsubmit="var b=this.querySelector('button[type=submit]'); if(b){ if(b.disabled) return false; b.disabled=true; b.dataset.origText=b.textContent; b.textContent='Connexion…'; setTimeout(function(){ if(b){b.disabled=false; if(b.dataset.origText) b.textContent=b.dataset.origText;} }, 8000); }">
@@ -268,6 +269,7 @@
 <div class="register-link">
     <p>Pas de compte ? <a href="{{ url_for('auth.signup_email') }}">Créer un compte</a></p>
 </div>
+</main>
 
 </body>
 </html>
