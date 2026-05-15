@@ -670,7 +670,16 @@
           color: LinkText !important;
         }
         .theme-dark .week-gift-icon.trophy-warm {
-          color: LinkText !important;
+          color: #0066EE !important;
+          stroke: #0066EE !important;
+          animation: none !important;
+        }
+        @supports (-webkit-touch-callout: none) {
+          .theme-dark .week-gift-icon.trophy-warm {
+            color: #007AFF !important;
+            stroke: #007AFF !important;
+            animation: none !important;
+          }
         }
         .week-gift-icon:hover { transform: scale(1.15); }
         .week-gift-star {
