@@ -1079,6 +1079,7 @@ def check_weekly_reset(house_id, conn=None):
             # Mettre à jour la date de dernière réinitialisation hebdomadaire
             c.execute("UPDATE houses SET last_weekly_reset_date=? WHERE id=?", 
                      (current_week_start, house_id))
+            c.execute("UPDATE houses SET weekly_winner_email=NULL WHERE id=?", (house_id,))
             
             conn.commit()
             reset_performed = True
@@ -2858,6 +2859,16 @@ def add_cache_headers(response):
         response.headers['Cache-Control'] = 'private, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
+    return response
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.setdefault('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+    response.headers.setdefault('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
     return response
 
 
