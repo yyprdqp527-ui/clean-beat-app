@@ -8,7 +8,7 @@ baby_bp = Blueprint('baby', __name__)
 @baby_bp.route('/baby_tracking/<cat>/<int:task_id>')
 def baby_tracking(cat, task_id):
     """Page de suivi pour les tâches de bébé (biberon, couches, sommeil)"""
-    from app import get_db_connection, normalize_category, TASKS_CONFIG, _dbg
+    from app import get_db_connection, normalize_category, TASKS_CONFIG, _dbg, validate_avatar_file
     _dbg(f"👶 PAGE BABY_TRACKING accédée par {session.get('user', 'NON_CONNECTE')} pour task_id={task_id}")
 
     if 'user' not in session:
@@ -56,6 +56,8 @@ def baby_tracking(cat, task_id):
         """, (house_id, task_type))
         history = [dict(zip(['user_email', 'tracking_time', 'bottle_ml', 'observations', 'created_at', 'avatar_url', 'avatar_file', 'avatar'], row))
                    for row in c.fetchall()]
+        for entry in history:
+            entry['avatar_file'] = validate_avatar_file(entry.get('avatar_file'))
 
     conn.close()
 
