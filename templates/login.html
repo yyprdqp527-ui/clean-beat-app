@@ -240,28 +240,28 @@
     {% if request.args.get('next_code') %}
     <input type="hidden" name="next_code" value="{{ request.args.get('next_code') }}">
     {% endif %}
-    <label>Email:</label>
-    <input type="email" name="email" required
+    <label for="loginEmail">Email:</label>
+    <input type="email" id="loginEmail" name="email" required
            autocomplete="username" inputmode="email">
 
-    <label>Mot de passe:</label>
+    <label for="loginPassword">Mot de passe:</label>
     <div style="position:relative;">
         <input type="password" id="loginPassword" name="password" required
                autocomplete="current-password" style="width:100%;padding-right:50px;">
-        <button type="button" onclick="var p=document.getElementById('loginPassword');if(p.type==='password'){p.type='text';this.textContent='🙈'}else{p.type='password';this.textContent='👁️'}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;box-shadow:none;color:#666;">👁️</button>
+        <button type="button" aria-label="Afficher le mot de passe" onclick="var p=document.getElementById('loginPassword');if(p.type==='password'){p.type='text';this.setAttribute('aria-label','Masquer le mot de passe');this.textContent='🙈'}else{p.type='password';this.setAttribute('aria-label','Afficher le mot de passe');this.textContent='👁️'}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;box-shadow:none;color:#666;">👁️</button>
     </div>
 
     <button type="submit">Se connecter</button>
 
 <p style="font-size:12px;color:var(--color-text-secondary);text-align:center;margin-top:8px;">
   En vous connectant vous acceptez notre
-  <a href="/privacy">politique de confidentialité</a>
+  <a href="/privacy" style="display:inline-block;padding:6px 4px;">politique de confidentialité</a>
 </p>
 </form>
 
 <div style="text-align:center;margin-top:10px;">
     <a href="{{ url_for('auth.forgot_password') }}"
-       style="color:rgba(255,255,255,0.85);font-size:13px;text-decoration:underline;">
+       style="color:rgba(255,255,255,0.85);font-size:13px;text-decoration:underline;display:inline-block;padding:10px 8px;">
         Mot de passe oublié ?
     </a>
 </div>
