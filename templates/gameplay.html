@@ -2153,9 +2153,8 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(r => r.json())
     .then(data => {
         if (data && data.task) {
-            window._wheelTaskId = data.task_id || null;
             hasPendingTask = true;
-            addWheelTaskCard({ task: data.task_name, points: data.points });
+            addWheelTaskCard({ task: data.task_name, points: data.points }, data.task_id || null);
         }
     })
     .catch(() => {});
@@ -2257,8 +2256,9 @@ function spinWheel() {
     const selectedTask = wheelTasks[selectedIndex];
     currentRotation = (currentRotation + totalRotation) % 360;
     setTimeout(() => {
-        addWheelTaskCard(selectedTask);
-        hasPendingTask = true;
+        isSpinning = false;
+        spinBtn.disabled = false;
+        spinBtn.textContent = '🎯 FAIRE TOURNER LA ROUE !';
         fetch('/api/spin_wheel', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2269,18 +2269,19 @@ function spinWheel() {
         })
         .then(r => r.json())
         .then(data => {
-            if (data && data.task_id) {
-                window._wheelTaskId = data.task_id;
-            }
+            addWheelTaskCard(selectedTask, data && data.task_id ? data.task_id : null);
+            hasPendingTask = true;
         })
-        .catch(() => {});
-        isSpinning = false;
-        spinBtn.disabled = false;
-        spinBtn.textContent = '🎯 FAIRE TOURNER LA ROUE !';
+        .catch(() => {
+            console.error('spin_wheel API failed');
+            addWheelTaskCard(selectedTask, null);
+            hasPendingTask = true;
+        });
     }, 4000);
 }
 
-function addWheelTaskCard(task) {
+function addWheelTaskCard(task, task_id) {
+    window._wheelTaskId = task_id !== undefined ? task_id : window._wheelTaskId;
     const list = document.getElementById('wheelTaskList');
     if (!list) return;
     const emojiMatch = task.task.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base})\s*/u);
