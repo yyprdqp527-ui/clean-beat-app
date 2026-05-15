@@ -1,8 +1,30 @@
 // Service Worker CleanBeat - Notifications Push v5
 
+const CACHE_NAME = 'qfq-cache-v1';
+const STATIC_ASSETS = ['/menu', '/static/manifest.json'];
+
 // Force le nouveau SW à prendre le contrôle immédiatement (sans attendre fermeture des onglets)
 self.addEventListener('install', function(event) {
     self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(STATIC_ASSETS))
+    );
+});
+
+self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') return;
+    if (event.request.url.includes('/api/')) return;
+    event.respondWith(
+        fetch(event.request)
+            .then(response => {
+                const clone = response.clone();
+                caches.open(CACHE_NAME)
+                    .then(cache => cache.put(event.request, clone));
+                return response;
+            })
+            .catch(() => caches.match(event.request))
+    );
 });
 self.addEventListener('activate', function(event) {
     event.waitUntil(self.clients.claim());
