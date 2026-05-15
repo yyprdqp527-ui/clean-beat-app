@@ -364,7 +364,8 @@ def rewards():
                              rewards_family=rewards_family_list,
                              rewards_couple=rewards_couple_list,
                              rewards_coloc=rewards_coloc_list,
-                             house_type=house_type))
+                             house_type=house_type,
+                             rewards_locked=bool(_winner_email_db)))
         
         # Empêcher la mise en cache
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'

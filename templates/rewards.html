@@ -1064,27 +1064,6 @@
                 <div class="countdown-time" id="countdown">--:--:--</div>
             </div>
         </div>
-        
-        <!-- BOUTON TEMPORAIRE POUR TEST -->
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="document.getElementById('testGrid').style.display='block'; this.style.display='none';" 
-                    style="background: linear-gradient(145deg, #FFD700, #FFA500); color: #1a1a2e; border: none; padding: 15px 30px; border-radius: 25px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4);">
-                Débloquer la grille (TEST)
-            </button>
-        </div>
-        
-        <!-- Grille cachée pour test -->
-        <div id="testGrid" style="display: none;">
-            <div class="mystery-grid">
-                {% for i in range(1, 41) %}
-                <div class="mystery-box" 
-                     data-box="{{ i }}"
-                     onclick="openBox({{ i }})">
-                    <div class="box-number">{{ i }}</div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
 
         {% elif not is_winner %}
         <!-- Message pas le gagnant -->
@@ -1158,7 +1137,11 @@
             {% endfor %}
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="openEditRewards('family')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% if rewards_locked %}
+                <button disabled style="padding: 18px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(166,211,220,0.3) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #597176; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; cursor: not-allowed; font-size: 14px; font-weight: 700; opacity: 0.75; display: inline-flex; align-items: center; gap: 8px;">🔒 Liste figée jusqu'à l'ouverture du cadeau</button>
+                {% else %}
+                <button onclick="window.location.href='/settings/rewards'" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% endif %}
             </div>
             {% endif %}
             
@@ -1178,7 +1161,11 @@
             {% endfor %}
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="openEditRewards('couple')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% if rewards_locked %}
+                <button disabled style="padding: 18px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(166,211,220,0.3) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #597176; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; cursor: not-allowed; font-size: 14px; font-weight: 700; opacity: 0.75; display: inline-flex; align-items: center; gap: 8px;">🔒 Liste figée jusqu'à l'ouverture du cadeau</button>
+                {% else %}
+                <button onclick="window.location.href='/settings/rewards'" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% endif %}
             </div>
             {% endif %}
             
@@ -1198,7 +1185,11 @@
             {% endfor %}
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="openEditRewards('coloc')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% if rewards_locked %}
+                <button disabled style="padding: 18px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(166,211,220,0.3) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #597176; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; cursor: not-allowed; font-size: 14px; font-weight: 700; opacity: 0.75; display: inline-flex; align-items: center; gap: 8px;">🔒 Liste figée jusqu'à l'ouverture du cadeau</button>
+                {% else %}
+                <button onclick="window.location.href='/settings/rewards'" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% endif %}
             </div>
             {% endif %}
         </div>
