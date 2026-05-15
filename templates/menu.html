@@ -1078,11 +1078,16 @@ body { padding-bottom: 84px !important; }
                         sessionStorage.setItem('internalNav', '1'); window.location.href = '/rewards';
                     } else {
                         // Afficher le leader et encourager
-                        var leaderName = (typeof WEEK_LEADER_NAME !== 'undefined' && WEEK_LEADER_NAME) ? WEEK_LEADER_NAME : null;
-                        var leaderPts  = (typeof WEEK_LEADER_PTS  !== 'undefined') ? WEEK_LEADER_PTS  : 0;
-                        var msg = leaderName
-                            ? leaderName + ' est en tête avec ' + leaderPts + ' pts mais tu peux encore gagner ! 💪'
-                            : 'La semaine n\'est pas finie — tu peux encore tout changer ! 💪';
+                        let weekMsg;
+                        if (MY_NAME && MY_NAME === WEEK_LEADER_NAME) {
+                            weekMsg = `🏆 Tu es en tête avec ${WEEK_LEADER_PTS} pts cette semaine ! Continue comme ça !`;
+                        } else if (WEEK_LEADER_NAME) {
+                            const diff = WEEK_LEADER_PTS - MY_WEEKLY_PTS;
+                            weekMsg = `${WEEK_LEADER_NAME} est en tête avec ${WEEK_LEADER_PTS} pts. Il te manque ${diff} pts pour gagner !`;
+                        } else {
+                            weekMsg = `Aucun point cette semaine encore — sois le premier !`;
+                        }
+                        var msg = weekMsg;
                         if(typeof showToast === 'function'){
                             showToast(msg);
                         } else {
@@ -1104,8 +1109,12 @@ body { padding-bottom: 84px !important; }
         });
     }
     // Données leader pour le cadeau (injectées par Jinja au rendu)
-    var WEEK_LEADER_NAME = "{{ sorted_by_week[0].name | e if sorted_by_week else '' }}";
-    var WEEK_LEADER_PTS  = {{ sorted_by_week[0].weekly_points | default(0) if sorted_by_week else 0 }};
+    const WEEK_SORTED = {{ players | sort(attribute='weekly_points', reverse=True) | tojson }};
+    const WEEK_LEADER = WEEK_SORTED.length ? WEEK_SORTED[0] : null;
+    const WEEK_LEADER_NAME = WEEK_LEADER ? WEEK_LEADER.name : '';
+    const WEEK_LEADER_PTS = WEEK_LEADER ? WEEK_LEADER.weekly_points : 0;
+    const MY_NAME = "{{ player1_name | e }}";
+    const MY_WEEKLY_PTS = {{ (players | selectattr('is_current_user') | list | first).weekly_points | default(0) }};
 
     updateWeekProgressBar();
     var _weekBarItv = setInterval(updateWeekProgressBar, 60000);
