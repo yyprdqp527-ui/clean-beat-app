@@ -500,7 +500,8 @@ def settings_rewards():
 
     return render_template('settings_rewards.html',
                            house_type=house_type,
-                           rewards_list=rewards_list)
+                           rewards_list=rewards_list,
+                           default_rewards=defaults[:20])
 
 
 @rewards_bp.route('/update_rewards', methods=['POST'])
@@ -515,15 +516,19 @@ def update_rewards():
     
     if not house_type or not rewards:
         return jsonify({'success': False, 'message': 'Données manquantes'}), 400
-    
-    if not isinstance(rewards, list) or len(rewards) != 40:
-        return jsonify({'success': False, 'message': 'Il faut exactement 40 récompenses'}), 400
-    
-    # Valider que toutes les récompenses sont des chaînes non vides
-    for reward in rewards:
-        if not isinstance(reward, str) or not reward.strip():
-            return jsonify({'success': False, 'message': 'Toutes les récompenses doivent être remplies'}), 400
-    
+
+    if not isinstance(rewards, list) or len(rewards) == 0:
+        return jsonify({'success': False, 'message': 'Données manquantes'}), 400
+
+    # Reçoit 20 récompenses → les double pour créer un pool de 40
+    rewards_raw = [r.strip() for r in rewards if isinstance(r, str) and r.strip()][:20]
+    # Complète jusqu'à 20 avec les défauts si besoin
+    defaults = _get_default_rewards(house_type)[:20]
+    while len(rewards_raw) < 20:
+        rewards_raw.append(defaults[len(rewards_raw)])
+    # Double le pool : chaque récompense personnalisée apparaît 2 fois
+    rewards_final = rewards_raw + rewards_raw
+
     conn = get_db_connection()
     c = conn.cursor()
     
@@ -536,8 +541,8 @@ def update_rewards():
     
     house_id = user_row[0]
     
-    # Sauvegarder les récompenses personnalisées
-    rewards_json = json.dumps(rewards, ensure_ascii=False)
+    # Sauvegarder les récompenses personnalisées (pool de 40 = 20 × 2)
+    rewards_json = json.dumps(rewards_final, ensure_ascii=False)
     
     try:
         c.execute("""

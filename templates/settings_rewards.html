@@ -4,406 +4,99 @@
 {% block title %}Mes récompenses · QuiFaitQuoi{% endblock %}
 
 {% block content %}
-<style>
-    .sr-container {
-        max-width: 560px;
-        margin: 0 auto;
-        padding: 40px 20px 60px 20px;
-    }
-    .sr-header {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.18) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        padding: 24px 20px;
-        margin-bottom: 24px;
-        text-align: center;
-        border: 2px solid rgba(253,174,84,0.3);
-        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
-    }
-    .sr-header h1 {
-        font-size: 22px; font-weight: 800; color: #153036; margin: 0 0 4px;
-    }
-    .sr-header .subtitle {
-        font-size: 14px; color: #597176; font-weight: 500;
-    }
-    .sr-info {
-        background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(166,211,220,0.35);
-        border-radius: 18px;
-        padding: 14px 16px;
-        margin-bottom: 18px;
-        font-size: 13px;
-        font-weight: 600;
-        color: #153036;
-        line-height: 1.5;
-        text-align: center;
-    }
-    .sr-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    .sr-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.7) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255,255,255,0.55);
-        border-radius: 16px;
-        padding: 10px 12px;
-        box-shadow: 0 4px 14px rgba(89,113,118,0.1);
-    }
-    .sr-num {
-        flex-shrink: 0;
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
-        color: white;
-        font-size: 13px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .sr-input {
-        flex: 1;
-        min-width: 0;
-        border: 1px solid rgba(21,48,54,0.15);
-        border-radius: 12px;
-        padding: 10px 12px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #153036;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: rgba(255,255,255,0.8);
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .sr-input:focus {
-        border-color: #FDAE54;
-        box-shadow: 0 0 0 3px rgba(253,174,84,0.15);
-    }
-    .sr-save-btn {
-        flex-shrink: 0;
-        background: linear-gradient(135deg, #2ed573 0%, #1eae5b 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 10px 14px;
-        font-size: 13px;
-        font-weight: 800;
-        cursor: pointer;
-        white-space: nowrap;
-        box-shadow: 0 4px 12px rgba(46,213,115,0.3);
-        transition: all 0.2s;
-    }
-    .sr-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(46,213,115,0.4); }
-    .sr-save-btn:active { transform: scale(0.97); }
-    .sr-save-btn:disabled {
-        background: linear-gradient(135deg, #b0b0b0 0%, #999 100%);
-        cursor: default;
-        box-shadow: none;
-    }
-    .sr-save-btn.saved {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    }
-    .sr-toast {
-        position: fixed;
-        top: 20px; right: 20px;
-        background: linear-gradient(135deg, #2ed573 0%, #1eae5b 100%);
-        color: white;
-        padding: 14px 22px;
-        border-radius: 14px;
-        font-weight: 800;
-        font-size: 14px;
-        z-index: 9999;
-        box-shadow: 0 8px 24px rgba(46,213,115,0.4);
-        opacity: 0; transform: translateX(20px);
-        transition: all 0.3s ease;
-        pointer-events: none;
-    }
-    .sr-toast.show { opacity: 1; transform: translateX(0); }
-    .sr-toast.error {
-        background: linear-gradient(135deg, #ff4757 0%, #d83545 100%);
-        box-shadow: 0 8px 24px rgba(255,71,87,0.4);
-    }
-    @media (max-width: 520px) {
-        .sr-container { padding-top: 90px; }
-    }
-    @media (max-width: 420px) {
-        .sr-item { padding: 8px 10px; gap: 8px; }
-        .sr-num { width: 28px; height: 28px; font-size: 12px; }
-        .sr-input { padding: 8px 10px; font-size: 13px; }
-        .sr-save-btn { padding: 8px 10px; font-size: 12px; }
-    }
-
-    /* ── Onglets iOS-style ─────────────────────────────────── */
-    .sr-tabs {
-        display: flex;
-        background: rgba(21,48,54,0.08);
-        border-radius: 14px;
-        padding: 3px;
-        margin-bottom: 24px;
-        gap: 3px;
-    }
-    .sr-tab {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 11px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        background: transparent;
-        color: #597176;
-        transition: all 0.2s;
-        font-family: inherit;
-    }
-    .sr-tab.active {
-        background: rgba(255,255,255,0.95);
-        color: #153036;
-        box-shadow: 0 2px 8px rgba(21,48,54,0.12);
-    }
-    .sr-panel { display: none; }
-    .sr-panel.active { display: block; }
-
-    .sr-add-card {
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.6);
-        box-shadow: 0 8px 32px rgba(21,48,54,0.1);
-        padding: 24px 20px;
-        margin-bottom: 16px;
-    }
-    .sr-add-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #597176;
-        margin-bottom: 10px;
-        letter-spacing: 0.03em;
-    }
-    .sr-add-input {
-        width: 100%;
-        padding: 14px 16px;
-        border-radius: 12px;
-        border: 1.5px solid rgba(253,174,84,0.4);
-        background: rgba(255,255,255,0.9);
-        font-size: 16px;
-        color: #153036;
-        font-weight: 500;
-        box-sizing: border-box;
-        margin-bottom: 14px;
-        outline: none;
-        font-family: inherit;
-        resize: vertical;
-    }
-    .sr-add-input:focus {
-        border-color: #FDAE54;
-        box-shadow: 0 0 0 3px rgba(253,174,84,0.15);
-    }
-    .sr-add-btn {
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, #FDAE54, #F4C68D);
-        border: none;
-        border-radius: 14px;
-        font-size: 16px;
-        font-weight: 800;
-        color: #153036;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(253,174,84,0.35);
-        font-family: inherit;
-    }
-    .sr-add-btn:disabled { opacity: 0.7; cursor: default; }
-    .sr-confirm {
-        background: rgba(46,213,115,0.12);
-        border: 1px solid rgba(46,213,115,0.3);
-        border-radius: 12px;
-        padding: 14px 16px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #1B6B4A;
-        text-align: center;
-        display: none;
-        margin-top: 12px;
-    }
-</style>
-
 <a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour">←</a>
 
-<div class="sr-container">
-    <div class="sr-header">
-        <h1>Mes récompenses</h1>
-        <p class="subtitle">Personnalise les 40 cases de la grille</p>
+<div class="rewards-settings-wrap">
+
+  <!-- En-tête motivant -->
+  <div class="rewards-header">
+    <h2>🎁 Tes récompenses personnelles</h2>
+    <p class="rewards-intro">
+      La grille du dimanche est remplie de récompenses par défaut —
+      mais c'est <strong>toi qui décides ce qui te ferait vraiment plaisir</strong>.
+      Remplis ces 20 cases avec tes envies : une sortie, un massage,
+      une soirée canapé… Chaque récompense que tu écris a
+      <strong>deux fois plus de chances</strong> d'apparaître dans la grille ! 🌟
+    </p>
+  </div>
+
+  <!-- Grille 20 inputs -->
+  <form id="rewards-form">
+    <div class="rewards-grid-20">
+      {% for i in range(20) %}
+      <div class="reward-slot">
+        <span class="reward-num">{{ i + 1 }}</span>
+        <input
+          type="text"
+          class="reward-input"
+          name="reward_{{ i }}"
+          value="{{ rewards_list[i] if rewards_list and i < rewards_list|length else '' }}"
+          placeholder="{{ default_rewards[i] if default_rewards and i < default_rewards|length else 'Écris ce qui te ferait plaisir…' }}"
+          maxlength="60"
+        >
+      </div>
+      {% endfor %}
     </div>
 
-    <div class="sr-tabs">
-        <button type="button" class="sr-tab active" onclick="switchTab('add')">Ajouter</button>
-        <button type="button" class="sr-tab" onclick="switchTab('edit')">Modifier la grille</button>
-    </div>
+    <button type="button" class="save-btn" onclick="saveRewards()">
+      ✅ Enregistrer mes récompenses
+    </button>
+  </form>
 
-    <!-- ONGLET 1 : Ajouter -->
-    <div class="sr-panel active" id="panel-add">
-        <div class="sr-add-card">
-            <div class="sr-add-label">Ta nouvelle récompense</div>
-            <textarea class="sr-add-input" id="new-reward-input" rows="3"
-                      placeholder="Ex : Soirée cinéma à deux..." maxlength="200"></textarea>
-            <button class="sr-add-btn" onclick="addCustomReward()">Ajouter dans la grille</button>
-            <div class="sr-confirm" id="add-confirm">
-                🎉 Ta récompense sera placée aléatoirement dans la grille — visible par tous les joueurs de la maison !
-            </div>
-        </div>
-    </div>
+  <p class="rewards-hint">
+    💡 Les cases vides seront remplacées par des récompenses par défaut.
+    Tes récompenses personnelles apparaîtront <strong>2 fois</strong> dans la grille du dimanche.
+  </p>
 
-    <!-- ONGLET 2 : Modifier -->
-    <div class="sr-panel" id="panel-edit">
-        <div class="sr-info">
-            Les récompenses sont mélangées <strong>aléatoirement</strong> dans la grille du dimanche.
-            Modifie chaque case et clique sur <strong>Enregistrer</strong>.
-        </div>
-
-        <div class="sr-list" id="sr-list">
-            {% for reward in rewards_list %}
-            <div class="sr-item">
-                <div class="sr-num">{{ loop.index }}</div>
-                <input type="text" class="sr-input"
-                       data-index="{{ loop.index0 }}"
-                       value="{{ reward }}"
-                       maxlength="200">
-                <button class="sr-save-btn" data-index="{{ loop.index0 }}">Enregistrer</button>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
 </div>
 
-<div class="sr-toast" id="sr-toast"></div>
+<style>
+.rewards-settings-wrap { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+.rewards-header { text-align: center; margin-bottom: 24px; }
+.rewards-header h2 { font-size: 22px; font-weight: 500; margin-bottom: 8px; }
+.rewards-intro { font-size: 15px; color: var(--color-text-secondary); line-height: 1.6; }
+.rewards-grid-20 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.reward-slot { display: flex; align-items: center; gap: 8px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
+.reward-num { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); min-width: 20px; }
+.reward-input { flex: 1; border: none; background: transparent; font-size: 14px; color: var(--color-text-primary); outline: none; }
+.reward-input::placeholder { color: var(--color-text-secondary); opacity: 0.6; }
+.save-btn { width: 100%; padding: 14px; border-radius: var(--border-radius-lg); background: var(--color-background-secondary); border: 1px solid var(--color-border-secondary); font-size: 16px; font-weight: 500; cursor: pointer; color: var(--color-text-primary); }
+.rewards-hint { text-align: center; font-size: 13px; color: var(--color-text-secondary); margin-top: 16px; line-height: 1.5; }
+@media (max-width: 420px) {
+  .rewards-grid-20 { grid-template-columns: 1fr; }
+  .rewards-settings-wrap { padding-top: 80px; }
+}
+</style>
 
 <script>
-function switchTab(tab) {
-    document.querySelectorAll('.sr-tab').forEach((t, i) => {
-        t.classList.toggle('active', i === (tab === 'add' ? 0 : 1));
-    });
-    document.getElementById('panel-add').classList.toggle('active', tab === 'add');
-    document.getElementById('panel-edit').classList.toggle('active', tab === 'edit');
-}
-
-async function addCustomReward() {
-    const input = document.getElementById('new-reward-input');
-    const val = input.value.trim();
-    if (!val) { input.focus(); return; }
-    const btn = document.querySelector('.sr-add-btn');
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = '⏳ En cours...';
-    try {
-        const r = await fetch('/api/add_custom_reward', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reward: val })
-        });
-        const data = await r.json();
-        if (r.ok && data.ok) {
-            input.value = '';
-            const confirm = document.getElementById('add-confirm');
-            confirm.style.display = 'block';
-            setTimeout(() => { confirm.style.display = 'none'; }, 4000);
-        } else {
-            alert(data.error || 'Erreur, réessaie.');
-        }
-    } catch(e) {
-        alert('Erreur réseau, réessaie.');
-    } finally {
+function saveRewards() {
+  const inputs = document.querySelectorAll('.reward-input');
+  const rewards = Array.from(inputs).map(function(i) { return i.value.trim(); });
+  const btn = document.querySelector('.save-btn');
+  btn.disabled = true;
+  fetch('/update_rewards', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ house_type: {{ house_type|tojson }}, rewards: rewards })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      btn.textContent = '✅ Enregistré !';
+      setTimeout(function() {
+        btn.textContent = '✅ Enregistrer mes récompenses';
         btn.disabled = false;
-        btn.textContent = originalText;
+      }, 2000);
+    } else {
+      alert(data.message || 'Erreur, réessaie.');
+      btn.disabled = false;
     }
+  })
+  .catch(function() {
+    alert('Erreur réseau, réessaie.');
+    btn.disabled = false;
+  });
 }
-
-(function(){
-    var HOUSE_TYPE = {{ house_type|tojson }};
-    var listEl = document.getElementById('sr-list');
-    var toastEl = document.getElementById('sr-toast');
-    var toastTimer = null;
-
-    function showToast(msg, isError) {
-        toastEl.textContent = msg;
-        toastEl.classList.toggle('error', !!isError);
-        toastEl.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(function(){
-            toastEl.classList.remove('show');
-        }, 2500);
-    }
-
-    function collectAll() {
-        var inputs = listEl.querySelectorAll('.sr-input');
-        var arr = [];
-        inputs.forEach(function(inp){ arr.push(inp.value.trim()); });
-        return arr;
-    }
-
-    listEl.addEventListener('click', async function(e){
-        var btn = e.target.closest('.sr-save-btn');
-        if (!btn) return;
-        var idx = parseInt(btn.getAttribute('data-index'), 10);
-        var item = btn.closest('.sr-item');
-        var input = item.querySelector('.sr-input');
-        var val = input.value.trim();
-
-        if (!val) {
-            showToast('La récompense ne peut pas être vide', true);
-            input.focus();
-            return;
-        }
-
-        var rewards = collectAll();
-        // Vérifier que toutes sont remplies (sinon le backend rejette)
-        for (var i = 0; i < rewards.length; i++) {
-            if (!rewards[i]) {
-                showToast('Récompense ' + (i+1) + ' vide — remplis-la avant', true);
-                return;
-            }
-        }
-
-        btn.disabled = true;
-        var originalText = btn.textContent;
-        btn.textContent = '⏳';
-
-        try {
-            var resp = await fetch('/update_rewards', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ house_type: HOUSE_TYPE, rewards: rewards })
-            });
-            var data = await resp.json();
-            if (resp.ok && data.success) {
-                btn.textContent = '✓ Enregistré';
-                btn.classList.add('saved');
-                showToast('Récompense ' + (idx+1) + ' enregistrée');
-                setTimeout(function(){
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                    btn.classList.remove('saved');
-                }, 1500);
-            } else {
-                throw new Error(data.message || ('HTTP ' + resp.status));
-            }
-        } catch(err) {
-            btn.disabled = false;
-            btn.textContent = originalText;
-            showToast('Erreur : ' + err.message, true);
-        }
-    });
-})();
 </script>
 {% endblock %}
