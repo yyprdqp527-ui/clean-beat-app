@@ -57,10 +57,11 @@
 
     .privacy-back {
         display: inline-block;
-        margin: 20px 0 0 0;
+        margin: 20px 0 16px 0;
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--color-text-primary, rgba(255, 255, 255, 0.7));
         text-decoration: none;
+        cursor: pointer;
     }
 </style>
 {% endblock %}
@@ -68,6 +69,7 @@
 {% block content %}
 <div style="padding: 20px;">
     <div class="privacy-container">
+        <a class="privacy-back" onclick="history.back()">← Retour</a>
         <h1>Politique de confidentialité</h1>
 
         <h2>1. Qui sommes-nous ?</h2>
