@@ -1321,7 +1321,7 @@
         /* Responsive mobile - 2 colonnes aussi sur mobile */
         @media (max-width: 600px) {
             .rooms-isometric {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 10px 6px;
                 padding: 10px 6px;
             }
@@ -1982,7 +1982,7 @@
         }
         @media (max-width: 360px) {
             .rooms-isometric {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(3, 1fr) !important;
                 gap: 8px 6px !important;
                 padding: 8px 4px !important;
             }
