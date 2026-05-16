@@ -510,11 +510,11 @@ def update_rewards():
     from app import get_db_connection
     if 'user' not in session:
         return jsonify({'success': False, 'message': 'Non connecté'}), 401
-    
-    data = request.get_json()
+
+    data = request.get_json(silent=True) or {}
     house_type = data.get('house_type')
     rewards = data.get('rewards')
-    
+
     if not house_type or not rewards:
         return jsonify({'success': False, 'message': 'Données manquantes'}), 400
 
@@ -529,48 +529,41 @@ def update_rewards():
         rewards_raw.append(defaults[len(rewards_raw)])
     # Double le pool : chaque récompense personnalisée apparaît 2 fois
     rewards_final = rewards_raw + rewards_raw
+    rewards_json = json.dumps(rewards_final, ensure_ascii=False)
 
     conn = get_db_connection()
-    c = conn.cursor()
-    
-    # Récupérer la maison de l'utilisateur
-    c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
-    user_row = c.fetchone()
-    if not user_row or not user_row[0]:
-        conn.close()
-        return jsonify({'success': False, 'message': 'Pas de maison'}), 400
-    
-    house_id = user_row[0]
-
-    # Bloquer la modification si le cron a déjà désigné un gagnant cette semaine
-    winner_row = c.execute(
-        "SELECT weekly_winner_email FROM houses WHERE id=?", (house_id,)
-    ).fetchone()
-    if winner_row and winner_row[0]:
-        conn.close()
-        return jsonify({
-            'success': False,
-            'message': 'La liste est figée jusqu\'à l\'ouverture du cadeau du dimanche 🎁'
-        }), 403
-
-    # Sauvegarder les récompenses personnalisées (pool de 40 = 20 × 2)
-    rewards_json = json.dumps(rewards_final, ensure_ascii=False)
-    
     try:
+        c = conn.cursor()
+
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        user_row = c.fetchone()
+        if not user_row or not user_row[0]:
+            return jsonify({'success': False, 'message': 'Pas de maison'}), 400
+
+        house_id = user_row[0]
+
+        c.execute("SELECT weekly_winner_email FROM houses WHERE id=?", (house_id,))
+        winner_row = c.fetchone()
+        if winner_row and winner_row[0]:
+            return jsonify({
+                'success': False,
+                'message': "La liste est figée jusqu'à l'ouverture du cadeau du dimanche 🎁"
+            }), 403
+
         c.execute("""
             INSERT INTO custom_rewards (house_id, house_type, rewards_json, updated_at)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(house_id, house_type) 
-            DO UPDATE SET rewards_json=?, updated_at=CURRENT_TIMESTAMP
-        """, (house_id, house_type, rewards_json, rewards_json))
-        
+            ON CONFLICT(house_id, house_type)
+            DO UPDATE SET rewards_json=excluded.rewards_json,
+                          updated_at=CURRENT_TIMESTAMP
+        """, (house_id, house_type, rewards_json))
+
         conn.commit()
-        conn.close()
-        
         return jsonify({'success': True, 'message': 'Récompenses sauvegardées'})
     except Exception as e:
-        conn.close()
         return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
+    finally:
+        conn.close()
 
 
 # ── Helpers et nouvelle route "ajouter une recompense custom" ──────────────
