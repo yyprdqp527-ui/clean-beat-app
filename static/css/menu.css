@@ -1270,16 +1270,23 @@
         
         /* Titre EN DESSOUS du cadre */
         .room-card-title {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 2;
-            padding: 28px 18px 12px;
-            background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.15) 60%, transparent 100%);
-            font-size: 22px;
-            font-weight: 500;
-            color: #ffffff;
+            margin-top: 0px !important;
+            margin-bottom: 6px !important;
+            width: 100% !important;
+            padding: 5px 8px !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            color: #1a1410 !important;
+            background: linear-gradient(135deg, #FF9F47 0%, #FDB777 100%) !important;
+            border-radius: 8px !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 8px rgba(21, 48, 54, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
         
         /* Hover / Active */
