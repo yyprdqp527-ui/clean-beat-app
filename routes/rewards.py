@@ -543,9 +543,8 @@ def update_rewards():
     house_id = user_row[0]
 
     # Bloquer la modification si le cron a déjà désigné un gagnant cette semaine
-    winner_row = c.execute(
-        "SELECT weekly_winner_email FROM houses WHERE id=?", (house_id,)
-    ).fetchone()
+    c.execute("SELECT weekly_winner_email FROM houses WHERE id=?", (house_id,))
+    winner_row = c.fetchone()
     if winner_row and winner_row[0]:
         conn.close()
         return jsonify({
