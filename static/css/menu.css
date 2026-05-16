@@ -1206,7 +1206,7 @@
         /* ======= GRILLE ALIGNÉE — 3 COLONNES ======= */
         .rooms-isometric {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 24px 18px;
             width: 100%;
             padding: 8px 8px;
@@ -1221,7 +1221,7 @@
             -webkit-tap-highlight-color: transparent;
             overflow: visible !important;
             position: relative;
-            transform: scale(0.85);
+            transform: scale(1);
             transform-origin: top center;
             transition: transform 0.22s ease, filter 0.22s ease;
             display: flex !important;
@@ -1315,10 +1315,10 @@
 
         /* Cartes affichées instantanément — pas d'animation de chargement */
         
-        /* Responsive mobile - 3 colonnes aussi sur mobile */
+        /* Responsive mobile - 2 colonnes aussi sur mobile */
         @media (max-width: 600px) {
             .rooms-isometric {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
                 gap: 10px 6px;
                 padding: 10px 6px;
             }
