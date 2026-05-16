@@ -1206,8 +1206,8 @@
         /* ======= GRILLE ALIGNÉE — 3 COLONNES ======= */
         .rooms-isometric {
             display: grid;
-            grid-template-columns: repeat(1, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px 18px;
             width: 100%;
             padding: 8px 8px;
             box-sizing: border-box;
@@ -1221,8 +1221,8 @@
             -webkit-tap-highlight-color: transparent;
             overflow: hidden;
             position: relative;
-            height: 130px;
-            transform: scale(1);
+            height: unset;
+            transform: scale(0.85);
             transform-origin: top center;
             transition: transform 0.22s ease, filter 0.22s ease;
             display: flex !important;
@@ -1233,12 +1233,12 @@
         
         /* Image dans cadre glassmorphisme qui déborde */
         .room-card-visual {
-            width: 100%;
-            height: 100%;
+            width: unset;
+            height: unset;
             overflow: visible;
-            position: absolute;
-            inset: 0;
-            aspect-ratio: unset;
+            position: unset;
+            inset: unset;
+            aspect-ratio: 400 / 462;
             background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(89,113,118,0.15);
@@ -1270,16 +1270,6 @@
         
         /* Titre EN DESSOUS du cadre */
         .room-card-title {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 2;
-            padding: 28px 18px 12px;
-            background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.15) 60%, transparent 100%);
-            font-size: 22px;
-            font-weight: 500;
-            color: #ffffff;
         }
         
         /* Hover / Active */
