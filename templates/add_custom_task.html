@@ -524,6 +524,13 @@ body {
                     </div>
                 </div>
 
+            <!-- BOUTON CRÉER / ENREGISTRER -->
+            <div class="btn-container">
+                <button type="submit" class="btn btn-primary">
+                    {% if task %}💾 Enregistrer{% else %}🚀 Lancer la mission !{% endif %}
+                </button>
+            </div>
+
                 {% if mission_images %}
                 <!-- GALERIE D'IMAGES PRÉCHARGÉES -->
                 <div class="gallery-section">
@@ -547,13 +554,6 @@ body {
                 <label for="pointsDisplay" class="label-centered"><span class="label-emoji">⭐</span> Combien ça vaut ?</label>
                 <input type="number" class="points-input-field points-centered" id="pointsDisplay" name="points"
                        value="{{ task.points if task else 10 }}" min="1" max="999" required>
-            </div>
-
-            <!-- BOUTON CRÉER / ENREGISTRER -->
-            <div class="btn-container">
-                <button type="submit" class="btn btn-primary">
-                    {% if task %}💾 Enregistrer{% else %}🚀 Lancer la mission !{% endif %}
-                </button>
             </div>
             
             {% if task %}
