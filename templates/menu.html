@@ -1114,7 +1114,8 @@ body { padding-bottom: 84px !important; }
     const WEEK_LEADER_NAME = WEEK_LEADER ? WEEK_LEADER.name : '';
     const WEEK_LEADER_PTS = WEEK_LEADER ? WEEK_LEADER.weekly_points : 0;
     const MY_NAME = "{{ player1_name | e }}";
-    const MY_WEEKLY_PTS = {{ (players | selectattr('is_current_user') | list | first).weekly_points | default(0) }};
+    {% set _cur_list = players | selectattr('is_current_user') | list %}
+    const MY_WEEKLY_PTS = {{ (_cur_list | first).weekly_points | default(0) if _cur_list else 0 }};
 
     updateWeekProgressBar();
     var _weekBarItv = setInterval(updateWeekProgressBar, 60000);
