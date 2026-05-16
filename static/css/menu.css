@@ -1979,7 +1979,7 @@
         }
         @media (max-width: 360px) {
             .rooms-isometric {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(3, 1fr) !important;
                 gap: 8px 6px !important;
                 padding: 8px 4px !important;
             }
