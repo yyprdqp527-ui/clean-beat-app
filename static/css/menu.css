@@ -1219,9 +1219,8 @@
         .room-card {
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
+            overflow: visible !important;
             position: relative;
-            height: unset;
             transform: scale(0.85);
             transform-origin: top center;
             transition: transform 0.22s ease, filter 0.22s ease;
@@ -1233,11 +1232,9 @@
         
         /* Image dans cadre glassmorphisme qui déborde */
         .room-card-visual {
-            width: unset;
-            height: unset;
+            width: 100%;
             overflow: visible;
-            position: unset;
-            inset: unset;
+            position: relative;
             aspect-ratio: 400 / 462;
             background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
             border-radius: 20px;
@@ -1318,7 +1315,7 @@
 
         /* Cartes affichées instantanément — pas d'animation de chargement */
         
-        /* Responsive mobile - 2 colonnes aussi sur mobile */
+        /* Responsive mobile - 3 colonnes aussi sur mobile */
         @media (max-width: 600px) {
             .rooms-isometric {
                 grid-template-columns: repeat(3, 1fr);
@@ -1922,8 +1919,8 @@
         /* Pastille orange « nouvelle mission » sur les cartes de pièces */
         .room-mission-dot {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: -8px;
+            right: -8px;
             min-width: 26px;
             height: 26px;
             padding: 0 7px;
@@ -1945,8 +1942,8 @@
         /* Pastille rose chambre bébé */
         .room-baby-dot {
             position: absolute;
-            top: 8px;
-            left: 8px;
+            top: -8px;
+            left: -8px;
             min-width: 26px;
             height: 26px;
             padding: 0 7px;
@@ -1982,7 +1979,7 @@
         }
         @media (max-width: 360px) {
             .rooms-isometric {
-                grid-template-columns: repeat(3, 1fr) !important;
+                grid-template-columns: repeat(2, 1fr) !important;
                 gap: 8px 6px !important;
                 padding: 8px 4px !important;
             }
