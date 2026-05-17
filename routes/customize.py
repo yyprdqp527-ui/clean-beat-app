@@ -128,11 +128,11 @@ AVAILABLE_ROOM_IMAGES = [
     {'file': 'images/thumbs/Garage2.webp',              'label': 'Garage'},
     {'file': 'images/thumbs/bureau.webp',               'label': 'Bureau'},
     {'file': 'images/thumbs/chambreparentale_marron.webp','label': 'Chambre'},
-    {'file': 'images/thumbs/chambre1.webp',             'label': 'Chambre 2'},
+    {'file': 'images/imageqfq/Furniture28.webp',             'label': 'Chambre 2'},
     {'file': 'images/thumbs/chambre2.webp',             'label': 'Chambre 3'},
     {'file': 'images/thumbs/chambre_garçon3.webp',      'label': 'Chambre garçon'},
-    {'file': 'images/thumbs/chambre_enfant_4.webp',     'label': 'Chambre enfant'},
-    {'file': 'images/thumbs/chambre_bébé4_.webp',       'label': 'Chambre bébé'},
+    {'file': 'images/imageqfq/WoodenBunkBeds11.webp',     'label': 'Chambre enfant'},
+    {'file': 'images/imageqfq/GreenBaby58.webp',       'label': 'Chambre bébé'},
     {'file': 'images/thumbs/default.webp',              'label': 'Autre'},
 ]
 _ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
@@ -262,11 +262,11 @@ def personnaliser_maison():
     # Liste complète de toutes les pièces
     ALL_ROOMS = [
         {'key': 'chambre_parentale', 'default_name': 'Chambre 1',     'image': 'images/imageqfq/litparent.webp', 'fixed': False},
-        {'key': 'chambre1',          'default_name': 'Chambre 2',     'image': 'images/thumbs/chambre1.webp',                'fixed': False},
+        {'key': 'chambre1',          'default_name': 'Chambre 2',     'image': 'images/imageqfq/Furniture28.webp',                'fixed': False},
         {'key': 'chambre2',          'default_name': 'Chambre 3',     'image': 'images/thumbs/chambre2.webp',                'fixed': False},
         {'key': 'chambre_garcon',    'default_name': 'Chambre 4',     'image': 'images/thumbs/chambre_garçon3.webp',         'fixed': False},
-        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/thumbs/chambre_enfant_4.webp',        'fixed': False},
-        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/thumbs/chambre_bébé4_.webp',          'fixed': False},
+        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/imageqfq/WoodenBunkBeds11.webp',        'fixed': False},
+        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/imageqfq/GreenBaby58.webp',          'fixed': False},
         {'key': 'salon',             'default_name': 'Salon',         'image': 'images/imageqfq/68- Furniture Clipart.webp',             'fixed': False},
         {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',             'fixed': False},
         {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/imageqfq/bathtub.webp',                'fixed': False},
