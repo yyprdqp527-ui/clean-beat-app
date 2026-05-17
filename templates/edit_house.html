@@ -855,15 +855,16 @@ function onRoomPhotoSelected(input) {
 // Catalogue de pièces prédéfinies — clic = ajout DIRECT
 (function buildEmojiCatalogue() {
     var CATALOGUE = [
-        { key: 'jardin',       label: 'Jardin',              emoji: '🌿' },
-        { key: 'cave',         label: 'Cave',                emoji: '🍷' },
-        { key: 'animaux',      label: 'Animaux',             emoji: '🐾' },
-        { key: 'salle_sport',  label: 'Salle de sport',      emoji: '🏋️' },
-        { key: 'atelier',      label: 'Atelier',             emoji: '🔧' },
-        { key: 'bibliotheque', label: 'Bibliothèque',        emoji: '📚' },
-        { key: 'dressing',     label: 'Dressing',            emoji: '👗' },
-        { key: 'veranda',      label: 'Véranda',             emoji: '☀️' },
-        { key: 'piscine',      label: 'Piscine',             emoji: '🏊' },
+        { key: 'jardin',        label: 'Jardin',          emoji: '🌿', image: 'images/imageqfq/Gardening11.webp' },
+        { key: 'salle_billard', label: 'Salle de billard',emoji: '🎱', image: 'images/imageqfq/ManCave65.webp' },
+        { key: 'salle_tv',      label: 'Salle TV',        emoji: '📺', image: 'images/imageqfq/ManCave76.webp' },
+        { key: 'salle_sport',   label: 'Salle de sport',  emoji: '🏋️', image: 'images/imageqfq/Gym12.webp' },
+        { key: 'bureau',        label: 'Bureau',          emoji: '💻', image: 'images/imageqfq/Writer5.webp' },
+        { key: 'dressing',      label: 'Dressing',        emoji: '👗', image: 'images/imageqfq/OrganizingCloset.webp' },
+        { key: 'piscine',       label: 'Piscine',         emoji: '🏊', image: 'images/imageqfq/Pool4.webp' },
+        { key: 'terrasse',      label: 'Terrasse',        emoji: '🌺', image: 'images/imageqfq/Furniture33.webp' },
+        { key: 'animaux',       label: 'Animaux',         emoji: '🐾', image: 'images/imageqfq/Pets9.webp' },
+        { key: 'salle_lecture', label: 'Salle lecture',   emoji: '📚', image: 'images/imageqfq/salonqfq.webp' },
     ];
     var grid = document.getElementById('emojiCatalogueGrid');
     if (!grid) return;
@@ -887,7 +888,7 @@ function onRoomPhotoSelected(input) {
         card.dataset.emoji = item.emoji;
         card.dataset.label = item.label;
         card.innerHTML = '<span class="emoji-card-check">✅</span>' +
-                         '<div style="font-size:2.5rem;line-height:1.2;">' + item.emoji + '</div>' +
+                         '<img src="/static/' + item.image + '?v=126" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 4px;" alt="">' +
                          '<div style="margin-top:6px;font-size:13px;font-weight:600;">' + item.label + '</div>';
 
         // Marque comme déjà ajoutée si label trouvé
@@ -917,7 +918,7 @@ function onRoomPhotoSelected(input) {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: item.label, image: '', emoji: item.emoji })
+                body: JSON.stringify({ name: item.label, image: item.image, emoji: item.emoji })
             })
             .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
             .then(function(res) {

@@ -17,15 +17,16 @@ ROOM_THUMB_H = 462
 # Plus aucune génération d'image serveur pour ces pièces : le menu les rend
 # directement via .emoji-losange + emoji unicode (instantané).
 ROOM_CATALOGUE = [
-    {"key": "jardin",       "emoji": "🌿", "label": "Jardin"},
-    {"key": "cave",         "emoji": "🍷", "label": "Cave"},
-    {"key": "animaux",      "emoji": "🐾", "label": "Animaux"},
-    {"key": "salle_sport",  "emoji": "🏋️", "label": "Salle de sport"},
-    {"key": "atelier",      "emoji": "🔧", "label": "Atelier"},
-    {"key": "bibliotheque", "emoji": "📚", "label": "Bibliothèque"},
-    {"key": "dressing",     "emoji": "👗", "label": "Dressing"},
-    {"key": "veranda",      "emoji": "☀️", "label": "Véranda"},
-    {"key": "piscine",      "emoji": "🏊", "label": "Piscine"},
+    {"key": "jardin",        "emoji": "🌿", "label": "Jardin",           "image": "images/imageqfq/Gardening11.webp"},
+    {"key": "salle_billard", "emoji": "🎱", "label": "Salle de billard", "image": "images/imageqfq/ManCave65.webp"},
+    {"key": "salle_tv",      "emoji": "📺", "label": "Salle TV",         "image": "images/imageqfq/ManCave76.webp"},
+    {"key": "salle_sport",   "emoji": "🏋️", "label": "Salle de sport",  "image": "images/imageqfq/Gym12.webp"},
+    {"key": "bureau",        "emoji": "💻", "label": "Bureau",           "image": "images/imageqfq/Writer5.webp"},
+    {"key": "dressing",      "emoji": "👗", "label": "Dressing",         "image": "images/imageqfq/OrganizingCloset.webp"},
+    {"key": "piscine",       "emoji": "🏊", "label": "Piscine",          "image": "images/imageqfq/Pool4.webp"},
+    {"key": "terrasse",      "emoji": "🌺", "label": "Terrasse",         "image": "images/imageqfq/Furniture33.webp"},
+    {"key": "animaux",       "emoji": "🐾", "label": "Animaux",          "image": "images/imageqfq/Pets9.webp"},
+    {"key": "salle_lecture", "emoji": "📚", "label": "Salle lecture",    "image": "images/imageqfq/salonqfq.webp"},
 ]
 
 
@@ -134,6 +135,16 @@ AVAILABLE_ROOM_IMAGES = [
     {'file': 'images/imageqfq/Furniture64.webp',     'label': 'Chambre enfant'},
     {'file': 'images/imageqfq/GreenBaby58.webp',       'label': 'Chambre bébé'},
     {'file': 'images/thumbs/default.webp',              'label': 'Autre'},
+    {'file': 'images/imageqfq/Gardening11.webp',         'label': 'Jardin'},
+    {'file': 'images/imageqfq/ManCave65.webp',           'label': 'Salle de billard'},
+    {'file': 'images/imageqfq/ManCave76.webp',           'label': 'Salle TV'},
+    {'file': 'images/imageqfq/Gym12.webp',               'label': 'Salle de sport'},
+    {'file': 'images/imageqfq/Writer5.webp',             'label': 'Bureau'},
+    {'file': 'images/imageqfq/OrganizingCloset.webp',    'label': 'Dressing'},
+    {'file': 'images/imageqfq/Pool4.webp',               'label': 'Piscine'},
+    {'file': 'images/imageqfq/Furniture33.webp',         'label': 'Terrasse'},
+    {'file': 'images/imageqfq/Pets9.webp',               'label': 'Animaux'},
+    {'file': 'images/imageqfq/salonqfq.webp',            'label': 'Salle lecture'},
 ]
 _ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
 
