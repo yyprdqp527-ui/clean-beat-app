@@ -123,7 +123,7 @@ AVAILABLE_ROOM_IMAGES = [
     {'file': 'images/thumbs/salonorange.webp',          'label': 'Salon'},
     {'file': 'images/thumbs/cuisinewoop.webp',          'label': 'Cuisine'},
     {'file': 'images/thumbs/sdbwoop.webp',              'label': 'Salle de bain'},
-    {'file': 'images/imageqfq/Clipart (1).webp',                  'label': 'Toilettes'},
+    {'file': 'images/imageqfq/toilet2.webp',                  'label': 'Toilettes'},
     {'file': 'images/thumbs/buanderie5.webp',           'label': 'Buanderie'},
     {'file': 'images/thumbs/Garage2.webp',              'label': 'Garage'},
     {'file': 'images/thumbs/bureau.webp',               'label': 'Bureau'},
@@ -270,7 +270,7 @@ def personnaliser_maison():
         {'key': 'salon',             'default_name': 'Salon',         'image': 'images/imageqfq/68- Furniture Clipart.webp',             'fixed': False},
         {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',             'fixed': False},
         {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/imageqfq/bathtub.webp',                'fixed': False},
-        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/imageqfq/Clipart (1).webp',                    'fixed': False},
+        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/imageqfq/toilet2.webp',                    'fixed': False},
         {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/imageqfq/Laundry_basket.webp',              'fixed': False},
         {'key': 'garage',            'default_name': 'Garage',        'image': 'images/imageqfq/voiture.wepb.webp',                'fixed': False},
     ]
