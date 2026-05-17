@@ -404,9 +404,10 @@ def personnaliser_maison():
         if item['file'] in added_images:
             continue
         room_key = f"custom_{int(time.time()*1000)}"
-        c_ins.execute("""INSERT OR IGNORE INTO custom_rooms
+        c_ins.execute("""INSERT INTO custom_rooms
                      (house_id, room_key, custom_name, custom_image, is_hidden, emoji, image_data)
-                     VALUES (?, ?, ?, ?, 1, '', '')""",
+                     VALUES (?, ?, ?, ?, 1, '', '')
+                     ON CONFLICT(house_id, room_key) DO NOTHING""",
                       (house_id, room_key, item['label'], item['file']))
         conn_ins.commit()
         added_images.add(item['file'])
