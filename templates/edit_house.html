@@ -474,12 +474,6 @@
 
         {# 🆕 Page épurée : seulement les 2 boutons carrés au centre #}
         <div class="house-actions-grid">
-            <button type="button" class="house-action-btn" id="btnPanelAdd"
-                    onclick="togglePanel('add')"
-                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
-                <span class="btn-icon" style="display:block;text-align:center;width:100%;">➕</span>
-                <span class="btn-label" style="display:block;text-align:center;width:100%;">Ajouter une<br>pièce</span>
-            </button>
             <button type="button" class="house-action-btn" id="btnPanelManage"
                     onclick="togglePanel('manage')"
                     style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
@@ -522,18 +516,18 @@
             </div>
 
             {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            {# Panneau "Ajouter des pièces" #}
+            {# Panneau "Supprimer des pièces" — TOUTES les pièces, toggles auto-save #}
             {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            <div id="panelAdd" class="rooms-panel" style="display:none;">
+            <div id="panelManage" class="rooms-panel" style="display:none;">
 
-                {# 1. Carte titre glassmorphism #}
                 <div class="add-title-card">
-                    <span class="att-icon">🏠</span>
-                    <p class="att-title">Ajouter une pièce</p>
-                    <p class="att-sub">Choisis une pièce ci-dessous<br>ou prends une photo de ta pièce</p>
+                    <span class="att-icon">🗑️</span>
+                    <p class="att-title">Gérer mes pièces</p>
+                    <p class="att-sub">Masque les pièces que tu n'utilises pas mais <strong>conserve les pièces essentielles</strong> (cuisine, salle de bain…) pour ne pas perdre leurs tâches associées.<br><br>
+                    Tu peux aussi <strong>renommer n'importe quelle pièce</strong> en tapant directement dans son champ de texte.</p>
                 </div>
 
-                {# 2. Bouton photo AU DESSUS de la grille #}
+                {# Ajouter une pièce via photo ou import #}
                 <input type="file" id="roomPhotoInput"
                        accept="image/*" capture="environment"
                        style="display:none;"
@@ -549,25 +543,6 @@
                 </button>
                 <p id="roomPhotoStatus" class="room-default-name"
                    style="display:none; margin: -6px 0 12px; text-align:center;"></p>
-
-                {# 3. Grille catalogue d'emojis — clic = ajout direct #}
-                <div id="emojiCatalogueGrid"
-                     style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
-                {# illusGrid invisible : conservé pour compat JS #}
-                <div class="illus-grid" id="illusGrid" style="display:none;"></div>
-            </div>
-
-            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            {# Panneau "Supprimer des pièces" — TOUTES les pièces, toggles auto-save #}
-            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            <div id="panelManage" class="rooms-panel" style="display:none;">
-
-                <div class="add-title-card">
-                    <span class="att-icon">🗑️</span>
-                    <p class="att-title">Gérer mes pièces</p>
-                    <p class="att-sub">Masque les pièces que tu n'utilises pas mais <strong>conserve les pièces essentielles</strong> (cuisine, salle de bain…) pour ne pas perdre leurs tâches associées.<br><br>
-                    Tu peux aussi <strong>renommer n'importe quelle pièce</strong> en tapant directement dans son champ de texte.</p>
-                </div>
 
                 <div class="rooms-list" id="rooms-list">
                     {# Pièces standards : toggle masquer/afficher (auto-save via /toggle_room) #}
