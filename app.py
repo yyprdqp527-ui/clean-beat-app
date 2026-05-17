@@ -4208,19 +4208,19 @@ def menu():
     # Définir les pièces par défaut (correspond exactement aux 12 cartes du menu)
     ALL_DEFAULT_ROOMS = [
         # Chambres (optionnelles – peuvent être masquées et renommées)
-        {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/imageqfq/105- Furniture Clipart.webp', 'category': 'chambre_parentale', 'fixed': False},
-        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/imageqfq/Furniture (67).webp',                'category': 'chambre1',           'fixed': False},
-        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/imageqfq/lit2qfq.webp',                'category': 'chambre2',           'fixed': False},
-        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/imageqfq/lit2qfq.webp',        'category': 'chambre_garcon',     'fixed': False},
-        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/25- Furniture Clipart.webp',       'category': 'chambre_enfant',     'fixed': False},
-        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/it.webp',         'category': 'chambre_bebe',       'fixed': False},
+        {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/imageqfq/litparent.webp', 'category': 'chambre_parentale', 'fixed': False},
+        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/imageqfq/Furniture 28.webp',                'category': 'chambre1',           'fixed': False},
+        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/imageqfq/litados.webp',                'category': 'chambre2',           'fixed': False},
+        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/imageqfq/it.webp',        'category': 'chambre_garcon',     'fixed': False},
+        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/Wooden Bunk Beds 11.webp',       'category': 'chambre_enfant',     'fixed': False},
+        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/58 - Green Baby.webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
         {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/Stove-Top-Oven-Clipart-6.webp',  'category': 'cuisine',    'fixed': True},
         {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/68- Furniture Clipart.webp',  'category': 'salon',      'fixed': True},
         {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/78- Furniture Clipart.webp',       'category': 'piece_bonus', 'fixed': True},
-        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/88 - Bath Essentials.webp',     'category': 'salle_bain', 'fixed': True},
+        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',     'category': 'salle_bain', 'fixed': True},
         {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet_bowl.webp',          'category': 'wc',         'fixed': True},
-        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Dish-Washer-Washing-Machine-Clipart4.webp',   'category': 'buanderie',  'fixed': True},
+        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',   'category': 'buanderie',  'fixed': True},
         {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/voiture.wepb.webp',      'category': 'garage',     'fixed': False},
     ]
     if house_id:

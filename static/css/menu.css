@@ -2420,3 +2420,8 @@
   transform: scale(0.97);
   box-shadow: 0 2px 8px rgba(253,174,84,0.25);
 }
+
+.room-card[data-room="garage"] .room-card-visual img {
+  object-fit: contain;
+  background: #f5f5f5;
+}
