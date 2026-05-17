@@ -4209,7 +4209,7 @@ def menu():
     ALL_DEFAULT_ROOMS = [
         # Chambres (optionnelles – peuvent être masquées et renommées)
         {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/imageqfq/105- Furniture Clipart.webp', 'category': 'chambre_parentale', 'fixed': False},
-        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/thumbs/chambre1.webp',                'category': 'chambre1',           'fixed': False},
+        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/imageqfq/Furniture (67).webp',                'category': 'chambre1',           'fixed': False},
         {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/imageqfq/lit2qfq.webp',                'category': 'chambre2',           'fixed': False},
         {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/imageqfq/lit2qfq.webp',        'category': 'chambre_garcon',     'fixed': False},
         {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/25- Furniture Clipart.webp',       'category': 'chambre_enfant',     'fixed': False},
@@ -4221,7 +4221,7 @@ def menu():
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/88 - Bath Essentials.webp',     'category': 'salle_bain', 'fixed': True},
         {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet_bowl.webp',          'category': 'wc',         'fixed': True},
         {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Dish-Washer-Washing-Machine-Clipart4.webp',   'category': 'buanderie',  'fixed': True},
-        {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/95 - Man Cave.webp',      'category': 'garage',     'fixed': False},
+        {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/voiture.wepb.webp',      'category': 'garage',     'fixed': False},
     ]
     if house_id:
         for room in ALL_DEFAULT_ROOMS:
