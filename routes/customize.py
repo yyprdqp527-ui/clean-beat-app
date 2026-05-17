@@ -388,6 +388,7 @@ def personnaliser_maison():
             'emoji': emoji,
             'image_data': image_data,
             'current_name': cust.get('name') or 'Pièce personnalisée',
+            'default_name': cust.get('name') or 'Pièce personnalisée',
             'is_hidden': cust.get('is_hidden', False),
         })
     extra_rooms_data.sort(key=lambda r: r['key'])
