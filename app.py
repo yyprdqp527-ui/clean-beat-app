@@ -165,6 +165,10 @@ class _CompatCursor:
         if not self._is_pg:
             return sql
         sql = sql.replace('?', '%s')
+        # Echapper les % litteraux (ex: LIKE 'custom_%') pour eviter que
+        # psycopg2 les interprete comme des placeholders supplementaires.
+        # On laisse %s (placeholder) et %% (% deja echappe) intacts.
+        sql = re.sub(r'%(?![s%])', r'%%', sql)
         sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
         sql = sql.replace('DATETIME DEFAULT CURRENT_TIMESTAMP', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
         sql = sql.replace(' DATETIME ', ' TIMESTAMP ')
