@@ -353,6 +353,15 @@ def personnaliser_maison():
     # GET : charger les réglages actuels
     conn = get_db_connection()
     c = conn.cursor()
+
+    # Nettoyer les emojis des pièces catalogue
+    c.execute("""UPDATE custom_rooms
+                 SET emoji = ''
+                 WHERE house_id = ?
+                 AND room_key LIKE 'custom_%'
+                 AND emoji != ''""", (house_id,))
+    conn.commit()
+
     try:
         c.execute("SELECT room_key, custom_name, custom_image, is_hidden, emoji, image_data FROM custom_rooms WHERE house_id=?", (house_id,))
         custom_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3]), 'emoji': row[4], 'image_data': row[5]} for row in c.fetchall()}
