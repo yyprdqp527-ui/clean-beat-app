@@ -404,6 +404,7 @@ def personnaliser_maison():
 
     # Auto-insérer les pièces catalogue manquantes (cachées par défaut)
     added_images = {r['image'] for r in extra_rooms_data}
+    added_names = {r['current_name'].lower() for r in extra_rooms_data}
     conn_ins = get_db_connection()
     c_ins = conn_ins.cursor()
     inserted = False
@@ -411,6 +412,8 @@ def personnaliser_maison():
         if 'imageqfq' not in item['file']:
             continue
         if item['file'] in added_images:
+            continue
+        if item['label'].lower() in added_names:
             continue
         room_key = f"custom_{int(time.time()*1000)}"
         c_ins.execute("""INSERT INTO custom_rooms
