@@ -4335,7 +4335,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     nm.textContent  = data.winner_name || data.name || 'Champion';
     pts.textContent = (data.points || 0) + ' points';
     var isWinner = (data.winner_email || data.email) === _ue;
-    btn.textContent = isWinner ? 'C\'est parti !' : '👀 Voir la grille';
+    btn.textContent = isWinner ? 'C\'est parti !' : 'Voir la grille';
     ov.style.display = 'flex';
     try { localStorage.setItem(winnerSeenKey, '1'); } catch(e){}
     btn.onclick = function(){

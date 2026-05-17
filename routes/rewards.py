@@ -57,10 +57,12 @@ def rewards():
     today = now_paris()
     start_of_week = (today - timedelta(days=today.weekday())).date().isoformat()
 
-    _wrow = c.execute(
+    c.execute(
         "SELECT weekly_winner_email, weekly_winner_claimed FROM houses WHERE id=?",
         (house_id,)
-    ).fetchone()
+    )
+
+    _wrow = c.fetchone()
     _winner_email_db = _wrow[0] if _wrow and _wrow[0] else None
 
     is_winner = False
@@ -70,10 +72,11 @@ def rewards():
     opening_for_child = False
 
     if _winner_email_db:
-        _urow = c.execute(
+        c.execute(
             "SELECT name, is_child_account FROM users WHERE email=?",
             (_winner_email_db,)
-        ).fetchone()
+        )
+        _urow = c.fetchone()
         if _urow:
             winner_name    = _urow[0] or 'Champion'
             winner_is_child = bool(_urow[1])
@@ -751,10 +754,11 @@ def open_reward_box():
     # (ou — cas spécial — un parent ouvrant pour un enfant gagnant sans téléphone)
     # BUG FIX: lecture directe depuis houses.weekly_winner_email (désigné par le cron)
     # au lieu de recalculer depuis completed_tasks (qui peut avoir changé)
-    _wrow = c.execute(
+    c.execute(
         "SELECT weekly_winner_email FROM houses WHERE id = ?",
         (house_id,)
-    ).fetchone()
+    )
+    _wrow = c.fetchone()
     _winner_email = _wrow[0] if _wrow and _wrow[0] else None
 
     if not _winner_email:
@@ -762,10 +766,11 @@ def open_reward_box():
         return jsonify({'success': False, 'message': 'Aucun gagnant cette semaine'}), 403
 
     # Récupérer is_child_account du gagnant désigné
-    _urow = c.execute(
+    c.execute(
         "SELECT is_child_account FROM users WHERE email = ?",
         (_winner_email,)
-    ).fetchone()
+    )
+    _urow = c.fetchone()
     _winner_is_child = bool(_urow[0]) if _urow and _urow[0] is not None else False
     opening_for_child = False
 
@@ -1048,10 +1053,11 @@ def open_reward_box():
         # Enregistrer la récompense dans les récompenses du joueur (l'enfant si parent ouvre pour lui)
         _dbg(f"[DEBUG] Insertion dans mystery_rewards: user={opener_email}, house={house_id}, reward={reward_text}, opening_for_child={opening_for_child}")
         # BUG FIX: garde-fou anti-double-claim (protection contre double-clic ou race condition)
-        _already = c.execute(
+        c.execute(
             "SELECT id FROM mystery_rewards WHERE user_email = ? AND house_id = ? AND won_date = date('now')",
             (opener_email, house_id)
-        ).fetchone()
+        )
+        _already = c.fetchone()
         if _already:
             conn.close()
             return jsonify({'success': False, 'message': 'Tu as déjà réclamé ta récompense cette semaine !'}), 409
