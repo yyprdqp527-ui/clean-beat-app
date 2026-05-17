@@ -884,12 +884,7 @@ function onRoomPhotoSelected(input) {
                     card.style.opacity = '1';
                     return;
                 }
-                _playValid();
-                if (window.cbToast) window.cbToast('✅ ' + item.label + ' ajoutée !', 'success', 1800);
-                card.style.opacity = '';
-                card.classList.remove('is-busy');
-                // Rafraîchir la liste du panneau Supprimer après un court délai
-                setTimeout(function() { window.location.reload(); }, 500);
+                location.reload();
             })
             .catch(function() {
                 grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
