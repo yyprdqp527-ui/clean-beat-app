@@ -393,6 +393,15 @@ def personnaliser_maison():
         })
     extra_rooms_data.sort(key=lambda r: r['key'])
 
+    # Pièces catalogue pas encore ajoutées à la maison
+    added_images = {r['image'] for r in extra_rooms_data}
+    catalogue_not_added = [
+        {'label': r['label'], 'image': r['file']}
+        for r in AVAILABLE_ROOM_IMAGES
+        if 'imageqfq' in r['file']
+        and r['file'] not in added_images
+    ]
+
     house_members = []
     try:
         conn_m = get_db_connection()
@@ -419,7 +428,8 @@ def personnaliser_maison():
                            extra_rooms=extra_rooms_data,
                            available_images=AVAILABLE_ROOM_IMAGES,
                            house_members=house_members,
-                           current_house_name=current_house_name)
+                           current_house_name=current_house_name,
+                           catalogue_not_added=catalogue_not_added)
 
 
 def _save_emoji_dataurl(data_url, app, size=400):
