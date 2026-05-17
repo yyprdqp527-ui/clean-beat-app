@@ -544,20 +544,6 @@
                         </div>
                     </div>
                     {% endfor %}
-
-                    {# Pièces du catalogue pas encore ajoutées #}
-                    {% for item in catalogue_not_added %}
-                    <div class="room-item" style="opacity:0.6;">
-                      <img src="{{ url_for('static', filename=item.image) }}"
-                           style="width:44px;height:44px;object-fit:contain;border-radius:8px;">
-                      <span style="flex:1;font-weight:500;">{{ item.label }}</span>
-                      <button class="btn-add-room"
-                              onclick="addCatalogueRoom('{{ item.label }}', '{{ item.image }}')"
-                              style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:6px 12px;color:white;cursor:pointer;">
-                        + Ajouter
-                      </button>
-                    </div>
-                    {% endfor %}
                 </div>
 
             </div>
