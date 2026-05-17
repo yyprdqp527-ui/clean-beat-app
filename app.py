@@ -4215,7 +4215,7 @@ def menu():
         {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/Wooden Bunk Beds 11.webp',       'category': 'chambre_enfant',     'fixed': False},
         {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/58 - Green Baby.webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
-        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/Stove-Top-Oven-Clipart-6.webp',  'category': 'cuisine',    'fixed': True},
+        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',  'category': 'cuisine',    'fixed': True},
         {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/68- Furniture Clipart.webp',  'category': 'salon',      'fixed': True},
         {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/78- Furniture Clipart.webp',       'category': 'piece_bonus', 'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',     'category': 'salle_bain', 'fixed': True},

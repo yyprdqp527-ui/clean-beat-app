@@ -268,7 +268,7 @@ def personnaliser_maison():
         {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/thumbs/chambre_enfant_4.webp',        'fixed': False},
         {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/thumbs/chambre_bébé4_.webp',          'fixed': False},
         {'key': 'salon',             'default_name': 'Salon',         'image': 'images/imageqfq/68- Furniture Clipart.webp',             'fixed': False},
-        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/imageqfq/Stove-Top-Oven-Clipart-6.webp',             'fixed': False},
+        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',             'fixed': False},
         {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/imageqfq/bathtub.webp',                'fixed': False},
         {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/imageqfq/Clipart (1).webp',                    'fixed': False},
         {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/imageqfq/Laundry_basket.webp',              'fixed': False},
