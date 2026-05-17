@@ -480,40 +480,12 @@
                 <span class="btn-icon" style="display:block;text-align:center;width:100%;">🗑️</span>
                 <span class="btn-label" style="display:block;text-align:center;width:100%;">Gérer mes<br>pièces</span>
             </button>
-            <button type="button" class="house-action-btn" id="btnPanelRename"
-                    onclick="togglePanel('rename')"
-                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
-                <span class="btn-icon" style="display:block;text-align:center;width:100%;">✏️</span>
-                <span class="btn-label" style="display:block;text-align:center;width:100%;">Renommer la<br>maison</span>
-            </button>
+
         </div>
 
         {# Form conservé pour les routes existantes (POST personnaliser_maison) — invisible #}
         <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
             <input type="hidden" name="house_name" value="{{ current_house_name or '' }}">
-
-            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            {# Panneau "Renommer la maison" #}
-            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            <div id="panelRename" class="rooms-panel" style="display:none;">
-                <div class="add-title-card">
-                    <span class="att-icon">🏠</span>
-                    <p class="att-title">Renommer la maison</p>
-                </div>
-                <input type="text" id="renameHouseInput"
-                       value="{{ current_house_name or '' }}"
-                       placeholder="Nom de la maison"
-                       maxlength="50"
-                       style="width:100%;box-sizing:border-box;padding:12px 16px;border-radius:14px;border:2px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.85);color:#153036;font-size:16px;font-weight:600;text-align:center;outline:none;margin-bottom:12px;font-family:inherit;"
-                       onkeydown="if(event.key==='Enter'){event.preventDefault();saveHouseName();}">
-                <button type="button" class="add-custom-room-btn" id="btnSaveHouseName"
-                        style="margin-top:0;"
-                        onclick="saveHouseName()">
-                    💾 Enregistrer
-                </button>
-                <p id="renameHouseStatus" class="room-default-name"
-                   style="display:none; margin: 10px 0 0; text-align:center;"></p>
-            </div>
 
             {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
             {# Panneau "Supprimer des pièces" — TOUTES les pièces, toggles auto-save #}
@@ -744,8 +716,7 @@ function _playValid() {
 function togglePanel(which) {
     var panels = {
         add: document.getElementById('panelAdd'),
-        manage: document.getElementById('panelManage'),
-        rename: document.getElementById('panelRename')
+        manage: document.getElementById('panelManage')
     };
     if (!panels[which]) return;
     // Masque la grille des 2 boutons + le retour vers settings
@@ -767,7 +738,6 @@ function togglePanel(which) {
 function closePanel() {
     var pa = document.getElementById('panelAdd');     if (pa) pa.style.display = 'none';
     var pm = document.getElementById('panelManage');  if (pm) pm.style.display = 'none';
-    var pr = document.getElementById('panelRename');  if (pr) pr.style.display = 'none';
     var backH = document.getElementById('backToHome'); if (backH) backH.style.display = 'none';
     var grid  = document.querySelector('.house-actions-grid'); if (grid) grid.style.display = '';
     var backS = document.getElementById('backToSettings'); if (backS) backS.style.display = '';
