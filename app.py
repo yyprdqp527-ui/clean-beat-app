@@ -4216,8 +4216,8 @@ def menu():
         {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/GreenBaby58.webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
         {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',  'category': 'cuisine',    'fixed': True},
-        {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/68- Furniture Clipart.webp',  'category': 'salon',      'fixed': True},
-        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/78- Furniture Clipart.webp',       'category': 'piece_bonus', 'fixed': True},
+        {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/FurnitureClipart68.webp',  'category': 'salon',      'fixed': True},
+        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/FurnitureClipart78.webp',       'category': 'piece_bonus', 'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',     'category': 'salle_bain', 'fixed': True},
         {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet2.webp',          'category': 'wc',         'fixed': True},
         {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',   'category': 'buanderie',  'fixed': True},

@@ -267,7 +267,7 @@ def personnaliser_maison():
         {'key': 'chambre_garcon',    'default_name': 'Chambre 4',     'image': 'images/thumbs/chambre_garçon3.webp',         'fixed': False},
         {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/imageqfq/WoodenBunkBeds11.webp',        'fixed': False},
         {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/imageqfq/GreenBaby58.webp',          'fixed': False},
-        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/imageqfq/68- Furniture Clipart.webp',             'fixed': False},
+        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/imageqfq/FurnitureClipart68.webp',             'fixed': False},
         {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',             'fixed': False},
         {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/imageqfq/bathtub.webp',                'fixed': False},
         {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/imageqfq/toilet2.webp',                    'fixed': False},
