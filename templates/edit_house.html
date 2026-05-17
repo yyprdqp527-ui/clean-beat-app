@@ -745,6 +745,9 @@ function closePanel() {
     requestAnimationFrame(function(){ _playClick(); });
 }
 
+// Ouvrir automatiquement le panel "Gérer mes pièces" au chargement
+document.addEventListener('DOMContentLoaded', function() { togglePanel('manage'); });
+
 // 🎨 Génère un data URL Canvas (losange bleu + emoji centré, 400×400)
 function _emojiToDataURL(emoji) {
     try {
