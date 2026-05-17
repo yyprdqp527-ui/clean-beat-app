@@ -90,7 +90,6 @@
             gap: 12px;
             transition: opacity .2s;
         }
-        .room-item.is-hidden-item { opacity: 0.45; }
 
         .room-thumb {
             width: 54px; height: 54px;
@@ -519,7 +518,7 @@
                 <div class="rooms-list" id="rooms-list">
                     {# Pièces standards + catalogue : toggle masquer/afficher (auto-save via /toggle_room) #}
                     {% for room in (rooms + extra_rooms) %}
-                    <div class="room-item {% if room.is_hidden %}is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                    <div class="room-item" id="item-{{ room.key }}">
                         <div class="room-thumb">
                             <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
                         </div>
