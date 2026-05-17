@@ -362,6 +362,18 @@ def personnaliser_maison():
                  AND emoji != ''""", (house_id,))
     conn.commit()
 
+    # Nettoyer les doublons custom : garder le meilleur par nom
+    c.execute("""
+        DELETE FROM custom_rooms
+        WHERE house_id = ?
+        AND custom_image = ''
+        AND custom_name IN (
+            SELECT custom_name FROM custom_rooms
+            WHERE house_id = ? AND custom_image != ''
+        )
+    """, (house_id, house_id))
+    conn.commit()
+
     try:
         c.execute("SELECT room_key, custom_name, custom_image, is_hidden, emoji, image_data FROM custom_rooms WHERE house_id=?", (house_id,))
         custom_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3]), 'emoji': row[4], 'image_data': row[5]} for row in c.fetchall()}
