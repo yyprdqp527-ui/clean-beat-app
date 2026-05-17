@@ -98,7 +98,7 @@
     <!-- Préchargement des images des pièces (critical path) -->
     {% for room in custom_rooms %}
     {% if room.image and not room.image.startswith('data:') %}
-    <link rel="preload" as="image" href="{{ url_for('static', filename=room.image) }}?v=123">
+    <link rel="preload" as="image" href="{{ url_for('static', filename=room.image) }}?v=124">
     {% endif %}
     {% endfor %}
     <script>
@@ -1944,7 +1944,7 @@ function sendMalus(reason, points){
                                         </div>
                                         {% else %}
                                         <picture>
-                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=123{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="async" loading="eager">
+                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=124{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="async" loading="eager">
                                         </picture>
                                         {% endif %}
                                         <span class="room-mission-dot"
