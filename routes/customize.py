@@ -219,7 +219,7 @@ def rename_room():
 
 @customize_bp.route('/toggle_room', methods=['POST'])
 def toggle_room():
-    from app import get_db_connection, _invalidate_house_cache
+    from app import get_db_connection, _invalidate_house_cache, SOCKETIO_AVAILABLE, socketio, safe_socketio_emit, _dbg
     if 'user' not in session:
         return {'ok': False}, 401
     data = request.get_json(force=True)
@@ -246,6 +246,12 @@ def toggle_room():
         return {'ok': False, 'error': str(e)}, 500
     finally:
         conn.close()
+    if SOCKETIO_AVAILABLE and socketio:
+        try:
+            safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                               namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception:
+            pass
     return {'ok': True}
 
 
