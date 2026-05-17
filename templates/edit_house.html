@@ -544,12 +544,21 @@
                         </div>
                     </div>
                     {% endfor %}
-                </div>
 
-                <p class="add-section-title" style="margin-top:20px;font-weight:600;opacity:0.7;">
-                  + Ajouter une pièce
-                </p>
-                <div id="emojiCatalogueGrid" class="emoji-catalogue-grid"></div>
+                    {# Pièces du catalogue pas encore ajoutées #}
+                    {% for item in catalogue_not_added %}
+                    <div class="room-item" style="opacity:0.6;">
+                      <img src="{{ url_for('static', filename=item.image) }}"
+                           style="width:44px;height:44px;object-fit:contain;border-radius:8px;">
+                      <span style="flex:1;font-weight:500;">{{ item.label }}</span>
+                      <button class="btn-add-room"
+                              onclick="addCatalogueRoom('{{ item.label }}', '{{ item.image }}')"
+                              style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:6px 12px;color:white;cursor:pointer;">
+                        + Ajouter
+                      </button>
+                    </div>
+                    {% endfor %}
+                </div>
 
             </div>
 
@@ -777,97 +786,13 @@ function onRoomPhotoSelected(input) {
     try { input.value = ''; } catch(e) {}
 }
 
-// Catalogue de pièces prédéfinies — clic = ajout DIRECT
-(function buildEmojiCatalogue() {
-    var CATALOGUE = [
-        { key: 'jardin',        label: 'Jardin',          emoji: '🌿', image: 'images/imageqfq/Gardening11.webp' },
-        { key: 'salle_billard', label: 'Salle de billard',emoji: '🎱', image: 'images/imageqfq/ManCave65.webp' },
-        { key: 'salle_tv',      label: 'Salle TV',        emoji: '📺', image: 'images/imageqfq/ManCave76.webp' },
-        { key: 'salle_sport',   label: 'Salle de sport',  emoji: '🏋️', image: 'images/imageqfq/Gym12.webp' },
-        { key: 'bureau',        label: 'Bureau',          emoji: '💻', image: 'images/imageqfq/Writer5.webp' },
-        { key: 'dressing',      label: 'Dressing',        emoji: '👗', image: 'images/imageqfq/OrganizingCloset.webp' },
-        { key: 'piscine',       label: 'Piscine',         emoji: '🏊', image: 'images/imageqfq/Pool4.webp' },
-        { key: 'terrasse',      label: 'Terrasse',        emoji: '🌺', image: 'images/imageqfq/Furniture33.webp' },
-        { key: 'animaux',       label: 'Animaux',         emoji: '🐾', image: 'images/imageqfq/Pets9.webp' },
-        { key: 'salle_lecture', label: 'Salle lecture',   emoji: '📚', image: 'images/imageqfq/salonqfq.webp' },
-    ];
-    var grid = document.getElementById('emojiCatalogueGrid');
-    if (!grid) return;
-    var BASE = 'position:relative;background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);' +
-               'border:1px solid rgba(255,255,255,0.3);border-radius:16px;' +
-               'box-shadow:0 4px 24px rgba(0,0,0,0.12);padding:18px 12px;' +
-               'text-align:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;user-select:none;';
-
-    // Liste des labels déjà ajoutés (pour cocher les cartes correspondantes)
-    var existingNames = [];
-    try {
-        document.querySelectorAll('#panelManage .room-item .room-info .room-rename-input').forEach(function(el) {
-            existingNames.push((el.value || '').trim().toLowerCase());
-        });
-    } catch(e) {}
-
-    CATALOGUE.forEach(function(item) {
-        var card = document.createElement('div');
-        card.className = 'room-item';
-        card.dataset.key = item.key;
-        card.dataset.emoji = item.emoji;
-        card.dataset.label = item.label;
-        card.innerHTML = '<span class="emoji-card-check">✅</span>' +
-                         '<img src="/static/' + item.image + '?v=126" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 4px;" alt="">' +
-                         '<div style="margin-top:6px;font-size:13px;font-weight:600;">' + item.label + '</div>';
-
-        // Marque comme déjà ajoutée si label trouvé
-        if (existingNames.indexOf(item.label.toLowerCase()) !== -1) {
-            card.classList.add('emoji-card-added');
-        }
-
-        card.addEventListener('mouseenter', function() {
-            if (card.classList.contains('is-busy')) return;
-            card.style.transform = 'translateY(-4px)';
-            card.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
-        });
-        card.addEventListener('mouseleave', function() {
-            card.style.transform = '';
-            card.style.boxShadow = '0 4px 24px rgba(0,0,0,0.12)';
-        });
-        card.addEventListener('click', function() {
-            if (card.classList.contains('is-busy')) return;
-            card.classList.add('is-busy');
-            card.style.opacity = '0.6';
-            card.classList.add('emoji-card-added');
-            _playClick();
-            // Désactivation des autres cartes pendant l'enregistrement
-            grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = 'none'; });
-            var image_data_url = _emojiToDataURL(item.emoji);
-            fetch('/add_custom_room', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name: item.label, image: item.image })
-            })
-            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-            .then(function(res) {
-                grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
-                if (!res.ok || !res.data || !res.data.ok) {
-                    if (window.cbToast) window.cbToast((res.data && res.data.error) || "Impossible d'ajouter la pièce.", 'danger', 2800);
-                    card.classList.remove('emoji-card-added');
-                    card.classList.remove('is-busy');
-                    card.style.opacity = '1';
-                    return;
-                }
-                location.reload();
-            })
-            .catch(function() {
-                grid.querySelectorAll('[data-key]').forEach(function(c) { c.style.pointerEvents = ''; });
-                if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
-                card.classList.remove('emoji-card-added');
-                card.classList.remove('is-busy');
-                card.style.opacity = '1';
-            });
-        });
-        grid.appendChild(card);
-    });
-}());
+function addCatalogueRoom(name, image) {
+  fetch('/add_custom_room', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: name, image: image})
+  }).then(() => location.reload());
+}
 
 function _showPendingTasksError(count) {
     var t = document.createElement('div');
