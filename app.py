@@ -4210,16 +4210,16 @@ def menu():
         # Chambres (optionnelles – peuvent être masquées et renommées)
         {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/imageqfq/105- Furniture Clipart.webp', 'category': 'chambre_parentale', 'fixed': False},
         {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/thumbs/chambre1.webp',                'category': 'chambre1',           'fixed': False},
-        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/thumbs/chambre2.webp',                'category': 'chambre2',           'fixed': False},
-        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/thumbs/chambre_garçon3.webp',        'category': 'chambre_garcon',     'fixed': False},
-        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/thumbs/chambre_enfant_4.webp',       'category': 'chambre_enfant',     'fixed': False},
-        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/thumbs/chambre_bébé4_.webp',         'category': 'chambre_bebe',       'fixed': False},
+        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/imageqfq/lit2qfq.webp',                'category': 'chambre2',           'fixed': False},
+        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/imageqfq/lit2qfq.webp',        'category': 'chambre_garcon',     'fixed': False},
+        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/25- Furniture Clipart.webp',       'category': 'chambre_enfant',     'fixed': False},
+        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/it.webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
         {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/Stove-Top-Oven-Clipart-6.webp',  'category': 'cuisine',    'fixed': True},
         {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/68- Furniture Clipart.webp',  'category': 'salon',      'fixed': True},
         {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/78- Furniture Clipart.webp',       'category': 'piece_bonus', 'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/88 - Bath Essentials.webp',     'category': 'salle_bain', 'fixed': True},
-        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/thumbs/Wc2.webp',          'category': 'wc',         'fixed': True},
+        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet_bowl.webp',          'category': 'wc',         'fixed': True},
         {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Dish-Washer-Washing-Machine-Clipart4.webp',   'category': 'buanderie',  'fixed': True},
         {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/95 - Man Cave.webp',      'category': 'garage',     'fixed': False},
     ]
