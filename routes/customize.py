@@ -393,6 +393,62 @@ def personnaliser_maison():
         })
     extra_rooms_data.sort(key=lambda r: r['key'])
 
+    # Auto-insérer les pièces catalogue manquantes (cachées par défaut)
+    added_images = {r['image'] for r in extra_rooms_data}
+    conn_ins = get_db_connection()
+    c_ins = conn_ins.cursor()
+    inserted = False
+    for item in AVAILABLE_ROOM_IMAGES:
+        if 'imageqfq' not in item['file']:
+            continue
+        if item['file'] in added_images:
+            continue
+        room_key = f"custom_{int(time.time()*1000)}"
+        c_ins.execute("""INSERT OR IGNORE INTO custom_rooms
+                     (house_id, room_key, custom_name, custom_image, is_hidden, emoji, image_data)
+                     VALUES (?, ?, ?, ?, 1, '', '')""",
+                      (house_id, room_key, item['label'], item['file']))
+        conn_ins.commit()
+        added_images.add(item['file'])
+        inserted = True
+        time.sleep(0.001)  # évite les room_key identiques
+
+    # Recharger extra_rooms_data depuis la DB après insertion
+    if inserted:
+        c_ins.execute("SELECT room_key, custom_name, custom_image, is_hidden, emoji, image_data FROM custom_rooms WHERE house_id=?", (house_id,))
+        custom_db2 = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3]), 'emoji': row[4], 'image_data': row[5]} for row in c_ins.fetchall()}
+        extra_rooms_data = []
+        for key, cust in custom_db2.items():
+            if not key.startswith('custom_'):
+                continue
+            emoji = cust.get('emoji') or None
+            image_data = cust.get('image_data') or None
+            img = cust.get('image') or ''
+            if img and not _is_valid_room_image(img):
+                img = 'images/thumbs/default.webp'
+            if not emoji and not image_data and not img:
+                img = 'images/thumbs/default.webp'
+            extra_rooms_data.append({
+                'key': key,
+                'image': img,
+                'emoji': emoji,
+                'image_data': image_data,
+                'current_name': cust.get('name') or 'Pièce personnalisée',
+                'default_name': cust.get('name') or 'Pièce personnalisée',
+                'is_hidden': cust.get('is_hidden', False),
+            })
+        extra_rooms_data.sort(key=lambda r: r['key'])
+    conn_ins.close()
+
+    # Supprimer les doublons : garder uniquement le premier par image
+    seen_images = set()
+    dedup_extra = []
+    for r in extra_rooms_data:
+        if r['image'] not in seen_images:
+            dedup_extra.append(r)
+            seen_images.add(r['image'])
+    extra_rooms_data = dedup_extra
+
     # Pièces catalogue pas encore ajoutées à la maison
     added_images = {r['image'] for r in extra_rooms_data}
     catalogue_not_added = [
