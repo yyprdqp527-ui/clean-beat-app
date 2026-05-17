@@ -2137,6 +2137,8 @@ def init_db():
     # autocommit=True évite ce problème : chaque CREATE TABLE/INDEX est atomique.
     if _USE_PG and hasattr(conn._conn, 'autocommit'):
         conn._conn.autocommit = True
+    if _USE_PG:
+        conn.execute("SET lock_timeout = '3s'")
     print('init_db DB connected', flush=True)
     c = conn.cursor()
     c.execute("""
