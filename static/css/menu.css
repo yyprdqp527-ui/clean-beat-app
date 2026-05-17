@@ -2421,10 +2421,8 @@
   box-shadow: 0 2px 8px rgba(253,174,84,0.25);
 }
 
-.room-card[data-room="garage"] .room-card-visual img,
-.room-card[data-room="toilettes"] .room-card-visual img {
-  object-fit: contain;
-  object-position: center;
-  background-color: #f8f6f3;
-  padding: 8px;
+.room-card[data-room="toilettes"] .room-card-visual img,
+.room-card[data-room="garage"] .room-card-visual img {
+  object-fit: cover !important;
+  object-position: center !important;
 }
