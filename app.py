@@ -4212,10 +4212,10 @@ def menu():
         {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/imageqfq/Furniture28.webp',                'category': 'chambre1',           'fixed': False},
         {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/imageqfq/litados.webp',                'category': 'chambre2',           'fixed': False},
         {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/imageqfq/it.webp',        'category': 'chambre_garcon',     'fixed': False},
-        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/WoodenBunkBeds11.webp',       'category': 'chambre_enfant',     'fixed': False},
+        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/Furniture64.webp',       'category': 'chambre_enfant',     'fixed': False},
         {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/GreenBaby58.webp',         'category': 'chambre_bebe',       'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
-        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/Stand-Mixer-Clipart1.webp',  'category': 'cuisine',    'fixed': True},
+        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/OvenStove.webp',  'category': 'cuisine',    'fixed': True},
         {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/FurnitureClipart68.webp',  'category': 'salon',      'fixed': True},
         {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/FurnitureClipart78.webp',       'category': 'piece_bonus', 'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',     'category': 'salle_bain', 'fixed': True},
