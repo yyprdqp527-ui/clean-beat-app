@@ -4219,7 +4219,7 @@ def menu():
         {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/68- Furniture Clipart.webp',  'category': 'salon',      'fixed': True},
         {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/78- Furniture Clipart.webp',       'category': 'piece_bonus', 'fixed': True},
         {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',     'category': 'salle_bain', 'fixed': True},
-        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet_bowl.webp',          'category': 'wc',         'fixed': True},
+        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/Clipart (1).webp',          'category': 'wc',         'fixed': True},
         {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',   'category': 'buanderie',  'fixed': True},
         {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/voiture.wepb.webp',      'category': 'garage',     'fixed': False},
     ]
