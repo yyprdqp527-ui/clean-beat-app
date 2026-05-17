@@ -544,8 +544,6 @@
                 <p id="roomPhotoStatus" class="room-default-name"
                    style="display:none; margin: -6px 0 12px; text-align:center;"></p>
 
-                <div id="emojiCatalogueGrid" class="emoji-catalogue-grid"></div>
-
                 <div class="rooms-list" id="rooms-list">
                     {# Pièces standards : toggle masquer/afficher (auto-save via /toggle_room) #}
                     {% for room in rooms %}
@@ -604,6 +602,12 @@
                     </div>
                     {% endfor %}
                 </div>
+
+                <p class="add-section-title" style="margin-top:20px;font-weight:600;opacity:0.7;">
+                  + Ajouter une pièce
+                </p>
+                <div id="emojiCatalogueGrid" class="emoji-catalogue-grid"></div>
+
             </div>
 
         </form>
@@ -860,7 +864,7 @@ function onRoomPhotoSelected(input) {
 
     CATALOGUE.forEach(function(item) {
         var card = document.createElement('div');
-        card.style.cssText = BASE;
+        card.className = 'room-item';
         card.dataset.key = item.key;
         card.dataset.emoji = item.emoji;
         card.dataset.label = item.label;
