@@ -2732,23 +2732,25 @@ function sendMalus(reason, points){
                                     }
                                 });
                             }
-                            refreshMissionDots(); // fallback API
                             refreshAllBadges();
                         });
 
                         // ✅ Mission validée — rafraîchir les pastilles oranges (disparition sur TOUS les écrans)
                         socket.on('task_validated', function(data) {
                             console.log('✅ WebSocket: task_validated reçu', data);
-                            // Masquage optimiste — refreshMissionDots() corrige si missions restantes
+                            // Décrémentation directe — refreshMissionDots() corrige toujours (asymétrie intentionnelle)
                             if (data.category) {
                                 document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
                                     var vis = dot.closest('.room-card-visual');
                                     if (vis && vis.getAttribute('data-category') === data.category) {
-                                        dot.style.display = 'none';
+                                        var _cur = parseInt(dot.textContent) || 0;
+                                        var _next = _cur - 1;
+                                        if (_next <= 0) { dot.style.display = 'none'; dot.textContent = '0'; }
+                                        else { dot.textContent = _next; }
                                     }
                                 });
                             }
-                            refreshMissionDots(); // corrige si d'autres missions restent
+                            refreshMissionDots(); // toujours — corrige si missions restantes
                             refreshAllBadges();
                         });
 
