@@ -2500,10 +2500,9 @@ function sendMalus(reason, points){
                                 console.log('Lecture du son de réception...');
                                 if (window.SoundManager) SoundManager.play('receiveMessage');
                                 
-                                // ✅ Une seule mise à jour : refreshAllBadges met à jour les badges séparés
-                                // (Messages = private uniquement, Courses, pastille bébé, mission dots).
-                                // Évite le flash visuel d'un double-update.
-                                refreshAllBadges();
+                                // ✅ Mise à jour directe DOM (instantanée, même mécanique que Courses)
+                                updateUnreadBadge(data.recipient_unread_count);
+                                refreshAllBadges(); // fallback API
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
@@ -2548,8 +2547,10 @@ function sendMalus(reason, points){
                             
                             // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail) {
-                                console.log('Mise à jour MON compteur:', data.count);
-                                updateUnreadBadge(data.count);
+                                // Gérer les deux formes de payload (count ou unread_received)
+                                var _cnt = (data.count !== undefined) ? data.count : (data.unread_received !== undefined ? data.unread_received : 0);
+                                console.log('Mise à jour MON compteur:', _cnt);
+                                updateUnreadBadge(_cnt);
                                 
                                 if (data.unread_by_sender) {
                                     updateUnreadBySender(data.unread_by_sender);
@@ -2707,20 +2708,47 @@ function sendMalus(reason, points){
                         // 👶 Nouveau suivi bébé enregistré — tout le monde rafraîchit ses badges
                         socket.on('baby_tracking_added', function(data) {
                             console.log('👶 WebSocket: baby_tracking_added reçu', data);
-                            refreshAllBadges();
+                            // Mise à jour directe DOM (instantanée)
+                            var _babyDot = document.getElementById('room-baby-dot');
+                            if (_babyDot) {
+                                var _cur = parseInt(_babyDot.textContent) || 0;
+                                _babyDot.textContent = (_cur + 1) > 99 ? '99+' : (_cur + 1);
+                                _babyDot.style.display = '';
+                            }
+                            refreshAllBadges(); // fallback API
                         });
 
                         // 🆕 Nouvelle mission ajoutée — rafraîchir les pastilles oranges
                         socket.on('task_added_notification', function(data) {
                             console.log('🆕 WebSocket: task_added_notification reçu', data);
-                            refreshMissionDots();
+                            // Mise à jour directe DOM pour la pièce concernée (instantanée)
+                            if (data.category) {
+                                document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
+                                    var vis = dot.closest('.room-card-visual');
+                                    if (vis && vis.getAttribute('data-category') === data.category) {
+                                        var _cur = parseInt(dot.textContent) || 0;
+                                        dot.textContent = (_cur + 1) > 99 ? '99+' : (_cur + 1);
+                                        dot.style.display = '';
+                                    }
+                                });
+                            }
+                            refreshMissionDots(); // fallback API
                             refreshAllBadges();
                         });
 
                         // ✅ Mission validée — rafraîchir les pastilles oranges (disparition sur TOUS les écrans)
                         socket.on('task_validated', function(data) {
                             console.log('✅ WebSocket: task_validated reçu', data);
-                            refreshMissionDots();
+                            // Masquage optimiste — refreshMissionDots() corrige si missions restantes
+                            if (data.category) {
+                                document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
+                                    var vis = dot.closest('.room-card-visual');
+                                    if (vis && vis.getAttribute('data-category') === data.category) {
+                                        dot.style.display = 'none';
+                                    }
+                                });
+                            }
+                            refreshMissionDots(); // corrige si d'autres missions restent
                             refreshAllBadges();
                         });
 
