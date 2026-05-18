@@ -467,20 +467,9 @@
 <body>
 
     <a href="{{ url_for('customize.settings_page') }}" id="backToSettings" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
-    <button type="button" id="backToHome" class="back-btn-glass" aria-label="Retour" style="display:none;" onclick="closePanel()">←</button>
+    <a href="{{ url_for('customize.settings_page') }}" id="backToHome" class="back-btn-glass" aria-label="Retour aux réglages" style="display:none;">←</a>
 
     <div class="header-below-zone">
-
-        {# 🆕 Page épurée : seulement les 2 boutons carrés au centre #}
-        <div class="house-actions-grid">
-            <button type="button" class="house-action-btn" id="btnPanelManage"
-                    onclick="togglePanel('manage')"
-                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
-                <span class="btn-icon" style="display:block;text-align:center;width:100%;">🗑️</span>
-                <span class="btn-label" style="display:block;text-align:center;width:100%;">Gérer mes<br>pièces</span>
-            </button>
-
-        </div>
 
         {# Form conservé pour les routes existantes (POST personnaliser_maison) — invisible #}
         <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
@@ -520,7 +509,16 @@
                     {% for room in (rooms + extra_rooms) %}
                     <div class="room-item" id="item-{{ room.key }}">
                         <div class="room-thumb">
-                            <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.current_name }}" loading="lazy">
+                            {% if room.image_b64 %}
+                              <img src="{{ room.image_b64 }}"
+                                   style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
+                            {% elif room.image and not room.image.startswith('images/imageqfq') %}
+                              <img src="{{ url_for('static', filename=room.image) }}"
+                                   style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
+                            {% elif room.image %}
+                              <img src="{{ url_for('static', filename=room.image) }}"
+                                   style="width:44px;height:44px;object-fit:contain;border-radius:8px;">
+                            {% endif %}
                         </div>
                         <div class="room-info">
                             <div class="room-default-name">{{ room.default_name }}</div>
@@ -701,13 +699,7 @@ function togglePanel(which) {
 }
 
 function closePanel() {
-    var pa = document.getElementById('panelAdd');     if (pa) pa.style.display = 'none';
-    var pm = document.getElementById('panelManage');  if (pm) pm.style.display = 'none';
-    var backH = document.getElementById('backToHome'); if (backH) backH.style.display = 'none';
-    var grid  = document.querySelector('.house-actions-grid'); if (grid) grid.style.display = '';
-    var backS = document.getElementById('backToSettings'); if (backS) backS.style.display = '';
-    if (window.scrollY > 0) window.scrollTo(0, 0);
-    requestAnimationFrame(function(){ _playClick(); });
+    window.location.href = "{{ url_for('customize.settings_page') }}";
 }
 
 // Ouvrir automatiquement le panel "Gérer mes pièces" au chargement
