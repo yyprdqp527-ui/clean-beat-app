@@ -619,7 +619,7 @@ def add_custom_room():
         return {'ok': False, 'error': str(e)}, 500
     finally:
         conn.close()
-    return {'ok': True, 'room_key': room_key, 'name': name, 'image': image}
+    return {'ok': True, 'room_key': room_key, 'name': name, 'image': image_b64 or image}
 
 
 @customize_bp.route('/delete_custom_room', methods=['POST'])
