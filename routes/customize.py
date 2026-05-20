@@ -121,16 +121,32 @@ def _is_user_uploaded_image(path):
 # Liste blanche des illustrations disponibles pour les pièces personnalisées
 # (uniquement des thumbs isométriques déjà présents dans /static/images/thumbs/)
 AVAILABLE_ROOM_IMAGES = [
+    {'file': 'images/imageqfq/bathtub.webp',              'label': 'Salle de bain'},
+    {'file': 'images/imageqfq/toilet2.webp',              'label': 'Toilettes'},
+    {'file': 'images/imageqfq/toilet_bowl.webp',          'label': 'WC'},
+    {'file': 'images/imageqfq/OvenStove.webp',            'label': 'Cuisine'},
+    {'file': 'images/imageqfq/Laundry_basket.webp',       'label': 'Buanderie'},
+    {'file': 'images/imageqfq/litparent.webp',            'label': 'Chambre parentale'},
+    {'file': 'images/imageqfq/litados.webp',              'label': 'Chambre ado'},
+    {'file': 'images/imageqfq/it.webp',                   'label': 'Chambre ado fille'},
+    {'file': 'images/imageqfq/lit2qfq.webp',              'label': 'Chambre double'},
+    {'file': 'images/imageqfq/WoodenBunkBeds11.webp',     'label': 'Chambre enfant'},
+    {'file': 'images/imageqfq/GreenBaby58.webp',          'label': 'Chambre bébé'},
     {'file': 'images/imageqfq/FurnitureClipart78.webp',   'label': 'Bureau'},
     {'file': 'images/imageqfq/Gardening11.webp',          'label': 'Jardin'},
     {'file': 'images/imageqfq/ManCave65.webp',            'label': 'Salle de billard'},
     {'file': 'images/imageqfq/ManCave76.webp',            'label': 'Salle TV'},
+    {'file': 'images/imageqfq/CManCave76.webp',           'label': 'Salon'},
+    {'file': 'images/imageqfq/FurnitureClipart68.webp',   'label': 'Canapé salon'},
+    {'file': 'images/imageqfq/Furniture28.webp',          'label': 'Séjour'},
+    {'file': 'images/imageqfq/Furniture64.webp',          'label': 'Salle à manger'},
     {'file': 'images/imageqfq/Gym12.webp',                'label': 'Salle de sport'},
     {'file': 'images/imageqfq/OrganizingCloset.webp',     'label': 'Dressing'},
     {'file': 'images/imageqfq/Pool4.webp',                'label': 'Piscine'},
     {'file': 'images/imageqfq/Furniture33.webp',          'label': 'Terrasse'},
     {'file': 'images/imageqfq/Pets9.webp',                'label': 'Animaux'},
     {'file': 'images/imageqfq/salonqfq.webp',             'label': 'Salle lecture'},
+    {'file': 'images/imageqfq/voiture.wepb.webp',         'label': 'Garage'},
 ]
 _ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
 
