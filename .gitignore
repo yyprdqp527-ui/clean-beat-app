@@ -61,3 +61,4 @@ static/avatars/*.jpeg
 *_backup.*
 *_old.*
 *.prebeta.bak
+_backup_rgb_originals/
