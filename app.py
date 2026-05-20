@@ -2605,6 +2605,8 @@ CREATE TABLE IF NOT EXISTS users (
         from PIL import Image as _PILImage
         import base64 as _base64_bf
         from io import BytesIO as _BytesIO_bf
+        # Forcer la re-migration des images imageqfq (fichiers mis à jour, fond transparent)
+        c.execute("UPDATE custom_rooms SET image_data = '' WHERE custom_image LIKE '%imageqfq%'")
         c.execute("""
             SELECT id, custom_image FROM custom_rooms
             WHERE room_key LIKE 'custom_%'
