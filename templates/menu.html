@@ -115,7 +115,7 @@
         })();
     </script>
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}?v=6">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}?v=10">
     <style>
         /* Overrides thématiques (dépendent de Jinja2 → ne peuvent pas vivre dans un .css statique) */
         body { background: {{ bg_gradient }}; }
@@ -3392,7 +3392,7 @@ function refreshAllBadges() {
                     // Souscription manquante → bannière critique, pas de cooldown
                     setTimeout(showPushBanner, 800);
                 }
-            }).catch(function(){ /* API push indisponible (dev) — ne pas afficher la bannière */ });
+            }).catch(function(){ setTimeout(showPushBanner, 800); });
             return;
         }
 
