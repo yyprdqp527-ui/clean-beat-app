@@ -17,16 +17,9 @@ ROOM_THUMB_H = 462
 # Plus aucune génération d'image serveur pour ces pièces : le menu les rend
 # directement via .emoji-losange + emoji unicode (instantané).
 ROOM_CATALOGUE = [
-    {"key": "jardin",        "emoji": "🌿", "label": "Jardin",           "image": "images/imageqfq/Gardening11.webp"},
-    {"key": "salle_billard", "emoji": "🎱", "label": "Salle de billard", "image": "images/imageqfq/ManCave65.webp"},
-    {"key": "salle_tv",      "emoji": "📺", "label": "Salle TV",         "image": "images/imageqfq/ManCave76.webp"},
-    {"key": "salle_sport",   "emoji": "🏋️", "label": "Salle de sport",  "image": "images/imageqfq/Gym12.webp"},
-    {"key": "bureau",        "emoji": "💻", "label": "Bureau",           "image": "images/imageqfq/FurnitureClipart78.webp"},
-    {"key": "dressing",      "emoji": "👗", "label": "Dressing",         "image": "images/imageqfq/OrganizingCloset.webp"},
-    {"key": "piscine",       "emoji": "🏊", "label": "Piscine",          "image": "images/imageqfq/Pool4.webp"},
-    {"key": "terrasse",      "emoji": "🌺", "label": "Terrasse",         "image": "images/imageqfq/Furniture33.webp"},
-    {"key": "animaux",       "emoji": "🐾", "label": "Animaux",          "image": "images/imageqfq/Pets9.webp"},
-    {"key": "salle_lecture", "emoji": "📚", "label": "Salle lecture",    "image": "images/imageqfq/salonqfq.webp"},
+    {"key": "jardin",  "emoji": "🌿", "label": "Jardin",        "image": "images/imageqfq/Gardening11.webp"},
+    {"key": "piscine", "emoji": "🏊", "label": "Piscine",       "image": "images/imageqfq/Pool4.webp"},
+    {"key": "animaux", "emoji": "🐾", "label": "Animaux",       "image": "images/imageqfq/Pets9.webp"},
 ]
 
 
@@ -123,30 +116,15 @@ def _is_user_uploaded_image(path):
 AVAILABLE_ROOM_IMAGES = [
     {'file': 'images/imageqfq/bathtub.webp',              'label': 'Salle de bain'},
     {'file': 'images/imageqfq/toilet2.webp',              'label': 'Toilettes'},
-    {'file': 'images/imageqfq/toilet_bowl.webp',          'label': 'WC'},
     {'file': 'images/imageqfq/OvenStove.webp',            'label': 'Cuisine'},
     {'file': 'images/imageqfq/Laundry_basket.webp',       'label': 'Buanderie'},
-    {'file': 'images/imageqfq/litparent.webp',            'label': 'Chambre parentale'},
-    {'file': 'images/imageqfq/litados.webp',              'label': 'Chambre ado'},
-    {'file': 'images/imageqfq/it.webp',                   'label': 'Chambre ado fille'},
-    {'file': 'images/imageqfq/lit2qfq.webp',              'label': 'Chambre double'},
-    {'file': 'images/imageqfq/WoodenBunkBeds11.webp',     'label': 'Chambre enfant'},
     {'file': 'images/imageqfq/GreenBaby58.webp',          'label': 'Chambre bébé'},
     {'file': 'images/imageqfq/FurnitureClipart78.webp',   'label': 'Bureau'},
     {'file': 'images/imageqfq/Gardening11.webp',          'label': 'Jardin'},
-    {'file': 'images/imageqfq/ManCave65.webp',            'label': 'Salle de billard'},
-    {'file': 'images/imageqfq/ManCave76.webp',            'label': 'Salle TV'},
     {'file': 'images/imageqfq/CManCave76.webp',           'label': 'Salon'},
-    {'file': 'images/imageqfq/FurnitureClipart68.webp',   'label': 'Canapé salon'},
-    {'file': 'images/imageqfq/Furniture28.webp',          'label': 'Séjour'},
-    {'file': 'images/imageqfq/Furniture64.webp',          'label': 'Salle à manger'},
-    {'file': 'images/imageqfq/Gym12.webp',                'label': 'Salle de sport'},
-    {'file': 'images/imageqfq/OrganizingCloset.webp',     'label': 'Dressing'},
     {'file': 'images/imageqfq/Pool4.webp',                'label': 'Piscine'},
-    {'file': 'images/imageqfq/Furniture33.webp',          'label': 'Terrasse'},
     {'file': 'images/imageqfq/Pets9.webp',                'label': 'Animaux'},
-    {'file': 'images/imageqfq/salonqfq.webp',             'label': 'Salle lecture'},
-    {'file': 'images/imageqfq/voiture.wepb.webp',         'label': 'Garage'},
+    {'file': 'images/imageqfq/voiture.webp',              'label': 'Garage'},
 ]
 _ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
 
@@ -280,18 +258,20 @@ def personnaliser_maison():
 
     # Liste complète de toutes les pièces
     ALL_ROOMS = [
-        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',     'image': 'images/imageqfq/litparent.webp', 'fixed': False},
-        {'key': 'chambre1',          'default_name': 'Chambre 2',     'image': 'images/imageqfq/Furniture28.webp',                'fixed': False},
-        {'key': 'chambre2',          'default_name': 'Chambre 3',     'image': 'images/imageqfq/litados.webp',                'fixed': False},
-        {'key': 'chambre_garcon',    'default_name': 'Chambre 4',     'image': 'images/imageqfq/it.webp',         'fixed': False},
-        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',     'image': 'images/imageqfq/Furniture64.webp',        'fixed': False},
-        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',  'image': 'images/imageqfq/GreenBaby58.webp',          'fixed': False},
-        {'key': 'salon',             'default_name': 'Salon',         'image': 'images/imageqfq/FurnitureClipart68.webp',             'fixed': False},
-        {'key': 'cuisine',           'default_name': 'Cuisine',       'image': 'images/imageqfq/OvenStove.webp',             'fixed': False},
-        {'key': 'salle_bain',        'default_name': 'Salle de bain', 'image': 'images/imageqfq/bathtub.webp',                'fixed': False},
-        {'key': 'toilettes',         'default_name': 'Toilettes',     'image': 'images/imageqfq/toilet2.webp',                    'fixed': False},
-        {'key': 'buanderie',         'default_name': 'Buanderie',     'image': 'images/imageqfq/Laundry_basket.webp',              'fixed': False},
-        {'key': 'garage',            'default_name': 'Garage',        'image': 'images/imageqfq/voiture.wepb.webp',                'fixed': False},
+        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',    'image': 'images/imageqfq/litparent.webp',          'fixed': False},
+        {'key': 'chambre1',          'default_name': 'Séjour',        'image': 'images/imageqfq/Furniture28.webp',        'fixed': False},
+        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',    'image': 'images/imageqfq/Furniture64.webp',        'fixed': False},
+        {'key': 'chambre2',          'default_name': 'Chambre 3',    'image': 'images/imageqfq/litados.webp',            'fixed': False},
+        {'key': 'chambre_garcon',    'default_name': 'Chambre 4',      'image': 'images/imageqfq/it.webp',                  'fixed': False},
+        {'key': 'chambre_lits',      'default_name': 'Chambre enfant', 'image': 'images/imageqfq/WoodenBunkBeds11.webp',    'fixed': False, 'default_hidden': True},
+        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',   'image': 'images/imageqfq/GreenBaby58.webp',         'fixed': False},
+        {'key': 'salon',             'default_name': 'Salon',        'image': 'images/imageqfq/FurnitureClipart68.webp', 'fixed': False},
+        {'key': 'cuisine',           'default_name': 'Cuisine',      'image': 'images/imageqfq/OvenStove.webp',          'fixed': False},
+        {'key': 'bureau',            'default_name': 'Bureau',       'image': 'images/imageqfq/FurnitureClipart78.webp', 'fixed': False},
+        {'key': 'salle_bain',        'default_name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',            'fixed': False},
+        {'key': 'toilettes',         'default_name': 'Toilettes',    'image': 'images/imageqfq/toilet2.webp',            'fixed': False},
+        {'key': 'buanderie',         'default_name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',     'fixed': False},
+        {'key': 'garage',            'default_name': 'Garage',       'image': 'images/imageqfq/voiture.webp',            'fixed': False, 'default_hidden': True},
     ]
 
     if request.method == 'POST':
@@ -382,6 +362,16 @@ def personnaliser_maison():
     """, (house_id, house_id))
     conn.commit()
 
+    # Supprimer les custom rooms auto-insérées dont l'image est déjà
+    # utilisée par une pièce standard (évite les doublons visuels)
+    _std_imgs = tuple(r['image'] for r in ALL_ROOMS if r.get('image'))
+    if _std_imgs:
+        c.execute(
+            "DELETE FROM custom_rooms WHERE house_id=? AND room_key LIKE 'custom_%' AND custom_image IN ({})".format(','.join('?'*len(_std_imgs))),
+            (house_id,) + _std_imgs
+        )
+        conn.commit()
+
     try:
         c.execute("SELECT room_key, custom_name, custom_image, is_hidden, emoji, image_data FROM custom_rooms WHERE house_id=?", (house_id,))
         custom_db = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3]), 'emoji': row[4], 'image_data': row[5]} for row in c.fetchall()}
@@ -395,10 +385,11 @@ def personnaliser_maison():
         r = room.copy()
         cust = custom_db.get(room['key'], {})
         r['current_name'] = cust.get('name') or room['default_name']
-        r['is_hidden']    = cust.get('is_hidden', False)
+        r['is_hidden']    = cust.get('is_hidden', room.get('default_hidden', False))
         rooms_data.append(r)
 
     # 🆕 Pièces personnalisées (room_key commence par 'custom_')
+    _std_images = {r['image'] for r in ALL_ROOMS if r.get('image')}
     extra_rooms_data = []
     for key, cust in custom_db.items():
         if not key.startswith('custom_'):
@@ -406,6 +397,9 @@ def personnaliser_maison():
         emoji = cust.get('emoji') or None
         image_data = cust.get('image_data') or None
         img = cust.get('image') or ''
+        # Ignorer les entrées catalogue dont l'image est déjà une pièce standard
+        if img and not image_data and img in _std_images:
+            continue
         # Sécurité : autoriser uniquement liste blanche OU upload utilisateur
         if img and not _is_valid_room_image(img):
             img = 'images/thumbs/default.webp'
@@ -426,6 +420,8 @@ def personnaliser_maison():
     # Utiliser les custom_image bruts depuis la DB (pas extra_rooms_data dont 'image'
     # peut valoir 'images/thumbs/default.webp' quand custom_image='' après backfill)
     added_catalogue_images = {v['image'] for v in custom_db.values() if v.get('image')}
+    # Exclure aussi les images déjà utilisées par les pièces standard
+    added_catalogue_images |= {r['image'] for r in ALL_ROOMS}
     # Inclure les noms des pièces standard pour éviter les conflits de labels
     added_names = {r['current_name'].lower() for r in extra_rooms_data} \
                 | {r['default_name'].lower() for r in rooms_data}

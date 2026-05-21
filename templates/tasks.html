@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 {% set hide_header = true %}
 
 {% block page_styles %}
@@ -626,10 +625,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
         modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
         document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex') close(); });
         btnConfirm.addEventListener('click', function(){
-            if(pendingForm){
-                btnConfirm.disabled = true;
-                pendingForm.submit();
-            }
+            if(pendingForm){ pendingForm.submit(); }
             close();
         });
     })();
@@ -684,7 +680,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             }
 
             // ─ Touch (mobile) ─
-            card.addEventListener('touchstart', function(e) { startPress(e); }, { passive: true });
+            card.addEventListener('touchstart', function(e) { e.preventDefault(); startPress(e); }, { passive: false });
             card.addEventListener('touchend', cancelPress);
             card.addEventListener('touchmove', cancelPress, { passive: true });
 
@@ -692,9 +688,10 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
             card.addEventListener('click', function(e) {
                 if (wasLongPress) {
                     e.preventDefault();
+                    e.stopPropagation();
                     wasLongPress = false;
                 }
-            });
+            }, true);
 
             // ─ Mouse (desktop) ─
             card.addEventListener('mousedown', startPress);
@@ -871,7 +868,7 @@ window.addEventListener('DOMContentLoaded', function(){ var toast=document.getEl
         }
         
         console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
-        const socket = io({transports: ['websocket'], reconnectionAttempts: 10, reconnectionDelay: 1000, reconnectionDelayMax: 5000});
+        const socket = io();
         const userEmail = "{{ session.get('user', '') }}";
         
         console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');

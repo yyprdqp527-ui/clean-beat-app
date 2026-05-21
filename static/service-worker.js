@@ -1,7 +1,7 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
 // Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v134';
+const CACHE_NAME = 'cleanbeat-v133';
 const OFFLINE_URL = '/static/manifest.json';
 
 // URLs à purger du cache (anciennes images remplacées)
@@ -22,13 +22,22 @@ const PURGE_URLS = [
     '/static/qfq-512.png',
 ];
 
-// PERF: precache uniquement les ressources critiques (icones + JS).
-// Les thumbs des pieces sont mis en cache a la demande par le fetch handler
-// (cache-first sur /static/images/), evite de bloquer l'install du SW 2-3s.
 const PRECACHE_URLS = [
     '/static/manifest.json',
     '/static/qfq-icon-192-v2.png',
     '/static/qfq-icon-512-v2.png',
+    '/static/images/thumbs/chambreparentale_marron.webp',
+    '/static/images/thumbs/chambre1.webp',
+    '/static/images/thumbs/chambre2.webp',
+    '/static/images/thumbs/chambre_garçon3.webp',
+    '/static/images/thumbs/chambre_enfant_4.webp',
+    '/static/images/thumbs/chambre_bébé4_.webp',
+    '/static/images/thumbs/salonorange.webp',
+    '/static/images/thumbs/cuisinewoop.webp',
+    '/static/images/thumbs/sdbwoop.webp',
+    '/static/images/thumbs/Wc2.webp',
+    '/static/images/thumbs/buanderie5.webp',
+    '/static/images/thumbs/Garage2.webp',
     '/static/socket.io.min.js',
     '/static/soundManager.js',
 ];
