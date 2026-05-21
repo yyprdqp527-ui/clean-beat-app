@@ -4189,7 +4189,7 @@ def menu():
     # Définir les pièces par défaut (correspond exactement aux 12 cartes du menu)
     ALL_DEFAULT_ROOMS = [
         # Chambres (optionnelles – peuvent être masquées et renommées)
-        {'key': 'chambre_parentale', 'name': 'Chambre principale', 'image': 'images/imageqfq/litparent.webp',          'category': 'chambre_parentale', 'fixed': False},
+        {'key': 'chambre_parentale', 'name': 'Chambre 1',          'image': 'images/imageqfq/litparent.webp',          'category': 'chambre_parentale', 'fixed': False},
         {'key': 'chambre1',          'name': 'Chambre 2',          'image': 'images/imageqfq/Furniture28.webp',        'category': 'chambre1',          'fixed': False},
         {'key': 'chambre2',          'name': 'Chambre 3',          'image': 'images/imageqfq/litados.webp',            'category': 'chambre2',          'fixed': False},
         {'key': 'chambre_garcon',    'name': 'Chambre 4',          'image': 'images/imageqfq/it.webp',                  'category': 'chambre_garcon', 'fixed': False},

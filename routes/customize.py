@@ -258,7 +258,7 @@ def personnaliser_maison():
 
     # Liste complète de toutes les pièces
     ALL_ROOMS = [
-        {'key': 'chambre_parentale', 'default_name': 'Chambre principale', 'image': 'images/imageqfq/litparent.webp',          'fixed': False},
+        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',          'image': 'images/imageqfq/litparent.webp',          'fixed': False},
         {'key': 'chambre1',          'default_name': 'Chambre 2',          'image': 'images/imageqfq/Furniture28.webp',        'fixed': False},
         {'key': 'chambre2',          'default_name': 'Chambre 3',          'image': 'images/imageqfq/litados.webp',            'fixed': False},
         {'key': 'chambre_garcon',    'default_name': 'Chambre 4',          'image': 'images/imageqfq/it.webp',                  'fixed': False},
