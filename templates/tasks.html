@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% set hide_header = true %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 
 {% block page_styles %}
 <style>
