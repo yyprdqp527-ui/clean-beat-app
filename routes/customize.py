@@ -21,7 +21,7 @@ ROOM_CATALOGUE = [
     {"key": "salle_billard", "emoji": "🎱", "label": "Salle de billard", "image": "images/imageqfq/ManCave65.webp"},
     {"key": "salle_tv",      "emoji": "📺", "label": "Salle TV",         "image": "images/imageqfq/ManCave76.webp"},
     {"key": "salle_sport",   "emoji": "🏋️", "label": "Salle de sport",  "image": "images/imageqfq/Gym12.webp"},
-    {"key": "bureau",        "emoji": "💻", "label": "Bureau",           "image": "images/imageqfq/Writer5.webp"},
+    {"key": "bureau",        "emoji": "💻", "label": "Bureau",           "image": "images/imageqfq/FurnitureClipart78.webp"},
     {"key": "dressing",      "emoji": "👗", "label": "Dressing",         "image": "images/imageqfq/OrganizingCloset.webp"},
     {"key": "piscine",       "emoji": "🏊", "label": "Piscine",          "image": "images/imageqfq/Pool4.webp"},
     {"key": "terrasse",      "emoji": "🌺", "label": "Terrasse",         "image": "images/imageqfq/Furniture33.webp"},
