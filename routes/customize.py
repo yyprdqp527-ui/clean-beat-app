@@ -21,7 +21,7 @@ ROOM_CATALOGUE = [
     {"key": "salle_billard", "emoji": "🎱", "label": "Salle de billard", "image": "images/imageqfq/ManCave65.webp"},
     {"key": "salle_tv",      "emoji": "📺", "label": "Salle TV",         "image": "images/imageqfq/ManCave76.webp"},
     {"key": "salle_sport",   "emoji": "🏋️", "label": "Salle de sport",  "image": "images/imageqfq/Gym12.webp"},
-    {"key": "bureau",        "emoji": "💻", "label": "Bureau",           "image": "images/imageqfq/Writer5.webp"},
+    {"key": "bureau",        "emoji": "💻", "label": "Bureau",           "image": "images/imageqfq/FurnitureClipart78.webp"},
     {"key": "dressing",      "emoji": "👗", "label": "Dressing",         "image": "images/imageqfq/OrganizingCloset.webp"},
     {"key": "piscine",       "emoji": "🏊", "label": "Piscine",          "image": "images/imageqfq/Pool4.webp"},
     {"key": "terrasse",      "emoji": "🌺", "label": "Terrasse",         "image": "images/imageqfq/Furniture33.webp"},
@@ -423,7 +423,9 @@ def personnaliser_maison():
     extra_rooms_data.sort(key=lambda r: r['key'])
 
     # Auto-insérer les pièces catalogue manquantes (cachées par défaut)
-    added_images = {r['image'] for r in extra_rooms_data}
+    # Utiliser les custom_image bruts depuis la DB (pas extra_rooms_data dont 'image'
+    # peut valoir 'images/thumbs/default.webp' quand custom_image='' après backfill)
+    added_catalogue_images = {v['image'] for v in custom_db.values() if v.get('image')}
     # Inclure les noms des pièces standard pour éviter les conflits de labels
     added_names = {r['current_name'].lower() for r in extra_rooms_data} \
                 | {r['default_name'].lower() for r in rooms_data}
@@ -433,7 +435,7 @@ def personnaliser_maison():
     for item in AVAILABLE_ROOM_IMAGES:
         if 'imageqfq' not in item['file']:
             continue
-        if item['file'] in added_images:
+        if item['file'] in added_catalogue_images:
             continue
         if item['label'].lower() in added_names:
             continue
@@ -444,7 +446,7 @@ def personnaliser_maison():
                      ON CONFLICT(house_id, room_key) DO NOTHING""",
                       (house_id, room_key, item['label'], item['file']))
         conn_ins.commit()
-        added_images.add(item['file'])
+        added_catalogue_images.add(item['file'])
         inserted = True
         time.sleep(0.001)  # évite les room_key identiques
 
