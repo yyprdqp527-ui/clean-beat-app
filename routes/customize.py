@@ -364,10 +364,21 @@ def personnaliser_maison():
 
     # Supprimer les custom rooms auto-insérées dont l'image est déjà
     # utilisée par une pièce standard (évite les doublons visuels)
+    # Ne supprime PAS si image_data est rempli (= upload utilisateur)
     _std_imgs = tuple(r['image'] for r in ALL_ROOMS if r.get('image'))
     if _std_imgs:
         c.execute(
-            "DELETE FROM custom_rooms WHERE house_id=? AND room_key LIKE 'custom_%' AND custom_image IN ({})".format(','.join('?'*len(_std_imgs))),
+            "SELECT room_key, custom_image, image_data FROM custom_rooms WHERE house_id=? AND room_key LIKE 'custom_%' AND custom_image IN ({})".format(','.join('?'*len(_std_imgs))),
+            (house_id,) + _std_imgs
+        )
+        _to_delete = c.fetchall()
+        for _row in _to_delete:
+            if _row[2]:  # image_data non vide = upload utilisateur, on conserve
+                print(f"[customize] SKIP delete custom_room {_row[0]} house={house_id} (has image_data)", flush=True)
+            else:
+                print(f"[customize] DELETE custom_room {_row[0]} image={_row[1]} house={house_id}", flush=True)
+        c.execute(
+            "DELETE FROM custom_rooms WHERE house_id=? AND room_key LIKE 'custom_%' AND custom_image IN ({}) AND (image_data IS NULL OR image_data = '')".format(','.join('?'*len(_std_imgs))),
             (house_id,) + _std_imgs
         )
         conn.commit()
