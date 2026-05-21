@@ -258,13 +258,13 @@ def personnaliser_maison():
 
     # Liste complète de toutes les pièces
     ALL_ROOMS = [
-        {'key': 'chambre_parentale', 'default_name': 'Chambre 1',    'image': 'images/imageqfq/litparent.webp',          'fixed': False},
-        {'key': 'chambre1',          'default_name': 'Séjour',        'image': 'images/imageqfq/Furniture28.webp',        'fixed': False},
-        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',    'image': 'images/imageqfq/Furniture64.webp',        'fixed': False},
-        {'key': 'chambre2',          'default_name': 'Chambre 3',    'image': 'images/imageqfq/litados.webp',            'fixed': False},
-        {'key': 'chambre_garcon',    'default_name': 'Chambre 4',      'image': 'images/imageqfq/it.webp',                  'fixed': False},
-        {'key': 'chambre_lits',      'default_name': 'Chambre enfant', 'image': 'images/imageqfq/WoodenBunkBeds11.webp',    'fixed': False, 'default_hidden': True},
-        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',   'image': 'images/imageqfq/GreenBaby58.webp',         'fixed': False},
+        {'key': 'chambre_parentale', 'default_name': 'Chambre principale', 'image': 'images/imageqfq/litparent.webp',          'fixed': False},
+        {'key': 'chambre1',          'default_name': 'Chambre 2',          'image': 'images/imageqfq/Furniture28.webp',        'fixed': False},
+        {'key': 'chambre2',          'default_name': 'Chambre 3',          'image': 'images/imageqfq/litados.webp',            'fixed': False},
+        {'key': 'chambre_garcon',    'default_name': 'Chambre 4',          'image': 'images/imageqfq/it.webp',                  'fixed': False},
+        {'key': 'chambre_enfant',    'default_name': 'Chambre 5',          'image': 'images/imageqfq/Furniture64.webp',        'fixed': False},
+        {'key': 'chambre_lits',      'default_name': 'Chambre enfant',     'image': 'images/imageqfq/WoodenBunkBeds11.webp',    'fixed': False, 'default_hidden': True},
+        {'key': 'chambre_bebe',      'default_name': 'Chambre bébé',       'image': 'images/imageqfq/GreenBaby58.webp',         'fixed': False},
         {'key': 'salon',             'default_name': 'Salon',        'image': 'images/imageqfq/FurnitureClipart68.webp', 'fixed': False},
         {'key': 'cuisine',           'default_name': 'Cuisine',      'image': 'images/imageqfq/OvenStove.webp',          'fixed': False},
         {'key': 'bureau',            'default_name': 'Bureau',       'image': 'images/imageqfq/FurnitureClipart78.webp', 'fixed': False},
