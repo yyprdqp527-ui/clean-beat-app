@@ -1228,6 +1228,8 @@
             flex-direction: column !important;
             align-items: center !important;
             text-decoration: none !important;
+            min-width: 0;
+            width: 100%;
         }
         
         /* Image dans cadre glassmorphisme qui déborde */
@@ -1333,6 +1335,8 @@
                 min-width: 0 !important;
                 height: 24px !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
         
@@ -1978,6 +1982,8 @@
                 font-weight: 800 !important;
                 width: 100% !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
         @media (max-width: 360px) {
@@ -1994,6 +2000,8 @@
                 font-weight: 800 !important;
                 width: 100% !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
             .room-card-visual {
                 border-radius: 12px !important;
