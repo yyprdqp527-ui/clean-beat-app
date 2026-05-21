@@ -115,7 +115,7 @@
         })();
     </script>
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.min.css') }}?v=11">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}?v=10">
     <style>
         /* Overrides thématiques (dépendent de Jinja2 → ne peuvent pas vivre dans un .css statique) */
         body { background: {{ bg_gradient }}; }
@@ -2133,8 +2133,6 @@ function sendMalus(reason, points){
                 window.showHouseSpeechBubble = showHouseSpeechBubble;
 
                 // Protection: si socket.io n'est pas chargé, les badges restent fonctionnels
-                // (socket.io.min.js est en defer → disponible au DOMContentLoaded, pas avant)
-                function _initMenuSocket() {
                 try {
                         // Réutiliser window.socket s'il existe déjà (créé par base.html),
                         // sinon le créer ici avec la config complète.
@@ -2809,12 +2807,6 @@ function sendMalus(reason, points){
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
                     console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
-                }
-                } // fin _initMenuSocket
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', _initMenuSocket);
-                } else {
-                    _initMenuSocket();
                 }
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
