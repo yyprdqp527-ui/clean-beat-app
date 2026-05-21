@@ -3003,9 +3003,16 @@ function refreshAllBadges() {
                             // (clic explicite sur la notif), pas via postMessage SW
                         }
                         // 🔔 Push reminder reçu pendant qu'on est déjà sur /menu
-                        // → recharger /menu?reminder=<id> pour afficher le popup
+                        // → afficher le popup directement sans reload (on est sur /menu)
                         if (event.data && event.data.type === 'SHOW_REMINDER' && event.data.url) {
-                            try { window.location.href = event.data.url; } catch(_) {}
+                            fetch('/api/latest_reminder', { credentials: 'same-origin', cache: 'no-store' })
+                                .then(function(r) { return r.ok ? r.json() : null; })
+                                .then(function(d) {
+                                    if (d && d.reminder && d.reminder.id && typeof _showReminderPopup === 'function') {
+                                        _showReminderPopup(d.reminder.id, d.reminder.content || '');
+                                    }
+                                })
+                                .catch(function() {});
                         }
                     });
                 }
