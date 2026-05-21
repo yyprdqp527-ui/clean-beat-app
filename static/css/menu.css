@@ -1236,7 +1236,7 @@
             overflow: visible;
             position: relative;
             aspect-ratio: 400 / 462;
-            background: linear-gradient(135deg, rgba(253,174,84,0.18) 0%, rgba(253,174,84,0.08) 100%);
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(89,113,118,0.15);
             border: 2px solid rgba(253,174,84,0.3);
