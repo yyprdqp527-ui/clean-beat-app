@@ -509,8 +509,8 @@
                     {% for room in (rooms + extra_rooms) %}
                     <div class="room-item" id="item-{{ room.key }}">
                         <div class="room-thumb">
-                            {% if room.image_data %}
-                              <img src="{{ room.image_data }}"
+                            {% if room.image_b64 %}
+                              <img src="{{ room.image_b64 }}"
                                    style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
                             {% elif room.image and not room.image.startswith('images/imageqfq') %}
                               <img src="{{ url_for('static', filename=room.image) }}"

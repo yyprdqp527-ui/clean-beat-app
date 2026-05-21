@@ -2600,9 +2600,34 @@ CREATE TABLE IF NOT EXISTS users (
     except Exception as _bf_err:
         print(f"⚠️ Backfill emoji: {_bf_err}", flush=True)
 
-    # Backfill image_data désactivé : l'UPDATE qui vidait image_data pour les
-    # pièces imageqfq causait des doublons à chaque démarrage (auto-insert pensait
-    # que la pièce était absente). Les image_data déjà en base sont conservées.
+    # Backfill image_data (base64) pour pièces custom dont image_data est NULL
+    try:
+        from PIL import Image as _PILImage
+        import base64 as _base64_bf
+        from io import BytesIO as _BytesIO_bf
+        # Forcer la re-migration des images imageqfq (fichiers mis à jour, fond transparent)
+        c.execute("UPDATE custom_rooms SET image_data = '' WHERE custom_image LIKE ?", ('%imageqfq%',))
+        c.execute("""
+            SELECT id, custom_image FROM custom_rooms
+            WHERE room_key LIKE 'custom_%'
+            AND (image_data IS NULL OR image_data = '')
+            AND custom_image IS NOT NULL AND custom_image != ''
+        """)
+        _imgrows = c.fetchall()
+        _img_migrated = 0
+        for _imgrow_id, _imgrow_path in _imgrows:
+            _filepath = os.path.join('static', (_imgrow_path or '').lstrip('/'))
+            if os.path.exists(_filepath):
+                _buf = _BytesIO_bf()
+                _PILImage.open(_filepath).save(_buf, format='WEBP')
+                _buf.seek(0)
+                _b64 = "data:image/webp;base64," + _base64_bf.b64encode(_buf.getvalue()).decode('utf-8')
+                c.execute("UPDATE custom_rooms SET image_data = ? WHERE id = ?", (_b64, _imgrow_id))
+                _img_migrated += 1
+        if _imgrows:
+            print(f"✅ {_img_migrated}/{len(_imgrows)} images migrées en base64", flush=True)
+    except Exception as _img_err:
+        print(f"⚠️ Migration base64 images: {_img_err}", flush=True)
 
     # Table pour les tokens de réinitialisation de mot de passe
     c.execute("""
