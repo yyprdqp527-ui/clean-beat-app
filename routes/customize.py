@@ -628,6 +628,12 @@ def add_custom_room():
             VALUES (?, ?, ?, ?, 0, ?, ?)
         """, (house_id, room_key, name, image, emoji, image_b64))
         conn.commit()
+        if SOCKETIO_AVAILABLE and socketio:
+            try:
+                safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                                   namespace='/', room=f'house_{house_id}', broadcast=True)
+            except Exception as ws_err:
+                _dbg(f"⚠️ Erreur WebSocket add_custom_room: {ws_err}")
     except Exception as e:
         conn.rollback()
         return {'ok': False, 'error': str(e)}, 500
@@ -671,6 +677,12 @@ def delete_custom_room():
             return jsonify({'ok': False, 'error': 'pending_tasks', 'count': pending}), 400
         c.execute("DELETE FROM custom_rooms WHERE house_id=? AND room_key=?", (house_id, room_key))
         conn.commit()
+        if SOCKETIO_AVAILABLE and socketio:
+            try:
+                safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                                   namespace='/', room=f'house_{house_id}', broadcast=True)
+            except Exception as ws_err:
+                _dbg(f"⚠️ Erreur WebSocket delete_custom_room: {ws_err}")
     except Exception as e:
         conn.rollback()
         return {'ok': False, 'error': str(e)}, 500
@@ -781,6 +793,13 @@ def upload_room_image():
             _inval(_urow[0])
         except Exception:
             pass
+        if SOCKETIO_AVAILABLE and socketio:
+            try:
+                _hid = _urow[0]
+                safe_socketio_emit('house_rooms_updated', {'house_id': _hid},
+                                   namespace='/', room=f'house_{_hid}', broadcast=True)
+            except Exception as ws_err:
+                _dbg(f"⚠️ Erreur WebSocket upload_room_image: {ws_err}")
     except Exception as _db_err:
         print(f"⚠️ upload_room_image DB error: {_db_err}", flush=True)
         try:
