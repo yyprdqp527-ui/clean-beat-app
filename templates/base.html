@@ -1267,11 +1267,9 @@ window.cbToast = function(message, type, duration) {
                 }
             }
             // 🔔 Push reminder 20h reçu → rediriger vers /menu?reminder=<id>
-            // Seulement si on n'est PAS déjà sur /menu (menu.html gère le popup directement)
+            // pour que le popup "Hé, t'es là ?" s'affiche, peu importe la page courante.
             if (event.data && event.data.type === 'SHOW_REMINDER' && event.data.url) {
-                if (window.location.pathname.indexOf('/menu') !== 0) {
-                    try { window.location.href = event.data.url; } catch(_) {}
-                }
+                try { window.location.href = event.data.url; } catch(_) {}
             }
         });
     }
