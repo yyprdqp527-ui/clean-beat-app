@@ -3399,7 +3399,7 @@ function refreshAllBadges() {
                     // Souscription manquante → bannière critique, pas de cooldown
                     setTimeout(showPushBanner, 800);
                 }
-            }).catch(function(){ setTimeout(showPushBanner, 800); });
+            }).catch(function(){ /* API push indisponible (dev) — ne pas afficher la bannière */ });
             return;
         }
 
