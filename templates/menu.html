@@ -2976,8 +2976,7 @@ function refreshAllBadges() {
                         if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                         _menuCheckReminderResume();
                     };
-                    if (window.requestIdleCallback) requestIdleCallback(run, {timeout: 1000});
-                    else setTimeout(run, 0);
+                    (window.requestIdleCallback || function(cb){ setTimeout(cb, 1); })(run);
                 }
                 window.addEventListener('pageshow', function(event) {
                     console.log('🔄 pageshow event, persisted=' + event.persisted);
@@ -2987,7 +2986,7 @@ function refreshAllBadges() {
                 // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible') {
-                        requestIdleCallback(() => {
+                        (window.requestIdleCallback || function(cb){ setTimeout(cb, 1); })(function() {
                             refreshAllBadges();
                             refreshMissionDots();
                             updatePlayersPointsMenu();
