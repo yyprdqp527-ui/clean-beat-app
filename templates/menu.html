@@ -88,7 +88,13 @@
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function(regs) {
                     regs.forEach(function(r) { r.unregister(); });
-                    setTimeout(function() { location.reload(true); }, 500);
+                    setTimeout(function() {
+                        sessionStorage.setItem('badge_messages', '{{ unread_messages_count|default(0)|int }}');
+                        sessionStorage.setItem('badge_courses', '{{ courses_pending_count|default(0)|int }}');
+                        sessionStorage.setItem('badge_baby', '{{ unread_baby_tracking|default(0)|int }}');
+                        sessionStorage.setItem('badge_missions', JSON.stringify({{ rooms_with_new_missions|default({})|tojson }}));
+                        location.reload(true);
+                    }, 500);
                 });
                 return;
             }
@@ -4261,6 +4267,20 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
 <script>
 // Tab bar menu.html — pastille Messages (pill numérotée, idem base.html)
 (function() {
+    // Restauration des badges sauvegardés avant le reload de purge SW
+    (function() {
+        var _bm    = sessionStorage.getItem('badge_messages');
+        var _bc    = sessionStorage.getItem('badge_courses');
+        var _bb    = sessionStorage.getItem('badge_baby');
+        var _bmiss = sessionStorage.getItem('badge_missions');
+        if (_bm !== null || _bc !== null || _bb !== null || _bmiss !== null) {
+            if (_bm !== null)    { var e1=document.getElementById('messages-nav-badge'); if(e1){var n1=parseInt(_bm)||0; if(n1>0){e1.textContent=n1<100?n1:'99+';e1.style.display='inline-flex';}else{e1.style.display='none';}} }
+            if (_bc !== null)    { var e2=document.getElementById('courses-nav-badge');  if(e2){var n2=parseInt(_bc)||0; if(n2>0){e2.textContent=n2<100?n2:'99+';e2.style.display='inline-flex';}else{e2.style.display='none';}} }
+            if (_bb !== null)    { var e3=document.getElementById('room-baby-dot');      if(e3){var n3=parseInt(_bb)||0; if(n3>0){e3.textContent=n3;e3.style.display='';}else{e3.style.display='none';}} }
+            if (_bmiss !== null) { try { var md=JSON.parse(_bmiss); document.querySelectorAll('.room-mission-dot').forEach(function(dot){ var vis=dot.closest('.room-card-visual[data-category]'); if(!vis)return; var cat=vis.getAttribute('data-category'); var cnt=md[cat]||0; if(cnt>0){dot.textContent=cnt<100?cnt:'99+';dot.style.display='';}else{dot.style.display='none';} }); } catch(e){} }
+            ['badge_messages','badge_courses','badge_baby','badge_missions'].forEach(function(k){ sessionStorage.removeItem(k); });
+        }
+    })();
     var unreadCount = {{ unread_messages_count|default(0)|int }};
     var badge = document.getElementById('messages-nav-badge');
     if (badge) {
