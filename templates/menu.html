@@ -4284,6 +4284,31 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
             cBadge.style.display = 'none';
         }
     }
+    // Seed initial du badge bébé
+    var _babyCount = {{ unread_baby_tracking|default(0)|int }};
+    var babyDot = document.getElementById('room-baby-dot');
+    if (babyDot) {
+        if (_babyCount > 0) {
+            babyDot.textContent = _babyCount;
+            babyDot.style.display = '';
+        } else {
+            babyDot.style.display = 'none';
+        }
+    }
+    // Seed initial des mission dots (pastilles oranges par pièce)
+    var _missionData = {{ rooms_with_new_missions|default({})|tojson }};
+    document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
+        var vis = dot.closest('.room-card-visual[data-category]');
+        if (!vis) return;
+        var cat = vis.getAttribute('data-category');
+        var cnt = _missionData[cat] || 0;
+        if (cnt > 0) {
+            dot.textContent = cnt < 100 ? cnt : '99+';
+            dot.style.display = '';
+        } else {
+            dot.style.display = 'none';
+        }
+    });
 })();
 </script>
 

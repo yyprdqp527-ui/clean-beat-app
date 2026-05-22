@@ -4021,6 +4021,10 @@ def menu():
                         conn.commit()
             except Exception:
                 try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                try:
                     today = now_paris().date().isoformat()
                     c.execute("SELECT progress, last_reset_date FROM houses WHERE id=?", (house_id,))
                     prow = c.fetchone()
@@ -4030,6 +4034,10 @@ def menu():
                             c.execute("UPDATE houses SET progress=?, last_reset_date=? WHERE id=?", (0, today, house_id))
                             conn.commit()
                 except Exception:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                     pass
             
             # ⚡ Vérifier et effectuer la réinitialisation hebdomadaire des statistiques si nécessaire
@@ -4119,6 +4127,10 @@ def menu():
                         for r in diag_rows
                     ]
             except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
                 daily_report = []
 
             # 🔔 Messages non lus — MÊME connexion pour toutes les requêtes
