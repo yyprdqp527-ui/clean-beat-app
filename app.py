@@ -2600,32 +2600,9 @@ CREATE TABLE IF NOT EXISTS users (
     except Exception as _bf_err:
         print(f"⚠️ Backfill emoji: {_bf_err}", flush=True)
 
-    # Backfill image_data (base64) pour pièces custom dont image_data est NULL
-    try:
-        from PIL import Image as _PILImage
-        import base64 as _base64_bf
-        from io import BytesIO as _BytesIO_bf
-        c.execute("""
-            SELECT id, custom_image FROM custom_rooms
-            WHERE room_key LIKE 'custom_%'
-            AND (image_data IS NULL OR image_data = '')
-            AND custom_image IS NOT NULL AND custom_image != ''
-        """)
-        _imgrows = c.fetchall()
-        _img_migrated = 0
-        for _imgrow_id, _imgrow_path in _imgrows:
-            _filepath = os.path.join('static', (_imgrow_path or '').lstrip('/'))
-            if os.path.exists(_filepath):
-                _buf = _BytesIO_bf()
-                _PILImage.open(_filepath).save(_buf, format='WEBP')
-                _buf.seek(0)
-                _b64 = "data:image/webp;base64," + _base64_bf.b64encode(_buf.getvalue()).decode('utf-8')
-                c.execute("UPDATE custom_rooms SET image_data = ? WHERE id = ?", (_b64, _imgrow_id))
-                _img_migrated += 1
-        if _imgrows:
-            print(f"✅ {_img_migrated}/{len(_imgrows)} images migrées en base64", flush=True)
-    except Exception as _img_err:
-        print(f"⚠️ Migration base64 images: {_img_err}", flush=True)
+    # Backfill image_data désactivé : l'UPDATE qui vidait image_data pour les
+    # pièces imageqfq causait des doublons à chaque démarrage (auto-insert pensait
+    # que la pièce était absente). Les image_data déjà en base sont conservées.
 
     # Table pour les tokens de réinitialisation de mot de passe
     c.execute("""
@@ -4212,20 +4189,21 @@ def menu():
     # Définir les pièces par défaut (correspond exactement aux 12 cartes du menu)
     ALL_DEFAULT_ROOMS = [
         # Chambres (optionnelles – peuvent être masquées et renommées)
-        {'key': 'chambre_parentale', 'name': 'Chambre 1',    'image': 'images/imageqfq/litparent.webp', 'category': 'chambre_parentale', 'fixed': False},
-        {'key': 'chambre1',          'name': 'Chambre 2',    'image': 'images/imageqfq/Furniture28.webp',                'category': 'chambre1',           'fixed': False},
-        {'key': 'chambre2',          'name': 'Chambre 3',    'image': 'images/imageqfq/litados.webp',                'category': 'chambre2',           'fixed': False},
-        {'key': 'chambre_garcon',    'name': 'Chambre 4',    'image': 'images/imageqfq/it.webp',        'category': 'chambre_garcon',     'fixed': False},
-        {'key': 'chambre_enfant',    'name': 'Chambre 5',    'image': 'images/imageqfq/Furniture64.webp',       'category': 'chambre_enfant',     'fixed': False},
-        {'key': 'chambre_bebe',      'name': 'Chambre bébé', 'image': 'images/imageqfq/GreenBaby58.webp',         'category': 'chambre_bebe',       'fixed': False},
+        {'key': 'chambre_parentale', 'name': 'Chambre 1',          'image': 'images/imageqfq/litparent.webp',          'category': 'chambre_parentale', 'fixed': False},
+        {'key': 'chambre1',          'name': 'Chambre 2',          'image': 'images/imageqfq/Furniture28.webp',        'category': 'chambre1',          'fixed': False},
+        {'key': 'chambre2',          'name': 'Chambre 3',          'image': 'images/imageqfq/litados.webp',            'category': 'chambre2',          'fixed': False},
+        {'key': 'chambre_garcon',    'name': 'Chambre 4',          'image': 'images/imageqfq/it.webp',                  'category': 'chambre_garcon', 'fixed': False},
+        {'key': 'chambre_enfant',    'name': 'Chambre 5',          'image': 'images/imageqfq/Furniture64.webp',        'category': 'chambre_enfant',    'fixed': False, 'default_hidden': True},
+        {'key': 'chambre_lits',      'name': 'Chambre enfant',     'image': 'images/imageqfq/WoodenBunkBeds11.webp',    'category': 'chambre_lits',   'fixed': False, 'default_hidden': True},
+        {'key': 'chambre_bebe',      'name': 'Chambre bébé',       'image': 'images/imageqfq/GreenBaby58.webp',         'category': 'chambre_bebe',   'fixed': False},
         # Pièces fixes (ne peuvent pas être masquées, mais renommables)
-        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/OvenStove.webp',  'category': 'cuisine',    'fixed': True},
-        {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/FurnitureClipart68.webp',  'category': 'salon',      'fixed': True},
-        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/FurnitureClipart78.webp',       'category': 'piece_bonus', 'fixed': True},
-        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',     'category': 'salle_bain', 'fixed': True},
-        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet2.webp',          'category': 'wc',         'fixed': True},
-        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',   'category': 'buanderie',  'fixed': True},
-        {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/voiture.wepb.webp',      'category': 'garage',     'fixed': False},
+        {'key': 'cuisine',  'name': 'Cuisine',      'image': 'images/imageqfq/OvenStove.webp',          'category': 'cuisine',    'fixed': True},
+        {'key': 'salon',    'name': 'Salon',        'image': 'images/imageqfq/FurnitureClipart68.webp', 'category': 'salon',      'fixed': True},
+        {'key': 'bureau',   'name': 'Bureau',       'image': 'images/imageqfq/FurnitureClipart78.webp', 'category': 'piece_bonus','fixed': True},
+        {'key': 'salle_bain','name': 'Salle de bain','image': 'images/imageqfq/bathtub.webp',           'category': 'salle_bain', 'fixed': True},
+        {'key': 'toilettes','name': 'Toilettes',    'image': 'images/imageqfq/toilet2.webp',            'category': 'wc',         'fixed': True},
+        {'key': 'buanderie','name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',     'category': 'buanderie',  'fixed': True},
+        {'key': 'garage',   'name': 'Garage',       'image': 'images/imageqfq/voiture.webp',            'category': 'garage',     'fixed': False, 'default_hidden': True},
     ]
     if house_id:
         for room in ALL_DEFAULT_ROOMS:
@@ -4242,7 +4220,7 @@ def menu():
                     room_data['image'] = custom['image']
                 room_data['is_hidden'] = bool(custom['is_hidden'])
             else:
-                room_data['is_hidden'] = False
+                room_data['is_hidden'] = room.get('default_hidden', False)
             
             # N'ajouter que les pièces non masquées
             if not room_data.get('is_hidden'):

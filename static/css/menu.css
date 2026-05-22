@@ -1228,6 +1228,8 @@
             flex-direction: column !important;
             align-items: center !important;
             text-decoration: none !important;
+            min-width: 0;
+            width: 100%;
         }
         
         /* Image dans cadre glassmorphisme qui déborde */
@@ -1270,6 +1272,8 @@
             margin-top: 0px !important;
             margin-bottom: 6px !important;
             width: 100% !important;
+            min-width: 0 !important;
+            height: 28px !important;
             padding: 5px 8px !important;
             font-size: 15px !important;
             font-weight: 800 !important;
@@ -1295,7 +1299,6 @@
         .room-card:hover .room-card-visual img { 
             transform: scale(1.18);
             transform-origin: top left;
-            filter: drop-shadow(5px 9px 12px rgba(21,48,54,0.38));
         }
         .room-card:active { transform: scale(0.98); }
 
@@ -1329,7 +1332,11 @@
                 margin-bottom: 5px !important;
                 font-weight: 800 !important;
                 width: 100% !important;
+                min-width: 0 !important;
+                height: 24px !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
         
@@ -1975,6 +1982,8 @@
                 font-weight: 800 !important;
                 width: 100% !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
         @media (max-width: 360px) {
@@ -1991,6 +2000,8 @@
                 font-weight: 800 !important;
                 width: 100% !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
             .room-card-visual {
                 border-radius: 12px !important;

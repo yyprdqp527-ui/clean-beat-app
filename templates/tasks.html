@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 {% set hide_header = true %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 
 {% block page_styles %}
 <style>
@@ -626,10 +626,7 @@ body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
         modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
         document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex') close(); });
         btnConfirm.addEventListener('click', function(){
-            if(pendingForm){
-                btnConfirm.disabled = true;
-                pendingForm.submit();
-            }
+            if(pendingForm){ pendingForm.submit(); }
             close();
         });
     })();
