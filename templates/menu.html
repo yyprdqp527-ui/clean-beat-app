@@ -2808,6 +2808,16 @@ function sendMalus(reason, points){
                             if (ov) ov.style.display = 'none';
                         });
 
+                        // 🔔 Rappel quotidien envoyé par le cron (background task)
+                        socket.on('daily_reminder', function(data) {
+                            if (!data || !data.message_id) return;
+                            // Filtrer : n'afficher qu'au destinataire ciblé
+                            if (data.target_email && data.target_email !== userEmail) return;
+                            if (typeof _showReminderPopup === 'function') {
+                                _showReminderPopup(data.message_id, data.message || '');
+                            }
+                        });
+
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
                     console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);

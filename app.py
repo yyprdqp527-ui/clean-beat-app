@@ -4431,6 +4431,7 @@ def menu():
 
     if conn:
         conn.close()
+    print(f"DEBUG BADGES: messages={unread_messages_count} courses={courses_pending_count} baby={unread_baby_tracking} missions={rooms_with_new_missions}", flush=True)
     resp = make_response(render_template(
         'menu.html',
         players=players,
@@ -4724,7 +4725,25 @@ if SOCKETIO_AVAILABLE:
                 _dbg(f'⚠️ {user_email} : house_id introuvable !')
         except Exception as e:
             _dbg(f'❌ Erreur join_house pour {user_email}: {e}')
-    
+
+    @socketio.on('join_house_room')
+    def handle_join_house_room(data):
+        """Variante de join_house utilisant house_id directement (manage_players, contester, add_players)"""
+        house_id = data.get('house_id')
+        _dbg(f'📩 join_house_room reçu : house_id={house_id}, sid={request.sid}')
+
+        if not house_id:
+            _dbg(f'⚠️ join_house_room : house_id manquant !')
+            return
+
+        try:
+            room = f"house_{house_id}"
+            join_room(room)
+            emit('joined_room', {'room': room})
+            _dbg(f'✅ sid={request.sid} a REJOINT la room {room} (via join_house_room)')
+        except Exception as e:
+            _dbg(f'❌ Erreur join_house_room pour house_id={house_id}: {e}')
+
     @socketio.on('points_updated')
     def handle_points_updated(data):
         """Diffuser la mise à jour des points à tous les joueurs de la maison"""
