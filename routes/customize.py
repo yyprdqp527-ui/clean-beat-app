@@ -17,9 +17,9 @@ ROOM_THUMB_H = 462
 # Plus aucune génération d'image serveur pour ces pièces : le menu les rend
 # directement via .emoji-losange + emoji unicode (instantané).
 ROOM_CATALOGUE = [
-    {"key": "jardin",  "emoji": "🌿", "label": "Jardin",        "image": "images/imageqfq/Gardening11.webp"},
-    {"key": "piscine", "emoji": "🏊", "label": "Piscine",       "image": "images/imageqfq/Pool4.webp"},
-    {"key": "animaux", "emoji": "🐾", "label": "Animaux",       "image": "images/imageqfq/Pets9.webp"},
+    {"key": "jardin",  "label": "Jardin",        "image": "images/imageqfq/Gardening11.webp"},
+    {"key": "piscine", "label": "Piscine",       "image": "images/imageqfq/Pool4.webp"},
+    {"key": "animaux", "label": "Animaux",       "image": "images/imageqfq/Pets9.webp"},
 ]
 
 
