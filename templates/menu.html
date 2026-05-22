@@ -2145,7 +2145,7 @@ function sendMalus(reason, points){
                         // → une seule connexion Socket.IO par page.
                         if (!window.socket) {
                             window.socket = io({
-                                transports: ['websocket', 'polling'],
+                                transports: ['polling', 'websocket'],
                                 upgrade: true,
                                 reconnection: true,
                                 reconnectionDelay: 1000,
@@ -2980,12 +2980,18 @@ function refreshAllBadges() {
                 }
                 window.addEventListener('pageshow', function(event) {
                     console.log('🔄 pageshow event, persisted=' + event.persisted);
+                    if (window.socket && !window.socket.connected) {
+                        window.socket.connect();
+                    }
                     _menuOnResume();
                 });
 
                 // Rafraîchir quand la page redevient visible (retour d'un onglet, retour d'app mobile)
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible') {
+                        if (window.socket && !window.socket.connected) {
+                            window.socket.connect();
+                        }
                         (window.requestIdleCallback || function(cb){ setTimeout(cb, 1); })(function() {
                             refreshAllBadges();
                             refreshMissionDots();
@@ -2994,6 +3000,12 @@ function refreshAllBadges() {
                         });
                     }
                 });
+                // Keepalive applicatif : maintenir la connexion WebSocket active sur Safari iOS
+                setInterval(function() {
+                    if (document.visibilityState === 'visible' && window.socket && window.socket.connected) {
+                        window.socket.emit('ping_keepalive', {});
+                    }
+                }, 20000);
                 // Écouter les messages du Service Worker (ex: REFRESH_BADGES après push)
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.addEventListener('message', function(event) {
