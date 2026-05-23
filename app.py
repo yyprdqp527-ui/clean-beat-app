@@ -552,25 +552,8 @@ try:
 except ImportError:
     print("⚠️ flask-compress non installé. Installation: pip install flask-compress")
 
-# 🚀 WhiteNoise : sert les fichiers statiques SAUF /socket.io/ (WebSocket)
-try:
-    from whitenoise import WhiteNoise
-    _static_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-
-    # ⚠️ Capturer le wsgi_app FLASK PUR avant WhiteNoise
-    _flask_wsgi = app.wsgi_app  # Flask pur, sans middleware
-
-    _whitenoise_app = WhiteNoise(_flask_wsgi, root=_static_root, prefix='static/', max_age=31536000)
-
-    def _smart_wsgi(environ, start_response):
-        if environ.get('PATH_INFO', '').startswith('/socket.io/'):
-            return _flask_wsgi(environ, start_response)
-        return _whitenoise_app(environ, start_response)
-
-    app.wsgi_app = _smart_wsgi
-    print("✅ WhiteNoise activé avec bypass /socket.io/")
-except ImportError:
-    print("⚠️ whitenoise non installé")
+# 🚀 Statiques servis directement par Flask (WhiteNoise retiré — conflit avec Flask-SocketIO)
+print("✅ Statiques servis par Flask (pas de WhiteNoise)")
 
 # Ajouter un filtre Jinja personnalisé pour index
 @app.template_filter('index')
