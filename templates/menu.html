@@ -2146,8 +2146,8 @@ function sendMalus(reason, points){
                         // → une seule connexion Socket.IO par page.
                         if (!window.socket) {
                             window.socket = io({
-                                transports: ['websocket', 'polling'],
-                                upgrade: true,
+                                transports: ['polling'],
+                                upgrade: false,
                                 reconnection: true,
                                 reconnectionDelay: 1000,
                                 reconnectionDelayMax: 5000,
