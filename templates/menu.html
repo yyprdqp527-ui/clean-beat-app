@@ -2145,7 +2145,7 @@ function sendMalus(reason, points){
                         // → une seule connexion Socket.IO par page.
                         if (!window.socket) {
                             window.socket = io({
-                                transports: ['polling', 'websocket'],
+                                transports: ['websocket', 'polling'],
                                 upgrade: true,
                                 reconnection: true,
                                 reconnectionDelay: 1000,
@@ -2470,10 +2470,11 @@ function sendMalus(reason, points){
                         // 🆕 Nouveau joueur invité a rejoint → mise à jour ciblée si avatar déjà dans le DOM
                         socket.on('player_joined', function(data) {
                             console.log('✨ player_joined reçu:', data);
+                            // Si data.email absent → ignorer silencieusement
+                            if (!data || !data.email) return;
                             // Évite reload si c'est moi qui viens de rejoindre
-                            try { if (data && data.email === userEmail) return; } catch(e) {}
-                            var alreadyInDom = data && data.email &&
-                                document.querySelector('[data-player-email="' + data.email + '"]');
+                            if (data.email === userEmail) return;
+                            var alreadyInDom = document.querySelector('[data-player-email="' + data.email + '"]');
                             if (alreadyInDom) {
                                 if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                             } else {
@@ -2791,6 +2792,7 @@ function sendMalus(reason, points){
                             if (action === 'toggle' && roomKey) {
                                 var card = document.querySelector('.room-card[data-room="' + roomKey + '"]');
                                 if (card) card.style.display = data.is_hidden ? 'none' : '';
+                                if (!data.is_hidden && typeof refreshMissionDots === 'function') refreshMissionDots();
                                 return;
                             }
                             if (action === 'rename' && roomKey) {
