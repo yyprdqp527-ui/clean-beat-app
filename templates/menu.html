@@ -55,7 +55,8 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        const userEmail = "{{ session.get('user','') }}";
+        var userEmail = "{{ session.get('user','') }}";
+        window.userEmail = userEmail;
         const TIPS_KEY = 'qfq_tips_menu_' + userEmail;
         const PWA_KEY = 'pwa_installed_' + userEmail;
         var PURGE_KEY = 'cb_cache_purged_v1012';
