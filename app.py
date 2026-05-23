@@ -552,12 +552,20 @@ try:
 except ImportError:
     print("⚠️ flask-compress non installé. Installation: pip install flask-compress")
 
-# 🚀 WhiteNoise : sert les fichiers statiques efficacement (gzip auto + cache immutable)
+# 🚀 WhiteNoise : sert les fichiers statiques SAUF /socket.io/ (WebSocket)
 try:
     from whitenoise import WhiteNoise
     _static_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-    app.wsgi_app = WhiteNoise(app.wsgi_app, root=_static_root, prefix='static/', max_age=31536000)
-    print("✅ WhiteNoise activé - root:", _static_root)
+    _whitenoise_app = WhiteNoise(app.wsgi_app, root=_static_root, prefix='static/', max_age=31536000)
+    _original_wsgi = app.wsgi_app
+
+    def _smart_wsgi(environ, start_response):
+        if environ.get('PATH_INFO', '').startswith('/socket.io/'):
+            return _original_wsgi(environ, start_response)
+        return _whitenoise_app(environ, start_response)
+
+    app.wsgi_app = _smart_wsgi
+    print("✅ WhiteNoise activé avec bypass /socket.io/")
 except ImportError:
     print("⚠️ whitenoise non installé")
 
