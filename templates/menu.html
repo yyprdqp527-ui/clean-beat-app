@@ -2468,6 +2468,7 @@ function sendMalus(reason, points){
                         });
 
                         // 🆕 Nouveau joueur invité a rejoint → mise à jour ciblée si avatar déjà dans le DOM
+
                         socket.on('player_joined', function(data) {
                             console.log('✨ player_joined reçu:', data);
                             // Si data.email absent → ignorer silencieusement
@@ -2478,7 +2479,12 @@ function sendMalus(reason, points){
                             if (alreadyInDom) {
                                 if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                             } else {
-                                // Nouvel avatar absent du DOM → rechargement nécessaire
+                                // Avatar absent du DOM — log de diagnostic avant reload
+                                var allEmails = Array.from(document.querySelectorAll('[data-player-email]')).map(function(el){ return el.getAttribute('data-player-email'); });
+                                console.warn('[player_joined] RELOAD déclenché — email absent du DOM:', data.email);
+                                console.warn('[player_joined] Emails présents dans le DOM:', allEmails);
+                                console.warn('[player_joined] userEmail (moi):', userEmail);
+                                console.warn('[player_joined] data complet:', JSON.stringify(data));
                                 setTimeout(function() { window.location.reload(); }, 600);
                             }
                         });
