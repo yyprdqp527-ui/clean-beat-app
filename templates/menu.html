@@ -1863,9 +1863,11 @@ function sendMalus(reason, points){
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
 
-                    // Pas de polling — WebSocket (players_points_update) et visibilitychange assurent les mises à jour
-                    // Premier appel après 500ms
+                    // Premier appel après 500ms, puis toutes les 20s (filet sécurité si WebSocket rate)
                     setTimeout(updatePlayersPointsMenu, 500);
+                    setInterval(function() {
+                        if (document.visibilityState === 'visible') updatePlayersPointsMenu();
+                    }, 20000);
                 </script>
 
                 <script>
