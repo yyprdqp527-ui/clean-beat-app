@@ -620,14 +620,10 @@ if SOCKETIO_AVAILABLE:
         cors_allowed_origins="*",
         logger=False,
         engineio_logger=False,
-        ping_timeout=60,      # Réduit de 120 à 60 secondes
-        ping_interval=25,     # Réduit de 60 à 25 secondes
+        ping_timeout=60,
+        ping_interval=25,
         async_mode=_async_mode,
-        # Paramètres supplémentaires pour gunicorn + gevent
-        engineio_options={
-            'max_http_buffer_size': 1000000,  # 1MB buffer
-            'transports': ['websocket', 'polling'],  # WebSocket en priorité
-        }
+        allow_upgrades=True
     )
     print("✅ WebSocket activé pour la synchronisation en temps réel")
 else:
@@ -2576,6 +2572,8 @@ CREATE TABLE IF NOT EXISTS users (
         c.execute("ALTER TABLE custom_rooms ADD COLUMN image_data TEXT")
     except Exception:
         pass
+    c.execute("UPDATE custom_rooms SET emoji = '' WHERE emoji IS NOT NULL AND emoji != ''")
+    conn.commit()
 
 
     # Backfill image_data désactivé : l'UPDATE qui vidait image_data pour les
