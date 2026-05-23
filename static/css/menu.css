@@ -1235,7 +1235,7 @@
         /* Image dans cadre glassmorphisme qui déborde */
         .room-card-visual {
             width: 100%;
-            overflow: hidden;
+            overflow: visible;
             position: relative;
             aspect-ratio: 400 / 462;
             background-color: white;
