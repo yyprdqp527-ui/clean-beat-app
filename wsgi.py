@@ -4,6 +4,6 @@ monkey.patch_all()
 from app import app, socketio, SOCKETIO_AVAILABLE
 
 if SOCKETIO_AVAILABLE and socketio:
-    application = socketio.middleware(app)
+    application = socketio.sockio_mw
 else:
     application = app
