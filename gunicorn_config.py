@@ -14,15 +14,15 @@ import os
 # Worker class - DOIT être gevent pour Flask-SocketIO
 worker_class = 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
 
-# Nombre de workers — 2 sur Render Starter pour paralléliser les requêtes simultanées
-# (gevent gère de nombreuses connexions par worker via async I/O)
-workers = 2
+# OBLIGATOIRE avec Flask-SocketIO sans message queue (Redis/RabbitMQ)
+# Gevent gère des milliers de connexions en async dans ce seul worker
+workers = 1
 
 # Threads par worker (pas utilisé avec gevent mais défini pour clarté)
 threads = 1
 
 # Timeout pour les connexions WebSocket persistantes
-timeout = 30
+timeout = 120
 graceful_timeout = 120
 keepalive = 5
 
