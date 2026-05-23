@@ -1221,6 +1221,7 @@
             -webkit-tap-highlight-color: transparent;
             overflow: visible !important;
             position: relative;
+            z-index: 1;
             transform: scale(0.85);
             transform-origin: top center;
             transition: transform 0.22s ease, filter 0.22s ease;
