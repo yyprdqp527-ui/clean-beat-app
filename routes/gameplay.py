@@ -195,10 +195,10 @@ def api_send_malus():
                                     'daily_points': int(p[6]) if p[6] else 0} for p in c.fetchall()]
                 safe_socketio_emit('players_points_update', {
                     'players': players_data_ws, 'updated_player': target_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
                 safe_socketio_emit('malus_update', {
                     'house_id': house_id
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
         except Exception:
             pass
 
@@ -314,10 +314,10 @@ def api_send_bonus():
                                     'daily_points': int(p[6]) if p[6] else 0} for p in c.fetchall()]
                 safe_socketio_emit('players_points_update', {
                     'players': players_data_ws, 'updated_player': target_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
                 safe_socketio_emit('bonus_update', {
                     'house_id': house_id
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
         except Exception:
             pass
 

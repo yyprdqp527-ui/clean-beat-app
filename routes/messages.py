@@ -110,7 +110,7 @@ def _comments_inner():
                     'recipient_is_child': is_recipient_child,
                     'recipient_unread_count': recipient_unread_count,
                     'children_unread': children_unread
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
                 _dbg(f"✅ WebSocket new_message_notification émis vers house_{house_id}")
                 
                 # 🔌 Synchroniser la liste des messages pour tous les utilisateurs
@@ -119,7 +119,7 @@ def _comments_inner():
                     'action': 'new_message',
                     'sender_email': session['user'],
                     'recipient_email': recipient_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
                 _dbg(f"✅ WebSocket messages_list_update émis vers house_{house_id}")
                 
                 # 🔔 Envoyer une notification push au destinataire
@@ -344,7 +344,7 @@ def _comments_inner():
             safe_socketio_emit('all_messages_read', {
                 'reader_email': session['user'],
                 'house_id': house_id
-            }, namespace='/', room=f'house_{house_id}', broadcast=True)
+            }, namespace='/', room=f'house_{house_id}')
         except Exception:
             pass
 
@@ -721,7 +721,7 @@ def mark_all_messages_read():
     safe_socketio_emit('unread_count_update', {
         'user_email': session['user'],
         'unread_received': 0
-    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+    }, namespace='/', room=f'house_{house_id}')
 
     # Récupérer le nouveau compteur
     unread_count = get_unread_message_count(session['user'], house_id)
@@ -735,20 +735,20 @@ def mark_all_messages_read():
         'count': unread_count,
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
     
     # Notifier que cet utilisateur a tout lu (pour mettre à jour l'UI des autres)
     safe_socketio_emit('all_messages_read', {
         'reader_email': session['user'],
         'message_ids': unread_message_ids
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
 
     # Forcer un refresh des compteurs côté menu/comments sur tous les appareils.
     safe_socketio_emit('messages_list_update', {
         'house_id': house_id,
         'action': 'all_read',
         'reader_email': session['user']
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
     
     conn.close()
     
@@ -825,14 +825,14 @@ def mark_single_message_read_for_child():
         'child_email': child_email,
         'new_count': new_unread_count,
         'updated_by': session['user']
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
     safe_socketio_emit('message_read_update', {
         'message_id': int(message_id),
         'reader_email': child_email,
         'read_by': session['user']
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
     
     return jsonify({
         'success': True,
@@ -912,20 +912,20 @@ def mark_single_message_read():
         'user_email': session['user'],
         'unread_by_sender': unread_by_sender,
         'unread_sent_to': unread_sent_to
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
 
     if sender_email and sender_email != session['user']:
         safe_socketio_emit('unread_sent_to_update', {
             'user_email': sender_email,
             'unread_sent_to': sender_unread_sent_to
-        }, room=f'house_{house_id}', namespace='/', broadcast=True)
+        }, room=f'house_{house_id}', namespace='/')
     
     # Notifier que le message a été marqué comme lu (pour synchroniser l'UI en temps réel)
     safe_socketio_emit('message_read_update', {
         'message_id': int(message_id),
         'reader_email': session['user'],
         'read_by': session['user']
-    }, room=f'house_{house_id}', namespace='/', broadcast=True)
+    }, room=f'house_{house_id}', namespace='/')
 
     safe_socketio_emit('messages_list_update', {
         'house_id': house_id,

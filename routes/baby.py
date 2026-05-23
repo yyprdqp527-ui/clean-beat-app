@@ -83,7 +83,7 @@ def baby_tracking(cat, task_id):
             safe_socketio_emit('baby_badge_update', {
                 'count': 0,
                 'user_email': session['user']
-            }, namespace='/', room=f'house_{house_id}', broadcast=True)
+            }, namespace='/', room=f'house_{house_id}')
         except Exception as e:
             pass
 
@@ -181,7 +181,7 @@ def save_baby_tracking():
             'house_id': house_id,
             'sender_email': session['user'],
             'message': message_text
-        }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        }, namespace='/', room=f'house_{house_id}')
     except Exception as e:
         _dbg(f"⚠️ WebSocket baby_tracking_added: {e}")
 

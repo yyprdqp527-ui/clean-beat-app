@@ -94,7 +94,7 @@ def api_emit_suspicion():
                     'house_id': house_id,
                     'suspected': suspected_email,
                     'by': suspecting_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
         except Exception:
             pass
 

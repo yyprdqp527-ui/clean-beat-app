@@ -169,7 +169,7 @@ def categorie(cat):
                     safe_socketio_emit('baby_badge_update', {
                         'user_email': session['user'],
                         'baby_unread_count': 0  # Badge à 0 car on a tout marqué comme lu
-                    }, namespace='/', room=f'house_{house_id_baby}', broadcast=True)
+                    }, namespace='/', room=f'house_{house_id_baby}')
                     _dbg(f"✅ WebSocket baby_badge_update émis pour {session['user']} - badge à 0")
                 
                 # Récupérer les activités pour affichage
@@ -395,7 +395,7 @@ def add_task_page(cat, task_id=None):
                     # (le client appelle /api/unread_counts qui DOIT voir le message en DB)
                     try:
                         safe_socketio_emit('task_added_notification', _ws_payload,
-                                           namespace='/', room=_house_room, broadcast=True)
+                                           namespace='/', room=_house_room)
                     except Exception:
                         pass
                 threading.Thread(
@@ -739,7 +739,7 @@ def custom_task_page(task_id):
                     conn_ws.close()
                     safe_socketio_emit('players_points_update', {
                         'players': players_data_ws, 'updated_player': player_email
-                    }, namespace='/', room=f'house_{user_house_id}', broadcast=True)
+                    }, namespace='/', room=f'house_{user_house_id}')
                     _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
@@ -1129,7 +1129,7 @@ def task_enhanced(cat, task_id):
                     conn_ws2.close()
                     safe_socketio_emit('players_points_update', {
                         'players': players_data2, 'updated_player': player_email
-                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                    }, namespace='/', room=f'house_{house_id}')
                     _dbg(f"🔌 WebSocket: Diffusion mise à jour points pour {player_email}")
                 except Exception as ws_err:
                     _dbg(f"⚠️ Erreur WebSocket points: {ws_err}")
@@ -1634,7 +1634,7 @@ def api_validate_task():
                 # Utiliser safe_socketio_emit() pour gérer les sessions invalides
                 safe_socketio_emit('players_points_update', {
                     'players': players_data, 'updated_player': player_email
-                }, namespace='/', room=room_name, broadcast=True)
+                }, namespace='/', room=room_name)
                 
                 # 🟠 Notifier tous les joueurs que la mission a été validée
                 # → déclenche refreshMissionDots() + refreshAllBadges() côté client
@@ -1642,7 +1642,7 @@ def api_validate_task():
                     'category': category,
                     'task_name': task_name,
                     'player_email': player_email
-                }, namespace='/', room=room_name, broadcast=True)
+                }, namespace='/', room=room_name)
                 
                 _dbg(f"✅ WebSocket: Notification envoyée pour {player_email} (+{task_points} pts)")
                 _dbg(f"   Payload envoyé: {len(players_data)} joueurs, updated_player={player_email}")
@@ -1654,7 +1654,7 @@ def api_validate_task():
                         'action': 'baby_tracking',
                         'sender_email': player_email,
                         'sender_name': player_name
-                    }, namespace='/', room=room_name, broadcast=True)
+                    }, namespace='/', room=room_name)
                     _dbg(f"🔌 WebSocket: Synchronisation messagerie baby_tracking pour house_{user_house_id}")
                     
             except Exception as ws_err:

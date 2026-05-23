@@ -2978,7 +2978,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                 'action': 'system_message',
                 'message_type': message_type,
                 'sender_name': sender_name
-            }, room=f'house_{house_id}', namespace='/', broadcast=True)
+            }, room=f'house_{house_id}', namespace='/')
             _dbg(f"🔌 WebSocket: Synchronisation messagerie système pour house_{house_id}")
         
         # �🔔 Envoyer une notification push si activé
@@ -4765,7 +4765,7 @@ if SOCKETIO_AVAILABLE:
                 conn.close()
                 
                 # Diffuser à tous les clients de la room
-                emit('players_points_update', {'players': players}, room=room, broadcast=True)
+                emit('players_points_update', {'players': players}, room=room)
                 _dbg(f'📊 Points mis à jour pour la room {room}')
         except Exception as e:
             _dbg(f'❌ Erreur points_updated: {e}')
@@ -4821,7 +4821,7 @@ if SOCKETIO_AVAILABLE:
                 safe_socketio_emit('user_typing', {
                     'user_name': user_name,
                     'user_email': user_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
         except Exception as e:
             _dbg(f'❌ Erreur handle_typing: {e}')
 
@@ -4841,7 +4841,7 @@ if SOCKETIO_AVAILABLE:
                 house_id = row[0]
                 safe_socketio_emit('user_stop_typing', {
                     'user_email': user_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
         except Exception as e:
             _dbg(f'❌ Erreur handle_stop_typing: {e}')
 
@@ -4981,7 +4981,7 @@ def _daily_reminder_loop():
                         'message': message,
                         'message_id': msg_id,
                         'target_email': player_email
-                    }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                    }, namespace='/', room=f'house_{house_id}')
                 except Exception:
                     pass
 
@@ -5113,7 +5113,7 @@ def cron_daily_reminder():
                     'message': message,
                     'message_id': msg_id,
                     'target_email': player_email
-                }, namespace='/', room=f'house_{house_id}', broadcast=True)
+                }, namespace='/', room=f'house_{house_id}')
             except Exception:
                 pass
 

@@ -163,7 +163,7 @@ def add_reminder():
             'creator_avatar': creator_avatar,
             'creator_avatar_file': creator_avatar_file,
             'creator_avatar_url': creator_avatar_url
-        }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        }, namespace='/', room=f'house_{house_id}')
     except Exception:
         pass
 
@@ -281,7 +281,7 @@ def toggle_reminder(reminder_id):
                            'daily_points': int(p[6]) if p[6] else 0} for p in c.fetchall()]
             safe_socketio_emit('players_points_update', {
                 'players': players_ws, 'updated_player': session['user']
-            }, namespace='/', room=f'house_{house_id}', broadcast=True)
+            }, namespace='/', room=f'house_{house_id}')
         except Exception as ws_err:
             _dbg(f"⚠️ WebSocket liste courses: {ws_err}")
 
@@ -299,7 +299,7 @@ def toggle_reminder(reminder_id):
             'id': reminder_id,
             'is_done': bool(new_done),
             'pending_count': _courses_after
-        }, namespace='/', room=f'house_{house_id}', broadcast=True)
+        }, namespace='/', room=f'house_{house_id}')
     except Exception:
         pass
 
@@ -357,7 +357,7 @@ def delete_reminder(reminder_id):
             safe_socketio_emit('reminder_deleted', {
                 'id': reminder_id,
                 'pending_count': _pending_after_delete
-            }, namespace='/', room=f'house_{hr[0]}', broadcast=True)
+            }, namespace='/', room=f'house_{hr[0]}')
         except Exception:
             pass
 
