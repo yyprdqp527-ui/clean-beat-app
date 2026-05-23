@@ -699,10 +699,14 @@ def upload_room_image():
     if len(custom_name) > 30:
         custom_name = custom_name[:30]
 
-    # Créer la pièce directement en DB
+    # Créer ou mettre à jour la pièce en DB
+    # Si room_key est fourni dans le FormData → UPSERT sur cette pièce existante
+    # Si absent → nouvelle pièce custom_XXXX (comportement original)
+    received_key = (request.form.get('room_key') or '').strip()
     room_key = None
     try:
-        from app import get_db_connection as _get_db, _invalidate_house_cache as _inval
+        from app import get_db_connection as _get_db, _invalidate_house_cache as _inval, \
+            SOCKETIO_AVAILABLE, socketio, safe_socketio_emit, _dbg
         _conn = _get_db()
         _c = _conn.cursor()
         _c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
@@ -710,11 +714,25 @@ def upload_room_image():
         if not _urow or not _urow[0]:
             _conn.close()
             return {'ok': False, 'error': 'pas de maison'}, 403
-        room_key = f"custom_{int(time.time() * 1000)}"
-        _c.execute("""
-            INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, image_data)
-            VALUES (?, ?, ?, ?, 0, ?)
-        """, (_urow[0], room_key, custom_name, rel_path, img_b64))
+        _hid = _urow[0]
+        if received_key:
+            # Pièce existante (standard ou custom) : UPSERT — met à jour l'image sans changer is_hidden
+            room_key = received_key
+            _c.execute("""
+                INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, image_data)
+                VALUES (?, ?, ?, ?, 0, ?)
+                ON CONFLICT(house_id, room_key) DO UPDATE SET
+                    custom_name  = excluded.custom_name,
+                    custom_image = excluded.custom_image,
+                    image_data   = excluded.image_data
+            """, (_hid, room_key, custom_name, rel_path, img_b64))
+        else:
+            # Aucun room_key fourni → nouvelle pièce custom
+            room_key = f"custom_{int(time.time() * 1000)}"
+            _c.execute("""
+                INSERT INTO custom_rooms (house_id, room_key, custom_name, custom_image, is_hidden, image_data)
+                VALUES (?, ?, ?, ?, 0, ?)
+            """, (_hid, room_key, custom_name, rel_path, img_b64))
         _conn.commit()
         try:
             _inval(_urow[0])
