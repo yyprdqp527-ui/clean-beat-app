@@ -556,12 +556,15 @@ except ImportError:
 try:
     from whitenoise import WhiteNoise
     _static_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-    _whitenoise_app = WhiteNoise(app.wsgi_app, root=_static_root, prefix='static/', max_age=31536000)
-    _original_wsgi = app.wsgi_app
+
+    # ⚠️ Capturer le wsgi_app FLASK PUR avant WhiteNoise
+    _flask_wsgi = app.wsgi_app  # Flask pur, sans middleware
+
+    _whitenoise_app = WhiteNoise(_flask_wsgi, root=_static_root, prefix='static/', max_age=31536000)
 
     def _smart_wsgi(environ, start_response):
         if environ.get('PATH_INFO', '').startswith('/socket.io/'):
-            return _original_wsgi(environ, start_response)
+            return _flask_wsgi(environ, start_response)
         return _whitenoise_app(environ, start_response)
 
     app.wsgi_app = _smart_wsgi
