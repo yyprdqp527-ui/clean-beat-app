@@ -2156,6 +2156,7 @@ function sendMalus(reason, points){
                         }
                         const socket = window.socket;
                         const userEmail = "{{ session.get('user', '') }}";
+                        window.userEmail = userEmail;
                         
                         if (!userEmail) {
                             console.log('⚠️ WebSocket: Aucun utilisateur connecté');
