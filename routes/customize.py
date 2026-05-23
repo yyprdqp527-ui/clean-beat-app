@@ -13,16 +13,6 @@ ROOM_UPLOAD_PREFIX = 'uploads/rooms/'  # relatif à static/ → /static/uploads/
 ROOM_THUMB_W = 400
 ROOM_THUMB_H = 462
 
-# ─── Catalogue pièces personnalisées (emoji rendu en CSS côté client) ────────
-# Plus aucune génération d'image serveur pour ces pièces : le menu les rend
-# directement via .emoji-losange + emoji unicode (instantané).
-ROOM_CATALOGUE = [
-    {"key": "jardin",  "label": "Jardin",        "image": "images/imageqfq/Gardening11.webp"},
-    {"key": "piscine", "label": "Piscine",       "image": "images/imageqfq/Pool4.webp"},
-    {"key": "animaux", "label": "Animaux",       "image": "images/imageqfq/Pets9.webp"},
-]
-
-
 def _legacy_emoji_to_image_b64_unused(emoji: str, size: int = 400) -> str:
     """Génère côté serveur (PIL) une image losange avec l'emoji.
     Compatible macOS (Apple Color Emoji) et Linux (NotoColorEmoji si installé).
@@ -111,28 +101,9 @@ def _is_user_uploaded_image(path):
         return False
     return True
 
-# Liste blanche des illustrations disponibles pour les pièces personnalisées
-# (uniquement des thumbs isométriques déjà présents dans /static/images/thumbs/)
-AVAILABLE_ROOM_IMAGES = [
-    {'file': 'images/imageqfq/bathtub.webp',              'label': 'Salle de bain'},
-    {'file': 'images/imageqfq/toilet2.webp',              'label': 'Toilettes'},
-    {'file': 'images/imageqfq/OvenStove.webp',            'label': 'Cuisine'},
-    {'file': 'images/imageqfq/Laundry_basket.webp',       'label': 'Buanderie'},
-    {'file': 'images/imageqfq/GreenBaby58.webp',          'label': 'Chambre bébé'},
-    {'file': 'images/imageqfq/FurnitureClipart78.webp',   'label': 'Bureau'},
-    {'file': 'images/imageqfq/Gardening11.webp',          'label': 'Jardin'},
-    {'file': 'images/imageqfq/CManCave76.webp',           'label': 'Salon'},
-    {'file': 'images/imageqfq/Pool4.webp',                'label': 'Piscine'},
-    {'file': 'images/imageqfq/Pets9.webp',                'label': 'Animaux'},
-    {'file': 'images/imageqfq/voiture.webp',              'label': 'Garage'},
-]
-_ALLOWED_IMAGE_FILES = {img['file'] for img in AVAILABLE_ROOM_IMAGES}
-
-
 def _is_valid_room_image(path):
-    """Une image valide pour une pièce custom est soit dans la liste blanche,
-       soit dans le dossier des uploads utilisateur."""
-    return (path in _ALLOWED_IMAGE_FILES) or _is_user_uploaded_image(path)
+    """Une image valide pour une pièce custom est un upload utilisateur."""
+    return _is_user_uploaded_image(path)
 
 
 @customize_bp.route('/set_bg_theme', methods=['POST'])
@@ -272,6 +243,9 @@ def personnaliser_maison():
         {'key': 'toilettes',         'default_name': 'Toilettes',    'image': 'images/imageqfq/toilet2.webp',            'fixed': False},
         {'key': 'buanderie',         'default_name': 'Buanderie',    'image': 'images/imageqfq/Laundry_basket.webp',     'fixed': False},
         {'key': 'garage',            'default_name': 'Garage',       'image': 'images/imageqfq/voiture.webp',            'fixed': False, 'default_hidden': True},
+        {'key': 'jardin',            'default_name': 'Jardin',       'image': 'images/imageqfq/Gardening11.webp',        'fixed': False, 'default_hidden': True},
+        {'key': 'piscine',           'default_name': 'Piscine',      'image': 'images/imageqfq/Pool4.webp',              'fixed': False, 'default_hidden': True},
+        {'key': 'animaux',           'default_name': 'Animaux',      'image': 'images/imageqfq/Pets9.webp',              'fixed': False, 'default_hidden': True},
     ]
 
     if request.method == 'POST':
@@ -427,63 +401,6 @@ def personnaliser_maison():
         })
     extra_rooms_data.sort(key=lambda r: r['key'])
 
-    # Auto-insérer les pièces catalogue manquantes (cachées par défaut)
-    # Utiliser les custom_image bruts depuis la DB (pas extra_rooms_data dont 'image'
-    # peut valoir 'images/thumbs/default.webp' quand custom_image='' après backfill)
-    added_catalogue_images = {v['image'] for v in custom_db.values() if v.get('image')}
-    # Exclure aussi les images déjà utilisées par les pièces standard
-    added_catalogue_images |= {r['image'] for r in ALL_ROOMS}
-    # Inclure les noms des pièces standard pour éviter les conflits de labels
-    added_names = {r['current_name'].lower() for r in extra_rooms_data} \
-                | {r['default_name'].lower() for r in rooms_data}
-    conn_ins = get_db_connection()
-    c_ins = conn_ins.cursor()
-    inserted = False
-    for item in AVAILABLE_ROOM_IMAGES:
-        if 'imageqfq' not in item['file']:
-            continue
-        if item['file'] in added_catalogue_images:
-            continue
-        if item['label'].lower() in added_names:
-            continue
-        room_key = f"custom_{int(time.time()*1000)}"
-        c_ins.execute("""INSERT INTO custom_rooms
-                     (house_id, room_key, custom_name, custom_image, is_hidden, emoji, image_data)
-                     VALUES (?, ?, ?, ?, 1, '', '')
-                     ON CONFLICT(house_id, room_key) DO NOTHING""",
-                      (house_id, room_key, item['label'], item['file']))
-        conn_ins.commit()
-        added_catalogue_images.add(item['file'])
-        inserted = True
-        time.sleep(0.001)  # évite les room_key identiques
-
-    # Recharger extra_rooms_data depuis la DB après insertion
-    if inserted:
-        c_ins.execute("SELECT room_key, custom_name, custom_image, is_hidden, emoji, image_data FROM custom_rooms WHERE house_id=?", (house_id,))
-        custom_db2 = {row[0]: {'name': row[1], 'image': row[2], 'is_hidden': bool(row[3]), 'emoji': row[4], 'image_data': row[5]} for row in c_ins.fetchall()}
-        extra_rooms_data = []
-        for key, cust in custom_db2.items():
-            if not key.startswith('custom_'):
-                continue
-            emoji = cust.get('emoji') or None
-            image_data = cust.get('image_data') or None
-            img = cust.get('image') or ''
-            if img and not _is_valid_room_image(img):
-                img = 'images/thumbs/default.webp'
-            if not emoji and not image_data and not img:
-                img = 'images/thumbs/default.webp'
-            extra_rooms_data.append({
-                'key': key,
-                'image': img,
-                'emoji': emoji,
-                'image_data': image_data,
-                'current_name': cust.get('name') or 'Pièce personnalisée',
-                'default_name': cust.get('name') or 'Pièce personnalisée',
-                'is_hidden': cust.get('is_hidden', False),
-            })
-        extra_rooms_data.sort(key=lambda r: r['key'])
-    conn_ins.close()
-
     # Supprimer les doublons : garder uniquement le premier par image
     seen_images = set()
     dedup_extra = []
@@ -517,7 +434,6 @@ def personnaliser_maison():
 
     return render_template('edit_house.html', rooms=rooms_data,
                            extra_rooms=extra_rooms_data,
-                           available_images=AVAILABLE_ROOM_IMAGES,
                            house_members=house_members,
                            current_house_name=current_house_name)
 
