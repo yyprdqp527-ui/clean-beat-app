@@ -156,7 +156,7 @@ def rename_room():
         # WebSocket : notifier les autres joueurs
         if SOCKETIO_AVAILABLE and socketio:
             try:
-                safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                safe_socketio_emit('house_rooms_updated', {'house_id': house_id, 'action': 'rename', 'room_key': room_key, 'new_name': custom_name or ''},
                                    namespace='/', room=f'house_{house_id}', broadcast=True)
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket rename_room: {ws_err}")
@@ -199,7 +199,7 @@ def toggle_room():
         conn.close()
     if SOCKETIO_AVAILABLE and socketio:
         try:
-            safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+            safe_socketio_emit('house_rooms_updated', {'house_id': house_id, 'action': 'toggle', 'room_key': room_key, 'is_hidden': bool(is_hidden)},
                                namespace='/', room=f'house_{house_id}', broadcast=True)
         except Exception:
             pass
@@ -236,7 +236,7 @@ def reset_room_image():
     _invalidate_house_cache(house_id)
     if SOCKETIO_AVAILABLE and socketio:
         try:
-            safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+            safe_socketio_emit('house_rooms_updated', {'house_id': house_id, 'action': 'reset_image', 'room_key': room_key},
                                namespace='/', room=f'house_{house_id}', broadcast=True)
         except Exception:
             pass
@@ -335,7 +335,7 @@ def personnaliser_maison():
             # 🔌 WEBSOCKET: Notifier les autres joueurs du changement de pièces/nom maison
             if SOCKETIO_AVAILABLE and socketio:
                 try:
-                    safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                    safe_socketio_emit('house_rooms_updated', {'house_id': house_id, 'action': 'reload'},
                                       namespace='/', room=f'house_{house_id}', broadcast=True)
                     _dbg(f"🔌 WebSocket: house_rooms_updated émis pour house_{house_id}")
                 except Exception as ws_err:
@@ -605,7 +605,7 @@ def add_custom_room():
         conn.commit()
         if SOCKETIO_AVAILABLE and socketio:
             try:
-                safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                safe_socketio_emit('house_rooms_updated', {'house_id': house_id, 'action': 'add'},
                                    namespace='/', room=f'house_{house_id}', broadcast=True)
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket add_custom_room: {ws_err}")
@@ -654,7 +654,7 @@ def delete_custom_room():
         conn.commit()
         if SOCKETIO_AVAILABLE and socketio:
             try:
-                safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                safe_socketio_emit('house_rooms_updated', {'house_id': house_id, 'action': 'delete', 'room_key': room_key},
                                    namespace='/', room=f'house_{house_id}', broadcast=True)
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket delete_custom_room: {ws_err}")
@@ -789,7 +789,7 @@ def upload_room_image():
         if SOCKETIO_AVAILABLE and socketio:
             try:
                 _hid = _urow[0]
-                safe_socketio_emit('house_rooms_updated', {'house_id': _hid},
+                safe_socketio_emit('house_rooms_updated', {'house_id': _hid, 'action': 'update_image', 'room_key': room_key},
                                    namespace='/', room=f'house_{_hid}', broadcast=True)
             except Exception as ws_err:
                 _dbg(f"⚠️ Erreur WebSocket upload_room_image: {ws_err}")
