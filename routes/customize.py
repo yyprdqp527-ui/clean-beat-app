@@ -206,6 +206,43 @@ def toggle_room():
     return {'ok': True}
 
 
+@customize_bp.route('/reset_room_image', methods=['POST'])
+def reset_room_image():
+    from app import get_db_connection, _invalidate_house_cache, SOCKETIO_AVAILABLE, socketio, safe_socketio_emit, _dbg
+    if 'user' not in session:
+        return {'ok': False}, 401
+    data = request.get_json(force=True)
+    room_key = (data.get('room_key') or '').strip()
+    if not room_key:
+        return {'ok': False, 'error': 'room_key manquant'}, 400
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT house_id FROM users WHERE email=?", (session['user'],))
+        row = c.fetchone()
+        if not row:
+            return {'ok': False}, 403
+        house_id = row[0]
+        c.execute("""
+            UPDATE custom_rooms SET image_data = '', custom_image = ''
+            WHERE house_id = ? AND room_key = ?
+        """, (house_id, room_key))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return {'ok': False, 'error': str(e)}, 500
+    finally:
+        conn.close()
+    _invalidate_house_cache(house_id)
+    if SOCKETIO_AVAILABLE and socketio:
+        try:
+            safe_socketio_emit('house_rooms_updated', {'house_id': house_id},
+                               namespace='/', room=f'house_{house_id}', broadcast=True)
+        except Exception:
+            pass
+    return {'ok': True}
+
+
 @customize_bp.route('/personnaliser_maison', methods=['GET', 'POST'])
 def personnaliser_maison():
     from app import (get_db_connection, _dbg, _invalidate_house_cache,
@@ -375,6 +412,13 @@ def personnaliser_maison():
 
     # 🆕 Pièces personnalisées (room_key commence par 'custom_')
     _std_images = {r['image'] for r in ALL_ROOMS if r.get('image')}
+    # Set des image_data uploadées par l'utilisateur sur des pièces STANDARDS
+    # → permet d'éliminer les vieux custom_XXXX qui doublonnent une pièce standard
+    _std_image_datas = {
+        custom_db[r['key']]['image_data']
+        for r in ALL_ROOMS
+        if r['key'] in custom_db and custom_db[r['key']].get('image_data')
+    }
     extra_rooms_data = []
     for key, cust in custom_db.items():
         if not key.startswith('custom_'):
@@ -384,6 +428,10 @@ def personnaliser_maison():
         img = cust.get('image') or ''
         # Ignorer les entrées catalogue dont l'image est déjà une pièce standard
         if img and not image_data and img in _std_images:
+            continue
+        # Ignorer les custom_XXXX dont la photo uploadée est déjà portée
+        # par une pièce standard (résidu de l'ancien bug qui créait custom_XXXX)
+        if image_data and image_data in _std_image_datas:
             continue
         # Sécurité : autoriser uniquement liste blanche OU upload utilisateur
         if img and not _is_valid_room_image(img):
