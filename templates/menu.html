@@ -2163,7 +2163,12 @@ function sendMalus(reason, points){
                             console.log('⚠️ WebSocket: Aucun utilisateur connecté');
                             throw new Error('NO_USER');
                         }
-                        
+
+                        // Si socket déjà connecté (réutilisé depuis base.html), join_house immédiatement
+                        if (socket.connected) {
+                            socket.emit('join_house', { email: userEmail });
+                        }
+
                         socket.on('connect', function() {
                             console.log('🔌 WebSocket: Connecté au serveur (menu.html)');
                             console.log('   Transport:', socket.io.engine.transport.name);
