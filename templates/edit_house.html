@@ -467,7 +467,6 @@
 <body>
 
     <a href="{{ url_for('customize.settings_page') }}" id="backToSettings" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
-    <a href="{{ url_for('customize.settings_page') }}" id="backToHome" class="back-btn-glass" aria-label="Retour aux réglages" style="display:none;">←</a>
 
     <div class="header-below-zone">
 
@@ -475,10 +474,7 @@
         <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
             <input type="hidden" name="house_name" value="{{ current_house_name or '' }}">
 
-            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            {# Panneau "Supprimer des pièces" — TOUTES les pièces, toggles auto-save #}
-            {# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ #}
-            <div id="panelManage" class="rooms-panel" style="display:none;">
+            <div id="panelManage" class="rooms-panel">
 
                 <div class="add-title-card">
                     <span class="att-icon">🗑️</span>
@@ -676,34 +672,6 @@ function _playValid() {
     } catch(e) {}
 }
 
-function togglePanel(which) {
-    var panels = {
-        add: document.getElementById('panelAdd'),
-        manage: document.getElementById('panelManage')
-    };
-    if (!panels[which]) return;
-    // Masque la grille des 2 boutons + le retour vers settings
-    var grid = document.querySelector('.house-actions-grid');
-    if (grid) grid.style.display = 'none';
-    var backS = document.getElementById('backToSettings');
-    if (backS) backS.style.display = 'none';
-    // Cache tous les panneaux puis affiche le bon
-    Object.keys(panels).forEach(function(k) { if (panels[k]) panels[k].style.display = 'none'; });
-    panels[which].style.display = 'block';
-    // Affiche le retour interne
-    var backH = document.getElementById('backToHome');
-    if (backH) backH.style.display = '';
-    if (window.scrollY > 0) window.scrollTo(0, 0);
-    // Son joué après le changement visuel pour ne pas retarder le rendu
-    requestAnimationFrame(function(){ _playClick(); });
-}
-
-function closePanel() {
-    window.location.href = "{{ url_for('customize.settings_page') }}";
-}
-
-// Ouvrir automatiquement le panel "Gérer mes pièces" au chargement
-document.addEventListener('DOMContentLoaded', function() { togglePanel('manage'); });
 
 // 🎨 Génère un data URL Canvas (losange bleu + emoji centré, 400×400)
 function _emojiToDataURL(emoji) {
