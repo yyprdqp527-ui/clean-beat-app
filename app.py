@@ -585,6 +585,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Session valable
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RENDER') is not None  # True sur Render (HTTPS)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # ⚡ Cache in-memory pour inject_house_name (évite 1 requête DB par rendu)
 _house_info_cache: dict = {}  # {email: {'name': ..., 'code': ..., 'ts': float}}
@@ -617,7 +618,7 @@ if SOCKETIO_AVAILABLE:
 
     socketio = SocketIO(
         app,
-        cors_allowed_origins="*",
+        cors_allowed_origins=["https://clean-beat-app.onrender.com"],
         logger=False,
         engineio_logger=False,
         ping_timeout=60,      # Réduit de 120 à 60 secondes
