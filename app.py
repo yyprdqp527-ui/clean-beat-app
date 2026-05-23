@@ -4765,7 +4765,7 @@ if SOCKETIO_AVAILABLE:
                 conn.close()
                 
                 # Diffuser à tous les clients de la room
-                emit('players_points_update', {'players': players}, room=room)
+                emit('players_points_update', {'players': players}, room=room, broadcast=True)
                 _dbg(f'📊 Points mis à jour pour la room {room}')
         except Exception as e:
             _dbg(f'❌ Erreur points_updated: {e}')
