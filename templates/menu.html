@@ -2145,7 +2145,7 @@ function sendMalus(reason, points){
                         // → une seule connexion Socket.IO par page.
                         if (!window.socket) {
                             window.socket = io({
-                                transports: ['websocket', 'polling'],
+                                transports: ['polling', 'websocket'],
                                 upgrade: true,
                                 reconnection: true,
                                 reconnectionDelay: 1000,
@@ -2467,12 +2467,19 @@ function sendMalus(reason, points){
                             }
                         });
 
-                        // 🆕 Nouveau joueur invité a rejoint → reload pour afficher son avatar dans le header
+                        // 🆕 Nouveau joueur invité a rejoint → mise à jour ciblée si avatar déjà dans le DOM
                         socket.on('player_joined', function(data) {
                             console.log('✨ player_joined reçu:', data);
                             // Évite reload si c'est moi qui viens de rejoindre
                             try { if (data && data.email === userEmail) return; } catch(e) {}
-                            setTimeout(function() { window.location.reload(); }, 600);
+                            var alreadyInDom = data && data.email &&
+                                document.querySelector('[data-player-email="' + data.email + '"]');
+                            if (alreadyInDom) {
+                                if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
+                            } else {
+                                // Nouvel avatar absent du DOM → rechargement nécessaire
+                                setTimeout(function() { window.location.reload(); }, 600);
+                            }
                         });
                         
                         // Écouter les notifications de nouveaux messages
@@ -2777,8 +2784,25 @@ function sendMalus(reason, points){
                             if (typeof loadActiveBonuses === 'function') loadActiveBonuses();
                         });
 
-                        // 🏠 Config pièces modifiée — recharger le menu
-                        socket.on('house_rooms_updated', function() {
+                        // 🏠 Config pièces modifiée — mise à jour ciblée sans reload global
+                        socket.on('house_rooms_updated', function(data) {
+                            var action = data && data.action;
+                            var roomKey = data && data.room_key;
+                            if (action === 'toggle' && roomKey) {
+                                var card = document.querySelector('.room-card[data-room="' + roomKey + '"]');
+                                if (card) card.style.display = data.is_hidden ? 'none' : '';
+                                return;
+                            }
+                            if (action === 'rename' && roomKey) {
+                                if (data.new_name) {
+                                    var titleEl = document.querySelector('.room-card[data-room="' + roomKey + '"] .room-card-title');
+                                    if (titleEl) titleEl.textContent = data.new_name;
+                                } else {
+                                    window.location.reload();
+                                }
+                                return;
+                            }
+                            // reset_image, update_image, add, delete, reload ou action inconnue → rechargement complet
                             window.location.reload();
                         });
 
