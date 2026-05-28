@@ -5326,6 +5326,49 @@ def cron_list_players():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/classify', methods=['POST'])
+def classify():
+    data = request.get_json()
+    title = data.get('title', '')
+    categories = data.get('categories', [])
+
+    if not title:
+        return jsonify({'error': 'title required'}), 400
+
+    categories_str = ', '.join(categories)
+
+    response = requests.post(
+        'https://api.anthropic.com/v1/messages',
+        headers={
+            'Content-Type': 'application/json',
+            'x-api-key': os.environ.get('ANTHROPIC_API_KEY', ''),
+            'anthropic-version': '2023-06-01',
+        },
+        json={
+            'model': 'claude-haiku-4-5-20251001',
+            'max_tokens': 100,
+            'messages': [{
+                'role': 'user',
+                'content': f'''Tu es un assistant de classification de vidéos.
+Titre de la vidéo : "{title}"
+Catégories disponibles : {categories_str}
+
+Réponds UNIQUEMENT avec le nom exact d'une catégorie 
+de la liste ci-dessus qui correspond le mieux.
+Si aucune ne correspond, réponds "NOUVELLE: [nom suggéré]".
+Pas d'explication, juste le nom.'''
+            }],
+        },
+        timeout=10,
+    )
+
+    if response.status_code != 200:
+        return jsonify({'error': 'claude api error'}), 500
+
+    answer = response.json()['content'][0]['text'].strip()
+    return jsonify({'category': answer})
+
+
 if __name__ == '__main__':
     try:
         _dbg('\n--- Flask URL Map ---')
