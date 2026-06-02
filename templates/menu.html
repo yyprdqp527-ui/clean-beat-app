@@ -24,7 +24,7 @@
     <meta name="apple-mobile-web-app-title" content="QuiFaitQuoi">
     <meta name="theme-color" content="#597176">
     <link rel="manifest" href="/static/manifest.json?v=4">
-    <link rel="apple-touch-icon" href="/static/qfq-icon-192-v2.png">
+    <link rel="apple-touch-icon" href="/static/icons/qfq-icon-192-v2.png">
     <title>Menu</title>
     <!-- Google Fonts Montserrat - chargement non-bloquant -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,8 +55,7 @@
     <!-- 📱 Cache purge + Service Worker -->
     <script>
     (function(){
-        var userEmail = "{{ session.get('user','') }}";
-        window.userEmail = userEmail;
+        const userEmail = "{{ session.get('user','') }}";
         const TIPS_KEY = 'qfq_tips_menu_' + userEmail;
         const PWA_KEY = 'pwa_installed_' + userEmail;
         var PURGE_KEY = 'cb_cache_purged_v1012';
@@ -93,7 +92,7 @@
                         sessionStorage.setItem('badge_messages', '{{ unread_messages_count|default(0)|int }}');
                         sessionStorage.setItem('badge_courses', '{{ courses_pending_count|default(0)|int }}');
                         sessionStorage.setItem('badge_baby', '{{ unread_baby_tracking|default(0)|int }}');
-                        sessionStorage.setItem('badge_missions', JSON.stringify({{ rooms_with_new_missions|default({})|tojson }}));
+                        sessionStorage.setItem('badge_missions', '{{ rooms_with_new_missions|default({})|tojson }}');
                         location.reload(true);
                     }, 500);
                 });
@@ -105,7 +104,7 @@
     <!-- Préchargement des images des pièces (critical path) -->
     {% for room in custom_rooms %}
     {% if room.image and not room.image.startswith('data:') %}
-    <link rel="preload" as="image" href="{{ url_for('static', filename=room.image) }}?v=126">
+    <link rel="preload" as="image" href="{{ url_for('static', filename=room.image) }}?v=127">
     {% endif %}
     {% endfor %}
     <script>
@@ -122,7 +121,7 @@
         })();
     </script>
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}?v=11">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.min.css') }}?v=11">
     <style>
         /* Overrides thématiques (dépendent de Jinja2 → ne peuvent pas vivre dans un .css statique) */
         body { background: {{ bg_gradient }}; }
@@ -1863,11 +1862,11 @@ function sendMalus(reason, points){
                             .catch(err => console.error('Erreur mise à jour points:', err));
                     }
 
-                    // Premier appel après 500ms, puis toutes les 20s (filet sécurité si WebSocket rate)
+                    // Premier appel après 500ms, puis toutes les 20s (filet de sécurité si WebSocket rate)
                     setTimeout(updatePlayersPointsMenu, 500);
                     setInterval(function() {
                         if (document.visibilityState === 'visible') updatePlayersPointsMenu();
-                    }, 5000);
+                    }, 20000);
                 </script>
 
                 <script>
@@ -1953,7 +1952,7 @@ function sendMalus(reason, points){
                                         </div>
                                         {% else %}
                                         <picture>
-                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=126{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="async" loading="eager">
+                                            <img src="{% if room.image and room.image.startswith('data:') %}{{ room.image }}{% else %}{{ url_for('static', filename=room.image) }}?v=127{% endif %}" alt="{{ room.name }}" fetchpriority="high" decoding="async" loading="eager">
                                         </picture>
                                         {% endif %}
                                         <span class="room-mission-dot"
@@ -2142,13 +2141,16 @@ function sendMalus(reason, points){
                 window.showHouseSpeechBubble = showHouseSpeechBubble;
 
                 // Protection: si socket.io n'est pas chargé, les badges restent fonctionnels
+                // (socket.io.min.js est en defer → disponible au DOMContentLoaded, pas avant)
+                function _initMenuSocket() {
                 try {
                         // Réutiliser window.socket s'il existe déjà (créé par base.html),
                         // sinon le créer ici avec la config complète.
                         // → une seule connexion Socket.IO par page.
                         if (!window.socket) {
                             window.socket = io({
-                                transports: ['websocket', 'polling'],
+                                transports: ['polling'],
+                                upgrade: false,
                                 reconnection: true,
                                 reconnectionDelay: 1000,
                                 reconnectionDelayMax: 5000,
@@ -2158,14 +2160,13 @@ function sendMalus(reason, points){
                         }
                         const socket = window.socket;
                         const userEmail = "{{ session.get('user', '') }}";
-                        window.userEmail = userEmail;
                         
                         if (!userEmail) {
                             console.log('⚠️ WebSocket: Aucun utilisateur connecté');
                             throw new Error('NO_USER');
                         }
 
-                        // Si socket déjà connecté (réutilisé depuis base.html), join_house immédiatement
+                        // Si déjà connecté (ex: socket réutilisé depuis base.html), émettre join_house immédiatement
                         if (socket.connected) {
                             socket.emit('join_house', { email: userEmail });
                         }
@@ -2476,23 +2477,16 @@ function sendMalus(reason, points){
                         });
 
                         // 🆕 Nouveau joueur invité a rejoint → mise à jour ciblée si avatar déjà dans le DOM
-
                         socket.on('player_joined', function(data) {
                             console.log('✨ player_joined reçu:', data);
-                            // Si data.email absent → ignorer silencieusement
-                            if (!data || !data.email) return;
                             // Évite reload si c'est moi qui viens de rejoindre
-                            if (data.email === userEmail) return;
-                            var alreadyInDom = document.querySelector('[data-player-email="' + data.email + '"]');
+                            try { if (data && data.email === userEmail) return; } catch(e) {}
+                            var alreadyInDom = data && data.email &&
+                                document.querySelector('[data-player-email="' + data.email + '"]');
                             if (alreadyInDom) {
                                 if (typeof updatePlayersPointsMenu === 'function') updatePlayersPointsMenu();
                             } else {
-                                // Avatar absent du DOM — log de diagnostic avant reload
-                                var allEmails = Array.from(document.querySelectorAll('[data-player-email]')).map(function(el){ return el.getAttribute('data-player-email'); });
-                                console.warn('[player_joined] RELOAD déclenché — email absent du DOM:', data.email);
-                                console.warn('[player_joined] Emails présents dans le DOM:', allEmails);
-                                console.warn('[player_joined] userEmail (moi):', userEmail);
-                                console.warn('[player_joined] data complet:', JSON.stringify(data));
+                                // Nouvel avatar absent du DOM → rechargement nécessaire
                                 setTimeout(function() { window.location.reload(); }, 600);
                             }
                         });
@@ -2528,9 +2522,11 @@ function sendMalus(reason, points){
                                 console.log('Lecture du son de réception...');
                                 if (window.SoundManager) SoundManager.play('receiveMessage');
                                 
-                                // ✅ Mise à jour directe DOM (instantanée, même mécanique que Courses)
-                                updateUnreadBadge(data.recipient_unread_count);
-                                refreshAllBadges(); // fallback API
+                                // ✅ DOM direct immédiat (patron Courses) — mise à jour instantanée sans attendre l'API
+                                var _msgCnt = data.recipient_unread_count || 0;
+                                updateUnreadBadge(_msgCnt);
+                                // Confirmation serveur (corrige si décalage)
+                                refreshAllBadges();
                                 
                                 //  Mettre à jour les pastilles sur tous les avatars enfants
                                 if (data.children_unread) {
@@ -2575,10 +2571,8 @@ function sendMalus(reason, points){
                             
                             // Mettre à jour uniquement si c'est pour MOI
                             if (data.user_email === userEmail) {
-                                // Gérer les deux formes de payload (count ou unread_received)
-                                var _cnt = (data.count !== undefined) ? data.count : (data.unread_received !== undefined ? data.unread_received : 0);
-                                console.log('Mise à jour MON compteur:', _cnt);
-                                updateUnreadBadge(_cnt);
+                                console.log('Mise à jour MON compteur:', data.count);
+                                updateUnreadBadge(data.count);
                                 
                                 if (data.unread_by_sender) {
                                     updateUnreadBySender(data.unread_by_sender);
@@ -2736,47 +2730,43 @@ function sendMalus(reason, points){
                         // 👶 Nouveau suivi bébé enregistré — tout le monde rafraîchit ses badges
                         socket.on('baby_tracking_added', function(data) {
                             console.log('👶 WebSocket: baby_tracking_added reçu', data);
-                            // Mise à jour directe DOM (instantanée)
-                            var _babyDot = document.getElementById('room-baby-dot');
-                            if (_babyDot) {
-                                var _cur = parseInt(_babyDot.textContent) || 0;
-                                _babyDot.textContent = (_cur + 1) > 99 ? '99+' : (_cur + 1);
-                                _babyDot.style.display = '';
-                            }
-                            refreshAllBadges(); // fallback API
+                            // DOM direct : montrer la pastille immédiatement (count corrigé par refreshAllBadges)
+                            var _babyDot2 = document.getElementById('room-baby-dot');
+                            if (_babyDot2) { _babyDot2.style.display = ''; }
+                            refreshAllBadges();
                         });
 
                         // 🆕 Nouvelle mission ajoutée — rafraîchir les pastilles oranges
                         socket.on('task_added_notification', function(data) {
                             console.log('🆕 WebSocket: task_added_notification reçu', data);
-                            // Mise à jour directe DOM pour la pièce concernée (instantanée)
+                            // DOM direct : montrer le dot de la pièce concernée immédiatement
                             if (data.category) {
                                 document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
                                     var vis = dot.closest('.room-card-visual');
                                     if (vis && vis.getAttribute('data-category') === data.category) {
-                                        var _cur = parseInt(dot.textContent) || 0;
-                                        dot.textContent = (_cur + 1) > 99 ? '99+' : (_cur + 1);
                                         dot.style.display = '';
                                     }
                                 });
                             }
-                            refreshMissionDots(); // fallback API
+                            refreshMissionDots();
                             refreshAllBadges();
                         });
 
                         // ✅ Mission validée — rafraîchir les pastilles oranges (disparition sur TOUS les écrans)
                         socket.on('task_validated', function(data) {
                             console.log('✅ WebSocket: task_validated reçu', data);
-                            // Masquage optimiste — refreshMissionDots() corrige si missions restantes
+                            // DOM direct : décrémenter le dot de la pièce concernée immédiatement
                             if (data.category) {
                                 document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
                                     var vis = dot.closest('.room-card-visual');
                                     if (vis && vis.getAttribute('data-category') === data.category) {
-                                        dot.style.display = 'none';
+                                        var cur = parseInt(dot.textContent, 10) || 1;
+                                        if (cur <= 1) { dot.style.display = 'none'; dot.textContent = ''; }
+                                        else { dot.textContent = cur - 1; }
                                     }
                                 });
                             }
-                            refreshMissionDots(); // corrige si d'autres missions restent
+                            refreshMissionDots();
                             refreshAllBadges();
                         });
 
@@ -2806,7 +2796,6 @@ function sendMalus(reason, points){
                             if (action === 'toggle' && roomKey) {
                                 var card = document.querySelector('.room-card[data-room="' + roomKey + '"]');
                                 if (card) card.style.display = data.is_hidden ? 'none' : '';
-                                if (!data.is_hidden && typeof refreshMissionDots === 'function') refreshMissionDots();
                                 return;
                             }
                             if (action === 'rename' && roomKey) {
@@ -2861,6 +2850,18 @@ function sendMalus(reason, points){
                         console.log('WebSocket: Système de synchronisation initialisé');
                 } catch(socketError) {
                     console.warn('[CleanBeat] Socket.IO indisponible, badges en mode poll uniquement:', socketError);
+                }
+                } // fin _initMenuSocket
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', _initMenuSocket);
+                } else {
+                    _initMenuSocket();
+                }
+                } // fin _initMenuSocket
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', _initMenuSocket);
+                } else {
+                    _initMenuSocket();
                 }
                 
                 // 🔄 Rafraîchir les badges TOUJOURS au chargement/retour de page
@@ -3068,9 +3069,21 @@ function refreshAllBadges() {
                             // (clic explicite sur la notif), pas via postMessage SW
                         }
                         // 🔔 Push reminder reçu pendant qu'on est déjà sur /menu
-                        // → recharger /menu?reminder=<id> pour afficher le popup
+                        // → afficher le popup directement sans reload (fetch contenu + _showReminderPopup)
                         if (event.data && event.data.type === 'SHOW_REMINDER' && event.data.url) {
-                            try { window.location.href = event.data.url; } catch(_) {}
+                            var _reminderUrl = event.data.url;
+                            fetch('/api/latest_reminder', { credentials: 'same-origin', cache: 'no-store' })
+                                .then(function(r) { return r.ok ? r.json() : null; })
+                                .then(function(d) {
+                                    if (d && d.reminder && d.reminder.id && typeof _showReminderPopup === 'function') {
+                                        _showReminderPopup(d.reminder.id, d.reminder.content || '');
+                                    } else {
+                                        try { window.location.href = _reminderUrl; } catch(_) {}
+                                    }
+                                })
+                                .catch(function() {
+                                    try { window.location.href = _reminderUrl; } catch(_) {}
+                                });
                         }
                     });
                 }
@@ -3320,7 +3333,7 @@ function refreshAllBadges() {
 <!-- ═══ BANNIÈRE INSTALLATION PWA ═══ -->
 <div id="pwa-install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,rgba(255,255,255,0.88) 0%,rgba(166,211,220,0.55) 50%,rgba(253,174,84,0.35) 100%); color:#153036; padding:14px 16px 20px; box-shadow:0 -8px 32px rgba(21,48,54,0.18),0 0 0 1px rgba(255,255,255,0.5),inset 0 1px 0 rgba(255,255,255,0.65); border-radius:20px 20px 0 0; border:1px solid rgba(255,255,255,0.35); backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(255,255,255,0.97); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
     <div style="display:flex; align-items:flex-start; gap:12px; max-width:500px; margin:0 auto;">
-        <img src="/static/qfq-icon-192-v2.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
+        <img src="/static/icons/qfq-icon-192-v2.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
         <div style="flex:1;">
             <div style="font-size:15px;font-weight:800;margin-bottom:4px;color:#153036;">📲 Installe QuiFaitQuoi sur ton écran d'accueil</div>
             <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:white;background:rgba(253,174,84,0.95);padding:4px 10px;border-radius:8px;display:inline-block;">⚡ Étape obligatoire — version bêta testeur</div>
@@ -3454,10 +3467,11 @@ function refreshAllBadges() {
             if (isStandalone) return;
             fetch('/api/push/status').then(function(r){ return r.json(); }).then(function(data) {
                 if (!data.has_subscription) {
-                    // Souscription manquante → bannière critique, pas de cooldown
+                    // Souscription manquante → respecter quand même le cooldown dismiss
+                    if (dismissedAt && (Date.now() - dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
                     setTimeout(showPushBanner, 800);
                 }
-            }).catch(function(){ setTimeout(showPushBanner, 800); });
+            }).catch(function(){ /* API push indisponible (dev) — ne pas afficher la bannière */ });
             return;
         }
 
@@ -4330,15 +4344,15 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
 (function() {
     // Restauration des badges sauvegardés avant le reload de purge SW
     (function() {
-        var _bm    = sessionStorage.getItem('badge_messages');
-        var _bc    = sessionStorage.getItem('badge_courses');
-        var _bb    = sessionStorage.getItem('badge_baby');
+        var _bm = sessionStorage.getItem('badge_messages');
+        var _bc = sessionStorage.getItem('badge_courses');
+        var _bb = sessionStorage.getItem('badge_baby');
         var _bmiss = sessionStorage.getItem('badge_missions');
         if (_bm !== null || _bc !== null || _bb !== null || _bmiss !== null) {
-            if (_bm !== null)    { var e1=document.getElementById('messages-nav-badge'); if(e1){var n1=parseInt(_bm)||0; if(n1>0){e1.textContent=n1<100?n1:'99+';e1.style.display='inline-flex';}else{e1.style.display='none';}} }
-            if (_bc !== null)    { var e2=document.getElementById('courses-nav-badge');  if(e2){var n2=parseInt(_bc)||0; if(n2>0){e2.textContent=n2<100?n2:'99+';e2.style.display='inline-flex';}else{e2.style.display='none';}} }
-            if (_bb !== null)    { var e3=document.getElementById('room-baby-dot');      if(e3){var n3=parseInt(_bb)||0; if(n3>0){e3.textContent=n3;e3.style.display='';}else{e3.style.display='none';}} }
-            if (_bmiss !== null) { try { var md=JSON.parse(_bmiss); document.querySelectorAll('.room-mission-dot').forEach(function(dot){ var vis=dot.closest('.room-card-visual[data-category]'); if(!vis)return; var cat=vis.getAttribute('data-category'); var cnt=md[cat]||0; if(cnt>0){dot.textContent=cnt<100?cnt:'99+';dot.style.display='';}else{dot.style.display='none';} }); } catch(e){} }
+            if (_bm !== null) { var _el = document.getElementById('messages-nav-badge'); if (_el) { var _n = parseInt(_bm)||0; if (_n>0){_el.textContent=_n<100?_n:'99+';_el.style.display='inline-flex';}else{_el.style.display='none';} } }
+            if (_bc !== null) { var _el2 = document.getElementById('courses-nav-badge'); if (_el2) { var _n2 = parseInt(_bc)||0; if (_n2>0){_el2.textContent=_n2<100?_n2:'99+';_el2.style.display='inline-flex';}else{_el2.style.display='none';} } }
+            if (_bb !== null) { var _el3 = document.getElementById('room-baby-dot'); if (_el3) { var _n3 = parseInt(_bb)||0; if (_n3>0){_el3.textContent=_n3;_el3.style.display='';}else{_el3.style.display='none';} } }
+            if (_bmiss !== null) { try { var _md = JSON.parse(_bmiss); document.querySelectorAll('.room-mission-dot').forEach(function(dot){ var vis=dot.closest('.room-card-visual[data-category]'); if(!vis)return; var cat=vis.getAttribute('data-category'); var cnt=_md[cat]||0; if(cnt>0){dot.textContent=cnt<100?cnt:'99+';dot.style.display='';}else{dot.style.display='none';} }); } catch(e){} }
             ['badge_messages','badge_courses','badge_baby','badge_missions'].forEach(function(k){ sessionStorage.removeItem(k); });
         }
     })();
@@ -4363,31 +4377,6 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
             cBadge.style.display = 'none';
         }
     }
-    // Seed initial du badge bébé
-    var _babyCount = {{ unread_baby_tracking|default(0)|int }};
-    var babyDot = document.getElementById('room-baby-dot');
-    if (babyDot) {
-        if (_babyCount > 0) {
-            babyDot.textContent = _babyCount;
-            babyDot.style.display = '';
-        } else {
-            babyDot.style.display = 'none';
-        }
-    }
-    // Seed initial des mission dots (pastilles oranges par pièce)
-    var _missionData = {{ rooms_with_new_missions|default({})|tojson }};
-    document.querySelectorAll('.room-mission-dot').forEach(function(dot) {
-        var vis = dot.closest('.room-card-visual[data-category]');
-        if (!vis) return;
-        var cat = vis.getAttribute('data-category');
-        var cnt = _missionData[cat] || 0;
-        if (cnt > 0) {
-            dot.textContent = cnt < 100 ? cnt : '99+';
-            dot.style.display = '';
-        } else {
-            dot.style.display = 'none';
-        }
-    });
 })();
 </script>
 
@@ -4420,37 +4409,29 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
 </script>
 
 <!-- 🏆 ====== Overlay plein écran : Gagnant de la semaine ====== -->
-<div id="winnerOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;animation:winnerFadeIn .4s ease;">
-  <div style="background:linear-gradient(135deg,rgba(255,255,255,0.98) 0%,rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:24px;border:2px solid rgba(255,255,255,0.5);padding:35px 25px;max-width:90%;width:360px;text-align:center;box-shadow:0 25px 80px rgba(89,113,118,0.4),inset 0 1px 0 rgba(255,255,255,0.6);animation:winnerPopupBounce 0.6s cubic-bezier(0.175,0.885,0.32,1.275);position:relative;overflow:hidden;">
-    <div style="position:absolute;inset:0;pointer-events:none;">
-      <span style="position:absolute;font-size:18px;top:10%;left:10%;animation:winnerStarBlink 1.5s ease-in-out infinite;animation-delay:0s;">✨</span>
-      <span style="position:absolute;font-size:18px;top:15%;right:15%;animation:winnerStarBlink 1.5s ease-in-out infinite;animation-delay:0.5s;">⭐</span>
-      <span style="position:absolute;font-size:18px;bottom:20%;left:15%;animation:winnerStarBlink 1.5s ease-in-out infinite;animation-delay:1s;">✨</span>
-      <span style="position:absolute;font-size:18px;bottom:25%;right:10%;animation:winnerStarBlink 1.5s ease-in-out infinite;animation-delay:1.5s;">⭐</span>
-      <span style="position:absolute;font-size:18px;top:40%;left:5%;animation:winnerStarBlink 1.5s ease-in-out infinite;animation-delay:0.3s;">✨</span>
-      <span style="position:absolute;font-size:18px;top:50%;right:5%;animation:winnerStarBlink 1.5s ease-in-out infinite;animation-delay:0.8s;">⭐</span>
-    </div>
-    <div style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent 40%,rgba(255,215,0,0.1) 50%,transparent 60%);animation:winnerShimmer 3s ease-in-out infinite;pointer-events:none;"></div>
-    <div style="font-size:36px;margin-bottom:10px;animation:winnerConfettiBounce 1s ease-in-out infinite;">🎊 🎉 🎊</div>
-    <div style="font-size:70px;margin-bottom:15px;animation:winnerTrophyPulse 1.5s ease-in-out infinite;filter:drop-shadow(0 4px 15px rgba(255,215,0,0.6));">🏆</div>
-    <div style="color:#FFD700;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;text-shadow:0 2px 10px rgba(255,215,0,0.5);position:relative;z-index:1;">Champion de la semaine</div>
-    <div id="winnerName" style="color:white;font-size:32px;font-weight:800;margin-bottom:8px;text-shadow:0 3px 15px rgba(0,0,0,0.3);position:relative;z-index:1;"></div>
-    <div id="winnerPoints" style="color:rgba(255,255,255,0.95);font-size:17px;font-weight:700;margin-bottom:20px;position:relative;z-index:1;"></div>
-    <div style="background:rgba(255,255,255,0.15);border-radius:16px;padding:18px;margin-bottom:25px;border:1px solid rgba(255,255,255,0.25);position:relative;z-index:1;">
-      <p style="color:white;font-size:15px;line-height:1.6;margin:0;">Tu peux débloquer <span style="color:#FFD700;font-weight:700;">une case Mystère</span><br>et découvrir ta récompense !</p>
-    </div>
-    <button id="winnerClaimBtn" type="button" style="background:linear-gradient(145deg,#FFD700 0%,#FFA500 100%);color:#1a1a2e;border:none;padding:16px 50px;border-radius:30px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(255,215,0,0.5),0 0 30px rgba(255,215,0,0.3);position:relative;z-index:10;text-transform:uppercase;letter-spacing:1px;">C'est parti !</button>
-    <br>
-    <button id="winnerCloseBtn" type="button" style="margin-top:16px;background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;text-decoration:underline;position:relative;z-index:10;">Fermer</button>
-  </div>
+<div id="winnerOverlay" style="display:none;position:fixed;inset:0;z-index:99999;
+     background:radial-gradient(ellipse at center, rgba(20,10,40,0.96), rgba(0,0,0,0.99));
+     -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+     align-items:center;justify-content:center;flex-direction:column;
+     padding:24px;text-align:center;color:#fff;animation:winnerFadeIn .5s ease;">
+  <div style="font-size:120px;line-height:1;animation:winnerCrownPulse 1.5s ease-in-out infinite;">🏆</div>
+  <div style="font-size:18px;font-weight:800;letter-spacing:3px;color:#FDAE54;
+       text-transform:uppercase;margin:18px 0 12px;">Gagnant de la semaine</div>
+  <div id="winnerName" style="font-size:42px;font-weight:900;margin-bottom:8px;
+       text-shadow:0 4px 24px rgba(253,174,84,0.55);"></div>
+  <div id="winnerPoints" style="font-size:24px;color:#fff;opacity:0.9;margin-bottom:32px;
+       font-weight:700;"></div>
+  <button id="winnerClaimBtn" type="button" style="padding:18px 38px;font-size:17px;font-weight:800;
+          background:linear-gradient(135deg,#FDAE54,#f09030);border:none;border-radius:30px;
+          color:#fff;cursor:pointer;box-shadow:0 8px 30px rgba(253,174,84,0.5);
+          letter-spacing:1px;">🎁 Ouvrir mon cadeau</button>
+  <button id="winnerCloseBtn" type="button" style="margin-top:18px;background:transparent;border:none;
+          color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;text-decoration:underline;">
+    Fermer</button>
 </div>
 <style>
 @keyframes winnerFadeIn { from{opacity:0} to{opacity:1} }
-@keyframes winnerPopupBounce { 0%{transform:scale(0.3) translateY(50px);opacity:0} 50%{transform:scale(1.05) translateY(-10px)} 100%{transform:scale(1) translateY(0);opacity:1} }
-@keyframes winnerShimmer { 0%{transform:translateX(-100%) rotate(45deg)} 100%{transform:translateX(100%) rotate(45deg)} }
-@keyframes winnerConfettiBounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-8px) rotate(5deg)} }
-@keyframes winnerTrophyPulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 4px 15px rgba(255,215,0,0.6))} 50%{transform:scale(1.1);filter:drop-shadow(0 8px 25px rgba(255,215,0,0.9))} }
-@keyframes winnerStarBlink { 0%,100%{opacity:0.4;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+@keyframes winnerCrownPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
 </style>
 <script>
 (function(){
@@ -4469,7 +4450,7 @@ body { padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)); }
     nm.textContent  = data.winner_name || data.name || 'Champion';
     pts.textContent = (data.points || 0) + ' points';
     var isWinner = (data.winner_email || data.email) === _ue;
-    btn.textContent = isWinner ? 'C\'est parti !' : 'Voir la grille';
+    btn.textContent = isWinner ? '🎁 Ouvrir mon cadeau' : '👀 Voir la grille';
     ov.style.display = 'flex';
     try { localStorage.setItem(winnerSeenKey, '1'); } catch(e){}
     btn.onclick = function(){
