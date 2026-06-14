@@ -1880,7 +1880,7 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'title': f'{icon_emoji} CleanBeat',
                     'body': content,
                     'icon': '/static/images/logo.png',
-                    'url': '/comments',
+                    'url': '/menu' if message_type == 'reminder' else '/comments',
                     'messageId': message_id,
                     'messageType': message_type
                 }
