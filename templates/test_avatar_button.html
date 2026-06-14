@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Bouton Avatar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .hidden-section {
+            display: none;
+            background: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+        .visible {
+            display: block !important;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #FDAE54;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e69944;
+        }
+        .console-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            margin-top: 20px;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test du bouton "Choisir un avatar"</h1>
+    
+    <p>Cliquez sur le bouton ci-dessous :</p>
+    
+    <button onclick="testScroll()">🎨 Choisir un avatar (TEST)</button>
+    
+    <div id="avatarsSection" class="hidden-section">
+        <h2>✅ Section d'avatars</h2>
+        <p>Si vous voyez ce texte, le bouton fonctionne !</p>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            <div style="background: #A6D3DC; padding: 20px; border-radius: 10px;">Avatar 1</div>
+            <div style="background: #FDAE54; padding: 20px; border-radius: 10px;">Avatar 2</div>
+            <div style="background: #F4C68D; padding: 20px; border-radius: 10px;">Avatar 3</div>
+            <div style="background: #597176; padding: 20px; border-radius: 10px; color: white;">Avatar 4</div>
+        </div>
+    </div>
+    
+    <div class="console-output" id="console">
+        📝 Console de debug:<br>
+    </div>
+    
+    <script>
+        function log(message) {
+            const console = document.getElementById('console');
+            const time = new Date().toLocaleTimeString();
+            console.innerHTML += `[${time}] ${message}<br>`;
+        }
+        
+        function testScroll() {
+            log('🎨 Fonction testScroll() appelée');
+            
+            const section = document.getElementById('avatarsSection');
+            log('Section trouvée: ' + (section ? 'OUI' : 'NON'));
+            
+            if (section) {
+                section.style.display = 'block';
+                log('✅ Section affichée (display: block)');
+                
+                setTimeout(() => {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    log('✅ Scroll effectué');
+                }, 100);
+            } else {
+                log('❌ ERREUR: Section non trouvée!');
+            }
+        }
+        
+        log('✅ Script chargé et prêt');
+    </script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 {% block title %}Gérer les joueurs{% endblock %}
 {% block content %}
 <style>
     :root {
+        --brown-warm: #4a3428;
+        --brown-dark: #1a1410;
         --teal-light: #A6D3DC;
         --teal-dark: #597176;
         --gold: #FDAE54;
@@ -10,52 +13,7 @@
         --white: #ffffff;
         --dark: #153036;
     }
-    
-    /* Bouton retour glassmorphisme */
-    .back-btn-glass {
-        position: fixed;
-        top: 24px;
-        left: 24px;
-        z-index: 2001;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #153036;
-        font-size: 28px;
-        font-weight: bold;
-        text-decoration: none;
-        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-    }
-
-    .back-btn-glass:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    }
-
-    .back-btn-glass:active {
-        transform: scale(0.95);
-    }
-
-    @media (max-width: 520px) {
-        .back-btn-glass {
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-        }
-    }
-
-    /* Header rectangle titre */
+/* Header rectangle titre */
     .room-header {
         background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
         backdrop-filter: blur(20px);
@@ -143,16 +101,34 @@
         width: 110px;
         height: 110px;
         border-radius: 22px;
-        background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
-        box-shadow: 0 12px 30px rgba(0,0,0,0.15),
-                    inset 0 1px 0 rgba(255,255,255,0.8);
-        border: 2px solid rgba(253,174,84,0.4);
+        background: #ffffff;
+        border: 1px solid rgba(255,255,255,0.35);
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         flex-shrink: 0;
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+
+    /* Shimmer/shine sweep on top of avatar */
+    .player-avatar-preview::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -120%; height: 100%; width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 22px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+
+    @keyframes shine-sweep {
+        0% { left: -120%; }
+        50% { left: 0%; }
+        100% { left: 120%; }
     }
     
     .player-avatar-preview:hover {
@@ -164,6 +140,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        border-radius: 18px; /* match container rounded corners to avoid inner square */
     }
     
     .player-avatar-preview span {
@@ -329,11 +306,11 @@
     }
     
     .btn-edit {
-        background: linear-gradient(135deg, rgba(166,211,220,0.95), rgba(89,113,118,0.95));
+        background: linear-gradient(135deg, #A6D3DC, #597176);
         backdrop-filter: saturate(180%) blur(20px);
         -webkit-backdrop-filter: saturate(180%) blur(20px);
         color: white;
-        box-shadow: 0 8px 25px rgba(166,211,220,0.4),
+        box-shadow: 0 8px 25px rgba(89,113,118,0.35),
                     inset 0 1px 0 rgba(255,255,255,0.3);
         border: 1px solid rgba(255,255,255,0.3);
     }
@@ -613,67 +590,32 @@
 <div class="manage-container">
     <!-- Header rectangle titre -->
     <div class="room-header" style="max-width:800px; width:100%; margin:0 auto 20px;">
-        <span class="room-icon">👥</span>
         <h1 class="room-name">Gérer les joueurs</h1>
         <p class="room-subtitle">Modifiez les profils ou retirez des joueurs de la maison</p>
     </div>
     
-    <!-- Section Nom de la maison -->
-    <div class="house-name-section" style="max-width:800px; width:100%; margin:0 auto 30px;">
-        <div style="background: linear-gradient(135deg, rgba(166, 211, 220, 0.3), rgba(244, 198, 141, 0.3)); padding: 20px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <span style="font-size: 24px;">🏠</span>
-                <h2 style="margin: 0; font-size: 18px; color: #153036; font-weight: 600;">Nom de la maison</h2>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap;">
-                <input 
-                    type="text" 
-                    id="houseNameInput" 
-                    value="{{ house_name }}" 
-                    maxlength="50"
-                    style="flex: 1; min-width: 200px; padding: 12px 16px; border: 2px solid rgba(21,48,54,0.2); border-radius: 12px; font-size: 16px; background: white; font-family: inherit;"
-                    placeholder="Nom de votre maison"
-                >
-                <button 
-                    id="updateHouseNameBtn"
-                    style="padding: 12px 24px; background: linear-gradient(135deg, #A6D3DC, #597176); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; min-width: 120px;"
-                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.2)'"
-                    onmouseout="this.style.transform=''; this.style.boxShadow=''"
-                >
-                    ✓ Modifier
-                </button>
-            </div>
-            <div id="houseNameFeedback" style="margin-top: 8px; font-size: 14px; display: none;"></div>
-        </div>
-    </div>
-    
-    <!-- Bouton Ajouter des joueurs -->
-    <a href="{{ url_for('add_players') }}" class="btn-add-players">
-        <span class="btn-icon">➕</span>
-        <span class="btn-text">Ajouter des joueurs</span>
-    </a>
-    
     {% for player in players %}
     <div class="player-card" data-email="{{ player.email }}">
         <div class="player-header">
-            <div class="player-avatar-preview" id="avatar-preview-{{ loop.index }}">
+            {% set border_color = ('#FF6B9D' if (player.name and 'marion' in player.name|lower) else (player.player_color_hex if player.player_color_hex else (player.color if player.color else '#A6D3DC'))) %}
+            <div class="player-avatar-preview" id="avatar-preview-{{ loop.index }}" data-dicebear-seed="{{ (player.name or player.email)|urlencode }}" data-avatar-style="{{ player.avatar_style or 'adventurer' }}" style="border: 3px solid {% if '#' in border_color %}{{ border_color }}66{% else %}{{ border_color }}{% endif %}; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
                 {% if player.avatar_file %}
-                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar">
+                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar" onerror="this.onerror=null;this.src='{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';">
                 {% elif player.avatar_url %}
-                    <img src="{{ player.avatar_url }}" alt="Avatar">
+                    <img src="{{ player.avatar_url }}" alt="Avatar" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/{{ player.avatar_style or 'adventurer' }}/svg?seed={{ (player.name or player.email)|urlencode }}';">
                 {% elif player.avatar and player.avatar|length <= 4 %}
                     <span>{{ player.avatar }}</span>
                 {% else %}
-                    <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar par défaut">
+                    <img src="https://api.dicebear.com/7.x/{{ player.avatar_style or 'adventurer' }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="Avatar par défaut" onerror="this.onerror=null;this.src='{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';">
                 {% endif %}
             </div>
             <div class="player-info">
-                <div class="player-name-display">{{ player.name or 'Joueur' }}</div>
+                <div class="player-name-display" style="color: #000000;">{{ player.name or 'Joueur' }}</div>
             </div>
         </div>
-        
+
         <div class="btn-group">
-            <a href="{{ url_for('edit_player', email=player.email) }}" class="btn btn-edit" style="text-decoration: none; text-align: center;">✏️ Modifier</a>
+            <a href="{{ url_for('players.edit_player', email=player.email) }}" class="btn btn-edit" style="text-decoration: none; text-align: center;">✏️ Modifier</a>
             <button class="btn btn-delete" onclick="confirmDelete('{{ player.email }}', '{{ player.name or player.email }}')">🗑️ Supprimer</button>
         </div>
     </div>
@@ -681,70 +623,9 @@
 </div>
 
 <!-- Bouton retour flèche -->
-<a href="{{ url_for('menu') }}" class="back-btn-glass" title="Retour au menu">←</a>
+<a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
 
 <script>
-    // Mettre à jour le nom de la maison
-    document.getElementById('updateHouseNameBtn').addEventListener('click', async function() {
-        const input = document.getElementById('houseNameInput');
-        const newName = input.value.trim();
-        const feedback = document.getElementById('houseNameFeedback');
-        const btn = this;
-        
-        if (!newName) {
-            feedback.textContent = '❌ Le nom ne peut pas être vide';
-            feedback.style.color = '#f44336';
-            feedback.style.display = 'block';
-            return;
-        }
-        
-        // Désactiver le bouton pendant la requête
-        btn.disabled = true;
-        btn.textContent = '⏳ En cours...';
-        
-        try {
-            const formData = new FormData();
-            formData.append('house_name', newName);
-            
-            const response = await fetch('/update_house_name', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                feedback.textContent = '✅ ' + data.message;
-                feedback.style.color = '#4CAF50';
-                feedback.style.display = 'block';
-                
-                // Recharger la page après 1 seconde pour mettre à jour le nom partout
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                feedback.textContent = '❌ ' + data.error;
-                feedback.style.color = '#f44336';
-                feedback.style.display = 'block';
-            }
-        } catch (error) {
-            feedback.textContent = '❌ Erreur de connexion';
-            feedback.style.color = '#f44336';
-            feedback.style.display = 'block';
-        } finally {
-            // Réactiver le bouton
-            btn.disabled = false;
-            btn.textContent = '✓ Modifier';
-        }
-    });
-    
-    // Permettre la validation avec Entrée
-    document.getElementById('houseNameInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('updateHouseNameBtn').click();
-        }
-    });
-    
     // Confirmer la suppression
     function confirmDelete(email, name) {
         if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer ${name} ?\n\nCe joueur n'apparaîtra plus dans la maison.`)) {
@@ -776,5 +657,112 @@
             alert('Erreur lors de la suppression');
         }
     }
+    
+    // 🔌 WebSocket pour synchronisation en temps réel
+    if (typeof io !== 'undefined') {
+        const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
+        
+        socket.on('connect', function() {
+            console.log('🔌 WebSocket connecté sur manage_players');
+            const houseId = '{{ house_id }}';
+            if (houseId) {
+                socket.emit('join_house_room', { house_id: houseId });
+                console.log(`🏠 Rejoint la room: house_${houseId}`);
+            }
+        });
+        
+        // Écouter les mises à jour de la liste des joueurs
+        socket.on('players_list_update', function(data) {
+            console.log('🔄 Mise à jour liste joueurs reçue:', data);
+            
+            if (data.action === 'child_added') {
+                console.log(`👶 Enfant ajouté: ${data.new_player}`);
+            } else if (data.action === 'player_joined') {
+                console.log(`🎉 Joueur a rejoint: ${data.new_player}`);
+            } else if (data.action === 'player_registered') {
+                console.log(`✨ Nouveau joueur inscrit: ${data.new_player}`);
+            }
+            
+            // Recharger la page pour afficher le nouveau joueur
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        });
+        
+        // Écouter les mises à jour de points en temps réel
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket: Mise à jour des points reçue dans manage_players', data);
+            
+            // Mettre à jour l'affichage des points dans les cartes joueurs
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    // Chercher les éléments affichant les points pour ce joueur
+                    const playerCards = document.querySelectorAll('[data-player-email="' + player.email + '"]');
+                    
+                    playerCards.forEach(function(card) {
+                        // Mettre à jour les points quotidiens
+                        const dailyPointsEl = card.querySelector('.daily-points-value, .points-daily');
+                        if (dailyPointsEl) {
+                            dailyPointsEl.textContent = (player.daily_points || 0) + ' pts';
+                            
+                            // Animation visuelle
+                            dailyPointsEl.style.transition = 'all 0.3s ease';
+                            dailyPointsEl.style.transform = 'scale(1.2)';
+                            dailyPointsEl.style.color = '#28a745';
+                            setTimeout(function() {
+                                dailyPointsEl.style.transform = 'scale(1)';
+                                dailyPointsEl.style.color = '';
+                            }, 600);
+                        }
+                        
+                        // Mettre à jour les points totaux
+                        const totalPointsEl = card.querySelector('.total-points-value, .points-total');
+                        if (totalPointsEl) {
+                            totalPointsEl.textContent = player.total_points || 0;
+                        }
+                    });
+                });
+            }
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('🔌 WebSocket déconnecté');
+        });
+    }
 </script>
 {% endblock %}
+
+<script>
+// Replace broken avatar images by fetching DiceBear lorelei SVG using container seed
+document.addEventListener('DOMContentLoaded', async function() {
+    const containers = document.querySelectorAll('.player-avatar-preview[data-dicebear-seed]');
+    for (const c of containers) {
+        const img = c.querySelector('img');
+        // if there's an img and it loaded successfully, skip
+        if (img && img.complete && img.naturalWidth > 0) continue;
+
+        const seed = c.getAttribute('data-dicebear-seed') || 'default';
+        const style = c.getAttribute('data-avatar-style') || 'adventurer';
+        const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
+        try {
+            const resp = await fetch(url, { cache: 'no-cache' });
+            if (!resp.ok) throw new Error('no');
+            const svgText = await resp.text();
+            // inject SVG directly to avoid <img> loading issues
+            c.innerHTML = svgText;
+            // reapply inline styles to make it fit
+            const svg = c.querySelector('svg');
+            if (svg) {
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.display = 'block';
+                svg.style.objectFit = 'cover';
+            }
+        } catch (e) {
+            // fallback to local static svg if fetch failed
+            const local = '{{ url_for('static', filename='avatars/dicebear_lorelei_default.svg') }}';
+            c.innerHTML = `<img src="${local}" alt="Avatar par défaut" style="width:100%;height:100%;object-fit:cover;">`;
+        }
+    }
+});
+</script>

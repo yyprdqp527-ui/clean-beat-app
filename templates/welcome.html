@@ -1,214 +1,249 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CleanBeat - Bienvenue</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>QUI FAIT QUOI</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; }
+    html { overflow:hidden; }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            height: 100vh;
-            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
+    @font-face {
+      font-family: 'Bubblegum Sans';
+      src: url('/static/fonts/BubblegumSans.woff2') format('woff2');
+      font-display: block;
+    }
 
-        .background-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("{{ url_for('static', filename='images/Ménage à Deux.png') }}");
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            z-index: -1;
-        }
-        
-        /* Optimisation pour les écrans très larges */
-        @media (min-width: 1400px) {
-            .background-image {
-                background-size: contain;
-                background-position: center;
-            }
-        }
-        
-        /* Optimisation pour les écrans mobiles */
-        @media (max-width: 768px) {
-            .background-image {
-                background-size: contain;
-                background-position: center center;
-            }
-        }
-        
-        /* Optimisation pour les très petits écrans */
-        @media (max-width: 480px) {
-            .background-image {
-                background-size: 90% auto;
-                background-position: center center;
-            }
-        }
-        
-        @media (max-width: 375px) {
-            .background-image {
-                background-size: 85% auto;
-            }
-        }
-        
-        /* Optimisation pour les écrans en mode paysage mobile */
-        @media (max-height: 500px) and (orientation: landscape) {
-            .background-image {
-                background-size: contain;
-                background-position: center;
-            }
-        }
+    body {
+      background: {{ bg_gradient }};
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      padding-top: max(40px, env(safe-area-inset-top));
+      padding-bottom: max(40px, env(safe-area-inset-bottom));
+      font-family: 'Bubblegum Sans', cursive;
+      position: relative;
+    }
 
-        /* Overlay simple pour lisibilité du bouton uniquement */
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, transparent 0%, transparent 70%, rgba(89, 113, 118, 0.2) 100%);
-            z-index: 0;
-        }
+    .sp-bubble {
+      position: fixed;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.40);
+      pointer-events: none;
+      opacity: 0;
+    }
+    /* Bulles qui montent */
+    .sp-b1  { width:90px;  height:90px;  left:8%;   bottom:-100px; animation:spRise 5.5s ease-in 0.2s infinite; }
+    .sp-b2  { width:50px;  height:50px;  left:20%;  bottom:-60px;  animation:spRise 4.2s ease-in 0.8s infinite; }
+    .sp-b3  { width:130px; height:130px; left:35%;  bottom:-150px; animation:spRise 6.5s ease-in 0.0s infinite; }
+    .sp-b4  { width:40px;  height:40px;  left:50%;  bottom:-50px;  animation:spRise 3.8s ease-in 1.2s infinite; }
+    .sp-b5  { width:70px;  height:70px;  left:62%;  bottom:-80px;  animation:spRise 5.0s ease-in 0.5s infinite; }
+    .sp-b6  { width:100px; height:100px; left:75%;  bottom:-110px; animation:spRise 6.0s ease-in 0.3s infinite; }
+    .sp-b7  { width:30px;  height:30px;  left:85%;  bottom:-40px;  animation:spRise 3.5s ease-in 1.8s infinite; }
+    .sp-b8  { width:60px;  height:60px;  left:5%;   bottom:-70px;  animation:spRise 4.8s ease-in 2.5s infinite; }
+    .sp-b9  { width:45px;  height:45px;  left:90%;  bottom:-55px;  animation:spRise 4.0s ease-in 0.9s infinite; }
+    .sp-b10 { width:80px;  height:80px;  left:45%;  bottom:-90px;  animation:spRise 5.8s ease-in 3.0s infinite; }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            height: 100vh;
-            height: 100dvh; /* Support des nouveaux viewports dynamiques */
-            padding: 50px 20px;
-            text-align: center;
-            color: white;
-            position: relative;
-            z-index: 1; /* au-dessus de l'overlay */
-            max-width: 100vw;
-            overflow: hidden;
-        }
+    @keyframes spRise {
+      0%   { opacity:0;    transform:translateY(0)    scale(1); }
+      10%  { opacity:0.50; }
+      80%  { opacity:0.35; }
+      100% { opacity:0;    transform:translateY(-110vh) scale(1.2); }
+    }
 
-        /* Safe area pour iPhone (notch) */
-        @supports(padding: env(safe-area-inset-bottom)) {
-            .container { padding-bottom: calc(50px + env(safe-area-inset-bottom)); }
-        }
+    .sp-glass {
+      {% if bg_theme_light %}
+      background: rgba(0,0,0,0.07);
+      border: 2px solid rgba(0,0,0,0.12);
+      {% else %}
+      background: rgba(255,255,255,0.22);
+      border: 2px solid rgba(255,255,255,0.5);
+      {% endif %}
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 36px 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      text-align: center;
+      width: 100%;
+      max-width: 360px;
+      opacity: 0;
+      animation: spCardPop 0.5s cubic-bezier(.36,.07,.19,.97) 0.2s forwards;
+      position: relative;
+      z-index: 1;
+    }
+    @keyframes spCardPop {
+      0%   { opacity:0; transform:scale(0.8); }
+      70%  { opacity:1; transform:scale(1.03); }
+      100% { opacity:1; transform:scale(1); }
+    }
 
-        .cta-button {
-            background: linear-gradient(45deg, #000, #333, #000);
-            background-size: 300% 300%;
-            color: white;
-            border: none;
-            padding: 20px 50px;
-            font-size: 1.3em;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            text-decoration: none;
-            display: inline-block;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            animation: gradientShift 3s ease infinite;
-            backdrop-filter: saturate(120%) blur(2px);
-            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
-        }
+    .sp-t1 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 72px;
+      color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
+      line-height: 0.9;
+      opacity: 0;
+      animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 0.6s forwards;
+    }
+    .sp-t2 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 52px;
+      color: #7BC8F6;
+      line-height: 0.95;
+      opacity: 0;
+      animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 1.2s forwards;
+    }
+    @keyframes spBounce {
+      0%   { opacity:0; transform:scale(0.3) translateY(30px) rotate(-4deg); }
+      55%  { opacity:1; transform:scale(1.18) translateY(-12px) rotate(3deg); }
+      75%  { transform:scale(0.94) translateY(5px) rotate(-1deg); }
+      100% { opacity:1; transform:scale(1) translateY(0) rotate(0); }
+    }
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+    /* Point d'interrogation pêche animé */
+    .sp-question {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 80px;
+      color: #FDAE54;
+      line-height: 1;
+      opacity: 0;
+      animation: spQPop 1.8s cubic-bezier(.36,.07,.19,.97) 2.0s forwards;
+    }
+    @keyframes spQPop {
+      0%   { opacity:0; transform:scale(0.1); }
+      30%  { opacity:1; transform:scale(1.0); }
+      60%  { opacity:1; transform:scale(1.0); }
+      100% { opacity:0; transform:scale(2.8); }
+    }
+    .sp-t3 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 26px;
+      color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
+      line-height:1.3; min-height:34px;
+    }
+    .sp-t4 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 26px;
+      color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
+      line-height:1.3; min-height:34px;
+    }
+    .sp-cursor {
+      display:inline-block; width:3px;
+      background:currentColor; margin-left:2px;
+      vertical-align:middle;
+      animation:spBlink 0.5s step-end infinite;
+    }
+    @keyframes spBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        .cta-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .cta-button:hover::before {
-            left: 100%;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-4px) scale(1.05);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            background: linear-gradient(45deg, #333, #666, #333);
-        }
-
-        .cta-button:active {
-            transform: translateY(-2px) scale(1.02);
-        }
-
-        @media (max-width: 768px) {
-            .cta-button {
-                padding: 16px 34px;
-                font-size: 1.15em;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            }
-            
-            .container {
-                padding: 30px 20px;
-                min-height: 100vh;
-                min-height: 100dvh; /* Support pour les nouveaux viewports dynamiques */
-            }
-
-            /* Overlay minimal sur mobile */
-            .overlay { 
-                background: linear-gradient(180deg, transparent 0%, transparent 75%, rgba(89, 113, 118, 0.15) 100%); 
-            }
-        }
-        
-        /* Optimisations pour les très petits écrans */
-        @media (max-width: 480px) {
-            .cta-button {
-                padding: 14px 28px;
-                font-size: 1em;
-                letter-spacing: 1px;
-            }
-            
-            .container {
-                padding: 20px 15px;
-            }
-        }
-        
-        /* Optimisations pour les écrans en mode paysage */
-        @media (max-height: 500px) and (orientation: landscape) {
-            .container {
-                padding: 20px;
-                justify-content: center;
-            }
-            
-            .cta-button {
-                padding: 12px 30px;
-                font-size: 1.1em;
-            }
-        }
-    </style>
+    /* Boutons */
+    .welcome-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      margin-top: 20px;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .welcome-btn-primary {
+      display: block;
+      text-align: center;
+      padding: 14px 24px;
+      border-radius: 50px;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: white;
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 18px;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+    .welcome-btn-primary:active {
+      background: rgba(255,255,255,0.4);
+      transform: scale(0.97);
+    }
+    .welcome-btn-secondary {
+      display: block;
+      text-align: center;
+      padding: 12px 24px;
+      border-radius: 50px;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.85);
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 16px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .welcome-btn-secondary:active {
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
 </head>
 <body>
-    <div class="background-image"></div>
-    <div class="overlay"></div>
-    
-    <div class="container">
-        <a href="/signup_email" class="cta-button">
-            Que le meilleur gagne !
-        </a>
+  <div class="sp-bubble sp-b1"></div>
+  <div class="sp-bubble sp-b2"></div>
+  <div class="sp-bubble sp-b3"></div>
+  <div class="sp-bubble sp-b4"></div>
+  <div class="sp-bubble sp-b5"></div>
+  <div class="sp-bubble sp-b6"></div>
+  <div class="sp-bubble sp-b7"></div>
+  <div class="sp-bubble sp-b8"></div>
+  <div class="sp-bubble sp-b9"></div>
+  <div class="sp-bubble sp-b10"></div>
+  <div class="sp-glass">
+    <div class="sp-t1">QUI FAIT QUOI</div>
+    <div class="sp-t2">DANS LA BARAQUE</div>
+    <div class="sp-question" id="spQ">?</div>
+    <div class="sp-t3">
+      <span id="spLine3"></span>
+      <span class="sp-cursor" id="spCur3" style="height:22px;display:none"></span>
     </div>
+    <div class="welcome-buttons" id="welcomeButtons">
+      <a href="{{ url_for('auth.signup_email') }}" class="welcome-btn-primary">Créer mon compte</a>
+      <a href="{{ url_for('auth.login') }}" class="welcome-btn-secondary">J'ai déjà un compte</a>
+    </div>
+  </div>
+
+  <script>
+    function spType(elId, curId, text, speed, cb) {
+      var el = document.getElementById(elId);
+      var cur = document.getElementById(curId);
+      el.textContent = '';
+      cur.style.display = 'inline-block';
+      var i = 0;
+      var t = setInterval(function() {
+        el.textContent += text[i]; i++;
+        if (i >= text.length) {
+          clearInterval(t);
+          setTimeout(function() {
+            cur.style.display = 'none';
+            if (cb) cb();
+          }, 300);
+        }
+      }, speed);
+    }
+
+    function startTypewriter() {
+      spType('spLine3', 'spCur3', "Enfin la vérité !", 65, function() {
+        document.getElementById('welcomeButtons').style.opacity = '1';
+      });
+    }
+
+    // Le ? apparaît à 2s et dure 1.8s → typewriter démarre à 3.9s
+    setTimeout(startTypewriter, 3900);
+  </script>
 </body>
 </html>

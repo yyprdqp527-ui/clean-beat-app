@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180">
+  <defs>
+    <linearGradient id="floorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F8BBD0;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#E91E63;stop-opacity:0.2" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Sol isométrique -->
+  <path d="M 100 40 L 180 80 L 100 120 L 20 80 Z" 
+        fill="url(#floorGrad)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="2"/>
+  
+  <!-- Mur gauche -->
+  <path d="M 20 80 L 100 120 L 100 160 L 20 120 Z" 
+        fill="rgba(248, 187, 208, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mur droit -->
+  <path d="M 180 80 L 100 120 L 100 160 L 180 120 Z" 
+        fill="rgba(248, 187, 208, 0.2)" 
+        stroke="rgba(255, 255, 255, 0.3)" 
+        stroke-width="1.5"/>
+  
+  <!-- Grand lit double -->
+  <path d="M 50 90 L 120 125 L 120 135 L 50 100 Z" 
+        fill="rgba(233, 30, 99, 0.4)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <!-- Matelas texturé -->
+  <path d="M 50 90 L 120 125 L 120 130 L 50 95 Z" 
+        fill="rgba(248, 187, 208, 0.6)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1"/>
+  
+  <!-- Oreillers -->
+  <ellipse cx="70" cy="100" rx="10" ry="5" 
+           fill="rgba(255, 255, 255, 0.7)" 
+           stroke="rgba(248, 187, 208, 0.6)" 
+           stroke-width="1"/>
+  <ellipse cx="90" cy="112" rx="10" ry="5" 
+           fill="rgba(255, 255, 255, 0.7)" 
+           stroke="rgba(248, 187, 208, 0.6)" 
+           stroke-width="1"/>
+  
+  <!-- Tête de lit capitonnée -->
+  <path d="M 50 90 L 120 125 L 120 115 L 50 80 Z" 
+        fill="rgba(233, 30, 99, 0.6)" 
+        stroke="rgba(255, 255, 255, 0.6)" 
+        stroke-width="1.5"/>
+  <circle cx="70" cy="94" r="3" 
+          fill="rgba(255, 255, 255, 0.3)" 
+          stroke="rgba(255, 255, 255, 0.5)" 
+          stroke-width="0.5"/>
+  <circle cx="90" cy="106" r="3" 
+          fill="rgba(255, 255, 255, 0.3)" 
+          stroke="rgba(255, 255, 255, 0.5)" 
+          stroke-width="0.5"/>
+  
+  <!-- Table de chevet gauche -->
+  <path d="M 35 98 L 50 106 L 50 116 L 35 108 Z" 
+        fill="rgba(166, 211, 220, 0.5)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1"/>
+  <path d="M 35 98 L 50 106 L 50 102 L 35 94 Z" 
+        fill="rgba(166, 211, 220, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1"/>
+  
+  <!-- Lampe de chevet -->
+  <circle cx="42" cy="99" r="4" 
+          fill="rgba(253, 174, 84, 0.8)" 
+          stroke="rgba(255, 255, 255, 0.6)" 
+          stroke-width="1"
+          filter="url(#glow)"/>
+  <line x1="42" y1="99" x2="42" y2="106" 
+        stroke="rgba(89, 113, 118, 0.6)" 
+        stroke-width="1.5"/>
+  
+  <!-- Commode/armoire droite -->
+  <path d="M 135 105 L 165 120 L 165 140 L 135 125 Z" 
+        fill="rgba(89, 113, 118, 0.5)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <path d="M 135 105 L 165 120 L 165 115 L 135 100 Z" 
+        fill="rgba(89, 113, 118, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <!-- Poignées -->
+  <line x1="145" y1="115" x2="155" y2="121" 
+        stroke="rgba(200, 200, 200, 0.8)" 
+        stroke-width="2"/>
+  
+  <!-- Plante décorative -->
+  <ellipse cx="155" cy="115" rx="5" ry="2" 
+           fill="rgba(89, 113, 118, 0.4)" 
+           stroke="rgba(255, 255, 255, 0.3)" 
+           stroke-width="0.5"/>
+  <circle cx="155" cy="110" r="6" 
+          fill="rgba(76, 175, 80, 0.5)" 
+          stroke="rgba(76, 175, 80, 0.7)" 
+          stroke-width="1"/>
+  
+  <!-- Tapis moelleux -->
+  <ellipse cx="85" cy="120" rx="40" ry="18" 
+           fill="rgba(248, 187, 208, 0.3)" 
+           stroke="rgba(248, 187, 208, 0.5)" 
+           stroke-width="1.5"/>
+  
+  <!-- Icône -->
+  <text x="100" y="35" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="24" 
+        filter="url(#glow)">🛏️</text>
+  
+  <!-- Label glassmorphism -->
+  <rect x="35" y="5" width="130" height="22" 
+        fill="rgba(255, 255, 255, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5" 
+        rx="11"/>
+  <text x="100" y="20" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="14" 
+        font-weight="600" 
+        fill="#FFFFFF">Chambre Parentale</text>
+</svg>

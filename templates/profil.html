@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
+{% set hide_header = true %}
+
+{% block title %}Mon Profil — QuiFaitQuoi{% endblock %}
+
+{% block page_styles %}
+<style>
+/* ══ Page Profil ══ */
+/* Hérite de la règle globale d'adaptation background/color */
+body { min-height: 100vh; }
+
+.profil-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    color: white;
+    padding-bottom: 40px;
+}
+
+/* Zone hero */
+.profil-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 100px 20px 20px;
+    gap: 10px;
+    position: relative;
+}
+.profil-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -20px; right: -20px; height: 200px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(166,211,220,0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+.profil-avatar-ring {
+    width: 96px; height: 96px;
+    border-radius: 50%; padding: 3px;
+    background: conic-gradient(from 0deg, #A6D3DC, #FDAE54, #f4c68d, #A6D3DC);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 4px rgba(166,211,220,0.15);
+    flex-shrink: 0;
+}
+.profil-avatar-inner {
+    width: 100%; height: 100%;
+    border-radius: 50%; overflow: hidden;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(166,211,220,0.1));
+    display: flex; align-items: center; justify-content: center;
+}
+.profil-avatar-inner img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.profil-avatar-emoji { font-size: 42px; }
+.profil-name {
+    font-size: 24px; font-weight: 900; color: white;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    letter-spacing: 0.3px; text-align: center; line-height: 1.2;
+}
+.profil-email { font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 600; }
+
+
+/* Section titre */
+.profil-section-title {
+    font-size: 11px; font-weight: 800; color: #597176;
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 16px 20px 8px;
+}
+
+/* Rappels */
+.profil-reminders { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+.profil-reminder-item {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 20px; padding: 12px 16px;
+    text-decoration: none; color: #153036;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.2s;
+}
+.profil-reminder-item:active { transform: scale(0.98); }
+.profil-reminder-icon { font-size: 20px; width: 28px; text-align: center; }
+.profil-reminder-text { flex: 1; }
+.profil-reminder-badge {
+    background: #e74c3c; color: white;
+    font-size: 10px; font-weight: 800;
+    min-width: 18px; height: 18px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 8px rgba(231,76,60,0.3);
+}
+
+/* Cartes récompenses */
+.profil-reward-card {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.12) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(253,174,84,0.4);
+    border-radius: 20px; padding: 12px 16px;
+    margin-bottom: 0;
+    box-shadow: 0 8px 28px rgba(253,174,84,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.profil-reward-info { flex: 1; }
+.profil-reward-text { font-size: 14px; font-weight: 700; color: #153036; }
+.profil-reward-date { font-size: 10px; font-weight: 600; color: #597176; margin-top: 2px; }
+.profil-reward-use-btn {
+    background: linear-gradient(135deg, #FDAE54, #f4c68d);
+    color: white; border: none;
+    padding: 8px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+}
+.profil-reward-use-btn:active { transform: scale(0.95); }
+.profil-reward-used { opacity: 0.6; }
+.profil-reward-used-badge {
+    font-size: 10px; font-weight: 800;
+    background: rgba(46,204,113,0.2); color: #2ecc71;
+    border: 1px solid rgba(46,204,113,0.4);
+    padding: 4px 10px; border-radius: 12px;
+    white-space: nowrap;
+}
+.profil-used-rewards-toggle {
+    background: none; border: none;
+    color: #597176; font-size: 12px; font-weight: 700;
+    cursor: pointer; padding: 8px 0;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Montserrat', sans-serif;
+}
+.profil-used-rewards-content { display: none; }
+
+/* Modal récompenses */
+.profil-reward-modal {
+    display: none; position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(21,48,54,0.8); backdrop-filter: blur(10px);
+    z-index: 3000; align-items: center; justify-content: center;
+}
+.profil-reward-modal.show { display: flex; }
+.profil-reward-modal-content {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+    border-radius: 24px; padding: 30px;
+    max-width: 90%; width: 320px; text-align: center;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 25px 80px rgba(89,113,118,0.4);
+}
+.profil-reward-modal-title { color: #153036; font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+.profil-reward-modal-text {
+    background: linear-gradient(135deg, rgba(253,174,84,0.3), rgba(244,198,141,0.2));
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 14px; padding: 14px;
+    color: #153036; font-size: 15px; font-weight: 700;
+    margin-bottom: 14px;
+}
+.profil-modal-btn {
+    padding: 11px 22px; border-radius: 20px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    border: none; transition: all 0.2s;
+    font-family: 'Montserrat', sans-serif;
+}
+.profil-modal-confirm {
+    background: linear-gradient(135deg, #FDAE54, #f4c68d);
+    color: white; box-shadow: 0 4px 15px rgba(253,174,84,0.4);
+}
+.profil-modal-cancel {
+    background: rgba(166,211,220,0.3); color: #153036;
+    border: 2px solid rgba(166,211,220,0.3) !important;
+}
+.profil-modal-btn:active { transform: scale(0.97); }
+
+/* Boutons d'action */
+.profil-actions { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+
+/* ══ Notifications Gameplay ══ */
+.gp-notif-section { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+.gp-notif-card {
+    display: flex; align-items: center; gap: 14px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 20px; padding: 14px 16px;
+    position: relative; overflow: hidden;
+    animation: gpNotifSlideIn 0.5s ease-out both;
+    cursor: pointer;
+    text-decoration: none;
+    color: #153036;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.gp-notif-card:active { transform: scale(0.97); }
+.gp-notif-card:nth-child(1) { animation-delay: 0.05s; }
+.gp-notif-card:nth-child(2) { animation-delay: 0.12s; }
+.gp-notif-card:nth-child(3) { animation-delay: 0.19s; }
+.gp-notif-card:nth-child(4) { animation-delay: 0.26s; }
+@keyframes gpNotifSlideIn {
+    from { opacity: 0; transform: translateX(-20px) scale(0.95); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+/* Bordure accent par type */
+.gp-notif-card.gp-bonus  { border-color: rgba(231,76,60,0.4); background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(231,76,60,0.12) 100%); }
+.gp-notif-card.gp-malus  { border-color: rgba(46,204,113,0.4); background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(46,204,113,0.12) 100%); }
+.gp-notif-card.gp-suspicion { border-color: rgba(253,174,84,0.4); background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.12) 100%); }
+
+.gp-notif-emoji {
+    font-size: 36px; flex-shrink: 0;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    line-height: 1;
+}
+/* Pulse par type */
+.gp-bonus .gp-notif-emoji  { animation: gpPulseRed 1.8s ease-in-out infinite; }
+.gp-malus .gp-notif-emoji  { animation: gpPulseGreen 1.8s ease-in-out infinite; }
+.gp-suspicion .gp-notif-emoji { animation: gpPulseOrange 1.8s ease-in-out infinite; }
+
+@keyframes gpPulseRed {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(231,76,60,0)); }
+    50%      { transform: scale(1.25); filter: drop-shadow(0 0 16px rgba(231,76,60,0.7)); }
+}
+@keyframes gpPulseGreen {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(46,204,113,0)); }
+    50%      { transform: scale(1.25); filter: drop-shadow(0 0 16px rgba(46,204,113,0.7)); }
+}
+@keyframes gpPulseOrange {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(253,174,84,0)); }
+    50%      { transform: scale(1.25); filter: drop-shadow(0 0 16px rgba(253,174,84,0.7)); }
+}
+
+.gp-notif-body { flex: 1; min-width: 0; }
+.gp-notif-title { font-size: 13px; font-weight: 800; color: #153036; line-height: 1.3; }
+.gp-notif-detail { font-size: 11px; font-weight: 600; color: #597176; margin-top: 3px; line-height: 1.3; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.gp-notif-task { font-size: 11px; font-weight: 700; color: #2c3e50; margin-top: 2px; line-height: 1.3; }
+.gp-giver-avatar { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; flex-shrink: 0; }
+.gp-giver-emoji-av { width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.gp-notif-pts {
+    font-size: 14px; font-weight: 900; white-space: nowrap; flex-shrink: 0;
+    padding: 4px 10px; border-radius: 10px;
+}
+.gp-bonus .gp-notif-pts  { color: #e74c3c; background: rgba(231,76,60,0.12); }
+.gp-malus .gp-notif-pts  { color: #27ae60; background: rgba(46,204,113,0.12); }
+.gp-notif-empty {
+    text-align: center; padding: 20px;
+    color: #597176; font-size: 13px; font-weight: 600;
+}
+.profil-action-btn {
+    display: flex; align-items: center; justify-content: center;
+    padding: 15px 20px; border-radius: 16px;
+    font-size: 15px; font-weight: 800; text-decoration: none;
+    letter-spacing: 0.3px; transition: all 0.2s;
+}
+.profil-action-btn:active { transform: scale(0.98); }
+.profil-action-edit {
+    background: linear-gradient(135deg, rgba(166,211,220,0.95) 0%, rgba(166,211,220,0.7) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(166,211,220,0.5);
+    color: #153036;
+    box-shadow: 0 8px 24px rgba(166,211,220,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.profil-action-logout {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
+    color: #597176;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set cp = cp or (players|selectattr('email', 'equalto', current_user_name)|first if players else none) %}
+<a href="{{ url_for('menu') }}" class="back-btn-glass">←</a>
+
+<div class="profil-page">
+
+    <!-- Zone héro : avatar + nom + maison -->
+    <div class="profil-hero">
+        <div class="profil-avatar-ring">
+            <div class="profil-avatar-inner">
+                {% if player1_avatar_file %}
+                    <img src="{{ url_for('static', filename='avatars/' + player1_avatar_file) }}" alt="{{ player1_name or 'Avatar' }}" onerror="this.onerror=null;this.style.display='none';">
+                {% elif player1_avatar_url %}
+                    <img src="{{ player1_avatar_url }}" alt="{{ player1_name or 'Avatar' }}" onerror="this.onerror=null;this.style.display='none';">
+                {% elif player1_avatar and player1_avatar|length <= 4 %}
+                    <span class="profil-avatar-emoji">{{ player1_avatar }}</span>
+                {% else %}
+                    <img src="https://api.dicebear.com/7.x/adventurer/svg?seed={{ current_user_name.split('@')[0] if current_user_name else 'default' }}" alt="{{ player1_name or 'Avatar' }}">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profil-name">{{ player1_name or 'Joueur' }}</div>
+        {% if current_user_name %}
+        <div class="profil-email">{{ current_user_name }}</div>
+        {% endif %}
+
+    </div>
+
+    <!-- ══ Notifications Gameplay (bonus/malus/suspicions reçus) ══ -->
+    {% if gameplay_notifs|default([])|length > 0 %}
+    <div class="profil-section-title">🔔 Dernières notifs reçues</div>
+    <div class="gp-notif-section">
+        {% for n in gameplay_notifs[:8] %}
+        {% if n.type == 'bonus' %}
+        <a class="gp-notif-card gp-bonus" href="{{ url_for('gameplay_bp.gameplay') }}?section=malus">
+            <div class="gp-notif-emoji">❤️</div>
+            <div class="gp-notif-body">
+                <div class="gp-notif-title">Bonus{% if n.reason %} · {{ n.reason }}{% endif %}</div>
+                {% if n.task_context %}<div class="gp-notif-task">📋 {{ n.task_context }}</div>{% endif %}
+                <div class="gp-notif-detail">
+                    {% if n.giver %}
+                    {% if n.giver_avatar_url %}<img class="gp-giver-avatar" src="{{ n.giver_avatar_url }}" alt="">
+                    {% elif n.giver_avatar_file and n.giver_avatar_file != 'default.png' and n.giver_avatar_file != 'homme.png' %}<img class="gp-giver-avatar" src="/static/avatars/{{ n.giver_avatar_file }}" alt="">
+                    {% elif n.giver_avatar and n.giver_avatar|length <= 4 %}<span class="gp-giver-emoji-av">{{ n.giver_avatar }}</span>
+                    {% else %}<span class="gp-giver-emoji-av">👤</span>
+                    {% endif %}
+                    De <strong>{{ n.giver }}</strong>
+                    {% endif %}
+                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date | date_fr }}{% endif %}
+                </div>
+            </div>
+            <div class="gp-notif-pts">+{{ n.points|abs }} pts</div>
+        </a>
+        {% elif n.type == 'malus' %}
+        <a class="gp-notif-card gp-malus" href="{{ url_for('gameplay_bp.gameplay') }}?section=malus">
+            <div class="gp-notif-emoji">💀</div>
+            <div class="gp-notif-body">
+                <div class="gp-notif-title">Malus{% if n.reason %} · {{ n.reason }}{% endif %}</div>
+                {% if n.task_context %}<div class="gp-notif-task">📋 {{ n.task_context }}</div>{% endif %}
+                <div class="gp-notif-detail">
+                    {% if n.giver %}
+                    {% if n.giver_avatar_url %}<img class="gp-giver-avatar" src="{{ n.giver_avatar_url }}" alt="">
+                    {% elif n.giver_avatar_file and n.giver_avatar_file != 'default.png' and n.giver_avatar_file != 'homme.png' %}<img class="gp-giver-avatar" src="/static/avatars/{{ n.giver_avatar_file }}" alt="">
+                    {% elif n.giver_avatar and n.giver_avatar|length <= 4 %}<span class="gp-giver-emoji-av">{{ n.giver_avatar }}</span>
+                    {% else %}<span class="gp-giver-emoji-av">👤</span>
+                    {% endif %}
+                    De <strong>{{ n.giver }}</strong>
+                    {% endif %}
+                    {% if n.date %}{% if n.giver %} · {% endif %}🕐 {{ n.date | date_fr }}{% endif %}
+                </div>
+            </div>
+            <div class="gp-notif-pts">{{ n.points }} pts</div>
+        </a>
+        {% elif n.type == 'suspicion' %}
+        <a class="gp-notif-card gp-suspicion" href="{{ url_for('gameplay_bp.gameplay') }}?section=suspicion">
+            <div class="gp-notif-emoji">🔍</div>
+            <div class="gp-notif-body">
+                <div class="gp-notif-title">🕵️ {{ n.from|default('Quelqu\'un') }} te soupçonne !</div>
+                <div class="gp-notif-detail">📋 {{ n.text|default('Tâche inconnue') }} — {{ n.status|default('en cours') }}</div>
+            </div>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+
+
+
+    <!-- Récompenses -->
+    <div class="profil-section-title">{% if is_own_profile %}Mes récompenses{% else %}Récompenses{% endif %}</div>
+    {% if my_rewards_available or my_rewards_used %}
+    <div class="profil-reminders">
+        {% if my_rewards_available %}
+            {% for reward in my_rewards_available %}
+            <div class="profil-reward-card">
+                <div class="profil-reward-info">
+                    <div class="profil-reward-text">🎁 {{ reward.text }}</div>
+                    <div class="profil-reward-date">Gagnée le {{ reward.date | date_fr("day") }}</div>
+                </div>
+                {% if is_own_profile %}
+                <button class="profil-reward-use-btn"
+                        data-reward-id="{{ reward.id }}"
+                        data-reward-text="{{ reward.text }}"
+                        onclick="profilConfirmUse(this.dataset.rewardId, this.dataset.rewardText)">
+                    Utiliser
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="profil-reminder-item" style="opacity:0.6;pointer-events:none;">
+            <span class="profil-reminder-icon">🎁</span>
+            <span class="profil-reminder-text">Pas encore de récompense disponible</span>
+        </div>
+        {% endif %}
+        {% if my_rewards_used %}
+        <button class="profil-used-rewards-toggle" onclick="profilToggleUsed(this)">
+            <span>▶</span> Voir les {{ my_rewards_used|length }} récompense(s) utilisée(s)
+        </button>
+        <div class="profil-used-rewards-content">
+            {% for reward in my_rewards_used %}
+            <div class="profil-reward-card profil-reward-used">
+                <div class="profil-reward-info">
+                    <div class="profil-reward-text">{{ reward.text }}</div>
+                    <div class="profil-reward-date">Utilisée le {{ reward.used_date | date_fr("day") }}</div>
+                </div>
+                <span class="profil-reward-used-badge">Utilisée</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="profil-reminders">
+        <div class="profil-reminder-item" style="opacity:0.6;pointer-events:none;">
+            <span class="profil-reminder-icon">🎁</span>
+            <span class="profil-reminder-text">Pas encore de récompense</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if is_own_profile %}
+    <!-- Modal confirmation utilisation récompense -->
+    <div id="profilRewardModal" class="profil-reward-modal" onclick="profilCloseModal()">
+        <div class="profil-reward-modal-content" onclick="event.stopPropagation()">
+            <h2 class="profil-reward-modal-title">Utiliser cette récompense ?</h2>
+            <div class="profil-reward-modal-text" id="profilModalRewardText"></div>
+            <p style="color:#597176;font-size:13px;font-weight:600;margin-bottom:20px;line-height:1.5;">
+                Une fois utilisée, elle sera retirée de ta liste.
+            </p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button class="profil-modal-btn profil-modal-cancel" onclick="profilCloseModal()">Annuler</button>
+                <button class="profil-modal-btn profil-modal-confirm" id="profilConfirmBtn">Oui, utiliser</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}{# is_own_profile #}
+
+    {% if is_own_profile %}
+    <!-- Section bêta testeur -->
+    <div class="profil-section-title">Version bêta</div>
+    <div class="profil-reminders">
+        <div class="profil-reminder-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="font-size:13px;font-weight:800;color:#153036;">🧡 Merci d'être bêta testeur !</div>
+            <div style="font-size:12px;color:rgba(21,48,54,0.7);line-height:1.5;">Tu fais partie des premiers à tester QuiFaitQuoi. Les images utilisées sont temporaires — nous cherchons d'ailleurs un illustrateur (si tu en connais un, fais-le nous savoir !). Certaines fonctionnalités sont encore en cours de polissage et il peut y avoir des bugs — c'est normal pour une version bêta ! Ton avis compte énormément. 💙</div>
+        </div>
+        <span class="profil-reminder-item" onclick="document.getElementById('install-guide-modal').style.display='flex'" style="cursor:pointer;">
+            <span style="font-size:22px;">📱</span>
+            <span style="font-size:14px;font-weight:700;color:#153036;">Installer l'appli</span>
+        </span>
+        <a href="{{ url_for('admin.feedback') }}" class="profil-reminder-item">
+            <span style="font-size:22px;">✉️</span>
+            <span style="font-size:14px;font-weight:700;color:#153036;">Donner mon avis</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Boutons d'action -->
+    <div class="profil-actions">
+        {% if is_own_profile %}
+        <a href="{{ url_for('auth.logout') }}" class="profil-action-btn profil-action-logout">
+            👋&nbsp; Se déconnecter
+        </a>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+let profilCurrentRewardId = null;
+function profilConfirmUse(id, text) {
+    profilCurrentRewardId = id;
+    document.getElementById('profilModalRewardText').textContent = text;
+    document.getElementById('profilRewardModal').classList.add('show');
+}
+function profilCloseModal() {
+    document.getElementById('profilRewardModal').classList.remove('show');
+    profilCurrentRewardId = null;
+}
+document.getElementById('profilConfirmBtn').addEventListener('click', function() {
+    if (!profilCurrentRewardId) return;
+    this.disabled = true;
+    fetch('/use_reward/' + profilCurrentRewardId, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            profilCloseModal();
+            if (window.cbToast) window.cbToast('Récompense utilisée !', 'success', 3000);
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            document.getElementById('profilConfirmBtn').disabled = false;
+            alert(data.message || 'Erreur');
+        }
+    })
+    .catch(() => { document.getElementById('profilConfirmBtn').disabled = false; alert('Une erreur est survenue'); });
+});
+function profilToggleUsed(btn) {
+    const content = btn.nextElementSibling;
+    const arrow = btn.querySelector('span');
+    const isOpen = content.style.display === 'block';
+    content.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Avatar Display - Dust</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .info-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        
+        .info-section h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        .avatar-test {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+        
+        .avatar-display {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #667eea;
+            background: white;
+        }
+        
+        .avatar-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-info {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .test-url {
+            word-break: break-all;
+            font-size: 12px;
+            color: #495057;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test d'affichage d'avatar - Marie-ange</h1>
+    
+    <div class="card">
+        <div class="info-section">
+            <h3>📋 Données de la base de données</h3>
+            <p><strong>Nom:</strong> Berthe (Marie-ange)</p>
+            <p><strong>Email:</strong> agdaval@yahoo.fr</p>
+            <p>
+                <strong>avatar:</strong> 
+                <span class="status {{ 'success' if avatar else 'warning' }}">
+                    {{ avatar if avatar else 'Vide' }}
+                </span>
+            </p>
+            <p>
+                <strong>avatar_file:</strong> 
+                <span class="status {{ 'success' if avatar_file else 'warning' }}">
+                    {{ avatar_file if avatar_file else 'Vide (chaîne vide)' }}
+                </span>
+            </p>
+            <p>
+                <strong>avatar_url:</strong> 
+                <span class="status {{ 'success' if avatar_url else 'error' }}">
+                    {{ 'Présent' if avatar_url else 'Absent' }}
+                </span>
+            </p>
+        </div>
+        
+        {% if avatar_url %}
+        <div class="avatar-test">
+            <h4 style="margin: 0; color: #667eea;">✅ Avatar DiceBear (avatar_url)</h4>
+            <div class="avatar-display">
+                <img src="{{ avatar_url }}" alt="Avatar DiceBear" id="dicebear-avatar">
+            </div>
+            <div class="avatar-info">
+                <strong>URL DiceBear:</strong><br>
+                <div class="test-url">{{ avatar_url }}</div>
+            </div>
+            <div id="load-status"></div>
+        </div>
+        {% endif %}
+        
+        {% if avatar_file %}
+        <div class="avatar-test">
+            <h4 style="margin: 0; color: #667eea;">📁 Avatar fichier SVG (avatar_file)</h4>
+            <div class="avatar-display">
+                <img src="{{ url_for('static', filename='avatars/' ~ avatar_file) }}" alt="Avatar fichier">
+            </div>
+            <div class="avatar-info">
+                <strong>Fichier:</strong> <code>{{ avatar_file }}</code>
+            </div>
+        </div>
+        {% elif not avatar_file %}
+        <div class="info-section" style="background: #fff3cd;">
+            <h4 style="margin: 0; color: #856404;">⚠️ avatar_file est vide</h4>
+            <p style="margin: 10px 0 0 0; font-size: 14px;">
+                C'est normal si vous utilisez DiceBear au lieu d'un fichier SVG local.
+            </p>
+        </div>
+        {% endif %}
+        
+        {% if avatar and avatar|length <= 4 %}
+        <div class="avatar-test">
+            <h4 style="margin: 0; color: #667eea;">😊 Avatar emoji</h4>
+            <div class="avatar-display" style="display: flex; align-items: center; justify-content: center; font-size: 60px;">
+                {{ avatar }}
+            </div>
+            <div class="avatar-info">
+                <strong>Emoji:</strong> <code>{{ avatar }}</code>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="card">
+        <h3>🔍 Logique d'affichage du template menu.html</h3>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px;">
+            <div>1️⃣ Si <code>player1_avatar_file</code> existe et n'est pas vide</div>
+            <div style="margin-left: 20px; color: #666;">→ Afficher l'image SVG locale</div>
+            <br>
+            <div>2️⃣ Sinon, si <code>player1_avatar_url</code> existe</div>
+            <div style="margin-left: 20px; color: {{ '#28a745' if avatar_url and not avatar_file else '#666' }}; font-weight: {{ 'bold' if avatar_url and not avatar_file else 'normal' }};">
+                → Afficher l'image DiceBear {{ '✅ (VOTRE CAS)' if avatar_url and not avatar_file else '' }}
+            </div>
+            <br>
+            <div>3️⃣ Sinon, si <code>player1_avatar</code> existe (≤ 4 caractères)</div>
+            <div style="margin-left: 20px; color: #666;">→ Afficher l'emoji</div>
+            <br>
+            <div>4️⃣ Sinon</div>
+            <div style="margin-left: 20px; color: #666;">→ Afficher l'image par défaut (homme.png)</div>
+        </div>
+        
+        {% if avatar_url and not avatar_file %}
+        <div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+            <strong style="color: #155724;">✅ Conclusion:</strong><br>
+            <span style="color: #155724;">
+                Votre avatar DiceBear devrait s'afficher sur la page menu !<br>
+                Si ce n'est pas le cas, c'est un <strong>problème de cache navigateur</strong>.
+            </span>
+        </div>
+        
+        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+            <strong style="color: #856404;">💡 Solution:</strong><br>
+            <ul style="margin: 10px 0; color: #856404;">
+                <li><strong>Safari:</strong> Cmd + Option + E, puis Cmd + R</li>
+                <li><strong>Chrome:</strong> Cmd + Shift + Delete → "Images et fichiers en cache"</li>
+                <li><strong>Ou:</strong> Ouvrir en mode navigation privée</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Tester si l'image DiceBear se charge
+        const dicebearImg = document.getElementById('dicebear-avatar');
+        const statusDiv = document.getElementById('load-status');
+        
+        if (dicebearImg) {
+            dicebearImg.onload = function() {
+                statusDiv.innerHTML = '<span class="status success">✅ Image chargée avec succès</span>';
+                console.log('✅ Avatar DiceBear chargé:', dicebearImg.src);
+            };
+            
+            dicebearImg.onerror = function() {
+                statusDiv.innerHTML = '<span class="status error">❌ Erreur de chargement de l\'image</span>';
+                console.error('❌ Erreur de chargement:', dicebearImg.src);
+            };
+            
+            // Log immédiat
+            console.log('🔗 URL DiceBear:', dicebearImg.src);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>QUI FAIT QUOI</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; }
+    html { overflow:hidden; }
+
+    @font-face {
+      font-family: 'Bubblegum Sans';
+      src: url('/static/fonts/BubblegumSans.woff2') format('woff2');
+      font-display: block;
+    }
+
+    body {
+      background: {{ bg_gradient }};
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      padding-top: max(40px, env(safe-area-inset-top));
+      padding-bottom: max(40px, env(safe-area-inset-bottom));
+      cursor: pointer;
+      font-family: 'Bubblegum Sans', cursive;
+      position: relative;
+    }
+
+    .sp-bubble {
+      position: fixed;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.40);
+      pointer-events: none;
+      opacity: 0;
+    }
+    /* Bulles qui montent */
+    .sp-b1  { width:90px;  height:90px;  left:8%;   bottom:-100px; animation:spRise 5.5s ease-in 0.2s infinite; }
+    .sp-b2  { width:50px;  height:50px;  left:20%;  bottom:-60px;  animation:spRise 4.2s ease-in 0.8s infinite; }
+    .sp-b3  { width:130px; height:130px; left:35%;  bottom:-150px; animation:spRise 6.5s ease-in 0.0s infinite; }
+    .sp-b4  { width:40px;  height:40px;  left:50%;  bottom:-50px;  animation:spRise 3.8s ease-in 1.2s infinite; }
+    .sp-b5  { width:70px;  height:70px;  left:62%;  bottom:-80px;  animation:spRise 5.0s ease-in 0.5s infinite; }
+    .sp-b6  { width:100px; height:100px; left:75%;  bottom:-110px; animation:spRise 6.0s ease-in 0.3s infinite; }
+    .sp-b7  { width:30px;  height:30px;  left:85%;  bottom:-40px;  animation:spRise 3.5s ease-in 1.8s infinite; }
+    .sp-b8  { width:60px;  height:60px;  left:5%;   bottom:-70px;  animation:spRise 4.8s ease-in 2.5s infinite; }
+    .sp-b9  { width:45px;  height:45px;  left:90%;  bottom:-55px;  animation:spRise 4.0s ease-in 0.9s infinite; }
+    .sp-b10 { width:80px;  height:80px;  left:45%;  bottom:-90px;  animation:spRise 5.8s ease-in 3.0s infinite; }
+
+    @keyframes spRise {
+      0%   { opacity:0;    transform:translateY(0)    scale(1); }
+      10%  { opacity:0.50; }
+      80%  { opacity:0.35; }
+      100% { opacity:0;    transform:translateY(-110vh) scale(1.2); }
+    }
+
+    .sp-glass {
+      {% if bg_theme_light %}
+      background: rgba(0,0,0,0.07);
+      border: 2px solid rgba(0,0,0,0.12);
+      {% else %}
+      background: rgba(255,255,255,0.22);
+      border: 2px solid rgba(255,255,255,0.5);
+      {% endif %}
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 36px 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      text-align: center;
+      width: 100%;
+      max-width: 360px;
+      opacity: 0;
+      animation: spCardPop 0.5s cubic-bezier(.36,.07,.19,.97) 0.2s forwards;
+      position: relative;
+      z-index: 1;
+    }
+    @keyframes spCardPop {
+      0%   { opacity:0; transform:scale(0.8); }
+      70%  { opacity:1; transform:scale(1.03); }
+      100% { opacity:1; transform:scale(1); }
+    }
+
+    .sp-t1 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 72px;
+      color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
+      line-height: 0.9;
+      opacity: 0;
+      animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 0.6s forwards;
+    }
+    .sp-t2 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 52px;
+      color: #7BC8F6;
+      line-height: 0.95;
+      opacity: 0;
+      animation: spBounce 0.7s cubic-bezier(.36,.07,.19,.97) 1.2s forwards;
+    }
+    @keyframes spBounce {
+      0%   { opacity:0; transform:scale(0.3) translateY(30px) rotate(-4deg); }
+      55%  { opacity:1; transform:scale(1.18) translateY(-12px) rotate(3deg); }
+      75%  { transform:scale(0.94) translateY(5px) rotate(-1deg); }
+      100% { opacity:1; transform:scale(1) translateY(0) rotate(0); }
+    }
+
+    .sp-divider {
+      width:50px; height:4px; border-radius:2px;
+      background: {% if bg_theme_light %}rgba(0,0,0,0.15){% else %}rgba(255,255,255,0.3){% endif %};
+      margin:12px 0 8px;
+      opacity:0; transition:opacity 0.4s;
+    }
+    .sp-t3 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 26px;
+      color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
+      line-height:1.3; min-height:34px;
+    }
+    .sp-t4 {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 26px;
+      color: {% if bg_theme_light %}#1a1008{% else %}white{% endif %};
+      line-height:1.3; min-height:34px;
+    }
+    .sp-cursor {
+      display:inline-block; width:3px;
+      background:currentColor; margin-left:2px;
+      vertical-align:middle;
+      animation:spBlink 0.5s step-end infinite;
+    }
+    @keyframes spBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .sp-skip {
+      position:fixed;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      left:50%; transform:translateX(-50%);
+      font-family: 'Bubblegum Sans', cursive;
+      font-size:14px;
+      color: {% if bg_theme_light %}rgba(0,0,0,0.3){% else %}rgba(255,255,255,0.4){% endif %};
+      opacity:0; transition:opacity 0.5s;
+      white-space:nowrap;
+    }
+  </style>
+</head>
+<body onclick="goToMenu()">
+  <div class="sp-bubble sp-b1"></div>
+  <div class="sp-bubble sp-b2"></div>
+  <div class="sp-bubble sp-b3"></div>
+  <div class="sp-bubble sp-b4"></div>
+  <div class="sp-bubble sp-b5"></div>
+  <div class="sp-bubble sp-b6"></div>
+  <div class="sp-bubble sp-b7"></div>
+  <div class="sp-bubble sp-b8"></div>
+  <div class="sp-bubble sp-b9"></div>
+  <div class="sp-bubble sp-b10"></div>
+  <div class="sp-glass">
+    <div class="sp-t1">QUI FAIT QUOI</div>
+    <div class="sp-t2">DANS LA BARAQUE</div>
+    <div class="sp-divider" id="spDiv"></div>
+    <div class="sp-t3">
+      <span id="spLine3"></span>
+      <span class="sp-cursor" id="spCur3" style="height:22px;display:none"></span>
+    </div>
+    <div class="sp-t4">
+      <span id="spLine4"></span>
+      <span class="sp-cursor" id="spCur4" style="height:22px;display:none"></span>
+    </div>
+  </div>
+  <div class="sp-skip" id="spSkip" style="display:none"></div>
+
+  <script>
+    function goToMenu() {
+      localStorage.setItem('lastSplash', Date.now());
+      sessionStorage.setItem('splashDone', '1');
+      window.location.href = '/menu?nav=1';
+    }
+
+    function spType(elId, curId, text, speed, cb) {
+      var el = document.getElementById(elId);
+      var cur = document.getElementById(curId);
+      el.textContent = '';
+      cur.style.display = 'inline-block';
+      var i = 0;
+      var t = setInterval(function() {
+        el.textContent += text[i]; i++;
+        if (i >= text.length) {
+          clearInterval(t);
+          setTimeout(function() {
+            cur.style.display = 'none';
+            if (cb) cb();
+          }, 300);
+        }
+      }, speed);
+    }
+
+    function startTypewriter() {
+      document.getElementById('spDiv').style.opacity = '1';
+      spType('spLine3', 'spCur3', "Que le meilleur", 65, function() {
+        setTimeout(function() {
+          spType('spLine4', 'spCur4', "gagne !", 65, null);
+        }, 150);
+      });
+    }
+
+    // t1 bounce finit à 1.3s, t2 bounce finit à 1.9s
+    // Typewriter démarre à 2.1s
+    setTimeout(startTypewriter, 2100);
+    setTimeout(goToMenu, 5500);
+  </script>
+</body>
+</html>

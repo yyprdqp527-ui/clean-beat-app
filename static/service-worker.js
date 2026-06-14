@@ -1,28 +1,56 @@
 // 🔔 Service Worker pour les notifications push - CleanBeat
-// Version: 1.0.0
+// Version: 1.1.0
 
-const CACHE_NAME = 'cleanbeat-v1';
-const OFFLINE_URL = '/menu';
+const CACHE_NAME = 'cleanbeat-v136';
+const OFFLINE_URL = '/static/manifest.json';
+
+// URLs à purger du cache (anciennes images remplacées)
+const PURGE_URLS = [
+    '/static/icon-192.png',
+    '/static/icon-512.png',
+    '/static/icon-192.png?v=2',
+    '/static/icon-512.png?v=2',
+    '/static/icon-192.png?v=3',
+    '/static/icon-512.png?v=3',
+    '/static/icon-192-v3.png',
+    '/static/icon-512-v3.png',
+    '/static/images/cuisinewoop.webp',
+    '/static/images/thumbs/cuisinewoop.webp',
+    '/static/qfq-icon-192.png',
+    '/static/qfq-icon-512.png',
+    '/static/qfq-192.png',
+    '/static/qfq-512.png',
+];
+
+const PRECACHE_URLS = [
+    '/static/manifest.json',
+    '/static/qfq-icon-192-v2.png',
+    '/static/qfq-icon-512-v2.png',
+    '/static/images/thumbs/chambreparentale_marron.webp',
+    '/static/images/thumbs/chambre1.webp',
+    '/static/images/thumbs/chambre2.webp',
+    '/static/images/thumbs/chambre_garçon3.webp',
+    '/static/images/thumbs/chambre_enfant_4.webp',
+    '/static/images/thumbs/chambre_bébé4_.webp',
+    '/static/images/thumbs/salonorange.webp',
+    '/static/images/thumbs/cuisinewoop.webp',
+    '/static/images/thumbs/sdbwoop.webp',
+    '/static/images/thumbs/Wc2.webp',
+    '/static/images/thumbs/buanderie5.webp',
+    '/static/images/thumbs/Garage2.webp',
+    '/static/socket.io.min.js',
+    '/static/soundManager.js',
+];
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
     console.log('🔧 Service Worker: Installation...');
-    
+
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log('📦 Service Worker: Cache ouvert');
-            return cache.addAll([
-                '/',
-                '/menu',
-                '/comments',
-                '/static/manifest.json',
-                OFFLINE_URL
-            ]);
-        })
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(PRECACHE_URLS))
+            .then(() => self.skipWaiting())
     );
-    
-    // Force le nouveau service worker à prendre le contrôle immédiatement
-    self.skipWaiting();
 });
 
 // Activation du Service Worker
@@ -39,6 +67,11 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             );
+        }).then(() => {
+            // Purger les URLs spécifiques du nouveau cache aussi
+            return caches.open(CACHE_NAME).then((cache) => {
+                return Promise.all(PURGE_URLS.map(url => cache.delete(url)));
+            });
         })
     );
     
@@ -50,6 +83,63 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     // Ignorer les requêtes non-GET
     if (event.request.method !== 'GET') return;
+    
+    const url = new URL(event.request.url);
+    
+    // 🎨 Cache First pour les avatars proxy (SVG cachés 7 jours côté serveur)
+    if (url.pathname === '/api/avatar_proxy') {
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    return response;
+                });
+            })
+        );
+        return;
+    }
+
+    // 🚫 Ne JAMAIS mettre en cache les requêtes API ni les pages dynamiques
+    // (les badges/compteurs/avatars doivent toujours être frais)
+    if (url.pathname.startsWith('/api/') || 
+        url.pathname === '/menu' || 
+        url.pathname === '/comments' ||
+        url.pathname === '/mes_recompenses' ||
+        url.pathname === '/manage_players' ||
+        url.pathname === '/rewards' ||
+        url.pathname.startsWith('/edit_player/') ||
+        url.pathname.startsWith('/categorie/') ||
+        url.pathname.startsWith('/tasks/') ||
+        url.pathname === '/') {
+        event.respondWith(
+            fetch(event.request).catch(() => {
+                return caches.match(event.request).then((response) => {
+                    return response || caches.match(OFFLINE_URL);
+                });
+            })
+        );
+        return;
+    }
+
+    // 🏠 Cache First pour TOUTES les images statiques (pièces + tâches + récompenses)
+    const isStaticImage = url.pathname.startsWith('/static/images/') &&
+        /\.(webp|png|jpg|jpeg)$/i.test(url.pathname);
+
+    if (isStaticImage) {
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    return response;
+                });
+            })
+        );
+        return;
+    }
     
     event.respondWith(
         fetch(event.request)
@@ -72,127 +162,16 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
-// 🔔 NOTIFICATIONS PUSH - Réception
-self.addEventListener('push', (event) => {
-    console.log('📬 Service Worker: Notification push reçue');
-    
-    let notificationData = {
-        title: 'CleanBeat',
-        body: 'Vous avez un nouveau message',
-        icon: '/static/images/logo.png',
-        badge: '/static/images/logo.png',
-        tag: 'cleanbeat-notification',
-        requireInteraction: false,
-        data: {
-            url: '/comments'
-        }
-    };
-    
-    if (event.data) {
-        try {
-            const data = event.data.json();
-            notificationData = {
-                title: data.title || 'CleanBeat',
-                body: data.body || data.message || 'Vous avez un nouveau message',
-                icon: data.icon || '/static/images/logo.png',
-                badge: data.badge || '/static/images/logo.png',
-                tag: data.tag || 'cleanbeat-notification',
-                requireInteraction: data.requireInteraction || false,
-                data: {
-                    url: data.url || '/comments',
-                    messageId: data.messageId,
-                    messageType: data.messageType
-                },
-                actions: data.actions || [
-                    {
-                        action: 'open',
-                        title: 'Ouvrir'
-                    },
-                    {
-                        action: 'close',
-                        title: 'Fermer'
-                    }
-                ]
-            };
-        } catch (e) {
-            console.error('❌ Erreur parsing notification data:', e);
-        }
-    }
-    
-    event.waitUntil(
-        self.registration.showNotification(notificationData.title, {
-            body: notificationData.body,
-            icon: notificationData.icon,
-            badge: notificationData.badge,
-            tag: notificationData.tag,
-            requireInteraction: notificationData.requireInteraction,
-            data: notificationData.data,
-            actions: notificationData.actions,
-            vibrate: [200, 100, 200],
-            timestamp: Date.now()
-        })
-    );
-});
+// ⚠️ Les notifications push sont gérées UNIQUEMENT par /sw.js pour éviter les doublons.
+// Ce service worker gère uniquement le cache et le mode offline.
 
-// 🔔 NOTIFICATIONS - Clic sur la notification
-self.addEventListener('notificationclick', (event) => {
-    console.log('👆 Service Worker: Clic sur notification');
-    
-    event.notification.close();
-    
-    const urlToOpen = event.notification.data?.url || '/comments';
-    
-    // Si l'action est "close", ne rien faire
-    if (event.action === 'close') {
-        return;
-    }
-    
-    event.waitUntil(
-        clients.matchAll({
-            type: 'window',
-            includeUncontrolled: true
-        }).then((clientList) => {
-            // Chercher si une fenêtre CleanBeat est déjà ouverte
-            for (const client of clientList) {
-                if (client.url.includes(urlToOpen) && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            
-            // Sinon, ouvrir une nouvelle fenêtre
-            if (clients.openWindow) {
-                return clients.openWindow(urlToOpen);
-            }
-        })
-    );
-});
+// ⚠️ notificationclick, notificationclose et message supprimés ici.
+// Ils sont gérés uniquement par /sw.js pour éviter les doublons.
 
-// 🔔 NOTIFICATIONS - Fermeture de la notification
-self.addEventListener('notificationclose', (event) => {
-    console.log('❌ Service Worker: Notification fermée');
-    
-    // Optionnel: envoyer une analytics pour tracking
-    // fetch('/api/notification-closed', {
-    //     method: 'POST',
-    //     body: JSON.stringify({
-    //         tag: event.notification.tag,
-    //         timestamp: Date.now()
-    //     })
-    // });
-});
-
-// 📨 Messages depuis le client
+// 📨 Messages depuis le client (SKIP_WAITING uniquement, pas de badges)
 self.addEventListener('message', (event) => {
-    console.log('💬 Service Worker: Message reçu', event.data);
-    
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
-    }
-    
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({
-            version: CACHE_NAME
-        });
     }
 });
 

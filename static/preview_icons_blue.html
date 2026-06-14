@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propositions icônes bleues – QuiFaitQuoi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f0f4f8;
+    font-family: -apple-system, sans-serif;
+    padding: 30px 20px 60px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  p.subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 36px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 24px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .proposal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 0.3px;
+    text-align: center;
+  }
+
+  .sublabel {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    margin-top: -8px;
+  }
+
+  /* ── Simulation icône iOS ── */
+  .icon-wrap {
+    width: 120px;
+    height: 120px;
+    border-radius: 27px;          /* ~23% de 120 */
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.15);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Reflet iOS */
+  .icon-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 27px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.18) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  svg.icon {
+    width: 120px;
+    height: 120px;
+    display: block;
+  }
+
+  /* ── Grille de 2 SVG ── */
+  .large-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    max-width: 480px;
+    margin: 0 auto 28px;
+  }
+
+  /* ── Section titre ── */
+  .section-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #666;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 24px 0 16px;
+  }
+
+  /* Barre de sélection */
+  .selected-badge {
+    background: #1a73e8;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Simulation écran accueil ── */
+  .homescreen {
+    max-width: 360px;
+    margin: 40px auto 0;
+    background: #1a1a2e;
+    border-radius: 40px;
+    padding: 50px 30px 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    position: relative;
+  }
+
+  .homescreen-title {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    align-items: end;
+    justify-items: center;
+  }
+
+  .app-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .app-item .icon-wrap-small {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+    position: relative;
+  }
+
+  .app-item .icon-wrap-small::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.18) 0%, transparent 55%);
+  }
+
+  .app-item .icon-wrap-small svg {
+    width: 60px;
+    height: 60px;
+    display: block;
+  }
+
+  .app-name {
+    font-size: 9px;
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    max-width: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Icône système simulée */
+  .sys-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+  }
+
+</style>
+</head>
+<body>
+
+<h1>Propositions icônes — QuiFaitQuoi</h1>
+<p class="subtitle">Texte blanc · Dégradé bleu · Police Bubblegum Sans</p>
+
+<!-- ══════════════════════════════════════════════════════ PROPOSITIONS ══ -->
+<p class="section-title">4 variantes</p>
+
+<div class="grid">
+
+  <!-- ① Bleu Océan -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg class="icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>@import url('https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap');</style>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#4FC3F7"/>
+            <stop offset="50%"  stop-color="#1976D2"/>
+            <stop offset="100%" stop-color="#0D47A1"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#g1)"/>
+        <text x="256" y="185" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="325" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="rgba(255,255,255,0.85)">FAIT</text>
+        <text x="256" y="465" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">① Bleu Océan</div>
+    <div class="sublabel">#4FC3F7 → #1976D2 → #0D47A1</div>
+  </div>
+
+  <!-- ② Bleu Nuit -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg class="icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#667eea"/>
+            <stop offset="50%"  stop-color="#3a6fd8"/>
+            <stop offset="100%" stop-color="#1a237e"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#g2)"/>
+        <text x="256" y="185" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="325" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="#FFD54F">FAIT</text>
+        <text x="256" y="465" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">② Bleu Nuit</div>
+    <div class="sublabel">#667eea → #3a6fd8 → #1a237e<br>+ accent doré</div>
+  </div>
+
+  <!-- ③ Bleu-Turquoise -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg class="icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#00BCD4"/>
+            <stop offset="50%"  stop-color="#0277BD"/>
+            <stop offset="100%" stop-color="#1565C0"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#g3)"/>
+        <text x="256" y="185" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="325" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="rgba(255,255,255,0.9)">FAIT</text>
+        <text x="256" y="465" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">③ Bleu Turquoise</div>
+    <div class="sublabel">#00BCD4 → #0277BD → #1565C0</div>
+  </div>
+
+  <!-- ④ Bleu Royal -->
+  <div class="proposal">
+    <div class="icon-wrap">
+      <svg class="icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#42A5F5"/>
+            <stop offset="50%"  stop-color="#1E3A8A"/>
+            <stop offset="100%" stop-color="#0F1F5C"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="118" fill="url(#g4)"/>
+        <!-- Étoile déco -->
+        <circle cx="390" cy="80" r="18" fill="rgba(255,255,255,0.15)"/>
+        <circle cx="130" cy="420" r="12" fill="rgba(255,255,255,0.10)"/>
+        <text x="256" y="185" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUI</text>
+        <text x="256" y="325" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="#90CAF9">FAIT</text>
+        <text x="256" y="465" font-family="'Bubblegum Sans', cursive" font-size="148"
+              text-anchor="middle" fill="white">QUOI</text>
+      </svg>
+    </div>
+    <div class="label">④ Bleu Royal</div>
+    <div class="sublabel">#42A5F5 → #1E3A8A → #0F1F5C<br>+ accent bleu clair</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════ ÉCRAN ACCUEIL ══ -->
+<p class="section-title" style="margin-top:48px;">Simulation écran d'accueil</p>
+
+<div class="homescreen">
+  <div class="homescreen-title">Écran d'accueil</div>
+  <div class="app-grid">
+
+    <!-- QuiFaitQuoi – variante ① -->
+    <div class="app-item">
+      <div class="icon-wrap-small">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="s1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#4FC3F7"/>
+              <stop offset="50%"  stop-color="#1976D2"/>
+              <stop offset="100%" stop-color="#0D47A1"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="118" fill="url(#s1)"/>
+          <text x="256" y="185" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="325" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="rgba(255,255,255,0.85)">FAIT</text>
+          <text x="256" y="465" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">① Océan</div>
+    </div>
+
+    <!-- QuiFaitQuoi – variante ② -->
+    <div class="app-item">
+      <div class="icon-wrap-small">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="s2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#667eea"/>
+              <stop offset="50%"  stop-color="#3a6fd8"/>
+              <stop offset="100%" stop-color="#1a237e"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="118" fill="url(#s2)"/>
+          <text x="256" y="185" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="325" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="#FFD54F">FAIT</text>
+          <text x="256" y="465" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">② Nuit</div>
+    </div>
+
+    <!-- QuiFaitQuoi – variante ③ -->
+    <div class="app-item">
+      <div class="icon-wrap-small">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="s3" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#00BCD4"/>
+              <stop offset="50%"  stop-color="#0277BD"/>
+              <stop offset="100%" stop-color="#1565C0"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="118" fill="url(#s3)"/>
+          <text x="256" y="185" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="325" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="rgba(255,255,255,0.9)">FAIT</text>
+          <text x="256" y="465" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">③ Turquoise</div>
+    </div>
+
+    <!-- QuiFaitQuoi – variante ④ -->
+    <div class="app-item">
+      <div class="icon-wrap-small">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="s4" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#42A5F5"/>
+              <stop offset="50%"  stop-color="#1E3A8A"/>
+              <stop offset="100%" stop-color="#0F1F5C"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="118" fill="url(#s4)"/>
+          <circle cx="390" cy="80" r="18" fill="rgba(255,255,255,0.15)"/>
+          <text x="256" y="185" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUI</text>
+          <text x="256" y="325" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="#90CAF9">FAIT</text>
+          <text x="256" y="465" font-family="'Bubblegum Sans',cursive" font-size="148" text-anchor="middle" fill="white">QUOI</text>
+        </svg>
+      </div>
+      <div class="app-name">④ Royal</div>
+    </div>
+
+    <!-- Apps système simulées pour le contexte -->
+    <div class="app-item">
+      <div class="sys-icon" style="background:linear-gradient(135deg,#a8d8ea,#57a1c6)">📷</div>
+      <div class="app-name">Appareil photo</div>
+    </div>
+    <div class="app-item">
+      <div class="sys-icon" style="background:linear-gradient(135deg,#9b5de5,#6a0dad)">📱</div>
+      <div class="app-name">Téléphone</div>
+    </div>
+    <div class="app-item">
+      <div class="sys-icon" style="background:linear-gradient(135deg,#f9c74f,#f77f00)">🗓</div>
+      <div class="app-name">Calendrier</div>
+    </div>
+    <div class="app-item">
+      <div class="sys-icon" style="background:linear-gradient(135deg,#43aa8b,#277da1)">⚙️</div>
+      <div class="app-name">Réglages</div>
+    </div>
+
+  </div>
+</div>
+
+<p style="text-align:center;font-size:11px;color:#aaa;margin-top:32px;">
+  Dites-moi quelle variante vous préférez !
+</p>
+
+</body>
+</html>

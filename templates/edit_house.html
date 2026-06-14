@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    
+    <title>Ma Maison · Dust</title>
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
+    <style>
+        :root {
+            --brown-warm: #4a3428;
+            --brown-dark: #1a1410;
+            --gold:       #FDAE54;
+            --peach:      #F4C68D;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: {{ bg_gradient }};
+            min-height: 100vh;
+            color: #153036;
+            overflow-x: hidden;
+        }
+
+/* Zone de contenu - identique à .header-below-zone de tasks.html */
+        .header-below-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 100px 16px 80px;
+            width: 100%;
+        }
+
+        /* Header pièce - identique à .room-header de tasks.html */
+        .room-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+            max-width: 900px;
+            width: 100%;
+        }
+        .room-header .room-icon { font-size: 48px; margin-bottom: 8px; display: block; }
+        .room-header .room-name { font-size: 22px; font-weight: 800; color: #153036; margin: 0; }
+        .room-header .room-subtitle { font-size: 14px; color: #1a1410; margin-top: 4px; }
+
+        /* Container principal - identique à .container-menu de tasks.html */
+        .container-menu {
+            max-width: 900px;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 30px 24px 40px;
+            box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .section-label {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: rgba(21,48,54,0.55);
+            margin-bottom: 14px;
+        }
+
+        .rooms-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .room-item {
+            background: rgba(255,255,255,0.55);
+            border: 1.5px solid rgba(255,255,255,0.70);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: opacity .2s;
+        }
+
+        .room-thumb {
+            width: 54px; height: 54px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: rgba(166,211,220,0.3);
+        }
+        .room-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .room-info { flex: 1; min-width: 0; }
+        .room-default-name { font-size: .68rem; color: rgba(21,48,54,0.5); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+        .room-rename-input {
+            width: 100%;
+            background: rgba(255,255,255,0.9);
+            border: 1.5px solid rgba(166,211,220,0.5);
+            border-radius: 9px;
+            color: #153036;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 6px 10px;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .room-rename-input:focus {
+            outline: none;
+            border-color: #fdae54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.18);
+            background: #fff;
+        }
+        .room-rename-input.is-saving { opacity: 0.6; }
+        .room-rename-input.is-saved { border-color: #4caf50; background: rgba(76,175,80,0.08); }
+        .room-rename-input.is-error { border-color: #e74c3c; background: rgba(231,76,60,0.08); }
+
+        .room-name-input {
+            width: 100%;
+            background: rgba(255,255,255,0.9);
+            border: 1.5px solid rgba(253,174,84,0.35);
+            border-radius: 9px;
+            color: #153036;
+            font-size: .92rem;
+            font-weight: 600;
+            padding: 7px 10px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .room-name-input::placeholder { color: rgba(21,48,54,0.35); font-weight: 400; }
+        .room-name-input:focus { border-color: #FDAE54; box-shadow: 0 0 0 3px rgba(253,174,84,0.2); }
+
+        .toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+        .toggle-label-txt { font-size: .6rem; color: rgba(21,48,54,0.55); text-align: center; }
+        .toggle { position: relative; width: 46px; height: 26px; }
+        .toggle input { display: none; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.35);
+            border-radius: 26px;
+            cursor: pointer;
+            transition: background .25s;
+            border: 1.5px solid rgba(255,255,255,0.50);
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            left: 3px; top: 50%;
+            transform: translateY(-50%);
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform .25s;
+        }
+        .toggle input:checked + .toggle-slider { background: rgba(220,80,80,0.55); }
+        .toggle input:checked + .toggle-slider::before { transform: translateY(-50%) translateX(20px); }
+
+        /* Bouton Enregistrer - identique à .add-task-btn de tasks.html */
+        .btn-save {
+            display: block;
+            width: max-content;
+            margin: 32px auto 0;
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: white;
+            font-weight: 800;
+            font-size: 15px;
+            padding: 18px 40px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(253,174,84,0.4);
+            font-family: inherit;
+            transition: all .3s ease;
+        }
+        .btn-save:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 35px rgba(253,174,84,0.6); }
+        .btn-save:active { transform: scale(0.97); }
+
+        @media (max-width: 520px) {
+            .header-below-zone { padding: 84px 12px 80px; }
+            .container-menu { border-radius: 16px !important; margin: 0 !important; padding: 20px 14px 30px !important; }
+            .room-header { border-radius: 16px; }
+        }
+        @media (max-width: 375px) {
+            .container-menu { border-radius: 12px !important; padding: 14px 10px 24px !important; }
+            .btn-save { padding: 16px 28px; font-size: 14px; }
+        }
+    
+        /* Boutons picker de fond */
+        .bg-theme-btn {
+            width: 90px;
+            height: 70px;
+            border-radius: 14px;
+            border: 3px solid transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .bg-theme-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .bg-theme-btn.active { border-color: #FDAE54; box-shadow: 0 0 0 3px rgba(253,174,84,0.5); }
+        .bg-theme-check {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 14px;
+            font-weight: 900;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .bg-theme-btn.active .bg-theme-check { opacity: 1; }
+        .bg-theme-btn--light { color: #153036 !important; text-shadow: none !important; }
+        .bg-theme-btn--light.active { border-color: #597176; box-shadow: 0 0 0 3px rgba(89,113,118,0.4); }
+
+        /* 🆕 Pièces personnalisées — bouton + formulaire d'ajout (mêmes variables / classes) */
+        .extra-room-delete {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(220,80,80,0.45);
+            background: rgba(255,255,255,0.7);
+            color: rgba(220,80,80,0.85);
+            font-size: 18px; font-weight: 800;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .2s ease;
+            font-family: inherit;
+            margin-left: 4px;
+        }
+        .extra-room-delete:hover {
+            background: rgba(220,80,80,0.15);
+            transform: scale(1.08);
+        }
+
+        .add-custom-room-btn {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            background: rgba(255,255,255,0.55);
+            border: 1.5px dashed rgba(253,174,84,0.55);
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: #4a3428;
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s ease;
+        }
+        .add-custom-room-btn:hover {
+            background: rgba(253,174,84,0.15);
+            border-color: #FDAE54;
+        }
+
+        .add-room-form {
+            margin-top: 14px;
+            padding: 16px 14px;
+            background: rgba(255,255,255,0.55);
+            border: 1.5px solid rgba(255,255,255,0.70);
+            border-radius: 14px;
+        }
+        .add-room-field { margin-bottom: 14px; }
+        .add-room-field:last-of-type { margin-bottom: 12px; }
+
+        .illus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+            gap: 8px;
+        }
+        .illus-choice {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(166,211,220,0.3);
+            border: 2px solid rgba(255,255,255,0.70);
+            padding: 0;
+            cursor: pointer;
+            transition: all .2s ease;
+            font-family: inherit;
+        }
+        .illus-choice img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .illus-choice:hover { transform: translateY(-2px); }
+        .illus-choice.selected {
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.30);
+        }
+
+        .add-room-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+        }
+        .btn-add-room-confirm,
+        .btn-add-room-cancel {
+            border-radius: 50px;
+            padding: 10px 22px;
+            font-weight: 700;
+            font-size: .9rem;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s ease;
+        }
+        .btn-add-room-confirm {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(253,174,84,0.35);
+        }
+        .btn-add-room-confirm:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(253,174,84,0.5); }
+        .btn-add-room-cancel {
+            background: rgba(255,255,255,0.7);
+            color: #4a3428;
+            border: 1.5px solid rgba(255,255,255,0.70);
+        }
+        .btn-add-room-cancel:hover { background: rgba(255,255,255,0.95); }
+
+        /* � Boutons d'action style Gameplay (.gameplay-action-btn copié 1:1) */
+        .house-actions-row {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 8px 0 18px;
+        }
+        .house-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            color: #153036;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: left;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            width: 100%;
+        }
+        .house-action-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            box-shadow: 0 12px 32px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+            border-color: rgba(166,211,220,0.5);
+        }
+        .house-action-btn:active { transform: scale(0.98); }
+        .house-action-btn .btn-icon { font-size: 24px; flex-shrink: 0; }
+        .house-action-btn .btn-label { flex: 1; color: #153036; text-align: center; display: block; width: 100%; }
+        /* 🟧 Boutons d'action carrés style Gameplay (côte à côte, centrés) */
+        .house-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 560px;
+            width: 100%;
+            margin: 0 auto 24px;
+        }
+        @media (max-width: 480px) {
+            .house-actions-grid { gap: 8px; max-width: 100%; }
+            .house-action-btn {
+                padding: 10px 4px;
+                gap: 4px;
+                border-radius: 18px;
+            }
+            .house-action-btn .btn-icon { font-size: 24px; }
+            .house-action-btn .btn-label { font-size: 11px; line-height: 1.15; }
+        }
+        .house-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            aspect-ratio: 1 / 1;
+            min-width: 0;
+            overflow: hidden;
+            padding: 18px 14px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 24px;
+            color: #153036;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .house-action-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.2) 100%);
+            box-shadow: 0 12px 32px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+            border-color: rgba(166,211,220,0.5);
+        }
+        .house-action-btn:active { transform: scale(0.96); }
+        .house-action-btn.is-active {
+            border-color: #FDAE54;
+            box-shadow: 0 0 0 3px rgba(253,174,84,0.25), 0 8px 24px rgba(89,113,118,0.15);
+        }
+        .house-action-btn .btn-icon { font-size: 38px; line-height: 1; flex: 0 0 auto; }
+        .house-action-btn .btn-label { font-size: 14px; font-weight: 800; color: #153036; line-height: 1.25; text-align: center; display: block; width: 100%; flex: 0 0 auto; }
+
+        .rooms-panel { margin-top: 4px; margin-bottom: 18px; min-height: 60vh; }
+
+        /* Carte titre glass dans le panneau Ajouter */
+        .add-title-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(253,174,84,0.3);
+            border-radius: 20px;
+            padding: 18px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(89,113,118,0.12);
+        }
+        .add-title-card .att-icon { font-size: 32px; line-height: 1; display: block; margin-bottom: 6px; }
+        .add-title-card .att-title { font-size: 17px; font-weight: 800; color: #153036; margin: 0 0 4px; }
+        .add-title-card .att-sub   { font-size: 13px; color: rgba(21,48,54,0.7); margin: 0; line-height: 1.4; }
+
+        /* Coche ✅ sur carte emoji déjà ajoutée */
+        .emoji-card-check {
+            position: absolute;
+            top: 6px; right: 8px;
+            font-size: 20px;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity .2s;
+            pointer-events: none;
+        }
+        .emoji-card-added .emoji-card-check { opacity: 1; }
+        .emoji-card-added { border-color: rgba(76,175,80,0.6) !important; }
+
+        /* 📷 Boutons par carte de pièce */
+        .room-img-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 7px;
+        }
+        .room-img-btn {
+            flex: 1;
+            padding: 6px 5px;
+            min-height: 44px;
+            font-size: 10.5px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1.5px solid rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.55);
+            color: #4a3428;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s ease;
+            white-space: nowrap;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .room-img-btn:hover {
+            background: rgba(255,255,255,0.88);
+            border-color: rgba(253,174,84,0.55);
+        }
+        .room-img-btn--reset {
+            border-color: rgba(220,80,80,0.3);
+            color: rgba(160,40,40,0.85);
+        }
+        .room-img-btn--reset:hover {
+            background: rgba(220,80,80,0.1);
+            border-color: rgba(220,80,80,0.55);
+        }
+        /* Carte grisée quand masquée */
+        .room-item.is-hidden-item {
+            opacity: 0.45;
+        }
+        /* Toggle switch iOS */
+        .room-toggle-switch {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 2px 0;
+            margin-left: 2px;
+        }
+        .room-toggle-track {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            background: rgba(160,160,160,0.55);
+            position: relative;
+            transition: background 0.25s;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.18);
+        }
+        .room-toggle-switch[data-hidden="false"] .room-toggle-track {
+            background: rgba(56,168,68,0.82);
+        }
+        .room-toggle-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.28);
+            transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+        }
+        .room-toggle-switch[data-hidden="false"] .room-toggle-thumb {
+            transform: translateX(20px);
+        }
+
+        </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
+</head>
+<body>
+
+    <a href="{{ url_for('customize.settings_page') }}" id="backToSettings" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
+
+    <div class="header-below-zone">
+
+        {# Form conservé pour les routes existantes (POST personnaliser_maison) — invisible #}
+        <form method="POST" action="{{ url_for('customize.personnaliser_maison') }}" style="max-width:900px; width:100%;">
+            <input type="hidden" name="house_name" value="{{ current_house_name or '' }}">
+
+            <div id="panelManage" class="rooms-panel">
+
+                <div class="add-title-card">
+                    <span class="att-icon">🗑️</span>
+                    <p class="att-title">Gérer mes pièces</p>
+                    <p class="att-sub">Masque les pièces que tu n'utilises pas mais <strong>conserve les pièces essentielles</strong> (cuisine, salle de bain…) pour ne pas perdre leurs tâches associées.<br><br>
+                    Tu peux aussi <strong>renommer n'importe quelle pièce</strong> en tapant directement dans son champ de texte.</p>
+                </div>
+
+
+                <div class="rooms-list" id="rooms-list">
+                    {# Pièces standards + catalogue : toggle masquer/afficher (auto-save via /toggle_room) #}
+                    {% for room in (rooms + extra_rooms) %}
+                    <div class="room-item{% if room.is_hidden %} is-hidden-item{% endif %}" id="item-{{ room.key }}">
+                        <div class="room-thumb">
+                            {% if room.image_data %}
+                              <img src="{{ room.image_data }}"
+                                   style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
+                            {% elif room.image and not room.image.startswith('images/imageqfq') %}
+                              <img src="{{ url_for('static', filename=room.image) }}"
+                                   style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
+                            {% elif room.image %}
+                              <img src="{{ url_for('static', filename=room.image) }}"
+                                   style="width:44px;height:44px;object-fit:contain;border-radius:8px;">
+                            {% endif %}
+                        </div>
+                        <div class="room-info">
+                            <div class="room-default-name">{{ room.default_name }}</div>
+                            <input type="text" class="room-rename-input"
+                                   value="{{ room.current_name }}"
+                                   data-default="{{ room.default_name }}"
+                                   data-room-key="{{ room.key }}"
+                                   maxlength="60"
+                                   onblur="renameRoom(this)"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                            <div class="room-img-actions">
+                                <input type="file" id="photoInput-{{ room.key }}"
+                                       accept="image/*" capture="environment"
+                                       style="display:none;"
+                                       onchange="uploadRoomPhoto('{{ room.key }}', this)">
+                                <button type="button" class="room-img-btn"
+                                        onclick="document.getElementById('photoInput-{{ room.key }}').click()">📷 Ma photo</button>
+                                {% if room.image_data %}
+                                <button type="button" class="room-img-btn room-img-btn--reset"
+                                        onclick="resetRoomImage('{{ room.key }}')">↩️ Original</button>
+                                {% endif %}
+                                <label class="room-toggle-switch"
+                                       id="toggleBtn-{{ room.key }}"
+                                       data-hidden="{{ 'true' if room.is_hidden else 'false' }}"
+                                       onclick="toggleRoom('{{ room.key }}', this)">
+                                    <span class="room-toggle-track"><span class="room-toggle-thumb"></span></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+<script>
+function toggleRoom(roomKey, btn) {
+    _playClick();
+    var item = document.getElementById('item-' + roomKey);
+    var wasHidden = btn.dataset.hidden === 'true';
+    var nowHidden = !wasHidden;
+    // Mise à jour optimiste
+    btn.dataset.hidden = nowHidden ? 'true' : 'false';
+    if (item) item.classList.toggle('is-hidden-item', nowHidden);
+    fetch('/toggle_room', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ room_key: roomKey, is_hidden: nowHidden })
+    }).then(function(r) {
+        if (!r.ok) {
+            // Revert
+            btn.dataset.hidden = wasHidden ? 'true' : 'false';
+            if (item) item.classList.toggle('is-hidden-item', wasHidden);
+        }
+    }).catch(function() {
+        btn.dataset.hidden = wasHidden ? 'true' : 'false';
+        if (item) item.classList.toggle('is-hidden-item', wasHidden);
+    });
+}
+
+function saveHouseName() {
+    var input = document.getElementById('renameHouseInput');
+    var btn = document.getElementById('btnSaveHouseName');
+    var status = document.getElementById('renameHouseStatus');
+    if (!input) return;
+    var newName = (input.value || '').trim();
+    if (!newName) {
+        if (status) {
+            status.textContent = 'Le nom ne peut pas être vide';
+            status.style.color = '#c62828';
+            status.style.display = 'block';
+        }
+        return;
+    }
+    _playClick();
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    if (status) { status.style.display = 'none'; }
+    var fd = new FormData();
+    fd.append('house_name', newName);
+    fetch('/update_house_name', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: fd
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        if (data && data.success) {
+            _playValid();
+            if (status) {
+                status.textContent = '✅ ' + (data.message || 'Nom mis à jour !');
+                status.style.color = '#2e7d32';
+                status.style.display = 'block';
+            }
+            if (window.cbToast) window.cbToast(data.message || 'Nom de la maison mis à jour !', 'success', 2200);
+            // Mettre à jour le champ caché du form (pour cohérence)
+            var hidden = document.querySelector('input[type=hidden][name=house_name]');
+            if (hidden) hidden.value = newName;
+            setTimeout(function() {
+                if (status) status.style.display = 'none';
+            }, 2500);
+        } else {
+            var msg = (data && data.error) || "Impossible de renommer la maison.";
+            if (status) {
+                status.textContent = '⚠️ ' + msg;
+                status.style.color = '#c62828';
+                status.style.display = 'block';
+            }
+            if (window.cbToast) window.cbToast(msg, 'danger', 2800);
+        }
+    }).catch(function() {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        if (status) {
+            status.textContent = '⚠️ Erreur réseau';
+            status.style.color = '#c62828';
+            status.style.display = 'block';
+        }
+    });
+}
+
+function renameRoom(input) {
+    var roomKey = input.dataset.roomKey;
+    var defaultName = input.dataset.default || '';
+    var newName = (input.value || '').trim();
+    var previous = input.dataset.previous != null ? input.dataset.previous : input.defaultValue;
+    if (newName === previous) return;
+    // Si vide, on revient au nom par défaut visuellement (et on efface le custom_name en DB)
+    var displayName = newName || defaultName;
+    input.value = displayName;
+    input.classList.add('is-saving');
+    fetch('/rename_room', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ room_key: roomKey, new_name: newName })
+    }).then(function(r) {
+        input.classList.remove('is-saving');
+        if (r.ok) {
+            input.dataset.previous = displayName;
+            input.classList.add('is-saved');
+            setTimeout(function() { input.classList.remove('is-saved'); }, 1200);
+        } else {
+            input.value = previous;
+            input.classList.add('is-error');
+            setTimeout(function() { input.classList.remove('is-error'); }, 1500);
+        }
+    }).catch(function() {
+        input.classList.remove('is-saving');
+        input.value = previous;
+        input.classList.add('is-error');
+        setTimeout(function() { input.classList.remove('is-error'); }, 1500);
+    });
+}
+
+function _playClick() {
+    try { if (window.SoundManager && SoundManager.play) SoundManager.play('buttonClick'); } catch(e) {}
+}
+function _playValid() {
+    try {
+        if (window.SoundManager && SoundManager.play) {
+            // Essaye plusieurs noms de sons existants
+            ['validation','success','taskValidated','correct','buttonClick'].some(function(n){
+                try { SoundManager.play(n); return true; } catch(e){ return false; }
+            });
+        }
+    } catch(e) {}
+}
+
+
+// 🎨 Génère un data URL Canvas (losange bleu + emoji centré, 400×400)
+function _emojiToDataURL(emoji) {
+    try {
+        var size = 400;
+        var c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = 'rgba(160, 210, 255, 0.71)';
+        ctx.beginPath();
+        ctx.moveTo(size/2, 4);
+        ctx.lineTo(size-4, size/2);
+        ctx.lineTo(size/2, size-4);
+        ctx.lineTo(4, size/2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.font = (size*0.5) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(emoji, size/2, size/2 + 4);
+        return c.toDataURL('image/png');
+    } catch (e) { return ''; }
+}
+
+// 📷 Sélection d'une photo → upload + création pièce en une seule requête
+function onRoomPhotoSelected(input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    // Valider le nom avant d'envoyer
+    var roomName = '';
+    var nameInput = document.getElementById('photoRoomName');
+    if (nameInput) roomName = nameInput.value.trim();
+    if (!roomName) {
+        if (window.cbToast) window.cbToast('Veuillez saisir le nom de la pièce', 'danger', 2800);
+        try { input.value = ''; } catch(e) {}
+        return;
+    }
+    if (window.cbToast) window.cbToast('Envoi de la photo…', 'info', 1800);
+    var fd = new FormData();
+    fd.append('photo', file);
+    fd.append('room_name', roomName);
+    fd.append('custom_name', roomName);
+    fetch('/upload_room_image', { method: 'POST', credentials: 'same-origin', body: fd })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.data || !res.data.ok) {
+                if (window.cbToast) window.cbToast((res.data && res.data.error) || "Échec de l'envoi.", 'danger', 2800);
+                return;
+            }
+            _playValid();
+            if (window.cbToast) window.cbToast('✅ Pièce ajoutée !', 'success', 1800);
+            setTimeout(function() { window.location.reload(); }, 600);
+        })
+        .catch(function() {
+            if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800);
+        });
+    try { input.value = ''; } catch(e) {}
+}
+
+function addCatalogueRoom(name, image) {
+  fetch('/add_custom_room', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: name, image: image})
+  }).then(() => location.reload());
+}
+
+function _showPendingTasksError(count) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;min-width:280px;max-width:320px;padding:16px 20px;background:rgba(255,255,255,0.96);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);border-radius:16px;border:1px solid rgba(255,255,255,0.8);box-shadow:0 8px 32px rgba(21,48,54,0.18);font-size:14px;font-weight:600;color:#153036;text-align:center;border-left:4px solid #E24B4A;';
+    t.innerHTML = '⚠️ Cette pièce a <strong>' + count + ' tâche(s) en cours</strong>.<br><span style="font-size:12px;color:#597176;margin-top:4px;display:block;">Valide ou supprime-les avant de retirer cette pièce.</span>';
+    document.body.appendChild(t);
+    setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 5000);
+}
+
+function deleteCustomRoom(roomKey) {
+    _cbConfirm("Supprimer cette pièce personnalisée ?", function() {
+        fetch('/delete_custom_room', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ room_key: roomKey })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (res.data && res.data.error === 'pending_tasks') {
+                _showPendingTasksError(res.data.count || 0);
+                return;
+            }
+            if (!res.ok || !res.data || !res.data.ok) {
+                if (window.cbToast) window.cbToast((res.data && res.data.error) || "Suppression impossible.", 'danger', 2800);
+                return;
+            }
+            if (window.cbToast) window.cbToast('🗑 Pièce supprimée', 'success', 1600);
+            var item = document.getElementById('item-' + roomKey);
+            if (item && item.parentNode) item.parentNode.removeChild(item);
+            var addedCard = document.querySelector('[data-key="' + roomKey + '"]');
+            if (addedCard) addedCard.classList.remove('emoji-card-added');
+        })
+        .catch(function() { if (window.cbToast) window.cbToast("Erreur réseau, réessaye.", 'danger', 2800); });
+    });
+}
+
+// 🪟 Confirm glassmorphisme inline (réutilise le style visuel de cbToast — gradients/blur/border)
+// noLabel et yesLabel sont optionnels (défaut : 'Annuler' / 'Supprimer')
+function _cbConfirm(message, onYes, noLabel, yesLabel) {
+    noLabel  = noLabel  || 'Annuler';
+    yesLabel = yesLabel || 'Supprimer';
+    var overlay = document.createElement('div');
+    overlay.style.cssText =
+        'position:fixed;inset:0;background:rgba(21,48,54,.35);backdrop-filter:blur(4px);' +
+        '-webkit-backdrop-filter:blur(4px);z-index:99998;display:flex;align-items:center;justify-content:center;' +
+        'opacity:0;transition:opacity .25s;';
+    var box = document.createElement('div');
+    box.style.cssText =
+        'background:linear-gradient(135deg,rgba(255,255,255,.92) 0%,rgba(255,215,0,.28) 50%,rgba(253,174,84,.38) 100%);' +
+        'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);' +
+        'border:1px solid rgba(255,255,255,.4);border-radius:24px;padding:22px 22px 16px;' +
+        'max-width:320px;width:88%;text-align:center;font-family:Montserrat,sans-serif;color:#153036;' +
+        'box-shadow:0 12px 40px rgba(21,48,54,.3),0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.6);' +
+        'transform:scale(.9);transition:transform .25s cubic-bezier(.34,1.56,.64,1);';
+    box.innerHTML =
+        '<div style="font-size:15px;font-weight:700;margin-bottom:18px;line-height:1.4;">' + message + '</div>' +
+        '<div style="display:flex;gap:10px;justify-content:center;">' +
+          '<button type="button" data-act="no" style="flex:1;padding:11px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.4);' +
+            'background:rgba(255,255,255,.5);font-weight:700;font-family:inherit;color:#153036;cursor:pointer;">' + noLabel + '</button>' +
+          '<button type="button" data-act="yes" style="flex:1;padding:11px 14px;border-radius:18px;border:1px solid rgba(231,76,60,.4);' +
+            'background:linear-gradient(135deg,rgba(255,107,107,.4),rgba(231,76,60,.5));font-weight:800;font-family:inherit;color:#fff;cursor:pointer;">' + yesLabel + '</button>' +
+        '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
+        overlay.style.opacity = '1'; box.style.transform = 'scale(1)';
+    }); });
+    function close() {
+        overlay.style.opacity = '0'; box.style.transform = 'scale(.9)';
+        setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
+    }
+    box.querySelector('[data-act="no"]').addEventListener('click', function() { _playClick(); close(); });
+    box.querySelector('[data-act="yes"]').addEventListener('click', function() { _playClick(); close(); try { onYes(); } catch(e) {} });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+}
+
+function uploadRoomPhoto(roomKey, input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    // Récupère le nom depuis le champ rename de la carte
+    var nameEl = document.querySelector('[data-room-key="' + roomKey + '"]');
+    var roomName = nameEl ? (nameEl.value || '').trim() : '';
+    if (!roomName) {
+        if (window.cbToast) window.cbToast('Saisis d\'abord le nom de la pièce', 'danger', 2800);
+        try { input.value = ''; } catch(e) {}
+        return;
+    }
+    if (window.cbToast) window.cbToast('Envoi de la photo…', 'info', 1800);
+    var fd = new FormData();
+    fd.append('photo', file);
+    fd.append('room_name', roomName);
+    fd.append('room_key', roomKey);
+    fetch('/upload_room_image', { method: 'POST', credentials: 'same-origin', body: fd })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.data || !res.data.ok) {
+                if (window.cbToast) window.cbToast((res.data && res.data.error) || "Échec de l'envoi.", 'danger', 2800);
+                return;
+            }
+            _playValid();
+            if (window.cbToast) window.cbToast('✅ Photo mise à jour !', 'success', 1800);
+            // Mettre à jour la vignette en place — sans rechargement de page
+            var item = document.getElementById('item-' + roomKey);
+            if (item && res.data.image_b64) {
+                var thumb = item.querySelector('.room-thumb');
+                if (thumb) {
+                    var img = thumb.querySelector('img');
+                    if (img) {
+                        img.src = res.data.image_b64;
+                        img.style.objectFit = 'cover';
+                    } else {
+                        thumb.innerHTML = '<img src="' + res.data.image_b64 + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;">';
+                    }
+                }
+                // Faire apparaître le bouton ↩️ Original s'il est absent
+                var actions = item.querySelector('.room-img-actions');
+                if (actions && !actions.querySelector('.room-img-btn--reset')) {
+                    var resetBtn = document.createElement('button');
+                    resetBtn.type = 'button';
+                    resetBtn.className = 'room-img-btn room-img-btn--reset';
+                    resetBtn.setAttribute('onclick', "resetRoomImage('" + roomKey + "')");
+                    resetBtn.textContent = '↩️ Original';
+                    var photoBtn = actions.querySelector('.room-img-btn:not(.room-img-btn--reset):not(.room-img-btn--toggle)');
+                    if (photoBtn) {
+                        photoBtn.insertAdjacentElement('afterend', resetBtn);
+                    } else {
+                        actions.insertBefore(resetBtn, actions.firstChild);
+                    }
+                }
+            }
+        })
+        .catch(function() {
+            if (window.cbToast) window.cbToast('Erreur réseau, réessaye.', 'danger', 2800);
+        });
+    try { input.value = ''; } catch(e) {}
+}
+
+function resetRoomImage(roomKey) {
+    _cbConfirm('Remettre l\'image originale de cette pièce ?', function() {
+        fetch('/reset_room_image', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room_key: roomKey })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.data || !res.data.ok) {
+                if (window.cbToast) window.cbToast((res.data && res.data.error) || 'Impossible de réinitialiser.', 'danger', 2800);
+                return;
+            }
+            _playValid();
+            if (window.cbToast) window.cbToast('↩️ Image originale restaurée', 'success', 1800);
+            setTimeout(function() { window.location.reload(); }, 600);
+        })
+        .catch(function() {
+            if (window.cbToast) window.cbToast('Erreur réseau, réessaye.', 'danger', 2800);
+        });
+    }, 'Non', 'Oui, remettre l\'original');
+}
+</script>
+
+<!-- 🔊 Howler.js + SoundManager (chargé localement car page autonome) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous" defer></script>
+<script src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004" defer></script>
+<script>
+(function(){
+    function unlockAudio(){
+        // Diff\u00e8re l'unlock audio pour ne pas bloquer le 1er clic
+        var run = function(){
+            try { if (window.SoundManager) SoundManager.unlock(); } catch(e) {}
+        };
+        if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 500 });
+        else setTimeout(run, 0);
+        document.removeEventListener('touchstart', unlockAudio, false);
+        document.removeEventListener('click', unlockAudio, false);
+    }
+    document.addEventListener('touchstart', unlockAudio, false);
+    document.addEventListener('click', unlockAudio, false);
+})();
+</script>
+
+</body>
+</html>

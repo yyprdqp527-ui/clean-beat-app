@@ -2,8 +2,11 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{% block title %}CleanBeat{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Dust{% endblock %}</title>
+    <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
     <style>
         * {
             margin: 0;
@@ -51,30 +54,7 @@
             text-decoration: none;
         }
 
-        .back-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .back-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .back-button:active {
-            transform: translateY(0);
-        }
+        /* Bouton retour : chargé via back-btn-glass.css */
 
         /* Maison centrée avec barre de santé */
         .house-center {
@@ -174,10 +154,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: transparent;
             border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-            border: 2px solid #fff;
+            box-shadow: none;
+            border: none;
+            padding: 0;
         }
 
         /* Conteneur avatar + barre verticale */
@@ -208,8 +189,9 @@
         }
 
         .current-player .player-avatar-header {
-            background: rgba(255,255,255,0.95);
-            border-color: rgba(255,255,255,0.8);
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
         }
 
         .player-info-header {
@@ -381,11 +363,6 @@
                 order: 1;
             }
 
-            .back-button {
-                padding: 6px 12px;
-                font-size: 0.8rem;
-            }
-
             .house-message {
                 position: relative;
                 top: 0;
@@ -409,13 +386,11 @@
     <div class="game-header">
         <div class="header-content">
             <div class="logo-section">
-                <a href="{{ url_for('menu') }}" class="app-logo">🏠 CleanBeat</a>
-                {% if request.endpoint != 'menu' %}
-                    <a href="{{ url_for('menu') }}" class="back-button">
-                        ← Retour maison
-                    </a>
-                {% endif %}
+                <a href="{{ url_for('menu') }}" class="app-logo">🏠 Dust</a>
             </div>
+            {% if request.endpoint != 'menu' %}
+            <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+            {% endif %}
             
             <!-- Maison centrée avec barre de santé -->
             <div class="house-center">
@@ -442,7 +417,17 @@
                 {% for player in players %}
                     <div class="player-header {% if player.email == session.get('user') %}current-player{% endif %}" data-email="{{ player.email }}">
                         <div class="avatar-progress-row">
-                            <div class="player-avatar-header">{{ player.avatar }}</div>
+                            <div class="player-avatar-header">
+                                {% if player.avatar_file %}
+                                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% elif player.avatar_url %}
+                                    <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% elif player.avatar and player.avatar|length <= 4 %}
+                                    {{ player.avatar }}
+                                {% else %}
+                                    <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% endif %}
+                            </div>
                             <div class="player-progress" title="{{ player.percentage|default(0) }}%">
                                 <div class="player-progress-fill" data-percentage="{{ player.percentage|default(0) }}"></div>
                             </div>
@@ -462,13 +447,7 @@
     {% endif %}
 
     <!-- Messages flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, msg in messages %}
-          <div class="flash {{ category }}">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    {% include '_flash_popup.html' %}
 
     <!-- Contenu principal -->
     <div class="main-content">
@@ -588,7 +567,7 @@
         function showPointsAnimation(playerElement, points) {
             const bubble = document.createElement('div');
             bubble.className = 'points-bubble';
-            bubble.textContent = '+' + points;
+            bubble.textContent = (points > 0 ? '+' : '') + points;
             bubble.style.cssText = `
                 position: absolute;
                 top: -10px;
@@ -609,9 +588,9 @@
             setTimeout(() => bubble.remove(), 2000);
         }
         
-        // ⚡ Vérifier toutes les 3 secondes pour synchronisation quasi-instantanée
-        const updateInterval = setInterval(updatePlayersPoints, 3000);
-        console.log('✅ Polling points: toutes les 3 secondes');
+        // ⚡ Vérification points : 15s (Socket.IO push gere le temps reel)
+        const updateInterval = setInterval(updatePlayersPoints, 15000);
+        console.log('✅ Polling points: toutes les 15 secondes');
         
         // Première mise à jour après 1 seconde
         setTimeout(updatePlayersPoints, 1000);
@@ -627,7 +606,7 @@
                 lastPoints[index] = currentPoints;
             });
         }
-        setInterval(checkPointsChanges, 2000);
+        setInterval(checkPointsChanges, 10000);
 
         // Animation des barres de progression verticales (au chargement)
         function animatePlayerProgressBars() {

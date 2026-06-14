@@ -2,100 +2,296 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>{% block title %}Clean Beat{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Qui Fait Quoi{% endblock %}</title>
+    <meta name="description" content="Clean Beat — gérez les tâches ménagères en duo, gagnez des points et débloquez des récompenses.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <!-- PWA: manifest + meta tags pour mode plein écran -->
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="manifest" href="/static/manifest.json?v=4">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CleanBeat">
+    <meta name="apple-mobile-web-app-title" content="QuiFaitQuoi">
     <meta name="theme-color" content="#597176">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="apple-touch-icon" href="/static/icons/qfq-icon-192-v2.png">
     <link rel="stylesheet" href="{{ url_for('static', filename='points_style.css') }}">
-    <!-- Import Google Fonts Montserrat pour toute l'appli -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common-styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}">
+    <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nav-feedback.css') }}">
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"></noscript>
+    <!-- Socket.IO - hébergé localement pour éviter dépendance CDN externe -->
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    {% block head_scripts %}{% endblock %}
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* 🚨 ANTI-ZOOM MOBILE - FORCER LARGEUR ÉCRAN */
-        html {
-            overflow-x: hidden !important;
-            max-width: 100vw !important;
-            -webkit-text-size-adjust: 100%;
-            -moz-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
-        
-        body {
-            overflow-x: hidden !important;
-            max-width: 100vw !important;
-            width: 100% !important;
-        }
-        
-        /* Empêcher tout élément de dépasser */
-        img, video, iframe, table, form, div, section, article, aside, header, footer, nav, main {
-            max-width: 100% !important;
-        }
-
-        /* Images PNG responsives (mobile-friendly) */
-        img[src$=".png"] {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-
+        /* ── Variables de couleur héritées du CSS moderne ── */
         :root { 
-            --avatar-size: 88px;
-            --teal-light:#A6D3DC;
-            --teal-dark:#597176;
+            --avatar-size: 70px;
+            --teal-light: #A6D3DC;
+            --teal-dark: #597176;
+            --brown-warm: #4a3428;
+            --brown-dark: #1a1410;
             --header-padding-vertical: 14px;
             --header-padding-horizontal: 28px;
             --header-total-height: 80px;
             --header-spacing-bottom: 4px;
         }
 
-        body {
-            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            padding-bottom: 0;
+        /* ── Adaptation couleur texte selon le thème choisi (clair/sombre) ── */
+        :root {
+            --adaptive-text: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
+            --adaptive-muted: {% if bg_theme_light %}rgba(21,48,54,0.7){% else %}rgba(255,255,255,0.7){% endif %};
+            --adaptive-light: {% if bg_theme_light %}rgba(21,48,54,0.5){% else %}rgba(255,255,255,0.5){% endif %};
         }
 
-        /* Game Header harmonisé */
-        .header-menu { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:nowrap; background: rgba(255,255,255,0.24); backdrop-filter: saturate(180%) blur(30px); -webkit-backdrop-filter: saturate(180%) blur(30px); padding: var(--header-padding-vertical) var(--header-padding-horizontal); border-radius: 0 0 24px 24px; box-shadow: 0 12px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35); color:#153036; position:fixed; top:0; left:0; right:0; z-index:2000; box-sizing:border-box; border: 1px solid rgba(255,255,255,0.55); }
-        .header-inner { width:100%; max-width:880px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 8px; }
-        .avatar-strip { display:flex; gap:15px; align-items:center; justify-content:center; }
-        /* Deux joueurs: espacement réduit pour mobile */
-        .avatar-strip.two-players { gap: 50px; }
-        .header-left, .header-right { position: relative; z-index: 2001; display:flex; align-items:center; gap:12px; flex:0 0 auto; }
-        .avatar-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:0 0 var(--avatar-size); max-width: var(--avatar-size); width: var(--avatar-size); box-sizing: border-box; }
-        .avatar-row { display:flex; align-items:center; gap:8px; flex:0 0 auto; position: relative; }
-        .avatar-name { text-align:center; color:#153036; max-width: calc(var(--avatar-size) * 1.8); font-size:12px; font-weight:800; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow: 0 1px 3px rgba(255,255,255,0.8); letter-spacing: 0.3px; }
-        .avatar-square { position: relative; z-index: 2002; width: var(--avatar-size, 80px); height: var(--avatar-size, 80px); border-radius:18px; overflow:hidden; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%); box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid rgba(255,255,255,0.6); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .avatar-square:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 15px 45px rgba(0,0,0,0.22), 0 0 0 4px rgba(255,255,255,0.45); border-color: rgba(255,255,255,0.8); }
-        .avatar-square img { width:100%; height:100%; object-fit:cover; display:block; }
-        .avatar-square-wrapper { position: relative; display: inline-block; overflow: visible; }
-        .avatar-square-wrapper .vbar { position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); height: calc(var(--avatar-size) - 8px); width:6px; border-radius:999px; background: linear-gradient(180deg, rgba(21,48,54,0.06), rgba(21,48,54,0.10)); overflow:hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); border: 1px solid rgba(21,48,54,0.22); z-index:2100; }
-        .avatar-square-wrapper .vbar .vbar-fill { transition: height 0.4s ease; box-shadow: 0 0 6px rgba(0,0,0,0.12); left:0; right:0; bottom:0; position:absolute; }
+        /* Classes utilitaires explicites pour le texte adaptatif */
+        .text-adaptive { color: var(--adaptive-text) !important; }
+        .text-adaptive-muted { color: var(--adaptive-muted) !important; }
+        .text-adaptive-light { color: var(--adaptive-light) !important; }
+
+        /* ── Éléments à fond propre CLAIR : texte toujours foncé, peu importe le thème ── */
+        /* Inputs, textareas, selects : fond blanc/clair natif → texte foncé obligatoire */
+        input, textarea, select, [contenteditable] {
+            color: #153036 !important;
+        }
+        /* Cartes à fond blanc : le texte garde sa couleur propre (non overridée) */
+        .task-card:not(.negative-task),
+        .task-card:not(.negative-task) .task-name,
+        .room-header,
+        .room-header .room-name,
+        .room-header .room-subtitle,
+        .glass-card, .glass-panel, .glass-modal,
+        .back-btn-glass,
+        .header-menu {
+            color: #153036 !important;
+        }
+        /* Sous-textes de cartes claires */
+        .task-card:not(.negative-task) .task-subtitle,
+        .task-card:not(.negative-task) .task-desc,
+        .task-card:not(.negative-task) .task-points {
+            color: #597176 !important;
+        }
+
+        /* ── Fix iOS tap — réaction instantanée, pas de flash bleu/gris ── */
+        *, *::before, *::after {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, a, [onclick], input[type="submit"],
+        input[type="button"], label, .btn {
+            cursor: pointer;
+        }
+        button, [onclick], .malus-option {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ── Base harmonisée avec système de thèmes personnalisés ── */
+        body {
+            background: {{ bg_gradient }};
+            color: {% if bg_theme_light %}#153036{% else %}#ffffff{% endif %};
+        }
+
+        /* ── Header moderne harmonisé ── */
+        .header-menu { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+            flex-wrap: nowrap; 
+            background: white;
+            border: 1px solid #e8f4f8;
+            padding: var(--header-padding-vertical) var(--header-padding-horizontal); 
+            padding-top: calc(var(--header-padding-vertical) + env(safe-area-inset-top, 0px));
+            border-radius: 0 0 24px 24px; 
+            box-shadow: 0 4px 16px rgba(89,113,118,0.12);
+            color: #153036; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            z-index: 2000; 
+            box-sizing: border-box;
+        }
         
-        /* Barre horizontale pour mobile */
-        .vbar-horizontal { display: none; width: 100%; height: 4px; border-radius: 999px; background: linear-gradient(90deg, rgba(230,235,240,0.8) 0%, rgba(210,220,230,0.9) 100%); overflow: hidden; position: relative; margin-top: 2px; }
-        .vbar-horizontal .vbar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; height: 100%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .vbar { width:10px; min-width:10px; height: calc(var(--avatar-size, 80px) - 6px); border-radius:999px; background: linear-gradient(180deg, rgba(230,235,240,0.8) 0%, rgba(210,220,230,0.9) 100%); overflow:hidden; box-shadow: inset 0 2px 6px rgba(0,0,0,0.12), 0 3px 10px rgba(0,0,0,0.1), 0 0 0 2px rgba(253,174,84,0.15); border: 2px solid rgba(253,174,84,0.3); display:inline-block; position: relative; transition: all 0.3s ease; }
-        .vbar-fill { position: absolute; left: 0; right: 0; bottom: 0; width:100%; height:0%; transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 20px currentColor, 0 -3px 12px rgba(255,255,255,0.4), inset 0 2px 6px rgba(255,255,255,0.5); border-radius: 999px; filter: saturate(1.3) brightness(1.1); }
-        .avatar-points { text-align: center; font-size: 11px; font-weight: 700; color: #153036; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
-        .daily-chip { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:800; color:#153036; background: rgba(255,255,255,0.85); border:1px solid rgba(21,48,54,0.15); border-radius:999px; padding:4px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
-        .daily-chip .dot { width:6px; height:6px; border-radius:50%; background: #FDAE54; display:inline-block; }
-        .daily-chip .bar { width:60px; height:6px; border-radius:999px; background: rgba(21,48,54,0.12); overflow:hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); }
-        .daily-chip .bar-fill { height:100%; background: linear-gradient(90deg, #FDAE54, #F4C68D); width:0%; transition: width 0.4s ease; }
+        .header-inner { 
+            width: 100%; 
+            max-width: 880px; 
+            margin: 0 auto; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+            padding: 0 8px; 
+        }
+        
+        .avatar-strip { 
+            display: flex; 
+            gap: 15px; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .avatar-strip.two-players { 
+            gap: 50px; 
+        }
+        
+        .avatar-col { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px; 
+            flex: 0 0 var(--avatar-size); 
+            max-width: var(--avatar-size); 
+            width: var(--avatar-size); 
+            box-sizing: border-box; 
+        }
+        
+        .avatar-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            flex: 0 0 auto; 
+            position: relative; 
+        }
+        
+        .avatar-name { 
+            text-align: center; 
+            color: #597176; 
+            max-width: calc(var(--avatar-size) * 1.8); 
+            font-size: 15px; 
+            font-weight: 800; 
+            line-height: 1.2; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            letter-spacing: 0.3px; 
+        }
+        
+        .avatar-square { 
+            position: relative; 
+            z-index: 2002; 
+            width: var(--avatar-size, 70px); 
+            height: var(--avatar-size, 70px); 
+            border-radius: 12px; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: white;
+            box-shadow: 0 4px 16px rgba(89,113,118,0.15); 
+            border: 3px solid #A6D3DC; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        
+        .avatar-square:hover { 
+            transform: translateY(-2px) scale(1.05); 
+            box-shadow: 0 8px 24px rgba(89,113,118,0.25); 
+        }
+        
+        .avatar-square img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            display: block; 
+        }
+        
+        .avatar-points { 
+            text-align: center; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #597176; 
+        }
+        
+        .vbar { 
+            width: 10px; 
+            min-width: 10px; 
+            height: calc(var(--avatar-size, 70px) - 6px); 
+            border-radius: 999px; 
+            background: #e8f4f8; 
+            overflow: hidden; 
+            box-shadow: inset 0 1px 2px rgba(89,113,118,0.1); 
+            border: 2px solid #A6D3DC; 
+            display: inline-block; 
+            position: relative; 
+            transition: all 0.3s ease; 
+        }
+        
+        .vbar-fill { 
+            position: absolute; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            width: 100%; 
+            height: 0%; 
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: linear-gradient(180deg, #A6D3DC, #FDAE54);
+            border-radius: 999px; 
+        }
+        
+        .vbar-horizontal { 
+            display: none; 
+            width: 100%; 
+            height: 4px; 
+            border-radius: 999px; 
+            background: #e8f4f8; 
+            overflow: hidden; 
+            position: relative; 
+            margin-top: 2px; 
+        }
+        
+        .vbar-horizontal .vbar-fill { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            bottom: 0; 
+            width: 0%; 
+            height: 100%; 
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #A6D3DC, #FDAE54);
+        }
+        
+        .daily-chip { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            color: #153036; 
+            background: white;
+            border: 1px solid #e8f4f8; 
+            border-radius: 999px; 
+            padding: 4px 8px; 
+            box-shadow: 0 2px 8px rgba(89,113,118,0.08); 
+        }
+        
+        .daily-chip .dot { 
+            width: 6px; 
+            height: 6px; 
+            border-radius: 50%; 
+            background: #FDAE54; 
+            display: inline-block; 
+        }
+        
+        .daily-chip .bar { 
+            width: 60px; 
+            height: 6px; 
+            border-radius: 999px; 
+            background: #e8f4f8; 
+            overflow: hidden; 
+        }
+        
+        .daily-chip .bar-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #FDAE54, #F4C68D); 
+            width: 0%; 
+            transition: width 0.4s ease; 
+        }
         /* Media queries pour mobile et tablette */
         @media (max-width: 520px) { 
             .header-menu { padding: 10px 12px; } 
@@ -128,7 +324,7 @@
                 max-width: var(--avatar-size); 
                 min-width: var(--avatar-size);
                 line-height: 1.1; 
-                font-size: 8px;
+                font-size: 10px;
                 word-break: normal;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -157,7 +353,7 @@
             .avatar-strip { gap: 3px; }
             .avatar-strip.two-players { gap: 15px !important; }
             .avatar-name { 
-                font-size: 7px;
+                font-size: 9px;
                 max-width: var(--avatar-size);
             }
             .avatar-points { font-size: 7px !important; }
@@ -173,14 +369,12 @@
             :root {
                 --avatar-size: 60px;
             }
-            .avatar-square { border-radius: 12px; }
         }
         
         @media (max-width: 390px) {
             :root {
                 --avatar-size: 56px;
             }
-            .avatar-square { border-radius: 10px; }
         }
         
         @media (max-width: 360px) {
@@ -600,19 +794,26 @@
     </style>
     {% block extra_styles %}{% endblock %}
     {% block page_styles %}{% endblock %}
-    
-    <!-- 🔔 Script Push Notifications -->
-    <script src="{{ url_for('static', filename='push-notifications.js') }}" defer></script>
+    <link rel="prefetch" href="/menu">
+    <link rel="prefetch" href="/classement">
+    <link rel="prefetch" href="/reminders">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 {% if menu_page %}
+  {% include '_game_header.html' %}
+{% elif not hide_header %}
   {% include '_game_header.html' %}
 {% endif %}
 
 <!-- Bouton retour vers le menu (affiché sur toutes les pages sauf le menu) -->
 
-
+<main>
 {% block content %}{% endblock %}
+</main>
+
+
+<!-- 🎭 Popup flash glassmorphisme universel (toutes pages héritant de base.html) -->
+{% include '_flash_popup.html' %}
 
 <script>
 // Variables globales pour la maison
@@ -642,52 +843,6 @@ let houseMessages = {
 
 let lastActivityTime = Date.now();
 let inactivityTimer;
-let audioContext;
-
-// Initialiser l'audio context
-function initAudioContext() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    return audioContext;
-}
-
-// Fonction pour jouer un son avec Web Audio API
-function playSound(type) {
-    try {
-        const ctx = initAudioContext();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        if (type === 'pointsSound') {
-            // Son de points gagnés (notes montantes)
-            oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // Do
-            oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // Mi
-            oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // Sol
-            oscillator.type = 'triangle';
-            gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            oscillator.start(ctx.currentTime);
-            oscillator.stop(ctx.currentTime + 0.5);
-        } else if (type === 'happySound') {
-            // Son de célébration (mélodie joyeuse)
-            oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // Do
-            oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15); // Mi
-            oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.3); // Sol
-            oscillator.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.45); // Do aigu
-            oscillator.type = 'sine';
-            gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
-            oscillator.start(ctx.currentTime);
-            oscillator.stop(ctx.currentTime + 0.8);
-        }
-    } catch (e) {
-        console.log('Son non disponible:', e);
-    }
-}
 
 // Fonction pour nommer la maison
 function nameHouse() {
@@ -697,12 +852,11 @@ function nameHouse() {
         return;
     }
     
-    fetch('/name_house', {
+    var formData = new FormData();
+    formData.append('house_name', houseName);
+    fetch('/house/update_house_name', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ house_name: houseName })
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
@@ -746,7 +900,12 @@ function animateHouse(mood) {
 function showPointsAnimation(points) {
     const pointsDiv = document.createElement('div');
     pointsDiv.className = 'points-animation';
-    pointsDiv.textContent = '+' + points + ' points!';
+    pointsDiv.textContent = (points > 0 ? '+' : '') + points + ' points!';
+    if (points > 0) {
+        pointsDiv.style.color = '#7ABAC5';
+    } else {
+        pointsDiv.style.color = '#D4856A';
+    }
     document.body.appendChild(pointsDiv);
     
     setTimeout(() => {
@@ -762,7 +921,7 @@ function onTaskCompleted(points) {
     showPointsAnimation(points);
     
     // Son de réussite
-    playSound('pointsSound');
+    SoundManager.play('gainPoints');
     
     // Animation de la maison heureuse
     animateHouse('happy');
@@ -796,7 +955,7 @@ function updateHouseProgress() {
             animateHouse('excited');
             const celebrationMessage = houseMessages.celebration[Math.floor(Math.random() * houseMessages.celebration.length)];
             showHouseMessage(celebrationMessage, 'celebration');
-            playSound('happySound');
+            SoundManager.play('victory');
         }, 500);
     }
 }
@@ -828,8 +987,8 @@ function startInactivityCheck() {
 // Fonction pour copier le lien d'invitation
 function copyInviteLink() {
     const baseUrl = window.location.origin;
-    const registerUrl = baseUrl + "{{ url_for('register') }}";
-    const inviteLink = registerUrl + "?house_code={{ house_code }}";
+    const registerUrl = baseUrl + "{{ url_for('house.join_house') }}";
+    const inviteLink = registerUrl + "?code={{ house_code }}";
     
     navigator.clipboard.writeText(inviteLink).then(function() {
         const btn = event.target.closest('.invite-player-btn');
@@ -898,24 +1057,6 @@ function showHouseChallenge() {
     setTimeout(() => { challengeDiv.style.display = 'none'; }, 10000);
 }
 
-// Sonnerie lors de la création d'une tâche
-function playTaskCreatedSound() {
-    try {
-        const ctx = initAudioContext();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.25);
-    } catch (e) { console.log('Sonnerie non disponible', e); }
-}
-
 // Fonction pour afficher un message de la maison
 function showHouseMessage(message, type) {
     const messageDiv = document.getElementById('houseMessage');
@@ -943,7 +1084,7 @@ function updateHouseHealth(amount = 5) {
             animateHouse('excited');
             const celebrationMessage = houseMessages.celebration[Math.floor(Math.random() * houseMessages.celebration.length)];
             showHouseMessage(celebrationMessage, 'celebration');
-            playSound('happySound');
+            SoundManager.play('victory');
         }, 500);
     }
     if (newVal <= 20) {
@@ -955,7 +1096,7 @@ function updateHouseHealth(amount = 5) {
 function onTaskCompleted(points) {
     lastActivityTime = Date.now();
     showPointsAnimation(points);
-    playSound('pointsSound');
+    SoundManager.play('gainPoints');
     animateHouse('happy');
     const messages = houseMessages.encouragement;
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
@@ -970,13 +1111,301 @@ function onTaskCreated() {
     showHouseMessage("Nouvelle tâche ajoutée ! La maison compte sur vous ! 🏠🔔", 'encouragement');
     showHouseChallenge();
 }
+
+// 🎭 Fonction universelle pour afficher un popup glassmorphisme harmonisé
+window.showGlassPopup = function(message, category = 'info', duration = 3000) {
+    // Catégories: success, warning, danger, info
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(21, 48, 54, 0.7);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        z-index: 10000; display: flex; align-items: center; justify-content: center;
+        opacity: 0; animation: fadeInOverlay 0.3s ease forwards;
+    `;
+    
+    const popup = document.createElement('div');
+    let bgGradient;
+    if (category === 'success') {
+        bgGradient = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 215, 0, 0.3) 50%, rgba(253, 174, 84, 0.4) 100%)';
+    } else if (category === 'warning') {
+        bgGradient = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(253, 174, 84, 0.4) 50%, rgba(244, 198, 141, 0.5) 100%)';
+    } else if (category === 'danger') {
+        bgGradient = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 107, 107, 0.3) 50%, rgba(231, 76, 60, 0.2) 100%)';
+    } else {
+        bgGradient = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(166, 211, 220, 0.5) 50%, rgba(89, 113, 118, 0.3) 100%)';
+    }
+    
+    popup.style.cssText = `
+        background: ${bgGradient};
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: 28px; padding: 32px 28px; max-width: 340px; width: 90%;
+        box-shadow: 0 25px 50px rgba(21, 48, 54, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        position: relative; border: 1px solid rgba(255, 255, 255, 0.3); text-align: center; overflow: hidden;
+        animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    `;
+    
+    popup.innerHTML = `
+        <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:14px;right:14px;background:rgba(21,48,54,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:50%;width:38px;height:38px;font-size:22px;color:#153036;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s ease;">&times;</button>
+        <div style="font-size:17px;line-height:1.6;color:#153036;font-weight:600;margin-top:8px;text-shadow:0 1px 2px rgba(255,255,255,0.5);">${message}</div>
+    `;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.8) translateY(30px); opacity: 0; } 60% { transform: scale(1.03) translateY(-5px); } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+    
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+    
+    if (duration > 0) {
+        setTimeout(() => overlay.remove(), duration);
+    }
+};
         
+</script>
+
+<!-- 🔊 Howler.js + SoundManager centralisé (defer pour ne pas bloquer le parsing HTML) -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
+<script defer src="{{ url_for('static', filename='js/soundManager.js') }}?v=1004"></script>
+<!-- 🔓 Déverrouillage audio mobile (iOS/Android) au premier toucher
+     - bubbling phase (false) au lieu de capture pour ne pas intercepter les clics avant les boutons
+     - passive: true pour ne jamais bloquer le scroll / le clic
+     - SoundManager.unlock() reporté en requestIdleCallback pour ne pas bloquer le 1er tap -->
+<script>
+(function(){
+    function unlockAudio(){
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('click', unlockAudio);
+        var run = function(){ if(window.SoundManager) try{ SoundManager.unlock(); }catch(_){} };
+        run();
+    }
+    document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
+    document.addEventListener('click', unlockAudio, { passive: true, once: true });
+})();
 </script>
 
 {% block extra_scripts %}{% endblock %}
 
+<script>
+// ═══════════════════════════════════════════════════════
+//  cbToast — Toast glassmorphisme global (toutes pages)
+//  Usage : cbToast('message', 'success'|'warning'|'danger'|'info', duréeMs)
+// ═══════════════════════════════════════════════════════
+window.cbToast = function(message, type, duration) {
+    type     = type     || 'info';
+    duration = (duration === undefined) ? 2800 : duration;
+    var bg = {
+        success: 'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(255,215,0,.3) 50%,rgba(253,174,84,.4) 100%)',
+        warning: 'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(253,174,84,.4) 50%,rgba(244,198,141,.5) 100%)',
+        danger:  'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(255,107,107,.3) 50%,rgba(231,76,60,.2) 100%)',
+        info:    'linear-gradient(135deg,rgba(255,255,255,.9) 0%,rgba(166,211,220,.5) 50%,rgba(89,113,118,.3) 100%)'
+    };
+    var t = document.createElement('div');
+    t.style.cssText =
+        'position:fixed;bottom:28px;left:50%;' +
+        'transform:translateX(-50%) translateY(18px);' +
+        'background:' + (bg[type] || bg.info) + ';' +
+        'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);' +
+        'border:1px solid rgba(255,255,255,.3);' +
+        'border-radius:28px;padding:13px 26px;' +
+        'font-size:14px;font-weight:700;font-family:Montserrat,sans-serif;' +
+        'color:#153036;text-align:center;max-width:340px;width:90%;' +
+        'box-shadow:0 8px 32px rgba(21,48,54,.25),0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.6);' +
+        'z-index:99999;pointer-events:none;' +
+        'transition:opacity .35s cubic-bezier(.34,1.56,.64,1),transform .35s cubic-bezier(.34,1.56,.64,1);' +
+        'opacity:0;';
+    t.textContent = message;
+    document.body.appendChild(t);
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
+        t.style.transform = 'translateX(-50%) translateY(0)';
+        t.style.opacity   = '1';
+    }); });
+    setTimeout(function() {
+        t.style.transform = 'translateX(-50%) translateY(18px)';
+        t.style.opacity   = '0';
+        setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
+    }, duration);
+};
+</script>
 
+<!-- 🔔 Script Push Notifications - chargé à la fin pour éviter les erreurs de timing -->
+<script src="{{ url_for('static', filename='push-notifications.js') }}"></script>
 
+<!-- Badge icone accueil : recalcule a chaque chargement de page -->
+<script>
+(function() {
+    function refreshAppBadge() {
+        if (!('setAppBadge' in navigator)) return;
+        fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(counts) {
+                if (!counts) return;
+                var total = (counts.unread_received || 0)
+                          + (counts.unread_task_added || 0)
+                          + (counts.courses_pending_count || 0)
+                          + (counts.unread_baby || 0);
+                if (total > 0) {
+                    navigator.setAppBadge(total).catch(function(){});
+                } else {
+                    navigator.clearAppBadge().catch(function(){});
+                }
+            })
+            .catch(function() {});
+    }
+    // Recalcul initial
+    refreshAppBadge();
+    // Écouter les messages du Service Worker (REFRESH_BADGES après push)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'REFRESH_BADGES') {
+                refreshAppBadge();
+                if (typeof refreshTabBadges === 'function') {
+                    refreshTabBadges();
+                }
+            }
+            // 🔔 Push reminder 20h reçu → rediriger vers /menu?reminder=<id>
+            // pour que le popup "Hé, t'es là ?" s'affiche, peu importe la page courante.
+            if (event.data && event.data.type === 'SHOW_REMINDER' && event.data.url) {
+                try { window.location.href = event.data.url; } catch(_) {}
+            }
+        });
+    }
+
+    // 🔔 Au retour de visibilité (tap icône PWA en arrière-plan, déverrouillage),
+    // vérifier s'il y a un reminder du jour non lu et rediriger vers /menu si c'est le cas.
+    // Couvre le cas iOS où l'icône PWA reprend la dernière page (≠ /menu).
+    var _qfqLastReminderCheck = 0;
+    function _qfqCheckReminderResume() {
+        if (document.visibilityState !== 'visible') return;
+        var now = Date.now();
+        if (now - _qfqLastReminderCheck < 4000) return; // throttle 4s
+        _qfqLastReminderCheck = now;
+        // Sur /menu, c'est menu.html qui gère (affichage direct du popup)
+        if (location.pathname === '/menu' || location.pathname.indexOf('/menu') === 0) return;
+        fetch('/api/latest_reminder', { credentials: 'same-origin', cache: 'no-store' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (data && data.reminder && data.reminder.id) {
+                    window.location.href = '/menu?reminder=' + encodeURIComponent(data.reminder.id);
+                }
+            })
+            .catch(function() {});
+    }
+    document.addEventListener('visibilitychange', _qfqCheckReminderResume);
+    window.addEventListener('pageshow', _qfqCheckReminderResume);
+    // ⚠️ 'focus' retiré : iOS Safari le déclenche à chaque tap → ralentit tous les clics.
+    // visibilitychange + pageshow couvrent déjà le retour de l'app PWA.
+    // 🛟 Polling de secours : iOS PWA standalone ne déclenche pas toujours les events ci-dessus.
+    // 60s au lieu de 20s : suffisant pour un reminder du jour, et 3× moins de fetches.
+    setInterval(_qfqCheckReminderResume, 60000);
+})();
+</script>
+
+<script>
+// 📱 Tab bar — onglet actif + pastilles (Messages dot + Courses count)
+// 🔧 Source unique de vérité front pour les badges nav, valable sur TOUTES les pages
+//    héritant de base.html. Ré-exécutée à chaque visibilitychange/pageshow et sur
+//    chaque event WebSocket pertinent (reminder_*, all_messages_read, new_message_notification).
+(function() {
+    var path = window.location.pathname;
+    var tabMap = {
+        'qfqTabClassement': ['/classement-stats', '/classement', '/sats', '/stats_graphique'],
+        'qfqTabMessages':   ['/comments', '/baby_messages', '/mission_messages'],
+        'qfqTabMinijeux':   ['/gameplay'],
+        'qfqTabCourses':    ['/reminders'],
+        'qfqTabSettings':   ['/settings', '/settings/theme', '/personnaliser_maison', '/profil', '/edit_player']
+    };
+    for (var id in tabMap) {
+        var paths = tabMap[id];
+        for (var i = 0; i < paths.length; i++) {
+            if (path === paths[i] || path.indexOf(paths[i] + '/') === 0) {
+                var el = document.getElementById(id);
+                if (el) { el.classList.add('active'); }
+                break;
+            }
+        }
+    }
+
+    // 🔧 Setter Messages — même pattern que Courses (.qfq-tab-count + chiffre)
+    function setMessagesDot(unread) {
+        var badge = document.getElementById('messages-nav-badge');
+        if (!badge) return;
+        if (unread > 0) {
+            badge.textContent = unread < 100 ? unread : '99+';
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // 🔧 Setter compteur Courses (idempotent)
+    function setCoursesCount(cnt) {
+        var b = document.getElementById('courses-nav-badge');
+        if (!b) return;
+        if (cnt > 0) {
+            b.textContent = cnt < 100 ? cnt : '99+';
+            b.style.display = '';
+        } else {
+            b.style.display = 'none';
+        }
+    }
+
+    var _qfqLastRefresh = 0;
+    function refreshTabBadges() {
+        var now = Date.now();
+        if (now - _qfqLastRefresh < 400) return; // throttle 400ms
+        _qfqLastRefresh = now;
+        fetch('/api/unread_counts', { cache: 'no-store', credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(counts) {
+                if (!counts) return;
+                // Pastille Messages = UNIQUEMENT messages privés reçus non lus
+                // (task_added a sa propre pastille mission, baby_tracking a sa pastille bébé)
+                setMessagesDot(counts.unread_received || 0);
+                setCoursesCount(counts.courses_pending_count || 0);
+            })
+            .catch(function() {});
+    }
+    // Exposer pour réutilisation (ex: comments.html)
+    window._qfqRefreshTabBadges = refreshTabBadges;
+
+    // Refresh initial
+    refreshTabBadges();
+
+    // Refresh sur retour de visibilité (PWA iOS, retour d'onglet)
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') refreshTabBadges();
+    });
+    window.addEventListener('pageshow', refreshTabBadges);
+
+    // 🔌 Brancher Socket.IO si chargé sur la page courante (ne casse pas si absent)
+    function bindWS() {
+        if (typeof io === 'undefined') return false;
+        try {
+            var s = (window.socket && window.socket.on) ? window.socket : io({transports: ['websocket', 'polling'], reconnection: true, reconnectionAttempts: Infinity, reconnectionDelay: 1000, reconnectionDelayMax: 5000});
+            window.socket = s;
+            ['reminder_added','reminder_toggle','reminder_deleted',
+             'all_messages_read','new_message_notification','system_message','message_read']
+             .forEach(function(ev) { s.on(ev, refreshTabBadges); });
+            return true;
+        } catch(_) { return false; }
+    }
+    if (!bindWS()) {
+        // Réessayer une fois après chargement complet (Socket.IO peut être chargé en defer)
+        window.addEventListener('load', function() { setTimeout(bindWS, 300); });
+    }
+})();
+</script>
+<footer style="text-align:center;padding:16px 0 32px;opacity:0.7;">
+  <a href="/privacy"
+    style="font-size:12px;color:rgba(255,255,255,0.6);text-decoration:none;">
+    Politique de confidentialité
+  </a>
+</footer>
+<script src="{{ url_for('static', filename='js/nav-feedback.js') }}"></script>
 </body>
 </html>
 

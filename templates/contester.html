@@ -1,0 +1,744 @@
+{% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
+{% block title %}Contester une tâche{% endblock %}
+{% block content %}
+<style>
+    :root {
+        --brown-warm: #4a3428;
+        --brown-dark: #1a1410;
+        --teal-light: #A6D3DC;
+        --teal-dark: #597176;
+        --gold: #FDAE54;
+        --peach: #F4C68D;
+        --white: #ffffff;
+        --dark: #153036;
+        --danger: #e74c3c;
+        --danger-light: rgba(231, 76, 60, 0.15);
+    }
+/* Header rectangle titre */
+    .room-header {
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(231,76,60,0.12) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        border: 2px solid rgba(231,76,60,0.2);
+        box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+    }
+    .room-header .room-icon { font-size: 48px; margin-bottom: 8px; display: block; }
+    .room-header .room-name { font-size: 22px; font-weight: 800; color: #153036; margin: 0; }
+    .room-header .room-subtitle { font-size: 14px; color: #597176; margin-top: 4px; }
+
+    .contest-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 90px 20px 40px 20px;
+    }
+
+    /* Onglets */
+    .contest-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
+    .contest-tab {
+        flex: 1;
+        padding: 14px;
+        border: 2px solid rgba(166,211,220,0.4);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.9);
+        backdrop-filter: blur(10px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--dark);
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .contest-tab:hover { transform: translateY(-2px); background: rgba(255,255,255,1); }
+    .contest-tab.active {
+        background: linear-gradient(135deg, var(--gold), var(--peach));
+        border-color: var(--gold);
+        color: white;
+        box-shadow: 0 8px 25px rgba(253,174,84,0.4);
+    }
+    .contest-tab .tab-badge {
+        display: inline-block;
+        background: rgba(231,76,60,0.9);
+        color: white;
+        font-size: 11px;
+        font-weight: 800;
+        min-width: 20px;
+        height: 20px;
+        line-height: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-left: 6px;
+        padding: 0 6px;
+    }
+    .contest-tab.active .tab-badge { background: rgba(255,255,255,0.4); color: var(--dark); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* === CARDS STYLE (comme manage_players) === */
+    .task-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 20px;
+        border: 2px solid rgba(255,255,255,0.5);
+        box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .task-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 60px rgba(89,113,118,0.3), inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .task-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .task-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 2px solid rgba(166,211,220,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        position: relative;
+    }
+    .task-avatar::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -120%; height: 100%; width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 16px;
+        pointer-events: none;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+    @keyframes shine-sweep { 0% { left: -120%; } 50% { left: 0%; } 100% { left: 120%; } }
+    .task-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
+
+    /* Skull à droite de l'avatar */
+    .skull-indicator {
+        font-size: 22px;
+        z-index: 10;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        animation: skull-bounce 2s ease-in-out infinite;
+        align-self: center;
+        margin-right: 6px;
+        flex-shrink: 0;
+    }
+    @keyframes skull-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+
+    .task-info { flex: 1; }
+    .task-player-name {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 2px;
+    }
+    .task-name-display {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--teal-dark);
+        margin-bottom: 2px;
+    }
+    .task-meta {
+        font-size: 12px;
+        color: rgba(21,48,54,0.5);
+        font-weight: 500;
+    }
+    .task-points-badge {
+        background: linear-gradient(135deg, var(--gold), var(--peach));
+        color: white;
+        font-weight: 800;
+        font-size: 14px;
+        padding: 6px 14px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(253,174,84,0.3);
+        flex-shrink: 0;
+    }
+
+    /* Boutons action */
+    .btn-group { display: flex; gap: 12px; margin-top: 12px; }
+
+    .btn {
+        flex: 1;
+        padding: 14px 20px;
+        border: none;
+        border-radius: 18px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+    .btn:hover::before { left: 100%; }
+
+    .btn-contest {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        box-shadow: 0 8px 25px rgba(231,76,60,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .btn-contest:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 35px rgba(231,76,60,0.5);
+    }
+    .btn-contest:active { transform: translateY(-1px) scale(1); }
+
+    .btn-accept {
+        background: linear-gradient(135deg, #27ae60, #219a52);
+        color: white;
+        box-shadow: 0 8px 25px rgba(39,174,96,0.35);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .btn-accept:hover { transform: translateY(-3px) scale(1.02); }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        box-shadow: 0 8px 25px rgba(231,76,60,0.35);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .btn-reject:hover { transform: translateY(-3px) scale(1.02); }
+
+    .btn-photo {
+        background: linear-gradient(135deg, var(--teal-light), var(--teal-dark));
+        color: white;
+        box-shadow: 0 8px 25px rgba(89,113,118,0.35);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .btn-photo:hover { transform: translateY(-3px) scale(1.02); }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-pending {
+        background: rgba(241,196,15,0.2);
+        color: #f39c12;
+        border: 1.5px solid rgba(241,196,15,0.4);
+    }
+    .status-proof {
+        background: rgba(52,152,219,0.2);
+        color: #2980b9;
+        border: 1.5px solid rgba(52,152,219,0.4);
+    }
+
+    /* Photo preview */
+    .proof-photo-container {
+        margin-top: 16px;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px solid rgba(166,211,220,0.4);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .proof-photo-container img {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--teal-dark);
+    }
+    .empty-state-icon { font-size: 64px; margin-bottom: 16px; display: block; }
+    .empty-state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--dark); }
+    .empty-state-text { font-size: 14px; opacity: 0.7; }
+
+    /* Modal confirmation glassmorphisme */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(21,48,54,0.7);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.15) 100%);
+        backdrop-filter: blur(30px);
+        border-radius: 28px;
+        padding: 36px 28px;
+        max-width: 420px;
+        width: 100%;
+        border: 2px solid rgba(255,255,255,0.6);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        text-align: center;
+        animation: modal-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes modal-in {
+        0% { transform: scale(0.9); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .modal-icon { font-size: 56px; margin-bottom: 16px; display: block; }
+    .modal-title { font-size: 20px; font-weight: 800; color: var(--dark); margin-bottom: 12px; }
+    .modal-text { font-size: 14px; color: var(--teal-dark); line-height: 1.6; margin-bottom: 24px; }
+    .modal-warning {
+        background: var(--danger-light);
+        border: 1.5px solid rgba(231,76,60,0.3);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 24px;
+        font-size: 13px;
+        color: var(--danger);
+        font-weight: 600;
+    }
+    .modal-buttons { display: flex; gap: 12px; }
+    .modal-btn {
+        flex: 1;
+        padding: 14px;
+        border: none;
+        border-radius: 16px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+    }
+    .modal-btn-cancel {
+        background: rgba(255,255,255,0.95);
+        color: var(--dark);
+        border: 1.5px solid rgba(166,211,220,0.5);
+    }
+    .modal-btn-cancel:hover { background: white; }
+    .modal-btn-confirm {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        box-shadow: 0 6px 20px rgba(231,76,60,0.4);
+    }
+    .modal-btn-confirm:hover { transform: translateY(-2px); }
+
+    /* Camera input hidden */
+    .hidden-file-input { display: none; }
+
+    /* Responsive */
+    @media (max-width: 520px) {
+        .contest-container { padding: 80px 12px 40px 12px; }
+        .room-header .room-name { font-size: 18px; }
+        .task-card { padding: 20px; border-radius: 20px; }
+        .task-header { gap: 12px; }
+        .task-avatar { width: 50px; height: 50px; }
+        .task-player-name { font-size: 14px; }
+        .btn { padding: 12px 16px; font-size: 13px; }
+        .modal-card { padding: 28px 20px; }
+        .contest-tabs { gap: 6px; }
+        .contest-tab { padding: 10px 8px; font-size: 12px; }
+    }
+</style>
+
+<div class="contest-container">
+    <!-- Header -->
+    <div class="room-header">
+        <span class="room-icon">⚔️</span>
+        <h1 class="room-name">Contester une tâche</h1>
+        <p class="room-subtitle">Vérifie que les tâches ont vraiment été faites !</p>
+    </div>
+
+    <!-- Onglets -->
+    <div class="contest-tabs">
+        <button class="contest-tab active" onclick="switchTab('tasks')">
+            🔍 Tâches du jour
+        </button>
+        <button class="contest-tab" onclick="switchTab('pending')">
+            ⏳ En cours
+            {% if pending_contests|length > 0 %}
+            <span class="tab-badge">{{ pending_contests|length }}</span>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- TAB 1: Tâches contestables -->
+    <div id="tab-tasks" class="tab-content active">
+        {% if tasks|length == 0 %}
+        <div class="empty-state">
+            <span class="empty-state-icon">🏠</span>
+            <div class="empty-state-title">Rien à contester</div>
+            <div class="empty-state-text">Les autres joueurs n'ont pas encore validé de tâches aujourd'hui.</div>
+        </div>
+        {% else %}
+        {% for task in tasks %}
+        <div class="task-card" id="task-card-{{ task.id }}">
+            <div class="task-header">
+                <div class="task-avatar">
+                    {% if task.avatar_file %}
+                        <img src="{{ url_for('static', filename='avatars/' + task.avatar_file) }}" alt="{{ task.player_name }}">
+                    {% elif task.avatar_url %}
+                        <img src="{{ task.avatar_url }}" alt="{{ task.player_name }}">
+                    {% elif task.avatar and task.avatar|length <= 4 %}
+                        <span style="font-size:28px;">{{ task.avatar }}</span>
+                    {% else %}
+                        <img src="https://api.dicebear.com/7.x/{{ task.avatar_style }}/svg?seed={{ task.player_email.split('@')[0] }}" alt="{{ task.player_name }}">
+                    {% endif %}
+                </div>
+                {% if task.player_email in skulls_today %}
+                <span class="skull-indicator">💀</span>
+                {% endif %}
+                <div class="task-info">
+                    <div class="task-player-name">{{ task.player_name }}</div>
+                    <div class="task-name-display">{{ task.task_name }}</div>
+                    <div class="task-meta">{{ task.category | replace('_', ' ') | title }} • {{ task.completed_at.split(' ')[1][:5] if ' ' in task.completed_at else '' }}</div>
+                </div>
+                <div class="task-points-badge">{{ task.points }} pts</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-contest" onclick="openContestModal({{ task.id }}, '{{ task.task_name | e }}', '{{ task.player_name | e }}')">
+                    ⚔️ Contester
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- TAB 2: Contestations en cours -->
+    <div id="tab-pending" class="tab-content">
+        {% if pending_contests|length == 0 %}
+        <div class="empty-state">
+            <span class="empty-state-icon">✅</span>
+            <div class="empty-state-title">Aucune contestation</div>
+            <div class="empty-state-text">Pas de contestation en cours pour le moment.</div>
+        </div>
+        {% else %}
+        {% for contest in pending_contests %}
+        <div class="task-card" id="contest-card-{{ contest.id }}">
+            <div class="task-header">
+                <div class="task-avatar" style="position:relative;">
+                    {% if contest.contested_avatar_file %}
+                        <img src="{{ url_for('static', filename='avatars/' + contest.contested_avatar_file) }}" alt="{{ contest.contested_name }}">
+                    {% elif contest.contested_avatar_url %}
+                        <img src="{{ contest.contested_avatar_url }}" alt="{{ contest.contested_name }}">
+                    {% elif contest.contested_avatar and contest.contested_avatar|length <= 4 %}
+                        <span style="font-size:28px;">{{ contest.contested_avatar }}</span>
+                    {% else %}
+                        <img src="https://api.dicebear.com/7.x/{{ contest.contested_avatar_style }}/svg?seed={{ contest.contested_email.split('@')[0] }}" alt="{{ contest.contested_name }}">
+                    {% endif %}
+                </div>
+                <div class="task-info">
+                    <div class="task-player-name">{{ contest.task_name }}</div>
+                    <div class="task-name-display">
+                        {{ contest.contestant_name }} conteste {{ contest.contested_name }}
+                    </div>
+                    {% if contest.status == 'pending_proof' %}
+                    <span class="status-badge status-pending">⏳ En attente de preuve</span>
+                    {% elif contest.status == 'proof_submitted' %}
+                    <span class="status-badge status-proof">📸 Preuve envoyée</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if contest.status == 'pending_proof' and contest.contested_email == current_user %}
+            <!-- Je suis le joueur contesté → je dois envoyer une preuve -->
+            <div style="margin-top: 16px; padding: 16px; background: rgba(241,196,15,0.1); border-radius: 16px; border: 1.5px solid rgba(241,196,15,0.3);">
+                <p style="font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 12px;">
+                    📸 {{ contest.contestant_name }} conteste ta tâche ! Envoie une photo comme preuve.
+                </p>
+                <input type="file" accept="image/*" capture="environment" class="hidden-file-input" id="proof-input-{{ contest.id }}" onchange="submitProof({{ contest.id }}, this)">
+                <button class="btn btn-photo" onclick="document.getElementById('proof-input-{{ contest.id }}').click()">
+                    📷 Prendre une photo preuve
+                </button>
+            </div>
+            {% endif %}
+
+            {% if contest.status == 'proof_submitted' and contest.contestant_email == current_user %}
+            <!-- Je suis le contestataire → je dois valider/rejeter la preuve -->
+            <div class="proof-photo-container">
+                <img src="{{ url_for('static', filename='contest_proofs/' + contest.proof_photo) }}" alt="Preuve photo">
+            </div>
+            <p style="margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--dark); text-align: center;">
+                Cette preuve te convainc-t-elle ?
+            </p>
+            <div class="btn-group" style="margin-top: 12px;">
+                <button class="btn btn-accept" onclick="validateContest({{ contest.id }}, 'accept')">
+                    ✅ Accepter
+                </button>
+                <button class="btn btn-reject" onclick="validateContest({{ contest.id }}, 'reject')">
+                    ❌ Rejeter
+                </button>
+            </div>
+            {% endif %}
+
+            {% if contest.status == 'proof_submitted' and contest.contested_email == current_user %}
+            <!-- Je suis le contesté et j'ai envoyé la preuve → en attente -->
+            <div style="margin-top: 16px; padding: 16px; background: rgba(52,152,219,0.1); border-radius: 16px; border: 1.5px solid rgba(52,152,219,0.3); text-align: center;">
+                <p style="font-size: 14px; font-weight: 700; color: #2980b9;">
+                    ✅ Preuve envoyée ! En attente de la décision de {{ contest.contestant_name }}...
+                </p>
+            </div>
+            {% endif %}
+
+            {% if contest.status == 'pending_proof' and contest.contestant_email == current_user %}
+            <!-- Je suis le contestataire → en attente de la preuve -->
+            <div style="margin-top: 16px; padding: 16px; background: rgba(241,196,15,0.1); border-radius: 16px; border: 1.5px solid rgba(241,196,15,0.3); text-align: center;">
+                <p style="font-size: 14px; font-weight: 700; color: #f39c12;">
+                    ⏳ En attente de la preuve de {{ contest.contested_name }}...
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bouton retour -->
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+
+<!-- Modal de confirmation -->
+<div class="modal-overlay" id="contestModal">
+    <div class="modal-card">
+        <span class="modal-icon">⚔️</span>
+        <div class="modal-title">Contester cette tâche ?</div>
+        <div class="modal-text" id="modalText">
+            Tu es sur le point de contester la tâche "<span id="modalTaskName"></span>" de <strong id="modalPlayerName"></strong>.
+        </div>
+        <div class="modal-warning">
+            ⚠️ Attention ! Si tu es suspicieux à tort, tu risques de perdre <strong>10 points</strong> !
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-cancel" onclick="closeContestModal()">Non</button>
+            <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn" onclick="confirmContest()">Oui, contester !</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal résultat -->
+<div class="modal-overlay" id="resultModal">
+    <div class="modal-card">
+        <span class="modal-icon" id="resultIcon">✅</span>
+        <div class="modal-title" id="resultTitle">Résultat</div>
+        <div class="modal-text" id="resultText"></div>
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-cancel" onclick="closeResultModal()" style="flex:1;">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pendingContestTaskId = null;
+
+    // === TABS ===
+    function switchTab(tab) {
+        document.querySelectorAll('.contest-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        
+        if (tab === 'tasks') {
+            document.querySelectorAll('.contest-tab')[0].classList.add('active');
+            document.getElementById('tab-tasks').classList.add('active');
+        } else {
+            document.querySelectorAll('.contest-tab')[1].classList.add('active');
+            document.getElementById('tab-pending').classList.add('active');
+        }
+    }
+
+    // === MODAL CONTESTATION ===
+    function openContestModal(taskId, taskName, playerName) {
+        pendingContestTaskId = taskId;
+        document.getElementById('modalTaskName').textContent = taskName;
+        document.getElementById('modalPlayerName').textContent = playerName;
+        document.getElementById('contestModal').classList.add('active');
+    }
+
+    function closeContestModal() {
+        document.getElementById('contestModal').classList.remove('active');
+        pendingContestTaskId = null;
+    }
+
+    async function confirmContest() {
+        if (!pendingContestTaskId) return;
+        
+        const btn = document.getElementById('modalConfirmBtn');
+        btn.disabled = true;
+        btn.textContent = '...';
+        
+        try {
+            const response = await fetch('/api/contest_task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed_task_id: pendingContestTaskId })
+            });
+            
+            const result = await response.json();
+            closeContestModal();
+            
+            if (result.success) {
+                // Masquer la carte de tâche contestée
+                const card = document.getElementById('task-card-' + pendingContestTaskId);
+                if (card) {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(-100%)';
+                    setTimeout(() => card.remove(), 500);
+                }
+                showResult('⚔️', 'Contestation lancée !', result.message);
+            } else {
+                showResult('❌', 'Erreur', result.error || 'Impossible de contester cette tâche.');
+            }
+        } catch (error) {
+            closeContestModal();
+            showResult('❌', 'Erreur', 'Erreur de connexion. Réessaie plus tard.');
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Oui, contester !';
+    }
+
+    // === ENVOI PREUVE PHOTO ===
+    async function submitProof(contestId, input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        
+        // Limiter la taille (5 MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showResult('❌', 'Fichier trop lourd', 'La photo ne doit pas dépasser 5 Mo.');
+            return;
+        }
+        
+        // Convertir en base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64 = e.target.result;
+            
+            try {
+                const response = await fetch('/api/submit_contest_proof', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contest_id: contestId, photo: base64 })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('📸', 'Preuve envoyée !', result.message);
+                    // Rafraîchir après 2 secondes
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showResult('❌', 'Erreur', result.error);
+                }
+            } catch (error) {
+                showResult('❌', 'Erreur', 'Erreur lors de l\'envoi de la photo.');
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // === VALIDATION PREUVE ===
+    async function validateContest(contestId, decision) {
+        const actionText = decision === 'accept' ? 'accepter la preuve' : 'rejeter la preuve';
+        
+        try {
+            const response = await fetch('/api/validate_contest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contest_id: contestId, decision: decision })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const icon = decision === 'accept' ? '😅' : '💀';
+                showResult(icon, decision === 'accept' ? 'Preuve acceptée' : 'Preuve rejetée', result.message);
+                setTimeout(() => window.location.reload(), 2500);
+            } else {
+                showResult('❌', 'Erreur', result.error);
+            }
+        } catch (error) {
+            showResult('❌', 'Erreur', 'Erreur de connexion.');
+        }
+    }
+
+    // === MODAL RÉSULTAT ===
+    function showResult(icon, title, text) {
+        document.getElementById('resultIcon').textContent = icon;
+        document.getElementById('resultTitle').textContent = title;
+        document.getElementById('resultText').textContent = text;
+        document.getElementById('resultModal').classList.add('active');
+    }
+
+    function closeResultModal() {
+        document.getElementById('resultModal').classList.remove('active');
+    }
+
+    // === WEBSOCKET ===
+    if (typeof io !== 'undefined') {
+        const socket = io({ transports: ['websocket'], reconnectionAttempts: 3 });
+        
+        socket.on('connect', function() {
+            const houseId = '{{ house_id }}';
+            if (houseId) {
+                socket.emit('join_house_room', { house_id: houseId });
+            }
+        });
+        
+        socket.on('contest_created', function(data) {
+            // Notification: quelqu'un a contesté une tâche
+            if (data.contested_email === '{{ current_user }}') {
+                showResult('⚔️', 'Tu es contesté !', 
+                    data.contestant_name + ' conteste ta tâche "' + data.task_name + '". Envoie une preuve photo !');
+                setTimeout(() => window.location.reload(), 3000);
+            }
+        });
+        
+        socket.on('contest_proof_submitted', function(data) {
+            // La preuve a été envoyée
+            setTimeout(() => window.location.reload(), 1000);
+        });
+        
+        socket.on('contest_resolved', function(data) {
+            // La contestation a été résolue
+            setTimeout(() => window.location.reload(), 1000);
+        });
+    }
+</script>
+{% endblock %}

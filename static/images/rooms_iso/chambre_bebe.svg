@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180">
+  <defs>
+    <linearGradient id="floorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF9C4;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFEB3B;stop-opacity:0.3" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Sol isométrique -->
+  <path d="M 100 40 L 180 80 L 100 120 L 20 80 Z" 
+        fill="url(#floorGrad)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="2"/>
+  
+  <!-- Mur gauche -->
+  <path d="M 20 80 L 100 120 L 100 160 L 20 120 Z" 
+        fill="rgba(255, 249, 196, 0.3)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mur droit -->
+  <path d="M 180 80 L 100 120 L 100 160 L 180 120 Z" 
+        fill="rgba(255, 249, 196, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.3)" 
+        stroke-width="1.5"/>
+  
+  <!-- Berceau/Lit bébé -->
+  <path d="M 50 95 L 90 115 L 90 125 L 50 105 Z" 
+        fill="rgba(255, 235, 59, 0.3)" 
+        stroke="rgba(255, 255, 255, 0.6)" 
+        stroke-width="2"/>
+  <!-- Barreaux -->
+  <line x1="55" y1="97" x2="55" y2="107" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1.5"/>
+  <line x1="62" y1="101" x2="62" y2="111" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1.5"/>
+  <line x1="69" y1="105" x2="69" y2="115" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1.5"/>
+  <line x1="76" y1="109" x2="76" y2="119" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1.5"/>
+  <line x1="83" y1="113" x2="83" y2="123" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1.5"/>
+  
+  <!-- Matelas doux -->
+  <path d="M 52 105 L 88 123 L 88 126 L 52 108 Z" 
+        fill="rgba(255, 245, 157, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1"/>
+  
+  <!-- Doudou/peluche -->
+  <circle cx="65" cy="114" r="5" 
+          fill="rgba(255, 193, 7, 0.7)" 
+          stroke="rgba(255, 255, 255, 0.5)" 
+          stroke-width="1"/>
+  <circle cx="68" cy="112" r="2.5" 
+          fill="rgba(255, 235, 59, 0.8)" 
+          stroke="rgba(255, 255, 255, 0.4)" 
+          stroke-width="0.5"/>
+  
+  <!-- Table à langer -->
+  <path d="M 110 100 L 150 120 L 150 127 L 110 107 Z" 
+        fill="rgba(166, 211, 220, 0.5)" 
+        stroke="rgba(255, 255, 255, 0.6)" 
+        stroke-width="1.5"/>
+  <path d="M 110 100 L 150 120 L 150 117 L 110 97 Z" 
+        fill="rgba(166, 211, 220, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.6)" 
+        stroke-width="1.5"/>
+  
+  <!-- Étagère avec produits -->
+  <path d="M 115 95 L 145 110 L 145 113 L 115 98 Z" 
+        fill="rgba(255, 235, 59, 0.4)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1"/>
+  <!-- Produits bébé -->
+  <rect x="120" y="99" width="8" height="8" 
+        fill="rgba(255, 255, 255, 0.7)" 
+        stroke="rgba(200, 200, 200, 0.6)" 
+        stroke-width="0.5" rx="1"/>
+  <rect x="132" y="104" width="8" height="8" 
+        fill="rgba(255, 193, 7, 0.6)" 
+        stroke="rgba(200, 200, 200, 0.6)" 
+        stroke-width="0.5" rx="1"/>
+  
+  <!-- Fauteuil d'allaitement -->
+  <path d="M 30 105 L 50 117 L 50 127 L 30 115 Z" 
+        fill="rgba(253, 174, 84, 0.5)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  <!-- Dossier -->
+  <path d="M 30 105 L 50 117 L 50 110 L 30 98 Z" 
+        fill="rgba(253, 174, 84, 0.7)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mobile musical au plafond -->
+  <line x1="70" y1="75" x2="70" y2="90" 
+        stroke="rgba(255, 235, 59, 0.5)" 
+        stroke-width="1.5"/>
+  <circle cx="65" cy="92" r="3" 
+          fill="rgba(255, 193, 7, 0.7)" 
+          stroke="rgba(255, 255, 255, 0.5)" 
+          stroke-width="1"/>
+  <circle cx="70" cy="93" r="3" 
+          fill="rgba(255, 235, 59, 0.7)" 
+          stroke="rgba(255, 255, 255, 0.5)" 
+          stroke-width="1"/>
+  <circle cx="75" cy="92" r="3" 
+          fill="rgba(255, 245, 157, 0.7)" 
+          stroke="rgba(255, 255, 255, 0.5)" 
+          stroke-width="1"/>
+  
+  <!-- Veilleuse douce -->
+  <circle cx="160" cy="110" r="6" 
+          fill="rgba(255, 235, 59, 0.9)" 
+          stroke="rgba(255, 255, 255, 0.7)" 
+          stroke-width="1"
+          filter="url(#glow)"/>
+  
+  <!-- Tapis moelleux -->
+  <ellipse cx="70" cy="120" rx="35" ry="15" 
+           fill="rgba(255, 235, 59, 0.2)" 
+           stroke="rgba(255, 235, 59, 0.4)" 
+           stroke-width="1.5"/>
+  
+  <!-- Icône -->
+  <text x="100" y="35" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="24" 
+        filter="url(#glow)">👶</text>
+  
+  <!-- Label glassmorphism -->
+  <rect x="45" y="5" width="110" height="22" 
+        fill="rgba(255, 255, 255, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="1.5" 
+        rx="11"/>
+  <text x="100" y="20" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="14" 
+        font-weight="600" 
+        fill="#FFFFFF">Chambre Bébé</text>
+</svg>

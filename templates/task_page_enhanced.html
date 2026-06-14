@@ -1,13 +1,90 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
+<!-- CACHE BUSTER: 2026-02-07-NO-POPUP-WEBSOCKET-SYNC-v7 -->
+<!-- DEBUG: current_task_id={{ current_task_id }}, task_id={{ task_id }} -->
 {% set player_colors = ['rgba(74, 144, 226, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(39, 174, 96, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(231, 76, 60, 0.4)', 'rgba(26, 188, 156, 0.4)', 'rgba(243, 156, 18, 0.4)', 'rgba(52, 152, 219, 0.4)'] %}
 
 {% block title %}{{ task_name }} - Clean Beat (Avancé){% endblock %}
+{% block body_class %}page-task-enhanced{% endblock %}
 
 {% block content %}
 
+<!-- Message d'aide supprimé -->
+
 <style>
+    /* ========== COULEURS DYNAMIQUES PAR PIÈCE - Dégradés harmonieux ========== */
+    :root {
+        {% if 'Salon' in category or 'salon' in category|lower %}
+            /* Salon - Pêche clair (OK) */
+            --brown-warm: #FFCCAA;
+            --brown-dark: #FFB890;
+        {% elif 'Cuisine' in category or 'cuisine' in category|lower %}
+            /* Cuisine - Vert anis doux */
+            --brown-warm: #D9E5A0;
+            --brown-dark: #C8D985;
+        {% elif 'chambre_parentale' in category|lower or ('Chambre' in category and '1' in category) %}
+            /* Chambre 1 - Marron */
+            --brown-warm: #8B7355;
+            --brown-dark: #75614A;
+        {% elif 'chambre1' in category|lower or ('Chambre' in category and '2' in category) %}
+            /* Chambre 2 - Beige */
+            --brown-warm: #D4C4A8;
+            --brown-dark: #C2B196;
+        {% elif 'chambre2' in category|lower or ('Chambre' in category and '3' in category) %}
+            /* Chambre 3 - Olive */
+            --brown-warm: #8B8B5C;
+            --brown-dark: #75754A;
+        {% elif 'chambre_enfant' in category|lower or 'Chambre Enfant' in category %}
+            /* Chambre enfant 1 - Saumon (couleur échangée avec bébé) */
+            --brown-warm: #F5A89A;
+            --brown-dark: #E19080;
+        {% elif 'chambre_garcon' in category|lower or 'garcon' in category|lower %}
+            /* Chambre enfant 2 - Orangé */
+            --brown-warm: #E5A67F;
+            --brown-dark: #D1925E;
+        {% elif 'chambre_bebe' in category|lower or 'Bébé' in category or 'bebe' in category|lower or 'bébé' in category|lower %}
+            /* Chambre bébé - Rosé pâle (couleur échangée avec enfant 1) */
+            --brown-warm: #E8B5B5;
+            --brown-dark: #D19E9E;
+        {% elif 'Bureau' in category or 'Bonus' in category or 'bureau' in category|lower or 'bonus' in category|lower %}
+            /* Bureau - Beige/jaune pâle (OK) */
+            --brown-warm: #E9DDAF;
+            --brown-dark: #DCC88F;
+        {% elif 'Salle de bain' in category or 'sdb' in category|lower or 'bain' in category|lower or 'salle_bain' in category|lower %}
+            /* Salle de bain - Bleu ciel (OK) */
+            --brown-warm: #A8D8E0;
+            --brown-dark: #8BC7D1;
+        {% elif 'WC' in category or 'Toilettes' in category or 'wc' in category|lower or 'toilette' in category|lower %}
+            /* WC/Toilettes - Gris */
+            --brown-warm: #BFBFBF;
+            --brown-dark: #A8A8A8;
+        {% elif 'Buanderie' in category or 'buanderie' in category|lower %}
+            /* Buanderie - Vert olive clair (RÉFÉRENCE) */
+            --brown-warm: #a3a58f;
+            --brown-dark: #8F9177;
+        {% elif 'Garage' in category or 'garage' in category|lower %}
+            /* Garage - Bordeaux */
+            --brown-warm: #7D3C3C;
+            --brown-dark: #663030;
+        {% else %}
+            /* Beige neutre par défaut */
+            --brown-warm: #F5F1E8;
+            --brown-dark: #E8DCC8;
+        {% endif %}
+    }
+    
+    body {
+        background: {{ bg_gradient }};
+        min-height: 100vh;
+    }
+    
+    /* ========== FIN COULEURS DYNAMIQUES ========== */
+    
     /* Masquer le header game */
     .header-menu {
+        display: none !important;
+    }
+    .header-page-spacer {
         display: none !important;
     }
     
@@ -65,8 +142,30 @@
         border: 2px solid rgba(255, 255, 255, 0.9);
         animation: points-pulse 2.5s ease-in-out infinite;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
     }
-    
+
+    /* Modal d'édition des points - OPTIMISÉE MOBILE */
+    .points-modal { position: fixed; inset: 0; display: none; z-index: 2000; }
+    .points-modal.show { display: block; }
+    .points-modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .points-modal .dialog { position: relative; max-width: 380px; margin: 100px auto; background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 24px; z-index: 1; }
+    .points-modal .dialog h3 { margin: 0 0 16px; font-size: 20px; color: #153036; font-weight: 800; text-align: center; }
+    .points-modal .row { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .points-modal input[type="number"]{ flex:1; min-width: 0; height: 56px; font-size: 24px; padding: 12px 16px; border:2px solid #FDAE54; border-radius: 14px; font-weight: 700; text-align: center; }
+    .points-modal .actions { margin-top: 16px; display: flex; gap: 12px; justify-content: stretch; }
+    .points-modal button { flex: 1; height: 52px; padding: 0 20px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; font-size: 16px; transition: all 0.3s ease; }
+    .points-modal .btn-cancel { background: #e0e0e0; color: #333; }
+    .points-modal .btn-cancel:hover { background: #d0d0d0; transform: translateY(-2px); }
+    .points-modal .btn-ok { background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: #153036; box-shadow: 0 4px 15px rgba(253,174,84,0.4); }
+    .points-modal .btn-ok:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(253,174,84,0.6); }
+    @media (max-width: 768px) {
+        .points-modal .dialog { margin: 60px 16px; max-width: none; border-radius: 18px; padding: 20px; }
+        .points-modal input[type="number"] { height: 64px; font-size: 28px; border-width: 3px; }
+        .points-modal button { height: 58px; font-size: 18px; }
+        .points-modal .dialog h3 { font-size: 22px; margin-bottom: 20px; }
+    }
+
     /* Style pour les points négatifs (livraison) */
     .task-points-badge.negative {
         background: linear-gradient(135deg, 
@@ -198,133 +297,202 @@
     /* ========== STYLES POUR LES BOUTONS DE VALIDATION PAR JOUEUR ========== */
     .player-option {
         /* Forcer le comportement cliquable sur mobile */
-        -webkit-tap-highlight-color: rgba(76, 175, 80, 0.2) !important;
+        -webkit-tap-highlight-color: rgba(166, 211, 220, 0.3) !important;
         touch-action: manipulation !important;
         user-select: none !important;
         -webkit-user-select: none !important;
         cursor: pointer !important;
         position: relative !important;
         z-index: 100 !important;
+        overflow: hidden;
+        border-radius: 16px;
     }
     
     .player-option-inner {
-        padding: 14px 20px;
+        padding: 8px;
         border-radius: 16px;
-        border: 3px solid;
-        background: linear-gradient(135deg, rgba(166,211,220,0.15) 0%, rgba(255,255,255,0.95) 100%);
+        border: none;
+        background: transparent;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer !important;
-        width: 110px;
-        box-shadow: 0 3px 10px rgba(166,211,220,0.3);
+        width: 100px;
+        min-height: 135px;
+        box-sizing: border-box;
         pointer-events: none;
         position: relative;
         overflow: hidden;
     }
     
-    /* Effet de brillance au survol */
-    .player-option-inner::before {
+    /* Effet de brillance au survol - désactivé sur mobile */
+    @media (hover: hover) {
+        .player-option-inner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            transition: left 0.5s ease;
+            border-radius: 16px;
+        }
+        
+        /* Effet hover supprimé */
+        
+        /* Effet glassmorphism sur avatar au survol - DANS LE CADRE uniquement */
+        .player-option:hover .player-avatar-preview {
+            border-color: rgba(255,255,255,1) !important;
+            border-width: 4px !important;
+            box-shadow: 
+                0 8px 20px rgba(0,0,0,0.15),
+                inset 0 0 20px rgba(255,255,255,0.3),
+                inset 0 2px 0 rgba(255,255,255,0.9),
+                inset 0 0 0 2px rgba(255,255,255,0.4) !important;
+            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.08)) !important;
+            backdrop-filter: blur(15px) saturate(160%) !important;
+            -webkit-backdrop-filter: blur(15px) saturate(160%) !important;
+        }
+    }
+    
+    /* Animation de pulsation supprimée */
+    
+    .player-option .player-option-inner {
+        animation: none;
+    }
+
+    /* Utilisation des styles communs pour les avatars */
+    .player-avatar-preview {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
+        min-height: 100px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        border: 3px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 
+            0 4px 12px rgba(0,0,0,0.08);
+        flex: 0 0 auto;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        overflow: visible;
+        box-sizing: border-box;
+    }
+    
+    /* Effet glassmorphism sur la bordure uniquement */
+    /* Effet glassmorphism sur la bordure uniquement */
+    .player-avatar-preview::before {
+        content: '';
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, 
+            rgba(255,255,255,0.6) 0%, 
+            rgba(255,255,255,0.2) 50%,
+            rgba(255,255,255,0.6) 100%
+        );
+        backdrop-filter: blur(8px) saturate(150%);
+        -webkit-backdrop-filter: blur(8px) saturate(150%);
+        z-index: -1;
+        pointer-events: none;
+        opacity: 0.8;
+        box-shadow: 
+            inset 0 1px 0 rgba(255,255,255,0.6),
+            inset 0 0 20px rgba(255,255,255,0.3);
+    }
+
+    /* Effet shimmer/shine sur l'avatar (identique à common-styles) */
+    .player-avatar-preview::after {
         content: '';
         position: absolute;
         top: 0;
-        left: -100%;
+        left: -120%;
+        height: 100%;
+        width: 120%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        border-radius: 12px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+        animation: shine-sweep 3s ease-in-out infinite;
+        opacity: 0.9;
+    }
+
+    @keyframes shine-sweep {
+        0% {
+            left: -120%;
+            opacity: 0.9;
+        }
+        50% {
+            left: 120%;
+            opacity: 0.9;
+        }
+        100% {
+            left: 120%;
+            opacity: 0;
+        }
+    }
+
+    /* Effets hover/active supprimés - seront réajoutés de manière harmonieuse */
+
+    .player-avatar-preview img {
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-        transition: left 0.5s ease;
+        object-fit: cover;
+        border-radius: 10px;
+        display: block;
     }
     
-    .player-option:hover .player-option-inner::before {
-        left: 100%;
-    }
+    /* Animation de validation supprimée */
     
-    /* Animation de pulsation continue */
-    @keyframes player-pulse {
-        0%, 100% { 
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            transform: scale(1);
-        }
-        50% { 
-            box-shadow: 0 5px 15px rgba(76,175,80,0.25);
-            transform: scale(1.02);
-        }
-    }
+    /* Checkmark supprimé */
     
-    .player-option .player-option-inner {
-        animation: player-pulse 2s ease-in-out infinite;
-    }
+
     
-    /* État actif (clic) - Animation de validation */
-    .player-option:active .player-option-inner,
-    .player-option.validating .player-option-inner {
-        transform: scale(0.92) !important;
-        border-color: #4CAF50 !important;
-        background: linear-gradient(135deg, rgba(76,175,80,0.3) 0%, rgba(76,175,80,0.15) 100%) !important;
-        box-shadow: 0 0 20px rgba(76,175,80,0.6) !important;
-        animation: none !important;
-    }
+    /* Filtre image supprimé */
     
-    /* Animation flash lors de la validation */
-    @keyframes validation-flash {
-        0% { 
-            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.8);
-            transform: scale(1);
-        }
-        30% { 
-            box-shadow: 0 0 30px 10px rgba(76, 175, 80, 0.6);
-            transform: scale(1.15);
-        }
-        60% {
-            box-shadow: 0 0 50px 20px rgba(76, 175, 80, 0.3);
-            transform: scale(1.1);
-        }
-        100% { 
-            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-            transform: scale(1);
-        }
-    }
     
-    .player-option.validating .player-option-inner {
-        animation: validation-flash 0.6s ease-out !important;
-    }
+    /* Animation de validation supprimée */
     
-    /* Animation au survol sur desktop */
-    @media (hover: hover) {
-        .player-option:hover .player-option-inner {
-            border-color: #4CAF50 !important;
-            background: rgba(76,175,80,0.1) !important;
-            transform: translateY(-3px) scale(1.05) !important;
-            box-shadow: 0 8px 25px rgba(76,175,80,0.35) !important;
-            animation: none !important;
-        }
-    }
+    /* Effet de brillance supprimé */
     
-    /* ========== STYLES FORMULAIRE BÉBÉ ========== */
+    /* Effets hover supprimés - effet glassmorphism ajouté dans @media (hover: hover) */
+    
+    /* ========== STYLES FORMULAIRE BÉBÉ - HARMONISÉ ========== */
     #baby-tracking-form input[type="time"],
     #baby-tracking-form input[type="number"],
     #baby-tracking-form textarea {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-weight: 500;
     }
     
     #baby-tracking-form input[type="time"]:focus,
     #baby-tracking-form input[type="number"]:focus,
     #baby-tracking-form textarea:focus {
         outline: none;
-        border-color: rgba(166,211,220,0.8);
-        background: rgba(255,255,255,1);
-        box-shadow: 0 6px 20px rgba(166,211,220,0.4), 
-                    inset 0 1px 0 rgba(255,255,255,1);
-        transform: translateY(-1px);
+        border-color: #FDAE54;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.12),
+                    0 4px 16px rgba(253, 174, 84, 0.2);
+        transform: translateY(-2px);
     }
     
     #baby-tracking-form input[type="time"]:hover,
     #baby-tracking-form input[type="number"]:hover,
     #baby-tracking-form textarea:hover {
-        border-color: rgba(166,211,220,0.6);
-        box-shadow: 0 6px 16px rgba(166,211,220,0.35);
+        border-color: rgba(166,211,220,0.5);
+        box-shadow: 0 4px 12px rgba(166,211,220,0.3);
     }
     
     #baby-tracking-form input::placeholder,
@@ -336,8 +504,19 @@
     /* Responsive mobile */
     @media (max-width: 480px) {
         .player-option-inner {
-            padding: 12px 16px;
+            padding: 8px;
             width: 100px;
+            min-height: 135px;
+        }
+        
+        .player-avatar-preview {
+            width: 100px !important;
+            height: 100px !important;
+            min-width: 100px !important;
+            min-height: 100px !important;
+            border-width: 3px !important;
+            border-style: solid !important;
+            box-sizing: border-box !important;
         }
         
         #baby-tracking-form {
@@ -357,16 +536,16 @@
         }
     }
     
-    /* ========== BOUTON ASTUCE PRO (CTA Premium) ========== */
+    /* ========== BOUTON ASTUCE PRO (CTA Premium) - GLASSMORPHISME HARMONISÉ ========== */
     .pro-tip-container {
-        background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(253,174,84,0.08) 100%);
-        backdrop-filter: blur(15px) saturate(140%);
-        -webkit-backdrop-filter: blur(15px) saturate(140%);
-        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.24);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 18px;
         padding: 4px;
         margin-bottom: 16px;
-        border: 1px solid rgba(253, 174, 84, 0.25);
-        box-shadow: 0 4px 16px rgba(89, 113, 118, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        box-shadow: 0 8px 24px rgba(21, 48, 54, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.35);
         position: relative;
     }
     
@@ -376,25 +555,21 @@
     }
     
     .pro-tip-inner {
-        background: linear-gradient(135deg, 
-            rgba(253, 174, 84, 0.9) 0%, 
-            rgba(244, 198, 141, 0.85) 100%
-        );
-        backdrop-filter: blur(15px) saturate(160%);
-        -webkit-backdrop-filter: blur(15px) saturate(160%);
-        border-radius: 14px;
-        padding: 14px 18px;
+        background: linear-gradient(135deg, #FDAE54, #F4C68D);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 16px;
+        padding: 16px 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 
-            0 3px 12px rgba(253, 174, 84, 0.3), 
-            0 0 0 1px rgba(255, 255, 255, 0.2),
-            inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            0 6px 24px rgba(253, 174, 84, 0.35), 
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         position: relative;
         animation: gentle-pulse 3s ease-in-out infinite;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid transparent;
     }
     
     /* Animation de pulsation douce pour attirer l'attention */
@@ -447,14 +622,14 @@
         50% { transform: scale(1.15); }
     }
     
-    /* Badge "Gratuit" */
+    /* Badge "Gratuit" - GLASSMORPHISME HARMONISÉ */
     .tip-badge {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px) saturate(180%);
-        -webkit-backdrop-filter: blur(10px) saturate(180%);
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(15px) saturate(180%);
+        -webkit-backdrop-filter: blur(15px) saturate(180%);
         border-radius: 20px;
         padding: 6px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.5);
         animation: badge-glow 2s ease-in-out infinite;
         box-shadow: 
             0 2px 8px rgba(0, 0, 0, 0.1),
@@ -507,7 +682,7 @@
         }
     }
     
-    /* ========== CONTENEUR PRINCIPAL CENTRÉ & FIXE ========== */
+    /* ========== CONTENEUR PRINCIPAL CENTRÉ & FIXE - GLASSMORPHISME HARMONISÉ ========== */
     .task-main-container {
         width: 100%;
         max-width: 760px;
@@ -518,13 +693,14 @@
     }
     
     .task-card {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 16px;
-        padding: 16px;
-        box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
-        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.24);
+        backdrop-filter: saturate(180%) blur(30px);
+        -webkit-backdrop-filter: saturate(180%) blur(30px);
+        border-radius: 20px;
+        padding: 18px;
+        box-shadow: 0 20px 60px rgba(21, 48, 54, 0.15), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.55);
         width: 100%;
         box-sizing: border-box;
         transition: all 0.3s ease;
@@ -539,8 +715,8 @@
             max-width: calc(100% - 24px);
         }
         .task-card {
-            padding: 14px;
-            border-radius: 14px;
+            padding: 16px;
+            border-radius: 18px;
         }
     }
     
@@ -551,39 +727,44 @@
             max-width: calc(100% - 16px);
         }
         .task-card {
-            padding: 12px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 16px;
         }
     }
 </style>
 
-<!-- Bouton retour vers le menu -->
-<a href="{{ url_for('menu') }}" style="position:fixed;top:24px;left:24px;z-index:2001;width:56px;height:56px;background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px solid rgba(255,255,255,0.5);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#153036;font-size:28px;font-weight:bold;text-decoration:none;box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);transition:all 0.3s ease;" aria-label="Retour au menu">←</a>
+<!-- Bouton retour vers la catégorie -->
+<a href="{{ url_for('tasks.categorie', cat=category) }}" class="back-btn-glass" aria-label="Retour à la catégorie">←</a>
 
 <div class="task-main-container">
 
     <div class="task-card">
         
-        <!-- Titre de la tâche -->
-        <div style="text-align:center;margin-bottom:16px;">
-            <h2 style="margin:0 0 12px 0;color:#153036;font-size:22px;font-weight:800;">{{ task_name }}</h2>
+        <!-- 🎨 Header titre glassmorphisme comme page catégorie -->
+        <div class="room-header" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);backdrop-filter: blur(20px);-webkit-backdrop-filter: blur(20px);border-radius: 20px;padding: 20px;margin-bottom: 20px;text-align: center;border: 2px solid rgba(253,174,84,0.3);box-shadow: 0 8px 32px rgba(89,113,118,0.15);">
+            <h2 class="room-name" style="font-size: 22px;font-weight: 800;color: #153036;margin: 0 0 4px 0;">{{ task_name }}</h2>
+            {% if task_description %}
+            <p class="room-subtitle" style="font-size: 14px;color: #597176;margin: 0;">{{ task_description }}</p>
+            {% elif fun_text %}
+            <p class="room-subtitle" style="font-size: 14px;color: #597176;margin: 0;">{{ fun_text }}</p>
+            {% endif %}
         </div>
-        
-        {% if task_description %}
-        <p style="text-align:center;color:#555;margin:0 0 16px 0;">{{ task_description }}</p>
-        {% elif fun_text %}
-        <p style="text-align:center;color:#597176;font-size:15px;font-weight:600;margin:0 0 16px 0;">{{ fun_text }}</p>
-        {% endif %}
 
         <!-- Image centrée avec pastille de points - RESPONSIVE & FIXE -->
         <div class="task-image-container">
-            {% if task_image %}
-                <img src="{{ url_for('static', filename='images/' ~ task_image) }}" alt="{{ task_name }}" class="task-image">
+            {% if task_image and task_image.startswith('data:') %}
+                <img src="{{ task_image }}" alt="{{ task_name }}" class="task-image" loading="lazy">
+            {% elif task_image %}
+                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" class="task-image" loading="lazy" onerror="this.src='/static/images/{{ task_image }}';this.onerror=null;">
             {% else %}
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ task_name }}" class="task-image">
+                <img src="{{ url_for('static', filename='icons/qfq-icon-192-v2.png') }}" alt="{{ task_name }}" class="task-image">
             {% endif %}
-            <!-- Pastille rouge avec points en haut à droite -->
-            <span class="task-points-badge{% if task_points < 0 %} negative{% endif %}">{{ task_points|default(0) }}</span>
+            <!-- Pastille rouge avec points en haut à droite — cliquable pour modifier -->
+            <span class="task-points-badge{% if task_points < 0 %} negative{% endif %} points-edit-trigger"
+                  role="button" tabindex="0"
+                  title="Modifier les points"
+                  data-action="{% if is_custom_task %}{{ url_for('tasks.update_custom_task_points', cat=category, task_id=task_id) }}{% else %}{{ url_for('tasks.update_task_points', cat=category, task_id=task_id) }}{% endif %}"
+                  data-points="{{ task_points|default(0) }}">{{ task_points|default(0) }}</span>
         </div>
 
         <!-- Encart Trucs & Astuces (pub premium) -->
@@ -611,31 +792,32 @@
         <!-- FORMULAIRE DE SUIVI BÉBÉ (si tâche = biberon/couches/sommeil) -->
         {% set is_baby_task = 'biberon' in task_name.lower() or 'couche' in task_name.lower() or 'dormir' in task_name.lower() %}
         {% if is_baby_task %}
-        <div id="baby-tracking-form" style="margin:24px auto;max-width:520px;width:calc(100% - 32px);background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:24px;border-radius:16px;border:2px solid rgba(255,255,255,0.5);box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);box-sizing:border-box;">
-            <h4 style="text-align:center;color:#153036;margin-bottom:20px;font-weight:700;font-size:18px;">
+        <div id="baby-tracking-form" style="margin:24px auto;max-width:520px;width:calc(100% - 32px);background:rgba(255, 255, 255, 0.24);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.55);box-shadow:0 20px 60px rgba(21, 48, 54, 0.15), inset 0 1px 0 rgba(255,255,255,0.35);box-sizing:border-box;">
+            <h4 style="text-align:center;margin:0 auto 20px auto;padding:8px 16px;font-size:16px;font-weight:700;color:#1a1410;background:linear-gradient(135deg, #FF9F47 0%, #FDB777 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:10px;display:inline-block;max-width:90%;box-shadow:0 4px 12px rgba(255,159,71,0.25);">
                 {% if 'biberon' in task_name.lower() %}🍼 Suivi du biberon
-                {% elif 'couche' in task_name.lower() %}Suivi des couches
+                {% elif 'couche' in task_name.lower() %}👶 Suivi des couches
                 {% else %}😴 Suivi du sommeil{% endif %}
             </h4>
             
+            <!-- 🕐 Champ heure précise -->
             <div class="form-group" style="margin-bottom:18px;">
-                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🕐 Heure</label>
-                <input type="time" id="tracking_time" class="form-control" required style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:16px;color:#153036;font-weight:500;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;-webkit-appearance:none;appearance:none;">
+                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🕐 Heure <span style="color:#e74c3c;font-weight:700;">*</span></label>
+                <input type="time" id="tracking_time" class="form-control" required style="display:block;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(166,211,220,0.35);background:rgba(255,255,255,0.85);font-size:16px;color:#153036;font-weight:500;box-shadow:0 2px 8px rgba(21, 48, 54, 0.05);transition:all 0.3s ease;box-sizing:border-box;-webkit-appearance:none;appearance:none;">
             </div>
             
             {% if 'biberon' in task_name.lower() %}
             <div class="form-group" style="margin-bottom:18px;">
-                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🍼 Quantité (ml)</label>
-                <input type="number" id="bottle_ml" class="form-control" placeholder="Ex: 120" min="0" max="500" required style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:16px;color:#153036;font-weight:500;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;">
+                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">🍼 Quantité (ml) <span style="color:#888;font-weight:400;font-size:12px;">(optionnel)</span></label>
+                <input type="number" id="bottle_ml" class="form-control" placeholder="Ex: 120" min="0" max="500" style="display:block;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(166,211,220,0.35);background:rgba(255,255,255,0.85);font-size:16px;color:#153036;font-weight:500;box-shadow:0 2px 8px rgba(21, 48, 54, 0.05);transition:all 0.3s ease;box-sizing:border-box;">
             </div>
             {% endif %}
             
             <div class="form-group" style="margin-bottom:18px;">
-                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">📝 Observations {% if 'biberon' not in task_name.lower() %}<span style="color:#e74c3c;font-weight:700;">*</span>{% endif %}</label>
-                <textarea id="observations" class="form-control" rows="3" placeholder="{% if 'biberon' in task_name.lower() %}Type de lait, appétit...{% elif 'couche' in task_name.lower() %}Selles, irritations...{% else %}Qualité du sommeil...{% endif %}" {% if 'biberon' not in task_name.lower() %}required{% endif %} style="display:block;width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(166,211,220,0.4);background:rgba(255,255,255,0.9);font-size:15px;color:#153036;line-height:1.5;resize:vertical;font-weight:400;box-shadow:0 3px 10px rgba(166,211,220,0.3);transition:all 0.3s ease;box-sizing:border-box;"></textarea>
+                <label style="display:block;font-weight:600;color:#153036;margin-bottom:8px;font-size:14px;">📝 Observations (optionnel)</label>
+                <textarea id="observations" class="form-control" rows="3" placeholder="{% if 'biberon' in task_name.lower() %}Ex: bébé a bien mangé, lait maternel, régurgitation...{% elif 'couche' in task_name.lower() %}Ex: couche sale, selles normales, irritation...{% else %}Ex: bébé fatigué, a bien dormi...{% endif %}" style="display:block;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(166,211,220,0.35);background:rgba(255,255,255,0.85);font-size:16px;color:#153036;line-height:1.5;resize:vertical;font-weight:500;box-shadow:0 2px 8px rgba(21, 48, 54, 0.05);transition:all 0.3s ease;box-sizing:border-box;"></textarea>
             </div>
             
-            <p style="text-align:center;font-size:13px;color:#597176;margin-top:12px;margin-bottom:0;font-weight:500;opacity:0.85;">✉️ Les infos seront envoyées à votre partenaire</p>
+            <p style="text-align:center;font-size:14px;color:#2ecc71;margin-top:16px;margin-bottom:0;font-weight:700;background:rgba(46,204,113,0.1);padding:12px;border-radius:8px;border:1px solid rgba(46,204,113,0.3);">💬 Ces informations seront automatiquement envoyées dans la messagerie pour informer les autres joueurs de la maison</p>
         </div>
         {% endif %}
 
@@ -644,29 +826,34 @@
         <div style="margin-bottom:20px;">
             <p style="text-align:center;color:#153036;font-size:16px;font-weight:700;margin-bottom:14px;">👆 Qui a fait cette tâche ?</p>
             
-            <!-- Formulaire avec les boutons de joueurs -->
-            <form method="post" id="complete-form">
-                <div id="player-selector" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 10px;">
-                    {% for player in players %}
-                    {% set player_idx = loop.index0 %}
-                    {% set color = player_colors[player_idx % 8] %}
-                    <button type="submit" name="player_email" value="{{ player.email }}" class="player-option" data-email="{{ player.email }}" style="background:none;border:none;padding:0;margin:0;cursor:pointer;outline:none;">
-                        <div class="player-option-inner" style="border-color: {{ color }};">
+            <!-- Boutons de joueurs (plus de formulaire classique) -->
+            <div id="player-selector" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 10px;">
+                {% for player in players %}
+                <button type="button" class="player-option ajax-validate-btn" data-email="{{ player.email }}" style="background:none;border:none;padding:0;margin:0;cursor:pointer;outline:none;">
+                    {% set border_color = (player.player_color_hex if player.player_color_hex else (player.color if player.color else '#A6D3DC')) %}
+                    <div class="player-option-inner" style="border-color: {{ border_color }};">
+                        <div style="position:relative;display:flex;align-items:center;justify-content:center;">
                             {% if player.avatar_file %}
-                                <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                                <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %};">
+                                    <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                                </div>
                             {% elif player.avatar_url %}
-                                <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                                <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %};">
+                                    <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                                </div>
                             {% elif player.avatar and player.avatar|length <= 4 %}
-                                <span style="font-size:28px;">{{ player.avatar }}</span>
+                                <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %}; font-size:32px; color: #153036; display:flex; align-items:center; justify-content:center;">{{ player.avatar }}</div>
                             {% else %}
-                                <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="{{ player.name }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                                <div class="player-avatar-preview" style="border:3px solid {% if '#' in border_color %}{{ border_color }}DD{% else %}{{ border_color }}{% endif %};">
+                                    <img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ (player.name or player.email)|urlencode }}" alt="{{ player.name }}">
+                                </div>
                             {% endif %}
-                            <span style="font-weight:700;color:#153036;font-size:14px;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;">{{ player.name }}</span>
                         </div>
-                    </button>
-                    {% endfor %}
-                </div>
-            </form>
+                        <span style="font-weight:700;color:#153036;font-size:12px;width:100px;text-align:center;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 4px;display:block;min-height:32px;display:flex;align-items:center;justify-content:center;">{{ player.name }}</span>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
         
@@ -675,11 +862,11 @@
         <style>
             @keyframes pulse-glow {
                 0%, 100% { 
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 0 0 rgba(76,175,80,0.4);
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 0 0 rgba(166,211,220,0.5);
                     transform: scale(1);
                 }
                 50% { 
-                    box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 20px 5px rgba(76,175,80,0.3);
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 20px 5px rgba(166,211,220,0.4);
                     transform: scale(1.02);
                 }
             }
@@ -712,13 +899,17 @@
             #complete-btn:active {
                 transform: scale(0.97);
             }
+            @keyframes task-pts-popup {
+                0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+                20%  { opacity:1; transform:translate(-50%,-70%) scale(1.35); }
+                50%  { opacity:1; transform:translate(-50%,-85%) scale(1.15); }
+                100% { opacity:0; transform:translate(-50%,-130%) scale(0.9); }
+            }
         </style>
         <div style="text-align:center;">
-            <form method="post" id="complete-form-solo">
-                <button id="complete-btn" type="submit" style="padding:16px 28px;border-radius:14px;color:#fff;border:none;font-weight:800;cursor:pointer;font-size:17px;width:100%;max-width:320px;transition:all 0.2s ease;">
-                    ✅ {{ task_name|clean_task }}, c'est fait !
-                </button>
-            </form>
+            <button id="complete-btn" type="button" class="ajax-validate-btn-solo" style="background: linear-gradient(135deg, #FDAE54, #ff8c35); color: white; font-size: 18px; font-weight: 800; padding: 18px 32px; border-radius: 50px; border: none; width: 100%; max-width: 320px; box-shadow: 0 4px 20px rgba(253,174,84,0.4); letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s ease;">
+                ✅ Valide ta tâche !
+            </button>
         </div>
         {% endif %}
     </div>
@@ -726,180 +917,225 @@
     </div>
 </div>
 
-<!-- Inline audio fallback (embedded WAV in base64) -->
-<audio id="cheer-audio" preload="auto" src="data:audio/wav;base64,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..."></audio>
+<!-- Audio embarqué base64 supprimé (corrompu) -->
+
+<style>
+.points-help-banner.showing { display: flex !important; animation: slideDown 0.5s ease-out; }
+.points-help-banner.hide { animation: slideUp 0.4s ease-out forwards; }
+</style>
+
+<!-- Modal édition des points -->
+<div id="points-modal" class="points-modal" aria-hidden="true">
+    <div class="backdrop" data-close="1"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="points-modal-title">
+        <h3 id="points-modal-title">Modifier les points</h3>
+        <form id="points-form" method="POST" action="#">
+            <div class="row">
+                <input id="points-input" name="points" type="number" min="0" max="999" value="0" inputmode="numeric" />
+            </div>
+            <div class="actions">
+                <button type="button" class="btn-cancel" data-close="1">Annuler</button>
+                <button type="submit" class="btn-ok">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% endblock %}
 
-{% block scripts %}
+{% block extra_scripts %}
 <script>
 // ========== FONCTIONS GLOBALES ==========
+window.TASK_CATEGORY = {{ category|default('')|tojson }};
 
-// Fonction pour jouer le son
-function playSound(){
-    try{
-        var audioEl = document.getElementById('cheer-audio');
-        if(audioEl){
-            var p = audioEl.play();
-            if(p && p.then) p.catch(function(){});
-        } else if(navigator.vibrate){
-            navigator.vibrate(60);
+//  Validation AJAX de la tâche - VERSION OPTIMISÉE PERFORMANCE
+function validateTaskAjax(playerEmail) {
+    // Récupérer les données de la tâche
+    var taskName = {{ task_name|tojson }};
+    var category = {{ category|default("")|tojson }};
+    var taskId = {{ current_task_id|default(0) }};
+    var isCustomTask = {{ 'true' if is_custom_task else 'false' }};
+    
+    // Données de suivi bébé si présentes
+    var trackingTime = document.getElementById('tracking_time');
+    var bottleMl = document.getElementById('bottle_ml');
+    var observations = document.getElementById('observations');
+    
+    // ✅ VALIDATION: Si formulaire de suivi bébé présent, seule l'heure est obligatoire
+    if (trackingTime && !trackingTime.value) {
+        alert('⏰ Merci de renseigner l\'heure pour le suivi bébé !\nCette information sera envoyée dans la messagerie.');
+        trackingTime.focus();
+        trackingTime.style.border = '2px solid #e74c3c';
+        return; // Arrêter la validation
+    }
+    
+    var payload = {
+        task_type: isCustomTask ? 'custom' : 'standard',
+        task_id: taskId,
+        task_name: taskName,
+        category: category,
+        player_email: playerEmail
+    };
+    
+    if (trackingTime && trackingTime.value) payload.tracking_time = trackingTime.value;
+    if (bottleMl && bottleMl.value) payload.bottle_ml = bottleMl.value;
+    if (observations && observations.value) payload.observations = observations.value;
+    
+    // Ajouter un timeout pour éviter les blocages
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 10s timeout
+    
+    fetch('/api/validate_task', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+    })
+    .then(function(response) {
+        clearTimeout(timeoutId); // Nettoyer le timeout
+        console.log('📥 Réponse reçue, status:', response.status);
+        
+        // 🔐 Si 401 (non connecté), rediriger vers login
+        if (response.status === 401) {
+            window.location.href = '/signup_email?next=' + encodeURIComponent(window.location.pathname);
+            return Promise.reject('Non connecté');
         }
-    }catch(e){
-        try{ if(navigator.vibrate) navigator.vibrate(60); }catch(_){}
-    }
-}
+        
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            // ✅ Son + animation +X pts + redirection menu (identique tâches standard)
+            SoundManager.play('gainPoints');
 
-// Fonction pour créer le feu d'artifice / confettis
-function createFireworks() {
-    // Créer le flash de célébration
-    var flash = document.createElement('div');
-    flash.className = 'celebration-flash';
-    document.body.appendChild(flash);
-    setTimeout(function() { flash.remove(); }, 600);
+            // Animation +X pts flottante au centre de l'écran
+            var pts = data.points || 0;
+            if (pts > 0) {
+                var popup = document.createElement('div');
+                popup.textContent = '+' + pts + ' pts';
+                popup.style.cssText = 'position:fixed;top:50%;left:50%;font-size:2.2em;font-weight:800;color:#153036;z-index:99999;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,0.95) 0%,rgba(255,215,0,0.4) 50%,rgba(255,255,255,0.9) 100%);padding:10px 22px;border-radius:50px;box-shadow:0 4px 20px rgba(0,0,0,0.15);animation:task-pts-popup 1.2s ease-out forwards;';
+                document.body.appendChild(popup);
+                setTimeout(function() { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 1300);
+            }
 
-    // Créer le conteneur de confettis
-    var container = document.createElement('div');
-    container.className = 'confetti-container';
-    document.body.appendChild(container);
+            // Redirection vers la pièce pour enchaîner les tâches
+            var redirectUrl = (window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu') +
+                '?success=1&pts=' + (data.points || 0) + 
+                '&ts=' + (data.timestamp || Date.now()) + 
+                '&who=' + encodeURIComponent(data.player_email || '') + 
+                '&whon=' + encodeURIComponent(data.player_name || '');
 
-    // Couleurs harmonisées avec l'app (bleu-vert, orange, doré, crème)
-    var colors = ['#fdae54', '#f4c68d', '#a6d3dc', '#597176', '#ffd700', '#ff9f43', '#89b4bb', '#153036'];
-    var shapes = ['circle', 'square', 'triangle', 'star'];
-
-    // Créer les confettis qui explosent du centre
-    for (var i = 0; i < 80; i++) {
-        (function(index) {
+            // Délai pour laisser le son et l'animation se jouer
             setTimeout(function() {
-                var confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                
-                // Position de départ (centre de l'écran)
-                var startX = window.innerWidth / 2;
-                var startY = window.innerHeight / 2;
-                
-                // Direction aléatoire
-                var angle = (Math.random() * 360) * Math.PI / 180;
-                var velocity = 200 + Math.random() * 300;
-                var endX = startX + Math.cos(angle) * velocity;
-                var endY = startY + Math.sin(angle) * velocity - 100;
-                
-                // Style aléatoire
-                var color = colors[Math.floor(Math.random() * colors.length)];
-                var size = 8 + Math.random() * 12;
-                var shape = shapes[Math.floor(Math.random() * shapes.length)];
-                
-                confetti.style.left = startX + 'px';
-                confetti.style.top = startY + 'px';
-                confetti.style.width = size + 'px';
-                confetti.style.height = size + 'px';
-                confetti.style.backgroundColor = color;
-                
-                // Forme
-                if (shape === 'circle') {
-                    confetti.style.borderRadius = '50%';
-                } else if (shape === 'triangle') {
-                    confetti.style.width = '0';
-                    confetti.style.height = '0';
-                    confetti.style.backgroundColor = 'transparent';
-                    confetti.style.borderLeft = (size/2) + 'px solid transparent';
-                    confetti.style.borderRight = (size/2) + 'px solid transparent';
-                    confetti.style.borderBottom = size + 'px solid ' + color;
-                } else if (shape === 'star') {
-                    confetti.style.borderRadius = '2px';
-                    confetti.style.transform = 'rotate(45deg)';
-                }
-                
-                container.appendChild(confetti);
-                
-                // Animation
-                var duration = 1000 + Math.random() * 1000;
-                confetti.animate([
-                    { 
-                        opacity: 1, 
-                        transform: 'translate(0, 0) rotate(0deg) scale(1)',
-                    },
-                    { 
-                        opacity: 0.8,
-                        transform: 'translate(' + (endX - startX) * 0.5 + 'px, ' + (endY - startY - 50) + 'px) rotate(360deg) scale(1.2)',
-                        offset: 0.4
-                    },
-                    { 
-                        opacity: 0, 
-                        transform: 'translate(' + (endX - startX) + 'px, ' + (endY - startY + 200) + 'px) rotate(720deg) scale(0.5)',
-                    }
-                ], {
-                    duration: duration,
-                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                    fill: 'forwards'
+                window.location.href = redirectUrl;
+            }, 1200);
+        } else {
+            // Erreur ou doublon
+            if (data.error === 'already_done_by_other') {
+                showAlreadyDoneByOtherPopup(data.message, data.player_name);
+            } else if (data.duplicate) {
+                showDuplicatePopup(data.error);
+            } else {
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+                // Réactiver les boutons
+                document.querySelectorAll('.ajax-validate-btn, .ajax-validate-btn-solo').forEach(function(btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
                 });
-                
-            }, index * 15);
-        })(i);
-    }
-
-    // Supprimer le conteneur après l'animation
-    setTimeout(function() {
-        container.remove();
-    }, 3000);
+            }
+        }
+    })
+    .catch(function(error) {
+        alert('⚠️ Erreur de connexion. Veuillez réessayer.');
+        document.querySelectorAll('.ajax-validate-btn, .ajax-validate-btn-solo').forEach(function(btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    });
 }
+
+// Confettis supprimés
+function createFireworks() {}
 
 // ========== MODE SOLO ==========
 document.addEventListener('DOMContentLoaded', function(){
-    var btnSolo = document.getElementById('complete-btn');
-    var formSolo = document.getElementById('complete-form-solo');
+    var btnSolo = document.querySelector('.ajax-validate-btn-solo');
     
-    if(btnSolo && formSolo) {
-        formSolo.addEventListener('submit', function(e){
+    if(btnSolo) {
+        btnSolo.addEventListener('click', function(e){
             e.preventDefault();
             
             // Désactiver le bouton
             btnSolo.disabled = true;
             btnSolo.style.opacity = '0.6';
+            btnSolo.textContent = '⏳ Validation...';
             
-            // Lancer le feu d'artifice
+            // Lancer le feu d'artifice immédiatement
             createFireworks();
             
-            // Jouer le son
-            playSound();
+            // (Son de clic géré automatiquement par SoundManager auto-click)
             
-            // Soumettre le formulaire après une courte attente
-            setTimeout(function() {
-                formSolo.submit();
-            }, 500);
+            // Valider via AJAX
+            validateTaskAjax(null);
         });
     }
 });
 
-// ========== GESTION DE LA SÉLECTION DU JOUEUR - VERSION SIMPLIFIÉE ==========
+// ========== GESTION DE LA SÉLECTION DU JOUEUR - VERSION AJAX ==========
+console.log('🔥🔥🔥 SCRIPT CHARGÉ - DÉBUT DE L\'IIFE 🔥🔥🔥');
 (function() {
-    'use strict';
+    console.log('🎮 Démarrage script sélection joueur...');
+    console.log('🎮 document.readyState:', document.readyState);
     
-    console.log('🎮 [INIT] Initialisation du sélecteur de joueur...');
+    // Attendre que le DOM soit prêt
+    if (document.readyState === 'loading') {
+        console.log('🎮 DOM en cours de chargement - ajout event listener');
+        document.addEventListener('DOMContentLoaded', initPlayerSelection);
+    } else {
+        console.log('🎮 DOM déjà prêt - init immédiate');
+        initPlayerSelection();
+    }
     
-    const playerButtons = document.querySelectorAll('.player-option');
-    const form = document.getElementById('complete-form');
-    const formSolo = document.getElementById('complete-form-solo');
-    const taskName = '{{ task_name }}';
-    const category = '{{ cat }}';
-    const taskId = {{ task_id if task_id is defined else 0 }};
-    
-    // Vérifier si c'est une tâche de bébé nécessitant un suivi
-    const isBabyTask = taskName && (
-        taskName.toLowerCase().includes('biberon') || 
-        taskName.toLowerCase().includes('couche') || 
-        taskName.toLowerCase().includes('dormir')
-    );
-    
-    console.log('🍼 Tâche de bébé:', isBabyTask, '- Tâche:', taskName);
-    
-    // Fonction pour valider le formulaire de suivi bébé
-    function validateBabyTracking() {
+    function initPlayerSelection() {
+        console.log('🎮 INIT - Recherche des boutons joueurs...');
+        
+        var playerButtons = document.querySelectorAll('.ajax-validate-btn');
+        console.log('🎮 Nombre de boutons trouvés:', playerButtons.length);
+        
+        if (playerButtons.length === 0) {
+            console.log('⚠️ Aucun bouton joueur trouvé');
+            return;
+        }
+        
+        var taskName = {{ task_name|tojson }};
+        var category = {{ category|default("")|tojson }};
+        var taskId = {{ current_task_id|default(0) }};
+        
+        // Vérifier si c'est une tâche de bébé nécessitant un suivi
+        var isBabyTask = taskName && (
+            taskName.toLowerCase().includes('biberon') || 
+            taskName.toLowerCase().includes('couche') || 
+            taskName.toLowerCase().includes('dormir')
+        );
+        
+        console.log('🍼 Tâche de bébé:', isBabyTask);
+        
+        // Fonction pour valider le formulaire de suivi bébé
+        function validateBabyTracking() {
+        console.log('🍼 Validation suivi bébé - isBabyTask:', isBabyTask);
         if (!isBabyTask) return true;
         
         const trackingTime = document.getElementById('tracking_time');
         const bottleMl = document.getElementById('bottle_ml');
         const observations = document.getElementById('observations');
+        
+        // Ne pas bloquer si les champs ne sont pas présents
+        if (!trackingTime && !bottleMl && !observations) {
+            console.log('✅ Pas de champs de suivi trouvés, validation OK');
+            return true;
+        }
         
         if (trackingTime && !trackingTime.value) {
             alert('⏰ Veuillez indiquer l\'heure');
@@ -907,433 +1143,128 @@ document.addEventListener('DOMContentLoaded', function(){
             return false;
         }
         
-        if (taskName.toLowerCase().includes('biberon')) {
-            if (bottleMl && !bottleMl.value) {
-                alert('🍼 Veuillez indiquer la quantité en ml');
-                bottleMl.focus();
-                return false;
-            }
+        // Pour le biberon, la quantité est optionnelle mais recommandée
+        // Les observations sont toujours optionnelles
+        // Seule l'heure est obligatoire
+        
+            console.log('✅ Validation suivi bébé OK');
+            return true;
         }
         
-        if (!taskName.toLowerCase().includes('biberon')) {
-            if (observations && !observations.value.trim()) {
-                alert('📝 Veuillez ajouter des observations');
-                observations.focus();
-                return false;
-            }
+        if (playerButtons.length === 0) {
+            console.log('ℹ️ Mode solo - pas de sélecteur de joueur');
+            return;
         }
         
-        return true;
-    }
-    
-    // Fonction pour ajouter les données de suivi au formulaire
-    function addBabyTrackingData(form) {
-        if (!isBabyTask) return;
+        console.log('👥 Attachement des événements sur', playerButtons.length, 'bouton(s)');
         
-        const trackingTime = document.getElementById('tracking_time');
-        const bottleMl = document.getElementById('bottle_ml');
-        const observations = document.getElementById('observations');
-        
-        if (trackingTime && trackingTime.value) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'tracking_time';
-            input.value = trackingTime.value;
-            form.appendChild(input);
-        }
-        
-        if (bottleMl && bottleMl.value) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'bottle_ml';
-            input.value = bottleMl.value;
-            form.appendChild(input);
-        }
-        
-        if (observations && observations.value) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'observations';
-            input.value = observations.value;
-            form.appendChild(input);
-        }
-    }
-    
-    // Intercepter la soumission pour les tâches de bébé
-    if (isBabyTask) {
-        console.log('👶 Validation du formulaire de suivi activée');
-        
-        // Intercepter le formulaire multi-joueurs
-        if (form) {
-            form.addEventListener('submit', function(e) {
+        // Animation visuelle et clic AJAX pour chaque bouton joueur
+        playerButtons.forEach(function(button, index) {
+            var email = button.getAttribute('data-email');
+            console.log('📌 Bouton', index, 'configuré pour:', email);
+            console.log('📌 Bouton élément:', button);
+            
+            // Effets hover supprimés
+            
+            // 🚀 CLIC = VALIDATION AJAX
+            console.log('📌 Ajout addEventListener click sur bouton', index);
+            button.addEventListener('click', function(e) {
+                console.log('🎯 ========== CLIC DÉTECTÉ ==========');
+                console.log('🎯 Event:', e);
+                console.log('🎯 Joueur:', email);
                 e.preventDefault();
-                if (!validateBabyTracking()) return;
-                addBabyTrackingData(form);
-                console.log('✅ Formulaire validé avec suivi bébé');
-                form.submit();
-            });
-        }
-        
-        // Intercepter le formulaire solo
-        if (formSolo) {
-            formSolo.addEventListener('submit', function(e) {
-                e.preventDefault();
-                if (!validateBabyTracking()) return;
-                addBabyTrackingData(formSolo);
-                console.log('✅ Formulaire validé avec suivi bébé');
-                formSolo.submit();
-            });
-        }
-    }
-    
-    if (playerButtons.length === 0) {
-        console.log('ℹ️ Mode solo - pas de sélecteur de joueur');
-        return;
-    }
-    
-    console.log(`👥 ${playerButtons.length} joueur(s) trouvé(s)`);
-    
-    // Animation visuelle au survol/clic des boutons
-    playerButtons.forEach(button => {
-        const email = button.getAttribute('data-email');
-        
-        button.addEventListener('mouseenter', function() {
-            const inner = button.querySelector('.player-option-inner');
-            if (inner) {
-                inner.style.borderColor = '#4CAF50';
-                inner.style.background = 'rgba(76,175,80,0.1)';
-                inner.style.transform = 'translateY(-3px) scale(1.05)';
-                inner.style.boxShadow = '0 8px 25px rgba(76,175,80,0.35)';
-            }
-        });
-        
-        button.addEventListener('mouseleave', function() {
-            const inner = button.querySelector('.player-option-inner');
-            if (inner) {
-                inner.style.borderColor = '#ddd';
-                inner.style.background = '#fff';
-                inner.style.transform = 'scale(1)';
-                inner.style.boxShadow = '0 3px 10px rgba(0,0,0,0.1)';
-            }
-        });
-        
-        button.addEventListener('mousedown', function(e) {
-            const inner = button.querySelector('.player-option-inner');
-            if (inner) {
-                inner.style.transform = 'scale(0.92)';
-                inner.style.borderColor = '#4CAF50';
-            }
-            // Son de clic léger
-            try {
-                const clickSound = new Audio('data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
-                clickSound.volume = 0.3;
-                clickSound.play().catch(function(){});
-            } catch(e) {}
-        });
-        
-        button.addEventListener('mouseup', function(e) {
-            const inner = button.querySelector('.player-option-inner');
-            if (inner) {
-                inner.style.transform = 'scale(1.05)';
-            }
-        });
-    });
-    
-    // Gestion de la soumission du formulaire
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            console.log('🚀 SOUMISSION DU FORMULAIRE');
-            
-            // Récupérer le joueur qui a cliqué (via le bouton submit)
-            const submitter = e.submitter;
-            if (submitter) {
-                const playerEmail = submitter.value;
-                console.log(`   Email du joueur: ${playerEmail}`);
-            }
-            
-            // Lancer le feu d'artifice
-            createFireworks();
-            
-            // Jouer le son
-            playSound();
-            
-            // Laisser le formulaire se soumettre normalement
-            // (pas de e.preventDefault())
-        });
-    }
-    
-    console.log('✅ Initialisation terminée');
-})();
-</script>
-<style>
-    /* Styles pour les confettis */
-    .confetti-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 9999;
-        overflow: hidden;
-    }
-    .confetti {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        opacity: 0;
-    }
-    @keyframes confetti-fall {
-        0% {
-            opacity: 1;
-            transform: translateY(0) rotate(0deg) scale(1);
-        }
-        100% {
-            opacity: 0;
-            transform: translateY(100vh) rotate(720deg) scale(0.5);
-        }
-    }
-    @keyframes confetti-burst {
-        0% {
-            opacity: 1;
-            transform: scale(0) rotate(0deg);
-        }
-        50% {
-            opacity: 1;
-            transform: scale(1.2) rotate(180deg);
-        }
-        100% {
-            opacity: 0;
-            transform: scale(0.8) rotate(360deg) translateY(100px);
-        }
-    }
-    /* Effet flash de célébration - Harmonisé avec l'app */
-    .celebration-flash {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle, 
-            rgba(253, 174, 84, 0.4) 0%, 
-            rgba(166, 211, 220, 0.2) 40%,
-            transparent 70%);
-        pointer-events: none;
-        z-index: 9998;
-        animation: flash-celebration 0.6s ease-out forwards;
-    }
-    @keyframes flash-celebration {
-        0% { opacity: 0; transform: scale(0.3); }
-        40% { opacity: 1; transform: scale(1.1); }
-        100% { opacity: 0; transform: scale(1.8); }
-    }
-    
-    /* ========== POPUP DE SUCCÈS GLASSMORPHISME ========== */
-    .success-popup-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(21, 48, 54, 0.7);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        animation: fadeInOverlay 0.4s ease forwards;
-    }
-    @keyframes fadeInOverlay {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    .success-popup {
-        /* Glassmorphisme doré */
-        background: linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.9) 0%, 
-            rgba(255, 215, 0, 0.25) 50%,
-            rgba(253, 174, 84, 0.35) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 32px;
-        padding: 40px 32px;
-        max-width: 340px;
-        width: 90%;
-        box-shadow: 
-            0 30px 60px rgba(21, 48, 54, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.5),
-            0 0 80px rgba(253, 174, 84, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        position: relative;
-        animation: popInSuccess 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border: 1px solid rgba(255, 215, 0, 0.3);
-        text-align: center;
-        overflow: hidden;
-    }
-    @keyframes popInSuccess {
-        0% { transform: scale(0.5) translateY(50px); opacity: 0; }
-        60% { transform: scale(1.05) translateY(-10px); }
-        100% { transform: scale(1) translateY(0); opacity: 1; }
-    }
-    
-    /* Effet de brillance animé */
-    .success-popup::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-        animation: shimmerSuccess 2.5s ease-in-out infinite;
-    }
-    @keyframes shimmerSuccess {
-        0% { left: -100%; }
-        100% { left: 100%; }
-    }
-    
-    .success-emoji {
-        font-size: 64px;
-        margin-bottom: 16px;
-        animation: bounceEmoji 1s ease infinite;
-        display: block;
-    }
-    @keyframes bounceEmoji {
-        0%, 100% { transform: translateY(0) scale(1); }
-        50% { transform: translateY(-12px) scale(1.1); }
-    }
-    
-    .success-title {
-        font-size: 24px;
-        font-weight: 800;
-        color: #153036;
-        margin-bottom: 8px;
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-    }
-    
-    .success-points {
-        font-size: 32px;
-        font-weight: 900;
-        background: linear-gradient(135deg, #fdae54, #f4c68d);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 20px;
-    }
-    
-    .success-btn {
-        background: linear-gradient(135deg, rgba(21, 48, 54, 0.9), rgba(89, 113, 118, 0.9));
-        color: white;
-        border: none;
-        border-radius: 16px;
-        padding: 16px 40px;
-        font-size: 17px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 20px rgba(21, 48, 54, 0.3);
-    }
-    .success-btn:active {
-        transform: scale(0.95);
-    }
-</style>
-
-<script>
-// Fonction pour créer le feu d'artifice / confettis
-function createFireworks() {
-    // Créer le flash de célébration
-    var flash = document.createElement('div');
-    flash.className = 'celebration-flash';
-    document.body.appendChild(flash);
-    setTimeout(function() { flash.remove(); }, 600);
-
-    // Créer le conteneur de confettis
-    var container = document.createElement('div');
-    container.className = 'confetti-container';
-    document.body.appendChild(container);
-
-    // Couleurs harmonisées avec l'app (bleu-vert, orange, doré, crème)
-    var colors = ['#fdae54', '#f4c68d', '#a6d3dc', '#597176', '#ffd700', '#ff9f43', '#89b4bb', '#153036'];
-    var shapes = ['circle', 'square', 'triangle', 'star'];
-
-    // Créer les confettis qui explosent du centre
-    for (var i = 0; i < 80; i++) {
-        (function(index) {
-            setTimeout(function() {
-                var confetti = document.createElement('div');
-                confetti.className = 'confetti';
+                e.stopPropagation();
                 
-                // Position de départ (centre de l'écran)
-                var startX = window.innerWidth / 2;
-                var startY = window.innerHeight / 2;
-                
-                // Direction aléatoire
-                var angle = (Math.random() * 360) * Math.PI / 180;
-                var velocity = 200 + Math.random() * 300;
-                var endX = startX + Math.cos(angle) * velocity;
-                var endY = startY + Math.sin(angle) * velocity - 100;
-                
-                // Style aléatoire
-                var color = colors[Math.floor(Math.random() * colors.length)];
-                var size = 8 + Math.random() * 12;
-                var shape = shapes[Math.floor(Math.random() * shapes.length)];
-                
-                confetti.style.left = startX + 'px';
-                confetti.style.top = startY + 'px';
-                confetti.style.width = size + 'px';
-                confetti.style.height = size + 'px';
-                confetti.style.backgroundColor = color;
-                
-                // Forme
-                if (shape === 'circle') {
-                    confetti.style.borderRadius = '50%';
-                } else if (shape === 'triangle') {
-                    confetti.style.width = '0';
-                    confetti.style.height = '0';
-                    confetti.style.backgroundColor = 'transparent';
-                    confetti.style.borderLeft = (size/2) + 'px solid transparent';
-                    confetti.style.borderRight = (size/2) + 'px solid transparent';
-                    confetti.style.borderBottom = size + 'px solid ' + color;
-                } else if (shape === 'star') {
-                    confetti.style.borderRadius = '2px';
-                    confetti.style.transform = 'rotate(45deg)';
+                // Valider le tracking bébé si nécessaire
+                var isValid = validateBabyTracking();
+                if (!isValid) {
+                    console.log('❌ Validation échouée');
+                    return;
                 }
                 
-                container.appendChild(confetti);
+                console.log('✅ Validation OK - Lancement AJAX');
                 
-                // Animation
-                var duration = 1000 + Math.random() * 1000;
-                confetti.animate([
-                    { 
-                        opacity: 1, 
-                        transform: 'translate(0, 0) rotate(0deg) scale(1)',
-                    },
-                    { 
-                        opacity: 0.8,
-                        transform: 'translate(' + (endX - startX) * 0.5 + 'px, ' + (endY - startY - 50) + 'px) rotate(360deg) scale(1.2)',
-                        offset: 0.4
-                    },
-                    { 
-                        opacity: 0, 
-                        transform: 'translate(' + (endX - startX) + 'px, ' + (endY - startY + 200) + 'px) rotate(720deg) scale(0.5)',
-                    }
-                ], {
-                    duration: duration,
-                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                    fill: 'forwards'
+                // Désactiver tous les boutons
+                playerButtons.forEach(function(btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.pointerEvents = 'none';
                 });
                 
-            }, index * 15);
-        })(i);
+                var inner = button.querySelector('.player-option-inner');
+                if (inner) {
+                    inner.style.transform = 'scale(0.92)';
+                    inner.style.borderColor = 'rgba(166,211,220,0.9)';
+                }
+                
+                // Optimistic update : son + feux d'artifice AVANT le fetch
+                try { SoundManager.play('gainPoints'); } catch(e) {}
+                try { createFireworks(); } catch(e) {}
+                
+                // Valider via AJAX
+                console.log('📡 Appel validateTaskAjax:', email);
+                validateTaskAjax(email);
+            });
+        });
+        
+        console.log('✅ Initialisation terminée');
     }
+})();
+</script>
+<!-- Confettis et flash supprimés -->
 
-    // Supprimer le conteneur après l'animation
-    setTimeout(function() {
-        container.remove();
-    }, 3000);
+<script>
+// 🏠 Popup "déjà validé par un autre joueur" — glassmorphisme avec Garder / Supprimer
+function showAlreadyDoneByOtherPopup(message, playerName) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+    var taskId = {{ current_task_id|default(0) }};
+    var category = {{ category|default("")|tojson }};
+
+    overlay.innerHTML = '<div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px;padding:28px 24px;max-width:340px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.25);color:#fff;">'
+        + '<div style="font-size:2.2em;margin-bottom:12px;">🏠</div>'
+        + '<p style="font-size:1em;line-height:1.5;margin:0 0 22px;">' + message + '</p>'
+        + '<div style="display:flex;gap:12px;justify-content:center;">'
+        + '<button id="keep-mission-btn" style="flex:1;padding:12px 0;border-radius:12px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:#fff;font-size:0.95em;font-weight:600;cursor:pointer;">Garder</button>'
+        + '<button id="delete-mission-btn" style="flex:1;padding:12px 0;border-radius:12px;border:none;background:#e74c3c;color:#fff;font-size:0.95em;font-weight:600;cursor:pointer;">Supprimer</button>'
+        + '</div></div>';
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('keep-mission-btn').addEventListener('click', function() {
+        overlay.remove();
+        window.location.href = window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu';
+    });
+
+    document.getElementById('delete-mission-btn').addEventListener('click', function() {
+        // Soumettre un formulaire POST vers la route de suppression
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/delete_custom_task/' + taskId + '/' + encodeURIComponent(category);
+        document.body.appendChild(form);
+        form.submit();
+    });
+
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) { overlay.remove(); window.location.href = window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu'; }
+    });
+}
+
+// 🔄 Popup pour les doublons - Utilise showGlassPopup universel
+function showDuplicatePopup(message) {
+    var dest = window.TASK_CATEGORY ? '/categorie/' + window.TASK_CATEGORY : '/menu';
+    // Utiliser la fonction universelle de base.html
+    if (typeof showGlassPopup === 'function') {
+        showGlassPopup(message, 'warning', 2800);
+        setTimeout(function() {
+            window.location.href = dest;
+        }, 2800);
+    } else {
+        // Fallback si showGlassPopup n'est pas disponible
+        alert(message);
+        window.location.href = dest;
+    }
 }
 
 // Animation + son lors du clic sur "Marquer comme terminé"
@@ -1353,18 +1284,7 @@ document.addEventListener('DOMContentLoaded', function(){
     var initialTasks = parseInt(tasksEl ? tasksEl.textContent||0 : 0);
     var reward = {{ task_points|default(0) }};
 
-    function playSound(){
-        try{
-            if(audioEl){
-                var p = audioEl.play();
-                if(p && p.then) p.catch(function(){});
-            } else if(navigator.vibrate){
-                navigator.vibrate(60);
-            }
-        }catch(e){
-            try{ if(navigator.vibrate) navigator.vibrate(60); }catch(_){}
-        }
-    }
+    // Son déjà défini en haut - playSound() utilise le son iPhone
 
     function animateNumber(el, start, end, duration){
         if(!el) return;
@@ -1389,8 +1309,7 @@ document.addEventListener('DOMContentLoaded', function(){
         // Lancer le feu d'artifice
         createFireworks();
         
-        // Jouer le son
-        playSound();
+        // (Son de clic géré automatiquement par SoundManager auto-click)
         
         // Soumettre le formulaire après une courte attente
         setTimeout(function() {
@@ -1398,5 +1317,173 @@ document.addEventListener('DOMContentLoaded', function(){
         }, 500);
     });
 });
+
+// ==========================================
+// 🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
+// ==========================================
+(function() {
+    try {
+        console.log('🔍 WebSocket: Démarrage du script de connexion (task_page_enhanced)...');
+        
+        // Vérifier que Socket.IO est chargé
+        if (typeof io === 'undefined') {
+            console.error('❌ WebSocket: Socket.IO non chargé! Vérifiez le CDN.');
+            return;
+        }
+        
+        console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
+        const socket = io({
+            transports: ['websocket'],
+            reconnection: true,
+            reconnectionDelay: 2000,
+            reconnectionAttempts: 10,
+            timeout: 10000
+        });
+        const userEmail = "{{ session.get('user', '') }}";
+        
+        console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');
+        
+        if (!userEmail) {
+            console.log('⚠️ WebSocket: Aucun utilisateur connecté');
+            return;
+        }
+        
+        socket.on('connect', function() {
+            console.log('🔌 WebSocket: Connecté au serveur (task_page_enhanced.html)');
+            console.log('   Transport:', socket.io.engine.transport.name);
+            console.log('🔍 WebSocket: Envoi join_house avec email:', userEmail);
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        socket.on('joined_room', function(data) {
+            console.log('🏠 WebSocket: Rejoint la room', data.room);
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket: Déconnecté du serveur');
+        });
+        
+        socket.on('connect_error', function(error) {
+            console.error('❌ WebSocket: Erreur de connexion', error);
+        });
+        
+        socket.on('reconnect', function(attemptNumber) {
+            console.log('🔄 WebSocket: Reconnecté après', attemptNumber, 'tentatives - Rejoin de la room');
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        // Écouter les mises à jour de points en temps réel
+        socket.on('players_points_update', function(data) {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📊 WebSocket: Mise à jour des points reçue (task_page_enhanced.html)');
+            console.log('   🕐 Timestamp:', new Date().toLocaleTimeString());
+            console.log('   🎯 Joueur modifié:', data.updated_player);
+            console.log('   👥 Nombre de joueurs:', data.players ? data.players.length : 0);
+            console.log('   📊 Données complètes:', data);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
+            // Mettre à jour l'affichage des points dans la barre latérale
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    console.log(`   🔄 Mise à jour ${player.name}: ${player.daily_points} pts quotidien, ${player.total_points} pts total`);
+                    
+                    // Chercher les éléments de points pour ce joueur dans la sidebar
+                    const playerCard = document.querySelector('.player-card[data-player-email="' + player.email + '"]');
+                    if (playerCard) {
+                        console.log(`      ✅ Carte trouvée pour ${player.name}`);
+                        
+                        // Mettre à jour les points quotidiens
+                        const dailyEl = playerCard.querySelector('.daily-points');
+                        if (dailyEl) {
+                            const oldDailyPoints = parseInt(dailyEl.textContent) || 0;
+                            const newDailyPoints = player.daily_points || 0;
+                            
+                            console.log(`      📊 Points quotidiens: ${oldDailyPoints} → ${newDailyPoints}`);
+                            
+                            dailyEl.textContent = newDailyPoints + ' pts';
+                            
+                            // Animation visuelle si changement
+                            if (oldDailyPoints !== newDailyPoints) {
+                                dailyEl.style.transition = 'all 0.3s ease';
+                                dailyEl.style.transform = 'scale(1.3)';
+                                dailyEl.style.color = '#28a745';
+                                dailyEl.style.fontWeight = '900';
+                                
+                                setTimeout(function() {
+                                    dailyEl.style.transform = 'scale(1)';
+                                    dailyEl.style.color = '';
+                                    dailyEl.style.fontWeight = '';
+                                }, 600);
+                            }
+                        }
+                        
+                        // Mettre à jour les points totaux
+                        const totalEl = playerCard.querySelector('.total-points');
+                        if (totalEl) {
+                            const newTotalPoints = player.total_points || 0;
+                            console.log(`      💎 Points totaux: → ${newTotalPoints}`);
+                            totalEl.textContent = newTotalPoints;
+                        }
+                    } else {
+                        console.log(`      ⚠️ Carte non trouvée pour ${player.name}`);
+                    }
+                });
+                
+                console.log('✅ Mise à jour des points terminée (task_page)');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur WebSocket:', error);
+    }
+})();
+
+// Modal d'édition des points (ouverture sur clic de pastille)
+window.addEventListener('DOMContentLoaded', function(){
+    var modal = document.getElementById('points-modal');
+    var form = document.getElementById('points-form');
+    var input = document.getElementById('points-input');
+    function openModal(action, value){
+        if(!modal || !form || !input) return;
+        form.setAttribute('action', action || '#');
+        input.value = (value != null ? value : 0);
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden','false');
+        input.focus();
+    }
+    function closeModal(){
+        if(!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden','true');
+    }
+    document.querySelectorAll('.points-edit-trigger').forEach(function(el){
+        el.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openModal(el.getAttribute('data-action'), el.getAttribute('data-points')); });
+        el.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openModal(el.getAttribute('data-action'), el.getAttribute('data-points')); }});
+    });
+    if(modal){
+        modal.addEventListener('click', function(e){ if(e.target && e.target.getAttribute && e.target.getAttribute('data-close')){ closeModal(); }});
+    }
+});
 </script>
+
+<script src="{{ url_for('static', filename='js/qfq-tips.js') }}"></script>
+<script>
+(function() {
+  var KEY = 'qfq_tips_task';
+  if (localStorage.getItem(KEY)) return;
+  var TIPS = [
+    {
+      target: '.points-badge, .task-points-badge',
+      text: '✏️ Tu peux modifier les points de cette tâche selon sa difficulté !',
+      position: 'bottom'
+    }
+  ];
+  setTimeout(function() {
+    if (!window.QfqTips) return;
+    window.QfqTips.init(TIPS, KEY, null);
+  }, 800);
+})();
+</script>
+
 {% endblock %}

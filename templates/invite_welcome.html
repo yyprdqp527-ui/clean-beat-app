@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Invitation - QuiFaitQuoi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Toi aussi t'as un logement ? Rejoins-moi sur QuiFaitQuoi 🏠">
+    <meta property="og:description" content="Occupe-toi de ta baraque, marque des points et gagne !">
+    <meta property="og:image" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:image" content="https://clean-beat-app.onrender.com/static/qfq-icon-512-v2.png">
+    <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: {{ bg_gradient }};
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 25px;
+        }
+
+        /* Logo TOG en haut */
+        .logo {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            letter-spacing: 8px;
+            margin-bottom: 10px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* Carte principale glassmorphisme */
+        .invitation-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 45px 35px;
+            text-align: center;
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 12px 40px rgba(89,113,118,0.2);
+            max-width: 540px;
+            width: 100%;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .invite-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 12px rgba(21, 48, 54, 0.15));
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .invite-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #153036;
+            margin-bottom: 40px;
+            line-height: 1.3;
+        }
+
+        .inviter-name {
+            color: #FDAE54;
+            font-weight: 900;
+        }
+
+        .house-name {
+            color: #597176;
+            font-weight: 700;
+        }
+
+        .invite-subtitle {
+            font-size: 16px;
+            color: #597176;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .house-info {
+            background: rgba(253,174,84,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 35px;
+            border: 2px solid rgba(253,174,84,0.2);
+        }
+
+        .house-info-label {
+            font-size: 13px;
+            color: #597176;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .house-info-value {
+            font-size: 20px;
+            color: #153036;
+            font-weight: 800;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+            color: #153036;
+            box-shadow: 0 6px 20px rgba(253,174,84,0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(253,174,84,0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            color: #153036;
+            border: 2px solid rgba(253,174,84,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: #FDAE54;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-top: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .qfq-bubble {
+            font-family: 'Boogaloo', 'Nunito', sans-serif;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2.8em;
+                letter-spacing: 6px;
+            }
+
+            .invitation-card {
+                padding: 35px 25px;
+            }
+
+            .invite-icon {
+                font-size: 3rem;
+            }
+
+            .invite-title {
+                font-size: 24px;
+            }
+
+            .invite-subtitle {
+                font-size: 15px;
+            }
+
+            .btn {
+                padding: 16px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invitation-card">
+    <div class="invite-icon">🎮</div>
+    
+    <h1 class="invite-title">
+        Toi aussi t'as un logement&nbsp;?<br><span style="display:block;margin-top:14px;"></span>
+        Tu t'en occupes<br>
+        Tu marques des points<br>
+        Tu gagnes&nbsp;!
+    </h1>
+    
+    <p class="invite-subtitle">
+        <span style="font-size:18px;font-weight:800;color:#153036;">
+            {{ inviter_name }} t'invite à rejoindre
+        </span>
+    </p>
+
+    <div style="margin:0 0 24px;">
+        <div style="font-family:'Bubblegum Sans',cursive;font-size:54px;color:white;line-height:0.95;text-shadow:0 3px 16px rgba(0,0,0,0.25);text-transform:uppercase;">
+            QuiFaitQuoi
+        </div>
+        <div style="font-family:'Bubblegum Sans',cursive;font-size:28px;color:#7BC8F6;line-height:1.3;margin-top:4px;text-transform:uppercase;">
+            dans la baraque
+        </div>
+    </div>
+
+    <p style="font-size:17px;font-weight:700;color:#597176;margin-bottom:28px;">
+        Montre enfin à {{ inviter_name }} ce que tu fais !
+    </p>
+
+    <div class="buttons-container">
+        <a href="{{ url_for('auth.signup_email', code=house_code) }}" class="btn btn-primary">
+            Créer un compte
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

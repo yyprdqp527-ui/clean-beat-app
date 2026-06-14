@@ -1,6 +1,6 @@
 {
-  "name": "CleanBeat",
-  "short_name": "CleanBeat",
+  "name": "QuiFaitQuoi",
+  "short_name": "QuiFaitQuoi",
   "description": "Application de gestion des tâches ménagères en duo",
   "start_url": "/menu",
   "display": "standalone",
@@ -8,21 +8,36 @@
   "theme_color": "#597176",
   "orientation": "portrait",
   "scope": "/",
-  "lang": "fr-FR",
+  "lang": "fr",
   "dir": "ltr",
-  "categories": ["lifestyle", "productivity"],
+  "categories": [
+    "lifestyle",
+    "productivity"
+  ],
   "icons": [
     {
-      "src": "/static/images/logo.png",
+      "src": "/static/icons/qfq-icon-192-v2.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/static/images/logo.png",
+      "src": "/static/icons/qfq-icon-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/qfq-icon-512-v2.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/qfq-icon-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [],
@@ -34,8 +49,9 @@
       "url": "/comments",
       "icons": [
         {
-          "src": "/static/images/logo.png",
-          "sizes": "192x192"
+          "src": "/static/icons/qfq-icon-192-v2.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }
@@ -46,6 +62,5 @@
     "action": "/comments",
     "method": "GET",
     "enctype": "application/x-www-form-urlencoded"
-  },
-  "gcm_sender_id": "103953800507"
+  }
 }

@@ -1,45 +1,12 @@
 
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 
 {% block title %}🎁 Grille de Cadeaux - {{ house_name }}{% endblock %}
 
 {% block page_styles %}
 <style>
-    /* Bouton retour glassmorphisme */
-    .back-btn-glass {
-        position: fixed;
-        top: 24px;
-        left: 24px;
-        z-index: 2001;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #153036;
-        font-size: 28px;
-        font-weight: bold;
-        text-decoration: none;
-        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-    }
-    
-    .back-btn-glass:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    }
-    
-    .back-btn-glass:active {
-        transform: scale(0.95);
-    }
-    
-    .gifts-main-container {
+.gifts-main-container {
         max-width: 900px;
         margin: 30px auto 0 auto;
         padding: 24px 18px 40px 18px;
@@ -186,7 +153,7 @@
 <div class="gifts-main-container">
     <!-- En-tête -->
     <div class="gifts-header">
-        <h1>🎁 Grille de Cadeaux Magique ✨</h1>
+        <h1>Grille de Cadeaux Magique</h1>
         <h2>{{ house_name }}</h2>
         <p style="margin: 15px 0; font-size: 1.1rem;">
             Accomplissez vos tâches en équipe pour débloquer des cadeaux fantastiques !
@@ -222,7 +189,7 @@
                 <div class="gift-status revealed">✨ Révélé ! ✨</div>
                 <div class="revealed-info">
                     🎉 Révélé par {{ gift.revealed_by }}<br>
-                    📅 Le {{ gift.revealed_date.split('T')[0] if gift.revealed_date else 'aujourd\'hui' }}
+                    📅 Le {{ gift.revealed_date.strftime('%Y-%m-%d') if gift.revealed_date.__class__.__name__ == 'datetime' else (gift.revealed_date.split('T')[0] if gift.revealed_date else 'aujourd\'hui') }}
                 </div>
                 
             {% elif can_open_gifts %}
@@ -232,7 +199,7 @@
                 <div class="gift-description">Cliquez pour découvrir votre surprise ! 🎊</div>
                 <div class="gift-status available">🌟 Disponible 🌟</div>
                 <div style="margin-top: 15px;">
-                    <a href="{{ url_for('reveal_gift', gift_id=gift.id) }}" 
+                    <a href="{{ url_for('rewards.reveal_gift', gift_id=gift.id) }}" 
                        class="reveal-btn"
                        onclick="return confirm('🎁 Êtes-vous sûr de vouloir révéler ce cadeau ? Une fois ouvert, il ne peut plus être changé ! ✨')">
                         ✨ Révéler le Cadeau ✨
@@ -257,7 +224,7 @@
             🏠 Retour à la Maison
         </a>
         
-        <a href="{{ url_for('daily_reward') }}" 
+        <a href="{{ url_for('rewards.rewards') }}" 
            style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #8b4513; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: bold; margin: 10px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
             🎯 Récompenses Quotidiennes
         </a>
@@ -270,7 +237,17 @@
             {% for player in players %}
             <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 15px; min-width: 120px;">
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
-                    <div style="font-size: 2rem;">{{ player.avatar or '👤' }}</div>
+                    <div style="font-size: 2rem; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%;">
+                        {% if player.avatar_file %}
+                            <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% elif player.avatar_url %}
+                            <img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% elif player.avatar and player.avatar|length <= 4 %}
+                            {{ player.avatar }}
+                        {% else %}
+                            <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                    </div>
                     <div class="vbar" title="{{ player.percentage|default(0) }}%"><div class="vbar-fill" style="height: {{ player.percentage|default(0) }}%"></div></div>
                 </div>
                     <div style="font-weight: bold; color: #2c3e50;">{{ player.name }}</div>
@@ -332,27 +309,54 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Son de succès (simple)
-function playSuccessSound() {
+//  WebSocket pour mise à jour en temps réel des points
+(function() {
     try {
-        const context = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = context.createOscillator();
-        const gainNode = context.createGain();
+        const socket = io({transports: ['websocket'], reconnectionAttempts: 3});
+        const userEmail = '{{ session.user }}';
         
-        oscillator.connect(gainNode);
-        gainNode.connect(context.destination);
+        socket.on('connect', function() {
+            console.log('✅ WebSocket Gifts: Connecté');
+            socket.emit('join_house', { email: userEmail });
+        });
         
-        oscillator.frequency.value = 660;
-        oscillator.type = 'sine';
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket Gifts: Mise à jour des points reçue', data);
+            
+            // Mettre à jour l'affichage des points dans les cartes joueurs
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    // Chercher les éléments affichant les points
+                    const playerCards = document.querySelectorAll('[data-player-email="' + player.email + '"]');
+                    
+                    playerCards.forEach(function(card) {
+                        // Mettre à jour les points si affichés
+                        const pointsEl = card.querySelector('.player-points-display, [class*="points"]');
+                        if (pointsEl && pointsEl.textContent.includes('points')) {
+                            pointsEl.textContent = (player.total_points || 0) + ' points';
+                            
+                            // Animation visuelle
+                            pointsEl.style.transition = 'all 0.3s ease';
+                            pointsEl.style.transform = 'scale(1.1)';
+                            pointsEl.style.color = '#667eea';
+                            setTimeout(function() {
+                                pointsEl.style.transform = 'scale(1)';
+                                pointsEl.style.color = '';
+                            }, 600);
+                        }
+                    });
+                });
+            }
+        });
         
-        gainNode.gain.setValueAtTime(0.3, context.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket Gifts: Déconnecté');
+        });
         
-        oscillator.start(context.currentTime);
-        oscillator.stop(context.currentTime + 0.5);
-    } catch (e) {
-        console.log('Son non disponible');
+    } catch (error) {
+        console.error('❌ Erreur WebSocket Gifts:', error);
     }
-}
+})();
 </script>
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 {% endblock %}

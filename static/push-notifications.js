@@ -19,8 +19,8 @@ class PushNotificationManager {
         }
 
         try {
-            // Enregistrer le Service Worker
-            this.registration = await navigator.serviceWorker.register('/static/service-worker.js');
+            // Enregistrer le Service Worker (sw.js à la racine pour scope global + setAppBadge)
+            this.registration = await navigator.serviceWorker.register('/sw.js');
             console.log('✅ Service Worker enregistré');
 
             // Attendre qu'il soit actif
@@ -35,7 +35,22 @@ class PushNotificationManager {
             
             if (this.subscription) {
                 console.log('✅ Déjà abonné aux notifications');
+                // Ré-envoyer la subscription au serveur au cas où elle n'y serait pas (ex: après reset DB)
+                await this.sendSubscriptionToServer(this.subscription);
                 return true;
+            }
+
+            // Si permission déjà accordée → s'abonner automatiquement
+            if (Notification.permission === 'granted' && this.vapidPublicKey) {
+                console.log('🔄 Permission accordée, abonnement automatique...');
+                await this.subscribe();
+            }
+
+            // Si permission jamais demandée → ne PAS demander automatiquement
+            // iOS Safari exige un geste utilisateur pour requestPermission()
+            // La demande se fait via le bouton/banner sur menu.html
+            if (Notification.permission === 'default') {
+                console.log('🔔 Permission notifications pas encore demandée (attente geste utilisateur)');
             }
 
             return true;
@@ -73,7 +88,31 @@ class PushNotificationManager {
      */
     async requestPermission() {
         if (!this.isSupported) {
-            alert('❌ Votre navigateur ne supporte pas les notifications push');
+            const t = document.createElement('div');
+            t.style.cssText = `
+              position:fixed; bottom:90px;
+              left:50%; transform:translateX(-50%);
+              z-index:9999; min-width:260px;
+              max-width:320px; padding:14px 20px;
+              background:rgba(255,255,255,0.96);
+              backdrop-filter:saturate(180%) blur(30px);
+              -webkit-backdrop-filter:saturate(180%) blur(30px);
+              border-radius:16px;
+              border:1px solid rgba(255,255,255,0.8);
+              box-shadow:0 8px 32px rgba(21,48,54,0.18);
+              font-size:14px; font-weight:600;
+              color:#153036; text-align:center;
+              border-left:4px solid #FDAE54;
+            `;
+            t.innerHTML = `
+              📱 Pour recevoir les notifications,<br>
+              <strong>installe l'appli sur ton écran d'accueil</strong> puis active-les.<br>
+              <span style="font-size:12px;color:#597176;margin-top:4px;display:block;">
+                Sans notifications, tu rateras les alertes de tes coéquipiers !
+              </span>
+            `;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 6000);
             return false;
         }
 
@@ -115,6 +154,31 @@ class PushNotificationManager {
             // Convertir la clé VAPID en Uint8Array
             const convertedVapidKey = this.urlBase64ToUint8Array(this.vapidPublicKey);
 
+            // 🔧 FIX: si une subscription existe deja (clé VAPID precedente, ou
+            // resouscription apres clear permissions), pushManager.subscribe()
+            // throw "InvalidStateError". On reutilise la sub existante si la cle
+            // matche, sinon on l'unsubscribe avant d'en creer une nouvelle.
+            let existing = null;
+            try { existing = await this.registration.pushManager.getSubscription(); } catch(_) {}
+            if (existing) {
+                const existingKey = existing.options && existing.options.applicationServerKey;
+                let sameKey = false;
+                if (existingKey) {
+                    try {
+                        const a = new Uint8Array(existingKey);
+                        sameKey = a.length === convertedVapidKey.length &&
+                                  a.every((v, i) => v === convertedVapidKey[i]);
+                    } catch(_) {}
+                }
+                if (sameKey) {
+                    console.log('✅ Subscription existante reutilisee');
+                    this.subscription = existing;
+                    return await this.sendSubscriptionToServer(existing);
+                }
+                console.log('🔄 Subscription existante avec cle differente, unsubscribe...');
+                try { await existing.unsubscribe(); } catch(_) {}
+            }
+
             // S'abonner
             this.subscription = await this.registration.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -128,6 +192,15 @@ class PushNotificationManager {
 
         } catch (error) {
             console.error('❌ Erreur souscription push:', error);
+            // 🔧 Fallback: si une sub existe quand meme apres l'erreur, la reutiliser
+            try {
+                const fallback = await this.registration.pushManager.getSubscription();
+                if (fallback) {
+                    console.log('🔁 Recuperation subscription existante apres erreur');
+                    this.subscription = fallback;
+                    return await this.sendSubscriptionToServer(fallback);
+                }
+            } catch(_) {}
             return false;
         }
     }
@@ -271,15 +344,15 @@ class PushNotificationManager {
             // Notification browser simple
             new Notification(title, {
                 body: options.body || '',
-                icon: options.icon || '/static/images/logo.png',
-                badge: options.badge || '/static/images/logo.png'
+                icon: options.icon || '/static/qfq-icon-192-v2.png',
+                badge: options.badge || '/static/qfq-icon-192-v2.png'
             });
         } else {
             // Notification via Service Worker
             await this.registration.showNotification(title, {
                 body: options.body || '',
-                icon: options.icon || '/static/images/logo.png',
-                badge: options.badge || '/static/images/logo.png',
+                icon: options.icon || '/static/qfq-icon-192-v2.png',
+                badge: options.badge || '/static/qfq-icon-192-v2.png',
                 tag: options.tag || 'cleanbeat-local',
                 requireInteraction: options.requireInteraction || false,
                 vibrate: [200, 100, 200]
@@ -288,15 +361,44 @@ class PushNotificationManager {
     }
 }
 
-// Instance globale
-window.pushManager = new PushNotificationManager();
+// Instance globale - utiliser un nom différent de 'pushManager' car c'est une API native du navigateur
+console.log('🔧 Création instance CleanBeatPushManager...');
+try {
+    window.cleanBeatPush = new PushNotificationManager();
+    console.log('✅ Instance CleanBeatPushManager créée:', window.cleanBeatPush);
+    console.log('✅ Méthode init disponible:', typeof window.cleanBeatPush.init);
+} catch (error) {
+    console.error('❌ Erreur création CleanBeatPushManager:', error);
+    window.cleanBeatPush = null;
+}
 
 // Auto-initialisation au chargement
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🔔 Initialisation gestionnaire notifications...');
-    await window.pushManager.init();
+(function() {
+    const init = async function() {
+        console.log('🔔 Initialisation gestionnaire notifications CleanBeat...');
+        
+        // Vérifier que cleanBeatPush existe et a une méthode init
+        if (!window.cleanBeatPush || typeof window.cleanBeatPush.init !== 'function') {
+            console.error('❌ cleanBeatPush non disponible ou init() manquante');
+            return;
+        }
+        
+        try {
+            await window.cleanBeatPush.init();
+            
+            // Afficher le statut dans la console
+            const status = window.cleanBeatPush.getStatus();
+            console.log(`📊 Statut notifications: ${status}`);
+        } catch (error) {
+            console.warn('⚠️ Erreur initialisation cleanBeatPush:', error);
+        }
+    };
     
-    // Afficher le statut dans la console
-    const status = window.pushManager.getStatus();
-    console.log(`📊 Statut notifications: ${status}`);
-});
+    // Attendre que le DOM soit chargé
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM déjà chargé, exécuter au prochain tick
+        setTimeout(init, 0);
+    }
+})();

@@ -1,0 +1,681 @@
+{%- extends 'base.html' %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
+{% set hide_header = true %}
+
+{% block title %}Classement — QuiFaitQuoi{% endblock %}
+{% block body_class %}page-classement{% endblock %}
+
+{% block page_styles %}
+<style>
+/* ══ Page Classement plein écran ══ */
+body { background: {{ bg_gradient }}; min-height: 100vh; padding-top: 12px; padding-bottom: 80px; }
+
+/* Cadre titre - Glassmorphisme identique à sats.html */
+.classement-title-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 14px 20px;
+    margin: 8px 16px 0;
+    border: 2px solid rgba(253,174,84,0.3);
+    box-shadow: 0 12px 40px rgba(253,174,84,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    text-align: center;
+}
+.classement-title-card .title-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1;
+}
+.classement-title-card h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #153036;
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+.classement-title-card .classement-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: #597176;
+    margin-top: 4px;
+}
+{% if house_name %}
+.classement-house-badge {
+    display: inline-block;
+    background: rgba(253,174,84,0.12);
+    border: 1px solid rgba(253,174,84,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px; font-weight: 700;
+    color: #597176;
+    margin-top: 8px;
+}
+{% endif %}
+
+.classement-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    padding-bottom: 40px;
+    gap: 0;
+}
+
+/* Section titre */
+.classement-section-title {
+    font-size: 11px; font-weight: 800; color: #597176;
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 20px 20px 10px;
+}
+
+/* ══ cw-player adapté fond sombre ══ */
+.classement-players-wrap { padding: 0 14px; }
+
+.cw-player {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+    box-shadow: 0 8px 24px rgba(89,113,118,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.cw-player:last-of-type { margin-bottom: 0; }
+.cw-player.cw-me {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.12) 100%);
+    border: 2px solid rgba(253,174,84,0.4);
+    box-shadow: 0 8px 28px rgba(253,174,84,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.cw-tasks-list {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 0;
+    background: none;
+}
+.cw-tasks-list.has-tasks { display: flex; }
+
+.cw-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #597176;
+    line-height: 1.3;
+    background: linear-gradient(135deg, rgba(166,211,220,0.15), rgba(255,255,255,0.5));
+    border: 1px solid rgba(166,211,220,0.3);
+    border-radius: 12px;
+}
+.cw-task-item + .cw-task-item { border-top: none; }
+.cw-task-dot { width:6px; height:6px; border-radius:50%; background:linear-gradient(135deg,#A6D3DC,#89b4bb); flex-shrink:0; }
+.cw-task-name { flex: 1; font-weight: 600; color: #153036; }
+.cw-task-pts { font-size: 11px; font-weight: 600; color: #597176; }
+.cw-task-time { font-size: 11px; font-weight: 800; color: #FDAE54 !important; background: rgba(253,174,84,0.15); padding: 3px 8px; border-radius: 8px; }
+
+.cw-rank { font-size: 16px; min-width: 22px; text-align: center; }
+.cw-avatar-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #A6D3DC; flex-shrink: 0; }
+.cw-avatar-emoji { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #A6D3DC, #C4E4E9); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.cw-info { flex: 1; min-width: 0; }
+.cw-name { font-size: 14px; font-weight: 700; color: #153036; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cw-bar-wrap { height: 4px; background: rgba(21,48,54,0.1); border-radius: 4px; margin-top: 5px; overflow: hidden; }
+.cw-bar-fill { height: 100%; border-radius: 4px; min-width: 5px; background: linear-gradient(90deg,#A6D3DC,#FDAE54); transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); }
+.cw-pts { font-size: 15px; font-weight: 800; color: #FDAE54 !important; }
+.cw-skull { font-size: 14px; }
+
+/* Bouton stats semaine */
+.classement-stats-btn {
+    display: block;
+    margin: 20px 16px 0;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%);
+    color: white;
+    font-size: 15px; font-weight: 800;
+    text-align: center;
+    border-radius: 18px;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    box-shadow: 0 6px 20px rgba(253,174,84,0.4);
+}
+.classement-stats-btn:active { transform: scale(0.98); }
+
+/* ══ Podium ══ */
+.ranking-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px; padding: 6px 10px; margin: 10px 16px 8px;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    overflow: visible;
+}
+.ranking-wrapper { position: relative; display: flex; align-items: center; gap: 4px; }
+.players-row {
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: 8px; padding: 10px 10px 4px; min-height: 130px;
+    overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; flex: 1;
+}
+.players-row::-webkit-scrollbar { display: none; }
+.scroll-arrow {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, rgba(253,174,84,0.85), rgba(244,198,141,0.75));
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 2px 8px rgba(253,174,84,0.25);
+    transition: all 0.3s ease; flex-shrink: 0; z-index: 10;
+    position: absolute; top: 50%; transform: translateY(-50%);
+}
+.scroll-arrow-left { left: -8px; }
+.scroll-arrow-right { right: -8px; }
+.scroll-arrow span { font-size: 22px; font-weight: bold; color: #153036; line-height: 1; }
+.scroll-arrow:hover { transform: translateY(-50%) scale(1.15); }
+.scroll-arrow:active { transform: translateY(-50%) scale(0.9); }
+.player-card {
+    width: 75px; background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(166,211,220,0.2));
+    border-radius: 14px; padding: 8px 5px 22px; text-align: center;
+    border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 4px 16px rgba(89,113,118,0.15);
+    transition: all 0.3s ease; position: relative; flex-shrink: 0;
+}
+.player-card.rank-1 { background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,180,0,0.15)); border-color: rgba(255,215,0,0.6); box-shadow: 0 8px 24px rgba(255,215,0,0.35); z-index: 3; }
+.player-card.rank-2 { background: linear-gradient(135deg, rgba(192,192,192,0.25), rgba(150,150,150,0.15)); border-color: rgba(192,192,192,0.6); z-index: 2; }
+.player-card.rank-3 { background: linear-gradient(135deg, rgba(205,127,50,0.25), rgba(160,82,45,0.15)); border-color: rgba(205,127,50,0.6); z-index: 1; }
+.player-rank {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    font-size: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); z-index: 2;
+}
+.player-card.rank-1 .player-rank { font-size: 22px; animation: bounce 1s ease infinite; }
+.player-card.is-me { border: 3px solid #FDAE54 !important; box-shadow: 0 6px 24px rgba(253,174,84,0.4); }
+.player-avatar { width: 42px; height: 42px; border-radius: 8px; margin: 0 auto 8px; display: block; }
+.player-avatar img, .player-avatar span {
+    width: 100%; height: 100%; border-radius: 8px; object-fit: cover;
+    border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex; align-items: center; justify-content: center;
+}
+.player-card.rank-1 .player-avatar { width: 50px; height: 50px; margin-bottom: 10px; }
+.player-card.rank-1 .player-avatar img, .player-card.rank-1 .player-avatar span { border: 3px solid #FFD700; box-shadow: 0 0 16px rgba(255,215,0,0.5); }
+.player-card.rank-2 .player-avatar { width: 46px; height: 46px; margin-bottom: 9px; }
+.player-card.rank-2 .player-avatar img, .player-card.rank-2 .player-avatar span { border: 3px solid #C0C0C0; }
+.player-card.rank-3 .player-avatar { width: 44px; height: 44px; margin-bottom: 8px; }
+.player-card.rank-3 .player-avatar img, .player-card.rank-3 .player-avatar span { border: 3px solid #CD7F32; }
+.player-name-podium {
+    font-size: 11px; font-weight: 700; color: #153036;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 80px; margin: 0 auto; position: absolute; bottom: 6px;
+    left: 50%; transform: translateX(-50%); width: calc(100% - 16px);
+}
+.player-points { font-size: 13px; font-weight: 900; color: #FDAE54; margin-bottom: 1px; margin-top: 4px; }
+.player-card.rank-1 .player-points { font-size: 15px; color: #FFD700; text-shadow: 0 2px 4px rgba(255,215,0,0.3); }
+.player-card.rank-2 .player-points { font-size: 14px; }
+.player-tasks-podium { font-size: 9px; color: #597176; margin-bottom: 18px; }
+@keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-4px);} }
+
+/* ══ Grille de boutons filtre (style gameplay) ══ */
+.classement-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 12px 16px 8px;
+    margin-bottom: 6px;
+}
+.filter-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.55);
+    border-radius: 22px;
+    padding: 14px 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 0 8px 28px rgba(89,113,118,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+}
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%);
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.filter-btn:active { transform: translateY(0) scale(0.97); box-shadow: 0 4px 16px rgba(89,113,118,0.12); }
+.filter-btn:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 16px 36px rgba(89,113,118,0.18);
+}
+.filter-btn:active {
+    transform: scale(0.97);
+}
+.filter-btn .fb-icon {
+    font-size: 38px;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.25));
+    line-height: 1;
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.filter-btn:hover .fb-icon { transform: scale(1.15) rotate(-3deg); }
+.filter-btn .fb-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #153036;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+    line-height: 1.25;
+}
+/* Couleurs par bouton */
+.filter-btn.cl-jour {
+    border-color: rgba(166,211,220,0.35);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.18) 100%);
+}
+.filter-btn.cl-jour .fb-label { color: #2E6E78; }
+.filter-btn.cl-semaine {
+    border-color: rgba(253,174,84,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(253,174,84,0.12) 100%);
+}
+.filter-btn.cl-semaine .fb-label { color: #96621C; }
+.filter-btn.cl-mois {
+    border-color: rgba(212,133,106,0.3);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(212,133,106,0.12) 100%);
+}
+.filter-btn.cl-mois .fb-label { color: #8B4F38; }
+/* Bouton actif */
+.filter-btn.active {
+    background: linear-gradient(135deg, #FDAE54 0%, #f09030 100%) !important;
+    border-color: rgba(253,174,84,0.6) !important;
+    box-shadow: 0 6px 20px rgba(253,174,84,0.35);
+}
+.filter-btn.active .fb-label { color: white !important; }
+.filter-btn.active::before { opacity: 0.3; }
+/* Bouton Stats fixé en bas — glassmorphisme */
+.filter-btn-stats-wrap {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
+}
+.filter-btn-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 2px solid rgba(255,255,255,0.55);
+    background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(253,174,84,0.15) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    font-size: 14px;
+    font-weight: 800;
+    color: #153036;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 28px rgba(89,113,118,0.18), inset 0 1px 0 rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.6);
+}
+.filter-btn-stats:active { transform: scale(0.96); }
+/* Responsive */
+@media (max-width: 480px) {
+    .classement-btn-grid { gap: 10px; padding: 10px 12px 6px; }
+    .filter-btn { border-radius: 18px; padding: 12px 6px; }
+    .filter-btn .fb-icon { font-size: 32px; }
+    .filter-btn .fb-label { font-size: 12px; }
+}
+@media (max-width: 360px) {
+    .classement-btn-grid { gap: 8px; padding: 8px 10px 4px; }
+    .filter-btn { border-radius: 16px; }
+    .filter-btn .fb-icon { font-size: 28px; }
+    .filter-btn .fb-label { font-size: 11px; }
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.podium-view { display: none; }
+.podium-view.active { display: block; }
+.tab-section-title {
+    font-size: 15px; font-weight: 800; color: rgba(255,255,255,0.95);
+    padding: 10px 20px 4px; text-align: center;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ══ Tab-panels : remplir l'espace restant ══ */
+.tab-panel.active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.tab-panel .classement-players-wrap {
+    flex: 1;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+{% set max_pts = namespace(v=1) %}
+{% for p in players %}{% if (p.daily_points|default(0)) > max_pts.v %}{% set max_pts.v = p.daily_points|default(0) %}{% endif %}{% endfor %}
+{% set sorted_by_week = players|selectattr('email','defined')|list|sort(attribute='daily_points',reverse=True) %}
+
+<a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+
+<div class="classement-page">
+
+    <!-- Titre simplifié -->
+    <div class="classement-title-card">
+        <span class="title-icon" style="display:none;">🏆</span>
+        <h1>Classement</h1>
+        <p class="classement-subtitle">Qui sera le champion du ménage ?</p>
+    </div>
+
+    <!-- Boutons filtre -->
+    <div class="classement-btn-grid">
+        <div class="filter-btn cl-jour active" data-tab="tab-today">
+            <div class="fb-icon">📋</div>
+            <div class="fb-label">Jour</div>
+        </div>
+        <div class="filter-btn cl-semaine" data-tab="tab-week">
+            <div class="fb-icon">📊</div>
+            <div class="fb-label">Semaine</div>
+        </div>
+        <div class="filter-btn cl-mois" data-tab="tab-month">
+            <div class="fb-icon">📆</div>
+            <div class="fb-label">Mois</div>
+        </div>
+    </div>
+
+    <!-- Podium dynamique (jour / semaine / mois) -->
+    <div class="ranking-card">
+
+        <!-- Podium JOUR -->
+        <div class="podium-view active" id="podium-today">
+        {% set day_sorted = players|sort(attribute='daily_points', reverse=True) %}
+        {% set max_dp = day_sorted|map(attribute='daily_points')|max if day_sorted else 1 %}
+        {% if max_dp == 0 %}{% set max_dp = 1 %}{% endif %}
+        <div class="ranking-wrapper">
+            {% if day_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('podiumDay').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>{% endif %}
+            <div class="players-row" id="podiumDay">
+            {% for player in day_sorted %}
+            {% set bh = ((player.daily_points / max_dp * 150) + 30)|round|int if max_dp > 0 else 30 %}
+            <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
+                <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+                <div class="player-avatar">
+                    {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                    {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                    {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
+                    {% else %}<img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ player.email|urlencode }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">{% endif %}
+                </div>
+                <div class="player-name-podium">{{ player.name }}</div>
+                <div class="player-points">{{ player.daily_points }} pts</div>
+                <div class="player-tasks-podium">{{ player.daily_tasks }} tâche{% if player.daily_tasks != 1 %}s{% endif %}</div>
+            </div>
+            {% endfor %}
+            </div>
+            {% if day_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('podiumDay').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>{% endif %}
+        </div>
+        </div>
+
+        <!-- Podium SEMAINE -->
+        <div class="podium-view" id="podium-week">
+        {% set week_sorted = players|sort(attribute='weekly_points', reverse=True) %}
+        {% set max_wkp = week_sorted|map(attribute='weekly_points')|max if week_sorted else 1 %}
+        {% if max_wkp == 0 %}{% set max_wkp = 1 %}{% endif %}
+        <div class="ranking-wrapper">
+            {% if week_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('podiumWeek').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>{% endif %}
+            <div class="players-row" id="podiumWeek">
+            {% for player in week_sorted %}
+            {% set bh = ((player.weekly_points / max_wkp * 150) + 30)|round|int if max_wkp > 0 else 30 %}
+            <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
+                <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+                <div class="player-avatar">
+                    {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                    {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                    {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
+                    {% else %}<img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ player.email|urlencode }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">{% endif %}
+                </div>
+                <div class="player-name-podium">{{ player.name }}</div>
+                <div class="player-points">{{ player.weekly_points }} pts</div>
+                <div class="player-tasks-podium">{{ player.weekly_tasks }} tâche{% if player.weekly_tasks != 1 %}s{% endif %}</div>
+            </div>
+            {% endfor %}
+            </div>
+            {% if week_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('podiumWeek').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>{% endif %}
+        </div>
+        </div>
+
+        <!-- Podium MOIS -->
+        <div class="podium-view" id="podium-month">
+        {% set month_sorted = players|sort(attribute='monthly_points', reverse=True) %}
+        {% set max_mop = month_sorted|map(attribute='monthly_points')|max if month_sorted else 1 %}
+        {% if max_mop == 0 %}{% set max_mop = 1 %}{% endif %}
+        <div class="ranking-wrapper">
+            {% if month_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-left" onclick="document.getElementById('podiumMonth').scrollBy({left:-200,behavior:'smooth'});"><span>‹</span></div>{% endif %}
+            <div class="players-row" id="podiumMonth">
+            {% for player in month_sorted %}
+            {% set bh = ((player.monthly_points / max_mop * 150) + 30)|round|int if max_mop > 0 else 30 %}
+            <div class="player-card rank-{{ loop.index }}{% if player.is_current_user %} is-me{% endif %}" style="padding-top: {{ bh }}px;">
+                <span class="player-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}</span>
+                <div class="player-avatar">
+                    {% if player.avatar_file %}<img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                    {% elif player.avatar_url %}<img src="{{ player.avatar_url }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                    {% elif player.avatar and player.avatar|length <= 4 %}<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">{{ player.avatar }}</span>
+                    {% else %}<img src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ player.email|urlencode }}" alt="{{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">{% endif %}
+                </div>
+                <div class="player-name-podium">{{ player.name }}</div>
+                <div class="player-points">{{ player.monthly_points }} pts</div>
+                <div class="player-tasks-podium">{{ player.monthly_tasks }} tâche{% if player.monthly_tasks != 1 %}s{% endif %}</div>
+            </div>
+            {% endfor %}
+            </div>
+            {% if month_sorted|length > 3 %}<div class="scroll-arrow scroll-arrow-right" onclick="document.getElementById('podiumMonth').scrollBy({left:200,behavior:'smooth'});"><span>›</span></div>{% endif %}
+        </div>
+        </div>
+
+    </div>
+
+    <!-- Tâches réalisées -->
+    <div class="tab-section-title">Tâches réalisées</div>
+
+    <!-- ═══ TAB : Aujourd'hui ═══ -->
+    <div class="tab-panel active" id="tab-today">
+    <div class="classement-players-wrap">
+        {% for p in sorted_by_week %}
+        {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
+        {% set bar_pct = (((p.daily_points|default(0)) / max_pts.v)*100)|int if max_pts.v>0 else 5 %}
+        <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}" data-cw-player-name="{{ p.name|e }}">
+            <div class="cw-rank">{{ medal }}</div>
+            {% if p.avatar_file %}<img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/'+p.avatar_file) }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar_url %}<img class="cw-avatar-img" src="{{ p.avatar_url }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar %}<div class="cw-avatar-emoji">{{ p.avatar }}</div>
+            {% else %}<img class="cw-avatar-img" src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p.email|urlencode }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>{% endif %}
+            <div class="cw-info">
+                <div class="cw-name">{{ p.name|e }}</div>
+                <div class="cw-bar-wrap"><div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else '' }}" style="width:0%;"></div></div>
+            </div>
+            <div class="cw-pts">{{ p.daily_points|default(0) }} pts</div>
+            {% if p.skull_active|default(false) %}<span class="cw-skull">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0)>0 %}<span class="cw-skull">💀×{{ p.skull_count }}</span>{% endif %}
+            <div class="cw-tasks-list"></div>
+        </div>
+        {% endfor %}
+    </div>
+    </div>
+
+    <!-- ═══ TAB : Semaine ═══ -->
+    <div class="tab-panel" id="tab-week">
+    {% set max_wk = namespace(v=1) %}
+    {% for p in players %}{% if (p.weekly_points|default(0)) > max_wk.v %}{% set max_wk.v = p.weekly_points|default(0) %}{% endif %}{% endfor %}
+    {% set sorted_week = players|sort(attribute='weekly_points', reverse=True) %}
+    <div class="classement-players-wrap">
+        {% for p in sorted_week %}
+        {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
+        {% set bar_pct = (((p.weekly_points|default(0)) / max_wk.v)*100)|int if max_wk.v>0 else 5 %}
+        <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}" data-cw-player-name="{{ p.name|e }}" data-cw-period="week">
+            <div class="cw-rank">{{ medal }}</div>
+            {% if p.avatar_file %}<img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/'+p.avatar_file) }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar_url %}<img class="cw-avatar-img" src="{{ p.avatar_url }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar %}<div class="cw-avatar-emoji">{{ p.avatar }}</div>
+            {% else %}<img class="cw-avatar-img" src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p.email|urlencode }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>{% endif %}
+            <div class="cw-info">
+                <div class="cw-name">{{ p.name|e }}</div>
+                <div class="cw-bar-wrap"><div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else '' }}" style="width:0%;"></div></div>
+            </div>
+            <div class="cw-pts">{{ p.weekly_points|default(0) }} pts</div>
+            {% if p.skull_active|default(false) %}<span class="cw-skull">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0)>0 %}<span class="cw-skull">💀×{{ p.skull_count }}</span>{% endif %}
+            <div class="cw-tasks-list"></div>
+        </div>
+        {% endfor %}
+    </div>
+    </div>
+
+    <!-- ═══ TAB : Mois ═══ -->
+    <div class="tab-panel" id="tab-month">
+    {% set max_mo = namespace(v=1) %}
+    {% for p in players %}{% if (p.monthly_points|default(0)) > max_mo.v %}{% set max_mo.v = p.monthly_points|default(0) %}{% endif %}{% endfor %}
+    {% set sorted_month = players|sort(attribute='monthly_points', reverse=True) %}
+    <div class="classement-players-wrap">
+        {% for p in sorted_month %}
+        {% if loop.index==1 %}{% set medal='🥇' %}{% elif loop.index==2 %}{% set medal='🥈' %}{% elif loop.index==3 %}{% set medal='🥉' %}{% else %}{% set medal=loop.index|string+'.' %}{% endif %}
+        {% set bar_pct = (((p.monthly_points|default(0)) / max_mo.v)*100)|int if max_mo.v>0 else 5 %}
+        <div class="cw-player {% if p.is_current_user %}cw-me{% endif %}" data-cw-player-name="{{ p.name|e }}" data-cw-period="month">
+            <div class="cw-rank">{{ medal }}</div>
+            {% if p.avatar_file %}<img class="cw-avatar-img" src="{{ url_for('static', filename='avatars/'+p.avatar_file) }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar_url %}<img class="cw-avatar-img" src="{{ p.avatar_url }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>
+            {% elif p.avatar %}<div class="cw-avatar-emoji">{{ p.avatar }}</div>
+            {% else %}<img class="cw-avatar-img" src="https://api.dicebear.com/7.x/lorelei/svg?seed={{ p.email|urlencode }}" alt="{{ p.name|e }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="cw-avatar-emoji" style="display:none;">👤</div>{% endif %}
+            <div class="cw-info">
+                <div class="cw-name">{{ p.name|e }}</div>
+                <div class="cw-bar-wrap"><div class="cw-bar-fill" data-pct="{{ bar_pct }}" data-color="{{ p.player_color_hex if p.player_color_hex else '' }}" style="width:0%;"></div></div>
+            </div>
+            <div class="cw-pts">{{ p.monthly_points|default(0) }} pts</div>
+            {% if p.skull_active|default(false) %}<span class="cw-skull">💀</span>{% elif p.skull_pending|default(false) %}<span class="cw-skull" style="color:#FDAE54;">💀?</span>{% elif p.skull_count|default(0)>0 %}<span class="cw-skull">💀×{{ p.skull_count }}</span>{% endif %}
+            <div class="cw-tasks-list"></div>
+        </div>
+        {% endfor %}
+    </div>
+    </div>
+
+</div>
+
+<script>
+(function(){
+    /* ── Animation des barres ── */
+    function animateBars(){
+        document.querySelectorAll('.cw-bar-fill').forEach(function(el){
+            var pct = el.getAttribute('data-pct') || '0';
+            el.style.width = pct + '%';
+            var col = el.getAttribute('data-color');
+            if(col){ el.style.background = col; }
+        });
+    }
+    setTimeout(animateBars, 60);
+
+    /* ── Chargement initial des tâches du jour ── */
+    loadCWTasks('tab-today');
+
+    /* ── Mapping tab → podium ── */
+    var podiumMap = {
+        'tab-today': 'podium-today',
+        'tab-week':  'podium-week',
+        'tab-month': 'podium-month'
+    };
+
+    /* ── Filtres onglets ── */
+    document.querySelectorAll('.filter-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var tab = btn.getAttribute('data-tab');
+            var wasActive = btn.classList.contains('active');
+            document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+            /* Basculer podium */
+            document.querySelectorAll('.podium-view').forEach(function(p){ p.classList.remove('active'); });
+            if(!wasActive){
+                btn.classList.add('active');
+                var target = document.getElementById(tab);
+                if(target){ target.classList.add('active'); }
+                var podiumId = podiumMap[tab];
+                if(podiumId){
+                    var podiumEl = document.getElementById(podiumId);
+                    if(podiumEl){ podiumEl.classList.add('active'); }
+                }
+                loadCWTasks(tab);
+            } else {
+                /* Aucun bouton actif → podium jour par défaut */
+                var defaultPodium = document.getElementById('podium-today');
+                if(defaultPodium){ defaultPodium.classList.add('active'); }
+            }
+            setTimeout(animateBars, 60);
+        });
+    });
+
+})();
+
+function loadCWTasks(tabId){
+    var enc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+    function renderTasks(data, selector){
+        if(!data.tasks) return;
+        var byName = {};
+        data.tasks.forEach(function(t){
+            if(!byName[t.player_name]) byName[t.player_name] = [];
+            byName[t.player_name].push(t);
+        });
+        document.querySelectorAll(selector).forEach(function(el){
+            var name = el.getAttribute('data-cw-player-name');
+            var list = el.querySelector('.cw-tasks-list');
+            if(!list) return;
+            var tasks = byName[name] || [];
+            /* Mettre à jour le compteur de points */
+            var totalPts = 0;
+            tasks.forEach(function(t){ totalPts += (t.points || 0); });
+            var ptsEl = el.querySelector('.cw-pts');
+            if(ptsEl){ ptsEl.textContent = totalPts + ' pts'; }
+            if(tasks.length === 0){
+                list.innerHTML = '<div class="cw-task-item" style="opacity:0.5;"><span class="cw-task-name">Aucune tâche</span></div>';
+                list.classList.add('has-tasks');
+                return;
+            }
+            list.innerHTML = tasks.map(function(t){
+                return '<div class="cw-task-item">'
+                     + '<div class="cw-task-dot"></div>'
+                     + '<span class="cw-task-name">'+enc(t.task_name)+'</span>'
+                     + '<span class="cw-task-pts">'+(t.points >= 0 ? '+' : '')+t.points+' pts</span>'
+                     + (t.time ? '<span class="cw-task-time">'+enc(t.time)+'</span>' : '')
+                     + '</div>';
+            }).join('');
+            list.classList.add('has-tasks');
+        });
+    }
+    var map = {
+        'tab-today':  {url: '/api/daily_tasks',   sel: '#tab-today .cw-player[data-cw-player-name]'},
+        'tab-week':   {url: '/api/weekly_tasks',  sel: '#tab-week .cw-player[data-cw-player-name]'},
+        'tab-month':  {url: '/api/monthly_tasks', sel: '#tab-month .cw-player[data-cw-player-name]'}
+    };
+    var entry = map[tabId];
+    if(entry){
+        fetch(entry.url).then(function(r){return r.json();}).then(function(d){
+            renderTasks(d, entry.sel);
+        }).catch(function(e){ console.error('Erreur chargement tâches:', e); });
+    }
+}
+</script>
+{% endblock %}

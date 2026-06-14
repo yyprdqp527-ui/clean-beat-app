@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180">
+  <defs>
+    <linearGradient id="floorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD54F;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFA726;stop-opacity:0.3" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Sol isométrique -->
+  <path d="M 100 40 L 180 80 L 100 120 L 20 80 Z" 
+        fill="url(#floorGrad)" 
+        stroke="rgba(255, 255, 255, 0.5)" 
+        stroke-width="2"/>
+  
+  <!-- Mur gauche -->
+  <path d="M 20 80 L 100 120 L 100 160 L 20 120 Z" 
+        fill="rgba(253, 174, 84, 0.25)" 
+        stroke="rgba(255, 255, 255, 0.4)" 
+        stroke-width="1.5"/>
+  
+  <!-- Mur droit -->
+  <path d="M 180 80 L 100 120 L 100 160 L 180 120 Z" 
+        fill="rgba(253, 174, 84, 0.2)" 
+        stroke="rgba(255, 255, 255, 0.3)" 
+        stroke-width="1.5"/>
+  
+  <!-- Cadeau géant brillant -->
+  <path d="M 70 90 L 130 120 L 130 140 L 70 110 Z" 
+        fill="rgba(255, 215, 0, 0.6)" 
+        stroke="rgba(255, 215, 0, 0.9)" 
+        stroke-width="2.5"
+        filter="url(#glow)"/>
+  <path d="M 70 90 L 130 120 L 130 115 L 70 85 Z" 
+        fill="rgba(255, 215, 0, 0.8)" 
+        stroke="rgba(255, 215, 0, 0.9)" 
+        stroke-width="2.5"
+        filter="url(#glow)"/>
+  
+  <!-- Ruban horizontal -->
+  <path d="M 70 100 L 130 130 L 130 133 L 70 103 Z" 
+        fill="rgba(255, 0, 0, 0.7)" 
+        stroke="rgba(255, 0, 0, 0.9)" 
+        stroke-width="1.5"
+        filter="url(#glow)"/>
+  
+  <!-- Ruban vertical -->
+  <path d="M 95 88 L 105 94 L 105 143 L 95 137 Z" 
+        fill="rgba(255, 0, 0, 0.7)" 
+        stroke="rgba(255, 0, 0, 0.9)" 
+        stroke-width="1.5"
+        filter="url(#glow)"/>
+  
+  <!-- Nœud sur le dessus -->
+  <ellipse cx="95" cy="90" rx="8" ry="4" 
+           fill="rgba(255, 0, 0, 0.8)" 
+           stroke="rgba(255, 0, 0, 0.9)" 
+           stroke-width="1.5"
+           filter="url(#glow)"/>
+  <ellipse cx="105" cy="95" rx="8" ry="4" 
+           fill="rgba(255, 0, 0, 0.8)" 
+           stroke="rgba(255, 0, 0, 0.9)" 
+           stroke-width="1.5"
+           filter="url(#glow)"/>
+  
+  <!-- Étoiles brillantes autour -->
+  <path d="M 50 85 L 52 90 L 57 90 L 53 94 L 55 99 L 50 95 L 45 99 L 47 94 L 43 90 L 48 90 Z" 
+        fill="rgba(255, 235, 59, 0.8)" 
+        stroke="rgba(255, 235, 59, 0.9)" 
+        stroke-width="1"
+        filter="url(#glow)"/>
+  
+  <path d="M 145 95 L 147 100 L 152 100 L 148 104 L 150 109 L 145 105 L 140 109 L 142 104 L 138 100 L 143 100 Z" 
+        fill="rgba(255, 235, 59, 0.8)" 
+        stroke="rgba(255, 235, 59, 0.9)" 
+        stroke-width="1"
+        filter="url(#glow)"/>
+  
+  <path d="M 100 68 L 102 73 L 107 73 L 103 77 L 105 82 L 100 78 L 95 82 L 97 77 L 93 73 L 98 73 Z" 
+        fill="rgba(255, 235, 59, 0.9)" 
+        stroke="rgba(255, 235, 59, 1)" 
+        stroke-width="1"
+        filter="url(#glow)"/>
+  
+  <!-- Confettis -->
+  <circle cx="40" cy="100" r="3" 
+          fill="rgba(2, 136, 209, 0.7)" 
+          filter="url(#glow)"/>
+  <circle cx="160" cy="110" r="3" 
+          fill="rgba(233, 30, 99, 0.7)" 
+          filter="url(#glow)"/>
+  <circle cx="55" cy="115" r="2.5" 
+          fill="rgba(76, 175, 80, 0.7)" 
+          filter="url(#glow)"/>
+  <circle cx="150" cy="125" r="2.5" 
+          fill="rgba(156, 39, 176, 0.7)" 
+          filter="url(#glow)"/>
+  <rect x="35" y="120" width="4" height="4" 
+        fill="rgba(253, 174, 84, 0.8)" 
+        filter="url(#glow)" 
+        rx="0.5"/>
+  <rect x="165" y="105" width="4" height="4" 
+        fill="rgba(255, 235, 59, 0.8)" 
+        filter="url(#glow)" 
+        rx="0.5"/>
+  
+  <!-- Points d'interrogation mystère -->
+  <text x="30" y="108" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="18" 
+        font-weight="bold"
+        fill="rgba(255, 255, 255, 0.8)"
+        filter="url(#glow)">?</text>
+  <text x="165" y="118" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="18" 
+        font-weight="bold"
+        fill="rgba(255, 255, 255, 0.8)"
+        filter="url(#glow)">?</text>
+  
+  <!-- Petits cadeaux en arrière-plan -->
+  <path d="M 155 125 L 170 133 L 170 140 L 155 132 Z" 
+        fill="rgba(233, 30, 99, 0.5)" 
+        stroke="rgba(233, 30, 99, 0.7)" 
+        stroke-width="1.5"/>
+  <line x1="162" y1="127" x2="162" y2="140" 
+        stroke="rgba(255, 255, 255, 0.7)" 
+        stroke-width="2"/>
+  
+  <path d="M 25 115 L 40 123 L 40 130 L 25 122 Z" 
+        fill="rgba(2, 136, 209, 0.5)" 
+        stroke="rgba(2, 136, 209, 0.7)" 
+        stroke-width="1.5"/>
+  <line x1="32" y1="117" x2="32" y2="130" 
+        stroke="rgba(255, 255, 255, 0.7)" 
+        stroke-width="2"/>
+  
+  <!-- Lumière magique -->
+  <circle cx="100" cy="100" r="50" 
+          fill="rgba(255, 215, 0, 0.08)" 
+          filter="url(#glow)"/>
+  
+  <!-- Icône -->
+  <text x="100" y="35" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="28" 
+        filter="url(#glow)">🎁</text>
+  
+  <!-- Label glassmorphism -->
+  <rect x="60" y="5" width="80" height="22" 
+        fill="rgba(255, 255, 255, 0.3)" 
+        stroke="rgba(255, 215, 0, 0.6)" 
+        stroke-width="2" 
+        rx="11"
+        filter="url(#glow)"/>
+  <text x="100" y="20" text-anchor="middle" 
+        font-family="'SF Pro Display', sans-serif" 
+        font-size="14" 
+        font-weight="700" 
+        fill="#FFD700"
+        style="text-shadow: 0 0 8px rgba(255,215,0,0.8);">Pièce Bonus</text>
+</svg>

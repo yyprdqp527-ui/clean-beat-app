@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 {% block title %}Ajouter des joueurs{% endblock %}
 {% block content %}
 <style>
     :root {
+        --brown-warm: #4a3428;
+        --brown-dark: #1a1410;
         --teal-light: #A6D3DC;
         --teal-dark: #597176;
         --gold: #FDAE54;
@@ -12,7 +15,7 @@
     }
     
     body {
-        background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+        background: {{ bg_gradient }};
         min-height: 100vh;
     }
     
@@ -194,51 +197,7 @@
         font-size: 20px;
     }
     
-    /* === BOUTON RETOUR FLECHE === */
-    .back-btn-glass {
-        position: fixed;
-        top: 24px;
-        left: 24px;
-        z-index: 2001;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #153036;
-        font-size: 28px;
-        font-weight: bold;
-        text-decoration: none;
-        box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-    }
-
-    .back-btn-glass:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    }
-
-    .back-btn-glass:active {
-        transform: scale(0.95);
-    }
-
-    @media (max-width: 520px) {
-        .back-btn-glass {
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-        }
-    }
-    
-    /* Header des joueurs */
+/* Header des joueurs */
     .players-header {
         display: flex;
         justify-content: center;
@@ -337,7 +296,7 @@
         </a>
         
         <!-- Option 2 : Inviter des partenaires -->
-        <a href="/invite_partner" class="option-card">
+        <a href="/invite_partner?source=manage" class="option-card">
             <div class="option-header">
                 <div class="option-icon">💑</div>
                 <div class="option-info">
@@ -365,6 +324,50 @@
 </div>
 
 <!-- Bouton retour flèche -->
-<a href="/manage_players" class="back-btn-glass" title="Retour">←</a>
+<a href="{{ url_for('customize.settings_page') }}" class="back-btn-glass" aria-label="Retour aux réglages">←</a>
+
+<script>
+// 🔌 WebSocket pour synchronisation en temps réel
+if (typeof io !== 'undefined') {
+    const socket = io({transports: ['websocket'], reconnectionAttempts: 10, reconnectionDelay: 1000, reconnectionDelayMax: 5000});
+    
+    socket.on('connect', function() {
+        console.log('🔌 WebSocket connecté sur add_players');
+        const houseId = '{{ house_id }}';
+        if (houseId) {
+            socket.emit('join_house_room', { house_id: houseId });
+            console.log(`🏠 Rejoint la room: house_${houseId}`);
+        }
+    });
+    
+    // Écouter les mises à jour de la liste des joueurs
+    socket.on('players_list_update', function(data) {
+        console.log('🔄 Mise à jour liste joueurs reçue:', data);
+        
+        if (data.action === 'child_added') {
+            console.log(`👶 Enfant ajouté: ${data.new_player}`);
+        } else if (data.action === 'player_joined') {
+            console.log(`🎉 Joueur a rejoint: ${data.new_player}`);
+        } else if (data.action === 'player_registered') {
+            console.log(`✨ Nouveau joueur inscrit: ${data.new_player}`);
+        }
+        
+        // Rediriger vers la page de gestion des joueurs
+        setTimeout(() => {
+            window.location.href = '/manage_players';
+        }, 500);
+    });
+    
+    // Écouter les mises à jour de points en temps réel
+    socket.on('players_points_update', function(data) {
+        console.log('📊 WebSocket: Mise à jour des points reçue dans add_players', data);
+        // Pas d'affichage de points sur cette page, juste log pour cohérence
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('🔌 WebSocket déconnecté');
+    });
+}
+</script>
 
 {% endblock %}

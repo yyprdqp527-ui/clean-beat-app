@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    
+    
     <title>Grille Mystère - Clean Beat</title>
     <!-- PWA: manifest + meta tags pour mode plein écran -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CleanBeat">
+    <meta name="apple-mobile-web-app-title" content="Dust">
     <meta name="theme-color" content="#597176">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
-    <!-- Import Google Fonts Montserrat pour toute l'appli -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600,700,800&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="/static/icons/qfq-icon-192-v2.png">
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"></noscript>
+    <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
     <style>
         /* Supprimer le délai de 300ms sur mobile */
         html {
@@ -26,6 +31,8 @@
         :root {
             --teal-light: #A6D3DC;
             --teal-dark: #597176;
+            --brown-warm: #4a3428;
+            --brown-dark: #1a1410;
             --gold: #FDAE54;
             --peach: #F4C68D;
             --purple: #9B59B6;
@@ -40,7 +47,7 @@
 
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            background: {{ bg_gradient }};
             background-attachment: fixed;
             min-height: 100vh;
             padding: 20px;
@@ -537,11 +544,29 @@
             .particles {
                 display: none;
             }
-            .header,
-            .back-btn-glass {
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-            }
+            .header {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2001;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #153036;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+}
+
         }
 
         /* Message pas de gagnant */
@@ -576,41 +601,7 @@
             font-weight: 700;
         }
 
-        /* Bouton retour glassmorphisme */
-        .back-btn-glass {
-            position: fixed;
-            top: 24px;
-            left: 24px;
-            z-index: 2001;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #153036;
-            font-size: 28px;
-            font-weight: bold;
-            text-decoration: none;
-            box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-            transition: all 0.3s ease;
-        }
-
-        .back-btn-glass:hover {
-            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-        }
-
-        .back-btn-glass:active {
-            transform: scale(0.95);
-        }
-
-        /* Modal récompense */
+/* Modal récompense */
         .reward-modal {
             display: none;
             position: fixed;
@@ -789,36 +780,46 @@
         /* Toast */
         .toast {
             position: fixed;
-            top: 20px;
+            top: 24px;
             left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            z-index: 3000;
+            transform: translateX(-50%) translateY(-18px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(166,211,220,0.6) 50%, rgba(244,198,141,0.4) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #153036;
+            padding: 13px 22px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 8px 32px rgba(21,48,54,0.25), 0 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+            text-align: center;
+            max-width: 320px;
+            z-index: 99999;
             display: none;
-            font-weight: 600;
         }
 
         .toast.show {
             display: block;
-            animation: slideDown 0.3s ease;
+            animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
-        @keyframes slideDown {
-            0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
-            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        @keyframes toastIn {
+            0%   { transform: translateX(-50%) translateY(-18px); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0);     opacity: 1; }
         }
 
         .toast.error {
-            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
-            color: white;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,107,107,0.3) 50%, rgba(231,76,60,0.2) 100%);
+            box-shadow: 0 8px 32px rgba(231,76,60,0.25), 0 0 0 1px rgba(255,107,107,0.4), inset 0 1px 0 rgba(255,255,255,0.6);
+            border-color: rgba(255, 107, 107, 0.4);
         }
 
         .toast.success {
-            background: linear-gradient(145deg, #2ecc71, #27ae60);
-            color: white;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.3) 50%, rgba(253,174,84,0.4) 100%);
+            box-shadow: 0 8px 32px rgba(255,215,0,0.3), 0 0 0 1px rgba(255,215,0,0.4), inset 0 1px 0 rgba(255,255,255,0.6);
+            border-color: rgba(255, 215, 0, 0.4);
         }
 
         /* Responsive */
@@ -1030,6 +1031,7 @@
             50% { transform: translateY(-15px) rotate(180deg); opacity: 1; }
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 </head>
 <body>
     <!-- Brume mystérieuse -->
@@ -1050,37 +1052,16 @@
 
     <div class="content">
         {% if not can_open %}
-        <!-- Message de verrouillage (pas dimanche ou avant 6h) -->
+        <!-- Message de verrouillage (pas dimanche) -->
         <div class="lock-message">
             <div class="lock-title">Grille verrouillée</div>
             <div class="lock-text">
                 La grille cadeau mystère s'ouvre uniquement<br>
-                le <strong>dimanche à partir de 6h du matin</strong> !
+                le <strong>dimanche</strong> !
             </div>
             <div class="countdown">
                 <div class="countdown-label">Prochain déverrouillage dans</div>
                 <div class="countdown-time" id="countdown">--:--:--</div>
-            </div>
-        </div>
-        
-        <!-- BOUTON TEMPORAIRE POUR TEST -->
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="document.getElementById('testGrid').style.display='block'; this.style.display='none';" 
-                    style="background: linear-gradient(145deg, #FFD700, #FFA500); color: #1a1a2e; border: none; padding: 15px 30px; border-radius: 25px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4);">
-                Débloquer la grille (TEST)
-            </button>
-        </div>
-        
-        <!-- Grille cachée pour test -->
-        <div id="testGrid" style="display: none;">
-            <div class="mystery-grid">
-                {% for i in range(1, 41) %}
-                <div class="mystery-box" 
-                     data-box="{{ i }}"
-                     onclick="openBox({{ i }})">
-                    <div class="box-number">{{ i }}</div>
-                </div>
-                {% endfor %}
             </div>
         </div>
 
@@ -1124,10 +1105,14 @@
                 <div class="popup-confetti-top">🎊 🎉 🎊</div>
                 <div class="popup-trophy">🏆</div>
                 <div class="popup-title">Champion de la semaine</div>
-                <div class="popup-winner-name">{{ user_name }}</div>
-                <div class="popup-subtitle">Tu as gagné !</div>
+                <div class="popup-winner-name">{{ winner_name or user_name }}</div>
+                <div class="popup-subtitle">{% if opening_for_child %}Ouvre la case mystère à sa place !{% else %}Tu as gagné !{% endif %}</div>
                 <div class="popup-message">
+                    {% if opening_for_child %}
+                    <p>{{ winner_name }} n'a pas de téléphone.<br>Tu peux débloquer <span class="highlight">sa case Mystère</span> à sa place !</p>
+                    {% else %}
                     <p>Tu peux débloquer <span class="highlight">une case Mystère</span><br>et découvrir ta récompense !</p>
+                    {% endif %}
                 </div>
                 <button id="popupCloseBtn" class="popup-btn" type="button">C'est parti !</button>
             </div>
@@ -1152,7 +1137,11 @@
             {% endfor %}
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="openEditRewards('family')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% if rewards_locked %}
+                <button disabled style="padding: 18px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(166,211,220,0.3) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #597176; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; cursor: not-allowed; font-size: 14px; font-weight: 700; opacity: 0.75; display: inline-flex; align-items: center; gap: 8px;">🔒 Liste figée jusqu'à l'ouverture du cadeau</button>
+                {% else %}
+                <button onclick="window.location.href='/settings/rewards'" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% endif %}
             </div>
             {% endif %}
             
@@ -1172,7 +1161,11 @@
             {% endfor %}
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="openEditRewards('couple')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% if rewards_locked %}
+                <button disabled style="padding: 18px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(166,211,220,0.3) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #597176; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; cursor: not-allowed; font-size: 14px; font-weight: 700; opacity: 0.75; display: inline-flex; align-items: center; gap: 8px;">🔒 Liste figée jusqu'à l'ouverture du cadeau</button>
+                {% else %}
+                <button onclick="window.location.href='/settings/rewards'" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% endif %}
             </div>
             {% endif %}
             
@@ -1192,7 +1185,11 @@
             {% endfor %}
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="openEditRewards('coloc')" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% if rewards_locked %}
+                <button disabled style="padding: 18px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(166,211,220,0.3) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #597176; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; cursor: not-allowed; font-size: 14px; font-weight: 700; opacity: 0.75; display: inline-flex; align-items: center; gap: 8px;">🔒 Liste figée jusqu'à l'ouverture du cadeau</button>
+                {% else %}
+                <button onclick="window.location.href='/settings/rewards'" style="padding: 18px 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 15px; font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(253, 174, 84, 0.4); display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.transform='scale(1.05) translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(253, 174, 84, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(253, 174, 84, 0.4)'">🎁 Personnaliser les récompenses</button>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -1630,6 +1627,7 @@
                 try {
                     const response = await fetch('/update_rewards', {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -1638,8 +1636,15 @@
                             rewards: rewards
                         })
                     });
-                    
-                    const data = await response.json();
+
+                    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                    const isJson = contentType.includes('application/json');
+                    const data = isJson ? await response.json() : { success: false, message: await response.text() };
+
+                    if (!response.ok) {
+                        throw new Error(data.message || ('HTTP ' + response.status));
+                    }
+
                     console.log('📥 Réponse serveur:', data);
                     
                     if (data.success) {
@@ -1668,7 +1673,7 @@
                     console.error('Erreur:', error);
                     button.disabled = false;
                     button.textContent = '✓ Enregistrer';
-                    alert('❌ Erreur de connexion');
+                    alert('❌ Impossible de sauvegarder en local. Vérifiez que le serveur tourne puis réessayez.');
                 }
             }
         </script>
@@ -1705,7 +1710,7 @@
             <p class="modal-subtitle">Valable une fois, utilisable quand tu veux !</p>
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <a href="{{ url_for('menu') }}" class="modal-close" style="text-decoration: none; display: inline-block;">Super !</a>
-                <a href="{{ url_for('mes_recompenses') }}" style="background: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-size: 14px; font-weight: 600; text-align: center;">Voir mes récompenses</a>
+                <a href="{{ url_for('rewards.mes_recompenses') }}" style="background: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-size: 14px; font-weight: 600; text-align: center;">Voir mes récompenses</a>
             </div>
         </div>
     </div>
@@ -1718,13 +1723,12 @@
             document.addEventListener('touchstart', function(e) {
                 var box = e.target.closest('.mystery-box');
                 if (box && !box.classList.contains('opened') && !box.classList.contains('loading')) {
-                    e.preventDefault();
                     var boxNumber = parseInt(box.getAttribute('data-box'));
                     if (boxNumber) {
                         openBox(boxNumber);
                     }
                 }
-            }, {passive: false});
+            }, {passive: true});
         })();
 
         // Fermer le popup festif du gagnant et aller vers la grille

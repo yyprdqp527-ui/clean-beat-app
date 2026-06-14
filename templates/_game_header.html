@@ -22,16 +22,18 @@
           <div class="avatar-name" style="font-weight:700;">{{ player.name }}</div>
           <div class="avatar-row" style="gap:6px; align-items:center;">
             <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+              {% if player.email == session.user %}<a href="{{ url_for('players.profil') }}" style="text-decoration:none;display:block;">{% endif %}
               <div class="avatar-square-wrapper" title="{{ player.name }}">
-                <div class="avatar-square">
+                {% set border_color = (player.player_color_hex if player and player.player_color_hex else color) %}
+                <div class="avatar-square" style="--avatar-accent: {{ border_color }}; background: transparent; box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6);">
                   {% if player.avatar_file %}
-                      <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar {{ player.name }}">
+                      <img src="{{ url_for('static', filename='avatars/' + player.avatar_file) }}" alt="Avatar {{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
                   {% elif player.avatar_url %}
-                      <img src="{{ player.avatar_url }}" alt="Avatar {{ player.name }}">
-                  {% elif player.avatar %}
+                      <img src="{{ player.avatar_url }}" alt="Avatar {{ player.name }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.style.display='none';">
+                  {% elif player.avatar and player.avatar|length <= 4 %}
                       <span style="font-size: {{ (avatar_size * 0.6)|int }}px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">{{ player.avatar }}</span>
                   {% else %}
-                      <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar {{ player.name }}">
+                      <img src="https://api.dicebear.com/7.x/{{ player.avatar_style|default('adventurer') }}/svg?seed={{ (player.name or player.email)|urlencode }}" alt="Avatar {{ player.name }}">
                   {% endif %}
                 </div>
                 {# Barre verticale pour desktop #}
@@ -39,6 +41,7 @@
                   <div class="vbar-fill" style="height: {{ fill }}%; background: linear-gradient(180deg, {{ color }} 0%, {{ color }}DD 100%);"></div>
                 </div>
               </div>
+              {% if player.email == session.user %}</a>{% endif %}
               {# Barre horizontale pour mobile #}
               <div class="vbar-horizontal" style="width: {{ avatar_size }}px;" data-points="{{ points }}" data-fill="{{ fill }}">
                 <div class="vbar-fill" style="width: {{ fill }}%; background: linear-gradient(90deg, {{ color }} 0%, {{ color }}DD 100%);"></div>
@@ -56,7 +59,7 @@
             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
               <div class="avatar-square-wrapper" title="Joueur en attente">
                 <div class="avatar-square">
-                  <img src="{{ url_for('static', filename='avatars/homme.png') }}" alt="Avatar en attente">
+                  <img src="{{ url_for('static', filename='images/default.png') }}" alt="Avatar en attente">
                 </div>
                 <div class="vbar simple" aria-label="Progression du jour" title="0%" data-points="0" data-fill="0">
                   <div class="vbar-fill" style="height: 0%; background: hsl(0, 0%, 60%);"></div>
@@ -88,12 +91,7 @@
       </div>
       {% endif %}
     </div>
-    <div class="header-right" style="gap:8px;">
-      <div class="house-health-bar" title="Santé de la maison">
-        <div id="house-health-fill" class="health-fill" data-width="{{ house_health|default(100)|int }}"></div>
-      </div>
-    </div>
   </div>
 </div>
 <!-- Spacer harmonisé entre le header fixe et le contenu -->
-<div style="height: calc(var(--header-total-height, 80px) + var(--header-spacing-bottom, 24px));"></div>
+<div class="header-page-spacer" style="height: calc(var(--header-total-height, 80px) + var(--header-spacing-bottom, 24px));"></div>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 
-{% block title %}Inviter des partenaires - CleanBeat{% endblock %}
+{% block title %}Inviter des partenaires - QuiFaitQuoi{% endblock %}
 
 {% block page_styles %}
 <style>
@@ -8,9 +9,13 @@
 .game-header, .header-menu, [class*="game-header"], [class*="header-menu"] {
     display: none !important;
 }
-
+.header-page-spacer {
+    display: none !important;
+}
 /* Palette harmonisée avec l'app */
 :root {
+    --brown-warm: #4a3428;
+    --brown-dark: #1a1410;
     --teal-light: #A6D3DC;
     --teal-medium: #89b4bb;
     --teal-dark: #597176;
@@ -22,7 +27,7 @@
 }
 
 body {
-    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+    background: {{ bg_gradient }};
     min-height: 100vh;
     padding: 20px;
     padding-bottom: 100px;
@@ -112,7 +117,7 @@ body {
     font-weight: 900;
     color: var(--dark);
     letter-spacing: 6px;
-    font-family: 'Courier New', monospace;
+    font-family: 'Montserrat', sans-serif;
     text-shadow: 0 2px 4px rgba(255,255,255,0.5);
     position: relative;
     z-index: 1;
@@ -315,7 +320,7 @@ body {
     border: 2px solid rgba(166,211,220,0.5);
     border-radius: 12px;
     font-size: 16px;
-    font-family: inherit;
+    font-family: 'Montserrat', sans-serif;
     transition: all 0.3s ease;
     background: rgba(255,255,255,0.8);
 }
@@ -741,6 +746,55 @@ body {
     }
 }
 
+.go-home-btn {
+    display: none;
+    width: 100%;
+    padding: 13px 20px;
+    background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 16px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    margin-top: 14px;
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.go-home-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 16px rgba(253,174,84,0.3);
+}
+.go-home-btn.visible {
+    display: flex;
+}
+
+/* Confirmation d'envoi */
+.sent-confirmation {
+    display: none;
+    background: linear-gradient(135deg, rgba(40,167,69,0.15) 0%, rgba(40,167,69,0.05) 100%);
+    border: 2px solid rgba(40,167,69,0.35);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #155724;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+.sent-confirmation.visible {
+    display: flex;
+}
+
 /* Responsive */
 @media (max-width: 400px) {
     .invite-title {
@@ -757,504 +811,473 @@ body {
         font-size: 16px;
     }
 }
+
+/* Menu déroulant suggestions nom de maison */
+.name-chips-house {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+.name-chip-house {
+    padding: 9px 16px;
+    border: 2px solid rgba(253,174,84,0.5);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.85);
+    color: #153036;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.name-chip-house:active, .name-chip-house:hover {
+    background: #FDAE54;
+    border-color: #FDAE54;
+    color: #fff;
+    transform: scale(0.96);
+}
+.house-name-input-styled {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid rgba(166,211,220,0.4);
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    background: rgba(255,255,255,0.95);
+    box-sizing: border-box;
+    color: #153036;
+    transition: border-color 0.3s;
+    -webkit-appearance: none;
+}
+.house-name-input-styled:focus {
+    outline: none;
+    border-color: #FDAE54;
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="invite-container">
+
+    <!-- Bouton retour (masqué en contexte inscription) -->
+    {% if not from_registration %}
+    <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
+    {% endif %}
+
     <!-- Header -->
     <div class="invite-header">
         <div class="invite-icon">🏠</div>
-        <h1 class="invite-title">Inviter des partenaires</h1>
-        <p class="invite-subtitle">
-            Partagez le ménage avec votre famille, votre partenaire ou vos colocs !
-        </p>
+        {% if from_registration %}
+        <h1 class="invite-title">Invite tes coéquipiers !</h1>
+        <p class="invite-subtitle">Partage le lien pour que tes proches rejoignent ta maison.</p>
+        {% elif from_manage %}
+        <h1 class="invite-title">Inviter un partenaire</h1>
+        <p class="invite-subtitle">Partage le code pour inviter quelqu'un à rejoindre ta maison !</p>
+        {% else %}
+        <h1 class="invite-title">Invite ton équipe !</h1>
+        <p class="invite-subtitle">Invite ton partenaire ou colocataire par SMS pour jouer ensemble dès maintenant.</p>
+        {% endif %}
     </div>
 
-    <!-- Section : Type de foyer SIMPLIFIÉ -->
-    <div class="glass-card">
-        <div class="card-title">
-            <span class="card-title-icon">🏠</span>
-            Type de foyer
-        </div>
-        
-        <div class="house-type-options" style="display: flex; gap: 10px; justify-content: space-between;">
-            <label class="house-type-option {% if not house_type or house_type == 'family' %}selected{% endif %}" 
-                   onclick="selectHouseTypeSimple(this)" 
-                   data-type="family"
-                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(76, 175, 80, 0.2); border: 2px solid rgba(76, 175, 80, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 32px;">👨‍👩‍👧‍👦</span>
-                <span style="font-weight: 700; color: white; font-size: 14px;">Famille</span>
-                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Parents et enfants</span>
-            </label>
-            
-            <label class="house-type-option {% if house_type == 'couple' %}selected{% endif %}" 
-                   onclick="selectHouseTypeSimple(this)" 
-                   data-type="couple"
-                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(233, 30, 99, 0.2); border: 2px solid rgba(233, 30, 99, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 32px;">💑</span>
-                <span style="font-weight: 700; color: white; font-size: 14px;">Couple</span>
-                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Deux adultes</span>
-            </label>
-            
-            <label class="house-type-option {% if house_type == 'coloc' %}selected{% endif %}" 
-                   onclick="selectHouseTypeSimple(this)" 
-                   data-type="coloc"
-                   style="flex: 1; padding: 15px 10px; border-radius: 16px; background: rgba(33, 150, 243, 0.2); border: 2px solid rgba(33, 150, 243, 0.3); cursor: pointer; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 32px;">🏠</span>
-                <span style="font-weight: 700; color: white; font-size: 14px;">Colocation</span>
-                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Colocataires</span>
-            </label>
-        </div>
-        
-        <input type="hidden" id="houseTypeInput" value="{{ house_type or 'family' }}">
-    </div>
+    <form method="post" id="inviteForm" style="width:100%;max-width:500px;">
+        {% if from_manage %}
+        <input type="hidden" name="invite_source" value="manage">
+        {% endif %}
+        <input type="hidden" name="partners" id="partnersJSON" value="[]">
+        <input type="hidden" name="children" id="childrenJSON" value="[]">
 
-    <!-- Messages flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="flash-message flash-{{ category }}">
-            {% if category == 'success' %}✅{% elif category == 'danger' %}❌{% else %}⚠️{% endif %}
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-    {% endwith %}
+        <!-- Nom et type de maison : toujours transmis en hidden (déjà configurés à l'étape précédente) -->
+        <input type="hidden" name="house_name" value="{{ house_name or '' }}">
+        <input type="hidden" name="house_type" value="{{ house_type or 'family' }}">
 
-    <!-- Section : Inviter un partenaire -->
-    <div class="glass-card" style="margin-bottom: 20px;">
-        <div class="card-title">
-            <span class="card-title-icon">💑</span>
-            Inviter un partenaire
+        <!-- Inviter par SMS -->
+        <div class="glass-card" style="margin-bottom:20px;">
+            <div class="card-title"><span class="card-title-icon">📱</span> Inviter mes coéquipiers</div>
+            <p style="font-size:13px;color:#888;margin-bottom:14px;">
+                Le lien et le code d'accès sont inclus automatiquement dans le message.
+            </p>
+            <button type="button" class="share-invite-btn" onclick="shareInvitation()">
+                <span class="share-invite-icon">📤</span>
+                <span class="share-invite-text">Envoyer par SMS / partager</span>
+            </button>
         </div>
-        
-        <div class="child-info">
-            <span class="child-info-icon">💡</span>
-            Partagez le code de votre maison par SMS, WhatsApp ou autre pour inviter votre partenaire ou colocataire.
-        </div>
-        
-        <!-- Code de la maison -->
-        {% if house_code %}
-        <div class="house-code-card">
-            <div class="house-code-label">Code de ta maison</div>
-            <div class="house-code-value" id="houseCode">{{ house_code }}</div>
-            
-            <!-- Lien d'invitation direct -->
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                <div class="house-code-label" style="font-size: 13px; margin-bottom: 8px;">📱 Lien d'invitation</div>
-                <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; font-size: 12px; word-break: break-all; color: rgba(255,255,255,0.9); font-family: monospace;">
-                    http://192.168.1.156:8000/join_house?code={{ house_code }}
-                </div>
-                <button onclick="copyInviteLink('{{ house_code }}')" style="margin-top: 8px; width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: white; font-size: 12px; cursor: pointer; transition: all 0.3s;">
-                    📋 Copier le lien
+
+        <!-- Inviter par email -->
+        <div class="glass-card" style="margin-bottom:20px;">
+            <div class="card-title"><span class="card-title-icon">✉️</span> Inviter par email</div>
+            <p style="font-size:13px;color:#888;margin-bottom:14px;">
+                Saisis l'adresse email de la personne à inviter.
+            </p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;">
+                <input type="email" id="inviteEmailInput" placeholder="prenom@example.com"
+                    style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid rgba(21,48,54,0.15);border-radius:12px;font-size:14px;font-family:inherit;outline:none;background:rgba(255,255,255,0.85);">
+                <button type="button" onclick="sendEmailInvite()"
+                    style="padding:12px 18px;background:linear-gradient(135deg,#FDAE54,#F4C68D);border:none;border-radius:12px;font-size:14px;font-weight:800;color:#153036;cursor:pointer;flex-shrink:0;white-space:nowrap;">
+                    Envoyer
                 </button>
             </div>
+            <div id="emailInviteResult" style="display:none;"></div>
+            <div id="invite-link" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(253,174,84,0.12);border:1.5px solid rgba(253,174,84,0.4);border-radius:12px;font-size:13px;word-break:break-all;">
+                <span style="font-weight:700;color:#153036;">Lien d'invitation :</span><br>
+                <a id="invite-link-url" href="" style="color:#153036;font-weight:600;text-decoration:underline;"></a>
+            </div>
+        </div>
+
+        <!-- Enfants -->
+        <div class="glass-card" style="margin-bottom:20px;">
+            <div class="card-title"><span class="card-title-icon">👶</span> Ajouter des enfants</div>
+            <p style="font-size:13px;color:#888;margin-bottom:14px;">
+                Les enfants n'ont pas besoin de téléphone. Crée leur profil directement ici.
+            </p>
+            <div id="childrenList"></div>
+            <button type="button" class="child-add-btn" onclick="addChildRow()">
+                ＋ Ajouter un enfant
+            </button>
+        </div>
+
+        <!-- Bouton continuer -->
+        <div class="glass-card" style="padding:16px;margin-bottom:20px;">
+            <button type="submit" class="share-invite-btn" onclick="prepareSubmit()"
+                    style="background:linear-gradient(135deg,#FDAE54 0%,#F4C68D 100%);border:none;">
+                Continuer →
+            </button>
+        </div>
+
+        {% if not from_registration %}
+        <div class="skip-section">
+            <a href="{{ url_for('menu') }}" class="skip-link">Je ferai ça plus tard</a>
         </div>
         {% endif %}
-        
-        <!-- Bouton principal glassmorphisme -->
-        <button type="button" class="share-invite-btn" id="shareBtn" onclick="shareInvitation()">
-            <span class="share-invite-icon">📤</span>
-            <span class="share-invite-text">Envoyer une invitation</span>
-        </button>
-    </div>
-
-    <!-- Section : Ajouter un enfant -->
-    <div class="glass-card child-section">
-        <div class="card-title">
-            <span class="card-title-icon">👶</span>
-            Ajouter un enfant
-        </div>
-        
-        <div class="child-info">
-            <span class="child-info-icon">💡</span>
-            Pour les enfants sans téléphone, créez directement leur profil. Ils pourront jouer depuis l'appareil familial.
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Prénom de l'enfant</label>
-            <input type="text" class="form-input" id="childName" placeholder="Ex: Lucas, Emma...">
-        </div>
-        
-        <!-- Sélection d'avatar pour l'enfant -->
-        <div class="form-group">
-            <label class="form-label">Choisir un avatar</label>
-            <div class="child-avatars-grid" id="childAvatarsGrid">
-                <div class="child-avatar-option selected" data-avatar="👶" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👶</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="👧" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👧</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="👦" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👦</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧒" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧒</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="👸" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">👸</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🤴" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🤴</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧑‍🎤" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧑‍🎤</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🦸" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🦸</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧚" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧚</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🧙" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🧙</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐱" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐱</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐶" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐶</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🦄" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🦄</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐼" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐼</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🐸" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🐸</span>
-                </div>
-                <div class="child-avatar-option" data-avatar="🦁" onclick="selectChildAvatar(this)">
-                    <span style="font-size: 28px;">🦁</span>
-                </div>
-            </div>
-        </div>
-        
-        <button class="add-btn" style="background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%); color: var(--dark);" onclick="addChild()">
-            ➕ Ajouter un enfant
-        </button>
-        
-        <!-- Liste des enfants ajoutés -->
-        <div class="children-list" id="childrenList" style="margin-top: 15px;"></div>
-        
-        <!-- Bouton Valider -->
-        <button class="add-btn" style="background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: white; font-size: 16px; padding: 16px; margin-top: 15px;" onclick="validateChildren()">
-            ✅ Valider
-        </button>
-    </div>
-
-    <!-- Lien pour passer -->
-    <div class="skip-section">
-        <a href="{{ url_for('create_profile') }}" class="skip-link">
-            Continuer sans inviter →
-        </a>
-    </div>
+    </form>
 </div>
 
-<!-- Formulaire caché pour les enfants -->
-<form method="post" id="inviteForm" style="display: none;">
-    <input type="hidden" name="partners" id="partnersData" value="[]">
-    <input type="hidden" name="children" id="childrenData" value="[]">
-    <input type="hidden" name="house_type" id="houseTypeData" value="family">
-</form>
+<style>
+.ht-selected {
+    border-color: #FDAE54 !important;
+    background: rgba(253,174,84,.1) !important;
+    box-shadow: 0 4px 15px rgba(253,174,84,.25) !important;
+}
+.child-add-btn {
+    width:100%;padding:11px;border:2px dashed #c0d9de;border-radius:12px;
+    background:rgba(166,211,220,.1);color:#597176;font-size:14px;font-weight:600;
+    cursor:pointer;transition:all .2s;font-family:'Montserrat',sans-serif;
+}
+.child-add-btn:hover { border-color:#597176;background:rgba(166,211,220,.2); }
+.child-row {
+    background: rgba(255,255,255,0.6);
+    border: 2px solid rgba(166,211,220,0.35);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.child-name-input {
+    width: 100%;
+    padding: 13px 16px;
+    border: 2px solid rgba(166,211,220,0.4);
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    background: rgba(255,255,255,0.95);
+    box-sizing: border-box;
+    color: #153036;
+    transition: border-color 0.3s;
+    -webkit-appearance: none;
+    margin-bottom: 10px;
+}
+.child-name-input:focus {
+    outline: none;
+    border-color: #FDAE54;
+    box-shadow: 0 0 0 4px rgba(253,174,84,0.15);
+}
+.child-avatars-row {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+.child-av {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(166,211,220,0.4);
+    background: rgba(255,255,255,0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    padding: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.child-av img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block;
+    pointer-events: none;
+}
+.child-av.av-selected {
+    border-color: #FDAE54;
+    box-shadow: 0 0 0 3px rgba(253,174,84,0.35);
+    transform: scale(1.15);
+}
+.btn-remove { flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid #ffcdd2;background:#fff0f0;color:#e55353;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;align-self:flex-start;margin-top:2px; }
+.child-save-btn {
+    width:100%;margin-top:12px;padding:12px;
+    background:linear-gradient(135deg,#FDAE54 0%,#F4C68D 100%);
+    border:none;border-radius:14px;
+    color:#fff;font-size:14px;font-weight:700;
+    font-family:'Montserrat',sans-serif;
+    cursor:pointer;transition:transform .15s,box-shadow .15s;
+    box-shadow:0 4px 14px rgba(253,174,84,.35);
+}
+.child-save-btn:active { transform:scale(.97); }
+.child-row-saved {
+    align-items:center;
+    background:rgba(253,174,84,.08);
+    border-color:rgba(253,174,84,.4);
+}
+.child-saved-av {
+    width:44px;height:44px;border-radius:50%;
+    border:2.5px solid rgba(253,174,84,.5);
+    flex-shrink:0;
+}
+.child-saved-name {
+    flex:1;font-size:15px;font-weight:700;
+    color:#153036;font-family:'Montserrat',sans-serif;
+    padding:0 8px;
+}
+.child-edit-btn {
+    flex-shrink:0;width:34px;height:34px;border-radius:50%;
+    border:2px solid rgba(166,211,220,0.5);
+    background:rgba(255,255,255,0.8);
+    font-size:15px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    padding:0;margin-right:6px;
+}
+.invite-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 50px;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  margin: 12px 0;
+}
+.invite-link-icon:active {
+  background: rgba(255,255,255,0.35);
+  transform: scale(0.97);
+}
+</style>
 
 <script>
-let children = [];
-let selectedChildAvatar = '👶';  // Avatar par défaut pour les enfants
-const houseCode = "{{ house_code or '' }}";
+var joinUrl   = "{{ join_url or '' }}";
+var inviteMessage = "Marre que les corvées nous prennent la tête dans la baraque ?\n" +
+"Teste « QuiFaitQuoi » avec moi. 🏠✨😉\n\n" +
+joinUrl;
 
-// Sélection du type de foyer
-function selectHouseType(element) {
-    // Désélectionner tous
-    document.querySelectorAll('.house-type-option').forEach(el => {
-        el.classList.remove('selected');
+function selectHouseType(type) {
+    ['family','couple','coloc'].forEach(function(t) {
+        var el = document.getElementById('ht-'+t);
+        if (el) el.classList.remove('ht-selected');
     });
-    // Sélectionner celui cliqué
-    element.classList.add('selected');
-    const houseType = element.getAttribute('data-type');
-    document.getElementById('houseTypeInput').value = houseType;
-    document.getElementById('houseTypeData').value = houseType;
-    
-    // Sauvegarder le type de foyer via AJAX
-    fetch('/update_house_type', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ house_type: houseType })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showTemporaryMessage('Type de foyer enregistré !');
-        }
-    })
-    .catch(error => console.error('Erreur:', error));
+    var sel = document.getElementById('ht-'+type);
+    if (sel) sel.classList.add('ht-selected');
+    var inp = document.getElementById('houseTypeInput');
+    if (inp) inp.value = type;
 }
 
-// Sélection d'avatar pour l'enfant
-function selectChildAvatar(element) {
-    // Désélectionner tous les avatars
-    document.querySelectorAll('.child-avatar-option').forEach(el => {
-        el.classList.remove('selected');
-    });
-    // Sélectionner l'avatar cliqué
-    element.classList.add('selected');
-    selectedChildAvatar = element.getAttribute('data-avatar');
-}
-
-// Message d'invitation
-const inviteMessage = `🏠 Rejoins-moi sur CleanBeat !
-
-Je t'invite à rejoindre ma maison pour partager les tâches ménagères de façon fun ! 🎮
-
-📱 Clique sur ce lien (aucune installation requise) :
-http://192.168.1.156:8000/join_house?code=${houseCode}
-
-🔑 Code de la maison : ${houseCode}
-
-À tout de suite ! 💪`;
-
-// URL de l'app (à adapter selon votre déploiement)
-const appUrl = window.location.origin;
-
-// Fonction pour copier le lien d'invitation
-function copyInviteLink(code) {
-    const link = `http://192.168.1.156:8000/join_house?code=${code}`;
-    navigator.clipboard.writeText(link).then(() => {
-        // Animation de confirmation
-        event.target.innerHTML = '✅ Lien copié !';
-        event.target.style.background = 'rgba(76, 175, 80, 0.3)';
-        setTimeout(() => {
-            event.target.innerHTML = '📋 Copier le lien';
-            event.target.style.background = 'rgba(255,255,255,0.2)';
-        }, 2000);
-    }).catch(err => {
-        alert('Erreur lors de la copie : ' + err);
-    });
-}
-
-// Partager l'invitation
 async function shareInvitation() {
-    // Essayer d'abord l'API Web Share (fonctionne sur Safari iOS !)
     if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'Invitation CleanBeat',
-                text: inviteMessage,
-                // url: appUrl + '/join_house'  // Optionnel
-            });
-            // L'utilisateur a partagé - proposer de noter la personne
-            showInviteSuccess();
-            return;
-        } catch (err) {
-            if (err.name === 'AbortError') {
-                // L'utilisateur a annulé - pas d'erreur à afficher
-                return;
-            }
-            console.log('Share error:', err);
+        try { await navigator.share({ title: 'Invitation QuiFaitQuoi', text: inviteMessage }); return; }
+        catch(e) { if (e.name === 'AbortError') return; }
+    }
+    var enc = encodeURIComponent(inviteMessage);
+    var ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    window.location.href = ios ? 'sms:&body=' + enc : 'sms:?body=' + enc;
+}
+
+function qfqToast(message, type, duration) {
+    if (type === undefined) type = 'error';
+    if (duration === undefined) duration = 4000;
+    var existing = document.getElementById('qfq-invite-toast');
+    if (existing) existing.remove();
+    var colors = { error: '#E24B4A', success: '#97C459', info: '#FDAE54' };
+    var t = document.createElement('div');
+    t.id = 'qfq-invite-toast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;min-width:260px;max-width:320px;padding:14px 20px;background:rgba(255,255,255,0.96);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);border-radius:16px;border:1px solid rgba(255,255,255,0.8);box-shadow:0 8px 32px rgba(21,48,54,0.18);font-size:14px;font-weight:600;color:#153036;text-align:center;border-left:4px solid ' + (colors[type] || colors['error']) + ';';
+    t.textContent = message;
+    document.body.appendChild(t);
+    setTimeout(function() { if (t.parentNode) t.remove(); }, duration);
+}
+
+async function sendEmailInvite() {
+    var input = document.getElementById('inviteEmailInput');
+    var email = (input.value || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        qfqToast('Saisis une adresse email valide.', 'error');
+        return;
+    }
+    qfqToast('Envoi en cours…', 'info');
+    try {
+        var resp = await fetch('/send_invite_email', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email})
+        });
+        var data = await resp.json();
+        if (data.ok) {
+            qfqToast('Invitation envoyée ! ✅', 'success');
+            input.value = '';
+        } else if (data.error === 'service email non configuré' || resp.status === 503) {
+            var lnk = document.getElementById('invite-link');
+            var lnkUrl = document.getElementById('invite-link-url');
+            if (lnk) { lnk.style.display = 'block'; }
+            if (lnkUrl && joinUrl) { lnkUrl.href = joinUrl; lnkUrl.textContent = joinUrl; }
+            qfqToast('Service email non disponible. Utilise le lien ci-dessous ou le SMS.', 'info');
+        } else {
+            qfqToast('Erreur lors de l\'envoi. Réessaie.', 'error');
         }
+    } catch(e) {
+        qfqToast('Erreur réseau. Réessaie.', 'error');
     }
-    
-    // Fallback : ouvrir l'app Messages directement avec le texte
-    const encodedMessage = encodeURIComponent(inviteMessage);
-    
-    // Détecter iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    
-    if (isIOS) {
-        // Sur iOS, ouvrir Messages avec le texte pré-rempli
-        window.location.href = `sms:&body=${encodedMessage}`;
-    } else {
-        // Sur Android ou autre, essayer SMS
-        window.location.href = `sms:?body=${encodedMessage}`;
-    }
-    
-    // Montrer le succès après un délai
-    setTimeout(showInviteSuccess, 500);
 }
 
-// Montrer le succès et proposer de noter
-function showInviteSuccess() {
-    // Ouvrir le formulaire pour noter qui a été invité
-    document.getElementById('manualForm').style.display = 'block';
-    document.getElementById('adultName').focus();
+var childCount = 0;
+var CHILD_AVATARS = [
+    {seed:'Lola',  bg:'b6e3f4'},
+    {seed:'Lucas', bg:'c0aede'},
+    {seed:'Emma',  bg:'ffd5dc'},
+    {seed:'Nathan',bg:'d1d4f9'},
+    {seed:'Lea',   bg:'ffdfbf'},
+    {seed:'Hugo',  bg:'b6e3f4'},
+    {seed:'Chloe', bg:'c0aede'},
+    {seed:'Tom',   bg:'ffd5dc'},
+    {seed:'Zoe',   bg:'d1d4f9'},
+    {seed:'Louis', bg:'ffdfbf'},
+    {seed:'Jade',  bg:'b6e3f4'},
+    {seed:'Theo',  bg:'c0aede'}
+];
+
+function dbUrl(item) {
+    return 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + encodeURIComponent(item.seed) + '&backgroundColor=transparent';
 }
 
-// Ajouter un enfant
-function addChild() {
-    const name = document.getElementById('childName').value.trim();
-    
-    if (!name) {
-        alert('Veuillez entrer le prénom de l\'enfant');
-        return;
-    }
-    
-    // Vérifier si déjà dans la liste
-    if (children.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-        alert('Cet enfant est déjà dans la liste');
-        return;
-    }
-    
-    children.push({
-        name: name,
-        avatar: selectedChildAvatar,  // Inclure l'avatar sélectionné
-        type: 'child'
+function addChildRow() {
+    var id = ++childCount;
+    var div = document.createElement('div');
+    div.className = 'child-row'; div.id = 'crow' + id;
+
+    var avHtml = '<div class="child-avatars-row" id="avrow' + id + '">';
+    CHILD_AVATARS.forEach(function(av, i) {
+        var sel = (i === 0) ? ' av-selected' : '';
+        var url = dbUrl(av);
+        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')" data-avatar="' + url + '">'
+            + '<img src="' + url + '" alt="' + av.seed + '" loading="lazy"></button>';
     });
-    
-    // Réinitialiser le champ et l'avatar sélectionné
-    document.getElementById('childName').value = '';
-    selectedChildAvatar = '👶';
-    document.querySelectorAll('.child-avatar-option').forEach(el => el.classList.remove('selected'));
-    document.querySelector('.child-avatar-option[data-avatar="👶"]').classList.add('selected');
-    
-    renderChildren();
-    updateChildCount();
-    
-    // Focus sur le champ de saisie pour ajouter un autre enfant
-    setTimeout(() => {
-        document.getElementById('childName').focus();
-    }, 100);
-    
-    // Afficher le message de succès temporaire
-    showTemporaryMessage('✅ Enfant ajouté ! Ajoute-en un autre si besoin 😊');
+    avHtml += '</div>';
+
+    div.innerHTML =
+        '<div style="flex:1">'
+        + '<input type="text" class="child-name-input child-name" placeholder="Pr\u00e9nom de l\'enfant" autocapitalize="words" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">'  
+        + avHtml
+        + '<button type="button" class="child-save-btn" onclick="saveChildRow(' + id + ')">Enregistrer</button>'
+        + '</div>'
+        + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
+
+    document.getElementById('childrenList').appendChild(div);
+    div.querySelector('.child-name-input').focus();
 }
 
-// Supprimer un enfant
-function removeChild(index) {
-    children.splice(index, 1);
-    renderChildren();
-    updateChildCount();
+function selectChildAv(btn, rowId) {
+    document.getElementById(rowId).querySelectorAll('.child-av').forEach(function(b) {
+        b.classList.remove('av-selected');
+    });
+    btn.classList.add('av-selected');
 }
 
-// Mettre à jour le compteur d'enfants
-function updateChildCount() {
-    const count = children.length;
-    const validateSection = document.getElementById('validateSection');
-    const childCountEl = document.getElementById('childCount');
-    
-    if (count > 0) {
-        validateSection.style.display = 'block';
-        childCountEl.textContent = count;
-    } else {
-        validateSection.style.display = 'none';
-    }
-}
+function removeRow(id) { var el = document.getElementById(id); if (el) el.remove(); }
 
-// Valider et créer les enfants
-function validateChildren() {
-    if (children.length === 0) {
-        alert('Veuillez ajouter au moins un enfant');
+function saveChildRow(id) {
+    var row = document.getElementById('crow' + id);
+    var nameInput = row.querySelector('.child-name');
+    var n = nameInput ? nameInput.value.trim() : '';
+    if (!n) {
+        if (nameInput) { nameInput.style.borderColor = '#ff4757'; nameInput.focus(); }
         return;
     }
-    
-    // Mettre à jour les données et soumettre
-    document.getElementById('childrenData').value = JSON.stringify(children);
-    document.getElementById('inviteForm').submit();
+    n = n.charAt(0).toUpperCase() + n.slice(1);
+    var selAv = row.querySelector('.child-av.av-selected');
+    var av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
+    row.classList.add('child-row-saved');
+    row.setAttribute('data-name', n);
+    row.setAttribute('data-avatar', av);
+    row.innerHTML =
+        '<img src="' + av + '" class="child-saved-av" alt="' + n + '">'
+        + '<span class="child-saved-name">' + n + '</span>'
+        + '<button type="button" class="child-edit-btn" onclick="editChildRow(' + id + ')" title="Modifier">✏️</button>'
+        + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
 }
 
-// Afficher un message temporaire
-function showTemporaryMessage(message) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'flash-message flash-success';
-    msgDiv.textContent = message;
-    msgDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; animation: slideDown 0.3s ease;';
-    
-    document.body.appendChild(msgDiv);
-    
-    setTimeout(() => {
-        msgDiv.style.animation = 'slideUp 0.3s ease';
-        setTimeout(() => msgDiv.remove(), 300);
-    }, 2000);
-}
-
-// Afficher la liste des enfants
-function renderChildren() {
-    const listEl = document.getElementById('childrenList');
-    
-    if (children.length === 0) {
-        listEl.innerHTML = '';
-        return;
-    }
-    
-    let html = '<div style="padding-top: 12px; border-top: 2px solid rgba(253,174,84,0.3); margin-top: 8px;">';
-    
-    children.forEach((child, index) => {
-        html += `
-            <div class="invite-item child" style="background: rgba(253,174,84,0.15); border: 2px solid rgba(253,174,84,0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 24px;">${child.avatar || '👶'}</span>
-                    <span style="font-weight: 700; color: var(--dark);">${child.name}</span>
-                </div>
-                <button type="button" class="remove-btn" onclick="removeChild(${index})" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(220,53,69,0.1); border: 2px solid rgba(220,53,69,0.3); color: var(--danger); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
-            </div>
-        `;
+function editChildRow(id) {
+    var row = document.getElementById('crow' + id);
+    var savedName = row.getAttribute('data-name') || '';
+    var savedAv   = row.getAttribute('data-avatar') || '';
+    row.classList.remove('child-row-saved');
+    var avHtml = '<div class="child-avatars-row" id="avrow' + id + '">';
+    CHILD_AVATARS.forEach(function(av, i) {
+        var url = dbUrl(av);
+        var sel = (url === savedAv) ? ' av-selected' : (i === 0 && !savedAv ? ' av-selected' : '');
+        avHtml += '<button type="button" class="child-av' + sel + '" onclick="selectChildAv(this,\'avrow' + id + '\')" data-avatar="' + url + '">'
+            + '<img src="' + url + '" alt="' + av.seed + '" loading="lazy"></button>';
     });
-    
-    html += '</div>';
-    listEl.innerHTML = html;
-    
-    // Mettre à jour les données du formulaire
-    document.getElementById('childrenData').value = JSON.stringify(children);
+    avHtml += '</div>';
+    row.innerHTML =
+        '<div style="flex:1">'
+        + '<input type="text" class="child-name-input child-name" placeholder="Pr\u00e9nom de l\'enfant" autocapitalize="words" value="' + savedName + '" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">'  
+        + avHtml
+        + '<button type="button" class="child-save-btn" onclick="saveChildRow(' + id + ')">Enregistrer</button>'
+        + '</div>'
+        + '<button type="button" class="btn-remove" onclick="removeRow(\'crow' + id + '\')">&#10005;</button>';
+    row.querySelector('.child-name-input').focus();
 }
 
-// Gérer la touche Entrée
-document.getElementById('childName').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        addChild();
-    }
-});
-
-// Sélectionner le type de foyer (version simplifiée)
-function selectHouseTypeSimple(element) {
-    const type = element.getAttribute('data-type');
-    
-    // Désélectionner toutes les options
-    document.querySelectorAll('.house-type-option').forEach(opt => {
-        opt.classList.remove('selected');
-        opt.style.transform = 'scale(1)';
-    });
-    
-    // Sélectionner l'option cliquée
-    element.classList.add('selected');
-    element.style.transform = 'scale(1.05)';
-    
-    // Mettre à jour le champ caché
-    document.getElementById('houseTypeInput').value = type;
-    document.getElementById('houseTypeData').value = type;
-    
-    // Envoyer la mise à jour au serveur immédiatement
-    fetch('/update_house_type', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ house_type: type })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Type de foyer mis à jour:', type);
+function prepareSubmit() {
+    document.getElementById('partnersJSON').value = JSON.stringify([]);
+    var children = [];
+    document.querySelectorAll('.child-row').forEach(function(row) {
+        var n, av;
+        if (row.classList.contains('child-row-saved')) {
+            n  = row.getAttribute('data-name') || '';
+            av = row.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0]);
+        } else {
+            var nameInput = row.querySelector('.child-name');
+            n = nameInput ? nameInput.value.trim() : '';
+            if (n.length > 0) n = n.charAt(0).toUpperCase() + n.slice(1);
+            var selAv = row.querySelector('.child-av.av-selected');
+            av = selAv ? (selAv.getAttribute('data-avatar') || dbUrl(CHILD_AVATARS[0])) : dbUrl(CHILD_AVATARS[0]);
         }
-    })
-    .catch(error => {
-        console.error('Erreur lors de la mise à jour du type de foyer:', error);
+        if (n) children.push({ name: n, avatar: av });
     });
-}
-
-// Sélectionner l'avatar de l'enfant
-function selectChildAvatar(element) {
-    // Désélectionner tous les avatars
-    document.querySelectorAll('.child-avatar-option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
-    
-    // Sélectionner l'avatar cliqué
-    element.classList.add('selected');
-    selectedChildAvatar = element.getAttribute('data-avatar');
+    document.getElementById('childrenJSON').value = JSON.stringify(children);
 }
 </script>
 {% endblock %}

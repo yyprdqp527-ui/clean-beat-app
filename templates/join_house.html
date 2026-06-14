@@ -3,9 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Rejoindre une maison - CleanBeat</title>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,800&display=swap" rel="stylesheet">
+    <title>Rejoindre une maison - Dust</title>
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"></noscript>
+    <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
     <style>
+        :root {
+            --teal-light: #A6D3DC;
+            --teal-dark: #597176;
+            --brown-warm: #4a3428;
+            --brown-dark: #1a1410;
+            --gold: #FDAE54;
+            --peach: #F4C68D;
+            --white: #ffffff;
+            --dark: #153036;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,284 +32,409 @@
 
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #A6D3DC 0%, #597176 100%);
+            background: {{ bg_gradient }};
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            overflow-x: hidden;
+            gap: 20px;
         }
         
-        /* Bouton retour glassmorphism */
-        .back-btn-glass {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.25);
+
+/* Header avec titre - style create_profile */
+        .page-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 2px solid rgba(255,255,255,0.4);
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            z-index: 1000;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
+            max-width: 600px;
+            width: 100%;
         }
         
-        .back-btn-glass:hover {
-            background: rgba(255, 255, 255, 0.35);
-            transform: translateX(-3px);
+        .page-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #153036;
+            margin: 0;
+            margin-bottom: 4px;
         }
         
-        .back-btn-glass:active {
-            transform: scale(0.95);
+        .page-subtitle {
+            font-size: 14px;
+            color: #597176;
+            margin-top: 4px;
+            margin-bottom: 0;
         }
         
-        /* 📱 MOBILE OPTIMISÉ */
+        /* 📱 Mobile optimisé */
         @media (max-width: 480px) {
             body {
-                padding: 12px !important;
+                padding: 12px;
             }
             
             .container {
-                padding: 25px 18px !important;
-                border-radius: 18px !important;
+                padding: 30px 22px;
+                border-radius: 20px;
             }
             
             .icon {
-                font-size: 2.5rem !important;
-                margin-bottom: 15px !important;
+                font-size: 3rem;
+                margin-bottom: 15px;
             }
             
             h1 {
-                font-size: 20px !important;
-                margin-bottom: 10px !important;
+                font-size: 22px;
+                margin-bottom: 12px;
             }
             
             .subtitle {
-                font-size: 13px !important;
-                margin-bottom: 20px !important;
+                font-size: 14px;
+                margin-bottom: 24px;
+            }
+
+            .step {
+                width: 42px;
+                height: 42px;
+                font-size: 16px;
+            }
+
+            .code-input {
+                font-size: 24px;
+                letter-spacing: 4px;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 15px;
             }
         }
         
         @media (max-width: 375px) {
             body {
-                padding: 10px !important;
+                padding: 10px;
             }
             
             .container {
-                padding: 20px 15px !important;
+                padding: 25px 18px;
+                border-radius: 18px;
             }
             
             .icon {
-                font-size: 2rem !important;
+                font-size: 2.5rem;
             }
             
             h1 {
-                font-size: 18px !important;
+                font-size: 20px;
+            }
+
+            .subtitle {
+                font-size: 13px;
             }
         }
 
-        .btn-login {
-            display: inline-block;
-            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-            margin: 15px 0;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
-            background: linear-gradient(135deg, #357ABD 0%, #2868A8 100%);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
+        /* Container principal - style create_profile EXACT */
         .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: saturate(180%) blur(30px);
-            -webkit-backdrop-filter: saturate(180%) blur(30px);
-            border-radius: 25px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.35);
-            border: 1px solid rgba(255,255,255,0.55);
-            max-width: 500px;
-            width: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            overflow: hidden;
             text-align: center;
+            padding: 32px 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        /* Animation d'apparition */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 12px rgba(21, 48, 54, 0.15));
         }
 
         h1 {
-            color: #153036;
+            color: var(--dark);
             margin-bottom: 15px;
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 800;
-            letter-spacing: 0.3px;
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
-            color: #597176;
-            font-size: 15px;
+            color: var(--teal-dark);
+            font-size: 14px;
             line-height: 1.6;
             margin-bottom: 30px;
+            font-weight: 500;
         }
 
+        /* Mode Toggle Buttons - glassmorphisme */
+        .mode-toggle {
+            margin: 25px 0;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .mode-toggle .btn {
+            flex: 1;
+            max-width: 180px;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(166,211,220,0.15) 100%);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid rgba(166, 211, 220, 0.4);
+            border-radius: 16px;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(21, 48, 54, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .mode-toggle .btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(166,211,220,0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(21, 48, 54, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .mode-toggle .btn.active {
+            background: linear-gradient(135deg, var(--gold), var(--peach));
+            border-color: var(--gold);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(253, 174, 84, 0.45),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        /* Indicateur d'étapes - glassmorphisme */
         .steps-indicator {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 40px;
+            padding: 0 20px;
         }
 
         .step {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: rgba(166, 211, 220, 0.3);
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 2px solid rgba(166, 211, 220, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            color: #597176;
-            transition: all 0.3s ease;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--teal-dark);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(21, 48, 54, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         .step.active {
-            background: linear-gradient(135deg, #FDAE54, #F4C68D);
-            border-color: #FDAE54;
+            background: linear-gradient(135deg, var(--gold), var(--peach));
+            border-color: var(--gold);
             color: white;
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
+            transform: scale(1.15);
+            box-shadow: 0 6px 24px rgba(253, 174, 84, 0.45),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            animation: pulse-step 2s ease-in-out infinite;
         }
 
         .step.completed {
-            background: linear-gradient(135deg, #A6D3DC, #597176);
-            border-color: #597176;
+            background: linear-gradient(135deg, var(--teal-light), var(--teal-dark));
+            border-color: var(--teal-dark);
             color: white;
+            box-shadow: 0 4px 16px rgba(89, 113, 118, 0.3);
         }
 
+        @keyframes pulse-step {
+            0%, 100% { transform: scale(1.15); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Formulaire avec glassmorphisme élégant */
         .form-section {
             display: none;
         }
 
         .form-section.active {
             display: block;
-            animation: fadeIn 0.5s ease;
+            animation: fadeSlideIn 0.5s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
             text-align: left;
         }
 
         label {
             display: block;
-            color: #153036;
+            color: var(--dark);
             font-weight: 700;
             font-size: 14px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            letter-spacing: 0.2px;
         }
 
         input {
             width: 100%;
-            padding: 14px 18px;
-            border: 2px solid rgba(166, 211, 220, 0.3);
-            border-radius: 15px;
+            padding: 16px 20px;
+            border: 2px solid rgba(166, 211, 220, 0.4);
+            border-radius: 16px;
             font-size: 16px;
             font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.08) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--dark);
+            box-shadow: 0 4px 12px rgba(21, 48, 54, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        input::placeholder {
+            color: rgba(89, 113, 118, 0.5);
+            font-weight: 500;
         }
 
         input:focus {
             outline: none;
-            border-color: #FDAE54;
-            box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.1);
+            border-color: var(--gold);
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(253,174,84,0.1) 100%);
+            box-shadow: 0 0 0 4px rgba(253, 174, 84, 0.15),
+                        0 6px 20px rgba(253, 174, 84, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.7);
             transform: translateY(-2px);
         }
 
         .code-input {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
-            letter-spacing: 3px;
+            letter-spacing: 6px;
             text-align: center;
             text-transform: uppercase;
+            padding: 20px;
         }
 
+        /* Boutons EXACTEMENT comme task_page_enhanced */
         .btn {
-            padding: 14px 30px;
+            padding: 16px 32px;
             border: none;
-            border-radius: 15px;
+            border-radius: 16px;
             font-family: 'Montserrat', sans-serif;
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             margin: 8px;
+            box-shadow: 0 6px 20px rgba(21, 48, 54, 0.15);
+            border: 2px solid transparent;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #FDAE54, #F4C68D);
+            background: linear-gradient(135deg, var(--gold), var(--peach));
             color: white;
-            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.3);
+            box-shadow: 0 6px 24px rgba(253, 174, 84, 0.35),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(253, 174, 84, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(253, 174, 84, 0.45),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: rgba(166, 211, 220, 0.3);
-            color: #597176;
+            background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(166,211,220,0.2) 100%);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: var(--teal-dark);
+            border: 2px solid rgba(166, 211, 220, 0.5);
+            box-shadow: 0 4px 16px rgba(21, 48, 54, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         .btn-secondary:hover {
-            background: rgba(166, 211, 220, 0.5);
+            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(166,211,220,0.25) 100%);
+            border-color: rgba(166, 211, 220, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(21, 48, 54, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
         }
 
+        /* Box de résumé - glassmorphisme */
         .summary-box {
-            background: rgba(166, 211, 220, 0.15);
-            border: 2px solid rgba(166, 211, 220, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
+            background: linear-gradient(135deg, rgba(166,211,220,0.15) 0%, rgba(255,255,255,0.1) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(166, 211, 220, 0.4);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 28px;
             text-align: left;
+            box-shadow: 0 6px 20px rgba(21, 48, 54, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .summary-item {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(166, 211, 220, 0.2);
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(166, 211, 220, 0.25);
         }
 
         .summary-item:last-child {
@@ -299,44 +442,53 @@
         }
 
         .summary-label {
-            color: #597176;
+            color: var(--teal-dark);
             font-weight: 600;
             font-size: 14px;
         }
 
         .summary-value {
-            color: #153036;
-            font-weight: 700;
-            font-size: 14px;
+            color: var(--dark);
+            font-weight: 800;
+            font-size: 15px;
         }
 
+        /* Flash messages - style tasks.html */
         .flash {
-            padding: 16px 22px;
-            border-radius: 16px;
-            margin-bottom: 25px;
+            padding: 18px 24px;
+            border-radius: 18px;
+            margin-bottom: 28px;
             font-size: 14px;
             font-weight: 600;
-            animation: slideDown 0.4s ease;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 6px 24px rgba(21, 48, 54, 0.12);
+            animation: slideDownBounce 0.5s ease;
+            box-shadow: 0 4px 16px rgba(21, 48, 54, 0.15);
+            border: 2px solid transparent;
         }
 
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideDownBounce {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            60% {
+                opacity: 1;
+                transform: translateY(5px);
+            }
+            100% {
+                transform: translateY(0);
+            }
         }
 
         .flash.danger {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 107, 107, 0.2), rgba(231, 76, 60, 0.15));
+            background: rgba(248, 215, 218, 0.9);
             color: #721c24;
-            border: 1px solid rgba(255, 107, 107, 0.4);
+            border-color: rgba(220, 53, 69, 0.3);
         }
 
         .flash.success {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 215, 0, 0.2), rgba(253, 174, 84, 0.3));
-            color: #153036;
-            border: 1px solid rgba(253, 174, 84, 0.4);
+            background: rgba(253, 240, 213, 0.9);
+            color: var(--dark);
+            border-color: rgba(253, 174, 84, 0.4);
         }
 
         .back-link {
@@ -369,73 +521,78 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 </head>
 <body>
 
 <!-- Bouton retour glassmorphism -->
-<a href="{{ url_for('login') }}" class="back-btn-glass" aria-label="Retour">←</a>
+<a href="{{ url_for('auth.login') }}" class="back-btn-glass" aria-label="Retour">←</a>
+
+<!-- Header avec titre - style create_profile -->
+<div class="page-header">
+    <div class="icon">🏠</div>
+    <h1 class="page-title">Rejoindre une maison</h1>
+    <p class="page-subtitle">Rejoins une maison existante avec un code ou crée ton compte</p>
+</div>
 
 <div class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, msg in messages %}
-          <div class="flash {{ category }}">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <div class="icon">🏠</div>
-    <h1>Rejoindre une maison</h1>
+    {% include '_flash_popup.html' %}
     
-    <div style="margin: 20px 0;">
-        <p style="color: #597176; font-size: 13px; margin-bottom: 10px;">Déjà inscrit ?</p>
-        <a href="http://192.168.1.156:8000/login" class="btn-login">🔐 Se connecter</a>
+    <!-- Boutons connexion/inscription avec glassmorphisme -->
+    <div class="mode-toggle">
+        <button type="button" class="btn active" id="btnSignup" onclick="window.location.href='{{ url_for('auth.signup_email') }}'">
+            Créer ton compte
+        </button>
+        <button type="button" class="btn" id="btnLogin" onclick="window.location.href='{{ url_for('auth.login') }}'">
+            🔐 Se connecter
+        </button>
     </div>
     
     <!-- Indicateur d'étapes -->
-    <div class="steps-indicator">
+    <div class="steps-indicator" id="stepsIndicator">
         <div class="step active" id="step1">1</div>
         <div class="step" id="step2">2</div>
         <div class="step" id="step3">3</div>
     </div>
 
     <form method="post" id="joinForm">
-        <!-- Étape 1: Code de la maison -->
+        
+        <!-- Étape 1: Code de la maison (toujours visible) -->
         <div class="form-section active" id="section1">
-            <div class="subtitle">
+            <div class="subtitle" id="subtitle1">
                 Entrez le code que vous avez reçu par SMS.
             </div>
             <div class="form-group">
                 <label for="house_code">Code de la maison</label>
                 <input type="text" id="house_code" name="house_code" required 
-                       class="code-input" placeholder="ABC123" maxlength="6">
+                       class="code-input" placeholder="ABC123" maxlength="6" value="{{ code or '' }}">
             </div>
             <button type="button" class="btn btn-primary" onclick="nextStep(2)">
                 Suivant →
             </button>
         </div>
 
-        <!-- Étape 2: Création du compte -->
+        <!-- MODE INSCRIPTION: Étape 2 - Création du compte -->
         <div class="form-section" id="section2">
             <div class="subtitle">
                 Créez votre compte pour commencer à jouer.
             </div>
-            <div class="form-group">
+            <div class="form-group" id="nameGroup">
                 <label for="user_name">Votre nom</label>
-                <input type="text" id="user_name" name="user_name" required 
-                       placeholder="Ex: Marie, Paul...">
+                <input type="text" id="user_name" name="user_name"
+                       placeholder="Ex: Marie, Paul..." autocomplete="name">
             </div>
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required 
-                       placeholder="votre@email.com">
+                       placeholder="votre@email.com" autocomplete="email">
             </div>
             <div class="form-group">
                 <label for="password">Mot de passe</label>
                 <input type="password" id="password" name="password" required 
-                       placeholder="Minimum 6 caractères">
+                       placeholder="Minimum 6 caractères" autocomplete="new-password">
             </div>
-            <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+            <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep(3)">
                 Suivant →
             </button>
             <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
@@ -478,6 +635,7 @@
 let currentStep = 1;
 
 function nextStep(step) {
+    
     // Valider l'étape actuelle
     const currentSection = document.getElementById(`section${currentStep}`);
     const inputs = currentSection.querySelectorAll('input[required]');
@@ -533,8 +691,10 @@ document.querySelectorAll('input').forEach(input => {
     input.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (currentStep < 3) {
-                nextStep(currentStep + 1);
+            if (currentStep === 1) {
+                nextStep(2);
+            } else if (currentStep === 2) {
+                nextStep(3);
             }
         }
     });
@@ -543,15 +703,6 @@ document.querySelectorAll('input').forEach(input => {
 // Auto-uppercase pour le code de la maison
 document.getElementById('house_code').addEventListener('input', function(e) {
     this.value = this.value.toUpperCase();
-});
-
-// Pré-remplir le code depuis l'URL si présent
-window.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    if (code) {
-        document.getElementById('house_code').value = code.toUpperCase();
-    }
 });
 </script>
 

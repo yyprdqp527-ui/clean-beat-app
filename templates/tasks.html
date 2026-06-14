@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% set hide_header = true %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
 
 {% block page_styles %}
 <style>
@@ -20,64 +22,66 @@
     .avatar-square-wrapper .vbar { left: calc(100% + 12px); right: auto; }
 }
 
-
 /* Palette harmonisée */
 :root{
     --teal-light:#A6D3DC; /* A6D3DC */
     --teal-dark:#597176;  /* 597176 */
     --gold:#FDAE54;       /* FDAE54 */
     --peach:#F4C68D;      /* F4C68D */
+    
+    /* 🎨 Couleurs dynamiques selon la pièce - Dégradés harmonieux */
+    {% if 'Salon' in category or 'salon' in category|lower %}
+        --brown-warm: #FFCCAA; /* Salon - Pêche clair (OK) */
+        --brown-dark: #FFB890;
+    {% elif 'Cuisine' in category or 'cuisine' in category|lower %}
+        --brown-warm: #C8D96F; /* Cuisine - Vert anis */
+        --brown-dark: #B5C75E;
+    {% elif 'chambre_parentale' in category|lower or ('Chambre' in category and '1' in category) %}
+        --brown-warm: #8B7355; /* Chambre 1 - Marron */
+        --brown-dark: #75614A;
+    {% elif 'chambre1' in category|lower or ('Chambre' in category and '2' in category) %}
+        --brown-warm: #D4C4A8; /* Chambre 2 - Beige */
+        --brown-dark: #C2B196;
+    {% elif 'chambre2' in category|lower or ('Chambre' in category and '3' in category) %}
+        --brown-warm: #8B8B5C; /* Chambre 3 - Olive */
+        --brown-dark: #75754A;
+    {% elif 'chambre_enfant' in category|lower or 'Chambre Enfant' in category %}
+        --brown-warm: #E8B5B5; /* Chambre enfant 1 - Rosé pâle */
+        --brown-dark: #D19E9E;
+    {% elif 'chambre_garcon' in category|lower or 'garcon' in category|lower %}
+        --brown-warm: #E5A67F; /* Chambre enfant 2 - Orangé */
+        --brown-dark: #D1925E;
+    {% elif 'chambre_bebe' in category|lower or 'Bébé' in category or 'bebe' in category|lower %}
+        --brown-warm: #F5A89A; /* Chambre bébé - Saumon */
+        --brown-dark: #E19080;
+    {% elif 'Bureau' in category or 'Bonus' in category or 'bonus' in category|lower %}
+        --brown-warm: #E9DDAF; /* Bureau - Beige/jaune pâle (OK) */
+        --brown-dark: #DCC88F;
+    {% elif 'Salle' in category or 'Bain' in category or 'salle_bain' in category|lower %}
+        --brown-warm: #A8D8E0; /* Salle de bain - Bleu ciel (OK) */
+        --brown-dark: #8BC7D1;
+    {% elif 'WC' in category or 'Toilettes' in category or 'toilettes' in category|lower or 'wc' in category|lower %}
+        --brown-warm: #BFBFBF; /* WC/Toilettes - Gris */
+        --brown-dark: #A8A8A8;
+    {% elif 'Buanderie' in category or 'buanderie' in category|lower %}
+        --brown-warm: #a3a58f; /* Buanderie - Vert olive clair (RÉFÉRENCE) */
+        --brown-dark: #8F9177;
+    {% elif 'Garage' in category or 'garage' in category|lower %}
+        --brown-warm: #7D3C3C; /* Garage - Bordeaux */
+        --brown-dark: #663030;
+    {% else %}
+        /* Beige neutre par défaut */
+        --brown-warm: #F5F1E8;
+        --brown-dark: #E8DCC8;
+    {% endif %}
 }
 body {
-    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+    background: {{ bg_gradient }};
     min-height: 100vh;
 }
 
-/* Bouton retour glassmorphisme */
-.back-btn-glass {
-    position: fixed;
-    top: 24px;
-    left: 24px;
-    z-index: 2001;
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #153036;
-    font-size: 28px;
-    font-weight: bold;
-    text-decoration: none;
-    box-shadow: 0 12px 40px rgba(89, 113, 118, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    transition: all 0.3s ease;
-}
-
-.back-btn-glass:hover {
-    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(166,211,220,0.25) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 15px 50px rgba(89, 113, 118, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-.back-btn-glass:active {
-    transform: scale(0.95);
-}
-
-@media (max-width: 520px) {
-    .back-btn-glass {
-        top: 20px;
-        left: 20px;
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-    }
-}
 /* Titre de catégorie en noir */
-.container-menu h1 { color:#000; }
+.container-menu h1 { color: var(--adaptive-text, #153036); }
 
 /* Header de la pièce - style harmonisé avec add_custom_task */
 .room-header {
@@ -136,6 +140,7 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    outline: none;
 }
 
 /* Style pour les cartes avec points négatifs (livraison) */
@@ -146,15 +151,20 @@ body {
 }
 
 .task-card.negative-task:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6),
+                0 0 25px rgba(80, 80, 80, 0.4);
 }
 
 .task-card.negative-task .task-name {
     color: white !important;
 }
 
-.task-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 40px rgba(253,174,84,0.25); }
+.task-card:hover { 
+    transform: translateY(-10px); 
+    box-shadow: 0 15px 40px rgba(253,174,84,0.25),
+                0 0 25px rgba(253,174,84,0.3); 
+}
 .task-card .task-name { font-weight: 800; color: var(--teal-dark); font-size: 16px; padding: 12px 10px; margin: 0; background: transparent !important; order: 1; }
 .task-card .task-image-container { 
     width: 100%; 
@@ -167,9 +177,9 @@ body {
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
-    transition: transform 0.3s;
+    transition: filter 0.3s;
 }
-.task-card:hover .task-image-container img { transform: scale(1.1); }
+.task-card:hover .task-image-container img { filter: brightness(1.1) contrast(1.05); }
 
 /* Pastille points en overlay sur l'image - RONDE ROUGE */
 .points-badge {
@@ -222,19 +232,23 @@ body {
 }
 
 .points-badge:hover {
-    transform: scale(1.15);
-    box-shadow: 0 6px 18px rgba(255,71,87,0.6), 
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(253,174,84,0.8), 
+                0 0 40px rgba(253,174,84,0.5),
                 inset 0 2px 4px rgba(255,255,255,0.6),
                 inset 0 -2px 4px rgba(0,0,0,0.25);
+    border: 2px solid rgba(253,174,84,1);
     background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
 }
 
 .points-badge.negative:hover {
-    transform: scale(1.15);
+    transform: scale(1);
     box-shadow: 
-        0 6px 18px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(80, 80, 80, 0.8),
+        0 0 40px rgba(80, 80, 80, 0.5),
         inset 0 2px 4px rgba(80, 80, 80, 0.5), 
         inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(100, 100, 100, 0.9);
 }
 
 .points-badge::before {
@@ -262,24 +276,20 @@ body {
 /* Animation d'attention pour attirer l'œil */
 @keyframes pulseAttention {
     0%, 100% {
-        transform: scale(1);
         box-shadow: 0 6px 20px rgba(253,174,84,0.4), inset 0 2px 4px rgba(255,255,255,0.3);
     }
     50% {
-        transform: scale(1.08);
-        box-shadow: 0 8px 28px rgba(253,174,84,0.6), inset 0 2px 4px rgba(255,255,255,0.5);
+        box-shadow: 0 8px 28px rgba(253,174,84,0.6), 0 0 20px rgba(253,174,84,0.4), inset 0 2px 4px rgba(255,255,255,0.5);
     }
 }
 
 /* Animation pour les points négatifs */
 @keyframes pulseAttentionNegative {
     0%, 100% {
-        transform: scale(1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(80, 80, 80, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.4);
     }
     50% {
-        transform: scale(1.08);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(80, 80, 80, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 20px rgba(80, 80, 80, 0.4), inset 0 2px 4px rgba(80, 80, 80, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -289,23 +299,9 @@ body {
 }
 
 
-/* Modal d'édition des points - OPTIMISÉE MOBILE */
-.points-modal { position: fixed; inset: 0; display: none; z-index: 2000; }
-.points-modal.show { display: block; }
-.points-modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-.points-modal .dialog { position: relative; max-width: 380px; margin: 100px auto; background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 24px; z-index: 1; }
-.points-modal .dialog h3 { margin: 0 0 16px; font-size: 20px; color: #153036; font-weight: 800; text-align: center; }
-.points-modal .row { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-.points-modal input[type="number"]{ flex:1; min-width: 0; height: 56px; font-size: 24px; padding: 12px 16px; border:2px solid #FDAE54; border-radius: 14px; font-weight: 700; text-align: center; }
-.points-modal .actions { margin-top: 16px; display: flex; gap: 12px; justify-content: stretch; }
-.points-modal button { flex: 1; height: 52px; padding: 0 20px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; font-size: 16px; transition: all 0.3s ease; }
-.points-modal .btn-cancel { background: #e0e0e0; color: #333; }
-.points-modal .btn-cancel:hover { background: #d0d0d0; transform: translateY(-2px); }
-.points-modal .btn-ok { background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color: #153036; box-shadow: 0 4px 15px rgba(253,174,84,0.4); }
-.points-modal .btn-ok:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(253,174,84,0.6); }
 
-.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color:#153036; padding:18px 24px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.15); opacity:0; transition: opacity .5s, transform .5s; z-index:9999; font-weight:600; font-size: 16px; max-width: 90%; text-align: center; border: 2px solid rgba(40,167,69,0.5); }
-.toast.show { opacity:1; transform: translate(-50%, -50%) scale(1); }
+.toast { position:fixed; top:24px; left:50%; transform:translateX(-50%) translateY(-18px); background:linear-gradient(135deg,rgba(255,255,255,0.85) 0%,rgba(166,211,220,0.6) 50%,rgba(244,198,141,0.4) 100%); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.3); color:#153036; padding:13px 22px; border-radius:20px; font-weight:700; font-size:14px; max-width:320px; text-align:center; box-shadow:0 8px 32px rgba(21,48,54,0.25),0 0 0 1px rgba(255,255,255,0.5),inset 0 1px 0 rgba(255,255,255,0.6); opacity:0; z-index:99999; transition:opacity .35s,transform .35s cubic-bezier(0.34,1.56,0.64,1); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
 @keyframes fadeInUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
 
@@ -336,10 +332,6 @@ body {
     .points-help-banner span:first-of-type {
         font-size: 24px !important;
     }
-    .points-modal .dialog { margin: 60px 16px; max-width: none; border-radius: 18px; padding: 20px; }
-    .points-modal input[type="number"] { height: 64px; font-size: 28px; border-width: 3px; }
-    .points-modal button { height: 58px; font-size: 18px; }
-    .points-modal .dialog h3 { font-size: 22px; margin-bottom: 20px; }
     /* Bouton mobile : centré sous les tâches et réduit */
     .add-task-btn {
         position: static;
@@ -466,10 +458,54 @@ body {
     }
 }
 
-/* Bouton ajouter tâche flottant */
-.add-task-btn { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color:white; padding:18px 25px; border-radius:50px; text-decoration:none; font-weight:800; box-shadow:0 8px 25px rgba(253, 174, 84, 0.4); transition: all .3s ease; z-index:1000; display:flex; align-items:center; gap:10px; font-size: 15px; }
+/* Bouton ajouter tâche — centré sous les tâches */
+.add-task-btn { position: static; display: block; width: max-content; margin: 20px auto 28px; background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%); color:white; padding:14px 22px; border-radius:50px; text-decoration:none; font-weight:800; box-shadow:0 6px 20px rgba(253, 174, 84, 0.4); transition: all .3s ease; font-size: 15px; }
 
-.add-task-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow:0 12px 35px rgba(253, 174, 84, 0.6); }
+.add-task-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow:0 8px 28px rgba(253, 174, 84, 0.5); }
+
+/* ===== BARRE DE NAVIGATION FIXE EN BAS ===== */
+body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important; }
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: saturate(180%) blur(28px);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 -8px 32px rgba(21,48,54,0.15);
+    display: flex;
+    overflow: hidden;
+}
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 4px 10px 4px;
+    background: none;
+    border: none;
+    border-left: 1px solid rgba(21,48,54,0.06);
+    cursor: pointer;
+    text-decoration: none;
+    color: #597176;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    transition: background 0.15s ease;
+}
+.bottom-nav-item:first-child { border-left: none; }
+.bottom-nav-item:active { background: rgba(21,48,54,0.06); }
+.bottom-nav-icon { font-size: 20px; line-height: 1; }
 
 /* Badge pour missions personnalisées */
 .custom-badge{
@@ -494,116 +530,15 @@ body {
 <!-- Bouton retour vers le menu -->
 <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour au menu">←</a>
 
-<!-- Message d'aide pour les points -->
-<div id="pointsHelp" class="points-help-banner" style="
-    max-width: 900px;
-    margin: {% if hide_header %}20px{% else %}120px{% endif %} auto 20px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 16px 24px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 2px solid rgba(253,174,84,0.5);
-    color: #153036;
-    font-weight: 600;
-    position: relative;
-    animation: slideDown 0.5s ease-out;
-">
-    <span style="font-size: 28px;">💡</span>
-    <span style="flex: 1;">Clique sur les pastilles rouges pour modifier la valeur des points !</span>
-    <button onclick="closeHelp()" style="
-        background: rgba(255,255,255,0.9);
-        border: none;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        cursor: pointer;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">✕</button>
-</div>
-
-<style>
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.points-help-banner.hide {
-    animation: slideUp 0.4s ease-out forwards;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-</style>
-
-<script>
-function closeHelp() {
-    const banner = document.getElementById('pointsHelp');
-    banner.classList.add('hide');
-    setTimeout(() => {
-        banner.style.display = 'none';
-    }, 400);
-    // Sauvegarder dans localStorage que l'utilisateur a vu le message pour cette catégorie
-    const category = '{{ category }}';
-    localStorage.setItem('pointsHelpSeen_' + category, 'true');
-}
-
-// Masquer automatiquement si déjà vu pour cette catégorie
-window.addEventListener('DOMContentLoaded', function() {
-    const category = '{{ category }}';
-    if (localStorage.getItem('pointsHelpSeen_' + category) === 'true') {
-        document.getElementById('pointsHelp').style.display = 'none';
-    } else {
-        // Auto-masquer après 15 secondes si l'utilisateur ne clique pas
-        setTimeout(() => {
-            const banner = document.getElementById('pointsHelp');
-            if (banner && banner.style.display !== 'none') {
-                closeHelp();
-            }
-        }, 15000);
-    }
-    
-    // Arrêter l'animation des pastilles après 10 secondes
-    setTimeout(() => {
-        document.querySelectorAll('.points-badge').forEach(badge => {
-            badge.classList.add('animation-done');
-        });
-    }, 10000);
-});
-</script>
-
 <div class="header-below-zone">
 <!-- Header de la pièce -->
 <div class="room-header" style="max-width:900px; width:100%; margin:0 auto 20px;">
-    <span class="room-icon">{{ category_icon|default('🏠') }}</span>
+{% if category_icon %}<span class="room-icon">{{ category_icon }}</span>{% endif %}
     <h1 class="room-name">{{ category_name|default(category|replace('_', ' ')|capitalize) }}</h1>
     <p class="room-subtitle">Sélectionne une tâche à accomplir</p>
 </div>
 
 <div class="container-menu" style="max-width:900px; margin:0 auto; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(166,211,220,0.2) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius:30px; padding:40px 30px 50px; box-shadow:0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6); border: 2px solid rgba(255, 255, 255, 0.5);">
-
 
     <div class="tasks">
         {% if tasks_with_images and tasks_with_images|length > 0 %}
@@ -611,11 +546,11 @@ window.addEventListener('DOMContentLoaded', function() {
                 {% set task_name = item[0] %}
                 {% set task_image = item[1] %}
                 {% set task_points = (tasks_points[loop.index0] if tasks_points is defined and tasks_points and loop.index0 < tasks_points|length else (item[2] if item|length > 2 else 0)) %}
-                <a href="{{ url_for('task_enhanced', cat=category, task_id=loop.index0) }}" class="task-card{% if task_points < 0 %} negative-task{% endif %}">
+                <a href="{{ url_for('tasks.task_enhanced', cat=category, task_id=loop.index0) }}" class="task-card{% if task_points < 0 %} negative-task{% endif %}">
                     <p class="task-name">{{ task_name or 'Tâche sans nom' }}</p>
                     <div class="task-image-container">
-                        <img src="{{ url_for('static', filename='images/' ~ (task_image if task_image else 'default.png')) }}" alt="{{ task_name or 'Tâche' }}">
-                        <span class="points-badge{% if task_points < 0 %} negative{% endif %} points-edit-trigger" role="button" tabindex="0" aria-label="{{ task_points }} points" data-action="{{ url_for('update_task_points', cat=category, task_id=loop.index0) }}" data-points="{{ task_points }}">{{ task_points }}</span>
+                        <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb if task_image else 'default.webp')) }}" alt="{{ task_name or 'Tâche' }}" loading="lazy"{% if task_image %} onerror="this.src='/static/images/{{ task_image }}';this.onerror=null;"{% endif %}>
+                        <span class="points-badge{% if task_points < 0 %} negative{% endif %}" aria-label="{{ task_points }} points">{{ task_points }}</span>
                     </div>
                 </a>
             {% endfor %}
@@ -623,19 +558,23 @@ window.addEventListener('DOMContentLoaded', function() {
 
         {% if custom_tasks and custom_tasks|length > 0 %}
             {% for custom_task in custom_tasks %}
-            <div class="task-card custom-task" style="position:relative;">
-                <!-- Lien vers la page de validation -->
-                <a href="{{ url_for('custom_task_page', task_id=custom_task.id) }}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
-                    <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
-                    <div class="task-image-container">
-                        <img src="{{ url_for('static', filename='images/' ~ (custom_task.image if custom_task.image else 'default.png')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}">
-                        <span class="points-badge">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
-                        <!-- Petit bouton - discret sur l'image -->
-                        <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" style="position:absolute; bottom:6px; left:6px; z-index:10;" onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Supprimer cette mission ?')) this.submit();">
-                            <button type="submit" title="Supprimer" style="background:rgba(0,0,0,0.5); border:none; cursor:pointer; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:16px; font-weight:bold; line-height:1;">−</button>
-                        </form>
-                    </div>
-                </a>
+            <div class="custom-task-wrapper">
+                <div class="task-card custom-task">
+                    <!-- Formulaire caché pour la suppression (soumis par confirmDeleteMission) -->
+                    <form method="POST" action="{{ url_for('delete_custom_task', task_id=custom_task.id, cat=category) }}" class="custom-task-delete-form" data-task-name="{{ custom_task.name or 'cette mission' }}" style="display:none;"></form>
+                    <!-- Lien vers la page de validation -->
+                    <a href="{{ url_for('tasks.custom_task_page', task_id=custom_task.id) }}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
+                        <p class="task-name">✨ {{ custom_task.name or 'Tâche personnalisée' }}</p>
+                        <div class="task-image-container">
+                            {% if custom_task.image and custom_task.image.startswith('data:') %}
+                            <img src="{{ custom_task.image }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/' ~ (custom_task.image|thumb if custom_task.image else 'default.webp')) }}" alt="{{ custom_task.name or 'Tâche personnalisée' }}" loading="lazy"{% if custom_task.image %} onerror="this.src='/static/images/{{ custom_task.image }}';this.onerror=null;"{% endif %}>
+                            {% endif %}
+                            <span class="points-badge" aria-label="{{ custom_task.points if custom_task.points is not none else 0 }} points">{{ custom_task.points if custom_task.points is not none else 0 }}</span>
+                        </div>
+                    </a>
+                </div>
             </div>
             {% endfor %}
         {% endif %}
@@ -645,74 +584,386 @@ window.addEventListener('DOMContentLoaded', function() {
         {% endif %}
     </div>
 
-    <!-- Bouton ajouter une mission dans le padding blanc -->
-    <a href="{{ url_for('add_task_page', cat=category) }}" class="add-task-btn" style="position:static; display:block; margin:32px auto 0; left:auto; right:auto; bottom:auto;">⭐ Ajoute une mission</a>
+    <!-- Bouton ajouter une mission -->
+    <a href="{{ url_for('tasks.add_task_page', cat=category) }}" class="add-task-btn">⭐ Ajoute une mission</a>
+
+    <!-- Modal glassmorphism : confirmation suppression mission -->
+    <div id="deleteMissionModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,0.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px; animation:fadeInModal .25s ease;">
+        <div style="max-width:380px; width:100%; background:linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(254,226,226,0.55) 100%); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-radius:24px; padding:28px 24px 22px; box-shadow:0 20px 60px rgba(220,38,38,0.25), 0 8px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.7); border:2px solid rgba(255,255,255,0.6); text-align:center; animation:scaleInModal .3s cubic-bezier(.34,1.56,.64,1);">
+            <div style="width:64px; height:64px; margin:0 auto 14px; border-radius:50%; background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%); display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 8px 22px rgba(220,38,38,0.45);">🗑️</div>
+            <h3 style="margin:0 0 8px; font-size:19px; font-weight:800; color:#153036;">Supprimer cette mission ?</h3>
+            <p id="deleteMissionName" style="margin:0 0 20px; font-size:14px; color:#475569; line-height:1.4;"></p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button type="button" id="deleteMissionCancel" style="flex:1; max-width:140px; padding:12px 18px; border-radius:14px; border:2px solid rgba(166,211,220,0.45); background:rgba(255,255,255,0.75); color:#153036; font-weight:700; font-size:14px; cursor:pointer; transition:all .2s ease; font-family:inherit;">Annuler</button>
+                <button type="button" id="deleteMissionConfirm" style="flex:1; max-width:140px; padding:12px 18px; border-radius:14px; border:none; background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%); color:#fff; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 6px 18px rgba(220,38,38,0.4); transition:all .2s ease; font-family:inherit;">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    @keyframes fadeInModal { from { opacity:0; } to { opacity:1; } }
+    @keyframes scaleInModal { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+    #deleteMissionCancel:hover { background:rgba(255,255,255,0.95); transform:translateY(-1px); }
+    #deleteMissionConfirm:hover { transform:translateY(-1px) scale(1.02); box-shadow:0 8px 24px rgba(220,38,38,0.5); }
+    </style>
+
+    <script>
+    (function(){
+        var modal = document.getElementById('deleteMissionModal');
+        var nameEl = document.getElementById('deleteMissionName');
+        var btnCancel = document.getElementById('deleteMissionCancel');
+        var btnConfirm = document.getElementById('deleteMissionConfirm');
+        var pendingForm = null;
+
+        window.confirmDeleteMission = function(form){
+            pendingForm = form;
+            var name = form.getAttribute('data-task-name') || 'cette mission';
+            nameEl.textContent = '« ' + name + ' » sera définitivement supprimée.';
+            modal.style.display = 'flex';
+        };
+        function close(){ modal.style.display = 'none'; pendingForm = null; }
+        btnCancel.addEventListener('click', close);
+        modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
+        document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex') close(); });
+        btnConfirm.addEventListener('click', function(){
+            if(pendingForm){ pendingForm.submit(); }
+            close();
+        });
+    })();
+
+    /* === APPUI LONG → SUPPRIMER MISSION CUSTOM === */
+    (function(){
+        var activeBtn = null;
+
+        function hideActiveBtn() {
+            if (activeBtn) { activeBtn.remove(); activeBtn = null; }
+        }
+
+        // Clic en dehors du bouton → ferme le bouton
+        document.addEventListener('click', function(e) {
+            if (activeBtn && e.target !== activeBtn) hideActiveBtn();
+        });
+
+        document.querySelectorAll('.custom-task-wrapper').forEach(function(wrapper) {
+            var card = wrapper.querySelector('.task-card.custom-task');
+            var form = wrapper.querySelector('.custom-task-delete-form');
+            if (!card || !form) return;
+
+            var pressTimer = null;
+            var wasLongPress = false;
+
+            function showDeleteBtn() {
+                hideActiveBtn();
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'qfq-delete-btn';
+                btn.textContent = 'Supprimer';
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    hideActiveBtn();
+                    confirmDeleteMission(form);
+                });
+                wrapper.appendChild(btn);
+                activeBtn = btn;
+            }
+
+            function startPress() {
+                clearTimeout(pressTimer);
+                wasLongPress = false;
+                pressTimer = setTimeout(function() {
+                    wasLongPress = true;
+                    showDeleteBtn();
+                }, 600);
+            }
+
+            function cancelPress() {
+                clearTimeout(pressTimer);
+            }
+
+            // ─ Touch (mobile) ─
+            card.addEventListener('touchstart', function(e) { startPress(e); }, { passive: true });
+            card.addEventListener('touchend', cancelPress);
+            card.addEventListener('touchmove', cancelPress, { passive: true });
+
+            // Bloquer la navigation si c'était un appui long
+            card.addEventListener('click', function(e) {
+                if (wasLongPress) {
+                    e.preventDefault();
+                    wasLongPress = false;
+                }
+            });
+
+            // ─ Mouse (desktop) ─
+            card.addEventListener('mousedown', startPress);
+            card.addEventListener('mouseup', cancelPress);
+            card.addEventListener('mouseleave', cancelPress);
+        });
+    })();
+    </script>
+
+    <style>
+    .custom-task-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+    .task-card.custom-task {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .task-card.custom-task img {
+        -webkit-touch-callout: none;
+        pointer-events: none;
+    }
+    .qfq-delete-btn {
+        color: #E24B4A;
+        font-weight: 700;
+        font-size: 14px;
+        background: transparent;
+        border: none;
+        padding: 8px 0;
+        width: 100%;
+        text-align: center;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    @keyframes qfq-wiggle {
+        0%   { transform: rotate(0deg); }
+        20%  { transform: rotate(-3deg); }
+        40%  { transform: rotate(3deg); }
+        60%  { transform: rotate(-2deg); }
+        80%  { transform: rotate(2deg); }
+        100% { transform: rotate(0deg); }
+    }
+    .qfq-wiggle {
+        animation: qfq-wiggle 0.5s ease-in-out;
+    }
+    </style>
+
+    <script>
+    /* === WIGGLE AU PREMIER CHARGEMENT === */
+    if (!sessionStorage.getItem('qfq_custom_task_wiggle_seen')) {
+        var cards = document.querySelectorAll('.task-card.custom-task');
+        cards.forEach(function(card, i) {
+            setTimeout(function() {
+                card.classList.add('qfq-wiggle');
+                card.addEventListener('animationend', function() {
+                    card.classList.remove('qfq-wiggle');
+                }, { once: true });
+            }, 800 + i * 150);
+        });
+        sessionStorage.setItem('qfq_custom_task_wiggle_seen', '1');
+    }
+    </script>
 
 </div>
 
-
-<!-- Bouton Menu harmonisé en bas de page -->
-
-
-<!-- Modal édition des points -->
-<div id="points-modal" class="points-modal" aria-hidden="true">
-    <div class="backdrop" data-close="1"></div>
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="points-modal-title">
-        <h3 id="points-modal-title">Modifier les points</h3>
-        <form id="points-form" method="POST" action="#">
-            <div class="row">
-                <input id="points-input" name="points" type="number" min="0" max="999" value="0" inputmode="numeric" />
-            </div>
-            <div class="actions">
-                <button type="button" class="btn-cancel" data-close="1">Annuler</button>
-                <button type="submit" class="btn-ok">OK</button>
-            </div>
-        </form>
+{% if 'chambre_bebe' in category|lower and baby_activities is defined and baby_activities %}
+<!-- ══ Fil d'activité bébé ══ -->
+<div style="max-width:900px; margin:20px auto 20px; background:linear-gradient(135deg,rgba(255,255,255,0.95) 0%,rgba(244,114,182,0.12) 100%); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-radius:24px; padding:24px 24px 20px; box-shadow:0 8px 32px rgba(244,114,182,0.18),inset 0 1px 0 rgba(255,255,255,0.7); border:2px solid rgba(244,114,182,0.35);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <span style="font-size:22px;">👶</span>
+        <span style="font-size:15px; font-weight:800; color:#153036;">Activités récentes</span>
+        <span style="flex:1;"></span>
+        <button id="toggle-history-btn" onclick="toggleFullHistory()" style="background:rgba(244,114,182,0.15); border:1px solid rgba(244,114,182,0.3); border-radius:10px; padding:6px 12px; font-size:11px; font-weight:700; color:#F472B6; cursor:pointer; transition:all 0.3s ease;">
+            <span id="toggle-icon">▼</span> <span id="toggle-text">Voir tout l'historique</span>
+        </button>
     </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for act in baby_activities[:5] %}
+        <div style="display:flex; align-items:flex-start; gap:10px; background:rgba(244,114,182,0.08); border-radius:14px; padding:10px 14px; border:1px solid rgba(244,114,182,0.18);">
+            <!-- Avatar -->
+            <div style="flex-shrink:0; width:36px; height:36px; border-radius:50%; overflow:hidden; background:rgba(244,114,182,0.18); display:flex; align-items:center; justify-content:center; font-size:18px;">
+                {% if act.avatar and act.avatar.startswith('/') or (act.avatar and act.avatar.startswith('http')) %}
+                    <img src="{{ act.avatar }}" style="width:36px;height:36px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.textContent='👤'">
+                {% else %}
+                    {{ act.avatar or '👤' }}
+                {% endif %}
+            </div>
+            <!-- Contenu -->
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:700; color:#153036; margin-bottom:2px;">{{ act.name }}</div>
+                <div style="font-size:13px; color:#444; line-height:1.4;">{{ act.content }}</div>
+                <div style="font-size:11px; color:#F472B6; font-weight:600; margin-top:4px;">
+                    {{ act.date_fr }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+    
+    <!-- Historique complet (plié par défaut) -->
+    <div id="full-history" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid rgba(244,114,182,0.2);">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for act in baby_activities[5:] %}
+            <div style="display:flex; align-items:flex-start; gap:10px; background:rgba(244,114,182,0.08); border-radius:14px; padding:10px 14px; border:1px solid rgba(244,114,182,0.18);">
+                <!-- Avatar -->
+                <div style="flex-shrink:0; width:36px; height:36px; border-radius:50%; overflow:hidden; background:rgba(244,114,182,0.18); display:flex; align-items:center; justify-content:center; font-size:18px;">
+                    {% if act.avatar and act.avatar.startswith('/') or (act.avatar and act.avatar.startswith('http')) %}
+                        <img src="{{ act.avatar }}" style="width:36px;height:36px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.textContent='👤'">
+                    {% else %}
+                        {{ act.avatar or '👤' }}
+                    {% endif %}
+                </div>
+                <!-- Contenu -->
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:13px; font-weight:700; color:#153036; margin-bottom:2px;">{{ act.name }}</div>
+                    <div style="font-size:13px; color:#444; line-height:1.4;">{{ act.content }}</div>
+                    <div style="font-size:11px; color:#F472B6; font-weight:600; margin-top:4px;">
+                        {{ act.date_fr }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, msg in messages %}
-        {% if category == 'success' %}
-            <div id="toast" class="toast show" data-toast-msg="{{ msg|escape }}"></div>
-        {% endif %}
-    {% endfor %}
-    {% if not messages %}
-        <div id="toast" class="toast"></div>
-    {% endif %}
-{% endwith %}
+<script>
+function toggleFullHistory() {
+    const historyDiv = document.getElementById('full-history');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+    const btn = document.getElementById('toggle-history-btn');
+    
+    if (historyDiv.style.display === 'none') {
+        historyDiv.style.display = 'block';
+        toggleIcon.textContent = '▲';
+        toggleText.textContent = 'Masquer l\'historique';
+        btn.style.background = 'rgba(244,114,182,0.25)';
+    } else {
+        historyDiv.style.display = 'none';
+        toggleIcon.textContent = '▼';
+        toggleText.textContent = 'Voir tout l\'historique';
+        btn.style.background = 'rgba(244,114,182,0.15)';
+    }
+}
+</script>
+
+{% endif %}
+<div id="toast" class="toast"></div>
 
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } });
-
-// Modal d'édition des points (ouverture sur clic de pastille)
-window.addEventListener('DOMContentLoaded', function(){
-    var modal = document.getElementById('points-modal');
-    var form = document.getElementById('points-form');
-    var input = document.getElementById('points-input');
-    function openModal(action, value){
-        if(!modal || !form || !input) return;
-        form.setAttribute('action', action || '#');
-        input.value = (value != null ? value : 0);
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden','false');
-        input.focus();
-    }
-    function closeModal(){
-        if(!modal) return;
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden','true');
-    }
-    document.querySelectorAll('.points-edit-trigger').forEach(function(el){
-        el.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openModal(el.getAttribute('data-action'), el.getAttribute('data-points')); });
-        el.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openModal(el.getAttribute('data-action'), el.getAttribute('data-points')); }});
-    });
-    if(modal){
-        modal.addEventListener('click', function(e){ if(e.target && e.target.getAttribute && e.target.getAttribute('data-close')){ closeModal(); }});
-    }
+// Son d'entrée dans la pièce (scripts defer chargés après parsing)
+window.addEventListener('load', function() {
+    if (window.SoundManager) { setTimeout(function() { SoundManager.play('roomFullscreen'); }, 200); }
 });
+
+window.addEventListener('DOMContentLoaded', function(){ var toast=document.getElementById('toast'); if(toast && toast.classList.contains('show')){ var msg=toast.getAttribute('data-toast-msg'); toast.style.display='none'; if(typeof window.cbToast==='function'){ window.cbToast('✅ '+msg,'success',2000); } else { toast.style.display=''; toast.innerHTML='✅ '+msg; setTimeout(()=>{ toast.classList.remove('show'); },2000); } } });
+
+// ==========================================
+// 🔌 WEBSOCKET - SYNCHRONISATION TEMPS RÉEL
+// ==========================================
+(function() {
+    try {
+        console.log('🔍 WebSocket: Démarrage du script de connexion...');
+        
+        // Vérifier que Socket.IO est chargé
+        if (typeof io === 'undefined') {
+            console.error('❌ WebSocket: Socket.IO non chargé! Vérifiez le CDN.');
+            return;
+        }
+        
+        console.log('✅ WebSocket: Socket.IO détecté, création de la connexion...');
+        const socket = io({transports: ['websocket'], reconnectionAttempts: 10, reconnectionDelay: 1000, reconnectionDelayMax: 5000});
+        const userEmail = "{{ session.get('user', '') }}";
+        
+        console.log('🔍 WebSocket: Email utilisateur:', userEmail || 'AUCUN');
+        
+        if (!userEmail) {
+            console.log('⚠️ WebSocket: Aucun utilisateur connecté');
+            return;
+        }
+        
+        socket.on('connect', function() {
+            console.log('🔌 WebSocket: Connecté au serveur (tasks.html)');
+            console.log('🔍 WebSocket: Envoi join_house avec email:', userEmail);
+            socket.emit('join_house', { email: userEmail });
+        });
+        
+        socket.on('joined_room', function(data) {
+            console.log('🏠 WebSocket: Rejoint la room', data.room);
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('❌ WebSocket: Déconnecté du serveur');
+        });
+        
+        // Écouter les mises à jour de points en temps réel
+        socket.on('players_points_update', function(data) {
+            console.log('📊 WebSocket: Mise à jour des points reçue', data);
+            
+            // Mettre à jour l'affichage des avatars et points dans le header
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(function(player) {
+                    // Chercher les éléments de points pour ce joueur
+                    const pointsElements = document.querySelectorAll('[data-player-email="' + player.email + '"]');
+                    pointsElements.forEach(function(el) {
+                        // Mettre à jour les points quotidiens
+                        if (el.classList.contains('player-daily-points') || el.querySelector('.player-daily-points')) {
+                            const dailyEl = el.classList.contains('player-daily-points') ? el : el.querySelector('.player-daily-points');
+                            if (dailyEl) {
+                                const newDailyPoints = player.daily_points || 0;
+                                dailyEl.textContent = newDailyPoints + ' pts';
+                                
+                                // Animation visuelle
+                                dailyEl.style.transition = 'all 0.3s ease';
+                                dailyEl.style.transform = 'scale(1.2)';
+                                dailyEl.style.color = '#28a745';
+                                setTimeout(function() {
+                                    dailyEl.style.transform = 'scale(1)';
+                                    dailyEl.style.color = '';
+                                }, 600);
+                            }
+                        }
+                        
+                        // Mettre à jour les points totaux
+                        if (el.classList.contains('player-total-points') || el.querySelector('.player-total-points')) {
+                            const totalEl = el.classList.contains('player-total-points') ? el : el.querySelector('.player-total-points');
+                            if (totalEl) {
+                                const newTotalPoints = player.total_points || 0;
+                                totalEl.textContent = newTotalPoints;
+                            }
+                        }
+                    });
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur WebSocket:', error);
+    }
+})();
 </script>
+
+<script src="{{ url_for('static', filename='js/qfq-tips.js') }}"></script>
+<script>
+(function() {
+  var KEY = 'qfq_tips_tasks';
+  if (localStorage.getItem(KEY)) return;
+
+  var TIPS = [
+    {
+      target: 'a.task-card',
+      text: '✅ Fais la tâche en vrai, puis clique sur ton avatar pour valider et marquer tes points !',
+      position: 'bottom'
+    },
+    {
+      target: 'a.add-task-btn',
+      text: '⭐ Ajoute tes propres missions perso ! Elles valent des points aussi.',
+      position: 'top'
+    }
+  ];
+
+  setTimeout(function() {
+    if (!window.QfqTips) return;
+    window.QfqTips.init(TIPS, KEY, null);
+  }, 800);
+})();
+</script>
+
 {% endblock %}
+

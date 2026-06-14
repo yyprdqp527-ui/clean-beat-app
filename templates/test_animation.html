@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Animation - Dust</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .player-info {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-panel">
+        <h1>🧪 Test Animation Célébration</h1>
+        
+        <div class="instructions">
+            <strong>Instructions :</strong>
+            <ol>
+                <li>Ouvrez la page <a href="/menu" target="_blank">Menu</a> dans un autre onglet</li>
+                <li>Cliquez sur un bouton ci-dessous pour déclencher l'animation sur l'avatar correspondant</li>
+                <li>L'animation devrait apparaître sur l'avatar dans la page Menu</li>
+            </ol>
+        </div>
+
+        <div class="test-grid">
+            <button onclick="testAnimation('pat@hotmail.com')">Test Pat</button>
+            <button onclick="testAnimation('marie@hotmail.com')">Test Marie</button>
+            <button onclick="testAnimation('gfufgjdgdye@me.com')">Test Marcel</button>
+            <button onclick="testAnimation('maryline@mail.com')">Test Maryline</button>
+        </div>
+
+        <div class="player-info">
+            <strong>ℹ️ Info :</strong> Les boutons ci-dessus envoient une requête à <code>/test_celebration/&lt;email&gt;</code> 
+            qui émet un événement WebSocket <code>task_celebration</code> dans votre maison.
+        </div>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function testAnimation(email) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Envoi...';
+            resultDiv.style.display = 'block';
+
+            try {
+                const response = await fetch(`/test_celebration/${email}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Animation envoyée !</strong><br>
+                        Joueur: ${data.email}<br>
+                        Room: ${data.room}<br>
+                        Message: ${data.message}<br><br>
+                        <em>Vérifiez la page Menu pour voir l'animation.</em>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>❌ Erreur</strong><br>
+                        ${data.error}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Erreur réseau</strong><br>
+                    ${error.message}
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,13 +3,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{% if change_avatar %}Mon Profil{% else %}Créer mon profil{% endif %} - CleanBeat</title>
-    <!-- Google Fonts avec preconnect pour performance -->
+    <title>{% if change_avatar %}Mon Profil{% else %}Créer mon profil{% endif %} - QuiFaitQuoi</title>
+    <!-- Google Fonts Montserrat - chargement non-bloquant -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"></noscript>
+    <!-- 🚨 FIX ANTI-ZOOM iOS Safari - CRITIQUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anti-zoom-ios.css') }}">
     <style>
         :root {
+            --brown-warm: #4a3428;
+            --brown-dark: #1a1410;
             --teal-light: #A6D3DC;
             --teal-dark: #597176;
             --gold: #FDAE54;
@@ -23,7 +29,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         html {
             height: 100%;
             overflow-x: hidden;
@@ -31,7 +37,7 @@
         
         body { 
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal-dark) 100%);
+            background: {{ bg_gradient }};
             background-attachment: fixed;
             min-height: 100vh;
             padding: 20px;
@@ -47,34 +53,52 @@
             padding: 32px 24px;
         }
         
-        /* Header avec titre */
+        /* Header avec titre - style harmonisé */
         .page-header {
             background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,174,84,0.15) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
-            padding: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
             text-align: center;
-            margin-bottom: 28px;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            border: 2px solid rgba(253, 174, 84, 0.3);
+            border: 2px solid rgba(253,174,84,0.3);
+            box-shadow: 0 8px 32px rgba(89,113,118,0.15);
         }
         
         .page-title {
             font-size: 22px;
             font-weight: 800;
-            color: var(--dark);
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+            color: #153036;
+            margin: 0;
+            margin-bottom: 4px;
         }
         
         .page-subtitle {
             font-size: 14px;
-            color: var(--dark);
-            font-weight: 400;
-            line-height: 1.5;
+            color: #597176;
+            margin-top: 4px;
+        }
+
+        /* Barre de progression */
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 5px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: #FDAE54;
+            box-shadow: 0 0 10px rgba(253,174,84,0.5);
         }
         
         /* Carte Profil */
@@ -103,14 +127,14 @@
         }
         
         .photo-preview {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            border: 4px solid var(--teal-light);
+            width: 110px;
+            height: 110px;
+            border-radius: 22px; /* cadre carré arrondi comme les autres avatars */
+            border: 3px solid var(--teal-light);
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: #ffffff;
             overflow: hidden;
             cursor: pointer;
             font-size: 50px;
@@ -120,6 +144,7 @@
             box-shadow: 
                 0 10px 30px rgba(0, 0, 0, 0.12),
                 inset 0 2px 4px rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
         }
         
         .photo-preview:hover {
@@ -132,31 +157,11 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            border-radius: 18px; /* évite le petit carré blanc interne */
+            display: block;
         }
         
-        .camera-overlay {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
-            color: white;
-            border-radius: 50%;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(253, 174, 84, 0.4);
-            border: 3px solid white;
-            transition: all 0.3s ease;
-        }
-        
-        .camera-overlay:hover {
-            transform: scale(1.1);
-        }
+        /* camera-overlay removed: no edit icon inside avatar frame */
         
         /* Boutons photo/avatar */
         .photo-options {
@@ -472,23 +477,7 @@
             transform: none;
         }
         
-        /* Lien retour */
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: var(--teal-dark);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            transition: color 0.3s ease;
-        }
-        
-        .back-link:hover {
-            color: var(--gold);
-        }
-        
-        .hidden {
+.hidden {
             display: none !important;
         }
         
@@ -612,8 +601,11 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">
 </head>
 <body>
+<!-- Bouton retour -->
+<a href="{{ url_for('auth.signup_email') }}" class="back-btn-glass" aria-label="Retour">←</a>
     <div class="container">
         <!-- Carte Titre -->
         <div class="page-header">
@@ -621,21 +613,29 @@
                 {% if change_avatar %}Mon Profil{% else %}Créer votre profil de joueur{% endif %}
             </h1>
             <p class="page-subtitle">
-                {% if change_avatar %}Modifiez vos informations pour personnaliser votre expérience{% else %}Choisis ton avatar et ton prénom pour commencer l'aventure CleanBeat{% endif %}
+                {% if change_avatar %}Modifiez vos informations pour personnaliser votre expérience{% else %}Choisis ton avatar et ton prénom pour commencer l'aventure{% endif %}
             </p>
         </div>
+
+        <!-- Barre de progression (uniquement si pas change_avatar) -->
+        {% if not change_avatar %}
+        <div class="progress-bar">
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step active"></div>
+        </div>
+        {% endif %}
         
         <!-- Carte Profil -->
         <div class="profile-card">
-            <form method="POST" action="{{ url_for('update_profile') if change_avatar else url_for('create_profile_post') }}" enctype="multipart/form-data" id="profileForm">
+            <form method="POST" action="{{ url_for('players.update_profile') if change_avatar else url_for('players.create_profile_post') }}" enctype="multipart/form-data" id="profileForm">
             <!-- Section Photo/Avatar -->
             <div class="photo-section">
                 <div class="photo-container">
-                    <div class="photo-preview" id="photoPreview" onclick="openAvatarModal()">
-                        👤
-                        <div class="camera-overlay">
-                            ✏️
-                        </div>
+                    <div class="photo-preview" id="photoPreview" data-dicebear-seed="alice" onclick="openAvatarModal()">
+                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=alice" alt="Avatar par défaut" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block;">
                     </div>
                 </div>
                 
@@ -653,21 +653,22 @@
                 
                 <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handlePhotoCapture(event)">
                 <input type="file" id="cameraInput" accept="image/*" capture="user" class="hidden" onchange="handlePhotoCapture(event)">
-                <input type="hidden" id="selectedPhoto" name="photo_data">
-                <input type="hidden" id="selectedAvatar" name="avatar">
+                <input type="hidden" id="selectedPhoto" name="photo_data" value="">
+                <input type="hidden" id="selectedAvatar" name="avatar" value="{{ current_avatar or '' }}">
+                <input type="hidden" id="avatarStyle" name="avatar_style" value="{{ current_avatar_style or 'adventurer' }}">
             </div>
 
             {% if change_avatar %}
             <!-- Mode édition profil -->
             <div class="form-group">
-                <label class="form-label">Votre prénom</label>
-                <input type="text" name="name" id="name" class="form-input" placeholder="Entrez votre prénom" value="{{ current_name if current_name else '' }}" minlength="2">
+                <label class="form-label">Votre prénom ou pseudo</label>
+                <input type="text" name="name" id="name" class="form-input" placeholder="Ton prénom ou pseudo (pas ton nom de famille)" value="{{ current_name if current_name else '' }}" minlength="2" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
             {% else %}
             <!-- Mode création -->
             <div class="form-group">
-                <label class="form-label">Votre prénom</label>
-                <input type="text" name="name" class="form-input" placeholder="Entrez votre prénom" required minlength="2">
+                <label class="form-label">Votre prénom ou pseudo</label>
+                <input type="text" id="name" name="name" class="form-input" placeholder="Ton prénom ou pseudo (pas ton nom de famille)" value="{{ current_name }}" required minlength="2" oninput="var v=this.value;if(v.length>0){this.value=v.charAt(0).toUpperCase()+v.slice(1);}">
             </div>
             {% endif %}
 
@@ -676,6 +677,10 @@
             </button>
         </form>
         </div>
+
+        <script>
+            // Aucun comportement dynamique : l'aperçu utilise l'avatar DiceBear lorelei statique par défaut.
+        </script>
     </div>
     
     <!-- Modal de sélection d'avatar -->
@@ -725,7 +730,7 @@
             
             // Vérifier la taille (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('La photo est trop volumineuse. Maximum 5 Mo.');
+                showGlassPopup('📸 La photo est trop volumineuse. Maximum 5 Mo.', 'warning', 3000);
                 return;
             }
             
@@ -734,7 +739,7 @@
                 // Redimensionner l'image si nécessaire
                 resizeImage(e.target.result, 500, function(resizedData) {
                     const preview = document.getElementById('photoPreview');
-                    preview.innerHTML = `<img src="${resizedData}" alt="Photo de profil"><div class="camera-overlay">✏️</div>`;
+                    preview.innerHTML = `<img src="${resizedData}" alt="Photo de profil">`;
                     document.getElementById('selectedPhoto').value = resizedData;
                     document.getElementById('selectedAvatar').value = '';
                     selectedAvatarData = { type: 'photo', data: resizedData };
@@ -790,7 +795,54 @@
             document.body.style.overflow = '';
         }
         
-        // Charger les avatars depuis l'API
+        // Fonction pour afficher une notification glassmorphique
+        function showGlassPopup(message, type = 'info', duration = 3000) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(21, 48, 54, 0.7);
+                backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+                z-index: 10000; display: flex; align-items: center; justify-content: center;
+                opacity: 0; animation: fadeInOverlay 0.3s ease forwards;
+            `;
+            const popup = document.createElement('div');
+            let bgGradient;
+            if (type === 'success') {
+                bgGradient = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.3) 50%, rgba(253,174,84,0.4) 100%)';
+            } else if (type === 'warning') {
+                bgGradient = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,174,84,0.4) 50%, rgba(244,198,141,0.5) 100%)';
+            } else if (type === 'danger') {
+                bgGradient = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,107,107,0.3) 50%, rgba(231,76,60,0.2) 100%)';
+            } else {
+                bgGradient = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(166,211,220,0.5) 50%, rgba(89,113,118,0.3) 100%)';
+            }
+            popup.style.cssText = `
+                background: ${bgGradient};
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                border-radius: 28px; padding: 32px 28px; max-width: 340px; width: 90%;
+                box-shadow: 0 25px 50px rgba(21,48,54,0.35), 0 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+                position: relative; border: 1px solid rgba(255,255,255,0.3); text-align: center; overflow: hidden;
+                animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+                font-family: 'Montserrat', sans-serif;
+            `;
+            popup.innerHTML = `
+                <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:14px;right:14px;background:rgba(21,48,54,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:50%;width:38px;height:38px;font-size:22px;color:#153036;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+                <div style="font-size:17px;line-height:1.6;color:#153036;font-weight:600;margin-top:8px;text-shadow:0 1px 2px rgba(255,255,255,0.5);">${message}</div>
+            `;
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
+                @keyframes popIn { 0% { transform:scale(0.8) translateY(30px); opacity:0; } 60% { transform:scale(1.03) translateY(-5px); } 100% { transform:scale(1) translateY(0); opacity:1; } }
+            `;
+            document.head.appendChild(style);
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
+            if (duration > 0) {
+                setTimeout(() => { overlay.style.opacity = '0'; overlay.style.transition = 'opacity 0.3s'; setTimeout(() => overlay.remove(), 300); }, duration);
+            }
+        }
+        
+        // Charger les avatars DiceBear directement
         async function loadAvatars() {
             const loading = document.getElementById('loadingSpinner');
             const content = document.getElementById('avatarsContent');
@@ -798,14 +850,43 @@
             try {
                 loading.classList.add('active');
                 
-                const response = await fetch('/api/avatars');
-                avatarsData = await response.json();
+                // Configuration en dur des styles DiceBear disponibles
+                const dicebearCategories = [
+                    { id: 'personas', name: '👤 Personas', type: 'dicebear', count: 20 },
+                    { id: 'avataaars', name: '😊 Avataaars', type: 'dicebear', count: 20 },
+                    { id: 'adventurer', name: '🎭 Aventurier', type: 'dicebear', count: 20 },
+                    { id: 'big-ears', name: '👂 Grandes Oreilles', type: 'dicebear', count: 20 },
+                    { id: 'bottts', name: '🤖 Robot', type: 'dicebear', count: 20 },
+                    { id: 'fun-emoji', name: '😄 Emoji Fun', type: 'dicebear', count: 20 },
+                    { id: 'lorelei', name: '🎨 Lorelei', type: 'dicebear', count: 20 },
+                    { id: 'micah', name: '✨ Micah', type: 'dicebear', count: 20 },
+                    { id: 'miniavs', name: '🎮 Mini Avatar', type: 'dicebear', count: 20 },
+                    { id: 'pixel-art', name: '🎲 Pixel Art', type: 'dicebear', count: 20 }
+                ];
+                
+                avatarsData = {
+                    categories: dicebearCategories,
+                    categoryNames: {},
+                    categoryType: {},
+                    dicebearSeeds: {}
+                };
+                
+                dicebearCategories.forEach(cat => {
+                    avatarsData.categoryNames[cat.id] = cat.name;
+                    avatarsData.categoryType[cat.id] = cat.type;
+                    
+                    if (cat.type === 'dicebear') {
+                        avatarsData.dicebearSeeds[cat.id] = generateDiceBearSeeds(cat.count || 20);
+                    }
+                });
                 
                 // Construire les onglets
                 buildCategoryTabs();
                 
                 // Afficher la première catégorie
-                showCategory('images');
+                if (dicebearCategories.length > 0) {
+                    showCategory(dicebearCategories[0].id);
+                }
                 
                 loading.classList.remove('active');
                 
@@ -815,34 +896,42 @@
             }
         }
         
+        function generateDiceBearSeeds(count) {
+            const seeds = [];
+            // Utiliser des seeds fixes basés sur des noms pour avoir toujours les mêmes avatars
+            const baseNames = [
+                'alice', 'bob', 'charlie', 'david', 'emma', 'frank', 'grace', 'henry',
+                'iris', 'jack', 'kate', 'liam', 'mia', 'noah', 'olivia', 'paul',
+                'quinn', 'rose', 'sam', 'tom', 'uma', 'victor', 'wendy', 'xavier',
+                'yara', 'zoe', 'alex', 'bella', 'chris', 'diana', 'evan', 'fiona'
+            ];
+            
+            for (let i = 0; i < count && i < baseNames.length; i++) {
+                seeds.push(baseNames[i]);
+            }
+            
+            // Si on a besoin de plus de seeds, ajouter des variantes
+            for (let i = baseNames.length; i < count; i++) {
+                seeds.push(baseNames[i % baseNames.length] + (Math.floor(i / baseNames.length) + 1));
+            }
+            
+            return seeds;
+        }
+        
         // Construire les onglets de catégories
         function buildCategoryTabs() {
             const tabsContainer = document.getElementById('categoryTabs');
             tabsContainer.innerHTML = '';
             
-            // Onglet Images (toujours premier)
-            if (avatarsData.images && avatarsData.images.length > 0) {
-                const tab = document.createElement('button');
-                tab.type = 'button';
-                tab.className = 'category-tab active';
-                tab.dataset.category = 'images';
-                tab.textContent = '📸 Personnages';
-                tab.onclick = () => showCategory('images');
-                tabsContainer.appendChild(tab);
-            }
-            
-            // Onglets emoji (depuis categories)
-            if (avatarsData.categories) {
-                avatarsData.categories.forEach(cat => {
-                    if (cat.type === 'emoji') {
-                        const tab = document.createElement('button');
-                        tab.type = 'button';
-                        tab.className = 'category-tab';
-                        tab.dataset.category = cat.id;
-                        tab.textContent = cat.name;
-                        tab.onclick = () => showCategory(cat.id);
-                        tabsContainer.appendChild(tab);
-                    }
+            if (avatarsData.categories && avatarsData.categories.length > 0) {
+                avatarsData.categories.forEach((cat, index) => {
+                    const tab = document.createElement('button');
+                    tab.type = 'button';
+                    tab.className = 'category-tab' + (index === 0 ? ' active' : '');
+                    tab.dataset.category = cat.id;
+                    tab.textContent = cat.name;
+                    tab.onclick = () => showCategory(cat.id);
+                    tabsContainer.appendChild(tab);
                 });
             }
         }
@@ -859,53 +948,42 @@
             const content = document.getElementById('avatarsContent');
             content.innerHTML = '';
             
-            if (categoryId === 'images') {
-                // Afficher les images PNG
+            const catType = avatarsData.categoryType[categoryId];
+            const category = avatarsData.categories.find(c => c.id === categoryId);
+            
+            if (catType === 'dicebear' && category) {
+                // Afficher les avatars DiceBear
                 const section = document.createElement('div');
                 section.className = 'avatars-section';
                 
                 const grid = document.createElement('div');
                 grid.className = 'avatars-grid';
                 
-                avatarsData.images.forEach(img => {
+                const seeds = avatarsData.dicebearSeeds[categoryId] || [];
+                // Le categoryId EST le style DiceBear (lorelei, avataaars, etc.)
+                const style = categoryId;
+                
+                seeds.forEach(seed => {
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
                     const option = document.createElement('div');
                     option.className = 'avatar-option';
-                    option.innerHTML = `<img src="${img.url}" alt="${img.label}">`;
-                    option.title = img.label;
-                    option.onclick = () => selectAvatar('image', img.file, img.url, option);
+                    option.style.backgroundImage = `url('${url}')`;
+                    option.style.backgroundSize = 'cover';
+                    option.dataset.type = 'dicebear';
+                    option.dataset.seed = seed;
+                    option.dataset.style = style;
+                    option.dataset.url = url;
+                    option.onclick = () => selectAvatar(option);
                     grid.appendChild(option);
                 });
                 
                 section.appendChild(grid);
                 content.appendChild(section);
-                
-            } else {
-                // Afficher les emojis de la catégorie
-                const category = avatarsData.categories.find(c => c.id === categoryId);
-                if (category && category.items) {
-                    const section = document.createElement('div');
-                    section.className = 'avatars-section';
-                    
-                    const grid = document.createElement('div');
-                    grid.className = 'avatars-grid';
-                    
-                    category.items.forEach(item => {
-                        const option = document.createElement('div');
-                        option.className = 'avatar-option emoji';
-                        option.textContent = item.emoji;
-                        option.title = item.label;
-                        option.onclick = () => selectAvatar('emoji', item.emoji, item.emoji, option);
-                        grid.appendChild(option);
-                    });
-                    
-                    section.appendChild(grid);
-                    content.appendChild(section);
-                }
             }
         }
         
         // Sélectionner un avatar
-        function selectAvatar(type, value, display, element) {
+        function selectAvatar(element) {
             // Retirer la sélection précédente
             document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
             
@@ -913,7 +991,12 @@
             element.classList.add('selected');
             
             // Sauvegarder la sélection
-            selectedAvatarData = { type, value, display };
+            selectedAvatarData = {
+                type: element.dataset.type,
+                seed: element.dataset.seed,
+                style: element.dataset.style,
+                url: element.dataset.url
+            };
             
             // Activer le bouton de confirmation
             document.getElementById('confirmAvatar').disabled = false;
@@ -921,43 +1004,127 @@
         
         // Confirmer la sélection d'avatar
         function confirmAvatarSelection() {
-            if (!selectedAvatarData) return;
+            if (!selectedAvatarData) {
+                showGlassPopup('⚠️ Veuillez sélectionner un avatar', 'warning', 2000);
+                return;
+            }
             
             const preview = document.getElementById('photoPreview');
             
-            if (selectedAvatarData.type === 'image') {
-                preview.innerHTML = `<img src="${selectedAvatarData.display}" alt="Avatar sélectionné"><div class="camera-overlay">✏️</div>`;
-                document.getElementById('selectedAvatar').value = selectedAvatarData.value;
+            if (selectedAvatarData.type === 'dicebear') {
+                // Afficher l'avatar DiceBear dans le preview
+                preview.innerHTML = `<img src="${selectedAvatarData.url}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius: 20px;">`;
+                
+                // Sauvegarder dans les champs cachés
+                document.getElementById('selectedAvatar').value = selectedAvatarData.seed;
+                document.getElementById('avatarStyle').value = selectedAvatarData.style;
                 document.getElementById('selectedPhoto').value = '';
-            } else if (selectedAvatarData.type === 'emoji') {
-                preview.innerHTML = `<span style="font-size: 60px;">${selectedAvatarData.value}</span><div class="camera-overlay">✏️</div>`;
-                document.getElementById('selectedAvatar').value = selectedAvatarData.value;
-                document.getElementById('selectedPhoto').value = '';
+                
+                console.log('✅ Avatar sélectionné:', {
+                    seed: selectedAvatarData.seed,
+                    style: selectedAvatarData.style,
+                    url: selectedAvatarData.url
+                });
+                
+                showGlassPopup('✨ Avatar sélectionné avec succès !', 'success', 2000);
             }
             
             closeAvatarModal();
         }
         
-        // ===== VALIDATION FORMULAIRE =====
+
         
+        // ===== INITIALISATION =====
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Avatar par défaut (premier seed de la liste)
+            const defaultSeed = 'alice';
+            const defaultStyle = 'adventurer';
+            
+            // Initialiser les champs cachés avec l'avatar par défaut
+            document.getElementById('selectedAvatar').value = defaultSeed;
+            document.getElementById('avatarStyle').value = defaultStyle;
+            
+            console.log('✅ Avatar par défaut initialisé:', { seed: defaultSeed, style: defaultStyle });
+            
+            {% if change_avatar %}
+            // Mode édition : pré-remplir l'avatar actuel si existant
+            {% if current_avatar_file %}
+            const currentPhoto = '{{ current_avatar_file }}';
+            if (currentPhoto) {
+                const preview = document.getElementById('photoPreview');
+                preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentPhoto}" alt="Photo actuelle" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
+                document.getElementById('selectedAvatar').value = currentPhoto;
+                selectedAvatarData = { type: 'image', value: currentPhoto };
+            }
+            {% elif current_avatar %}
+            const currentAvatar = '{{ current_avatar }}';
+            if (currentAvatar) {
+                const preview = document.getElementById('photoPreview');
+                // Vérifier si c'est un vrai emoji (caractères Unicode > 127)
+                const isEmoji = currentAvatar.length <= 4 && !currentAvatar.includes('.') && 
+                               /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(currentAvatar);
+                
+                if (isEmoji) {
+                    preview.innerHTML = `<span style="font-size: 60px;">${currentAvatar}</span>`;
+                    selectedAvatarData = { type: 'emoji', value: currentAvatar };
+                    document.getElementById('selectedAvatar').value = currentAvatar;
+                } else if (!currentAvatar.includes('.')) {
+                    // Chaîne sans extension => seed DiceBear
+                    const seed = currentAvatar;
+                    let style = '{{ current_avatar_style if current_avatar_style else "" }}';
+                    
+                    // Si pas de style, essayer de l'extraire de l'URL
+                    if (!style) {
+                        const currentUrl = '{{ current_avatar_url }}';
+                        const urlMatch = currentUrl.match(/dicebear\.com\/[^\/]+\/([^\/]+)\//);
+                        if (urlMatch) {
+                            style = urlMatch[1];
+                            console.log('🔧 Style extrait de l\'URL:', style);
+                        } else {
+                            style = 'lorelei'; // Fallback par défaut
+                        }
+                    }
+                    
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
+                    preview.innerHTML = `<img src="${url}" alt="Avatar DiceBear" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
+                    selectedAvatarData = { type: 'dicebear', seed: seed, style: style, url: url };
+                    document.getElementById('selectedAvatar').value = currentAvatar;
+                    document.getElementById('avatarStyle').value = style;
+                } else {
+                    // C'est un fichier avatar
+                    preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentAvatar}" alt="Avatar actuel" style="width: 100%; height: 100%; object-fit: cover; border-radius: 18px;">`;
+                    selectedAvatarData = { type: 'image', value: currentAvatar };
+                    document.getElementById('selectedAvatar').value = currentAvatar;
+                }
+            }
+            {% endif %}
+            {% endif %}
         document.getElementById('profileForm').addEventListener('submit', function(e) {
             const avatar = document.getElementById('selectedAvatar').value;
+            const avatarStyle = document.getElementById('avatarStyle').value;
             const photo = document.getElementById('selectedPhoto').value;
-            
-            {% if not change_avatar %}
             const name = document.querySelector('input[name="name"]').value.trim();
+            
+            console.log('🔍 Validation formulaire:', { name, avatar, avatarStyle, photo: photo ? 'présente' : 'aucune' });
+            
+            // Vérifier le nom en premier
             if (!name || name.length < 2) {
-                alert('Veuillez entrer un prénom valide (minimum 2 caractères).');
+                showGlassPopup('📝 Veuillez entrer un prénom valide (minimum 2 caractères).', 'warning', 3000);
+                e.preventDefault();
+                return false;
+            }
+            
+            // Vérifier qu'un avatar est sélectionné (seulement en mode création)
+            {% if not change_avatar %}
+            if (!avatar && !photo) {
+                showGlassPopup('👤 Veuillez choisir un avatar ou charger une photo avant de continuer.', 'warning', 3000);
                 e.preventDefault();
                 return false;
             }
             {% endif %}
             
-            if (!avatar && !photo) {
-                alert('Veuillez choisir un avatar ou charger une photo.');
-                e.preventDefault();
-                return false;
-            }
+            console.log('✅ Formulaire valide - soumission en cours');
         });
         
         // Fermer le modal en cliquant à l'extérieur
@@ -967,36 +1134,7 @@
             }
         });
         
-        // ===== INITIALISATION =====
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            {% if change_avatar %}
-            // Pré-remplir l'avatar actuel
-            {% if current_avatar_file %}
-            const currentPhoto = '{{ current_avatar_file }}';
-            if (currentPhoto) {
-                const preview = document.getElementById('photoPreview');
-                preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentPhoto}" alt="Photo actuelle"><div class="camera-overlay">✏️</div>`;
-                document.getElementById('selectedAvatar').value = currentPhoto;
-                selectedAvatarData = { type: 'image', value: currentPhoto };
-            }
-            {% elif current_avatar %}
-            const currentAvatar = '{{ current_avatar }}';
-            if (currentAvatar) {
-                const preview = document.getElementById('photoPreview');
-                // Si c'est un emoji
-                if (currentAvatar.length <= 4 && !currentAvatar.includes('.')) {
-                    preview.innerHTML = `<span style="font-size: 60px;">${currentAvatar}</span><div class="camera-overlay">✏️</div>`;
-                    selectedAvatarData = { type: 'emoji', value: currentAvatar };
-                } else {
-                    // C'est un fichier avatar
-                    preview.innerHTML = `<img src="{{ url_for('static', filename='avatars/') }}${currentAvatar}" alt="Avatar actuel"><div class="camera-overlay">✏️</div>`;
-                    selectedAvatarData = { type: 'image', value: currentAvatar };
-                }
-                document.getElementById('selectedAvatar').value = currentAvatar;
-            }
-            {% endif %}
-            {% endif %}
+            // Note: En mode création, l'image par défaut est déjà dans le HTML, pas besoin de la recréer
         });
     </script>
 </body>

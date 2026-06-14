@@ -22,7 +22,6 @@
         .avatar-square-wrapper .vbar { left: calc(100% + 12px); right: auto; }
     }
 
-
     /* Description/phrase courte sous le titre */
         .task-description {
             text-align: center;
@@ -461,9 +460,9 @@
     <div class="task-card">
         <div class="task-image-container">
             {% if task_image %}
-                <img src="{{ url_for('static', filename='images/' ~ task_image) }}" alt="{{ task_name }}">
+                <img src="{{ url_for('static', filename='images/' ~ (task_image|thumb)) }}" alt="{{ task_name }}" loading="lazy" onerror="this.src='/static/images/{{ task_image }}';this.onerror=null;">
             {% else %}
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ task_name }}">
+                <img src="{{ url_for('static', filename='icons/qfq-icon-192-v2.png') }}" alt="{{ task_name }}">
             {% endif %}
             
             <!-- Badge de points -->
@@ -505,7 +504,7 @@
 </div>
 
 <div class="back-link">
-    <a href="{{ url_for('categorie', cat=category) }}">← Retour à {{ category|title }}</a> |
+    <a href="{{ url_for('tasks.categorie', cat=category) }}">← Retour à {{ category|title }}</a> |
     <a href="{{ url_for('menu') }}">🏠 Menu principal</a>
 </div>
 
@@ -560,9 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     button.innerHTML = '🎉 Tâche accomplie !';
                     button.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
                     // Toast avec animation
-                    const toast = document.getElementById('toast');
-                    toast.textContent = "🎉 +" + taskPoints + " points gagnés !";
-                    toast.classList.add('show');
+                    window.cbToast("🎉 +" + taskPoints + " points gagnés !", 'success', 2500);
                     // Déclencher les animations de la maison (si disponibles)
                     if (typeof onTaskCompleted === 'function') {
                         onTaskCompleted(taskPoints);
@@ -570,7 +567,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Mettre à jour les statistiques
                     updateDailyStats(taskPoints);
                     setTimeout(function() {
-                        toast.classList.remove('show');
                         // Rediriger vers le menu avec animation de l'avatar
                         window.location.href = "{{ url_for('menu') }}?validated=1&pts=" + taskPoints + "&ts=" + Date.now();
                     }, 2500);
@@ -579,10 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error("Erreur lors de la requête :", err);
                     button.innerHTML = originalText;
                     button.disabled = false;
-                    const toast = document.getElementById('toast');
-                    toast.textContent = "❌ Erreur, veuillez réessayer";
-                    toast.classList.add('show');
-                    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+                    window.cbToast("❌ Erreur, veuillez réessayer", 'danger', 2000);
                 });
         });
     }

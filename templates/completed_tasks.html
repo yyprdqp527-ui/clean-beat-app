@@ -1,42 +1,11 @@
 {% extends "base.html" %}
+{% block extra_styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/back-btn-glass.css') }}">{% endblock %}
+{% set hide_header = true %}
 
 {% block title %}Tâches complétées - Clean Beat{% endblock %}
 
 {% block page_styles %}
-        /* Bouton retour glassmorphism */
-        .back-btn-glass {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 2px solid rgba(255,255,255,0.4);
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            z-index: 1000;
-        }
-        
-        .back-btn-glass:hover {
-            background: rgba(255, 255, 255, 0.35);
-            transform: translateX(-3px);
-        }
-        
-        .back-btn-glass:active {
-            transform: scale(0.95);
-        }
-        
-        /* Grille de tâches */
+/* Grille de tâches */
         .tasks {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -187,7 +156,7 @@
 <!-- Bouton retour glassmorphism -->
 <a href="{{ url_for('menu') }}" class="back-btn-glass" aria-label="Retour">←</a>
 
-<h1>✅ Tâches complétées</h1>
+<h1>Tâches complétées</h1>
 
 {% if tasks_done %}
 <div class="tasks">

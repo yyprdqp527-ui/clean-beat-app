@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Préview Slides Onboarding</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: rgba(21,48,54,0.92);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.ob-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(166,211,220,0.2) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 30px;
+  padding: 20px 16px 16px;
+  box-shadow: 0 12px 40px rgba(89,113,118,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+  border: 2px solid rgba(255,255,255,0.5);
+  max-width: 400px; width: 100%;
+  text-align: center;
+}
+
+/* Numéro de slide en haut */
+.slide-counter {
+  font-size: 12px;
+  font-weight: 700;
+  color: #FDAE54;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+
+.ob-screen-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4px 0 8px;
+}
+.ob-phone-frame {
+  position: relative;
+  display: block;
+  width: min(260px, 85%);
+  margin: 0 auto;
+  line-height: 0;
+}
+.ob-phone-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(21,48,54,0.22);
+}
+.ob-ring {
+  position: absolute;
+  border: 3px solid #FDAE54;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(253,174,84,0.6);
+  animation: ob-pulse-ring 1.8s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes ob-pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(253,174,84,0.6); }
+  60%  { box-shadow: 0 0 0 10px rgba(253,174,84,0); }
+  100% { box-shadow: 0 0 0 0 rgba(253,174,84,0); }
+}
+.ob-caption-glass {
+  background: rgba(21,48,54,0.06);
+  border: 1px solid rgba(21,48,54,0.1);
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin: 8px 0 0;
+  text-align: center;
+}
+.ob-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDAE54;
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ob-caption-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #153036;
+  margin: 0 0 5px;
+  line-height: 1.3;
+}
+.ob-caption-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #153036;
+  margin: 0;
+  line-height: 1.5;
+}
+.ob-slide { display: none; }
+.ob-slide.active { display: block; }
+
+/* Navigation */
+.ob-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin-top: 14px;
+  gap: 12px;
+}
+.ob-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+}
+.ob-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(89,113,118,0.25);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.ob-dot.active { background: #FDAE54; width: 18px; border-radius: 4px; }
+.ob-btn {
+  padding: 12px 20px; border: none; border-radius: 50px;
+  font-size: 14px; font-weight: 800; cursor: pointer;
+  background: linear-gradient(135deg, #FDAE54 0%, #F4C68D 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(253,174,84,0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.ob-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(253,174,84,0.5); }
+.ob-btn:active { transform: scale(0.97); }
+.ob-btn-prev {
+  background: rgba(89,113,118,0.12);
+  color: #597176;
+  box-shadow: none;
+}
+.ob-btn-prev:hover { background: rgba(89,113,118,0.2); transform: none; box-shadow: none; }
+</style>
+</head>
+<body>
+<div class="ob-card">
+
+  <!-- Slide 1 -->
+  <div class="ob-slide active" id="ob-slide-1">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide 1.webp" class="ob-phone-img" alt="Choisis une pièce">
+        <div class="ob-ring" style="width:30%;height:14%;border-radius:50%;top:32%;left:35%;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">1 / 9</span>
+      <p class="ob-caption-title">Choisis ta pièce 🏠</p>
+      <p class="ob-caption-text">Clique sur une pièce pour voir la liste des tâches à faire. C'est pénible, mais elles ne se font pas toutes seules !</p>
+    </div>
+  </div>
+
+  <!-- Slide 2 -->
+  <div class="ob-slide" id="ob-slide-2">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide2.webp" class="ob-phone-img" alt="Sélectionne une tâche">
+        <div class="ob-ring" style="width:70%;height:10%;border-radius:8px;top:42%;left:15%;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">2 / 9</span>
+      <p class="ob-caption-title">Jeu virtuel. Exécution réelle. 💪</p>
+      <p class="ob-caption-text">Sélectionne une tâche… et fais-la vraiment !</p>
+    </div>
+  </div>
+
+  <!-- Slide 3 -->
+  <div class="ob-slide" id="ob-slide-3">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide3.webp" class="ob-phone-img" alt="Valide la tâche">
+        <div class="ob-ring" style="width:28%;height:13%;border-radius:50%;top:68%;left:24%;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">3 / 9</span>
+      <p class="ob-caption-title">C'est fait ? Valide ! ✅</p>
+      <p class="ob-caption-text">Tâche accomplie = tâche validée. Clique sur ton avatar. Bravo !</p>
+    </div>
+  </div>
+
+  <!-- Slide 4 : Gagne des points -->
+  <div class="ob-slide" id="ob-slide-4">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide4.webp" class="ob-phone-img" alt="Gagne des points">
+        <div class="ob-ring" style="width:32%;height:15%;border-radius:50%;top:14%;left:68%;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">4 / 9</span>
+      <p class="ob-caption-title">Gagne des points ! 🏆</p>
+      <p class="ob-caption-text">Chaque tâche vaut des points. Plus t'en fais, plus tu gagnes ! À la fin de la semaine, celui qui a le plus de points peut ouvrir la grille des récompenses 🎁</p>
+    </div>
+  </div>
+
+  <!-- Slide 5 : Ajout de mission -->
+  <div class="ob-slide" id="ob-slide-5">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide4b.webp" class="ob-phone-img" alt="Ajout de mission">
+        <div class="ob-ring" style="width:26%;height:12%;border-radius:50%;bottom:8%;left:8%;top:auto;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">5 / 9</span>
+      <p class="ob-caption-title">Ajout de mission 🎯</p>
+      <p class="ob-caption-text">Tu peux ajouter des missions dans chaque pièce. Ton ou tes partenaires seront prévenus par une notification dès qu'une nouvelle mission est disponible !</p>
+    </div>
+  </div>
+
+  <!-- Slide 6 : Courses partagées -->
+  <div class="ob-slide" id="ob-slide-6">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide5.webp" class="ob-phone-img" alt="Courses partagées">
+        <div class="ob-ring" style="width:70%;height:9%;border-radius:8px;top:34%;left:15%;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">6 / 9</span>
+      <p class="ob-caption-title">Les courses, c'est pour tout le monde 🛒</p>
+      <p class="ob-caption-text">Liste partagée en temps réel. Celui qui est le plus près du magasin prend le relais — et marque des points !</p>
+    </div>
+  </div>
+
+  <!-- Slide 7 : Tracking bébé -->
+  <div class="ob-slide" id="ob-slide-7">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide5b.webp" class="ob-phone-img" alt="Tracking bébé">
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">7 / 9</span>
+      <p class="ob-caption-title">Tracking bébé 👶</p>
+      <p class="ob-caption-text">Les partenaires peuvent noter l'heure du biberon, des couches et du dodo, et suivre ensemble l'évolution des activités de bébé en temps réel !</p>
+    </div>
+  </div>
+
+  <!-- Slide 8 : Mini-jeux -->
+  <div class="ob-slide" id="ob-slide-8">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame" style="position:relative;">
+        <img src="images/slide6.webp" class="ob-phone-img" alt="Mini-jeux">
+        <div style="position:absolute;top:58%;left:0;right:0;display:flex;justify-content:space-around;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FDAE54" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FDAE54" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FDAE54" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">8 / 9</span>
+      <p class="ob-caption-title">Mini jeux 🎮</p>
+      <p class="ob-caption-text">Envoie des bonus et des malus à tes partenaires 😈 Fais un truc bien chiant et gagne un max de points… mmm débusque les entourloupes ménagères !!</p>
+    </div>
+  </div>
+
+  <!-- Slide 9 : Couleurs -->
+  <div class="ob-slide" id="ob-slide-9">
+    <div class="ob-screen-wrap">
+      <div class="ob-phone-frame">
+        <img src="images/slide7.webp" class="ob-phone-img" alt="Personnalisation">
+        <div class="ob-ring" style="width:22%;height:10%;border-radius:50%;top:44%;left:12%;"></div>
+      </div>
+    </div>
+    <div class="ob-caption-glass">
+      <span class="ob-num">9 / 9</span>
+      <p class="ob-caption-title">L'appli à ta couleur 🎨</p>
+      <p class="ob-caption-text">Choisis ta couleur, l'appli s'adapte à ton humeur !</p>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="ob-nav">
+    <div class="ob-dots" id="ob-dots"></div>
+    <button class="ob-btn" id="ob-next-btn" onclick="obNext()">Suivant →</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var current = 1;
+  var total = 9;
+
+  // Créer les dots
+  var dotsEl = document.getElementById('ob-dots');
+  for (var i = 1; i <= total; i++) {
+    var d = document.createElement('div');
+    d.className = 'ob-dot' + (i === 1 ? ' active' : '');
+    d.dataset.n = i;
+    d.onclick = (function(n){ return function(){ goTo(n); }; })(i);
+    dotsEl.appendChild(d);
+  }
+
+  function updateDots() {
+    var dots = dotsEl.querySelectorAll('.ob-dot');
+    dots.forEach(function(d, i) {
+      d.classList.toggle('active', i + 1 === current);
+    });
+  }
+
+  function goTo(n) {
+    document.getElementById('ob-slide-' + current).classList.remove('active');
+    current = n;
+    document.getElementById('ob-slide-' + current).classList.add('active');
+    updateDots();
+    document.getElementById('ob-prev-btn').style.display = current > 1 ? '' : 'none';
+    var btn = document.getElementById('ob-next-btn');
+    btn.textContent = current === total ? "C'est parti ! 🚀" : 'Suivant →';
+  }
+
+  function obNext() {
+    if (current < total) goTo(current + 1);
+    else alert('Fin des slides ! (Dans l\'appli : ferme la modale)');
+  }
+
+  window.obNext = obNext;
+})();
+</script>
+</body>
+</html>
