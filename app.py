@@ -3025,7 +3025,8 @@ def create_system_message(house_id, content, message_type='system', related_task
                     'url': notif_url,
                     'messageId': message_id,
                     'messageType': message_type,
-                    'badge': 1
+                    'badge': 1,
+                    'requireInteraction': True
                 }
                 
                 # Exclure l'expéditeur du push pour baby_tracking, task_added et courses_added
@@ -5227,7 +5228,8 @@ def cron_weekly_winner():
                     'body': f"{winner_name} a gagné avec {winner_pts} pts !",
                     'url': '/menu',
                     'icon': '/static/images/logo.png',
-                    'tag': f'weekly-winner-{house_id}'
+                    'tag': f'weekly-winner-{house_id}',
+                    'requireInteraction': True
                 }, exclude_email=None)
             except Exception as _e:
                 print(f"❌ weekly_winner push house={house_id}: {_e}", flush=True)
