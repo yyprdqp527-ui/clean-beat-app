@@ -3672,7 +3672,33 @@ def get_house_players_points(house_id, existing_conn=None):
             _weekly_map[row_wp[0]] = int(row_wp[1]) if row_wp[1] else 0
     except Exception:
         pass
-    
+
+    # 🚀 BATCH: weekly_tasks, monthly_points, monthly_tasks
+    _weekly_tasks_map = {}
+    _monthly_map = {}
+    _monthly_tasks_map = {}
+    _month_start = _today.replace(day=1).isoformat()
+    try:
+        c.execute("""
+            SELECT user_email, COUNT(*), COALESCE(SUM(points),0)
+            FROM completed_tasks
+            WHERE house_id=? AND DATE(completed_at) >= ?
+            GROUP BY user_email
+        """, (house_id, _week_start))
+        for row_wt in c.fetchall():
+            _weekly_tasks_map[row_wt[0]] = int(row_wt[1]) if row_wt[1] else 0
+        c.execute("""
+            SELECT user_email, COALESCE(SUM(points),0), COUNT(*)
+            FROM completed_tasks
+            WHERE house_id=? AND DATE(completed_at) >= ?
+            GROUP BY user_email
+        """, (house_id, _month_start))
+        for row_mp in c.fetchall():
+            _monthly_map[row_mp[0]] = int(row_mp[1]) if row_mp[1] else 0
+            _monthly_tasks_map[row_mp[0]] = int(row_mp[2]) if row_mp[2] else 0
+    except Exception:
+        pass
+
     for r in rows:
         email = r[0]
         points = r[1]
@@ -3861,6 +3887,9 @@ def get_house_players_points(house_id, existing_conn=None):
             'daily_points': daily_points,
             'daily_tasks': daily_tasks,
             'weekly_points': weekly_points,
+            'weekly_tasks': _weekly_tasks_map.get(email, 0),
+            'monthly_points': _monthly_map.get(email, 0),
+            'monthly_tasks': _monthly_tasks_map.get(email, 0),
             'color': color_vertical if color_vertical else player_color,  # Gradient pour v-bar verticale (ou hex en fallback)
             'color_h': color_horizontal if color_horizontal else player_color,  # Gradient pour v-bar horizontale (ou hex en fallback)
             'player_color_hex': player_color,  # Couleur hex brute pour bordure d'avatar
